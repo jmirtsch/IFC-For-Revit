@@ -56,6 +56,16 @@ namespace BIM.IFC.Exporter
             if (familyInstance.Invisible)
                 return;
 
+            // Don't export mullions and panels if they have a host and their host is not a mass
+            // as they will be exported with the host (curtain wall/roof).
+            if (familyInstance.Category.Id == new ElementId(BuiltInCategory.OST_CurtainWallMullions) ||
+                familyInstance.Category.Id == new ElementId(BuiltInCategory.OST_CurtainWallPanels))
+            {
+                Element host = familyInstance.Host;
+                if (host != null && host.Category.Id != new ElementId(BuiltInCategory.OST_Mass))
+                    return;
+            }
+		 
             FamilySymbol familySymbol = familyInstance.Symbol;
             Family family = familySymbol.Family;
             if (family == null)

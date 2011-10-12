@@ -294,6 +294,7 @@ namespace BIM.IFC.Utility
             string ifcClassName = ExporterIFCUtils.GetIFCClassName(element, exporterIFC);
             if (ifcClassName != "")
             {
+                enumTypeValue = ExporterIFCUtils.GetIFCType(elem, exporterIFC);
                 // if using name, override category id if match is found.
                 if (!ifcClassName.Equals("Default", StringComparison.OrdinalIgnoreCase))
                     exportType = ElementFilteringUtil.GetExportTypeFromClassName(ifcClassName);
