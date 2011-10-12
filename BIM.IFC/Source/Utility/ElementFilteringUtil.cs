@@ -508,15 +508,9 @@ namespace BIM.IFC.Utility
         /// <returns>The element filter.</returns>
         private static ElementFilter GetFamilyInstanceFilter(ExporterIFC exporter)
         {
-            // Exclude list of categories for instances which are exported as parts of other things.
-            List<BuiltInCategory> categories = new List<BuiltInCategory>();
-            categories.Add(BuiltInCategory.OST_CurtainWallMullions);
-            categories.Add(BuiltInCategory.OST_CurtainWallPanels);
-
             List<ElementFilter> filters = new List<ElementFilter>();
             filters.Add(new ElementOwnerViewFilter(ElementId.InvalidElementId));
             filters.Add(new ElementClassFilter(typeof(FamilyInstance)));
-            filters.Add(new ElementMulticategoryFilter(categories, true));
             LogicalAndFilter andFilter = new LogicalAndFilter(filters);
 
             return andFilter;
@@ -1024,6 +1018,10 @@ namespace BIM.IFC.Utility
             Document doc = element.Document;
             bool hidden = element.IsHidden(filterView);
             if (hidden)
+                return false;
+
+            Category category = element.Category;
+            if (category != null && category.get_AllowsVisibilityControl(filterView) && !category.get_Visible(filterView))
                 return false;
 
             bool temporaryVisible = filterView.IsElementVisibleInTemporaryViewMode(TemporaryViewMode.TemporaryHideIsolate, element.Id);
