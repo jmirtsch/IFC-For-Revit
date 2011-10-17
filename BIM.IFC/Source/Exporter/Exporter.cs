@@ -290,11 +290,11 @@ namespace BIM.IFC.Exporter
                     {
                         GenericMEPExporter.Export(exporterIFC, element, geomElem, productWrapper);
                     }
-                    else if (elem is FilledRegion)
+                    else if (element is FilledRegion)
                     {
                         // FilledRegion is still handled by internal Revit code, but the get_Geometry call makes sure
                         // that the Owner view is clean before we get the region's GeometryElement.
-                        ExporterIFCUtils.ExportElementInternal(exporterIFC, elem, productWrapper);
+                        ExporterIFCUtils.ExportElementInternal(exporterIFC, element, productWrapper);
                     }
 
                     st.RollBack();
