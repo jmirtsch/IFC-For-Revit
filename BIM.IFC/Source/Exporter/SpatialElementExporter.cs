@@ -743,6 +743,12 @@ namespace BIM.IFC.Exporter
             return true;
         }
 
+        static private bool Use2DRoomBoundaryForRoomVolumeCalculation()
+        {
+            String use2DRoomBoundary = Environment.GetEnvironmentVariable("Use2DRoomBoundaryForRoomVolumeCalculationOnIFCExport");
+            return (use2DRoomBoundary != null && use2DRoomBoundary == "1");
+        }
+
         /// <summary>
         /// Create IFC room/space/area item, not include boundaries. 
         /// </summary>
@@ -866,7 +872,7 @@ namespace BIM.IFC.Exporter
             using (IFCTransaction tr2 = new IFCTransaction(file))
             {
                 IFCAnyHandle repHnd = null;
-                if (!exporterIFC.ExportAs2x2 && geomElem != null)
+                if (!(exporterIFC.ExportAs2x2 || Use2DRoomBoundaryForRoomVolumeCalculation()) && geomElem != null)
                 {
 
                     IFCSolidMeshGeometryInfo solidMeshInfo = ExporterIFCUtils.GetSolidMeshGeometry(exporterIFC, geomElem, Transform.Identity);
