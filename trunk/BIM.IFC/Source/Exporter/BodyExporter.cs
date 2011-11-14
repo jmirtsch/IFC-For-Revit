@@ -475,98 +475,105 @@ namespace BIM.IFC.Exporter
 
                 int numExtrusionsToCreate = allFaces ? 1 : sizeOfGeometry;
 
-                for (int ii = 0; ii < numExtrusionsToCreate && tryToExportAsExtrusion; ii++)
+                try
                 {
-                    SetBestMaterialIdInExporter(geometryList[ii], exporterIFC);
-
-                    IList<IFCExtrusionData> extrusionList = new List<IFCExtrusionData>();
-
-                    IFCExtrusionAxes axesToExtrudeIn = exportBodyParams != null ? exportBodyParams.PossibleExtrusionAxes : IFCExtrusionAxes.TryDefault;
-                    XYZ directionToExtrudeIn = XYZ.Zero;
-                    if (exportBodyParams != null && exportBodyParams.HasCustomAxis)
-                        directionToExtrudeIn = exportBodyParams.CustomAxis;
-
-                    IFCExtrusionCalculatorOptions extrusionOptions =
-                       new IFCExtrusionCalculatorOptions(exporterIFC, axesToExtrudeIn, directionToExtrudeIn,
-                          scale);
-
-                    bool canExportAsExtrusion = false;
-                    if (allFaces)
-                        extrusionList = IFCExtrusionCalculatorUtils.CalculateExtrusionData(extrusionOptions, faces);
-                    else
-                        extrusionList = IFCExtrusionCalculatorUtils.CalculateExtrusionData(extrusionOptions, geometryList[ii]);
-
-                    if (extrusionList.Count > 0)
+                    for (int ii = 0; ii < numExtrusionsToCreate && tryToExportAsExtrusion; ii++)
                     {
-                        if (exportBodyParams != null && exportBodyParams.AreInnerRegionsOpenings)
-                        {
-                            IList<CurveLoop> curveLoops = extrusionList[0].GetLoops();
-                            XYZ extrudedDirection = extrusionList[0].ExtrusionDirection;
+                        SetBestMaterialIdInExporter(geometryList[ii], exporterIFC);
 
-                            int numLoops = curveLoops.Count;
-                            for (int jj = numLoops - 1; jj > 0; jj--)
+                        IList<IFCExtrusionData> extrusionList = new List<IFCExtrusionData>();
+
+                        IFCExtrusionAxes axesToExtrudeIn = exportBodyParams != null ? exportBodyParams.PossibleExtrusionAxes : IFCExtrusionAxes.TryDefault;
+                        XYZ directionToExtrudeIn = XYZ.Zero;
+                        if (exportBodyParams != null && exportBodyParams.HasCustomAxis)
+                            directionToExtrudeIn = exportBodyParams.CustomAxis;
+
+                        IFCExtrusionCalculatorOptions extrusionOptions =
+                           new IFCExtrusionCalculatorOptions(exporterIFC, axesToExtrudeIn, directionToExtrudeIn,
+                              scale);
+
+                        bool canExportAsExtrusion = false;
+                        if (allFaces)
+                            extrusionList = IFCExtrusionCalculatorUtils.CalculateExtrusionData(extrusionOptions, faces);
+                        else
+                            extrusionList = IFCExtrusionCalculatorUtils.CalculateExtrusionData(extrusionOptions, geometryList[ii]);
+
+                        if (extrusionList.Count > 0)
+                        {
+                            if (exportBodyParams != null && exportBodyParams.AreInnerRegionsOpenings)
                             {
-                                AddOpeningData(exportBodyParams, extrusionList[0], curveLoops[jj]);
+                                IList<CurveLoop> curveLoops = extrusionList[0].GetLoops();
+                                XYZ extrudedDirection = extrusionList[0].ExtrusionDirection;
+
+                                int numLoops = curveLoops.Count;
+                                for (int jj = numLoops - 1; jj > 0; jj--)
+                                {
+                                    AddOpeningData(exportBodyParams, extrusionList[0], curveLoops[jj]);
+                                }
+                                extrusionList[0].ClearLoops();
                             }
-                            extrusionList[0].ClearLoops();
-                        }
 
-                        canExportAsExtrusion = false;
-                        IFCAnyHandle extrusionHandle = CreateExtrudedSolidFromExtrusionData(exporterIFC, categoryId, extrusionList[0]);
-                        if (extrusionHandle.HasValue)
-                        {
-                            bodyItems.Add(extrusionHandle);
-
-                            IFCExtrusionBasis whichBasis = extrusionList[0].ExtrusionBasis;
-                            IList<CurveLoop> curveLoops = extrusionList[0].GetLoops();
-                            XYZ extrusionDirection = extrusionList[0].ExtrusionDirection;
-
-                            canExportAsExtrusion = (whichBasis >= 0);
-
-                            if (exportBodyParams != null)
+                            canExportAsExtrusion = false;
+                            IFCAnyHandle extrusionHandle = CreateExtrudedSolidFromExtrusionData(exporterIFC, categoryId, extrusionList[0]);
+                            if (extrusionHandle.HasValue)
                             {
-                                double zOff = (whichBasis == IFCExtrusionBasis.BasisZ) ? (1.0 - Math.Abs(extrusionDirection[2])) : Math.Abs(extrusionDirection[2]);
-                                double scaledAngle = Math.Asin(zOff) * 180 / Math.PI;
-                                exportBodyParams.Slope = scaledAngle;
-                                exportBodyParams.ScaledLength = extrusionList[0].ScaledExtrusionLength;
-                                exportBodyParams.CustomAxis = extrusionDirection;
-                                for (int kk = 1; kk < extrusionList.Count; kk++)
-                                {
-                                    AddOpeningData(exportBodyParams, extrusionList[kk]);
-                                }
+                                bodyItems.Add(extrusionHandle);
 
-                                Plane plane = null;
-                                double height = 0.0, width = 0.0;
-                                if (ComputeHeightWidthOfCurveLoop(curveLoops[0], plane, out height, out width))
-                                {
-                                    exportBodyParams.ScaledHeight = height * scale;
-                                    exportBodyParams.ScaledWidth = width * scale;
-                                }
+                                IFCExtrusionBasis whichBasis = extrusionList[0].ExtrusionBasis;
+                                IList<CurveLoop> curveLoops = extrusionList[0].GetLoops();
+                                XYZ extrusionDirection = extrusionList[0].ExtrusionDirection;
 
-                                double area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoops);
-                                if (area > 0.0)
-                                {
-                                    exportBodyParams.ScaledArea = area * scale * scale;
-                                }
+                                canExportAsExtrusion = (whichBasis >= 0);
 
-                                double innerPerimeter = ComputeInnerPerimeterOfCurveLoops(curveLoops);
-                                double outerPerimeter = ComputeOuterPerimeterOfCurveLoops(curveLoops);
-                                if (innerPerimeter > 0.0)
-                                    exportBodyParams.ScaledInnerPerimeter = innerPerimeter * scale;
-                                if (outerPerimeter > 0.0)
-                                    exportBodyParams.ScaledOuterPerimeter = outerPerimeter * scale;
+                                if (exportBodyParams != null)
+                                {
+                                    double zOff = (whichBasis == IFCExtrusionBasis.BasisZ) ? (1.0 - Math.Abs(extrusionDirection[2])) : Math.Abs(extrusionDirection[2]);
+                                    double scaledAngle = Math.Asin(zOff) * 180 / Math.PI;
+                                    exportBodyParams.Slope = scaledAngle;
+                                    exportBodyParams.ScaledLength = extrusionList[0].ScaledExtrusionLength;
+                                    exportBodyParams.CustomAxis = extrusionDirection;
+                                    for (int kk = 1; kk < extrusionList.Count; kk++)
+                                    {
+                                        AddOpeningData(exportBodyParams, extrusionList[kk]);
+                                    }
+
+                                    Plane plane = null;
+                                    double height = 0.0, width = 0.0;
+                                    if (ComputeHeightWidthOfCurveLoop(curveLoops[0], plane, out height, out width))
+                                    {
+                                        exportBodyParams.ScaledHeight = height * scale;
+                                        exportBodyParams.ScaledWidth = width * scale;
+                                    }
+
+                                    double area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoops);
+                                    if (area > 0.0)
+                                    {
+                                        exportBodyParams.ScaledArea = area * scale * scale;
+                                    }
+
+                                    double innerPerimeter = ComputeInnerPerimeterOfCurveLoops(curveLoops);
+                                    double outerPerimeter = ComputeOuterPerimeterOfCurveLoops(curveLoops);
+                                    if (innerPerimeter > 0.0)
+                                        exportBodyParams.ScaledInnerPerimeter = innerPerimeter * scale;
+                                    if (outerPerimeter > 0.0)
+                                        exportBodyParams.ScaledOuterPerimeter = outerPerimeter * scale;
+                                }
+                            }
+                            else
+                            {
+                                if (exportBodyParams != null)
+                                    exportBodyParams.ClearOpenings();
                             }
                         }
                         else
                         {
-                            if (exportBodyParams != null)
-                                exportBodyParams.ClearOpenings();
+                            tryToExportAsExtrusion = false;
                         }
                     }
-                    else
-                    {
-                        tryToExportAsExtrusion = false;
-                    }
+                }
+                catch
+                {
+                    tryToExportAsExtrusion = false;
                 }
 
                 if (tryToExportAsExtrusion)
