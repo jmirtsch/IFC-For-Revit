@@ -433,7 +433,7 @@ namespace BIM.IFC.Exporter
                     using (IFCTransaction tr = new IFCTransaction(file))
                     {
                         ElementFilter spatialElementFilter = ElementFilteringUtil.GetSpatialElementFilter(document, exporterIFC);
-                        FilteredElementCollector collector = new FilteredElementCollector(document);
+                        FilteredElementCollector collector = (filterView == null) ? new FilteredElementCollector(document) : new FilteredElementCollector(document, filterView.Id);
                         collector.WherePasses(spatialElementFilter);
                         foreach (Element elem in collector)
                         {

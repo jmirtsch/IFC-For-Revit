@@ -230,7 +230,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:RevitAPI, Version=2012.0.0.0, Culture=neutral, processorArchitecture=AMD64"
+            "AssemblyAsmDisplayName" = "8:RevitAPI, Version=2012.0.0.0, Culture=neutral, processorArchitecture=x86"
                 "ScatterAssemblies"
                 {
                     "_9D9308CC442DF038CE990BE984EE66ED"
@@ -368,15 +368,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:IFC Exporter for Revit 2012"
-        "ProductCode" = "8:{608A00B9-CDFC-4E48-90DE-6B913CD39F3B}"
-        "PackageCode" = "8:{70714CCC-DF62-4D48-A82F-C97EE3798413}"
+        "ProductCode" = "8:{93A61025-616A-4C6F-9A96-7035F68368D9}"
+        "PackageCode" = "8:{6E165AA2-EAA8-4A61-9095-FF7B3CA6DFF3}"
         "UpgradeCode" = "8:{399A7C8B-7932-4CE8-813D-BF30C35B553A}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:1.0.3"
+        "ProductVersion" = "8:1.0.4"
         "Manufacturer" = "8:IFC Exporter for Revit"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:http://sourceforge.net/projects/ifcexporter/"
