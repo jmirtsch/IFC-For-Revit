@@ -113,7 +113,7 @@ namespace BIM.IFC.Exporter
                 {
                     SpatialElementExporter.InitializeSpatialElementGeometryCalculator(document, exporterIFC);
                     ElementFilter spatialElementFilter = ElementFilteringUtil.GetSpatialElementFilter(document, exporterIFC);
-                    FilteredElementCollector collector = new FilteredElementCollector(document);
+                    FilteredElementCollector collector = (filterView == null) ? new FilteredElementCollector(document) : new FilteredElementCollector(document, filterView.Id);
                     collector.WherePasses(spatialElementFilter);
                     foreach (Element element in collector)
                     {
@@ -127,7 +127,7 @@ namespace BIM.IFC.Exporter
 
                 //export other elements
                 ElementFilter nonSpatialElementFilter = ElementFilteringUtil.GetNonSpatialElementFilter(document, exporterIFC);
-                FilteredElementCollector collector2 = new FilteredElementCollector(document);
+                FilteredElementCollector collector2 = (filterView == null) ? new FilteredElementCollector(document) : new FilteredElementCollector(document, filterView.Id);
                 collector2.WherePasses(nonSpatialElementFilter);
                 foreach (Element element in collector2)
                 {
