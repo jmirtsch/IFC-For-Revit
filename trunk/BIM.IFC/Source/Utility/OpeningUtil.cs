@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2011  Autodesk, Inc.
+// Copyright (C) 2012  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@ using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using BIM.IFC.Exporter;
+using BIM.IFC.Toolkit;
 
 namespace BIM.IFC.Utility
 {
@@ -63,49 +64,52 @@ namespace BIM.IFC.Utility
            IFCExtrusionCreationData extraParams, ExporterIFC exporterIFC,
            IFCAnyHandle originalPlacement, IFCPlacementSetter setter, IFCProductWrapper wrapper)
         {
-            if (!elementHandle.HasValue)
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(elementHandle))
                 return;
-
-            IFCFile file = exporterIFC.GetFile();
-            ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
 
             int sz = info.Count;
             if (sz == 0)
                 return;
 
-            IFCLabel openingObjectType = IFCLabel.Create("Opening");
+            IFCFile file = exporterIFC.GetFile();
+            ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
+            Document document = element.Document;
+
+            string openingObjectType = "Opening";
 
             int openingNumber = 1;
             for (int curr = info.Count - 1; curr >= 0; curr--)
             {
-                IFCAnyHandle extrusionHandle = BodyExporter.CreateExtrudedSolidFromExtrusionData(exporterIFC, categoryId, info[curr]);
-                if (!extrusionHandle.HasValue)
+                IFCAnyHandle extrusionHandle = ExtrusionExporter.CreateExtrudedSolidFromExtrusionData(exporterIFC, element, info[curr]);
+                if (IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionHandle))
                     continue;
 
+                IFCAnyHandle styledItemHnd = BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document,
+                    extrusionHandle, ElementId.InvalidElementId);
+                        
                 HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
                 bodyItems.Add(extrusionHandle);
 
-                IFCAnyHandle contextOfItems = exporterIFC.Get3DContextHandle();
-                IFCAnyHandle bodyRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, categoryId, contextOfItems, bodyItems,
-                   IFCAnyHandle.Create());
+                IFCAnyHandle contextOfItems = exporterIFC.Get3DContextHandle("Body");
+                IFCAnyHandle bodyRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItems, null);
                 IList<IFCAnyHandle> representations = new List<IFCAnyHandle>();
                 representations.Add(bodyRep);
 
-                IFCAnyHandle openingRep = file.CreateProductDefinitionShape(IFCLabel.Create(), IFCLabel.Create(), representations);
+                IFCAnyHandle openingRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
 
                 IFCAnyHandle openingPlacement = ExporterUtil.CopyLocalPlacement(file, originalPlacement);
-                IFCLabel guid = IFCLabel.CreateGUID();
+                string guid = ExporterIFCUtils.CreateGUID();
                 IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                IFCLabel openingName = NamingUtil.GetNameOverride(element, NamingUtil.CreateIFCName(exporterIFC, openingNumber++));
-                IFCLabel elementId = NamingUtil.CreateIFCElementId(element);
-                IFCAnyHandle openingElement = file.CreateOpeningElement(guid, ownerHistory,
-                   openingName, IFCLabel.Create(), openingObjectType, openingPlacement, openingRep, elementId);
+                string openingName = NamingUtil.GetNameOverride(element, NamingUtil.CreateIFCName(exporterIFC, openingNumber++));
+                string elementId = NamingUtil.CreateIFCElementId(element);
+                IFCAnyHandle openingElement = IFCInstanceExporter.CreateOpeningElement(file, guid, ownerHistory,
+                   openingName, null, openingObjectType, openingPlacement, openingRep, elementId);
                 wrapper.AddElement(openingElement, setter, extraParams, true);
-                if (exporterIFC.ExportBaseQuantities && (extraParams != null))
+                if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities && (extraParams != null))
                     ExporterIFCUtils.CreateOpeningQuantities(exporterIFC, openingElement, extraParams);
 
-                IFCLabel voidGuid = IFCLabel.CreateGUID();
-                file.CreateRelVoidsElement(voidGuid, ownerHistory, IFCLabel.Create(), IFCLabel.Create(), elementHandle, openingElement);
+                string voidGuid = ExporterIFCUtils.CreateGUID();
+                IFCInstanceExporter.CreateRelVoidsElement(file, voidGuid, ownerHistory, null, null, elementHandle, openingElement);
             }
         }
 
@@ -137,11 +141,13 @@ namespace BIM.IFC.Utility
            ExporterIFC exporterIFC, IFCAnyHandle originalPlacement,
            IFCPlacementSetter setter, IFCProductWrapper wrapper)
         {
-            if (!elementHandle.HasValue)
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(elementHandle))
                 return;
 
-            IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData();
-            CreateOpeningsIfNecessaryBase(elementHandle, element, info, extraParams, exporterIFC, originalPlacement, setter, wrapper);
+            using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
+            {
+                CreateOpeningsIfNecessaryBase(elementHandle, element, info, extraParams, exporterIFC, originalPlacement, setter, wrapper);
+            }
         }
 
         /// <summary>
@@ -172,7 +178,7 @@ namespace BIM.IFC.Utility
            ExporterIFC exporterIFC, IFCAnyHandle originalPlacement,
            IFCPlacementSetter setter, IFCProductWrapper wrapper)
         {
-            if (!elementHandle.HasValue)
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(elementHandle))
                 return;
 
             ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
@@ -180,6 +186,18 @@ namespace BIM.IFC.Utility
             IList<IFCExtrusionData> info = extraParams.GetOpenings();
             CreateOpeningsIfNecessaryBase(elementHandle, element, info, extraParams, exporterIFC, originalPlacement, setter, wrapper);
             extraParams.ClearOpenings();
+        }
+
+        public static bool NeedToCreateOpenings(IFCAnyHandle elementHandle, IFCExtrusionCreationData extraParams)
+        {
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(elementHandle))
+                return false;
+
+            if (extraParams == null)
+                return false;
+
+            IList<IFCExtrusionData> info = extraParams.GetOpenings();
+            return (info.Count > 0);
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2011  Autodesk, Inc.
+// Copyright (C) 2012  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,9 +23,13 @@ using System.Text;
 using Autodesk.Revit;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using BIM.IFC.Toolkit;
 
 namespace BIM.IFC.Utility
 {
+    using IFCDoorStyleOperation = Autodesk.Revit.DB.IFC.IFCDoorStyleOperation;
+    using IFCWindowStyleOperation = Autodesk.Revit.DB.IFC.IFCWindowStyleOperation;
+
     /// <summary>
     /// Provides static methods for door and window related manipulations.
     /// </summary>
@@ -34,13 +38,13 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Gets the panel operation from door style operation.
         /// </summary>
-        /// <parameter name="ifcDoorStyleOperationType">
+        /// <param name="ifcDoorStyleOperationType">
         /// The IFCDoorStyleOperation.
-        /// </parameter>
+        /// </param>
         /// <returns>
         /// The string represents the door panel operation.
         /// </returns>
-        public static string GetPanelOperationFromDoorStyleOperation(IFCDoorStyleOperation ifcDoorStyleOperationType)
+        public static IFCDoorPanelOperation GetPanelOperationFromDoorStyleOperation(IFCDoorStyleOperation ifcDoorStyleOperationType)
         {
             switch (ifcDoorStyleOperationType)
             {
@@ -49,42 +53,42 @@ namespace BIM.IFC.Utility
                 case IFCDoorStyleOperation.DoubleDoorSingleSwing:
                 case IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeLeft:
                 case IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeRight:
-                    return "Swinging";
+                    return IFCDoorPanelOperation.Swinging;
                 case IFCDoorStyleOperation.DoubleSwingLeft:
                 case IFCDoorStyleOperation.DoubleSwingRight:
                 case IFCDoorStyleOperation.DoubleDoorDoubleSwing:
-                    return "DoubleActing";
+                    return IFCDoorPanelOperation.Double_Acting;
                 case IFCDoorStyleOperation.SlidingToLeft:
                 case IFCDoorStyleOperation.SlidingToRight:
                 case IFCDoorStyleOperation.DoubleDoorSliding:
-                    return "Sliding";
+                    return IFCDoorPanelOperation.Sliding;
                 case IFCDoorStyleOperation.FoldingToLeft:
                 case IFCDoorStyleOperation.FoldingToRight:
                 case IFCDoorStyleOperation.DoubleDoorFolding:
-                    return "Folding";
+                    return IFCDoorPanelOperation.Folding;
                 case IFCDoorStyleOperation.Revolving:
-                    return "Revolving";
+                    return IFCDoorPanelOperation.Revolving;
                 case IFCDoorStyleOperation.RollingUp:
-                    return "RollingUp";
+                    return IFCDoorPanelOperation.RollingUp;
                 case IFCDoorStyleOperation.UserDefined:
-                    return "UserDefined";
+                    return IFCDoorPanelOperation.UserDefined;
                 default:
-                    return "NotDefined";
+                    return IFCDoorPanelOperation.NotDefined;
             }
         }
 
         /// <summary>
         /// Creates door panel properties.
         /// </summary>
-        /// <parameter name="exporterIFC">
+        /// <param name="exporterIFC">
         /// The ExporterIFC object.
-        /// </parameter>
-        /// <parameter name="doorWindowInfo">
+        /// </param>
+        /// <param name="doorWindowInfo">
         /// The IFCDoorWindowInfo object.
-        /// </parameter>
-        /// <parameter name="familyInstance">
+        /// </param>
+        /// <param name="familyInstance">
         /// The family instance of a door.
-        /// </parameter>
+        /// </param>
         /// <returns>
         /// The list of handles created.
         /// </returns>
@@ -92,23 +96,22 @@ namespace BIM.IFC.Utility
            IFCDoorWindowInfo doorWindowInfo, Element familyInstance)
         {
             IFCFile file = exporterIFC.GetFile();
-            IFCLabel descriptionOpt = IFCLabel.Create();
             IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
 
             IList<IFCAnyHandle> doorPanels = new List<IFCAnyHandle>();
 
-            IList<IFCMeasureValue> panelDepthOptList = new List<IFCMeasureValue>();
-            IList<IFCMeasureValue> panelWidthOptList = new List<IFCMeasureValue>();
+            IList<double?> panelDepthList = new List<double?>();
+            IList<double?> panelWidthList = new List<double?>();
 
-            IList<string> panelOperationList = new List<string>();
-            IList<string> panelPositionList = new List<string>();
+            IList<IFCDoorPanelOperation> panelOperationList = new List<IFCDoorPanelOperation>();
+            IList<IFCDoorPanelPosition> panelPositionList = new List<IFCDoorPanelPosition>();
 
-            int panelNum = 1;
+            int panelNumber = 1;
             const int maxPanels = 64;  // arbitrary large number to prevent infinite loops.
-            for (; panelNum < maxPanels; panelNum++)
+            for (; panelNumber < maxPanels; panelNumber++)
             {
-                string panelDepthCurrString = "PanelDepth" + panelNum.ToString();
-                string panelWidthCurrString = "PanelWidth" + panelNum.ToString();
+                string panelDepthCurrString = "PanelDepth" + panelNumber.ToString();
+                string panelWidthCurrString = "PanelWidth" + panelNumber.ToString();
 
                 // We will always have at least one panel definition as long as the panelOperation is not
                 // NotDefined.
@@ -116,14 +119,14 @@ namespace BIM.IFC.Utility
                 panelOperationList.Add(GetPanelOperationFromDoorStyleOperation(doorWindowInfo.DoorOperationType));
 
                 // If the panel operation is defined we'll allow no panel position for the 1st panel.
-                string panelPosition = GetIFCDoorPanelPosition("", familyInstance, panelNum);
-                if (panelPosition == "")
+                IFCDoorPanelPosition? panelPosition = GetIFCDoorPanelPosition("", familyInstance, panelNumber);
+                if (panelPosition == null)
                 {
-                    if (panelNum == 1)
+                    if (panelNumber == 1)
                         panelPosition = GetIFCDoorPanelPosition("", familyInstance, -1);
-                    if ((panelPosition == "") && (panelNum > 1))
+                    if ((panelPosition == null) && (panelNumber > 1))
                     {
-                        panelPositionList.Add("");
+                        panelPositionList.Add(IFCDoorPanelPosition.NotDefined);
                         break;
                     }
                 }
@@ -131,54 +134,55 @@ namespace BIM.IFC.Utility
                 if (doorWindowInfo.IsFlippedInX ^ doorWindowInfo.IsFlippedInY)
                     panelPosition = ReverseDoorPanelPosition(panelPosition);
 
-                panelPositionList.Add(panelPosition);
+                panelPositionList.Add(panelPosition != null ? (IFCDoorPanelPosition)panelPosition : IFCDoorPanelPosition.NotDefined);
 
                 double value1 = 0.0, value2 = 0.0;
                 bool foundDepth = ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, panelDepthCurrString, out value1);
-                if (!foundDepth && (panelNum == 1))
+                if (!foundDepth && (panelNumber == 1))
                     foundDepth = ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "PanelDepth", out value1);
 
                 bool foundWidth = ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, panelWidthCurrString, out value2);
-                if (!foundWidth && (panelNum == 1))
+                if (!foundWidth && (panelNumber == 1))
                     foundWidth = ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "PanelWidth", out value2);
 
                 if (foundDepth && foundWidth)
                 {
-                    panelDepthOptList.Add(IFCMeasureValue.Create(value1));
-                    panelWidthOptList.Add(IFCMeasureValue.Create(value2));
+                    panelDepthList.Add(value1);
+                    panelWidthList.Add(value2);
                 }
                 else
                 {
-                    panelDepthOptList.Add(IFCMeasureValue.Create());
-                    panelWidthOptList.Add(IFCMeasureValue.Create());
+                    panelDepthList.Add(null);
+                    panelWidthList.Add(null);
                 }
             }
 
             // calculate panelWidths
             double totalPanelWidth = 0.0;
-            for (int panelIdx = 0; (panelIdx < panelNum - 1); panelIdx++)
+            for (int panelIndex = 0; (panelIndex < panelNumber - 1); panelIndex++)
             {
-                if (!panelDepthOptList[panelIdx].HasValue || MathUtil.IsAlmostZero(panelDepthOptList[panelIdx].GetValue()) ||
-                    !panelWidthOptList[panelIdx].HasValue || MathUtil.IsAlmostZero(panelWidthOptList[panelIdx].GetValue()))
+                if (panelDepthList[panelIndex] == null || MathUtil.IsAlmostZero((double)panelDepthList[panelIndex]) ||
+                    panelWidthList[panelIndex] == null || MathUtil.IsAlmostZero((double)panelWidthList[panelIndex]))
                 {
                     totalPanelWidth = 0.0;
                     break;
                 }
-                totalPanelWidth += panelWidthOptList[panelIdx].GetValue();
+                totalPanelWidth += (double)panelWidthList[panelIndex];
             }
 
             if (!MathUtil.IsAlmostZero(totalPanelWidth))
             {
-                for (int panelIdx = 0; (panelIdx < panelNum - 1); panelIdx++)
+                for (int panelIndex = 0; (panelIndex < panelNumber - 1); panelIndex++)
                 {
-                    IFCMeasureValue currPanelWidthOpt = IFCMeasureValue.Create(panelWidthOptList[panelIdx].GetValue() / totalPanelWidth);
+                    double? currentPanelWidth = null;
+                    if (panelWidthList[panelIndex].HasValue)
+                        currentPanelWidth = (double)panelWidthList[panelIndex] / totalPanelWidth;
 
-                    IFCLabel doorPanelGUID = IFCLabel.CreateGUID();
-                    IFCLabel doorPanelName = NamingUtil.CreateIFCName(exporterIFC, -1);
-                    IFCAnyHandle shapeAspectStyleOpt = IFCAnyHandle.Create();
-                    IFCAnyHandle doorPanel = file.CreateDoorPanelProperties(doorPanelGUID, ownerHistory,
-                       doorPanelName, descriptionOpt, panelDepthOptList[panelIdx], panelOperationList[panelIdx],
-                       currPanelWidthOpt, panelPositionList[panelIdx], shapeAspectStyleOpt);
+                    string doorPanelGUID = ExporterIFCUtils.CreateGUID();
+                    string doorPanelName = exporterIFC.GetName();
+                    IFCAnyHandle doorPanel = IFCInstanceExporter.CreateDoorPanelProperties(file, doorPanelGUID, ownerHistory,
+                       doorPanelName, null, panelDepthList[panelIndex], panelOperationList[panelIndex],
+                       currentPanelWidth, panelPositionList[panelIndex], null);
                     doorPanels.Add(doorPanel);
                 }
             }
@@ -189,12 +193,12 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Creates door lining properties.
         /// </summary>
-        /// <parameter name="exporterIFC">
+        /// <param name="exporterIFC">
         /// The ExporterIFC object.
-        /// </parameter>
-        /// <parameter name="familyInstance">
+        /// </param>
+        /// <param name="familyInstance">
         /// The family instance of a door.
-        /// </parameter>
+        /// </param>
         /// <returns>
         /// The handle created.
         /// </returns>
@@ -202,19 +206,17 @@ namespace BIM.IFC.Utility
         {
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-            IFCLabel descriptionOpt = IFCLabel.Create();
 
-            IFCMeasureValue liningDepthOpt = IFCMeasureValue.Create();
-            IFCMeasureValue liningThicknessOpt = IFCMeasureValue.Create();
-            IFCMeasureValue thresholdDepthOpt = IFCMeasureValue.Create();
-            IFCMeasureValue thresholdThicknessOpt = IFCMeasureValue.Create();
-            IFCMeasureValue transomThicknessOpt = IFCMeasureValue.Create();
-            IFCMeasureValue transomOffsetOpt = IFCMeasureValue.Create();
-            IFCMeasureValue liningOffsetOpt = IFCMeasureValue.Create();
-            IFCMeasureValue thresholdOffsetOpt = IFCMeasureValue.Create();
-            IFCMeasureValue casingThicknessOpt = IFCMeasureValue.Create();
-            IFCMeasureValue casingDepthOpt = IFCMeasureValue.Create();
-            IFCAnyHandle shapeAspectStyleOpt = IFCAnyHandle.Create();
+            double? liningDepthOpt = null;
+            double? liningThicknessOpt = null;
+            double? thresholdDepthOpt = null;
+            double? thresholdThicknessOpt = null;
+            double? transomThicknessOpt = null;
+            double? transomOffsetOpt = null;
+            double? liningOffsetOpt = null;
+            double? thresholdOffsetOpt = null;
+            double? casingThicknessOpt = null;
+            double? casingDepthOpt = null;
 
             double value1, value2;
 
@@ -223,34 +225,34 @@ namespace BIM.IFC.Utility
             {
                 if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "LiningThickness", out value2))
                 {
-                    liningDepthOpt = IFCMeasureValue.Create(value1);
-                    liningThicknessOpt = IFCMeasureValue.Create(value2);
+                    liningDepthOpt = value1;
+                    liningThicknessOpt = value2;
                 }
             }
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "LiningOffset", out value1))
-                liningOffsetOpt = IFCMeasureValue.Create(value1);
+                liningOffsetOpt = value1;
 
             // both of these must be defined, or not defined - if only one is defined, we ignore the values.
             if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "ThresholdDepth", out value1))
             {
                 if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "ThresholdThickness", out value2))
                 {
-                    thresholdDepthOpt = IFCMeasureValue.Create(value1);
-                    thresholdThicknessOpt = IFCMeasureValue.Create(value2);
+                    thresholdDepthOpt = value1;
+                    thresholdThicknessOpt = value2;
                 }
             }
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "ThreshholdOffset", out value1))
-                liningOffsetOpt = IFCMeasureValue.Create(value1);
+                liningOffsetOpt = value1;
 
             // both of these must be defined, or not defined - if only one is defined, we ignore the values.
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "TransomOffset", out value1))
             {
                 if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "TransomThickness", out value2))
                 {
-                    transomOffsetOpt = IFCMeasureValue.Create(value1);
-                    transomThicknessOpt = IFCMeasureValue.Create(value2);
+                    transomOffsetOpt = value1;
+                    transomThicknessOpt = value2;
                 }
             }
 
@@ -259,35 +261,35 @@ namespace BIM.IFC.Utility
             {
                 if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "CasingThickness", out value2))
                 {
-                    casingDepthOpt = IFCMeasureValue.Create(value1);
-                    casingThicknessOpt = IFCMeasureValue.Create(value2);
+                    casingDepthOpt = value1;
+                    casingThicknessOpt = value2;
                 }
             }
 
-            IFCLabel doorLiningGUID = IFCLabel.CreateGUID();
-            IFCLabel doorLiningName = NamingUtil.CreateIFCName(exporterIFC, -1);
-            return file.CreateDoorLiningProperties(doorLiningGUID, ownerHistory,
-               doorLiningName, descriptionOpt, liningDepthOpt, liningThicknessOpt, thresholdDepthOpt, thresholdThicknessOpt,
+            string doorLiningGUID = ExporterIFCUtils.CreateSubElementGUID(familyInstance, (int) IFCDoorSubElements.DoorLining);
+            string doorLiningName = exporterIFC.GetName();
+            return IFCInstanceExporter.CreateDoorLiningProperties(file, doorLiningGUID, ownerHistory,
+               doorLiningName, null, liningDepthOpt, liningThicknessOpt, thresholdDepthOpt, thresholdThicknessOpt,
                transomThicknessOpt, transomOffsetOpt, liningOffsetOpt, thresholdOffsetOpt, casingThicknessOpt,
-               casingDepthOpt, shapeAspectStyleOpt);
+               casingDepthOpt, null);
         }
 
         /// <summary>
         /// Gets door panel position.
         /// </summary>
-        /// <parameter name="typeName">
+        /// <param name="typeName">
         /// The type name of the door.
-        /// </parameter>
-        /// <parameter name="element">
+        /// </param>
+        /// <param name="element">
         /// The door element.
-        /// </parameter>
-        /// <parameter name="number">
+        /// </param>
+        /// <param name="number">
         /// The number of panel position.
-        /// </parameter>
+        /// </param>
         /// <returns>
         /// The string represents the door panel position.
         /// </returns>
-        public static string GetIFCDoorPanelPosition(string typeName, Element element, int number)
+        public static IFCDoorPanelPosition? GetIFCDoorPanelPosition(string typeName, Element element, int number)
         {
             string currPanelName;
             if (number == -1)
@@ -300,129 +302,131 @@ namespace BIM.IFC.Utility
                 value = typeName;
 
             if (value == "")
-                return "";
+                return null;
             else if (String.Compare(value, "left", true) == 0)
-                return "left";
+                return IFCDoorPanelPosition.Left;
             else if (String.Compare(value, "middle", true) == 0)
-                return "middle";
+                return IFCDoorPanelPosition.Middle;
             else if (String.Compare(value, "right", true) == 0)
-                return "right";
+                return IFCDoorPanelPosition.Right;
             else
-                return "not defined";
+                return IFCDoorPanelPosition.NotDefined;
         }
 
         /// <summary>
         /// Reverses door panel position.
         /// </summary>
-        /// <parameter name="originalPosition">
+        /// <param name="originalPosition">
         /// The original position.
-        /// </parameter>
+        /// </param>
         /// <returns>
         /// The string represents the reversed door panel position.
         /// </returns>
-        public static string ReverseDoorPanelPosition(string originalPosition)
+        public static IFCDoorPanelPosition ReverseDoorPanelPosition(IFCDoorPanelPosition? originalPosition)
         {
-            if (String.Compare(originalPosition, "left", true) == 0)
-                return "right";
-            else if (String.Compare(originalPosition, "right", true) == 0)
-                return "left";
-            return originalPosition;
+            if (originalPosition == null)
+                return IFCDoorPanelPosition.NotDefined;
+            else if (originalPosition == IFCDoorPanelPosition.Left)
+                return IFCDoorPanelPosition.Right;
+            else if (originalPosition == IFCDoorPanelPosition.Right)
+                return IFCDoorPanelPosition.Left;
+            return (IFCDoorPanelPosition)originalPosition;
         }
 
         /// <summary>
         /// Gets window style operation.
         /// </summary>
-        /// <parameter name="familySymbol">
+        /// <param name="familySymbol">
         /// The element type of window.
-        /// </parameter>
+        /// </param>
         /// <returns>
         /// The IFCWindowStyleOperation.
         /// </returns>
-        public static IFCWindowStyleOperation GetIFCWindowStyleOperation(ElementType familySymbol)
+        public static Toolkit.IFCWindowStyleOperation GetIFCWindowStyleOperation(ElementType familySymbol)
         {
             Parameter parameter = familySymbol.get_Parameter(BuiltInParameter.WINDOW_OPERATION_TYPE);
             string value = parameter.AsValueString();
 
             if (String.IsNullOrEmpty(value))
-                return IFCWindowStyleOperation.NotDefined;
+                return Toolkit.IFCWindowStyleOperation.NotDefined;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "UserDefined"))
-                return IFCWindowStyleOperation.UserDefined;
+                return Toolkit.IFCWindowStyleOperation.UserDefined;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "SinglePanel"))
-                return IFCWindowStyleOperation.SinglePanel;
+                return Toolkit.IFCWindowStyleOperation.Single_Panel;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "DoublePanelVertical"))
-                return IFCWindowStyleOperation.DoublePanelVertical;
+                return Toolkit.IFCWindowStyleOperation.Double_Panel_Vertical;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "DoublePanelHorizontal"))
-                return IFCWindowStyleOperation.DoublePanelHorizontal;
+                return Toolkit.IFCWindowStyleOperation.Double_Panel_Horizontal;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "TriplePanelVertical"))
-                return IFCWindowStyleOperation.TriplePanelVertical;
+                return Toolkit.IFCWindowStyleOperation.Triple_Panel_Vertical;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "TriplePanelBottom"))
-                return IFCWindowStyleOperation.TriplePanelBottom;
+                return Toolkit.IFCWindowStyleOperation.Triple_Panel_Bottom;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "TriplePanelTop"))
-                return IFCWindowStyleOperation.TriplePanelTop;
+                return Toolkit.IFCWindowStyleOperation.Triple_Panel_Top;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "TriplePanelLeft"))
-                return IFCWindowStyleOperation.TriplePanelLeft;
+                return Toolkit.IFCWindowStyleOperation.Triple_Panel_Left;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "TriplePanelRight"))
-                return IFCWindowStyleOperation.TriplePanelRight;
+                return Toolkit.IFCWindowStyleOperation.Triple_Panel_Right;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "TriplePanelHorizontal"))
-                return IFCWindowStyleOperation.TriplePanelHorizontal;
+                return Toolkit.IFCWindowStyleOperation.Triple_Panel_Horizontal;
 
-            return IFCWindowStyleOperation.NotDefined;
+            return Toolkit.IFCWindowStyleOperation.NotDefined;
         }
 
         /// <summary>
         /// Gets window style construction.
         /// </summary>
-        /// <parameter name="element">
+        /// <param name="element">
         /// The window element.
-        /// </parameter>
-        /// <parameter name="initialValue">
+        /// </param>
+        /// <param name="initialValue">
         /// The initial value.
-        /// </parameter>
+        /// </param>
         /// <returns>
         /// The string represents the window style construction.
         /// </returns>
-        public static string GetIFCWindowStyleConstruction(Element element, string initialValue)
+        public static IFCWindowStyleConstruction GetIFCWindowStyleConstruction(Element element, string initialValue)
         {
             string value;
             if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "Construction", out value))
                 value = initialValue;
 
             if (value == "")
-                return "NotDefined";
+                return IFCWindowStyleConstruction.NotDefined;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Aluminum"))
-                return "Aluminum";
+                return IFCWindowStyleConstruction.Aluminium;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "HighGradeSteel"))
-                return "HighGradeSteel";
+                return IFCWindowStyleConstruction.High_Grade_Steel;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Steel"))
-                return "Steel";
+                return IFCWindowStyleConstruction.Steel;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Wood"))
-                return "Wood";
+                return IFCWindowStyleConstruction.Wood;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "AluminumWood"))
-                return "AluminumWood";
+                return IFCWindowStyleConstruction.Aluminium_Wood;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Plastic"))
-                return "Plastic";
+                return IFCWindowStyleConstruction.Plastic;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "OtherConstruction"))
-                return "OtherConstruction";
+                return IFCWindowStyleConstruction.Other_Construction;
 
-            return "NotDefined";
+            return IFCWindowStyleConstruction.NotDefined;
         }
 
         /// <summary>
         /// Gets window panel operation.
         /// </summary>
-        /// <parameter name="initialValue">
+        /// <param name="initialValue">
         /// The initial value.
-        /// </parameter>
-        /// <parameter name="element">
+        /// </param>
+        /// <param name="element">
         /// The window element.
-        /// </parameter>
-        /// <parameter name="number">
+        /// </param>
+        /// <param name="number">
         /// The number of panel operation.
-        /// </parameter>
+        /// </param>
         /// <returns>
         /// The string represents the window panel operation.
         /// </returns>
-        public static string GetIFCWindowPanelOperation(string initialValue, Element element, int number)
+        public static IFCWindowPanelOperation GetIFCWindowPanelOperation(string initialValue, Element element, int number)
         {
             string currPanelName = "PanelOperation" + number.ToString();
 
@@ -431,53 +435,53 @@ namespace BIM.IFC.Utility
                 value = initialValue;
 
             if (value == "")
-                return "NotDefined";
+                return IFCWindowPanelOperation.NotDefined;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "SideHungRightHand"))
-                return "SideHungRightHand";
+                return IFCWindowPanelOperation.SideHungRightHand;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "SideHungLeftHand"))
-                return "SideHungLeftHand";
+                return IFCWindowPanelOperation.SideHungLeftHand;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "TiltAndTurnRightHand"))
-                return "TiltAndTurnRightHand";
+                return IFCWindowPanelOperation.TiltAndTurnRightHand;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "TiltAndTurnLeftHand"))
-                return "TiltAndTurnLeftHand";
+                return IFCWindowPanelOperation.TiltAndTurnLeftHand;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "TopHung"))
-                return "TopHung";
+                return IFCWindowPanelOperation.TopHung;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "BottomHung"))
-                return "BottomHung";
+                return IFCWindowPanelOperation.BottomHung;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "PivotHorizontal"))
-                return "PivotHorizontal";
+                return IFCWindowPanelOperation.PivotHorizontal;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "PivotVertical"))
-                return "PivotVertical";
+                return IFCWindowPanelOperation.PivotVertical;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "SlidingHorizontal"))
-                return "SlidingHorizontal";
+                return IFCWindowPanelOperation.SlidingHorizontal;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "SlidingVertical"))
-                return "SlidingVertical";
+                return IFCWindowPanelOperation.SlidingVertical;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "RemovableCasement"))
-                return "RemovableCasement";
+                return IFCWindowPanelOperation.RemovableCasement;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "FixedCasement"))
-                return "FixedCasement";
+                return IFCWindowPanelOperation.FixedCasement;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "OtherOperation"))
-                return "OtherOperation";
+                return IFCWindowPanelOperation.OtherOperation;
 
-            return "NotDefined";
+            return IFCWindowPanelOperation.NotDefined;
         }
 
         /// <summary>
         /// Gets window panel position.
         /// </summary>
-        /// <parameter name="initialValue">
+        /// <param name="initialValue">
         /// The initial value.
-        /// </parameter>
-        /// <parameter name="element">
+        /// </param>
+        /// <param name="element">
         /// The window element.
-        /// </parameter>
-        /// <parameter name="number">
+        /// </param>
+        /// <param name="number">
         /// The number of panel position.
-        /// </parameter>
+        /// </param>
         /// <returns>
         /// The string represents the window panel position.
         /// </returns>
-        public static string GetIFCWindowPanelPosition(string initialValue, Element element, int number)
+        public static IFCWindowPanelPosition GetIFCWindowPanelPosition(string initialValue, Element element, int number)
         {
             string currPanelName = "PanelPosition" + number.ToString();
 
@@ -486,51 +490,50 @@ namespace BIM.IFC.Utility
                 value = initialValue;
 
             if (value == "")
-                return "NotDefined";
+                return IFCWindowPanelPosition.NotDefined;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Left"))
-                return "Left";
+                return IFCWindowPanelPosition.Left;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Middle"))
-                return "Middle";
+                return IFCWindowPanelPosition.Middle;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Right"))
-                return "Right";
+                return IFCWindowPanelPosition.Right;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Bottom"))
-                return "Bottom";
+                return IFCWindowPanelPosition.Bottom;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Top"))
-                return "Top";
+                return IFCWindowPanelPosition.Top;
 
-            return "NotDefined";
+            return IFCWindowPanelPosition.NotDefined;
         }
 
         /// <summary>
         /// Creates window panel position.
         /// </summary>
-        /// <parameter name="exporterIFC">
+        /// <param name="exporterIFC">
         /// The ExporterIFC object.
-        /// </parameter>
-        /// <parameter name="familyInstance">
+        /// </param>
+        /// <param name="familyInstance">
         /// The family instance of a window.
-        /// </parameter>
-        /// <parameter name="description">
+        /// </param>
+        /// <param name="description">
         /// The description.
-        /// </parameter>
+        /// </param>
         /// <returns>
         /// The handle created.
         /// </returns>
         public static IFCAnyHandle CreateWindowLiningProperties(ExporterIFC exporterIFC,
-           Element familyInstance, IFCLabel description)
+           Element familyInstance, string description)
         {
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
 
-            IFCMeasureValue liningDepthOpt = IFCMeasureValue.Create();
-            IFCMeasureValue liningThicknessOpt = IFCMeasureValue.Create();
-            IFCMeasureValue transomThicknessOpt = IFCMeasureValue.Create();
-            IFCMeasureValue mullionThicknessOpt = IFCMeasureValue.Create();
-            IFCMeasureValue firstTransomOffsetOpt = IFCMeasureValue.Create();
-            IFCMeasureValue secondTransomOffsetOpt = IFCMeasureValue.Create();
-            IFCMeasureValue firstMullionOffsetOpt = IFCMeasureValue.Create();
-            IFCMeasureValue secondMullionOffsetOpt = IFCMeasureValue.Create();
-            IFCAnyHandle shapeAspectStyleOpt = IFCAnyHandle.Create();
+            double? liningDepthOpt = null;
+            double? liningThicknessOpt = null;
+            double? transomThicknessOpt = null;
+            double? mullionThicknessOpt = null;
+            double? firstTransomOffsetOpt = null;
+            double? secondTransomOffsetOpt = null;
+            double? firstMullionOffsetOpt = null;
+            double? secondMullionOffsetOpt = null;
 
             double value1 = 0.0;
             double value2 = 0.0;
@@ -539,91 +542,88 @@ namespace BIM.IFC.Utility
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "LiningDepth", out value1) &&
                ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "LiningThickness", out value2))
             {
-                liningDepthOpt = IFCMeasureValue.Create(value1);
-                liningThicknessOpt = IFCMeasureValue.Create(value2);
+                liningDepthOpt = value1;
+                liningThicknessOpt = value2;
             }
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "TransomThickness", out value1))
-                transomThicknessOpt = IFCMeasureValue.Create(value1);
+                transomThicknessOpt = value1;
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FirstTransomOffset", out value1))
-                firstTransomOffsetOpt = IFCMeasureValue.Create(value1);
+                firstTransomOffsetOpt = value1;
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "SecondTransomOffset", out value1))
-                secondTransomOffsetOpt = IFCMeasureValue.Create(value1);
+                secondTransomOffsetOpt = value1;
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "MullionThickness", out value1))
-                mullionThicknessOpt = IFCMeasureValue.Create(value1);
+                mullionThicknessOpt = value1;
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FirstMullionOffset", out value1))
-                firstMullionOffsetOpt = IFCMeasureValue.Create(value1);
+                firstMullionOffsetOpt = value1;
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "SecondMullionOffset", out value1))
-                secondMullionOffsetOpt = IFCMeasureValue.Create(value1);
+                secondMullionOffsetOpt = value1;
 
-            IFCLabel windowLiningGUID = IFCLabel.CreateGUID();
-            IFCLabel windowLiningName = NamingUtil.CreateIFCName(exporterIFC, -1);
-            return file.CreateWindowLiningProperties(windowLiningGUID, ownerHistory,
+            string windowLiningGUID = ExporterIFCUtils.CreateGUID();
+            string windowLiningName = exporterIFC.GetName();
+            return IFCInstanceExporter.CreateWindowLiningProperties(file, windowLiningGUID, ownerHistory,
                windowLiningName, description, liningDepthOpt, liningThicknessOpt, transomThicknessOpt, mullionThicknessOpt,
-               firstTransomOffsetOpt, secondTransomOffsetOpt, firstMullionOffsetOpt, secondMullionOffsetOpt,
-               shapeAspectStyleOpt);
+               firstTransomOffsetOpt, secondTransomOffsetOpt, firstMullionOffsetOpt, secondMullionOffsetOpt, null);
         }
 
         /// <summary>
         /// Creates window panel properties.
         /// </summary>
-        /// <parameter name="exporterIFC">
+        /// <param name="exporterIFC">
         /// The ExporterIFC object.
-        /// </parameter>
-        /// <parameter name="doorWindowInfo">
+        /// </param>
+        /// <param name="doorWindowInfo">
         /// The IFCDoorWindowInfo object.
-        /// </parameter>
-        /// <parameter name="familyInstance">
+        /// </param>
+        /// <param name="familyInstance">
         /// The family instance of a window.
-        /// </parameter>
-        /// <parameter name="description">
+        /// </param>
+        /// <param name="description">
         /// The description.
-        /// </parameter>
+        /// </param>
         /// <returns>
         /// The list of handles created.
         /// </returns>
         public static IList<IFCAnyHandle> CreateWindowPanelProperties(ExporterIFC exporterIFC,
-           Element familyInstance, IFCLabel description)
+           Element familyInstance, string description)
         {
             IList<IFCAnyHandle> panels = new List<IFCAnyHandle>();
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
 
             const int maxPanels = 1000;  // arbitrary large number to prevent infinite loops.
-            for (int panelNum = 1; panelNum < maxPanels; panelNum++)
+            for (int panelNumber = 1; panelNumber < maxPanels; panelNumber++)
             {
-                string frameDepthCurrString = "FrameDepth" + panelNum.ToString();
-                string frameThicknessCurrString = "FrameThickness" + panelNum.ToString();
+                string frameDepthCurrString = "FrameDepth" + panelNumber.ToString();
+                string frameThicknessCurrString = "FrameThickness" + panelNumber.ToString();
 
-                string panelOperation = GetIFCWindowPanelOperation("", familyInstance, panelNum);
-                string panelPosition = GetIFCWindowPanelPosition("", familyInstance, panelNum);
-                if (panelOperation == "NotDefined" && panelPosition == "NotDefined")
+                IFCWindowPanelOperation panelOperation = GetIFCWindowPanelOperation("", familyInstance, panelNumber);
+                IFCWindowPanelPosition panelPosition = GetIFCWindowPanelPosition("", familyInstance, panelNumber);
+                if (panelOperation == IFCWindowPanelOperation.NotDefined && panelPosition == IFCWindowPanelPosition.NotDefined)
                     break;
 
-                IFCMeasureValue frameDepthOpt = IFCMeasureValue.Create();
-                IFCMeasureValue frameThicknessOpt = IFCMeasureValue.Create();
-                IFCAnyHandle shapeAspectStyleOpt = IFCAnyHandle.Create();
+                double? frameDepth = null;
+                double? frameThickness = null;
 
                 double value1, value2;
                 if ((ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, frameDepthCurrString, out value1) ||
-                    ((panelNum == 1) && (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FrameDepth", out value1)))) &&
+                    ((panelNumber == 1) && (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FrameDepth", out value1)))) &&
                    (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, frameThicknessCurrString, out value2) ||
-                    ((panelNum == 1) && (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FrameThickness", out value2)))))
+                    ((panelNumber == 1) && (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FrameThickness", out value2)))))
                 {
-                    frameDepthOpt = IFCMeasureValue.Create(value1);
-                    frameThicknessOpt = IFCMeasureValue.Create(value2);
+                    frameDepth = value1;
+                    frameThickness = value2;
                 }
 
-                IFCLabel panelGUID = IFCLabel.CreateGUID();
-                IFCLabel panelName = NamingUtil.CreateIFCName(exporterIFC, panelNum);
-                panels.Add(file.CreateWindowPanelProperties(panelGUID, ownerHistory,
-                   panelName, description, panelOperation, panelPosition, frameDepthOpt, frameThicknessOpt,
-                   shapeAspectStyleOpt));
+                string panelGUID = ExporterIFCUtils.CreateGUID();
+                string panelName = NamingUtil.CreateIFCName(exporterIFC, panelNumber);
+                panels.Add(IFCInstanceExporter.CreateWindowPanelProperties(file, panelGUID, ownerHistory,
+                   panelName, description, panelOperation, panelPosition, frameDepth, frameThickness, null));
             }
             return panels;
         }

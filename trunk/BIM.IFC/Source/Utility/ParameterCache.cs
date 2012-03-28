@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2011  Autodesk, Inc.
+// Copyright (C) 2012  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,8 +21,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 using Autodesk.Revit.DB.IFC;
+using BIM.IFC.Exporter.PropertySet;
 
 namespace BIM.IFC.Utility
 {
@@ -34,26 +34,26 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// List of property sets.
         /// </summary>
-        private List<IList<IFCPropertySetDescription>> m_PropertySets;
+        private List<IList<PropertySetDescription>> m_PropertySets;
 
         /// <summary>
         /// List of quantities.
         /// </summary>
-        private List<IList<IFCQuantityDescription>> m_Quantities;
+        private List<IList<QuantityDescription>> m_Quantities;
 
         /// <summary>
         /// Constructs a default ParameterCache object.
         /// </summary>
         public ParameterCache()
         {
-            m_PropertySets = new List<IList<IFCPropertySetDescription>>();
-            m_Quantities = new List<IList<IFCQuantityDescription>>();
+            m_PropertySets = new List<IList<PropertySetDescription>>();
+            m_Quantities = new List<IList<QuantityDescription>>();
         }
 
         /// <summary>
         /// The list of property sets.
         /// </summary>
-        public IList<IList<IFCPropertySetDescription>> PropertySets
+        public IList<IList<PropertySetDescription>> PropertySets
         {
             get
             {
@@ -64,7 +64,7 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// The list of quantities.
         /// </summary>
-        public IList<IList<IFCQuantityDescription>> Quantities
+        public IList<IList<QuantityDescription>> Quantities
         {
             get
             {

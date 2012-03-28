@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2011  Autodesk, Inc.
+// Copyright (C) 2012  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,11 +19,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Autodesk.Revit;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using BIM.IFC.Utility;
+using BIM.IFC.Toolkit;
 
 
 namespace BIM.IFC.Exporter
@@ -92,7 +94,7 @@ namespace BIM.IFC.Exporter
         /// The IFCProductWrapper.
         /// </param>
         public static void ExportCurveElement(ExporterIFC exporterIFC, CurveElement curveElement, GeometryElement geometryElement,
-                                               IFCProductWrapper productWrapper, CurveAnnotationCache annotationCache)
+                                               IFCProductWrapper productWrapper)
         {
             if (geometryElement == null || !ShouldCurveElementBeExported(curveElement))
                 return;
@@ -103,12 +105,12 @@ namespace BIM.IFC.Exporter
 
             IFCFile file = exporterIFC.GetFile();
 
-            using (IFCTransaction tr = new IFCTransaction(file))
+            using (IFCTransaction transaction = new IFCTransaction(file))
             {
                 using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, curveElement))
                 {
                     IFCAnyHandle localPlacement = setter.GetPlacement();
-                    IFCAnyHandle axisPlacement = file.Create3DAxisFromLocalPlacement(localPlacement);
+                    IFCAnyHandle axisPlacement = GeometryUtil.GetRelativePlacementFromLocalPlacement(localPlacement);
 
                     Plane planeSK = sketchPlane.Plane;
                     XYZ projDir = planeSK.Normal;
@@ -143,25 +145,105 @@ namespace BIM.IFC.Exporter
                         throw new Exception("IFC: expected 1 curve when export curve element.");
                     }
 
-                    IFCAnyHandle repItemHnd = file.CreateGeometricCurveSet(curves);
+                    HashSet<IFCAnyHandle> curveSet = new HashSet<IFCAnyHandle>(curves);
+                    IFCAnyHandle repItemHnd = IFCInstanceExporter.CreateGeometricCurveSet(file, curveSet);
 
                     IFCAnyHandle curveStyle = file.CreateStyle(exporterIFC, repItemHnd);
 
-                    //IFCAnyHandle curveAnno = ExporterIFCUtils.GetCurveAnnotation(exporterIFC, sketchPlane.Id, curveStyle);
+                    CurveAnnotationCache annotationCache = ExporterCacheManager.CurveAnnotationCache;
                     IFCAnyHandle curveAnno = annotationCache.GetAnnotation(sketchPlane.Id, curveStyle);
-                    if (curveAnno != null && curveAnno.HasValue)
+                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(curveAnno))
                     {
-                        ExporterIFCUtils.AddCurveToAnnotation(curveAnno, curves[0]);
+                        AddCurvesToAnnotation(curveAnno, curves);
                     }
                     else
                     {
-                        curveAnno = ExporterIFCUtils.CreateCurveAnnotation(exporterIFC, curveElement.Category.Id, sketchPlane.Id, plane, curveStyle, setter, localPlacement, repItemHnd);
+                        curveAnno = CreateCurveAnnotation(exporterIFC, curveElement, curveElement.Category.Id, sketchPlane.Id, plane, curveStyle, setter, localPlacement, repItemHnd);
+                        productWrapper.AddAnnotation(curveAnno, setter.GetLevelInfo(), true);
 
                         annotationCache.AddAnnotation(sketchPlane.Id, curveStyle, curveAnno);
                     }
                 }
-                tr.Commit();
+                transaction.Commit();
             }
+        }
+
+        /// <summary>
+        ///  Creates a new IfcAnnotation object.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="curveElement">The curve element.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="sketchPlaneId">The sketch plane id.</param>
+        /// <param name="refPlane">The reference plane.</param>
+        /// <param name="curveStyle">The curve style.</param>
+        /// <param name="placementSetter">The placemenet setter.</param>
+        /// <param name="localPlacement">The local placement.</param>
+        /// <param name="repItemHnd">The representation item.</param>
+        /// <returns>The handle.</returns>
+        static IFCAnyHandle CreateCurveAnnotation(ExporterIFC exporterIFC, Element curveElement, ElementId categoryId, ElementId sketchPlaneId,
+            Plane refPlane, IFCAnyHandle curveStyle, IFCPlacementSetter placementSetter, IFCAnyHandle localPlacement, IFCAnyHandle repItemHnd)
+        {
+            HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
+            bodyItems.Add(repItemHnd);
+            IFCAnyHandle bodyRepHnd = RepresentationUtil.CreateAnnotationSetRep(exporterIFC, curveElement, categoryId, exporterIFC.Get2DContextHandle(), bodyItems);
+
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRepHnd))
+                throw new Exception("Failed to create shape representation.");
+
+            List<IFCAnyHandle> shapes = new List<IFCAnyHandle>();
+            shapes.Add(bodyRepHnd);
+
+            IFCFile file = exporterIFC.GetFile();
+            IFCAnyHandle prodShapeHnd = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapes);
+
+            XYZ xDir = refPlane.XVec; XYZ zDir = refPlane.Normal; XYZ origin = refPlane.Origin;
+
+            // subtract out level origin if we didn't already before.
+            IFCLevelInfo levelInfo = placementSetter.GetLevelInfo();
+            if (levelInfo != null && !MathUtil.IsAlmostEqual(zDir.Z, 1.0))
+            {
+                zDir -= new XYZ(0, 0, levelInfo.Elevation);
+            }
+
+            origin = origin * exporterIFC.LinearScale;
+            IFCAnyHandle relativePlacement = ExporterUtil.CreateAxis(file, origin, zDir, xDir);
+            GeometryUtil.SetRelativePlacement(localPlacement, relativePlacement);
+
+            IFCAnyHandle annotation = IFCInstanceExporter.CreateAnnotation(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                null, null, null, localPlacement, prodShapeHnd);
+
+            return annotation;
+        }
+        
+        /// <summary>
+        ///  Adds IfcCurve handles to the IfcAnnotation handle.
+        /// </summary>
+        /// <param name="annotation">The annotation.</param>
+        /// <param name="curves">The curves.</param>
+        static void AddCurvesToAnnotation(IFCAnyHandle annotation, IList<IFCAnyHandle> curves)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(annotation, false, IFCEntityType.IfcAnnotation);
+
+            IFCAnyHandle prodShapeHnd = IFCAnyHandleUtil.GetRepresentation(annotation);
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodShapeHnd))
+                throw new InvalidOperationException("Couldn't find IfcAnnotation.");
+
+            List<IFCAnyHandle> repList = IFCAnyHandleUtil.GetRepresentations(prodShapeHnd);
+            if (repList.Count != 1)
+                throw new InvalidOperationException("Invalid repList for IfcAnnotation.");
+
+            HashSet<IFCAnyHandle> repItemSet = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(repList[0], "Items");
+            if (repItemSet.Count != 1)
+                throw new InvalidOperationException("Invalid repItemSet for IfcAnnotation.");
+
+            IFCAnyHandle repItemHnd = repItemSet.ElementAt(0);
+            if (!IFCAnyHandleUtil.IsSubTypeOf(repItemHnd, IFCEntityType.IfcGeometricSet))
+                throw new InvalidOperationException("Expected GeometricSet for IfcAnnotation.");
+
+            HashSet<IFCAnyHandle> newElements = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(repItemHnd, "Elements");
+            newElements.Add(curves[0]);
+            IFCAnyHandleUtil.SetAttribute(repItemHnd, "Elements", newElements);
         }
     }
 }

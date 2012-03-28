@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2011  Autodesk, Inc.
+// Copyright (C) 2012  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 
@@ -48,38 +47,38 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Finds the IfcPresentationStyleAssignment handle from the dictionary.
         /// </summary>
-        /// <param name="id">
-        /// The element id.
+        /// <param name="elementId">
+        /// The element elementId.
         /// </param>
         /// <returns>
         /// The IfcPresentationStyleAssignment handle.
         /// </returns>
-        public IFCAnyHandle Find(ElementId id)
+        public IFCAnyHandle Find(ElementId elementId)
         {
 
             IFCAnyHandle handle;
-            if (m_Styles.TryGetValue(id.IntegerValue, out handle))
+            if (m_Styles.TryGetValue(elementId.IntegerValue, out handle))
             {
                 return handle;
             }
-            return IFCAnyHandle.Create();
+            return null;
         }
 
         /// <summary>
         /// Adds the IfcPresentationStyleAssignment handle to the dictionary.
         /// </summary>
-        /// <param name="id">
-        /// The element id.
+        /// <param name="elementId">
+        /// The element elementId.
         /// </param>
         /// <param name="handle">
         /// The IfcPresentationStyleAssignment handle.
         /// </param>
-        public void Register(ElementId id, IFCAnyHandle handle)
+        public void Register(ElementId elementId, IFCAnyHandle handle)
         {
-            if (m_Styles.ContainsKey(id.IntegerValue))
-                throw new Exception("TextStyleCache already contains handle for id " + id.IntegerValue);
+            if (m_Styles.ContainsKey(elementId.IntegerValue))
+                throw new Exception("TextStyleCache already contains handle for elementId " + elementId.IntegerValue);
 
-            m_Styles[id.IntegerValue] = handle;
+            m_Styles[elementId.IntegerValue] = handle;
         }
     }
 }

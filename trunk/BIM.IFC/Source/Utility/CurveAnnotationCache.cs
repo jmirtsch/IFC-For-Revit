@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2011  Autodesk, Inc.
+// Copyright (C) 2012  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 
@@ -33,7 +32,7 @@ namespace BIM.IFC.Utility
     class CurveAnnotationCache
     {
         /// <summary>
-        /// Used as a key for a dictionary.
+        /// Used as a curveAnnotationKey for a dictionary.
         /// </summary>
         struct CurveAnnotationKey
         {
@@ -51,14 +50,14 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// The dictionary mapping from CurveAnnotationKey to curve annotation handle. 
         /// </summary>
-        Dictionary<CurveAnnotationKey, IFCAnyHandle> m_AnnotationMap;
+        Dictionary<CurveAnnotationKey, IFCAnyHandle> annotationMap;
 
         /// <summary>
         /// Constructs a default CurveAnnotationCache object.
         /// </summary>
         public CurveAnnotationCache()
         {
-            m_AnnotationMap = new Dictionary<CurveAnnotationKey, IFCAnyHandle>();
+            annotationMap = new Dictionary<CurveAnnotationKey, IFCAnyHandle>();
         }
 
         /// <summary>
@@ -75,17 +74,17 @@ namespace BIM.IFC.Utility
         /// </returns>
         public IFCAnyHandle GetAnnotation(ElementId sketchPlaneId, IFCAnyHandle curveStyleHandle)
         {
-            IFCAnyHandle ret;
-            CurveAnnotationKey key = new CurveAnnotationKey();
-            key.SketchPlaneId = sketchPlaneId;
-            key.CurveStyleHandle = curveStyleHandle;
-            if (m_AnnotationMap.TryGetValue(key, out ret))
+            IFCAnyHandle curveAnnotationHandle;
+            CurveAnnotationKey curveAnnotationKey = new CurveAnnotationKey();
+            curveAnnotationKey.SketchPlaneId = sketchPlaneId;
+            curveAnnotationKey.CurveStyleHandle = curveStyleHandle;
+            if (annotationMap.TryGetValue(curveAnnotationKey, out curveAnnotationHandle))
             {
-                return ret;
+                return curveAnnotationHandle;
             }
             else
             {
-                return IFCAnyHandle.Create();
+                return null;
             }
         }
 
@@ -103,16 +102,16 @@ namespace BIM.IFC.Utility
         /// </param>
         public void AddAnnotation(ElementId sketchPlaneId, IFCAnyHandle curveStyleHandle, IFCAnyHandle curveAnnotation)
         {
-            CurveAnnotationKey key = new CurveAnnotationKey();
-            key.SketchPlaneId = sketchPlaneId;
-            key.CurveStyleHandle = curveStyleHandle;
+            CurveAnnotationKey curveAnnotationKey = new CurveAnnotationKey();
+            curveAnnotationKey.SketchPlaneId = sketchPlaneId;
+            curveAnnotationKey.CurveStyleHandle = curveStyleHandle;
 
-            if (m_AnnotationMap.ContainsKey(key))
+            if (annotationMap.ContainsKey(curveAnnotationKey))
             {
-                throw new Exception("CurveAnnotationCache already contains this key");
+                throw new Exception("CurveAnnotationCache already contains this curveAnnotationKey");
             }
 
-            m_AnnotationMap[key] = curveAnnotation;
+            annotationMap[curveAnnotationKey] = curveAnnotation;
         }
     }
 }

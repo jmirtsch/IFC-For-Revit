@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2011  Autodesk, Inc.
+// Copyright (C) 2012  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 using Autodesk.Revit;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
@@ -46,6 +45,10 @@ namespace BIM.IFC.Utility
         /// </summary>
         ExportBeam,
         /// <summary>
+        /// Building element part.
+        /// </summary>
+        ExportBuildingElementPart,
+        /// <summary>
         /// Building element proxy.
         /// </summary>
         ExportBuildingElementProxy,
@@ -69,6 +72,10 @@ namespace BIM.IFC.Utility
         /// Door type.
         /// </summary>
         ExportDoorType,
+        /// <summary>
+        /// Assembly.
+        /// </summary>
+        ExportElementAssembly,
         /// <summary>
         /// Footing.
         /// </summary>
@@ -194,7 +201,7 @@ namespace BIM.IFC.Utility
         /// </summary>
         ExportFlowController,
         // direct subclass of FlowController
-        //not supported -- ExportElectricDistributionPointType,
+        //not suported -- ExportElectricDistributionPointType,
         // types of DistributionControlElementType
         /// <summary>
         /// Actuator type.
@@ -441,10 +448,11 @@ namespace BIM.IFC.Utility
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="filterView">The view for current view export.</param>
         /// <returns>The element filter.</returns>
-        public static ElementFilter GetSpatialElementFilter(Document document, ExporterIFC exporterIFC)
+        public static ElementFilter GetSpatialElementFilter(Document document, ExporterIFC exporterIFC, Element filterView)
         {
-            return GetExportFilter(document, exporterIFC, true);
+            return GetExportFilter(document, exporterIFC, filterView, true);
         }
 
         /// <summary>
@@ -452,10 +460,11 @@ namespace BIM.IFC.Utility
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="filterView">The view for current view export.</param>
         /// <returns>The Element filter.</returns>
-        public static ElementFilter GetNonSpatialElementFilter(Document document, ExporterIFC exporterIFC)
+        public static ElementFilter GetNonSpatialElementFilter(Document document, ExporterIFC exporterIFC, Element filterView)
         {
-            return GetExportFilter(document, exporterIFC, false);
+            return GetExportFilter(document, exporterIFC, filterView, false);
         }
 
         /// <summary>
@@ -463,14 +472,16 @@ namespace BIM.IFC.Utility
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="filterView">The view for current view export.</param>
         /// <param name="forSpatialElements">True to get spatial element filter, false for non spatial elements filter.</param>
         /// <returns>The element filter.</returns>
-        private static ElementFilter GetExportFilter(Document document, ExporterIFC exporterIFC, bool forSpatialElements)
+        private static ElementFilter GetExportFilter(Document document, ExporterIFC exporterIFC, Element filterView, 
+            bool forSpatialElements)
         {
             List<ElementFilter> filters = new List<ElementFilter>();
 
             // Class types & categories
-            ElementFilter classFilter = GetClassFilter(forSpatialElements, exporterIFC.ExportAs2x2);
+            ElementFilter classFilter = GetClassFilter(forSpatialElements);
 
             // Special handling for family instances and view specific elements
             if (!forSpatialElements)
@@ -481,7 +492,7 @@ namespace BIM.IFC.Utility
                 classFilters.Add(classFilter);
                 classFilters.Add(familyInstanceFilter);
 
-                if (!exporterIFC.ExportAs2x2)
+                if (ExporterCacheManager.ExportOptionsCache.ExportAnnotations)
                 {
                     ElementFilter ownerViewFilter = GetViewSpecificTypesFilter(exporterIFC);
                     classFilters.Add(ownerViewFilter);
@@ -496,7 +507,7 @@ namespace BIM.IFC.Utility
             filters.Add(GetDesignOptionFilter());
 
             // Phases
-            filters.Add(GetPhaseStatusFilter(document));
+            filters.Add(GetPhaseStatusFilter(document, filterView));
 
             return new LogicalAndFilter(filters);
         }
@@ -522,10 +533,16 @@ namespace BIM.IFC.Utility
         /// <returns>The element filter.</returns>
         private static ElementFilter GetDesignOptionFilter()
         {
-            ElementFilter dOptionFilter = new ElementDesignOptionFilter(ElementId.InvalidElementId);
+            ElementFilter designOptionFilter = new ElementDesignOptionFilter(ElementId.InvalidElementId);
             ElementFilter primaryOptionsFilter = new PrimaryDesignOptionMemberFilter();
-            return new LogicalOrFilter(dOptionFilter, primaryOptionsFilter);
+            return new LogicalOrFilter(designOptionFilter, primaryOptionsFilter);
         }
+
+        // Cannot be implemented until ExportLayerTable can be read.  Replacement is ShouldCategoryBeExported()
+        /*private static ElementFilter GetCategoryFilter()
+        {
+            
+        }*/
 
         /// <summary>
         /// Checks if element in certain category should be exported.
@@ -579,6 +596,8 @@ namespace BIM.IFC.Utility
             }
             else if (String.Compare(ifcClassName, "IfcBeam", true) == 0)
                 return IFCExportType.ExportBeam;
+            else if (String.Compare(ifcClassName, "IfcBuildingElementPart", true) == 0)
+                return IFCExportType.ExportBuildingElementPart;
             else if (String.Compare(ifcClassName, "IfcBuildingElementProxy", true) == 0)
                 return IFCExportType.ExportBuildingElementProxy;
             else if (String.Compare(ifcClassName, "IfcBuildingStorey", true) == 0)
@@ -591,6 +610,8 @@ namespace BIM.IFC.Utility
                 return IFCExportType.ExportCurtainWall;
             else if (IsEqualToTypeName(ifcClassName, ("IfcDoor")))
                 return IFCExportType.ExportDoorType;
+            else if (IsEqualToTypeName(ifcClassName, ("IfcElementAssembly")))
+                return IFCExportType.ExportElementAssembly;
             else if (String.Compare(ifcClassName, "IfcFloor", true) == 0)
             {
                 // IfcFloor is not a real type, but is being kept for backwards compatibility as a typo.
@@ -626,7 +647,8 @@ namespace BIM.IFC.Utility
                 return IFCExportType.ExportStair;
             else if (IsEqualToTypeName(ifcClassName, ("IfcTransportElement")))
                 return IFCExportType.ExportTransportElementType;
-            else if (String.Compare(ifcClassName, "IfcWall", true) == 0)
+            else if ((String.Compare(ifcClassName, "IfcWall", true) == 0) ||
+                     (String.Compare(ifcClassName, "IfcWallStandardCase", true) == 0))
                 return IFCExportType.ExportWall;
             else if (IsEqualToTypeName(ifcClassName, ("IfcWindow")))
                 return IFCExportType.ExportWindowType;
@@ -800,7 +822,10 @@ namespace BIM.IFC.Utility
                 return IFCExportType.ExportWasteTerminalType;
             else if (ifcClassName.StartsWith("Ifc"))
             {
-                throw new Exception("IFC: Unknown IFC type in getExportTypeFromClassName: " + ifcClassName);
+                // This used to throw an exception, but this could abort export if the user enters a bad IFC class name
+                // in the ExportLayerOptions table.  In the future, we should log this.
+                //throw new Exception("IFC: Unknown IFC type in getExportTypeFromClassName: " + ifcClassName);
+                return IFCExportType.ExportBuildingElementProxy;
             }
 
             return IFCExportType.DontExport;
@@ -905,9 +930,8 @@ namespace BIM.IFC.Utility
         /// Gets element filter that match certain types.
         /// </summary>
         /// <param name="forSpatialElements">True if to get filter for spatial element, false for other elements.</param>
-        /// <param name="exportAs2x2">True if it is to export IFC 2x2 version.</param>
         /// <returns>The element filter.</returns>
-        private static ElementFilter GetClassFilter(bool forSpatialElements, bool exportAs2x2)
+        private static ElementFilter GetClassFilter(bool forSpatialElements)
         {
             if (forSpatialElements)
             {
@@ -922,7 +946,7 @@ namespace BIM.IFC.Utility
 
                 excludedTypes.Add(typeof(SpatialElement));
 
-                if (exportAs2x2)
+                if (!ExporterCacheManager.ExportOptionsCache.ExportAnnotations)
                     excludedTypes.Add(typeof(CurveElement));
 
                 excludedTypes.Add(typeof(ElementType));
@@ -955,6 +979,8 @@ namespace BIM.IFC.Utility
                 excludedTypes.Add(typeof(TextNote));
                 excludedTypes.Add(typeof(FilledRegion));
 
+                // exclude levels that are covered in BeginExport
+                excludedTypes.Add(typeof(Level));
 
                 // exclude analytical models
                 excludedTypes.Add(typeof(Autodesk.Revit.DB.Structure.AnalyticalModel));
@@ -962,8 +988,6 @@ namespace BIM.IFC.Utility
                 ElementFilter excludedClassFilter = new ElementMulticlassFilter(excludedTypes, true);
 
                 List<BuiltInCategory> excludedCategories = new List<BuiltInCategory>();
-
-
 
 
                 // Native Revit types without match in API
@@ -975,7 +999,15 @@ namespace BIM.IFC.Utility
                 excludedCategories.Add(BuiltInCategory.OST_IOS_GeoLocations);
                 excludedCategories.Add(BuiltInCategory.OST_RvtLinks);
                 excludedCategories.Add(BuiltInCategory.OST_DecalElement);
-                excludedCategories.Add(BuiltInCategory.OST_Parts);
+                //excludedCategories.Add(BuiltInCategory.OST_Parts);
+                excludedCategories.Add(BuiltInCategory.OST_DuctCurvesCenterLine);
+                excludedCategories.Add(BuiltInCategory.OST_DuctFittingCenterLine);
+                excludedCategories.Add(BuiltInCategory.OST_PipeCurvesCenterLine);
+                excludedCategories.Add(BuiltInCategory.OST_PipeFittingCenterLine);
+                excludedCategories.Add(BuiltInCategory.OST_ConduitCenterLine);
+                excludedCategories.Add(BuiltInCategory.OST_ConduitFittingCenterLine);
+                excludedCategories.Add(BuiltInCategory.OST_FlexDuctCurvesCenterLine);
+                excludedCategories.Add(BuiltInCategory.OST_FlexPipeCurvesCenterLine);
 
                 ElementMulticategoryFilter excludedCategoryFilter = new ElementMulticategoryFilter(excludedCategories, true);
 
@@ -994,7 +1026,7 @@ namespace BIM.IFC.Utility
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <returns>The element filter.</returns>
-        private static ElementFilter GetPhaseStatusFilter(Document document)
+        private static ElementFilter GetPhaseStatusFilter(Document document, Element filterView)
         {
             List<ElementOnPhaseStatus> phaseStatuses = new List<ElementOnPhaseStatus>();
             phaseStatuses.Add(ElementOnPhaseStatus.None);  //include "none" because we might want to export phaseless elements.
@@ -1003,8 +1035,42 @@ namespace BIM.IFC.Utility
 
             PhaseArray phaseArray = document.Phases;
 
-            Phase lastPhase = phaseArray.get_Item(phaseArray.Size - 1);
-            return new ElementPhaseStatusFilter(lastPhase.Id, phaseStatuses);
+            ElementId phaseId = ElementId.InvalidElementId;
+            if (filterView != null)
+            {
+                Parameter currPhase = filterView.get_Parameter(BuiltInParameter.VIEW_PHASE);
+                if (currPhase != null)
+                    phaseId = currPhase.AsElementId();
+            }
+            if (phaseId == ElementId.InvalidElementId)
+            {
+                Phase lastPhase = phaseArray.get_Item(phaseArray.Size - 1);
+                phaseId = lastPhase.Id;
+            }
+
+            return new ElementPhaseStatusFilter(phaseId, phaseStatuses);
+        }
+
+        private static IDictionary<ElementId, bool> m_CategoryVisibilityCache = new Dictionary<ElementId, bool>();
+
+        public static void InitCategoryVisibilityCache()
+        {
+            m_CategoryVisibilityCache.Clear();
+        }
+
+        private static bool CheckIsCategoryHidden(View filterView, Element element)
+        {
+            bool value = false;
+            Category category = element.Category;
+            if (category == null)
+                return value;
+
+            if (m_CategoryVisibilityCache.TryGetValue(category.Id, out value))
+                return value;
+
+            value = (category.get_AllowsVisibilityControl(filterView) && !category.get_Visible(filterView));
+            m_CategoryVisibilityCache[category.Id] = value;
+            return value;
         }
 
         /// <summary>
@@ -1015,18 +1081,28 @@ namespace BIM.IFC.Utility
         /// <returns>True if the element is visible, false otherwise.</returns>
         public static bool IsElementVisible(View filterView, Element element)
         {
-            Document doc = element.Document;
             bool hidden = element.IsHidden(filterView);
             if (hidden)
                 return false;
 
             Category category = element.Category;
-            if (category != null && category.get_AllowsVisibilityControl(filterView) && !category.get_Visible(filterView))
+            hidden = CheckIsCategoryHidden(filterView, element);
+            if (hidden)
                 return false;
 
             bool temporaryVisible = filterView.IsElementVisibleInTemporaryViewMode(TemporaryViewMode.TemporaryHideIsolate, element.Id);
 
             return temporaryVisible;
+        }
+
+        /// <summary>
+        /// Checks if the IFC type is MEP type.
+        /// </summary>
+        /// <param name="exportType">IFC Export Type to check</param>
+        /// <returns>True for MEP type of elements.</returns>
+        public static bool IsMEPType(IFCExportType exportType)
+        {
+            return (exportType >= IFCExportType.ExportDistributionElement && exportType <= IFCExportType.ExportWasteTerminalType);
         }
     }
 }

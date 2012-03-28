@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2011  Autodesk, Inc.
+// Copyright (C) 2012  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -44,31 +44,39 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Returns a small value for use in comparing angles.
+        /// </summary>
+        /// <returns>
+        /// The value.
+        /// </returns>
+        public static double AngleEps()
+        {
+            return Math.PI / 1800.0;
+        }
+
+        /// <summary>
         /// Check if two double variables are almost equal.
         /// </summary>
-        /// <param name="value1"> The double value to be compared. </param>
-        /// <param name="value2"> Another double value to be compared. </param>
         /// <returns>
         /// True if they are almost equal, false otherwise.
         /// </returns>
-        public static bool IsAlmostEqual(double value1, double value2)
+        public static bool IsAlmostEqual(double d1, double d2)
         {
-            double sum = Math.Abs(value1) + Math.Abs(value2);
+            double sum = Math.Abs(d1) + Math.Abs(d2);
             if (sum < Eps())
                 return true;
-            return (Math.Abs(value1 - value2) <= sum * Eps());
+            return (Math.Abs(d1 - d2) <= sum * Eps());
         }
 
         /// <summary>
         /// Check if the double variable is almost equal to zero.
         /// </summary>
-        /// <param name="value">The double value.</param>
         /// <returns>
         /// True if the value is almost zero, false otherwise.
         /// </returns>
-        public static bool IsAlmostZero(double value)
+        public static bool IsAlmostZero(double dd)
         {
-            return Math.Abs(value) <= Eps();
+            return Math.Abs(dd) <= Eps();
         }
     }
 }

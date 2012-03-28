@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2011  Autodesk, Inc.
+// Copyright (C) 2012  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,8 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using BIM.IFC.Exporter.PropertySet;
+using BIM.IFC.Toolkit;
 using BIM.IFC.Utility;
 
 namespace BIM.IFC.Exporter
@@ -63,29 +65,25 @@ namespace BIM.IFC.Exporter
 
             ElementId catId = CategoryUtil.GetSafeCategoryId(mullion);
 
+            BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+            IFCAnyHandle repHnd = RepresentationUtil.CreateBRepProductDefinitionShape(mullion.Document.Application, exporterIFC, mullion, catId,
+                geometryElement, bodyExporterOptions, null, extraParams);
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))
+            {
+                extraParams.ClearOpenings();
+                return;
+            }
 
-            IFCSolidMeshGeometryInfo solidMeshInfo = ExporterIFCUtils.GetSolidMeshGeometry(exporterIFC, geometryElement, Transform.Identity);
-            IList<Solid> solids = solidMeshInfo.GetSolids();
-            IList<Mesh> polyMeshes = solidMeshInfo.GetMeshes();
-
-            bool tryToExportAsExtrusion = true;
-            if (solids.Count != 1 || polyMeshes.Count != 0)
-                tryToExportAsExtrusion = false;
-
-            IFCAnyHandle shapeRep = BodyExporter.ExportBody(mullion.Document.Application, exporterIFC, catId, solids, polyMeshes, tryToExportAsExtrusion, extraParams);
-            IList<IFCAnyHandle> shapeReps = new List<IFCAnyHandle>();
-            shapeReps.Add(shapeRep);
-            IFCAnyHandle repHnd = file.CreateProductDefinitionShape(IFCLabel.Create(), IFCLabel.Create(), shapeReps);
-
-            IFCLabel elemGUID = IFCLabel.CreateGUID(mullion);
+            string elemGUID = ExporterIFCUtils.CreateGUID(mullion);
             IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-            IFCLabel elemObjectType = NamingUtil.CreateIFCObjectName(exporterIFC, mullion);
-            IFCLabel elemId = NamingUtil.CreateIFCElementId(mullion);
-            //IFCLabel elemType = IFCLabel.Create("MULLION");
+            string elemObjectType = NamingUtil.CreateIFCObjectName(exporterIFC, mullion);
+            string elemId = NamingUtil.CreateIFCElementId(mullion);
 
-            IFCAnyHandle mullionHnd = file.CreateMember(elemGUID, ownerHistory, elemObjectType, IFCLabel.Create(), elemObjectType,
+            IFCAnyHandle mullionHnd = IFCInstanceExporter.CreateMember(file, elemGUID, ownerHistory, elemObjectType, null, elemObjectType,
                localPlacement, repHnd, elemId);
-            productWrapper.AddElement(mullionHnd, setter, extraParams, true);
+            productWrapper.AddElement(mullionHnd, setter, extraParams, LevelUtil.AssociateElementToLevel(mullion));
+
+            PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, mullion, productWrapper);
         }
     }
 }
