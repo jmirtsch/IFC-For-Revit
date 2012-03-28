@@ -1556,6 +1556,16 @@ namespace BIM.IFC.Toolkit
     }
 
     /// <summary>
+    /// Defines the boolean operators used in clipping.
+    /// </summary>
+    enum IFCBooleanOperator
+    {
+        Union,
+        Intersection,
+        Difference
+    }
+
+    /// <summary>
     /// IFC entity types.
     /// </summary>
     enum IFCEntityType

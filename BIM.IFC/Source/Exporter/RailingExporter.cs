@@ -86,7 +86,7 @@ namespace BIM.IFC.Exporter
             if (hostId == ElementId.InvalidElementId)
                 return returnHostId;
 
-            if (!IFCStairRampContainerInfo.ContainsStairOrRamp(exporterIFC, hostId))
+            if (!ExporterCacheManager.StairRampContainerInfoCache.ContainsStairRampContainerInfo(hostId))
                 return returnHostId;
 
             Element host = railingElem.Document.GetElement(hostId);
@@ -340,13 +340,13 @@ namespace BIM.IFC.Exporter
                         // Create multi-story duplicates of this railing.
                         if (hostId != ElementId.InvalidElementId)
                         {
-                            IFCStairRampContainerInfo stairRampInfo = IFCStairRampContainerInfo.GetContainerInfo(exporterIFC, hostId);
+                            StairRampContainerInfo stairRampInfo = ExporterCacheManager.StairRampContainerInfoCache.GetStairRampContainerInfo(hostId);
                             stairRampInfo.AddComponent(0, railing);
 
-                            IList<IFCAnyHandle> stairHandles = stairRampInfo.GetStairOrRampHandles();
+                            List<IFCAnyHandle> stairHandles = stairRampInfo.StairOrRampHandles;
                             for (int ii = 1; ii < stairHandles.Count; ii++)
                             {
-                                IFCAnyHandle railingLocalPlacement = stairRampInfo.GetLocalPlacement(ii);
+                                IFCAnyHandle railingLocalPlacement = stairRampInfo.LocalPlacements[ii];
                                 if (!IFCAnyHandleUtil.IsNullOrHasNoValue(railingLocalPlacement))
                                 {
                                     IFCAnyHandle railingHndCopy = CopyRailingHandle(exporterIFC, element, catId, railingLocalPlacement, railing);
@@ -356,7 +356,7 @@ namespace BIM.IFC.Exporter
                                 }
                             }
 
-                            IFCStairRampContainerInfo.AddStairRampContainerInfo(exporterIFC, hostId, stairRampInfo);
+                            ExporterCacheManager.StairRampContainerInfoCache.AddStairRampContainerInfo(hostId, stairRampInfo);
                         }
 
                         PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);

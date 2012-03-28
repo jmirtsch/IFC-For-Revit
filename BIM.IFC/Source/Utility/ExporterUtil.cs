@@ -267,7 +267,25 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
-        /// Creates IfcCartesianPoint object.
+        /// Creates IfcCartesianPoint object from a 2D point.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="point">The point</param>
+        /// <returns>The IfcCartesianPoint handle.</returns>
+        public static IFCAnyHandle CreateCartesianPoint(IFCFile file, UV point)
+        {
+            if (point == null)
+                throw new ArgumentNullException("point");
+
+            List<double> points = new List<double>();
+            points.Add(point.U);
+            points.Add(point.V);
+
+            return CreateCartesianPoint(file, points);
+        }
+
+        /// <summary>
+        /// Creates IfcCartesianPoint object from a 3D point.
         /// </summary>
         /// <param name="file">The file.</param>
         /// <param name="point">The point</param>
@@ -481,6 +499,37 @@ namespace BIM.IFC.Utility
             IFCAnyHandle mappingTarget =
                IFCInstanceExporter.CreateCartesianTransformationOperator3D(file, axis1, axis2, origin, scale, axis3);
             return IFCInstanceExporter.CreateMappedItem(file, repMap, mappingTarget);
+        }
+
+        /// <summary>
+        /// Creates an IfcPolyLine from a list of UV points.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="polylinePts">This list of UV values.</param>
+        /// <returns>An IfcPolyline handle.</returns>
+        public static IFCAnyHandle CreatePolyline(IFCFile file, IList<UV> polylinePts)
+        {
+            int numPoints = polylinePts.Count;
+            if (numPoints < 2)
+                return null;
+
+            bool closed = MathUtil.IsAlmostEqual(polylinePts[0], polylinePts[numPoints - 1]);
+            if (closed)
+            {
+                if (numPoints == 2)
+                    return null;
+                numPoints--;
+            }
+
+            IList<IFCAnyHandle> points = new List<IFCAnyHandle>();
+            for (int ii = 0; ii < numPoints; ii++)
+            {
+                points.Add(CreateCartesianPoint(file, polylinePts[ii]));
+            }
+            if (closed)
+                points.Add(points[0]);
+
+            return IFCInstanceExporter.CreatePolyline(file, points);
         }
 
         /// <summary>

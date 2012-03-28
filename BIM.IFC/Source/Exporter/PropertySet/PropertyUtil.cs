@@ -753,7 +753,7 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
-        /// Create a label property from the element's parameter.
+        /// Create a label property from the element's or type's parameter.
         /// </summary>
         /// <param name="file">
         /// The IFC file.
@@ -776,9 +776,10 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>
         /// The created property handle.
         /// </returns>
-        public static IFCAnyHandle CreateLabelPropertyFromElement(IFCFile file, Element elem, string revitParameterName,
+        public static IFCAnyHandle CreateLabelPropertyFromElementOrSymbol(IFCFile file, Element elem, string revitParameterName,
            BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
         {
+            // For Instance
             IFCAnyHandle propHnd = CreateLabelPropertyFromElement(file, elem, revitParameterName, ifcPropertyName, valueType);
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
                 return propHnd;
@@ -787,11 +788,18 @@ namespace BIM.IFC.Exporter.PropertySet
             {
                 string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
                 propHnd = CreateLabelPropertyFromElement(file, elem, builtInParamName, ifcPropertyName, valueType);
-                if (IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
                     return propHnd;
             }
 
-            return null;
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateLabelPropertyFromElementOrSymbol(file, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+            else
+                return null;
         }
 
         /// <summary>
@@ -826,7 +834,7 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
-        /// Create an identifier property from the element's parameter.
+        /// Create an identifier property from the element's or type's parameter.
         /// </summary>
         /// <param name="file">
         /// The IFC file.
@@ -849,9 +857,10 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>
         /// The created property handle.
         /// </returns>
-        public static IFCAnyHandle CreateIdentifierPropertyFromElement(IFCFile file, Element elem, string revitParameterName,
+        public static IFCAnyHandle CreateIdentifierPropertyFromElementOrSymbol(IFCFile file, Element elem, string revitParameterName,
            BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
         {
+            // For Instance
             IFCAnyHandle propHnd = CreateIdentifierPropertyFromElement(file, elem, revitParameterName, ifcPropertyName, valueType);
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
                 return propHnd;
@@ -864,11 +873,18 @@ namespace BIM.IFC.Exporter.PropertySet
                     return propHnd;
             }
 
-            return null;
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateIdentifierPropertyFromElementOrSymbol(file, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+            else
+                return null;
         }
 
         /// <summary>
-        /// Create a boolean property from the element's parameter.
+        /// Create a boolean property from the element's or type's parameter.
         /// </summary>
         /// <param name="file">
         /// The IFC file.
@@ -888,7 +904,7 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>
         /// The created property handle.
         /// </returns>
-        public static IFCAnyHandle CreateBooleanPropertyFromElement(IFCFile file, Element elem,
+        public static IFCAnyHandle CreateBooleanPropertyFromElementOrSymbol(IFCFile file, Element elem,
            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             int propertyValue;
@@ -896,11 +912,18 @@ namespace BIM.IFC.Exporter.PropertySet
             {
                 return CreateBooleanPropertyFromCache(file, ifcPropertyName, propertyValue != 0, valueType);
             }
-            return null;
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateBooleanPropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
+            else
+                return null;
         }
 
         /// <summary>
-        /// Create an integer property from the element's parameter.
+        /// Create an integer property from the element's or type's parameter.
         /// </summary>
         /// <param name="file">
         /// The IFC file.
@@ -920,7 +943,7 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>
         /// The created property handle.
         /// </returns>
-        public static IFCAnyHandle CreateIntegerPropertyFromElement(IFCFile file, Element elem,
+        public static IFCAnyHandle CreateIntegerPropertyFromElementOrSymbol(IFCFile file, Element elem,
            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             int propertyValue;
@@ -928,11 +951,19 @@ namespace BIM.IFC.Exporter.PropertySet
             {
                 return CreateIntegerPropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
             }
-            return null;
+
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateIntegerPropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
+            else
+                return null;
         }
 
         /// <summary>
-        /// Create a real property from the element's parameter.
+        /// Create a real property from the element's or type's parameter.
         /// </summary>
         /// <param name="file">
         /// The IFC file.
@@ -955,7 +986,7 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>
         /// The created property handle.
         /// </returns>
-        public static IFCAnyHandle CreateRealPropertyFromElement(IFCFile file, double scale, Element elem, string revitParameterName, string ifcPropertyName, 
+        public static IFCAnyHandle CreateRealPropertyFromElementOrSymbol(IFCFile file, double scale, Element elem, string revitParameterName, string ifcPropertyName, 
             PropertyValueType valueType)
         {
             double propertyValue;
@@ -963,11 +994,18 @@ namespace BIM.IFC.Exporter.PropertySet
             {
                 return CreateRealPropertyFromCache(file, scale, ifcPropertyName, propertyValue, valueType);
             }
-            return null;
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateRealPropertyFromElementOrSymbol(file, scale, elemType, revitParameterName, ifcPropertyName, valueType);
+            else
+                return null;
         }
 
         /// <summary>
-        /// Create a boolean property from the element's parameter.
+        /// Create a boolean property from the element's or type's parameter.
         /// </summary>
         /// <param name="file">
         /// The IFC file.
@@ -990,7 +1028,7 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>
         /// The created property handle.
         /// </returns>
-        public static IFCAnyHandle CreatePositiveLengthMeasurePropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+        public static IFCAnyHandle CreatePositiveLengthMeasurePropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             double propertyValue;
@@ -999,11 +1037,18 @@ namespace BIM.IFC.Exporter.PropertySet
                 propertyValue *= exporterIFC.LinearScale;
                 return CreatePositiveLengthMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
             }
-            return null;
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreatePositiveLengthMeasurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, ifcPropertyName, valueType);
+            else
+                return null;
         }
 
         /// <summary>
-        /// Create a positive ratio property from the element's parameter.
+        /// Create a positive ratio property from the element's or type's parameter.
         /// </summary>
         /// <param name="file">
         /// The IFC file.
@@ -1026,7 +1071,7 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>
         /// The created property handle.
         /// </returns>
-        public static IFCAnyHandle CreatePositiveRatioPropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+        public static IFCAnyHandle CreatePositiveRatioPropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             double propertyValue;
@@ -1035,11 +1080,18 @@ namespace BIM.IFC.Exporter.PropertySet
                 propertyValue *= exporterIFC.LinearScale;
                 return CreatePositiveRatioMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
             }
-            return null;
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreatePositiveRatioPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, ifcPropertyName, valueType);
+            else
+                return null;
         }
 
         /// <summary>
-        /// Create a plane angle measure property from the element's parameter.
+        /// Create a plane angle measure property from the element's or type's parameter.
         /// </summary>
         /// <param name="file">
         /// The IFC file.
@@ -1059,7 +1111,7 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>
         /// The created property handle.
         /// </returns>
-        public static IFCAnyHandle CreatePlaneAngleMeasurePropertyFromElement(IFCFile file, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        public static IFCAnyHandle CreatePlaneAngleMeasurePropertyFromElementOrSymbol(IFCFile file, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             double propertyValue;
             if (ParameterUtil.GetDoubleValueFromElement(elem, revitParameterName, out propertyValue))
@@ -1070,7 +1122,14 @@ namespace BIM.IFC.Exporter.PropertySet
                 propertyValue *= 180 / Math.PI;
                 return CreatePlaneAngleMeasurePropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
             }
-            return null;
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreatePlaneAngleMeasurePropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
+            else
+                return null;
         }
 
         /// <summary>
@@ -1110,7 +1169,7 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
-        /// Create an area measure property from the element's parameter.
+        /// Create an area measure property from the element's or type's parameter.
         /// </summary>
         /// <param name="file">
         /// The IFC file.
@@ -1136,7 +1195,7 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>
         /// The created property handle.
         /// </returns>
-        public static IFCAnyHandle CreateAreaMeasurePropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+        public static IFCAnyHandle CreateAreaMeasurePropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
             string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
         {
             IFCAnyHandle propHnd = CreateAreaMeasurePropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName, valueType);
@@ -1147,11 +1206,18 @@ namespace BIM.IFC.Exporter.PropertySet
             {
                 string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
                 propHnd = CreateAreaMeasurePropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName, valueType);
-                if (IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
                     return propHnd;
             }
 
-            return null;
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+            else
+                return null;
         }
 
         /// <summary>
@@ -1172,6 +1238,23 @@ namespace BIM.IFC.Exporter.PropertySet
             ifcTypeInfo.ScaledArea = typeInfo.ScaledArea;
             ifcTypeInfo.ScaledInnerPerimeter = typeInfo.ScaledInnerPerimeter;
             ifcTypeInfo.ScaledOuterPerimeter = typeInfo.ScaledOuterPerimeter;
+            ExporterIFCUtils.CreateBeamColumnBaseQuantities(exporterIFC, elemHandle, element, ifcTypeInfo);
+        }
+
+        /// <summary>
+        ///  Creates the shared beam, column and member QTO values.  
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="elemHandle">The element handle.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="ecData">The IFCExtrusionCreationData containing the appropriate data.</param>
+        public static void CreateBeamColumnMemberBaseQuantities(ExporterIFC exporterIFC, IFCAnyHandle elemHandle, Element element, IFCExtrusionCreationData ecData)
+        {
+            IFCTypeInfo ifcTypeInfo = new IFCTypeInfo();
+            ifcTypeInfo.ScaledDepth = ecData.ScaledLength;
+            ifcTypeInfo.ScaledArea = ecData.ScaledArea;
+            ifcTypeInfo.ScaledInnerPerimeter = ecData.ScaledInnerPerimeter;
+            ifcTypeInfo.ScaledOuterPerimeter = ecData.ScaledOuterPerimeter;
             ExporterIFCUtils.CreateBeamColumnBaseQuantities(exporterIFC, elemHandle, element, ifcTypeInfo);
         }
 

@@ -386,6 +386,8 @@ namespace BIM.IFC.Exporter
                                         if (!CreateIFCSpace(exporterIFC, spatialElement, productWrapper, setter))
                                             continue;
 
+                                        XYZ offset = GetSapceBoundaryOffset(setter);
+
                                         //get boundary information from surfaces
                                         IList<EnergyAnalysisSurface> surfaces = space.GetAnalyticalSurfaces();
                                         foreach (EnergyAnalysisSurface surface in surfaces)
@@ -393,7 +395,7 @@ namespace BIM.IFC.Exporter
                                             Element boundingElement = GetBoundaryElement(document, surface.OriginatingElementId);
 
                                             IList<EnergyAnalysisOpening> openings = surface.GetAnalyticalOpenings();
-                                            IFCAnyHandle connectionGeometry = CreateConnectionSurfaceGeometry(file, surface, openings, setter.Offset);
+                                            IFCAnyHandle connectionGeometry = CreateConnectionSurfaceGeometry(file, surface, openings, offset);
                                             CreateIFCSpaceBoundary(file, exporterIFC, spatialElement, boundingElement, setter.LevelId, connectionGeometry);
 
                                             // try to add doors and windows for host objects if appropriate.
@@ -402,7 +404,7 @@ namespace BIM.IFC.Exporter
                                                 foreach (EnergyAnalysisOpening opening in openings)
                                                 {
                                                     Element openingBoundingElem = GetBoundaryElement(document, opening.OriginatingElementId);
-                                                    IFCAnyHandle openingConnectionGeom = CreateConnectionSurfaceGeometry(file, opening, setter.Offset);
+                                                    IFCAnyHandle openingConnectionGeom = CreateConnectionSurfaceGeometry(file, opening, offset);
                                                     CreateIFCSpaceBoundary(file, exporterIFC, spatialElement, openingBoundingElem, setter.LevelId, openingConnectionGeom);
                                                 }
                                             }
@@ -515,16 +517,15 @@ namespace BIM.IFC.Exporter
         /// <returns>
         /// The connection geometry handle.
         /// </returns>
-        static IFCAnyHandle CreateConnectionSurfaceGeometry(IFCFile file, EnergyAnalysisSurface surface, IList<EnergyAnalysisOpening> openings, double offset)
+        static IFCAnyHandle CreateConnectionSurfaceGeometry(IFCFile file, EnergyAnalysisSurface surface, IList<EnergyAnalysisOpening> openings, XYZ offset)
         {
-            XYZ offsetPoint = new XYZ(0, 0, offset);
             Polyloop outerLoop = surface.GetPolyloop();
             IList<XYZ> outerLoopPoints = outerLoop.GetPoints();
 
             List<XYZ> newOuterLoopPoints = new List<XYZ>();
             foreach (XYZ point in outerLoopPoints)
             {
-                newOuterLoopPoints.Add(point.Subtract(offsetPoint));
+                newOuterLoopPoints.Add(point.Subtract(offset));
             }
 
             IList<IList<XYZ>> innerLoopPoints = new List<IList<XYZ>>();
@@ -534,7 +535,7 @@ namespace BIM.IFC.Exporter
                 List<XYZ> newOpeningPoints = new List<XYZ>();
                 foreach (XYZ openingPoint in openingPoints)
                 {
-                    newOpeningPoints.Add(openingPoint.Subtract(offsetPoint));
+                    newOpeningPoints.Add(openingPoint.Subtract(offset));
                 }
                 innerLoopPoints.Add(newOpeningPoints);
             }
@@ -559,16 +560,15 @@ namespace BIM.IFC.Exporter
         /// <returns>
         /// The connection surface geometry handle.
         /// </returns>
-        static IFCAnyHandle CreateConnectionSurfaceGeometry(IFCFile file, EnergyAnalysisOpening opening, double offset)
+        static IFCAnyHandle CreateConnectionSurfaceGeometry(IFCFile file, EnergyAnalysisOpening opening, XYZ offset)
         {
-            XYZ offsetPoint = new XYZ(0, 0, offset);
             Polyloop outerLoop = opening.GetPolyloop();
             IList<XYZ> outerLoopPoints = outerLoop.GetPoints();
 
             List<XYZ> newOuterLoopPoints = new List<XYZ>();
             foreach (XYZ point in outerLoopPoints)
             {
-                newOuterLoopPoints.Add(point.Subtract(offsetPoint));
+                newOuterLoopPoints.Add(point.Subtract(offset));
             }
 
             IList<IList<XYZ>> innerLoopPoints = new List<IList<XYZ>>();
@@ -668,6 +668,30 @@ namespace BIM.IFC.Exporter
             }
 
             return roomHeight;
+        }
+
+        /// <summary>
+        /// Gets the offset of the space boundary.
+        /// </summary>
+        /// <param name="setter">The placement settter.</param>
+        /// <returns>The offset.</returns>
+        static XYZ GetSapceBoundaryOffset(IFCPlacementSetter setter)
+        {
+            IFCAnyHandle localPlacement = setter.GetPlacement();
+            double zOffset = setter.Offset;
+
+            IFCAnyHandle relPlacement = GeometryUtil.GetRelativePlacementFromLocalPlacement(localPlacement);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(relPlacement))
+            {
+                IFCAnyHandle ptHnd = IFCAnyHandleUtil.GetLocation(relPlacement);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ptHnd))
+                {
+                    IList<double> addToCoords = IFCAnyHandleUtil.GetCoordinates(ptHnd);
+                    return new XYZ(addToCoords[0], addToCoords[1], addToCoords[2] + zOffset);
+                }
+            }
+
+            return new XYZ(0, 0, zOffset);
         }
 
         /// <summary>

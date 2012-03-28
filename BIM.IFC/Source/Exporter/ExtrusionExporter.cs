@@ -80,25 +80,6 @@ namespace BIM.IFC.Exporter
             return (numAngles == 4);
         }
 
-        private static UV ProjectPointToPlane(Plane plane, XYZ projDir, XYZ point)
-        {
-            XYZ zDir = plane.Normal;
-            
-            double denom = projDir.DotProduct(zDir);
-            if (MathUtil.IsAlmostZero(denom))
-                return null;
-
-            XYZ xDir = plane.XVec;
-            XYZ yDir = plane.YVec;
-            XYZ orig = plane.Origin;
-            
-            double distToPlane = ((orig - point).DotProduct(zDir)) / denom;
-            XYZ pointProj = distToPlane * projDir + point;
-            XYZ pointProjOffset = pointProj - orig;
-            UV pointProjUV = new UV(pointProjOffset.DotProduct(xDir), pointProjOffset.DotProduct(yDir));
-            return pointProjUV;
-        }
-
         private static IFCAnyHandle CreateRectangleProfileDefIfPossible(ExporterIFC exporterIFC, string profileName, CurveLoop curveLoop, Plane origPlane,
             XYZ projDir)
         {
@@ -138,7 +119,7 @@ namespace BIM.IFC.Exporter
                 Line line = curve as Line;
 
                 XYZ point = line.get_EndPoint(1);
-                UV pointProjUV = ProjectPointToPlane(origPlane, projDir, point);
+                UV pointProjUV = GeometryUtil.ProjectPointToPlane(origPlane, projDir, point);
                 if (pointProjUV == null)
                     return null;
                 pointProjUV *= scale;
@@ -314,7 +295,7 @@ namespace BIM.IFC.Exporter
                 Line line = curve as Line;
 
                 XYZ point = line.get_EndPoint(0);
-                UV pointProjUV = ProjectPointToPlane(origPlane, projDir, point);
+                UV pointProjUV = GeometryUtil.ProjectPointToPlane(origPlane, projDir, point);
                 if (pointProjUV == null)
                     return null;
                 pointProjUV *= scale;

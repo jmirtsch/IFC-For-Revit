@@ -242,6 +242,11 @@ namespace BIM.IFC.Utility
         static DummyHostCache m_DummyHostCache;
 
         /// <summary>
+        /// The StairRampContainerInfoCache object.
+        /// </summary>
+        static StairRampContainerInfoCache m_StairRampContainerInfoCache;
+
+        /// <summary>
         /// The ParameterCache object.
         /// </summary>
         public static AllocatedGeometryObjectCache AllocatedGeometryObjectCache
@@ -763,6 +768,20 @@ namespace BIM.IFC.Utility
             return m_DefaultCartesianTransformationOperator3D;
         }
 
+        /// <summary>
+        /// The StairRampContainerInfoCache object.
+        /// </summary>
+        public static StairRampContainerInfoCache StairRampContainerInfoCache
+        {
+            get
+            {
+                if (m_StairRampContainerInfoCache == null)
+                    m_StairRampContainerInfoCache = new StairRampContainerInfoCache();
+                return m_StairRampContainerInfoCache;
+            }
+        }
+
+        /// <summary>
         /// Clear all caches contained in this manager.
         /// </summary>
         public static void Clear()
@@ -809,6 +828,7 @@ namespace BIM.IFC.Utility
             m_PropertySetsForTypeCache = null;
             m_MaterialIdToStyleHandleCache = null;
             m_DefaultCartesianTransformationOperator3D = null;
+            m_StairRampContainerInfoCache = null;
         }
     }
 }
