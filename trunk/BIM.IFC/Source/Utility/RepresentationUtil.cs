@@ -265,6 +265,34 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Creates a Solid model representation.
+        /// </summary>
+        /// <param name="exporterIFC">
+        /// The ExporterIFC object.
+        /// </param>
+        /// <param name="categoryId">
+        /// The category id.
+        /// </param>
+        /// <param name="contextOfItems">
+        /// The context for which the different subtypes of representation are valid. 
+        /// </param>
+        /// <param name="bodyItems">
+        /// Set of geometric representation items that are defined for this representation.
+        /// </param>
+        /// <returns>
+        /// The handle.
+        /// </returns>
+        public static IFCAnyHandle CreateSolidModelRep(ExporterIFC exporterIFC, Element element, ElementId categoryId,
+           IFCAnyHandle contextOfItems, ICollection<IFCAnyHandle> bodyItems)
+        {
+            string identifierOpt = "Body";
+            string repTypeOpt = "SolidModel";
+            IFCAnyHandle bodyRepresentation = CreateShapeRepresentation(exporterIFC, element, categoryId,
+               contextOfItems, identifierOpt, repTypeOpt, bodyItems);
+            return bodyRepresentation;
+        }
+
+        /// <summary>
         /// Creates a Brep representation.
         /// </summary>
         /// <param name="exporterIFC">

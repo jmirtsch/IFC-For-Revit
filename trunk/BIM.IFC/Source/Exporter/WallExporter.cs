@@ -34,6 +34,137 @@ namespace BIM.IFC.Exporter
     /// </summary>
     class WallExporter
     {
+        private static IFCAnyHandle FallbackTryToCreateAsExtrusion(ExporterIFC exporterIFC, Wall wallElement, SolidMeshGeometryInfo smCapsule,
+            ElementId catId, Curve curve, Plane plane, double depth, IFCRange zSpan, IFCRange range, IFCPlacementSetter setter, 
+            out IList<IFCExtrusionData> cutPairOpenings, out bool isCompletelyClipped)
+        {
+            cutPairOpenings = new List<IFCExtrusionData>();
+
+            IFCAnyHandle bodyRep;
+            isCompletelyClipped = false;
+
+            XYZ localOrig = plane.Origin;
+
+            bool hasExtrusion = HasElevationProfile(wallElement);
+            if (hasExtrusion)
+            {
+                IList<CurveLoop> loops = GetElevationProfile(wallElement);
+                if (loops.Count == 0)
+                    hasExtrusion = false;
+                else
+                {
+                    IList<IList<CurveLoop>> sortedLoops = ExporterIFCUtils.SortCurveLoops(loops);
+                    if (sortedLoops.Count == 0)
+                        return null;
+
+                    // Current limitation: can't handle wall split into multiple disjointed pieces.
+                    int numSortedLoops = sortedLoops.Count;
+                    if (numSortedLoops > 1)
+                        return null;
+
+                    bool ignoreExtrusion = true;
+                    bool cantHandle = false;
+                    bool hasGeometry = false;
+                    for (int ii = 0; (ii < numSortedLoops) && !cantHandle; ii++)
+                    {
+                        int sortedLoopSize = sortedLoops[ii].Count;
+                        if (sortedLoopSize == 0)
+                            continue;
+                        if (!ExporterIFCUtils.IsCurveLoopConvexWithOpenings(sortedLoops[ii][0], wallElement, range, out ignoreExtrusion))
+                        {
+                            if (ignoreExtrusion)
+                            {
+                                // we need more information.  Is there something to export?  If so, we'll
+                                // ignore the extrusion.  Otherwise, we will fail.
+
+                                if (smCapsule.SolidsCount() == 0 && smCapsule.MeshesCount() == 0)
+                                {
+                                    continue;
+                                }
+                            }
+                            else
+                            {
+                                cantHandle = true;
+                            }
+                            hasGeometry = true;
+                        }
+                        else
+                        {
+                            hasGeometry = true;
+                        }
+                    }
+
+                    if (!hasGeometry)
+                    {
+                        isCompletelyClipped = true;
+                        return null;
+                    }
+
+                    if (cantHandle)
+                        return null;
+                }
+            }
+
+            if (!CanExportWallGeometryAsExtrusion(wallElement, range))
+                return null;
+
+            // extrusion direction.
+            XYZ extrusionDir = GetWallHeightDirection(wallElement);
+
+            // create extrusion boundary.
+            IList<CurveLoop> boundaryLoops = new List<CurveLoop>();
+
+            bool alwaysThickenCurve = IsWallBaseRectangular(wallElement, curve);
+
+            if (!alwaysThickenCurve)
+            {
+                boundaryLoops = GetLoopsFromTopBottomFace(wallElement, exporterIFC);
+                if (boundaryLoops.Count == 0)
+                    return null;
+            }
+            else
+            {
+                CurveLoop newLoop = CurveLoop.CreateViaThicken(curve, wallElement.Width, XYZ.BasisZ);
+                if (newLoop == null)
+                    return null;
+
+                if (!newLoop.IsCounterclockwise(XYZ.BasisZ))
+                    newLoop = GeometryUtil.ReverseOrientation(newLoop);
+                boundaryLoops.Add(newLoop);
+            }
+
+            // origin gets scaled later.
+            XYZ setterOffset = new XYZ(0, 0, setter.Offset + (localOrig[2] - setter.BaseOffset));
+
+            IFCAnyHandle baseBodyItemHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, boundaryLoops, plane,
+                extrusionDir, depth);
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(baseBodyItemHnd))
+                return null;
+
+            IFCAnyHandle bodyItemHnd = AddClippingsToBaseExtrusion(exporterIFC, wallElement,
+               setterOffset, range, zSpan, baseBodyItemHnd, out cutPairOpenings);
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyItemHnd))
+                return null;
+
+            IFCAnyHandle styledItemHnd = BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, wallElement.Document,
+                baseBodyItemHnd, ElementId.InvalidElementId);
+
+            HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
+            bodyItems.Add(bodyItemHnd);
+
+            IFCAnyHandle contextOfItemsBody = exporterIFC.Get3DContextHandle("Body");
+            if (baseBodyItemHnd.Id == bodyItemHnd.Id)
+            {
+                bodyRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, wallElement, catId, contextOfItemsBody, bodyItems, null);
+            }
+            else
+            {
+                bodyRep = RepresentationUtil.CreateClippingRep(exporterIFC, wallElement, catId, contextOfItemsBody, bodyItems);
+            }
+
+            return bodyRep;
+        }
+
         /// <summary>
         /// Main implementation to export walls.
         /// </summary>
@@ -178,7 +309,7 @@ namespace BIM.IFC.Exporter
                     IFCAnyHandle localPlacement = setter.GetPlacement();
 
                     Plane plane = new Plane(localXDir, localYDir, localOrig);  // project curve to XY plane.
-                    XYZ projDir = new XYZ(0, 0, 1);
+                    XYZ projDir = XYZ.BasisZ;
 
                     // two representations: axis, body.         
                     {
@@ -210,130 +341,108 @@ namespace BIM.IFC.Exporter
                     }
 
                     IList<IFCExtrusionData> cutPairOpenings = new List<IFCExtrusionData>();
+                    Document document = element.Document;
 
-                    do
+                    if (wallElement != null && exportingAxis && curve != null)
                     {
-                        if (wallElement == null || !exportingAxis || curve == null)
-                            break;
+                        SolidMeshGeometryInfo solidMeshInfo = 
+                            (range == null) ? GeometryUtil.GetSolidMeshGeometry(geometryElement, Transform.Identity) :
+                                GeometryUtil.GetClippedSolidMeshGeometry(geometryElement, range);
+                                
+                        IList<Solid> solids = solidMeshInfo.GetSolids();
+                        IList<Mesh> meshes = solidMeshInfo.GetMeshes();
+                        if (solids.Count == 0 && meshes.Count == 0)
+                            return null;
 
-                        bool hasExtrusion = HasElevationProfile(wallElement);
-                        if (hasExtrusion)
+                        bool useNewCode = false;
+                        if (useNewCode && solids.Count == 1 && meshes.Count == 0)
                         {
-                            IList<CurveLoop> loops = GetElevationProfile(wallElement);
-                            if (loops.Count == 0)
-                                hasExtrusion = false;
-                            else
+                            try
                             {
-                                IList<IList<CurveLoop>> sortedLoops = ExporterIFCUtils.SortCurveLoops(loops);
-                                if (sortedLoops.Count == 0)
-                                    break;
+                                ExtrusionAnalyzer wallAnalyzer = ExtrusionAnalyzer.Create(solids[0], plane, projDir);
 
-                                // Current limitation: can't handle wall split into multiple disjointed pieces.
-                                int numSortedLoops = sortedLoops.Count;
-                                if (numSortedLoops > 1)
-                                    break;
+                                bool polygonalBoundaryOnly = ExporterCacheManager.ExportOptionsCache.ExportAs2x2;
+                                bool isPolygonalBoundary;
+                                Face extrusionBase = wallAnalyzer.GetExtrusionBase();
+                                IList<CurveLoop> extrusionBoundaryLoops =
+                                    GeometryUtil.GetFaceBoundaries(extrusionBase, polygonalBoundaryOnly, out isPolygonalBoundary);
 
-                                bool ignoreExtrusion = true;
-                                bool cantHandle = false;
-                                bool hasGeometry = false;
-                                for (int ii = 0; (ii < numSortedLoops) && !cantHandle; ii++)
+                                IFCRange extrusionRange = new IFCRange(wallAnalyzer.StartParameter, wallAnalyzer.EndParameter);
+                                double startHeight = localOrig.Z + extrusionRange.Start;
+                                double endHeight = localOrig.Z + extrusionRange.End;
+                                if ((range != null) && (startHeight >= range.End || endHeight <= range.Start))
+                                    return null;
+
+                                double scaledExtrusionDepth = (endHeight - startHeight) * scale;
+
+                                IFCAnyHandle extrusionBodyItemHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null,
+                                    extrusionBoundaryLoops, plane, projDir, scaledExtrusionDepth);
+                                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionBodyItemHnd))
                                 {
-                                    int sortedLoopSize = sortedLoops[ii].Count;
-                                    if (sortedLoopSize == 0)
-                                        continue;
-                                    if (!ExporterIFCUtils.IsCurveLoopConvexWithOpenings(sortedLoops[ii][0], wallElement, range, out ignoreExtrusion))
+                                    IFCAnyHandle finalExtrusionBodyItemHnd = extrusionBodyItemHnd;
+                                    IDictionary<ElementId, ICollection<ICollection<Face>>> wallCutouts = 
+                                        GeometryUtil.GetCuttingElementFaces(wallElement, wallAnalyzer);
+                                    foreach (KeyValuePair<ElementId, ICollection<ICollection<Face>>> wallCutoutsForElement in wallCutouts)
                                     {
-                                        if (ignoreExtrusion)
+                                        Element cuttingElement = document.GetElement(wallCutoutsForElement.Key);
+                                        foreach (ICollection<Face> wallCutout in wallCutoutsForElement.Value)
                                         {
-                                            // we need more information.  Is there something to export?  If so, we'll
-                                            // ignore the extrusion.  Otherwise, we will fail.
-
-                                            SolidMeshGeometryInfo smCapsule = GeometryUtil.GetClippedSolidMeshGeometry(geometryElement, range);
-                                            if (smCapsule.SolidsCount() == 0 && smCapsule.MeshesCount() == 0)
+                                            finalExtrusionBodyItemHnd =
+                                                GeometryUtil.ProcessFaceCollection(exporterIFC, cuttingElement, wallCutout, extrusionRange,
+                                                finalExtrusionBodyItemHnd);
+                                            if (finalExtrusionBodyItemHnd == null)
                                             {
-                                                continue;
+                                                // Wall is completely clipped.
+                                                return null;
                                             }
                                         }
-                                        else
-                                        {
-                                            cantHandle = true;
-                                        }
-                                        hasGeometry = true;
+                                    }
+
+                                    IFCAnyHandle extrusionStyledItemHnd = BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document,
+                                        extrusionBodyItemHnd, ElementId.InvalidElementId);
+
+                                    HashSet<IFCAnyHandle> extrusionBodyItems = new HashSet<IFCAnyHandle>();
+                                    extrusionBodyItems.Add(finalExtrusionBodyItemHnd);
+
+                                    if (extrusionBodyItemHnd == finalExtrusionBodyItemHnd)
+                                    {
+                                        bodyRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, catId, contextOfItemsBody, 
+                                            extrusionBodyItems, null);
                                     }
                                     else
                                     {
-                                        hasGeometry = true;
+                                        bodyRep = RepresentationUtil.CreateClippingRep(exporterIFC, element, catId, contextOfItemsBody, 
+                                            extrusionBodyItems);
+                                    }
+
+                                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRep))
+                                    {
+                                        exportedAsWallWithAxis = true;
+                                        exportedBodyDirectly = true;
                                     }
                                 }
-
-                                if (!hasGeometry)
-                                    return null;
-                                if (cantHandle)
-                                    break;
+                            }
+                            catch
+                            {
+                                exportedAsWallWithAxis = false;
+                                exportedBodyDirectly = false;
                             }
                         }
-
-                        if (!CanExportWallGeometryAsExtrusion(element, range))
-                            break;
-
-                        // extrusion direction.
-                        XYZ extrusionDir = GetWallHeightDirection(wallElement);
-
-                        // create extrusion boundary.
-                        IList<CurveLoop> boundaryLoops = new List<CurveLoop>();
-
-                        bool alwaysThickenCurve = IsWallBaseRectangular(wallElement, curve);
-
-                        if (!alwaysThickenCurve)
+                            
+                        if (!exportedAsWallWithAxis)
                         {
-                            boundaryLoops = GetLoopsFromTopBottomFace(wallElement, exporterIFC);
-                            if (boundaryLoops.Count == 0)
-                                continue;
+                            // Fallback - use native routines to try to export wall.
+                            bool isCompletelyClipped;
+                            bodyRep = FallbackTryToCreateAsExtrusion(exporterIFC, wallElement, solidMeshInfo,
+                                catId, curve, plane, depth, zSpan, range, setter, 
+                                out cutPairOpenings, out isCompletelyClipped);
+                            if (isCompletelyClipped)
+                                return null;
+                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRep))
+                                exportedAsWallWithAxis = true;
                         }
-                        else
-                        {
-                            CurveLoop newLoop = CurveLoop.CreateViaThicken(curve, wallElement.Width, new XYZ(0, 0, 1));
-                            if (newLoop == null)
-                                break;
-
-                            if (!newLoop.IsCounterclockwise(new XYZ(0, 0, 1)))
-                                newLoop = GeometryUtil.ReverseOrientation(newLoop);
-                            boundaryLoops.Add(newLoop);
-                        }
-
-                        // origin gets scaled later.
-                        XYZ setterOffset = new XYZ(0, 0, setter.Offset + (localOrig[2] - setter.BaseOffset));
-
-                        IFCAnyHandle baseBodyItemHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, boundaryLoops, plane,
-                            extrusionDir, depth);
-                        if (IFCAnyHandleUtil.IsNullOrHasNoValue(baseBodyItemHnd))
-                            break;
-
-                        IFCAnyHandle bodyItemHnd = AddClippingsToBaseExtrusion(exporterIFC, wallElement,
-                           setterOffset, range, zSpan, baseBodyItemHnd, out cutPairOpenings);
-                        if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyItemHnd))
-                            break;
-
-                        Document document = element.Document;
-                        IFCAnyHandle styledItemHnd = BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document,
-                            baseBodyItemHnd, ElementId.InvalidElementId);
-
-                        HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
-                        bodyItems.Add(bodyItemHnd);
-
-                        if (baseBodyItemHnd.Id == bodyItemHnd.Id)
-                        {
-                            bodyRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, catId, contextOfItemsBody, bodyItems, null);
-                        }
-                        else
-                        {
-                            bodyRep = RepresentationUtil.CreateClippingRep(exporterIFC, element, catId, contextOfItemsBody, bodyItems);
-                        }
-
-                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRep))
-                            exportedAsWallWithAxis = true;
-                    } while (false);
-
+                    }
+                
                     using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
                     {
                         ElementId matId = ElementId.InvalidElementId;

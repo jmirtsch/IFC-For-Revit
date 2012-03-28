@@ -405,8 +405,8 @@ namespace BIM.IFC.Utility
                     {
                         Material matElem = document.GetElement(materialId) as Material;
 
-                        ElementId fillPatternId = matElem.GetCutPatternId();
-                        Autodesk.Revit.DB.Color color = matElem.GetCutPatternColor();
+                        ElementId fillPatternId = (matElem != null) ? matElem.GetCutPatternId() : ElementId.InvalidElementId;
+                        Autodesk.Revit.DB.Color color = (matElem != null) ? matElem.GetCutPatternColor() : new Color(0,0,0);
                         
                         double planScale = 100.0;
                                             
@@ -416,7 +416,7 @@ namespace BIM.IFC.Utility
 
                         IFCAnyHandle styledRepItem = null;
                         IFCAnyHandle matStyleHnd = CategoryUtil.GetOrCreateMaterialStyle(document, exporterIFC, materialId);
-                        if (matStyleHnd.HasValue)
+                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(matStyleHnd))
                         {
                             styles.Add(matStyleHnd);
 

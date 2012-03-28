@@ -357,7 +357,7 @@ namespace BIM.IFC.Exporter.PropertySet
 
             if (useProperty)
             {
-                propHnd = CreatePropertyFromElement(file, exporterIFC, element);
+                propHnd = CreatePropertyFromElementOrSymbol(file, exporterIFC, element);
             }
 
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
@@ -369,13 +369,13 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
-        /// Creates a property from element parameter.
+        /// Creates a property from element or its type's parameter.
         /// </summary>
         /// <param name="file">The file.</param>
         /// <param name="exporterIFC">The ExporterIFC.</param>
         /// <param name="element">The element.</param>
         /// <returns>The property handle.</returns>
-        IFCAnyHandle CreatePropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element element)
+        IFCAnyHandle CreatePropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element element)
         {
             IFCAnyHandle propHnd = null;
             PropertyType propertyType = PropertyType;
@@ -387,48 +387,48 @@ namespace BIM.IFC.Exporter.PropertySet
             {
                 case PropertyType.Label:
                     {
-                        propHnd = PropertyUtil.CreateLabelPropertyFromElement(file, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
+                        propHnd = PropertyUtil.CreateLabelPropertyFromElementOrSymbol(file, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
                         break;
                     }
                 case PropertyType.Identifier:
                     {
-                        propHnd = PropertyUtil.CreateIdentifierPropertyFromElement(file, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
+                        propHnd = PropertyUtil.CreateIdentifierPropertyFromElementOrSymbol(file, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
                         break;
                     }
                 case PropertyType.Boolean:
                     {
-                        propHnd = PropertyUtil.CreateBooleanPropertyFromElement(file, element, RevitParameterName, ifcPropertyName, valueType);
+                        propHnd = PropertyUtil.CreateBooleanPropertyFromElementOrSymbol(file, element, RevitParameterName, ifcPropertyName, valueType);
                         break;
                     }
                 case PropertyType.Integer:
                     {
-                        propHnd = PropertyUtil.CreateIntegerPropertyFromElement(file, element, RevitParameterName, ifcPropertyName, valueType);
+                        propHnd = PropertyUtil.CreateIntegerPropertyFromElementOrSymbol(file, element, RevitParameterName, ifcPropertyName, valueType);
                         break;
                     }
                 case PropertyType.Real:
                     {
                         double scale = exporterIFC.LinearScale;
-                        propHnd = PropertyUtil.CreateRealPropertyFromElement(file, scale, element, RevitParameterName, ifcPropertyName, valueType);
+                        propHnd = PropertyUtil.CreateRealPropertyFromElementOrSymbol(file, scale, element, RevitParameterName, ifcPropertyName, valueType);
                         break;
                     }
                 case PropertyType.PositiveLength:
                     {
-                        propHnd = PropertyUtil.CreatePositiveLengthMeasurePropertyFromElement(file, exporterIFC, element, RevitParameterName, ifcPropertyName, valueType);
+                        propHnd = PropertyUtil.CreatePositiveLengthMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, ifcPropertyName, valueType);
                         break;
                     }
                 case PropertyType.PositiveRatio:
                     {
-                        propHnd = PropertyUtil.CreatePositiveRatioPropertyFromElement(file, exporterIFC, element, RevitParameterName, ifcPropertyName, valueType);
+                        propHnd = PropertyUtil.CreatePositiveRatioPropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, ifcPropertyName, valueType);
                         break;
                     }
                 case PropertyType.PlaneAngle:
                     {
-                        propHnd = PropertyUtil.CreatePlaneAngleMeasurePropertyFromElement(file, element, RevitParameterName, ifcPropertyName, valueType);
+                        propHnd = PropertyUtil.CreatePlaneAngleMeasurePropertyFromElementOrSymbol(file, element, RevitParameterName, ifcPropertyName, valueType);
                         break;
                     }
                 case PropertyType.Area:
                     {
-                        propHnd = PropertyUtil.CreateAreaMeasurePropertyFromElement(file, exporterIFC, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
+                        propHnd = PropertyUtil.CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
                         break;
                     }
                 default:

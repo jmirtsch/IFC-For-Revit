@@ -10,12 +10,6 @@
     <OutputType>Library</OutputType>
     <MinFrameworkVersionRequired>3.0</MinFrameworkVersionRequired>
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <SccProjectName>SAK</SccProjectName>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccProvider>SAK</SccProvider>
-    <StartupObject>
-    </StartupObject>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
@@ -36,63 +30,6 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <SccProjectName>
-    </SccProjectName>
-    <SccLocalPath>
-    </SccLocalPath>
-    <SccProvider>
-    </SccProvider>
-    <StartupObject>
-    </StartupObject>
-    <SccAuxPath>
-    </SccAuxPath>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <OutputPath>bin\Debug\</OutputPath>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <BaseAddress>285212672</BaseAddress>
-    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
-    <ConfigurationOverrideFile>
-    </ConfigurationOverrideFile>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DocumentationFile>
-    </DocumentationFile>
-    <DebugSymbols>true</DebugSymbols>
-    <FileAlignment>4096</FileAlignment>
-    <NoStdLib>false</NoStdLib>
-    <NoWarn>
-    </NoWarn>
-    <Optimize>false</Optimize>
-    <RegisterForComInterop>false</RegisterForComInterop>
-    <RemoveIntegerChecks>false</RemoveIntegerChecks>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningLevel>4</WarningLevel>
-    <DebugType>full</DebugType>
-    <ErrorReport>prompt</ErrorReport>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <OutputPath>bin\Release\</OutputPath>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <BaseAddress>285212672</BaseAddress>
-    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
-    <ConfigurationOverrideFile>
-    </ConfigurationOverrideFile>
-    <DefineConstants>TRACE</DefineConstants>
-    <DocumentationFile>
-    </DocumentationFile>
-    <DebugSymbols>false</DebugSymbols>
-    <FileAlignment>4096</FileAlignment>
-    <NoStdLib>false</NoStdLib>
-    <NoWarn>
-    </NoWarn>
-    <Optimize>true</Optimize>
-    <RegisterForComInterop>false</RegisterForComInterop>
-    <RemoveIntegerChecks>false</RemoveIntegerChecks>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningLevel>4</WarningLevel>
-    <DebugType>none</DebugType>
-    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -126,6 +63,7 @@
     <Compile Include="Exporter\PropertySet\Calculators\LoadBearingCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\NumberOfStoreysCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\RailingHeightCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\RampFlightSlopeCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\RoofProjectedAreaCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SlabGrossAreaCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpaceConcealCalculator.cs" />
@@ -157,6 +95,7 @@
     <Compile Include="Exporter\SpaceBoundary.cs" />
     <Compile Include="Exporter\SpaceOccupantInfo.cs" />
     <Compile Include="Exporter\SpatialElementExporter.cs" />
+    <Compile Include="Exporter\StairRampContainerInfo.cs" />
     <Compile Include="Exporter\StairsExporter.cs" />
     <Compile Include="Exporter\SurfaceExporter.cs" />
     <Compile Include="Exporter\TextNoteExporter.cs" />
@@ -212,6 +151,7 @@
     <Compile Include="Utility\RepresentationUtil.cs" />
     <Compile Include="Utility\SolidMeshGeometryInfo.cs" />
     <Compile Include="Utility\SpaceOccupantInfoCache.cs" />
+    <Compile Include="Utility\StairRampContainerInfoCache.cs" />
     <Compile Include="Utility\StringPropertyInfoCache.cs" />
     <Compile Include="Utility\TypePropertyInfoCache.cs" />
     <Compile Include="Utility\UnitsCache.cs" />
@@ -252,10 +192,6 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup />
   <Import Project=".\BIM.IFC.props" />
-  <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
 </Project>

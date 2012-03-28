@@ -664,18 +664,18 @@ namespace BIM.IFC.Exporter
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction transaction = new IFCTransaction(file))
             {
-                foreach (KeyValuePair<ElementId, IFCStairRampContainerInfo> stairRamp in exporterIFC.GetStairRampContainers())
+                foreach (KeyValuePair<ElementId, StairRampContainerInfo> stairRamp in ExporterCacheManager.StairRampContainerInfoCache)
                 {
-                    IFCStairRampContainerInfo stairRampInfo = stairRamp.Value;
+                    StairRampContainerInfo stairRampInfo = stairRamp.Value;
 
-                    IList<IFCAnyHandle> hnds = stairRampInfo.GetStairOrRampHandles();
+                    IList<IFCAnyHandle> hnds = stairRampInfo.StairOrRampHandles;
                     for (int ii = 0; ii < hnds.Count; ii++)
                     {
                         IFCAnyHandle hnd = hnds[ii];
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(hnd))
                             continue;
 
-                        IList<IFCAnyHandle> comps = stairRampInfo.GetComponents(ii);
+                        IList<IFCAnyHandle> comps = stairRampInfo.Components[ii];
                         if (comps.Count == 0)
                             continue;
 

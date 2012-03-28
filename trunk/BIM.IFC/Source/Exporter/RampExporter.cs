@@ -194,7 +194,7 @@ namespace BIM.IFC.Exporter
 
                 string localRampName = rampName + ":" + (ii + 1);
 
-                IList<IFCAnyHandle> components = new List<IFCAnyHandle>();
+                List<IFCAnyHandle> components = new List<IFCAnyHandle>();
                 IFCAnyHandle containedRampCopyHnd = IFCInstanceExporter.CreateRamp(file, ExporterIFCUtils.CreateGUID(), ownerHistory,
                     localRampName, rampDescription, rampObjectType, containedLocalPlacementCopy, representationCopy, elementTag, rampType);
                 components.Add(containedRampCopyHnd);
@@ -208,8 +208,8 @@ namespace BIM.IFC.Exporter
 
                 productWrapper.AddElement(rampCopyHnd, currLevelInfo, ecData, LevelUtil.AssociateElementToLevel(ramp));
 
-                IFCStairRampContainerInfo stairRampInfo = IFCStairRampContainerInfo.Create(rampCopyHnd, components, rampLocalPlacementCopy);
-                IFCStairRampContainerInfo.AppendStairRampContainerInfo(exporterIFC, ramp.Id, stairRampInfo);
+                StairRampContainerInfo stairRampInfo = new StairRampContainerInfo(rampCopyHnd, components, rampLocalPlacementCopy);
+                ExporterCacheManager.StairRampContainerInfoCache.AppendStairRampContainerInfo(ramp.Id, stairRampInfo);
             }
         }
 
@@ -259,7 +259,7 @@ namespace BIM.IFC.Exporter
                         string elementTag = NamingUtil.CreateIFCElementId(ramp);
                         IFCRampType rampType = GetIFCRampType(ifcEnumType);
 
-                        IList<IFCAnyHandle> components = new List<IFCAnyHandle>();
+                        List<IFCAnyHandle> components = new List<IFCAnyHandle>();
                         IFCAnyHandle containedRampHnd = IFCInstanceExporter.CreateRamp(file, containedRampGuid, ownerHistory, rampName,
                             rampDescription, rampObjectType, containedRampLocalPlacement, representation, elementTag, rampType);
                         components.Add(containedRampHnd);
@@ -273,8 +273,8 @@ namespace BIM.IFC.Exporter
 
                         productWrapper.AddElement(rampHnd, placementSetter.GetLevelInfo(), ecData, LevelUtil.AssociateElementToLevel(ramp));
 
-                        IFCStairRampContainerInfo stairRampInfo = IFCStairRampContainerInfo.Create(rampHnd, components, null);
-                        IFCStairRampContainerInfo.AddStairRampContainerInfo(exporterIFC, ramp.Id, stairRampInfo);
+                        StairRampContainerInfo stairRampInfo = new StairRampContainerInfo(rampHnd, components, null);
+                        ExporterCacheManager.StairRampContainerInfoCache.AddStairRampContainerInfo(ramp.Id, stairRampInfo);
 
                         ExportMultistoryRamp(exporterIFC, ramp, numFlights,
                             ownerHistory, localPlacement, containedRampLocalPlacement, representation,
@@ -303,7 +303,7 @@ namespace BIM.IFC.Exporter
             {
                 if (!(element is FamilyInstance))
                 {
-                    ExporterIFCUtils.ExportRampAsContainer(exporterIFC, ifcEnumType, element, geometryElement, true, productWrapper);
+                    StairsExporter.ExportLegacyStairOrRampAsContainer(exporterIFC, ifcEnumType, element, geometryElement, true, productWrapper);
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(productWrapper.GetAnElement()))
                     {
                         int numFlights = GetNumFlightsForRamp(exporterIFC, element);

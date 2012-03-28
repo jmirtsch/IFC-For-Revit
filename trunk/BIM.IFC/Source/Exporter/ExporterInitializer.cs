@@ -86,6 +86,7 @@ namespace BIM.IFC.Exporter
             InitPropertySetBeamCommon(commonPropertySets);
             InitPropertySetRailingCommon(commonPropertySets);
             InitPropertySetRampCommon(commonPropertySets);
+            InitPropertySetRampFlightCommon(commonPropertySets);
             InitPropertySetRoofCommon(commonPropertySets, fileVersion);
             InitPropertySetSlabCommon(commonPropertySets);
             InitPropertySetStairCommon(commonPropertySets);
@@ -409,6 +410,29 @@ namespace BIM.IFC.Exporter
             propertySetStairFlightCommon.Entries.Add(PropertySetEntry.CreatePositiveLength("Headroom"));
 
             commonPropertySets.Add(propertySetStairFlightCommon);
+        }
+
+        /// <summary>
+        /// Initializes common ramp flight property sets.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetRampFlightCommon(IList<PropertySetDescription> commonPropertySets)
+        {
+            // Pset_RampFlightCommon
+            PropertySetDescription propertySetRampFlightCommon = new PropertySetDescription();
+            propertySetRampFlightCommon.Name = "Pset_RampFlightCommon";
+
+            propertySetRampFlightCommon.EntityTypes.Add(IFCEntityType.IfcRampFlight);
+
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
+            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            propertySetRampFlightCommon.Entries.Add(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePlaneAngle("Slope");
+            ifcPSE.PropertyCalculator = RampFlightSlopeCalculator.Instance;
+            propertySetRampFlightCommon.Entries.Add(ifcPSE);
+
+            commonPropertySets.Add(propertySetRampFlightCommon);
         }
 
         /// <summary>
@@ -1066,6 +1090,24 @@ namespace BIM.IFC.Exporter
 
             baseQuantities.Add(ifcSlabQuantity);
         }
+
+        /// <summary>
+        /// Initializes ramp flight base quantities.
+        /// </summary>
+        /// <param name="baseQuantities">List to store quantities.</param>
+        private static void InitRampFlightBaseQuantities(IList<QuantityDescription> baseQuantities)
+        {
+            QuantityDescription ifcBaseQuantity = new QuantityDescription();
+            ifcBaseQuantity.Name = "BaseQuantities";
+            ifcBaseQuantity.EntityTypes.Add(IFCEntityType.IfcRampFlight);
+
+            QuantityEntry ifcQE = new QuantityEntry("Width");
+            ifcQE.QuantityType = QuantityType.PositiveLength;
+            ifcQE.RevitBuiltInParameter = BuiltInParameter.STAIRS_ATTR_TREAD_WIDTH;
+            ifcBaseQuantity.Entries.Add(ifcQE);
+
+            baseQuantities.Add(ifcBaseQuantity);
+        }
         
         /// <summary>
         /// Initializes base quantities.
@@ -1077,6 +1119,7 @@ namespace BIM.IFC.Exporter
             InitCeilingBaseQuantities(baseQuantities);
             InitRailingBaseQuantities(baseQuantities);
             InitSlabBaseQuantities(baseQuantities);
+            InitRampFlightBaseQuantities(baseQuantities);
             quantities.Add(baseQuantities);
         }
 

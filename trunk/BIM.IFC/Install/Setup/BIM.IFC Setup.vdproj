@@ -70,7 +70,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
+        "OwnerKey" = "8:_6FB3D756DCF8979C549679683C379D9F"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -82,7 +82,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_6FB3D756DCF8979C549679683C379D9F"
+        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -211,11 +211,6 @@
             "AssemblyAsmDisplayName" = "8:RevitAPI, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
                 "ScatterAssemblies"
                 {
-                    "_2AF8A1C60BC57EBB4465D92E18C85C29"
-                    {
-                    "Name" = "8:RevitAPI.dll"
-                    "Attributes" = "3:512"
-                    }
                 }
             "SourcePath" = "8:RevitAPI.dll"
             "TargetName" = "8:"
@@ -262,11 +257,6 @@
             "AssemblyAsmDisplayName" = "8:DBManagedServices, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
                 "ScatterAssemblies"
                 {
-                    "_6FB3D756DCF8979C549679683C379D9F"
-                    {
-                    "Name" = "8:DBManagedServices.dll"
-                    "Attributes" = "3:512"
-                    }
                 }
             "SourcePath" = "8:DBManagedServices.dll"
             "TargetName" = "8:"
@@ -417,15 +407,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:IFC Exporter for Revit 2013"
-        "ProductCode" = "8:{4C43E91F-E70C-4606-BD1C-DC9A831F7496}"
-        "PackageCode" = "8:{9A58F4D2-C8CA-4539-86BF-87911C76798D}"
+        "ProductCode" = "8:{D7C2799D-6C3E-4E65-99C3-34BADA43A900}"
+        "PackageCode" = "8:{DF73C596-103C-4D5F-82C0-69AE429E4E00}"
         "UpgradeCode" = "8:{6569B2EC-1DFF-4367-A16A-9D448E11715B}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:2.0.0"
+        "ProductVersion" = "8:2.0.1"
         "Manufacturer" = "8:IFC Exporter for Revit"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:http://sourceforge.net/projects/ifcexporter/"

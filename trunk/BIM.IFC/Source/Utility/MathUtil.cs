@@ -69,6 +69,17 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Check if two UV variables are almost equal.
+        /// </summary>
+        /// <returns>
+        /// True if they are almost equal, false otherwise.
+        /// </returns>
+        public static bool IsAlmostEqual(UV uv1, UV uv2)
+        {
+            return IsAlmostEqual(uv1.U, uv2.U) && IsAlmostEqual(uv1.V, uv2.V);
+        }
+
+        /// <summary>
         /// Check if the double variable is almost equal to zero.
         /// </summary>
         /// <returns>

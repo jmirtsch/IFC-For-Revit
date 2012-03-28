@@ -1640,6 +1640,30 @@ namespace BIM.IFC.Toolkit
             return stairFlight;
         }
 
+        /// <summary>
+        /// Creates a handle representing an IfcRampFlight and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID for the entity.</param>
+        /// <param name="ownerHistory">The IfcOwnerHistory.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="objectType">The object type.</param>
+        /// <param name="objectPlacement">The local placement.</param>
+        /// <param name="representation">The geometric representation of the entity, in the IfcProductRepresentation.</param>
+        /// <param name="elementTag">The tag for the identifier of the element.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateRampFlight(IFCFile file, string guid, IFCAnyHandle ownerHistory,
+            string name, string description, string objectType, IFCAnyHandle objectPlacement,
+            IFCAnyHandle representation, string elementTag)
+        {
+            ValidateElement(guid, ownerHistory, name, description, objectType, objectPlacement, representation, elementTag);
+
+            IFCAnyHandle rampFlight = CreateInstance(file, IFCEntityType.IfcRampFlight);
+            SetElement(rampFlight, guid, ownerHistory, name, description, objectType, objectPlacement, representation, elementTag);
+            return rampFlight;
+        }
+
         private static void SetReinforcingElement(IFCAnyHandle reinforcingElement, string guid, IFCAnyHandle ownerHistory,
             string name, string description, string objectType, IFCAnyHandle objectPlacement,
             IFCAnyHandle representation, string elementTag, string steelGrade)
@@ -1656,6 +1680,43 @@ namespace BIM.IFC.Toolkit
         private static void SetSurfaceStyleShading(IFCAnyHandle surfaceStyleRendering, IFCAnyHandle surfaceColour)
         {
             surfaceStyleRendering.SetAttribute("SurfaceColour", surfaceColour);
+        }
+
+        private static void ValidateBooleanResult(IFCAnyHandle firstOperand, IFCAnyHandle secondOperand)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(firstOperand, false, IFCEntityType.IfcSolidModel, IFCEntityType.IfcBooleanResult,
+                IFCEntityType.IfcHalfSpaceSolid, IFCEntityType.IfcCsgPrimitive3D);
+            IFCAnyHandleUtil.ValidateSubTypeOf(secondOperand, false, IFCEntityType.IfcHalfSpaceSolid, IFCEntityType.IfcSolidModel,
+                IFCEntityType.IfcBooleanResult, IFCEntityType.IfcCsgPrimitive3D);
+        }
+
+        private static void SetBooleanResult(IFCAnyHandle booleanResultHnd, IFCBooleanOperator clipOperator,
+            IFCAnyHandle firstOperand, IFCAnyHandle secondOperand)
+        {
+            IFCAnyHandleUtil.SetAttribute(booleanResultHnd, "Operator", clipOperator);
+            IFCAnyHandleUtil.SetAttribute(booleanResultHnd, "FirstOperand", firstOperand);
+            IFCAnyHandleUtil.SetAttribute(booleanResultHnd, "SecondOperand", secondOperand);
+        }
+
+        private static void ValidateElementarySurface(IFCAnyHandle position)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(position, false, IFCEntityType.IfcAxis2Placement3D);
+        }
+
+        private static void SetElementarySurface(IFCAnyHandle elementarySurfaceHnd, IFCAnyHandle position)
+        {
+            IFCAnyHandleUtil.SetAttribute(elementarySurfaceHnd, "Position", position);
+        }
+
+        private static void ValidateHalfSpaceSolid(IFCAnyHandle baseSurface)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(baseSurface, false, IFCEntityType.IfcSurface);
+        }
+
+        private static void SetHalfSpaceSolid(IFCAnyHandle halfSpaceSolidHnd, IFCAnyHandle baseSurface, bool agreementFlag)
+        {
+            IFCAnyHandleUtil.SetAttribute(halfSpaceSolidHnd, "BaseSurface", baseSurface);
+            IFCAnyHandleUtil.SetAttribute(halfSpaceSolidHnd, "AgreementFlag", agreementFlag);
         }
 
         /// <summary>
@@ -2592,6 +2653,22 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandle cartesianPoint = CreateInstance(file, IFCEntityType.IfcCartesianPoint);
             IFCAnyHandleUtil.SetAttribute(cartesianPoint, "Coordinates", coordinates);
             return cartesianPoint;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcPolyline and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="points">The coordinates of the vertices.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreatePolyline(IFCFile file, IList<IFCAnyHandle> points)
+        {
+            if (points == null)
+                throw new ArgumentNullException("points");
+
+            IFCAnyHandle polylineHnd = CreateInstance(file, IFCEntityType.IfcPolyline);
+            IFCAnyHandleUtil.SetAttribute(polylineHnd, "Points", points);
+            return polylineHnd;
         }
 
         /// <summary>
@@ -6414,6 +6491,69 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandleUtil.SetAttribute(surfaceStyle, "Side", side);
             IFCAnyHandleUtil.SetAttribute(surfaceStyle, "Styles", styles);
             return surfaceStyle;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcHalfSpaceSoild and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="baseSurface">The clipping surface.</param>
+        /// <param name="agreementFlag">True if the normal of the half space solid points away from the base extrusion, false otherwise.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateHalfSpaceSolid(IFCFile file, IFCAnyHandle baseSurface, bool agreementFlag)
+        {
+            ValidateHalfSpaceSolid(baseSurface);
+
+            IFCAnyHandle halfSpaceSolidHnd = CreateInstance(file, IFCEntityType.IfcHalfSpaceSolid);
+            SetHalfSpaceSolid(halfSpaceSolidHnd, baseSurface, agreementFlag);
+            return halfSpaceSolidHnd;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcBooleanClippingResult and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="clipOperator">The clipping operator.</param>
+        /// <param name="firstOperand">The handle to be clipped.</param>
+        /// <param name="secondOperand">The clipping handle.</param>
+        /// <returns>The IfcBooleanClippingResult handle.</returns>
+        public static IFCAnyHandle CreateBooleanClippingResult(IFCFile file, IFCBooleanOperator clipOperator,
+            IFCAnyHandle firstOperand, IFCAnyHandle secondOperand)
+        {
+            ValidateBooleanResult(firstOperand, secondOperand);
+
+            IFCAnyHandle booleanClippingResultHnd = CreateInstance(file, IFCEntityType.IfcBooleanClippingResult);
+            SetBooleanResult(booleanClippingResultHnd, clipOperator, firstOperand, secondOperand);
+            return booleanClippingResultHnd;
+        }
+
+        public static IFCAnyHandle CreatePolygonalBoundedHalfSpace(IFCFile file, IFCAnyHandle position, IFCAnyHandle polygonalBoundary,
+            IFCAnyHandle baseSurface, bool agreementFlag)
+        {
+            ValidateHalfSpaceSolid(baseSurface);
+            IFCAnyHandleUtil.ValidateSubTypeOf(position, false, IFCEntityType.IfcAxis2Placement3D);
+            IFCAnyHandleUtil.ValidateSubTypeOf(polygonalBoundary, false, IFCEntityType.IfcBoundedCurve);
+
+            IFCAnyHandle polygonalBoundedHalfSpaceHnd = CreateInstance(file, IFCEntityType.IfcPolygonalBoundedHalfSpace);
+            SetHalfSpaceSolid(polygonalBoundedHalfSpaceHnd, baseSurface, agreementFlag);
+            IFCAnyHandleUtil.SetAttribute(polygonalBoundedHalfSpaceHnd, "Position", position);
+            IFCAnyHandleUtil.SetAttribute(polygonalBoundedHalfSpaceHnd, "PolygonalBoundary", polygonalBoundary);
+            return polygonalBoundedHalfSpaceHnd;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcPlane and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="position">The plane coordinate system.</param>
+        /// <returns>The IfcPlane handle.</returns>
+        public static IFCAnyHandle CreatePlane(IFCFile file, IFCAnyHandle position)
+        {
+            ValidateElementarySurface(position);
+
+            IFCAnyHandle planeHnd = CreateInstance(file, IFCEntityType.IfcPlane);
+            SetElementarySurface(planeHnd, position);
+            return planeHnd;
         }
 
         #endregion

@@ -504,15 +504,20 @@ namespace BIM.IFC.Exporter
             return currMappedRepHnd;
         }
 
-        private static BodyData ExportBodyAsBRep(ExporterIFC exporterIFC, IList<GeometryObject> splitGeometryList, Element element, 
-            ElementId categoryId, IFCAnyHandle contextOfItems, double eps, BodyExporterOptions options, BodyData bodyDataIn)
+        // NOTE: the useMappedGeometriesIfPossible and useGroupsIfPossible options are experimental and do not yet work well.
+        // In shipped code, these are always false, and should be kept false until API support routines are proved to be reliable.
+        private static BodyData ExportBodyAsBRep(ExporterIFC exporterIFC, IList<GeometryObject> splitGeometryList, 
+            IList<int> exportAsBRep, IList<IFCAnyHandle> bodyItems,
+            Element element, ElementId categoryId, IFCAnyHandle contextOfItems, double eps, BodyExporterOptions options, BodyData bodyDataIn)
         {
             bool exportAsBReps = true;
             IFCFile file = exporterIFC.GetFile();
             Document document = element.Document;
 
-            bool useMappedGeometriesIfPossible = options.UseMappedGeometriesIfPossible;
-            bool useGroupsIfPossible = options.UseGroupsIfPossible;
+            // Can't use the optimization functions below if we already have partially populated our body items with extrusions.
+            int numExtrusions = bodyItems.Count;
+            bool useMappedGeometriesIfPossible = options.UseMappedGeometriesIfPossible && (numExtrusions != 0);
+            bool useGroupsIfPossible = options.UseGroupsIfPossible && (numExtrusions != 0);
 
             IList<HashSet<IFCAnyHandle>> currentFaceHashSetList = new List<HashSet<IFCAnyHandle>>();
             IList<int> startIndexForObject = new List<int>();
@@ -545,9 +550,16 @@ namespace BIM.IFC.Exporter
             }
 
             bool isCoarse = (options.TessellationLevel == BodyExporterOptions.BodyTessellationLevel.Coarse);
-            foreach (GeometryObject geomObject in splitGeometryList)
+            
+            int numBRepsToExport = exportAsBRep.Count;
+            bool selectiveBRepExport = (numBRepsToExport > 0);
+            int numGeoms = selectiveBRepExport ? numBRepsToExport : splitGeometryList.Count;
+            
+            for (int index = 0; index < numGeoms; index++)
             {
+                GeometryObject geomObject = selectiveBRepExport ? splitGeometryList[exportAsBRep[index]] : splitGeometryList[index];
                 startIndexForObject.Add(currentFaceHashSetList.Count);
+
                 ElementId materialId = SetBestMaterialIdInExporter(geomObject, exporterIFC);
                 materialIds.Add(materialId);
                 bodyData.AddMaterial(materialId);
@@ -661,6 +673,29 @@ namespace BIM.IFC.Exporter
                             if ((currentFaceSet.Count < 4) || !CanCreateClosedShell(currentFaceSet))
                             {
                                 exportAsBReps = false;
+
+                                // We'll need to invalidate the extrusions we created and replace them with BReps.
+                                if (selectiveBRepExport && (numGeoms != splitGeometryList.Count))
+                                {
+                                    for (int fixIndex = 0; fixIndex < numExtrusions; fixIndex++)
+                                    {
+                                        bodyItems[0].Delete();
+                                        bodyItems.RemoveAt(0);
+                                    }
+                                    numExtrusions = 0;
+                                    numGeoms = splitGeometryList.Count;
+                                    int brepIndex = 0;
+                                    for (int fixIndex = 0; fixIndex < numGeoms; fixIndex++)
+                                    {
+                                        if ((brepIndex < numBRepsToExport) && (exportAsBRep[brepIndex] == fixIndex))
+                                        {
+                                            brepIndex++;
+                                            continue;
+                                        }
+                                        exportAsBRep.Add(fixIndex);
+                                    }
+                                    numBRepsToExport = exportAsBRep.Count;
+                                }
                             }
                         }
 
@@ -671,8 +706,7 @@ namespace BIM.IFC.Exporter
             startIndexForObject.Add(currentFaceHashSetList.Count);  // end index for last object.
 
             IList<IFCAnyHandle> repMapItems = new List<IFCAnyHandle>();
-            IList<IFCAnyHandle> bodyItems = new List<IFCAnyHandle>();
-
+            
             int size = currentFaceHashSetList.Count;
             if (exportAsBReps)
             {
@@ -765,9 +799,16 @@ namespace BIM.IFC.Exporter
             }
 
             if (useMappedGeometriesIfPossible)
+            {
                 bodyData.RepresentationHnd = RepresentationUtil.CreateBodyMappedItemRep(exporterIFC, element, categoryId, contextOfItems, bodyItems);
+            }
             else if (exportAsBReps)
-                bodyData.RepresentationHnd = RepresentationUtil.CreateBRepRep(exporterIFC, element, categoryId, contextOfItems, bodyItems);
+            {
+                if (numExtrusions > 0)
+                    bodyData.RepresentationHnd = RepresentationUtil.CreateSolidModelRep(exporterIFC, element, categoryId, contextOfItems, bodyItems);
+                else
+                    bodyData.RepresentationHnd = RepresentationUtil.CreateBRepRep(exporterIFC, element, categoryId, contextOfItems, bodyItems);
+            }
             else
                 bodyData.RepresentationHnd = RepresentationUtil.CreateSurfaceRep(exporterIFC, element, categoryId, contextOfItems, bodyItems, false, null);
 
@@ -896,6 +937,7 @@ namespace BIM.IFC.Exporter
 
             Document document = element.Document;
             bool tryToExportAsExtrusion = options.TryToExportAsExtrusion;
+            bool canExportSolidModelRep = false;
 
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle contextOfItems = exporterIFC.Get3DContextHandle("Body");
@@ -945,6 +987,9 @@ namespace BIM.IFC.Exporter
             IList<IFCAnyHandle> bodyItems = new List<IFCAnyHandle>();
             IList<ElementId> materialIdsForExtrusions = new List<ElementId>();
 
+            IList<int> exportAsBRep = new List<int>();
+            IList<int> exportAsExtrusion = new List<int>();
+            
             using (IFCTransaction tr = new IFCTransaction(file))
             {
                 if (tryToExportAsExtrusion)
@@ -983,14 +1028,26 @@ namespace BIM.IFC.Exporter
                             extrusionList = IFCExtrusionCalculatorUtils.CalculateExtrusionData(extrusionOptions, splitGeometryList[ii]);
 
                         if (extrusionList.Count == 0)
-                            tryToExportAsExtrusion = false;
+                        {
+                            if (!canExportSolidModelRep)
+                            {
+                                tryToExportAsExtrusion = false;
+                                break;
+                            }
+                            exportAsBRep.Add(ii);
+                        }
                         else
+                        {
                             extrusionLists.Add(extrusionList);
+                            exportAsExtrusion.Add(ii);
+                        }
                     }
 
-                    for (int ii = 0; ii < numExtrusionsToCreate && tryToExportAsExtrusion; ii++)
+                    int numCreatedExtrusions = extrusionLists.Count;
+                    for (int ii = 0; (ii < numCreatedExtrusions) && tryToExportAsExtrusion; ii++)
                     {
-                        bodyData.AddMaterial(SetBestMaterialIdInExporter(splitGeometryList[ii], exporterIFC));
+                        int geomIndex = exportAsExtrusion[ii];
+                        bodyData.AddMaterial(SetBestMaterialIdInExporter(splitGeometryList[geomIndex], exporterIFC));
 
                         if (exportBodyParams != null && exportBodyParams.AreInnerRegionsOpenings)
                         {
@@ -1005,62 +1062,69 @@ namespace BIM.IFC.Exporter
                             }
                         }
 
-                        tryToExportAsExtrusion = false;
-                        IFCAnyHandle extrusionHandle = ExtrusionExporter.CreateExtrudedSolidFromExtrusionData(exporterIFC, element, extrusionLists[ii][0]);
-                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionHandle))
+                        bool exportedAsExtrusion = false;
+                        IFCExtrusionBasis whichBasis = extrusionLists[ii][0].ExtrusionBasis;
+                        if (whichBasis >= 0)
                         {
-                            bodyItems.Add(extrusionHandle);
-                            materialIdsForExtrusions.Add(exporterIFC.GetMaterialIdForCurrentExportState());
-
-                            IFCExtrusionBasis whichBasis = extrusionLists[ii][0].ExtrusionBasis;
-                            IList<CurveLoop> curveLoops = extrusionLists[ii][0].GetLoops();
-                            XYZ extrusionDirection = extrusionLists[ii][0].ExtrusionDirection;
-
-                            tryToExportAsExtrusion = (whichBasis >= 0);
-
-                            if (exportBodyParams != null)
+                            IFCAnyHandle extrusionHandle = ExtrusionExporter.CreateExtrudedSolidFromExtrusionData(exporterIFC, element, extrusionLists[ii][0]);
+                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionHandle))
                             {
-                                double zOff = (whichBasis == IFCExtrusionBasis.BasisZ) ? (1.0 - Math.Abs(extrusionDirection[2])) : Math.Abs(extrusionDirection[2]);
-                                double scaledAngle = Math.Asin(zOff) * 180 / Math.PI;
-                                exportBodyParams.Slope = scaledAngle;
-                                exportBodyParams.ScaledLength = extrusionLists[ii][0].ScaledExtrusionLength;
-                                exportBodyParams.ExtrusionDirection = extrusionDirection;
-                                for (int kk = 1; kk < extrusionLists[ii].Count; kk++)
-                                {
-                                    ExtrusionExporter.AddOpeningData(exportBodyParams, extrusionLists[ii][kk]);
-                                }
+                                bodyItems.Add(extrusionHandle);
+                                materialIdsForExtrusions.Add(exporterIFC.GetMaterialIdForCurrentExportState());
 
-                                Plane plane = null;
-                                double height = 0.0, width = 0.0;
-                                if (ExtrusionExporter.ComputeHeightWidthOfCurveLoop(curveLoops[0], plane, out height, out width))
-                                {
-                                    exportBodyParams.ScaledHeight = height * scale;
-                                    exportBodyParams.ScaledWidth = width * scale;
-                                }
+                                IList<CurveLoop> curveLoops = extrusionLists[ii][0].GetLoops();
+                                XYZ extrusionDirection = extrusionLists[ii][0].ExtrusionDirection;
 
-                                double area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoops);
-                                if (area > 0.0)
+                                if (exportBodyParams != null)
                                 {
-                                    exportBodyParams.ScaledArea = area * scale * scale;
-                                }
+                                    double zOff = (whichBasis == IFCExtrusionBasis.BasisZ) ? (1.0 - Math.Abs(extrusionDirection[2])) : Math.Abs(extrusionDirection[2]);
+                                    double scaledAngle = Math.Asin(zOff) * 180 / Math.PI;
+                                    exportBodyParams.Slope = scaledAngle;
+                                    exportBodyParams.ScaledLength = extrusionLists[ii][0].ScaledExtrusionLength;
+                                    exportBodyParams.ExtrusionDirection = extrusionDirection;
+                                    for (int kk = 1; kk < extrusionLists[ii].Count; kk++)
+                                    {
+                                        ExtrusionExporter.AddOpeningData(exportBodyParams, extrusionLists[ii][kk]);
+                                    }
 
-                                double innerPerimeter = ExtrusionExporter.ComputeInnerPerimeterOfCurveLoops(curveLoops);
-                                double outerPerimeter = ExtrusionExporter.ComputeOuterPerimeterOfCurveLoops(curveLoops);
-                                if (innerPerimeter > 0.0)
-                                    exportBodyParams.ScaledInnerPerimeter = innerPerimeter * scale;
-                                if (outerPerimeter > 0.0)
-                                    exportBodyParams.ScaledOuterPerimeter = outerPerimeter * scale;
+                                    Plane plane = null;
+                                    double height = 0.0, width = 0.0;
+                                    if (ExtrusionExporter.ComputeHeightWidthOfCurveLoop(curveLoops[0], plane, out height, out width))
+                                    {
+                                        exportBodyParams.ScaledHeight = height * scale;
+                                        exportBodyParams.ScaledWidth = width * scale;
+                                    }
+
+                                    double area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoops);
+                                    if (area > 0.0)
+                                    {
+                                        exportBodyParams.ScaledArea = area * scale * scale;
+                                    }
+
+                                    double innerPerimeter = ExtrusionExporter.ComputeInnerPerimeterOfCurveLoops(curveLoops);
+                                    double outerPerimeter = ExtrusionExporter.ComputeOuterPerimeterOfCurveLoops(curveLoops);
+                                    if (innerPerimeter > 0.0)
+                                        exportBodyParams.ScaledInnerPerimeter = innerPerimeter * scale;
+                                    if (outerPerimeter > 0.0)
+                                        exportBodyParams.ScaledOuterPerimeter = outerPerimeter * scale;
+                                }
+                                exportedAsExtrusion = true;
                             }
                         }
-                        else
+
+                        if (!exportedAsExtrusion)
                         {
-                            if (exportBodyParams != null)
-                                exportBodyParams.ClearOpenings();
+                            if (!canExportSolidModelRep)
+                            {
+                                tryToExportAsExtrusion = false;
+                                break;
+                            }
+                            exportAsBRep.Add(ii);
                         }
                     }
                 }
 
-                if (tryToExportAsExtrusion)
+                if ((exportAsBRep.Count == 0) && tryToExportAsExtrusion)
                 {
                     int sz = bodyItems.Count();
                     for (int ii = 0; ii < sz; ii++)
@@ -1068,25 +1132,38 @@ namespace BIM.IFC.Exporter
 
                     bodyData.RepresentationHnd =
                         RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItems, bodyData.RepresentationHnd);
-
-                    tr.Commit();
-                    return bodyData;
                 }
 
-                tr.RollBack();
+                if (tryToExportAsExtrusion)
+                    tr.Commit();
+                else
+                    tr.RollBack();
+
+                if ((exportAsBRep.Count == 0) && tryToExportAsExtrusion)
+                    return bodyData;
             }
             
-            // We couldn't export it as an extrusion; export as a faceted solid or a surface model.
-            bodyItems.Clear();
+            // We couldn't export it as an extrusion; export as a solid, brep, or a surface model.
+            if (!canExportSolidModelRep)
+            {
+                exportAsExtrusion.Clear();
+                bodyItems.Clear();
+                if (exportBodyParams != null)
+                    exportBodyParams.ClearOpenings();
+            }
+
+            if (exportAsExtrusion.Count == 0)
+                exportAsBRep.Clear();
 
             // generate "bottom corner" of bbox; create new local placement if passed in.
             // need to transform, but not scale, this point to make it the new origin.
+            // We will only do this if we didn't create any extrusions at all.
             using (IFCTransformSetter transformSetter = IFCTransformSetter.Create())
             {
-                if (exportBodyParams != null)
+                if (exportBodyParams != null && (exportAsBRep.Count == 0))
                     bodyData.BrepOffsetTransform = transformSetter.InitializeFromBoundingBox(exporterIFC, splitGeometryList, exportBodyParams);
 
-                return ExportBodyAsBRep(exporterIFC, splitGeometryList, element, categoryId, contextOfItems, eps, options, bodyData);
+                return ExportBodyAsBRep(exporterIFC, splitGeometryList, exportAsBRep, bodyItems, element, categoryId, contextOfItems, eps, options, bodyData);
             }
         }
 
