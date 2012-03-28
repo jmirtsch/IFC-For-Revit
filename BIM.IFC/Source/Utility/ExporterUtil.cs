@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2011  Autodesk, Inc.
+// Copyright (C) 2012  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using BIM.IFC.Toolkit;
 
 namespace BIM.IFC.Utility
 {
@@ -31,6 +32,93 @@ namespace BIM.IFC.Utility
     /// </summary>
     class ExporterUtil
     {
+        /// <summary>
+        /// Determines if the Exception is local to the element, or if export should be aborted.
+        /// </summary>
+        /// <param name="ex">The unexpected exception.</param>
+        public static bool IsFatalException(Document document, Exception exception)
+        {
+            string msg = exception.ToString();
+            if (msg.Contains("Error in allocating memory"))
+            {
+                FailureMessage fm = new FailureMessage(BuiltInFailures.ExportFailures.IFCFatalToolkitExportError);
+                document.PostFailure(fm); 
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Gets the Revit program path.
+        /// </summary>
+        public static string RevitProgramPath
+        {
+            get
+            {
+                return System.IO.Path.GetDirectoryName(typeof(Autodesk.Revit.ApplicationServices.Application).Assembly.Location);
+            }
+        }
+
+        /// <summary>
+        /// Checks if using IFCBCA - Building Code Authority code checking.
+        /// </summary>
+        /// <param name="exportOptionsCache">The export options cache.</param>
+        /// <returns>True if it is, false otherwise.</returns>
+        public static bool DoCodeChecking(ExportOptionsCache exportOptionsCache)
+        {
+            switch (exportOptionsCache.FileVersion)
+            {
+                case IFCVersion.IFC2x2:
+                    {
+                        return exportOptionsCache.WallAndColumnSplitting;
+                    }
+                case IFCVersion.IFCBCA:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        
+        /// <summary>
+        /// Relates one object to another. 
+        /// </summary>
+        /// <param name="exporterIFC">
+        /// The ExporterIFC object.
+        /// </param>
+        /// <param name="relatingObject">
+        /// The relating object.
+        /// </param>
+        /// <param name="relatedObject">
+        /// The related object.
+        /// </param>
+        public static void RelateObject(ExporterIFC exporterIFC, IFCAnyHandle relatingObject, IFCAnyHandle relatedObject)
+        {
+            HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
+            relatedObjects.Add(relatedObject);
+            RelateObjects(exporterIFC, null, relatingObject, relatedObjects);
+        }
+
+        /// <summary>
+        /// Relates one object to a collection of others. 
+        /// </summary>
+        /// <param name="exporterIFC">
+        /// The ExporterIFC object.
+        /// </param>
+        /// <param name="optionalGUID">
+        /// A GUID value, or null to generate a random GUID.
+        /// </param>
+        /// <param name="relatingObject">
+        /// The relating object.
+        /// </param>
+        /// <param name="relatedObjects">
+        /// The related objects.
+        /// </param>
+        public static void RelateObjects(ExporterIFC exporterIFC, string optionalGUID, IFCAnyHandle relatingObject, ICollection<IFCAnyHandle> relatedObjects)
+        {
+            string guid = (optionalGUID != null) ? optionalGUID : ExporterIFCUtils.CreateGUID();
+            IFCInstanceExporter.CreateRelAggregates(exporterIFC.GetFile(), guid, exporterIFC.GetOwnerHistoryHandle(), null, null, relatingObject, new HashSet<IFCAnyHandle>(relatedObjects));
+        }
+
         /// <summary>
         /// Creates IfcAxis2Placement3D object.
         /// </summary>
@@ -51,9 +139,9 @@ namespace BIM.IFC.Utility
         /// </returns>
         public static IFCAnyHandle CreateAxis(IFCFile file, XYZ origin, XYZ zDirection, XYZ xDirection)
         {
-            IFCAnyHandle directionOpt = IFCAnyHandle.Create();
-            IFCAnyHandle refOpt = IFCAnyHandle.Create();
-            IFCAnyHandle location = IFCAnyHandle.Create();
+            IFCAnyHandle direction = null;
+            IFCAnyHandle refDirection = null;
+            IFCAnyHandle location = null;
 
             if (origin != null)
             {
@@ -72,17 +160,17 @@ namespace BIM.IFC.Utility
             {
                 IList<double> axisPts = new List<double>();
                 axisPts.Add(zDirection.X); axisPts.Add(zDirection.Y); axisPts.Add(zDirection.Z);
-                directionOpt = CreateDirection(file, axisPts);
+                direction = CreateDirection(file, axisPts);
             }
 
             if (exportzDirectionAndxDirection)
             {
                 IList<double> axisPts = new List<double>();
                 axisPts.Add(xDirection.X); axisPts.Add(xDirection.Y); axisPts.Add(xDirection.Z);
-                refOpt = CreateDirection(file, axisPts);
+                refDirection = CreateDirection(file, axisPts);
             }
 
-            return file.CreateAxis2Placement3D(location, directionOpt, refOpt);
+            return IFCInstanceExporter.CreateAxis2Placement3D(file, location, direction, refDirection);
         }
 
         /// <summary>
@@ -153,8 +241,48 @@ namespace BIM.IFC.Utility
                 }
             }
 
-            IFCAnyHandle directionHandle = file.CreateDirection(cleanList);
+            IFCAnyHandle directionHandle = IFCInstanceExporter.CreateDirection(file, cleanList);
             return directionHandle;
+        }
+
+        /// <summary>
+        /// Creates IfcDirection object.
+        /// </summary>
+        /// <param name="file">
+        /// The IFC file.
+        /// </param>
+        /// <param name="direction">
+        /// The direction.
+        /// </param>
+        /// <returns>
+        /// The handle.
+        /// </returns>
+        public static IFCAnyHandle CreateDirection(IFCFile file, XYZ direction)
+        {
+            IList<double> measure = new List<double>();
+            measure.Add(direction.X);
+            measure.Add(direction.Y);
+            measure.Add(direction.Z);
+            return CreateDirection(file, measure);
+        }
+
+        /// <summary>
+        /// Creates IfcCartesianPoint object.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="point">The point</param>
+        /// <returns>The IfcCartesianPoint handle.</returns>
+        public static IFCAnyHandle CreateCartesianPoint(IFCFile file, XYZ point)
+        {
+            if (point == null)
+                throw new ArgumentNullException("point");
+
+            List<double> points = new List<double>();
+            points.Add(point.X);
+            points.Add(point.Y);
+            points.Add(point.Z);
+
+            return CreateCartesianPoint(file, points);
         }
 
         /// <summary>
@@ -198,13 +326,90 @@ namespace BIM.IFC.Utility
 
             }
 
-            IFCAnyHandle pointHandle = file.CreateCartesianPoint(cleanMeasure);
+            IFCAnyHandle pointHandle = IFCInstanceExporter.CreateCartesianPoint(file, cleanMeasure);
 
             return pointHandle;
         }
 
         /// <summary>
-        /// Creates IfcMappedItem object.
+        /// Creates an IfcAxis2Placement3D object.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="location">The origin. If null, it will use the global origin handle.</param>
+        /// <param name="axis">The Z direction.</param>
+        /// <param name="refDirection">The X direction.</param>
+        /// <returns>the handle.</returns>
+        public static IFCAnyHandle CreateAxis2Placement3D(IFCFile file, XYZ location, XYZ axis, XYZ refDirection)
+        {
+            IFCAnyHandle locationHandle = null;
+            if (location != null)
+            {
+                List<double> measure = new List<double>();
+                measure.Add(location.X);
+                measure.Add(location.Y);
+                measure.Add(location.Z);
+                locationHandle = CreateCartesianPoint(file, measure);
+            }
+            else
+            {
+                locationHandle = ExporterIFCUtils.GetGlobal3DOriginHandle();
+            }
+
+
+            bool exportDirAndRef = (axis != null && refDirection != null &&
+                (!MathUtil.IsAlmostEqual(axis[2], 1.0) || !MathUtil.IsAlmostEqual(refDirection[0], 1.0)));
+
+            if ((axis != null) ^ (refDirection != null))
+            {
+                exportDirAndRef = false;
+            }
+
+            IFCAnyHandle axisHandle = null;
+            if (exportDirAndRef)
+            {
+                List<double> measure = new List<double>();
+                measure.Add(axis.X);
+                measure.Add(axis.Y);
+                measure.Add(axis.Z);
+                axisHandle = CreateDirection(file, measure);
+            }
+
+            IFCAnyHandle refDirectionHandle = null;
+            if (exportDirAndRef)
+            {
+                List<double> measure = new List<double>();
+                measure.Add(refDirection.X);
+                measure.Add(refDirection.Y);
+                measure.Add(refDirection.Z);
+                refDirectionHandle = CreateDirection(file, measure);
+            }
+
+            return IFCInstanceExporter.CreateAxis2Placement3D(file, locationHandle, axisHandle, refDirectionHandle);
+        }
+
+        /// <summary>
+        /// Creates an IfcAxis2Placement3D object.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="location">The origin.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateAxis2Placement3D(IFCFile file, XYZ location)
+        {
+            return CreateAxis2Placement3D(file, location, null, null);
+        }
+
+        /// <summary>
+        /// Creates a default IfcAxis2Placement3D object.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateAxis2Placement3D(IFCFile file)
+        {
+            return CreateAxis2Placement3D(file, null);
+        }
+
+        /// <summary>
+        /// Creates IfcMappedItem object from an origin.
         /// </summary>
         /// <param name="file">
         /// The IFC file.
@@ -220,11 +425,62 @@ namespace BIM.IFC.Utility
         /// </returns>
         public static IFCAnyHandle CreateDefaultMappedItem(IFCFile file, IFCAnyHandle repMap, XYZ orig)
         {
-            IFCAnyHandle origin = file.CreateCartesianPoint(orig);
-            IFCMeasureValue scale = IFCMeasureValue.Create(1.0);
+            if (MathUtil.IsAlmostZero(orig.X) && MathUtil.IsAlmostZero(orig.Y) && MathUtil.IsAlmostZero(orig.Z))
+                return CreateDefaultMappedItem(file, repMap);
+
+            IFCAnyHandle origin = CreateCartesianPoint(file, orig);
+            double scale = 1.0;
             IFCAnyHandle mappingTarget =
-               file.CreateCartesianTransformationOperator3D(IFCAnyHandle.Create(), IFCAnyHandle.Create(), origin, scale, IFCAnyHandle.Create());
-            return file.CreateMappedItem(repMap, mappingTarget);
+               IFCInstanceExporter.CreateCartesianTransformationOperator3D(file, null, null, origin, scale, null);
+            return IFCInstanceExporter.CreateMappedItem(file, repMap, mappingTarget);
+        }
+
+        /// <summary>
+        /// Creates IfcMappedItem object at (0,0,0).
+        /// </summary>
+        /// <param name="file">
+        /// The IFC file.
+        /// </param>
+        /// <param name="repMap">
+        /// The handle to be mapped.
+        /// </param>
+        /// <param name="orig">
+        /// The orig for mapping transformation.
+        /// </param>
+        /// <returns>
+        /// The handle.
+        /// </returns>
+        public static IFCAnyHandle CreateDefaultMappedItem(IFCFile file, IFCAnyHandle repMap)
+        {
+            IFCAnyHandle transformHnd = ExporterCacheManager.GetDefaultCartesianTransformationOperator3D(file);
+            return IFCInstanceExporter.CreateMappedItem(file, repMap, transformHnd);
+        }
+
+        /// <summary>
+        /// Creates IfcMappedItem object from a transform
+        /// </summary>
+        /// <param name="file">
+        /// The IFC file.
+        /// </param>
+        /// <param name="repMap">
+        /// The handle to be mapped.
+        /// </param>
+        /// <param name="transform">
+        /// The transform.
+        /// </param>
+        /// <returns>
+        /// The handle.
+        /// </returns>
+        public static IFCAnyHandle CreateMappedItemFromTransform(IFCFile file, IFCAnyHandle repMap, Transform transform)
+        {
+            IFCAnyHandle axis1 = CreateDirection(file, transform.BasisX);
+            IFCAnyHandle axis2 = CreateDirection(file, transform.BasisY);
+            IFCAnyHandle axis3 = CreateDirection(file, transform.BasisZ);
+            IFCAnyHandle origin = CreateCartesianPoint(file, transform.Origin);
+            double scale = 1.0;
+            IFCAnyHandle mappingTarget =
+               IFCInstanceExporter.CreateCartesianTransformationOperator3D(file, axis1, axis2, origin, scale, axis3);
+            return IFCInstanceExporter.CreateMappedItem(file, repMap, mappingTarget);
         }
 
         /// <summary>
@@ -241,10 +497,66 @@ namespace BIM.IFC.Utility
         /// </returns>
         public static IFCAnyHandle CopyLocalPlacement(IFCFile file, IFCAnyHandle originalPlacement)
         {
-            IFCAnyHandle placementRelToOpt = IFCGeometryUtils.GetPlacementRelToFromLocalPlacement(originalPlacement);
-            IFCAnyHandle relativePlacement = IFCGeometryUtils.GetRelativePlacementFromLocalPlacement(originalPlacement);
-            return file.CreateLocalPlacement(placementRelToOpt, relativePlacement);
+            IFCAnyHandle placementRelToOpt = GeometryUtil.GetPlacementRelToFromLocalPlacement(originalPlacement);
+            IFCAnyHandle relativePlacement = GeometryUtil.GetRelativePlacementFromLocalPlacement(originalPlacement);
+            return IFCInstanceExporter.CreateLocalPlacement(file, placementRelToOpt, relativePlacement);
         }
+
+        public static IList<IFCAnyHandle> CopyRepresentations(ExporterIFC exporterIFC, Element element, ElementId catId, IFCAnyHandle origProductRepresentation)
+        {
+            IList<IFCAnyHandle> origReps = IFCAnyHandleUtil.GetRepresentations(origProductRepresentation);
+            IList<IFCAnyHandle> newReps = new List<IFCAnyHandle>();
+            IFCFile file = exporterIFC.GetFile();
+
+            int num = origReps.Count;
+            for (int ii = 0; ii < num; ii++)
+            {
+                IFCAnyHandle repHnd = origReps[ii];
+                if (IFCAnyHandleUtil.IsTypeOf(repHnd, IFCEntityType.IfcShapeRepresentation))
+                {
+                    IFCAnyHandle newRepHnd = RepresentationUtil.CreateShapeRepresentation(exporterIFC, element, catId, 
+                        IFCAnyHandleUtil.GetContextOfItems(repHnd),
+                        IFCAnyHandleUtil.GetRepresentationIdentifier(repHnd), IFCAnyHandleUtil.GetRepresentationType(repHnd), 
+                        IFCAnyHandleUtil.GetItems(repHnd));
+                    newReps.Add(newRepHnd);
+                }
+                else
+                {
+                    // May want to throw exception here.
+                    newReps.Add(repHnd);
+                }
+            }
+
+            return newReps;
+        }
+
+        /// <summary>
+        /// Creates a copy of a product definition shape.
+        /// </summary>
+        /// <param name="exporterIFC">
+        /// The exporter.
+        /// </param>
+        /// <param name="origProductDefinitionShape">
+        /// The original product definition shape to be copied.
+        /// </param>
+        /// <returns>
+        /// The handle.
+        /// </returns>
+        public static IFCAnyHandle CopyProductDefinitionShape(ExporterIFC exporterIFC, 
+            Element elem,
+            ElementId catId,
+            IFCAnyHandle origProductDefinitionShape)
+        {
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(origProductDefinitionShape))
+                return null;
+
+            IList<IFCAnyHandle> representations = CopyRepresentations(exporterIFC, elem, catId, origProductDefinitionShape);
+
+            IFCFile file = exporterIFC.GetFile();
+            return IFCInstanceExporter.CreateProductDefinitionShape(file, IFCAnyHandleUtil.GetProductDefinitionShapeName(origProductDefinitionShape),
+                IFCAnyHandleUtil.GetProductDefinitionShapeDescription(origProductDefinitionShape), representations);
+        }
+
 
         /// <summary>
         /// Gets export type for an element.

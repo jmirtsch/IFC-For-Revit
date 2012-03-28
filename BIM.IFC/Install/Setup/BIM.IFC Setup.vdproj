@@ -21,20 +21,14 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_51B06F9B3436410A9E46C61F2CE610A0"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_5246FAD1DD4D727AD9AF75C9E4A8ACD3"
+        "MsmKey" = "8:_2AF8A1C60BC57EBB4465D92E18C85C29"
         "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_5246FAD1DD4D727AD9AF75C9E4A8ACD3"
-        "OwnerKey" = "8:_92F58532FA73A8ACB11632FDB24D54E9"
+        "MsmKey" = "8:_51B06F9B3436410A9E46C61F2CE610A0"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -45,8 +39,14 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_92F58532FA73A8ACB11632FDB24D54E9"
+        "MsmKey" = "8:_6FB3D756DCF8979C549679683C379D9F"
         "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_6FB3D756DCF8979C549679683C379D9F"
+        "OwnerKey" = "8:_2AF8A1C60BC57EBB4465D92E18C85C29"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -76,13 +76,13 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_92F58532FA73A8ACB11632FDB24D54E9"
+        "OwnerKey" = "8:_2AF8A1C60BC57EBB4465D92E18C85C29"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_5246FAD1DD4D727AD9AF75C9E4A8ACD3"
+        "OwnerKey" = "8:_6FB3D756DCF8979C549679683C379D9F"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -93,7 +93,7 @@
         "DisplayName" = "8:Debug"
         "IsDebugOnly" = "11:TRUE"
         "IsReleaseOnly" = "11:FALSE"
-        "OutputFilename" = "8:Debug\\IFC Exporter for Revit 2012.msi"
+        "OutputFilename" = "8:Debug\\IFC Exporter for Revit 2013.msi"
         "PackageFilesAs" = "3:2"
         "PackageFileSize" = "3:-2147483648"
         "CabType" = "3:1"
@@ -130,7 +130,7 @@
         "DisplayName" = "8:Release"
         "IsDebugOnly" = "11:FALSE"
         "IsReleaseOnly" = "11:TRUE"
-        "OutputFilename" = "8:Release\\IFC Exporter for Revit 2012.msi"
+        "OutputFilename" = "8:Release\\IFC Exporter for Revit 2013.msi"
         "PackageFilesAs" = "3:2"
         "PackageFileSize" = "3:-2147483648"
         "CabType" = "3:1"
@@ -204,20 +204,20 @@
         }
         "File"
         {
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_5246FAD1DD4D727AD9AF75C9E4A8ACD3"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_2AF8A1C60BC57EBB4465D92E18C85C29"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:DBManagedServices, Version=2012.0.0.0, Culture=neutral, processorArchitecture=AMD64"
+            "AssemblyAsmDisplayName" = "8:RevitAPI, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
                 "ScatterAssemblies"
                 {
-                    "_5246FAD1DD4D727AD9AF75C9E4A8ACD3"
+                    "_2AF8A1C60BC57EBB4465D92E18C85C29"
                     {
-                    "Name" = "8:DBManagedServices.dll"
+                    "Name" = "8:RevitAPI.dll"
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:DBManagedServices.dll"
+            "SourcePath" = "8:RevitAPI.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_6D6AA5CC6CBC4DD6BFBAF3367D0A6D23"
@@ -255,20 +255,20 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_92F58532FA73A8ACB11632FDB24D54E9"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_6FB3D756DCF8979C549679683C379D9F"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:RevitAPI, Version=2012.0.0.0, Culture=neutral, processorArchitecture=AMD64"
+            "AssemblyAsmDisplayName" = "8:DBManagedServices, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
                 "ScatterAssemblies"
                 {
-                    "_92F58532FA73A8ACB11632FDB24D54E9"
+                    "_6FB3D756DCF8979C549679683C379D9F"
                     {
-                    "Name" = "8:RevitAPI.dll"
+                    "Name" = "8:DBManagedServices.dll"
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:RevitAPI.dll"
+            "SourcePath" = "8:DBManagedServices.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_6D6AA5CC6CBC4DD6BFBAF3367D0A6D23"
@@ -379,7 +379,7 @@
             }
             "{994432C3-9487-495D-8656-3E829A8DBDDE}:_AEEFE046CE824BC88C80CB81279ADC54"
             {
-            "DefaultLocation" = "8:[CommonAppDataFolder]Autodesk\\Revit\\Addins\\2012"
+            "DefaultLocation" = "8:[CommonAppDataFolder]Autodesk\\Revit\\Addins\\2013"
             "Name" = "8:All Users AddIn Folder"
             "AlwaysCreate" = "11:FALSE"
             "Condition" = "8:"
@@ -391,7 +391,7 @@
             }
             "{994432C3-9487-495D-8656-3E829A8DBDDE}:_C158E449FF0140B691EA19FB967B049F"
             {
-            "DefaultLocation" = "8:[AppDataFolder]Autodesk\\Revit\\Addins\\2012"
+            "DefaultLocation" = "8:[AppDataFolder]Autodesk\\Revit\\Addins\\2013"
             "Name" = "8:Current User AddIn Folder"
             "AlwaysCreate" = "11:FALSE"
             "Condition" = "8:"
@@ -416,16 +416,16 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:IFC Exporter for Revit 2012"
-        "ProductCode" = "8:{93A61025-616A-4C6F-9A96-7035F68368D9}"
-        "PackageCode" = "8:{6E165AA2-EAA8-4A61-9095-FF7B3CA6DFF3}"
-        "UpgradeCode" = "8:{399A7C8B-7932-4CE8-813D-BF30C35B553A}"
+        "ProductName" = "8:IFC Exporter for Revit 2013"
+        "ProductCode" = "8:{4C43E91F-E70C-4606-BD1C-DC9A831F7496}"
+        "PackageCode" = "8:{9A58F4D2-C8CA-4539-86BF-87911C76798D}"
+        "UpgradeCode" = "8:{6569B2EC-1DFF-4367-A16A-9D448E11715B}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:1.0.4"
+        "ProductVersion" = "8:2.0.0"
         "Manufacturer" = "8:IFC Exporter for Revit"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:http://sourceforge.net/projects/ifcexporter/"

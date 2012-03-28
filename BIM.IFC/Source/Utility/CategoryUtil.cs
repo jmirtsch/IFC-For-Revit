@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2011  Autodesk, Inc.
+// Copyright (C) 2012  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@ using System.Text;
 using Autodesk.Revit;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using BIM.IFC.Toolkit;
 
 
 namespace BIM.IFC.Utility
@@ -85,6 +86,41 @@ namespace BIM.IFC.Utility
                 throw new Exception("Unable to obtain category for element id " + element.Id.IntegerValue);
             }
             return category.Name;
+        }
+
+        /// <summary>
+        /// Gets material id of the category of an element.
+        /// </summary>
+        /// <remarks>
+        /// Returns the material id of the parent category when the category of the element has no material.
+        /// </remarks>
+        /// <param name="element">
+        /// The element.
+        /// </param>
+        /// <returns>
+        /// The material id.
+        /// </returns>
+        public static ElementId GetBaseMaterialIdForElement(Element element)
+        {
+            ElementId baseMaterialId = ElementId.InvalidElementId;
+            Category category = element.Category;
+            if (category != null)
+            {
+                Material baseMaterial = category.Material;
+                if (baseMaterial != null)
+                    baseMaterialId = baseMaterial.Id;
+                else
+                {
+                    category = category.Parent;
+                    if (category != null)
+                    {
+                        baseMaterial = category.Material;
+                        if (baseMaterial != null)
+                            baseMaterialId = baseMaterial.Id;
+                    }
+                }
+            }
+            return baseMaterialId;
         }
 
         /// <summary>
@@ -159,9 +195,9 @@ namespace BIM.IFC.Utility
                 return isExternal;
             }
 
-            if (instParameter == null)
+            if (instParameter == null || !instParameter.HasValue)
             {
-                ElementType elementType = document.get_Element(element.GetTypeId()) as ElementType;
+                ElementType elementType = document.GetElement(element.GetTypeId()) as ElementType;
 
                 if (elementType != null)
                 {
@@ -184,9 +220,9 @@ namespace BIM.IFC.Utility
                 return true;
 
             // Wall types have the function parameter 
-            if (categoryId == new ElementId(BuiltInCategory.OST_Walls))
+            if (element is Wall)
             {
-                ElementType wallType = document.get_Element(element.GetTypeId()) as ElementType;
+                ElementType wallType = document.GetElement(element.GetTypeId()) as ElementType;
                 Parameter wallFunction = wallType.get_Parameter(BuiltInParameter.FUNCTION_PARAM);
 
                 if (wallFunction != null)
@@ -200,12 +236,12 @@ namespace BIM.IFC.Utility
             if (element is FamilyInstance)
             {
                 FamilyInstance familyInstance = (FamilyInstance)element;
-                Reference famInstanceHostRef = familyInstance.HostFace;
+                Reference familyInstanceHostReference = familyInstance.HostFace;
 
-                if (famInstanceHostRef != null)
+                if (familyInstanceHostReference != null)
                 {
-                    Element famInstanceHost = document.GetElement(famInstanceHostRef);
-                    return IsElementExternal(famInstanceHost);
+                    Element familyInstanceHost = document.GetElement(familyInstanceHostReference);
+                    return IsElementExternal(familyInstanceHost);
                 }
             }
 
@@ -227,28 +263,198 @@ namespace BIM.IFC.Utility
         /// <param name="materialId">
         /// The material id.
         /// </param>
-        public static void CreateMaterialAssociation(Document doc, ExporterIFC exporterIFC, IFCAnyHandle instanceHandle, ElementId materialId)
+        public static void CreateMaterialAssociation(Document document, ExporterIFC exporterIFC, IFCAnyHandle instanceHandle, ElementId materialId)
         {
             // Create material association if any.
             if (materialId != ElementId.InvalidElementId)
             {
-                IFCAnyHandle materialNameHnd = exporterIFC.FindMaterialHandle(materialId);
-                if (!materialNameHnd.HasValue)
-                {
-                    Material material = doc.get_Element(materialId) as Material;
-                    if (material != null)
-                    {
-                        IFCLabel materialName = IFCLabel.Create(material.Name);
-                        materialNameHnd = exporterIFC.GetFile().CreateMaterial(materialName);
-                        exporterIFC.RegisterMaterialHandle(materialId, materialNameHnd);
-                    }
-                }
+                IFCAnyHandle materialNameHandle = GetOrCreateMaterialHandle(document, exporterIFC, materialId);
 
-                if (materialNameHnd.HasValue)
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(materialNameHandle))
                 {
-                    exporterIFC.RegisterMaterialRelation(materialNameHnd, instanceHandle);
+                    ExporterCacheManager.MaterialRelationsCache.Add(materialNameHandle, instanceHandle);
                 }
             }
+        }
+
+        /// <summary>
+        /// Creates an association between a list of material handles and an instance handle.
+        /// </summary>
+        /// <param name="document">
+        /// The Revit document.
+        /// </param>
+        /// <param name="exporterIFC">
+        /// The ExporterIFC object.
+        /// </param>
+        /// <param name="instanceHandle">
+        /// The IFC instance handle.
+        /// </param>
+        /// <param name="materialId">
+        /// The list of material ids.
+        /// </param>
+        public static void CreateMaterialAssociations(Document document, ExporterIFC exporterIFC, IFCAnyHandle instanceHandle, ICollection<ElementId> materialList)
+        {
+            if (materialList.Count == 1)
+            {
+                foreach (ElementId materialId in materialList)
+                {
+                    CreateMaterialAssociation(document, exporterIFC, instanceHandle, materialId);
+                    return;
+                }
+            }
+
+            // Create material association if any.
+            IList<IFCAnyHandle> materials = new List<IFCAnyHandle>();
+            foreach (ElementId materialId in materialList)
+            {
+                if (materialId != ElementId.InvalidElementId)
+                {
+                    IFCAnyHandle matHnd = GetOrCreateMaterialHandle(document, exporterIFC, materialId);
+                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(matHnd))
+                    {
+                        materials.Add(matHnd);
+                    }
+                }
+            }
+            if (materials.Count == 0)
+                return;
+
+            IFCAnyHandle materialListHnd = IFCInstanceExporter.CreateMaterialList(exporterIFC.GetFile(), materials);
+            ExporterCacheManager.MaterialRelationsCache.Add(materialListHnd, instanceHandle);
+        }
+
+        public static IFCAnyHandle GetOrCreateMaterialStyle(Document document, ExporterIFC exporterIFC, ElementId materialId)
+        {
+            IFCAnyHandle styleHnd = ExporterCacheManager.MaterialIdToStyleHandleCache.Find(materialId);
+            if (styleHnd == null)
+	        {
+                Material material = document.GetElement(materialId) as Material;
+                if (material == null)
+                    return null;
+
+                string matName = material.Name;
+
+                Color color = material.Color;
+                double blueVal = color.Blue / 255.0;
+                double greenVal = color.Green / 255.0;
+                double redVal = color.Red / 255.0;
+
+                IFCFile file = exporterIFC.GetFile();
+                IFCAnyHandle colorHnd = IFCInstanceExporter.CreateColourRgb(file, null, redVal, greenVal, blueVal);
+
+                double transparency = ((double)material.Transparency) / 100.0;
+                IFCData smoothness = IFCDataUtil.CreateAsNormalisedRatioMeasure(((double)material.Smoothness) / 100.0);
+                
+                IFCData specularExp = IFCDataUtil.CreateAsSpecularExponent(material.Shininess);
+
+                IFCReflectanceMethod method = IFCReflectanceMethod.NotDefined;
+
+                IFCAnyHandle renderingHnd = IFCInstanceExporter.CreateSurfaceStyleRendering(file, colorHnd, transparency, 
+                    null, null, null, null, smoothness, specularExp, method);
+
+                ICollection<IFCAnyHandle> surfStyles = new HashSet<IFCAnyHandle>();
+                surfStyles.Add(renderingHnd);
+
+                IFCSurfaceSide surfSide = IFCSurfaceSide.Both;
+                styleHnd = IFCInstanceExporter.CreateSurfaceStyle(file, matName, surfSide, surfStyles);
+                ExporterCacheManager.MaterialIdToStyleHandleCache.Register(materialId, styleHnd);
+	        }	
+
+            return styleHnd;
+        }
+
+        /// <summary>
+        /// Gets material handle from material id or creates one if there is none.
+        /// </summary>
+        /// <param name="document">
+        /// The Revit document.
+        /// </param>
+        /// <param name="exporterIFC">
+        /// The ExporterIFC object.
+        /// </param>
+        /// <param name="materialId">
+        /// The material id.
+        /// </param>
+        /// <returns>
+        /// The handle.
+        /// </returns>
+        public static IFCAnyHandle GetOrCreateMaterialHandle(Document document, ExporterIFC exporterIFC, ElementId materialId)
+        {
+            IFCAnyHandle materialNameHandle = null;
+            materialNameHandle = ExporterCacheManager.MaterialHandleCache.Find(materialId);
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(materialNameHandle))
+            {
+                string materialName = " <Unnamed>";
+                if (materialId != ElementId.InvalidElementId)
+                {
+                    Material material = document.GetElement(materialId) as Material;
+                    if (material != null)
+                    {
+                        materialName = material.Name;
+                    }
+                }
+                materialNameHandle = IFCInstanceExporter.CreateMaterial(exporterIFC.GetFile(), materialName);
+                ExporterCacheManager.MaterialHandleCache.Register(materialId, materialNameHandle);
+                
+                // associate Material with SurfaceStyle if necessary.
+                IFCFile file = exporterIFC.GetFile();
+                if (materialId != ElementId.InvalidElementId && !ExporterCacheManager.ExportOptionsCache.ExportAs2x2 && materialNameHandle.HasValue)
+                {   
+                    HashSet<IFCAnyHandle> matRepHandles = IFCAnyHandleUtil.GetHasRepresentation(materialNameHandle);
+                    if (matRepHandles.Count == 0)
+                    {
+                        Material matElem = document.GetElement(materialId) as Material;
+
+                        ElementId fillPatternId = matElem.GetCutPatternId();
+                        Autodesk.Revit.DB.Color color = matElem.GetCutPatternColor();
+                        
+                        double planScale = 100.0;
+                                            
+                        HashSet<IFCAnyHandle> styles = new HashSet<IFCAnyHandle>();
+    
+                        bool hasFill = false;
+
+                        IFCAnyHandle styledRepItem = null;
+                        IFCAnyHandle matStyleHnd = CategoryUtil.GetOrCreateMaterialStyle(document, exporterIFC, materialId);
+                        if (matStyleHnd.HasValue)
+                        {
+                            styles.Add(matStyleHnd);
+
+                            if (fillPatternId != ElementId.InvalidElementId && !ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
+                            {
+                                IFCAnyHandle cutStyleHnd = exporterIFC.GetOrCreateFillPattern(fillPatternId, color, planScale);
+                                if (cutStyleHnd.HasValue)
+                                {
+                                    styles.Add(cutStyleHnd);
+                                    hasFill = true;
+                                }
+                            }
+
+                            IFCAnyHandle presStyleHnd = IFCInstanceExporter.CreatePresentationStyleAssignment(file, styles);
+
+                            HashSet<IFCAnyHandle> presStyleSet = new HashSet<IFCAnyHandle>();
+                            presStyleSet.Add(presStyleHnd);
+
+                            IFCAnyHandle styledItemHnd = IFCInstanceExporter.CreateStyledItem(file, styledRepItem, presStyleSet, null);
+
+                            IFCAnyHandle contextOfItems = exporterIFC.Get3DContextHandle("");   
+
+                            string repId = "Style";
+                            string repType = (hasFill) ? "Material and Cut Pattern" : "Material";
+                            HashSet<IFCAnyHandle> repItems = new HashSet<IFCAnyHandle>();
+                            repItems.Add(styledItemHnd);
+
+                            IFCAnyHandle styleRepHnd = IFCInstanceExporter.CreateStyledRepresentation(file, contextOfItems, repId, repType, repItems);
+
+                            List<IFCAnyHandle> repList = new List<IFCAnyHandle>();
+                            repList.Add(styleRepHnd);
+
+                            IFCAnyHandle matDefRepHnd = IFCInstanceExporter.CreateMaterialDefinitionRepresentation(file, null, null, repList, materialNameHandle);
+                        }
+                    }
+                }
+            }
+            return materialNameHandle;
         }
     }
 }

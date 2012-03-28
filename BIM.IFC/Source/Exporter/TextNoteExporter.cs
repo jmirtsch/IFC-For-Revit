@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2011  Autodesk, Inc.
+// Copyright (C) 2012  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@ using Autodesk.Revit;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using BIM.IFC.Utility;
+using BIM.IFC.Toolkit;
 
 namespace BIM.IFC.Exporter
 {
@@ -44,7 +45,7 @@ namespace BIM.IFC.Exporter
         /// <param name="productWrapper">
         /// The IFCProductWrapper.
         /// </param>
-        public static void Export(ExporterIFC exporterIFC, TextNote textNote, IFCProductWrapper productWrapper, PresentationStyleAssignmentCache cache)
+        public static void Export(ExporterIFC exporterIFC, TextNote textNote, IFCProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction tr = new IFCTransaction(file))
@@ -57,17 +58,18 @@ namespace BIM.IFC.Exporter
                 if (symId == ElementId.InvalidElementId)
                     throw new Exception("TextNote does not have valid type id.");
 
+                PresentationStyleAssignmentCache cache = ExporterCacheManager.PresentationStyleAssignmentCache;
                 IFCAnyHandle presHnd = cache.Find(symId);
-                if (!presHnd.HasValue)
+                if (IFCAnyHandleUtil.IsNullOrHasNoValue(presHnd))
                 {
                     TextElementType textElemType = textNote.Symbol;
                     CreatePresentationStyleAssignmentForTextElementType(exporterIFC, textElemType, cache);
                     presHnd = cache.Find(symId);
-                    if (!presHnd.HasValue)
+                    if (IFCAnyHandleUtil.IsNullOrHasNoValue(presHnd))
                         throw new Exception("Failed to create presentation style assignment for TextElementType.");
                 }
 
-                IList<IFCAnyHandle> presHndSet = new List<IFCAnyHandle>();
+                HashSet<IFCAnyHandle> presHndSet = new HashSet<IFCAnyHandle>();
                 presHndSet.Add(presHnd);
 
                 using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, textNote))
@@ -78,57 +80,54 @@ namespace BIM.IFC.Exporter
                     XYZ orig = textNote.Coord;
                     orig = orig.Multiply(linScale);
                     XYZ yDir = textNote.UpDirection;
-                    XYZ xDirection = textNote.BaseDirection;
-                    XYZ zDirection = xDirection.CrossProduct(yDir);
+                    XYZ xDir = textNote.BaseDirection;
+                    XYZ zDir = xDir.CrossProduct(yDir);
 
                     double sizeX = textNote.LineWidth * linScale * planScale;
                     double sizeY = textNote.Height * linScale * planScale;
 
-                    // When we display text on screen, we "flip" it if the xDirection is negative with relation to
+                    // When we display text on screen, we "flip" it if the xDir is negative with relation to
                     // the X-axis.  So if it is, we'll flip x and y.
                     bool flipOrig = false;
-                    if (xDirection.X < 0)
+                    if (xDir.X < 0)
                     {
-                        xDirection = xDirection.Multiply(-1.0);
+                        xDir = xDir.Multiply(-1.0);
                         yDir = yDir.Multiply(-1.0);
                         flipOrig = true;
                     }
 
                     // xFactor, yFactor only used if flipOrig.
                     double xFactor = 0.0, yFactor = 0.0;
-                    IFCLabel boxAlign = ConvertTextNoteAlignToBoxAlign(textNote, out xFactor, out yFactor);
+                    string boxAlignment = ConvertTextNoteAlignToBoxAlign(textNote, out xFactor, out yFactor);
 
                     // modify the origin to match the alignment.  In Revit, the origin is at the top-left (unless flipped,
                     // then bottom-right).
                     if (flipOrig)
                     {
-                        orig = orig.Add(xDirection.Multiply(sizeX * xFactor));
+                        orig = orig.Add(xDir.Multiply(sizeX * xFactor));
                         orig = orig.Add(yDir.Multiply(sizeY * yFactor));
                     }
 
-                    IFCAnyHandle origin = ExporterUtil.CreateAxis(file, orig, zDirection, xDirection);
+                    IFCAnyHandle origin = ExporterUtil.CreateAxis(file, orig, zDir, xDir);
 
-                    IFCLabel textStringLabel = IFCLabel.Create(textString);
-                    IFCAnyHandle extent = file.CreatePlanarExtent(sizeX, sizeY);
-                    IFCAnyHandle repItemHnd = file.CreateTextLiteralWithExtent(textStringLabel, origin, IFCTextPath.Left, extent, boxAlign);
-                    IFCAnyHandle annoTextOccHnd = file.CreateStyledItem(repItemHnd, presHndSet, IFCLabel.Create());
+                    IFCAnyHandle extent = IFCInstanceExporter.CreatePlanarExtent(file, sizeX, sizeY);
+                    IFCAnyHandle repItemHnd = IFCInstanceExporter.CreateTextLiteralWithExtent(file, textString, origin, Toolkit.IFCTextPath.Left, extent, boxAlignment);
+                    IFCAnyHandle annoTextOccHnd = IFCInstanceExporter.CreateStyledItem(file, repItemHnd, presHndSet, null);
 
                     ElementId catId = textNote.Category != null ? textNote.Category.Id : ElementId.InvalidElementId;
-                    IFCLabel identifierOpt = IFCLabel.Create("Annotation");
-                    IFCLabel repTypeOpt = IFCLabel.Create("Annotation2D");	// this is by IFC2x3 convention, not temporary
                     HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
                     bodyItems.Add(repItemHnd);
-                    IFCAnyHandle bodyRepHnd = RepresentationUtil.CreateShapeRepresentation(exporterIFC, catId, exporterIFC.Get2DContextHandle(), identifierOpt, repTypeOpt, bodyItems);
+                    IFCAnyHandle bodyRepHnd = RepresentationUtil.CreateAnnotationSetRep(exporterIFC, textNote, catId, exporterIFC.Get2DContextHandle(), bodyItems);
 
-                    if (!bodyRepHnd.HasValue)
+                    if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRepHnd))
                         throw new Exception("Failed to create shape representation.");
 
                     IList<IFCAnyHandle> shapeReps = new List<IFCAnyHandle>();
                     shapeReps.Add(bodyRepHnd);
 
-                    IFCAnyHandle prodShapeHnd = file.CreateProductDefinitionShape(IFCLabel.Create(), IFCLabel.Create(), shapeReps);
-                    IFCAnyHandle annoHnd = file.CreateAnnotation(IFCLabel.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
-                        IFCLabel.Create(), IFCLabel.Create(), IFCLabel.Create(), setter.GetPlacement(), prodShapeHnd);
+                    IFCAnyHandle prodShapeHnd = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
+                    IFCAnyHandle annoHnd = IFCInstanceExporter.CreateAnnotation(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                        null, null, null, setter.GetPlacement(), prodShapeHnd);
 
                     productWrapper.AddAnnotation(annoHnd, setter.GetLevelInfo(), true);
                 }
@@ -143,60 +142,58 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">
         /// The ExporterIFC object.
         /// </param>
-        /// <param name="textElementType">
+        /// <param name="textElemType">
         /// The text note element type.
         /// </param>
         /// <param name="cache">
         /// The cache of IfcPresentationStyleAssignment.
         /// </param>
-        static void CreatePresentationStyleAssignmentForTextElementType(ExporterIFC exporterIFC, TextElementType textElementType, PresentationStyleAssignmentCache cache)
+        static void CreatePresentationStyleAssignmentForTextElementType(ExporterIFC exporterIFC, TextElementType textElemType, PresentationStyleAssignmentCache cache)
         {
             IFCFile file = exporterIFC.GetFile();
 
-            Parameter fontNameParam = textElementType.get_Parameter(BuiltInParameter.TEXT_FONT);
+            Parameter fontNameParam = textElemType.get_Parameter(BuiltInParameter.TEXT_FONT);
             string fontName = (fontNameParam != null && fontNameParam.StorageType == StorageType.String) ? fontNameParam.AsString() : null;
 
 
-            Parameter fontSizeParam = textElementType.get_Parameter(BuiltInParameter.TEXT_SIZE);
+            Parameter fontSizeParam = textElemType.get_Parameter(BuiltInParameter.TEXT_SIZE);
             double fontSize = (fontSizeParam != null && fontSizeParam.StorageType == StorageType.Double) ? fontSizeParam.AsDouble() : -1.0;
 
             double scale = exporterIFC.LinearScale;
             double viewScale = 100.0;  // currently hardwired.
             fontSize *= (scale * viewScale);
 
-            IFCMeasureValue ifcFontSize = IFCMeasureValue.Create(fontSize);
-            IFCLabel ifcPreDefinedItemName = IFCLabel.Create("Text Font");
-            IFCLabel ifcFontName = IFCLabel.Create(fontName);
+            string ifcPreDefinedItemName = "Text Font";
 
-            IList<IFCLabel> fontNameList = new List<IFCLabel>();
-            fontNameList.Add(ifcFontName);
+            IList<string> fontNameList = new List<string>();
+            fontNameList.Add(fontName);
 
-            IFCAnyHandle textSyleFontModelHnd = file.CreateTextStyleFontModel(ifcPreDefinedItemName, fontNameList, IFCLabel.Create(), IFCLabel.Create(), IFCLabel.Create(), ifcFontSize);
+            IFCAnyHandle textSyleFontModelHnd = IFCInstanceExporter.CreateTextStyleFontModel(file, ifcPreDefinedItemName, fontNameList, null, null, null, IFCDataUtil.CreateAsPositiveLengthMeasure(fontSize));
 
-            Parameter fontColorParam = textElementType.get_Parameter(BuiltInParameter.LINE_COLOR);
+            Parameter fontColorParam = textElemType.get_Parameter(BuiltInParameter.LINE_COLOR);
             int color = (fontColorParam != null && fontColorParam.StorageType == StorageType.Integer) ? fontColorParam.AsInteger() : 0;
 
             double blueVal = ((double)((color & 0xff0000) >> 16)) / 255.0;
             double greenVal = ((double)((color & 0xff00) >> 8)) / 255.0;
             double redVal = ((double)(color & 0xff)) / 255.0;
 
-            IFCAnyHandle colorHnd = file.CreateColourRgb(IFCLabel.Create(), redVal, greenVal, blueVal);
-            IFCAnyHandle fontColorHnd = file.CreateTextStyleForDefinedFont(colorHnd, IFCAnyHandle.Create());
+            IFCAnyHandle colorHnd = IFCInstanceExporter.CreateColourRgb(file, null, redVal, greenVal, blueVal);
+            IFCAnyHandle fontColorHnd = IFCInstanceExporter.CreateTextStyleForDefinedFont(file, colorHnd, null);
 
-            IFCLabel ifcAttrName = IFCLabel.Create(textElementType.Name);
-            IFCAnyHandle textStyleHnd = file.CreateTextStyle(ifcAttrName, fontColorHnd, IFCAnyHandle.Create(), textSyleFontModelHnd);
+            string ifcAttrName = textElemType.Name;
+            IFCAnyHandle textStyleHnd = IFCInstanceExporter.CreateTextStyle(file, textElemType.Name, fontColorHnd, null, textSyleFontModelHnd);
 
-            if (!textStyleHnd.HasValue)
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(textStyleHnd))
                 return;
 
-            ICollection<IFCAnyHandle> presStyleSet = new System.Collections.ObjectModel.Collection<IFCAnyHandle>();
+            HashSet<IFCAnyHandle> presStyleSet = new HashSet<IFCAnyHandle>();
             presStyleSet.Add(textStyleHnd);
 
-            IFCAnyHandle presStyleHnd = file.CreatePresentationStyleAssignment(presStyleSet);
-            if (!presStyleHnd.HasValue)
+            IFCAnyHandle presStyleHnd = IFCInstanceExporter.CreatePresentationStyleAssignment(file, presStyleSet);
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(presStyleHnd))
                 return;
 
-            cache.Register(textElementType.Id, presStyleHnd);
+            cache.Register(textElemType.Id, presStyleHnd);
         }
 
         /// <summary>
@@ -211,7 +208,7 @@ namespace BIM.IFC.Exporter
         /// <param name="yFactor">
         /// The Y factor.
         /// </param>
-        static IFCLabel ConvertTextNoteAlignToBoxAlign(TextNote textNote, out double xFactor, out double yFactor)
+        static string ConvertTextNoteAlignToBoxAlign(TextNote textNote, out double xFactor, out double yFactor)
         {
             TextAlignFlags align = textNote.Align;
 
@@ -265,52 +262,52 @@ namespace BIM.IFC.Exporter
 
             xFactor = 0.0;
             yFactor = 0.0;
-            IFCLabel alignLabel = IFCLabel.Create();
+            string boxAlignmeng = null;
 
             switch (alignCase)
             {
                 case 0:
-                    alignLabel = IFCLabel.Create("top-left");
+                    boxAlignmeng = "top-left";
                     xFactor = -1.0;
                     yFactor = 1.0;
                     break;
                 case 1:
-                    alignLabel = IFCLabel.Create("bottom-left");
+                    boxAlignmeng = "bottom-left";
                     xFactor = -1.0;
                     yFactor = -1.0;
                     break;
                 case 2:
-                    alignLabel = IFCLabel.Create("middle-left");
+                    boxAlignmeng = "middle-left";
                     xFactor = -1.0;
                     break;
                 case 3:
-                    alignLabel = IFCLabel.Create("top-middle");
+                    boxAlignmeng = "top-middle";
                     yFactor = 1.0;
                     break;
                 case 4:
-                    alignLabel = IFCLabel.Create("center");
+                    boxAlignmeng = "center";
                     break;
                 case 5:
-                    alignLabel = IFCLabel.Create("bottom-middle");
+                    boxAlignmeng = "bottom-middle";
                     yFactor = -1.0;
                     break;
                 case 6:
-                    alignLabel = IFCLabel.Create("middle-right");
+                    boxAlignmeng = "middle-right";
                     xFactor = 1.0;
                     break;
                 case 7:
-                    alignLabel = IFCLabel.Create("top-right");
+                    boxAlignmeng = "top-right";
                     xFactor = 1.0;
                     yFactor = 1.0;
                     break;
                 case 8:
-                    alignLabel = IFCLabel.Create("bottom-right");
+                    boxAlignmeng = "bottom-right";
                     xFactor = 1.0;
                     yFactor = -1.0;
                     break;
             }
 
-            return alignLabel;
+            return boxAlignmeng;
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2011  Autodesk, Inc.
+// Copyright (C) 2012  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -63,13 +63,13 @@ namespace BIM.IFC.Utility
 
             propertyValue = string.Empty;
 
-            Parameter param = getParameterFromName(element, propertyName);
+            Parameter parameter = getParameterFromName(element, propertyName);
 
-            if (param != null && param.HasValue && param.StorageType == StorageType.String)
+            if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.String)
             {
-                if (param.AsString() != null)
+                if (parameter.AsString() != null)
                 {
-                    propertyValue = param.AsString();
+                    propertyValue = parameter.AsString();
                     return true;
                 }
             }
@@ -108,11 +108,11 @@ namespace BIM.IFC.Utility
 
             propertyValue = 0;
 
-            Parameter param = getParameterFromName(element, propertyName);
+            Parameter parameter = getParameterFromName(element, propertyName);
 
-            if (param != null && param.HasValue && param.StorageType == StorageType.Integer)
+            if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Integer)
             {
-                propertyValue = param.AsInteger();
+                propertyValue = parameter.AsInteger();
                 return true;
             }
 
@@ -122,15 +122,15 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Gets double value from parameter of an element.
         /// </summary>
-        /// <parameter name="element">
+        /// <param name="element">
         /// The element.
-        /// </parameter>
-        /// <parameter name="propertyName">
+        /// </param>
+        /// <param name="propertyName">
         /// The property name.
-        /// </parameter>
-        /// <parameter name="propertyValue">
+        /// </param>
+        /// <param name="propertyValue">
         /// The output property value.
-        /// </parameter>
+        /// </param>
         /// <exception cref="System.ArgumentNullException">
         /// Thrown when element is null.
         /// </exception>
@@ -162,17 +162,173 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Gets string value from built-in parameter of an element.
+        /// </summary>
+        /// <param name="element">
+        /// The element.
+        /// </param>
+        /// <param name="builtInParameter">
+        /// The built-in parameter.
+        /// </param>
+        /// <param name="propertyValue">
+        /// The output property value.
+        /// </param>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when element is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when builtInParameter in invalid.
+        /// </exception>
+        /// <returns>
+        /// True if get the value successfully, false otherwise.
+        /// </returns>
+        public static bool GetStringValueFromElement(Element element, BuiltInParameter builtInParameter, out string propertyValue)
+        {
+            if (element == null)
+                throw new ArgumentNullException("element");
+
+            if (builtInParameter == BuiltInParameter.INVALID)
+                throw new ArgumentException("BuiltInParameter is INVALID", "builtInParameter");
+
+            propertyValue = String.Empty;
+
+            Parameter parameter = element.get_Parameter(builtInParameter);
+            if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.String)
+            {
+                propertyValue = parameter.AsString();
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Sets string value of a built-in parameter of an element.
+        /// </summary>
+        /// <param name="element">
+        /// The element.
+        /// </param>
+        /// <param name="builtInParameter">
+        /// The built-in parameter.
+        /// </param>
+        /// <param name="propertyValue">
+        /// The property value.
+        /// </param>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when element is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when builtInParameter in invalid.
+        /// </exception>
+        public static void SetStringParameter(Element element, BuiltInParameter builtInParameter, string propertyValue)
+        {
+            if (element == null)
+                throw new ArgumentNullException("element");
+
+            if (builtInParameter == BuiltInParameter.INVALID)
+                throw new ArgumentException("BuiltInParameter is INVALID", "builtInParameter");
+
+            Parameter parameter = element.get_Parameter(builtInParameter);
+            if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.String)
+            {
+                parameter.SetValueString(propertyValue);
+                return;
+            }
+            else
+            {
+                ElementId parameterId = new ElementId(builtInParameter);
+                ExporterIFCUtils.AddValueString(element, parameterId, propertyValue);
+            }
+        }
+
+        /// <summary>
+        /// Gets double value from built-in parameter of an element.
+        /// </summary>
+        /// <param name="element">
+        /// The element.
+        /// </param>
+        /// <param name="builtInParameter">
+        /// The built-in parameter.
+        /// </param>
+        /// <param name="propertyValue">
+        /// The output property value.
+        /// </param>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when element is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when builtInParameter in invalid.
+        /// </exception>
+        /// <returns>
+        /// True if get the value successfully, false otherwise.
+        /// </returns>
+        public static bool GetDoubleValueFromElement(Element element, BuiltInParameter builtInParameter, out double propertyValue)
+        {
+            if (element == null)
+                throw new ArgumentNullException("element");
+
+            if (builtInParameter == BuiltInParameter.INVALID)
+                throw new ArgumentException("BuiltInParameter is INVALID", "builtInParameter");
+
+            propertyValue = 0.0;
+
+            Parameter parameter = element.get_Parameter(builtInParameter);
+
+            if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Double)
+            {
+                propertyValue = parameter.AsDouble();
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Gets double value from built-in parameter of an element or its element type.
+        /// </summary>
+        /// <param name="element">
+        /// The element.
+        /// </param>
+        /// <param name="builtInParameter">
+        /// The built-in parameter.
+        /// </param>
+        /// <param name="propertyValue">
+        /// The output property value.
+        /// </param>
+        /// <returns>
+        /// True if get the value successfully, false otherwise.
+        /// </returns>
+        public static bool GetDoubleValueFromElementOrSymbol(Element element, BuiltInParameter builtInParameter, out double propertyValue)
+        {
+            if (GetDoubleValueFromElement(element, builtInParameter, out propertyValue))
+                return true;
+            else
+            {
+                Document document = element.Document;
+                ElementId typeId = element.GetTypeId();
+
+                Element elemType = document.GetElement(typeId);
+                if (elemType != null)
+                {
+                    return GetDoubleValueFromElement(elemType, builtInParameter, out propertyValue);
+                }
+                else
+                    return false;
+            }
+        }
+
+        /// <summary>
         /// Gets double value from parameter of an element or its element type.
         /// </summary>
-        /// <parameter name="element">
+        /// <param name="element">
         /// The element.
-        /// </parameter>
-        /// <parameter name="propertyName">
+        /// </param>
+        /// <param name="propertyName">
         /// The property name.
-        /// </parameter>
-        /// <parameter name="propertyValue">
+        /// </param>
+        /// <param name="propertyValue">
         /// The output property value.
-        /// </parameter>
+        /// </param>
         /// <returns>
         /// True if get the value successfully, false otherwise.
         /// </returns>
@@ -185,7 +341,7 @@ namespace BIM.IFC.Utility
                 Document document = element.Document;
                 ElementId typeId = element.GetTypeId();
 
-                Element elemType = document.get_Element(typeId);
+                Element elemType = document.GetElement(typeId);
                 if (elemType != null)
                 {
                     return GetDoubleValueFromElement(elemType, propertyName, out propertyValue);
@@ -198,15 +354,15 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Gets positive double value from parameter of an element or its element type.
         /// </summary>
-        /// <parameter name="element">
+        /// <param name="element">
         /// The element.
-        /// </parameter>
-        /// <parameter name="propertyName">
+        /// </param>
+        /// <param name="propertyName">
         /// The property name.
-        /// </parameter>
-        /// <parameter name="propertyValue">
+        /// </param>
+        /// <param name="propertyValue">
         /// The output property value.
-        /// </parameter>
+        /// </param>
         /// <returns>
         /// True if get the value successfully and the value is positive, false otherwise.
         /// </returns>
@@ -221,12 +377,12 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Gets the parameter by name from an element.
         /// </summary>
-        /// <parameter name="element">
+        /// <param name="element">
         /// The element.
-        /// </parameter>
-        /// <parameter name="propertyName">
+        /// </param>
+        /// <param name="propertyName">
         /// The property name.
-        /// </parameter>
+        /// </param>
         /// <returns>
         /// The Parameter.
         /// </returns>
@@ -236,41 +392,53 @@ namespace BIM.IFC.Utility
             if (parameterIds.Size == 0)
                 return null;
 
+            IList<Parameter> parameters = new List<Parameter>();
+            IList<Definition> paramDefinitions = new List<Definition>();
+
             // We will do two passes.  In the first pass, we will look at parameters in the IFC group.
             // In the second pass, we will look at all other groups.
-            int pass = 0;
-            for (; pass < 2; pass++)
+            ParameterSetIterator parameterIt = parameterIds.ForwardIterator();
+
+            while (parameterIt.MoveNext())
             {
-                bool lookAtIFCParameters = (pass == 0);
-                ParameterSetIterator parameterIt = parameterIds.ForwardIterator();
+                Parameter parameter = parameterIt.Current as Parameter;
 
-                while (parameterIt.MoveNext())
+                Definition paramDefinition = parameter.Definition;
+                if (paramDefinition == null)
+                    continue;
+                if (paramDefinition.ParameterGroup != BuiltInParameterGroup.PG_IFC)
                 {
-                    Parameter parameter = parameterIt.Current as Parameter;
-
-                    Definition paramDef = parameter.Definition;
-                    if (lookAtIFCParameters ^ (paramDef.ParameterGroup == BuiltInParameterGroup.PG_IFC))
-                        continue;
-
-                    if (NamingUtil.IsEqualIgnoringCaseAndSpaces(paramDef.Name, propertyName))
-                        return parameter;
+                    parameters.Add(parameter);
+                    paramDefinitions.Add(paramDefinition);
+                    continue;
                 }
+
+                if (NamingUtil.IsEqualIgnoringCaseAndSpaces(paramDefinition.Name, propertyName))
+                    return parameter;
             }
+
+            int size = paramDefinitions.Count;
+            for (int ii = 0; ii < size; ii++)
+            {
+                if (NamingUtil.IsEqualIgnoringCaseAndSpaces(paramDefinitions[ii].Name, propertyName))
+                    return parameters[ii];
+            }
+
             return null;
         }
 
         /// <summary>
         /// Gets string value from parameter of an element or its element type.
         /// </summary>
-        /// <parameter name="element">
+        /// <param name="element">
         /// The element.
-        /// </parameter>
-        /// <parameter name="propertyName">
+        /// </param>
+        /// <param name="propertyName">
         /// The property name.
-        /// </parameter>
-        /// <parameter name="propertyValue">
+        /// </param>
+        /// <param name="propertyValue">
         /// The output property value.
-        /// </parameter>
+        /// </param>
         /// <returns>
         /// True if get the value successfully, false otherwise.
         /// </returns>
@@ -283,10 +451,36 @@ namespace BIM.IFC.Utility
                 Document document = element.Document;
                 ElementId typeId = element.GetTypeId();
 
-                Element elemType = document.get_Element(typeId);
+                Element elemType = document.GetElement(typeId);
                 if (elemType != null)
                 {
                     return GetStringValueFromElement(elemType, propertyName, out propertyValue);
+                }
+                else
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Gets integer value from parameter of an element or its element type.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <param name="propertyName">The property name.</param>
+        /// <param name="propertyValue">The output property value.</param>
+        /// <returns>True if get the value successfully, false otherwise.</returns>
+        public static bool GetIntValueFromElementOrSymbol(Element element, string propertyName, out int propertyValue)
+        {
+            if (GetIntValueFromElement(element, propertyName, out propertyValue))
+                return true;
+            else
+            {
+                Document document = element.Document;
+                ElementId typeId = element.GetTypeId();
+
+                Element elemType = document.GetElement(typeId);
+                if (elemType != null)
+                {
+                    return GetIntValueFromElement(elemType, propertyName, out propertyValue);
                 }
                 else
                     return false;
