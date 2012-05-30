@@ -95,6 +95,12 @@ namespace BIM.IFC.Export.UI
         /// </summary>
         public bool UseFamilyAndTypeNameForReference { get; set; }
 
+        /// <summary>
+        /// True to export the parts as independent building elements
+        /// False to export the parts with host element.
+        /// </summary>
+        public bool ExportPartsAsBuildingElements { get; set; }
+
         private bool m_isBuiltIn = false;
         private bool m_isInSession = false;
         private static IFCExportConfiguration s_inSessionConfiguration = null;
@@ -146,6 +152,7 @@ namespace BIM.IFC.Export.UI
             this.UseFamilyAndTypeNameForReference = false;
             this.ExportInternalRevitPropertySets = false;
             this.Export2DElements = false;
+            this.ExportPartsAsBuildingElements = false;
             this.m_isBuiltIn = false; 
             this.m_isInSession = false;
         }
@@ -181,6 +188,7 @@ namespace BIM.IFC.Export.UI
             configuration.VisibleElementsOfCurrentView = false;   
             configuration.Use2DRoomBoundaryForVolume = false;
             configuration.UseFamilyAndTypeNameForReference = false;
+            configuration.ExportPartsAsBuildingElements = false;
             configuration.m_isBuiltIn = true;
             configuration.m_isInSession = false; 
             return configuration;
@@ -208,6 +216,7 @@ namespace BIM.IFC.Export.UI
             this.VisibleElementsOfCurrentView = other.VisibleElementsOfCurrentView;
             this.Use2DRoomBoundaryForVolume = other.Use2DRoomBoundaryForVolume;
             this.UseFamilyAndTypeNameForReference = other.UseFamilyAndTypeNameForReference;
+            this.ExportPartsAsBuildingElements = other.ExportPartsAsBuildingElements;
             this.m_isBuiltIn = other.m_isBuiltIn;
             this.m_isInSession = other.m_isInSession;
         }
@@ -240,6 +249,7 @@ namespace BIM.IFC.Export.UI
             this.VisibleElementsOfCurrentView = other.VisibleElementsOfCurrentView;
             this.Use2DRoomBoundaryForVolume = other.Use2DRoomBoundaryForVolume;
             this.UseFamilyAndTypeNameForReference = other.UseFamilyAndTypeNameForReference;
+            this.ExportPartsAsBuildingElements = other.ExportPartsAsBuildingElements;
             this.m_isBuiltIn = false;
             this.m_isInSession = false;
         }
@@ -292,6 +302,7 @@ namespace BIM.IFC.Export.UI
             options.AddOption("ExportAnnotations", Export2DElements.ToString());
             options.AddOption("Use2DRoomBoundaryForVolume",Use2DRoomBoundaryForVolume.ToString());
             options.AddOption("UseFamilyAndTypeNameForReference",UseFamilyAndTypeNameForReference.ToString());
+            options.AddOption("ExportPartsAsBuildingElements", ExportPartsAsBuildingElements.ToString());
 
             options.AddOption("FileType", IFCFileType.ToString());
         }
@@ -321,6 +332,7 @@ namespace BIM.IFC.Export.UI
                 builder.AppendLine(GetDescriptionLine(Resources.ExportRevitPropertySets, ExportInternalRevitPropertySets));
                 builder.AppendLine(GetDescriptionLine(Resources.Use2DRoomBoundariesForRoomVolume, Use2DRoomBoundaryForVolume));
                 builder.AppendLine(GetDescriptionLine(Resources.UseFamilyAndTypeNameForReferences, UseFamilyAndTypeNameForReference));
+                builder.AppendLine(GetDescriptionLine(Resources.ExportPartsAsBuildingElements, ExportPartsAsBuildingElements));
 
                 return builder.ToString();
             }

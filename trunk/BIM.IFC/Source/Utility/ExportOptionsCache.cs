@@ -55,6 +55,7 @@ namespace BIM.IFC.Utility
             cache.SpaceBoundaryLevel = exporterIFC.SpaceBoundaryLevel;
             // Export Part element only if 'Current View Only' is checked and 'Show Parts' is selected. 
             cache.ExportParts = filterView != null && filterView.PartsVisibility == PartsVisibility.ShowPartsOnly;
+            cache.ExportPartsAsBuildingElementsOverride = null;
             cache.ExportAllLevels = false;
             cache.ExportAnnotationsOverride = null;
             cache.ExportInternalRevitPropertySetsOverride = null;
@@ -122,7 +123,10 @@ namespace BIM.IFC.Utility
 
             // "Revit property sets" override
             cache.ExportInternalRevitPropertySetsOverride = GetNamedBooleanOption(options, "ExportInternalRevitPropertySets");
-         
+
+            // "ExportSeparateParts" override
+            cache.ExportPartsAsBuildingElementsOverride = GetNamedBooleanOption(options, "ExportPartsAsBuildingElements");
+
             // "FileType" - note - setting is not respected yet
             ParseFileType(options, cache);
 
@@ -306,6 +310,29 @@ namespace BIM.IFC.Utility
         {
             get;
             set;
+        }
+
+        /// <summary>
+        /// Cache variable for the ExportPartsAsBuildingElements override (if set independently via the UI)
+        /// </summary>
+        public bool? ExportPartsAsBuildingElementsOverride
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Whether or not export the Parts as independent building elements.
+        /// Only if allows export parts and 'Export parts as building elements' is selected. 
+        /// </summary>
+        public bool ExportPartsAsBuildingElements
+        {
+            get
+            {
+                if (ExportPartsAsBuildingElementsOverride != null)
+                    return (bool)ExportPartsAsBuildingElementsOverride;
+                return false;
+            }
         }
 
         /// <summary>

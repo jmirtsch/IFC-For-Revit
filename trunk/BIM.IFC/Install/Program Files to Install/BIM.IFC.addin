@@ -6,6 +6,6 @@
     <ClientId>D2FE9530-A191-4F58-B3C4-1653384A6286</ClientId>
     <FullClassName>BIM.IFC.Exporter.Exporter</FullClassName>
 	<VendorId>IFCX</VendorId>
-	<VendorDescription>BIM Transformations Open Source Project, http://sourceforge.net/projects/bimtrans/</VendorDescription>
+	<VendorDescription>IFC Exporter for Revit, http://sourceforge.net/projects/ifcexporter/</VendorDescription>
   </AddIn>
 </RevitAddIns>

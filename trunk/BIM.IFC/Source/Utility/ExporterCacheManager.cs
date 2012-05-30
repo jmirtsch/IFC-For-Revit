@@ -218,9 +218,15 @@ namespace BIM.IFC.Utility
         static IDictionary<KeyValuePair<IFCEntityType, IFCEntityType>, bool> m_HandleIsSubTypeOfCache;
 
         /// <summary>
-        /// The common property sets to be exported for an entity type.
+        /// The common property sets to be exported for an entity type, regardless of Object Type.
         /// </summary>
         static IDictionary<IFCEntityType, IList<PropertySetDescription>> m_PropertySetsForTypeCache;
+
+        /// <summary>
+        /// The common property sets to be exported for an entity type, conditional on the Object Type of the
+        /// entity matching that of the PropertySetDescription.
+        /// </summary>
+        static IDictionary<IFCEntityType, IList<PropertySetDescription>> m_ConditionalPropertySetsForTypeCache;
 
         /// <summary>
         /// The material id to style handle cache.
@@ -732,7 +738,7 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
-        /// The common property sets to be exported for an entity type.
+        /// The common property sets to be exported for an entity type, regardless of Object Type.
         /// </summary>
         public static IDictionary<IFCEntityType, IList<PropertySetDescription>> PropertySetsForTypeCache
         {
@@ -741,6 +747,20 @@ namespace BIM.IFC.Utility
                 if (m_PropertySetsForTypeCache == null)
                     m_PropertySetsForTypeCache = new Dictionary<IFCEntityType, IList<PropertySetDescription>>();
                 return m_PropertySetsForTypeCache;
+            }
+        }
+
+        /// <summary>
+        /// The common property sets to be exported for an entity type, conditional on the Object Type of the
+        /// entity matching that of the PropertySetDescription.
+        /// </summary>
+        public static IDictionary<IFCEntityType, IList<PropertySetDescription>> ConditionalPropertySetsForTypeCache
+        {
+            get
+            {
+                if (m_ConditionalPropertySetsForTypeCache == null)
+                    m_ConditionalPropertySetsForTypeCache = new Dictionary<IFCEntityType, IList<PropertySetDescription>>();
+                return m_ConditionalPropertySetsForTypeCache;
             }
         }
 
@@ -826,6 +846,7 @@ namespace BIM.IFC.Utility
             m_HandleIsSubTypeOfCache = null;
             m_GroupElementGeometryCache = null;
             m_PropertySetsForTypeCache = null;
+            m_ConditionalPropertySetsForTypeCache = null;
             m_MaterialIdToStyleHandleCache = null;
             m_DefaultCartesianTransformationOperator3D = null;
             m_StairRampContainerInfoCache = null;

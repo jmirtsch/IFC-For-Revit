@@ -240,7 +240,7 @@ namespace BIM.IFC.Exporter
 	    }
 
         /// <summary>
-        /// Determines if a curveloop can be exported as an I-Shope profile.
+        /// Determines if a curveloop can be exported as an I-Shape profile.
         /// </summary>
         /// <param name="exporterIFC">The exporter.</param>
         /// <param name="profileName">The name of the profile.</param>
@@ -266,9 +266,13 @@ namespace BIM.IFC.Exporter
             XYZ xDir = origPlane.XVec;
             XYZ yDir = origPlane.YVec;
 
-            IList<UV> vertices = new List<UV>();
+            // The list of vertices, in order.  startVertex below is the upper-right hand vertex, in UV-space.
+            IList<UV> vertices = new List<UV>();    
+            // The directions in UV of the line segments. directions[ii] is the direction of the line segment starting with vertex[ii].
             IList<UV> directions = new List<UV>();
-
+            // The lengths in UV of the line segments.  lengths[ii] is the length of the line segment starting with vertex[ii].
+            IList<double> lengths = new List<double>();
+            // turnsCCW[ii] is true if directions[ii+1] is clockwise relative to directions[ii] in UV-space.
             IList<bool> turnsCCW = new List<bool>();
             
             IList<Arc> fillets = new List<Arc>();
@@ -288,7 +292,7 @@ namespace BIM.IFC.Exporter
                     if (!(curve is Arc))
                         return null;
                     fillets.Add(curve as Arc);
-                    filletPositions.Add(idx);   // share the index of the previous line segment.
+                    filletPositions.Add(idx);   // share the index of the next line segment.
                     continue;
                 }
 
@@ -316,7 +320,8 @@ namespace BIM.IFC.Exporter
 
                 XYZ direction3d = line.Direction;
                 UV direction = new UV(direction3d.DotProduct(xDir), direction3d.DotProduct(yDir));
-
+                lengths.Add(line.Length * scale);
+                
                 bool zeroU = MathUtil.IsAlmostZero(direction.U);
                 bool zeroV = MathUtil.IsAlmostZero(direction.V);
                 if (zeroU && zeroV)
@@ -335,7 +340,6 @@ namespace BIM.IFC.Exporter
                 }
 
                 directions.Add(direction);
-                
                 idx++;
             }
 
@@ -346,6 +350,119 @@ namespace BIM.IFC.Exporter
                 return null;
             turnsCCW.Add(directions[11].CrossProduct(directions[0]) > 0);
 
+            bool firstTurnIsCCW = turnsCCW[startVertex];
+
+            // Check proper turning of lines.
+            // The orientation of the turns should be such that 8 match the original orientation, and 4 go in the opposite direction.
+            // The opposite ones are:
+            // For I-Shape:
+            // if the first turn is clockwise (i.e., in -Y direction): 1,2,7,8.
+            // if the first turn is counterclockwise (i.e., in the -X direction): 2,3,8,9.
+            // For H-Shape:
+            // if the first turn is clockwise (i.e., in -Y direction): 2,3,8,9.
+            // if the first turn is counterclockwise (i.e., in the -X direction): 1,2,7,8.
+            
+            int iShapeCCWOffset = firstTurnIsCCW ? 1 : 0;
+            int hShapeCWOffset = firstTurnIsCCW ? 0 : 1;
+
+            bool isIShape = true;
+            bool isHShape = false;
+
+            for (int ii = 0; ii < 12 && isIShape; ii++)
+            {
+                int currOffset = 12 + (startVertex - iShapeCCWOffset);
+                int currIdx = (ii + currOffset) % 12;
+                if (currIdx == 1 || currIdx == 2 || currIdx == 7 || currIdx == 8)
+                {
+                    if (firstTurnIsCCW == turnsCCW[ii])
+                        isIShape = false;
+                }
+                else
+                {
+                    if (firstTurnIsCCW == !turnsCCW[ii])
+                        isIShape = false;
+                }
+            }
+
+            if (!isIShape)
+            {
+                // Check if it is orientated like an H - if neither I nor H, fail.
+                isHShape = true;
+
+                for (int ii = 0; ii < 12 && isHShape; ii++)
+                {
+                    int currOffset = 12 + (startVertex - hShapeCWOffset);
+                    int currIdx = (ii + currOffset) % 12;
+                    if (currIdx == 1 || currIdx == 2 || currIdx == 7 || currIdx == 8)
+                    {
+                        if (firstTurnIsCCW == turnsCCW[ii])
+                            return null;
+                    }
+                    else
+                    {
+                        if (firstTurnIsCCW == !turnsCCW[ii])
+                            return null;
+                    }
+                }
+            }
+
+            // Check that the lengths of parallel and symmetric line segments are equal.
+            double overallWidth = 0.0;
+            double overallDepth = 0.0;
+            double flangeThickness = 0.0;
+            double webThickness = 0.0;
+
+            // I-Shape:
+            // CCW pairs:(0,6), (1,5), (1,7), (1,11), (2,4), (2,8), (2,10), (3, 9)
+            // CW pairs: (11,5), (0,4), (0,6), (0,10), (1,3), (1,7), (1,9), (2, 8)
+            // H-Shape is reversed.
+            int cwPairOffset = (firstTurnIsCCW == isIShape) ? 0 : 11;
+
+            overallWidth = lengths[(startVertex + cwPairOffset) % 12];
+            flangeThickness = lengths[(startVertex + 1 + cwPairOffset) % 12];
+
+            if (isIShape)
+            {
+                if (firstTurnIsCCW)
+                {
+                    overallDepth = vertices[startVertex].V - vertices[(startVertex + 7) % 12].V;
+                    webThickness = vertices[(startVertex + 9) % 12].U - vertices[(startVertex + 3) % 12].U;
+                }
+                else
+                {
+                    overallDepth = vertices[startVertex].V - vertices[(startVertex + 5) % 12].V;
+                    webThickness = vertices[(startVertex + 2) % 12].U - vertices[(startVertex + 8) % 12].U;
+                }
+            }
+            else
+            {
+                if (!firstTurnIsCCW)
+                {
+                    overallDepth = vertices[startVertex].U - vertices[(startVertex + 7) % 12].U;
+                    webThickness = vertices[(startVertex + 9) % 12].V - vertices[(startVertex + 3) % 12].V;
+                }
+                else
+                {
+                    overallDepth = vertices[startVertex].U - vertices[(startVertex + 5) % 12].U;
+                    webThickness = vertices[(startVertex + 2) % 12].V - vertices[(startVertex + 8) % 12].V;
+                }
+            }
+
+            if (!MathUtil.IsAlmostEqual(overallWidth, lengths[(startVertex + 6 + cwPairOffset) % 12]))
+                return null;
+            if (!MathUtil.IsAlmostEqual(flangeThickness, lengths[(startVertex + 5 + cwPairOffset) % 12]) ||
+                !MathUtil.IsAlmostEqual(flangeThickness, lengths[(startVertex + 7 + cwPairOffset) % 12]) ||
+                !MathUtil.IsAlmostEqual(flangeThickness, lengths[(startVertex + 11 + cwPairOffset) % 12]))
+                return null;
+            double innerTopLeftLength = lengths[(startVertex + 2 + cwPairOffset) % 12];
+            if (!MathUtil.IsAlmostEqual(innerTopLeftLength, lengths[(startVertex + 4 + cwPairOffset) % 12]) ||
+                !MathUtil.IsAlmostEqual(innerTopLeftLength, lengths[(startVertex + 8 + cwPairOffset) % 12]) ||
+                !MathUtil.IsAlmostEqual(innerTopLeftLength, lengths[(startVertex + 10 + cwPairOffset) % 12]))
+                return null;
+            double iShaftLength = lengths[(startVertex + 3 + cwPairOffset) % 12];
+            if (!MathUtil.IsAlmostEqual(iShaftLength, lengths[(startVertex + 9 + cwPairOffset) % 12]))
+                return null;
+            
             // Check fillet validity.
             int numFillets = fillets.Count();
             double? filletRadius = null;
@@ -355,10 +472,20 @@ namespace BIM.IFC.Exporter
                 if (numFillets != 4)
                     return null;
 
-                if (filletPositions[startFillet] != ((2 + startVertex) % 12) ||
-                    filletPositions[(startFillet + 1) % 4] != ((3 + startVertex) % 12) ||
-                    filletPositions[(startFillet + 2) % 4] != ((8 + startVertex) % 12) ||
-                    filletPositions[(startFillet + 3) % 4] != ((9 + startVertex) % 12))
+                // startFillet can have any value from 0 to 4; if it is 4, need to reset it to 0.
+                
+                // The fillet positions relative to the upper right hand corner are:
+                // For I-Shape:
+                // if the first turn is clockwise (i.e., in -Y direction): 2,3,8,9.
+                // if the first turn is counterclockwise (i.e., in the -X direction): 3,4,9,10.
+                // For H-Shape:
+                // if the first turn is clockwise (i.e., in -Y direction): 3,4,9,10.
+                // if the first turn is counterclockwise (i.e., in the -X direction): 2,3,8,9.
+                int filletOffset = (isIShape == firstTurnIsCCW) ? 1 : 0;
+                if (filletPositions[startFillet % 4] != ((2 + filletOffset + startVertex) % 12) ||
+                    filletPositions[(startFillet + 1) % 4] != ((3 + filletOffset + startVertex) % 12) ||
+                    filletPositions[(startFillet + 2) % 4] != ((8 + filletOffset + startVertex) % 12) ||
+                    filletPositions[(startFillet + 3) % 4] != ((9 + filletOffset + startVertex) % 12))
                     return null;
 
                 double tmpFilletRadius = fillets[0].Radius;
@@ -372,43 +499,6 @@ namespace BIM.IFC.Exporter
                     filletRadius = tmpFilletRadius * scale;
             }
             
-            // Check proper turning of lines.
-            bool firstTurnIsCCW = turnsCCW[startVertex];
-            if (firstTurnIsCCW)
-            {
-                for (int ii = 0; ii < 12; ii++)
-                {
-                    int currIdx = (ii + 12 - startVertex) % 12;
-                    if (currIdx == 2 || currIdx == 3 || currIdx == 8 || currIdx == 9)
-                    {
-                        if (turnsCCW[ii])
-                            return null;
-                    }
-                    else
-                    {
-                        if (!turnsCCW[ii])
-                            return null;
-                    }
-                }
-            }
-            else
-            {
-                for (int ii = 0; ii < 12; ii++)
-                {
-                    int currIdx = (ii + 12 - startVertex) % 12;
-                    if (currIdx == 1 || currIdx == 2 || currIdx == 7 || currIdx == 8)
-                    {
-                        if (!turnsCCW[ii])
-                            return null;
-                    }
-                    else
-                    {
-                        if (turnsCCW[ii])
-                            return null;
-                    }
-                }
-            }
-
             XYZ planeNorm = origPlane.Normal;
             for (int ii = 0; ii < numFillets; ii++)
             {
@@ -417,35 +507,11 @@ namespace BIM.IFC.Exporter
                     return null;
             }
 
-            // We have an I-Shape Profile!  Get values.
-            double overallWidth = 0.0;
-            double overallDepth = 0.0;
-            double flangeThickness = 0.0;
-            double webThickness = 0.0;
-
-            if (firstTurnIsCCW)
-            {
-                overallWidth = vertices[startVertex].U - vertices[(startVertex + 1) % 12].U;
-                overallDepth = vertices[startVertex].V - vertices[(startVertex + 7) % 12].V;
-                webThickness = vertices[(startVertex + 9) % 12].U - vertices[(startVertex + 3) % 12].U;
-                flangeThickness = vertices[startVertex].V - vertices[(startVertex + 11) % 12].V;
-            }
-            else
-            {
-                overallWidth = vertices[startVertex].U - vertices[(startVertex + 11) % 12].U;
-                overallDepth = vertices[startVertex].V - vertices[(startVertex + 5) % 12].V;
-                webThickness = vertices[(startVertex + 2) % 12].U - vertices[(startVertex + 8) % 12].U;
-                flangeThickness = vertices[startVertex].V - vertices[(startVertex + 1) % 12].V;
-            }
-
             if (MathUtil.IsAlmostZero(overallWidth) || MathUtil.IsAlmostZero(overallDepth) ||
                 MathUtil.IsAlmostZero(flangeThickness) || MathUtil.IsAlmostZero(webThickness))
                 return null;
 
-            // fail if we have an H-Shaped profile.
-            if (!MathUtil.IsAlmostEqual(overallWidth, upperBoundU - lowerBoundU))
-                return null;
-
+            // We have an I-Shape Profile!
             IList<double> newCtr = new List<double>();
             newCtr.Add((vertices[0].U + vertices[6].U) / 2);
             newCtr.Add((vertices[0].V + vertices[6].V) / 2);
@@ -453,8 +519,18 @@ namespace BIM.IFC.Exporter
             IFCAnyHandle location = IFCInstanceExporter.CreateCartesianPoint(file, newCtr);
 
             IList<double> refDir = new List<double>();
-            refDir.Add(1.0);
-            refDir.Add(0.0);
+
+            if (isIShape)
+            {
+                refDir.Add(1.0);
+                refDir.Add(0.0);
+            }
+            else
+            {
+                refDir.Add(0.0);
+                refDir.Add(1.0);
+            }
+
             IFCAnyHandle refDirectionOpt = ExporterUtil.CreateDirection(file, refDir);
 
             IFCAnyHandle positionHnd = IFCInstanceExporter.CreateAxis2Placement2D(file, location, null, refDirectionOpt);
@@ -795,6 +871,232 @@ namespace BIM.IFC.Exporter
 
             newData.ExtrusionDirection = from.ExtrusionDirection;
             creationData.AddOpening(newData);
+        }
+
+        /// <summary>
+        /// Generates an IFCExtrusionCreationData from ExtrusionAnalyzer results
+        /// </summary>
+        /// <remarks>This will be used to populate certain property sets.</remarks>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="projDir">The projection direction of the extrusion.</param>
+        /// <param name="analyzer">The extrusion analyzer.</param>
+        /// <returns>The IFCExtrusionCreationData information.</returns>
+        public static IFCExtrusionCreationData GetExtrusionCreationDataFromAnalyzer(ExporterIFC exporterIFC, XYZ projDir, ExtrusionAnalyzer analyzer)
+        {
+            IFCExtrusionCreationData exportBodyParams = new IFCExtrusionCreationData();
+
+            XYZ extrusionDirection = analyzer.ExtrusionDirection;
+            double scale = exporterIFC.LinearScale;
+
+            double zOff = MathUtil.IsAlmostEqual(Math.Abs(projDir[2]), 1.0) ? (1.0 - Math.Abs(extrusionDirection[2])) : Math.Abs(extrusionDirection[2]);
+            double scaledAngle = Math.Asin(zOff) * 180 / Math.PI;
+            
+            exportBodyParams.Slope = scaledAngle;
+            exportBodyParams.ScaledLength = (analyzer.EndParameter - analyzer.StartParameter) * scale;
+            exportBodyParams.ExtrusionDirection = extrusionDirection;
+            
+            // no opening data support yet.
+
+            Face extrusionBase = analyzer.GetExtrusionBase();
+            if (extrusionBase == null)
+                return null;
+
+            IList<GeometryUtil.FaceBoundaryType> boundaryTypes;
+            IList<CurveLoop> boundaries = GeometryUtil.GetFaceBoundaries(extrusionBase, XYZ.Zero, out boundaryTypes);
+            if (boundaries.Count == 0)
+                return null;
+
+            Plane plane = null;
+            double height = 0.0, width = 0.0;
+            if (ExtrusionExporter.ComputeHeightWidthOfCurveLoop(boundaries[0], plane, out height, out width))
+            {
+                exportBodyParams.ScaledHeight = height * scale;
+                exportBodyParams.ScaledWidth = width * scale;
+            }
+
+            double area = extrusionBase.Area;
+            if (area > 0.0)
+            {
+                exportBodyParams.ScaledArea = area * scale * scale;
+            }
+
+            double innerPerimeter = ExtrusionExporter.ComputeInnerPerimeterOfCurveLoops(boundaries);
+            double outerPerimeter = ExtrusionExporter.ComputeOuterPerimeterOfCurveLoops(boundaries);
+            if (innerPerimeter > 0.0)
+                exportBodyParams.ScaledInnerPerimeter = innerPerimeter * scale;
+            if (outerPerimeter > 0.0)
+                exportBodyParams.ScaledOuterPerimeter = outerPerimeter * scale;
+
+            return exportBodyParams;
+        }
+
+        private class HandleAndAnalyzer
+        {
+            public IFCAnyHandle Handle = null;
+            public ExtrusionAnalyzer Analyzer = null;
+        }
+
+
+        private static HandleAndAnalyzer CreateExtrusionWithClippingBase(ExporterIFC exporterIFC, Element element, 
+            ElementId catId, Solid solid, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped)
+        
+        {
+            completelyClipped = false;
+            HandleAndAnalyzer nullVal = new HandleAndAnalyzer();
+            HandleAndAnalyzer retVal = new HandleAndAnalyzer();
+
+            try
+            {
+                ExtrusionAnalyzer elementAnalyzer = ExtrusionAnalyzer.Create(solid, plane, projDir);
+                retVal.Analyzer = elementAnalyzer;
+
+                IFCAnyHandle contextOfItemsBody = exporterIFC.Get3DContextHandle("Body");
+            
+                IFCAnyHandle bodyRep = null;
+                Document document = element.Document;
+                double scale = exporterIFC.LinearScale;
+                XYZ planeOrig = plane.Origin;
+                XYZ baseLoopOffset = null;
+          
+                if (!MathUtil.IsAlmostZero(elementAnalyzer.StartParameter))
+                    baseLoopOffset = elementAnalyzer.StartParameter * projDir;
+                
+                Face extrusionBase = elementAnalyzer.GetExtrusionBase();
+
+                IList<GeometryUtil.FaceBoundaryType> boundaryTypes;
+                IList<CurveLoop> extrusionBoundaryLoops =
+                    GeometryUtil.GetFaceBoundaries(extrusionBase, baseLoopOffset, out boundaryTypes);
+
+                // Return if we get any CurveLoops that are complex, as we don't want to export an approximation of the boundary here.
+                foreach (GeometryUtil.FaceBoundaryType boundaryType in boundaryTypes)
+                {
+                    if (boundaryType == GeometryUtil.FaceBoundaryType.Complex)
+                        return nullVal;
+                }
+
+                // Move base plane to start parameter location.
+                Plane extrusionBasePlane = null;
+                try
+                {
+                    extrusionBasePlane = extrusionBoundaryLoops[0].GetPlane();
+                }
+                catch
+                {
+                    return nullVal;
+                }
+
+                double extrusionLength = elementAnalyzer.EndParameter - elementAnalyzer.StartParameter;
+                double baseOffset = extrusionBasePlane.Origin.DotProduct(projDir);
+                IFCRange extrusionRange = new IFCRange(baseOffset, extrusionLength + baseOffset);
+
+                double startParam = planeOrig.DotProduct(projDir);
+                double endParam = planeOrig.DotProduct(projDir) + extrusionLength;
+                if ((range != null) && (startParam >= range.End || endParam <= range.Start))
+                {
+                    completelyClipped = true;
+                    return nullVal;
+                }
+
+                double scaledExtrusionDepth = extrusionLength * scale;
+
+                string profileName = null;
+                if (element != null)
+                {
+                    ElementType type = element.Document.GetElement(element.GetTypeId()) as ElementType;
+                    if (type != null)
+                        profileName = type.Name;
+                }
+
+                // We use a sub-transaction here in case we are able to generate the base body but not the clippings.
+                IFCFile file = exporterIFC.GetFile();
+                using (IFCTransaction tr = new IFCTransaction(file))
+                {
+                    // For creating the actual extrusion, we want to use the calculated extrusion plane, not the input plane.
+                    IFCAnyHandle extrusionBodyItemHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, profileName,
+                        extrusionBoundaryLoops, extrusionBasePlane, projDir, scaledExtrusionDepth);
+                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionBodyItemHnd))
+                    {
+                        IFCAnyHandle finalExtrusionBodyItemHnd = extrusionBodyItemHnd;
+                        IDictionary<ElementId, ICollection<ICollection<Face>>> elementCutouts =
+                            GeometryUtil.GetCuttingElementFaces(element, elementAnalyzer);
+                        foreach (KeyValuePair<ElementId, ICollection<ICollection<Face>>> elementCutoutsForElement in elementCutouts)
+                        {
+                            Element cuttingElement = document.GetElement(elementCutoutsForElement.Key);
+                            foreach (ICollection<Face> elementCutout in elementCutoutsForElement.Value)
+                            {
+                                bool unhandledClipping = false;
+                                try
+                                {
+                                    finalExtrusionBodyItemHnd = GeometryUtil.ProcessFaceCollection(exporterIFC, cuttingElement, 
+                                        extrusionBasePlane, projDir,
+                                        elementCutout, extrusionRange, finalExtrusionBodyItemHnd);
+                                }
+                                catch
+                                {
+                                    unhandledClipping = true;
+                                }
+
+                                if (finalExtrusionBodyItemHnd == null || unhandledClipping)
+                                {
+                                    // Item is completely clipped.
+                                    completelyClipped = (finalExtrusionBodyItemHnd == null);
+                                    tr.RollBack();
+                                    return nullVal;
+                                }
+                            }
+                        }
+
+                        IFCAnyHandle extrusionStyledItemHnd = BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document,
+                            extrusionBodyItemHnd, ElementId.InvalidElementId);
+
+                        HashSet<IFCAnyHandle> extrusionBodyItems = new HashSet<IFCAnyHandle>();
+                        extrusionBodyItems.Add(finalExtrusionBodyItemHnd);
+
+                        if (extrusionBodyItemHnd == finalExtrusionBodyItemHnd)
+                        {
+                            bodyRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, catId, contextOfItemsBody,
+                                extrusionBodyItems, null);
+                        }
+                        else
+                        {
+                            bodyRep = RepresentationUtil.CreateClippingRep(exporterIFC, element, catId, contextOfItemsBody,
+                                extrusionBodyItems);
+                        }
+                    }
+                    tr.Commit();
+                }
+
+                retVal.Handle = bodyRep;
+                return retVal;
+            }
+            catch
+            {
+                return nullVal;
+            }
+        }
+
+        public static IFCAnyHandle CreateExtrusionWithClipping(ExporterIFC exporterIFC, Element element, ElementId catId,
+            Solid solid, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped)
+        {
+            HandleAndAnalyzer handleAndAnalyzer = CreateExtrusionWithClippingBase(exporterIFC, element, catId,
+                solid, plane, projDir, range, out completelyClipped);
+            return handleAndAnalyzer.Handle;
+        }
+
+        public static HandleAndData CreateExtrusionWithClippingAndProperties(ExporterIFC exporterIFC, 
+            Element element, ElementId catId, Solid solid, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped)
+        {
+            HandleAndAnalyzer handleAndAnalyzer = CreateExtrusionWithClippingBase(exporterIFC, element, catId,
+                solid, plane, projDir, range, out completelyClipped);
+
+            HandleAndData ret = new HandleAndData();
+            ret.Handle = handleAndAnalyzer.Handle;
+            if (handleAndAnalyzer.Analyzer != null)
+            {
+                ret.Data = GetExtrusionCreationDataFromAnalyzer(exporterIFC, projDir, handleAndAnalyzer.Analyzer);
+            }
+
+            return ret;
         }
     }
 }

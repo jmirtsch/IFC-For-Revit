@@ -82,6 +82,9 @@ namespace BIM.IFC.Exporter
         {
             IList<PropertySetDescription> commonPropertySets = new List<PropertySetDescription>();
 
+            // Manufacturer type information
+            InitPropertySetManufacturerTypeInformation(commonPropertySets);
+
             // Architectural property sets.
             InitPropertySetBeamCommon(commonPropertySets);
             InitPropertySetRailingCommon(commonPropertySets);
@@ -122,6 +125,38 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
+        /// Initializes manufacturer type information property sets for all IfcElements.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetManufacturerTypeInformation(IList<PropertySetDescription> commonPropertySets)
+        {
+            //property set Manufacturer Information
+            PropertySetDescription propertySetManufacturer = new PropertySetDescription();
+            propertySetManufacturer.Name = "Pset_ManufacturerTypeInformation";
+
+            // sub type of IfcElement
+            propertySetManufacturer.EntityTypes.Add(IFCEntityType.IfcElement);
+
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("ArticleNumber");
+            propertySetManufacturer.Entries.Add(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateLabel("ModelReference");
+            propertySetManufacturer.Entries.Add(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateLabel("ModelLabel");
+            propertySetManufacturer.Entries.Add(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateLabel("Manufacturer");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.ALL_MODEL_MANUFACTURER;
+            propertySetManufacturer.Entries.Add(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateLabel("ProductionYear");
+            propertySetManufacturer.Entries.Add(ifcPSE);
+
+            commonPropertySets.Add(propertySetManufacturer);
+        }
+
+        /// <summary>
         /// Initializes common wall property sets.
         /// </summary>
         /// <param name="commonPropertySets">List to store property sets.</param>
@@ -133,7 +168,6 @@ namespace BIM.IFC.Exporter
             propertySetWallCommon.SubElementIndex = (int)IFCWallSubElements.PSetWallCommon;
 
             propertySetWallCommon.EntityTypes.Add(IFCEntityType.IfcWall);
-            propertySetWallCommon.EntityTypes.Add(IFCEntityType.IfcWallStandardCase);
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
             ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
@@ -578,7 +612,7 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
-        /// Initializes common bluiding element proxy property sets.
+        /// Initializes common building element proxy property sets.
         /// </summary>
         /// <param name="commonPropertySets">List to store property sets.</param>
         private static void InitPropertySetBuildingElementProxyCommon(IList<PropertySetDescription> commonPropertySets)
@@ -996,6 +1030,7 @@ namespace BIM.IFC.Exporter
             PropertySetDescription propertySetPhotovoltaicArray = new PropertySetDescription();
             propertySetPhotovoltaicArray.Name = "ePset_PhotovoltaicArray";
             propertySetPhotovoltaicArray.EntityTypes.Add(IFCEntityType.IfcRoof);
+            propertySetPhotovoltaicArray.EntityTypes.Add(IFCEntityType.IfcWall);
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("Hosts Photovoltaic Array");
             ifcPSE.PropertyName = "HostsPhotovoltaicArray";

@@ -53,7 +53,7 @@ namespace BIM.IFC.Exporter
                 bool isWallOrColumn = IsHostWallOrColumn(exporterIFC, hostElement);
                 bool hasOverrideLevel = overrideLevelId != null && overrideLevelId != ElementId.InvalidElementId;
 
-                IFCExtrusionAxes ifcExtrusionAxes = isWallOrColumn ? IFCExtrusionAxes.TryZ : IFCExtrusionAxes.TryXY;
+                IFCExtrusionAxes ifcExtrusionAxes = GetDefaultExtrusionAxesForHost(exporterIFC, hostElement);
 
                 // Split parts if wall or column is split by level, and then export; otherwise, export parts normally.
                 if (isWallOrColumn && hasOverrideLevel && ExporterCacheManager.ExportOptionsCache.WallAndColumnSplitting)
@@ -67,7 +67,7 @@ namespace BIM.IFC.Exporter
 
                     foreach (KeyValuePair<Part, IFCRange> partRange in splitPartRangeList)
                     {
-                        PartExporter.ExportPart(exporterIFC, partRange.Key, subWrapper, placementSetter, originalPlacement, partRange.Value, ifcExtrusionAxes, hostElement, overrideLevelId);
+                        PartExporter.ExportPart(exporterIFC, partRange.Key, subWrapper, placementSetter, originalPlacement, partRange.Value, ifcExtrusionAxes, hostElement, overrideLevelId, false);
                     }
                 }
                 else
@@ -75,7 +75,7 @@ namespace BIM.IFC.Exporter
                     foreach (ElementId partId in associatedPartsList)
                     {
                         Part part = hostElement.Document.GetElement(partId) as Part;
-                        PartExporter.ExportPart(exporterIFC, part, subWrapper, placementSetter, originalPlacement, null, ifcExtrusionAxes, hostElement, overrideLevelId);
+                        PartExporter.ExportPart(exporterIFC, part, subWrapper, placementSetter, originalPlacement, null, ifcExtrusionAxes, hostElement, overrideLevelId, false);
                     }
                 }
 
@@ -129,11 +129,69 @@ namespace BIM.IFC.Exporter
                         continue;
                     }
 
-                    bool isWallOrColumn = part.OriginalCategoryId == new ElementId(BuiltInCategory.OST_Walls) || part.OriginalCategoryId == new ElementId(BuiltInCategory.OST_Columns);
-                    IFCExtrusionAxes ifcExtrusionAxes = isWallOrColumn ? IFCExtrusionAxes.TryZ : IFCExtrusionAxes.TryXY;
-                    PartExporter.ExportPart(exporterIFC, partElement, productWrapper, null, null, null, ifcExtrusionAxes, null, null);
+                    IFCExtrusionAxes ifcExtrusionAxes = GetDefaultExtrusionAxesForPart(part);
+                    PartExporter.ExportPart(exporterIFC, partElement, productWrapper, null, null, null, ifcExtrusionAxes, null, null, false);
                 }
             }
+        }
+
+        /// <summary>
+        /// Export the parts as independent building elements. 
+        /// </summary>
+        /// <remarks>
+        /// The function works with AlternateIFCUI and it requires two conditions:
+        /// 1. Allows export parts: 'current view only' is checked and 'show parts' is selected.
+        /// 2. Allows export parts independent: 'Export parts as building elements' is checked in alternate UI dialog.
+        /// </remarks>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="partElement">The standalone part to export.</param>
+        /// <param name="geometryElement">The goemetry of the part.</param>
+        /// <param name="productWrapper">The IFCProductWrapper object.</param>
+        public static void ExportPartAsBuildingElement(ExporterIFC exporterIFC, Element partElement, GeometryElement geometryElement, IFCProductWrapper productWrapper)
+        {
+            Part part = partElement as Part;
+            if (!ExporterCacheManager.ExportOptionsCache.ExportParts || part == null || geometryElement == null)
+                return;
+
+            bool isWall = part.OriginalCategoryId == new ElementId(BuiltInCategory.OST_Walls);
+            bool isColumn = part.OriginalCategoryId == new ElementId(BuiltInCategory.OST_Columns);
+            bool isWallOrColumn = isWall || isColumn;
+            IFCExtrusionAxes ifcExtrusionAxes = GetDefaultExtrusionAxesForPart(part);
+            
+            Element hostElement = null;
+            ElementId overrideLevelId = null;
+
+            // Find the host element of the part.
+            hostElement = FindRootParent(part, part.OriginalCategoryId);
+
+            // If part's level is not associated, try to get the host's level with the same category.
+            if (hostElement != null && part.Level == null)
+            {
+                overrideLevelId = hostElement.Level.Id;
+            }
+
+            // Split parts with original category is wall or column and the option wall or column is split by level is checked, and then export; 
+            // otherwise, export separate parts normally.
+            if (isWallOrColumn && ExporterCacheManager.ExportOptionsCache.WallAndColumnSplitting)
+            {
+                IList<ElementId> levels = new List<ElementId>();
+                IList<IFCRange> ranges = new List<IFCRange>();
+                IFCExportType exportType = isWall ? IFCExportType.ExportWall : IFCExportType.ExportColumnType;
+                LevelUtil.CreateSplitLevelRangesForElement(exporterIFC, exportType, part, out levels, out ranges);
+                if (ranges.Count == 0)
+                {
+                    PartExporter.ExportPart(exporterIFC, partElement, productWrapper, null, null, null, ifcExtrusionAxes, hostElement, overrideLevelId, true);
+                }
+                else
+                {
+                    for (int ii = 0; ii < ranges.Count; ii++)
+                    {
+                        PartExporter.ExportPart(exporterIFC, partElement, productWrapper, null, null, ranges[ii], ifcExtrusionAxes, hostElement, levels[ii], true);
+                    }
+                }
+            }
+            else
+                PartExporter.ExportPart(exporterIFC, partElement, productWrapper, null, null, null, ifcExtrusionAxes, hostElement, overrideLevelId, true);
         }
 
         /// <summary>
@@ -145,7 +203,7 @@ namespace BIM.IFC.Exporter
         /// <param name="productWrapper">The IFCProductWrapper object.</param>
         public static void ExportPart(ExporterIFC exporterIFC, Element partElement, IFCProductWrapper productWrapper,
             IFCPlacementSetter placementSetter, IFCAnyHandle originalPlacement, IFCRange range, IFCExtrusionAxes ifcExtrusionAxes,
-            Element hostElement, ElementId overrideLevelId)
+            Element hostElement, ElementId overrideLevelId, bool asBuildingElement)
         {
             if (!ElementFilteringUtil.IsElementVisible(ExporterCacheManager.ExportOptionsCache.FilterViewForExport, partElement))
                 return;
@@ -155,19 +213,22 @@ namespace BIM.IFC.Exporter
                 return;
 
             IFCPlacementSetter standalonePlacementSetter = null;
-            bool standaloneExport = hostElement == null;
+            bool standaloneExport = hostElement == null && !asBuildingElement;
 
             ElementId partExportLevel = null;
-            if (standaloneExport)
-                partExportLevel = partElement.Level.Id;
+            if (standaloneExport || asBuildingElement)
+            {
+                if (partElement.Level != null)
+                    partExportLevel = partElement.Level.Id;
+            }
             else
             {
                 if (part.OriginalCategoryId != hostElement.Category.Id)
                     return;
                 partExportLevel = hostElement.Level.Id;
-                if (overrideLevelId != null)
-                    partExportLevel = overrideLevelId;
             }
+            if (overrideLevelId != null)
+                partExportLevel = overrideLevelId;
 
             if (ExporterCacheManager.PartExportedCache.HasExported(partElement.Id, partExportLevel))
                 return;
@@ -187,9 +248,10 @@ namespace BIM.IFC.Exporter
                 using (IFCTransaction transaction = new IFCTransaction(file))
                 {
                     IFCAnyHandle partPlacement = null;
-                    if (standaloneExport)
+                    if (standaloneExport || asBuildingElement)
                     {
-                        standalonePlacementSetter = IFCPlacementSetter.Create(exporterIFC, partElement);
+                        Transform orientationTrf = Transform.Identity;
+                        standalonePlacementSetter = IFCPlacementSetter.Create(exporterIFC, partElement, null, orientationTrf, partExportLevel);
                         partPlacement = standalonePlacementSetter.GetPlacement();
                     }
                     else
@@ -256,12 +318,57 @@ namespace BIM.IFC.Exporter
                         string partObjectType = NamingUtil.GetObjectTypeOverride(partElement, NamingUtil.CreateIFCObjectName(exporterIFC, partElement));
                         string partElemId = NamingUtil.CreateIFCElementId(partElement);
 
-                        IFCAnyHandle ifcPart = IFCInstanceExporter.CreateBuildingElementPart(file, partGUID, ownerHistory, partName, partDescription, partObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, partElemId);
+                        IFCAnyHandle ifcPart = null;
+                        if (!asBuildingElement)
+                        {
+                            ifcPart = IFCInstanceExporter.CreateBuildingElementPart(file, partGUID, ownerHistory, partName, partDescription, 
+                                partObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, partElemId);
+                        }
+                        else
+                        {
+                            string ifcEnumType;
+                            IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
+                            switch (exportType)
+                            {
+                                case IFCExportType.ExportColumnType:
+                                    ifcPart = IFCInstanceExporter.CreateColumn(file, partGUID, ownerHistory, partName, partDescription, partObjectType, 
+                                        extrusionCreationData.GetLocalPlacement(), prodRep, partElemId);
+                                    break;
+                                case IFCExportType.ExportCovering:
+                                    IFCCoveringType coveringType = CeilingExporter.GetIFCCoveringType(hostElement, ifcEnumType);
+                                    ifcPart = IFCInstanceExporter.CreateCovering(file, partGUID, ownerHistory, partName, partDescription, partObjectType, 
+                                        extrusionCreationData.GetLocalPlacement(), prodRep, partElemId, coveringType);
+                                    break;
+                                case IFCExportType.ExportFooting:
+                                    IFCFootingType footingType = FootingExporter.GetIFCFootingType(hostElement, ifcEnumType);
+                                    ifcPart = IFCInstanceExporter.CreateFooting(file, partGUID, ownerHistory, partName, partDescription, partObjectType, 
+                                        extrusionCreationData.GetLocalPlacement(), prodRep, partElemId, footingType);
+                                    break;
+                                case IFCExportType.ExportRoof:
+                                    IFCRoofType roofType = RoofExporter.GetIFCRoofType(ifcEnumType);
+                                    ifcPart = IFCInstanceExporter.CreateRoof(file, partGUID, ownerHistory, partName, partDescription, partObjectType, 
+                                        extrusionCreationData.GetLocalPlacement(), prodRep, partElemId, roofType);
+                                    break;
+                                case IFCExportType.ExportSlab:
+                                    IFCSlabType slabType = FloorExporter.GetIFCSlabType(ifcEnumType);
+                                    ifcPart = IFCInstanceExporter.CreateSlab(file, partGUID, ownerHistory, partName, partDescription, partObjectType, 
+                                        extrusionCreationData.GetLocalPlacement(), prodRep, partElemId, slabType);
+                                    break;
+                                case IFCExportType.ExportWall:
+                                    ifcPart = IFCInstanceExporter.CreateWallStandardCase(file, partGUID, ownerHistory, partName, partDescription, 
+                                        partObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, partElemId);
+                                    break;
+                                default:
+                                    ifcPart = IFCInstanceExporter.CreateBuildingElementProxy(file, partGUID, ownerHistory, partName, partDescription, 
+                                        partObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, partElemId, IFCElementComposition.Element);
+                                    break;
+                            }
+                        }
 
-                        productWrapper.AddElement(ifcPart, standaloneExport ? standalonePlacementSetter : placementSetter, extrusionCreationData, standaloneExport);
+                        productWrapper.AddElement(ifcPart, standaloneExport || asBuildingElement ? standalonePlacementSetter : placementSetter, extrusionCreationData, standaloneExport || asBuildingElement);
 
                         //Add the exported part to exported cache.
-                        TraceExportedParts(partElement, partExportLevel, standaloneExport ? ElementId.InvalidElementId : hostElement.Id);
+                        TraceExportedParts(partElement, partExportLevel, standaloneExport || asBuildingElement ? ElementId.InvalidElementId : hostElement.Id);
 
                         CategoryUtil.CreateMaterialAssociations(partElement.Document, exporterIFC, ifcPart, bodyData.MaterialIds);
 
@@ -371,6 +478,50 @@ namespace BIM.IFC.Exporter
             string ifcEnumType;
             IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
             return (exportType == IFCExportType.ExportWall) || (exportType == IFCExportType.ExportColumnType);
+        }
+
+        /// <summary>
+        /// Get the Default IFCExtrusionAxes for part. 
+        /// Simply having roof/floor/wall/column as Z and everything else as XY.
+        /// </summary>
+        /// <param name="part">The part.</param>
+        /// <returns>TryZ for wall/column/floor/roof category and TryXY for other category.</returns>
+        private static IFCExtrusionAxes GetDefaultExtrusionAxesForPart(Part part)
+        {
+            switch ((BuiltInCategory)part.OriginalCategoryId.IntegerValue)
+            {
+                case BuiltInCategory.OST_Walls:
+                case BuiltInCategory.OST_Columns:
+                case BuiltInCategory.OST_Floors:
+                case BuiltInCategory.OST_Roofs:
+                    return IFCExtrusionAxes.TryZ;
+                default:
+                    return IFCExtrusionAxes.TryXY;
+            }
+        }
+
+        /// <summary>
+        /// Get the Default IFCExtrusionAxes for host element. 
+        /// Simply having roof/floor/wall/column as Z and everything else as XY.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="hostElement">The host element to get the IFCExtrusionAxes.</param>
+        /// <returns>TryZ for wall/column/floor/roof elements and TryXY for other elements.</returns>
+        private static IFCExtrusionAxes GetDefaultExtrusionAxesForHost(ExporterIFC exporterIFC, Element hostElement)
+        {
+            string ifcEnumType;
+            IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
+
+            switch (exportType)
+            {
+                case IFCExportType.ExportWall:
+                case IFCExportType.ExportColumnType:
+                case IFCExportType.ExportSlab:
+                case IFCExportType.ExportRoof:
+                    return IFCExtrusionAxes.TryZ;
+                default:
+                    return IFCExtrusionAxes.TryXY;
+            }
         }
 
         /// <summary>
@@ -492,6 +643,40 @@ namespace BIM.IFC.Exporter
             }
 
             return theSplitLevelId;
+        }
+
+        /// <summary>
+        /// Find the root element for a part with its original category. 
+        /// </summary>
+        /// <param name="part">The part element.</param>
+        /// <param name="originalCategoryId">The category id to find the root element.</param>
+        /// <returns>The root element that makes the part; returns null if fail to find the root parent.</returns>
+        private static Element FindRootParent(Part part, ElementId originalCategoryId)
+        {
+            Element hostElement = null;
+
+            foreach (LinkElementId linkElementId in part.GetSourceElementIds())
+            {
+                if (linkElementId.HostElementId == ElementId.InvalidElementId)
+                    continue;
+
+                Element parentElement = part.Document.GetElement(linkElementId.HostElementId);
+                // If the direct parent is a part, find its parent.
+                if (parentElement is Part)
+                {
+                    Part parentPart = parentElement as Part;
+                    hostElement = FindRootParent(parentPart, originalCategoryId);
+                    if (hostElement != null)
+                        return hostElement;
+                }
+                else if (originalCategoryId == parentElement.Category.Id)
+                {
+                    hostElement = parentElement;
+                    return hostElement;
+                }
+            }
+
+            return hostElement;
         }
     }
 }

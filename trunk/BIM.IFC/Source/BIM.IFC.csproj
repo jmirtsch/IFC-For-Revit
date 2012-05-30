@@ -51,6 +51,7 @@
     <Compile Include="Exporter\FilledRegionExporter.cs" />
     <Compile Include="Exporter\FootingExporter.cs" />
     <Compile Include="Exporter\GenericMEPExporter.cs" />
+    <Compile Include="Exporter\HandleAndData.cs" />
     <Compile Include="Exporter\HostedSweepExporter.cs" />
     <Compile Include="Exporter\HostObjectExporter.cs" />
     <Compile Include="Exporter\MullionExporter.cs" />
@@ -70,6 +71,7 @@
     <Compile Include="Exporter\PropertySet\Calculators\SpaceTemperatureCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpecificZoneCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\StairRiserTreadsCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\ClassificationUtil.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDescription.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetEntry.cs" />
     <Compile Include="Exporter\PropertySet\PropertyUtil.cs" />

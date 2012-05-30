@@ -1,4 +1,4 @@
-﻿//
+//
 // BIM IFC export alternate UI library: this library works with Autodesk(R) Revit(R) to provide an alternate user interface for the export of IFC files from Revit.
 // Copyright (C) 2012  Autodesk, Inc.
 // 
@@ -85,6 +85,15 @@ namespace BIM.IFC.Export.UI.Properties {
         internal static string ExportBaseQuantities {
             get {
                 return ResourceManager.GetString("ExportBaseQuantities", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Export parts as building elements.
+        /// </summary>
+        internal static string ExportPartsAsBuildingElements {
+            get {
+                return ResourceManager.GetString("ExportPartsAsBuildingElements", resourceCulture);
             }
         }
         

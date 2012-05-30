@@ -62,7 +62,23 @@ namespace BIM.IFC.Exporter.PropertySet
         DescriptionCalculator m_DescriptionCalculator;
 
         /// <summary>
-        /// Identifies if the input handle matches the type of element to which this description applies.
+        /// Identifies if the input handle is sub type of one IFCEntityType in the EntityTypes list.
+        /// </summary>
+        /// <param name="handle">The handle.</param>
+        /// <returns>True if it is sub type, false otherwise.</returns>
+        public bool IsSubTypeOfEntityTypes(IFCAnyHandle handle)
+        {
+            foreach (IFCEntityType entityType in EntityTypes)
+            {
+                if (IFCAnyHandleUtil.IsSubTypeOf(handle, entityType))
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Identifies if the input handle matches the type of element, and optionally the object type, 
+        /// to which this description applies.
         /// </summary>
         /// <param name="handle">
         /// The handle.
@@ -72,7 +88,7 @@ namespace BIM.IFC.Exporter.PropertySet
         /// </returns>
         public bool IsAppropriateType(IFCAnyHandle handle)
         {
-            if (handle == null || !EntityTypes.Contains(IFCAnyHandleUtil.GetEntityType(handle)))
+            if (handle == null || !IsSubTypeOfEntityTypes(handle))
                 return false;
             if (ObjectType == "")
                 return true;
@@ -81,6 +97,42 @@ namespace BIM.IFC.Exporter.PropertySet
             return (NamingUtil.IsEqualIgnoringCaseAndSpaces(ObjectType, objectType));
         }
 
+        /// <summary>
+        /// Identifies if the input handle matches the type of element only to which this description applies.
+        /// </summary>
+        /// <param name="handle">
+        /// The handle.
+        /// </param>
+        /// <returns>
+        /// True if it matches, false otherwise.
+        /// </returns>
+        public bool IsAppropriateEntityType(IFCAnyHandle handle)
+        {
+            if (handle == null || !IsSubTypeOfEntityTypes(handle))
+                return false;
+            return true;         
+        }
+
+        /// <summary>
+        /// Identifies if the input handle matches the object type only to which this description applies.
+        /// </summary>
+        /// <param name="handle">
+        /// The handle.
+        /// </param>
+        /// <returns>
+        /// True if it matches, false otherwise.
+        /// </returns>
+        public bool IsAppropriateObjectType(IFCAnyHandle handle)
+        {
+            if (handle == null)
+                return false;
+            if (ObjectType == "")
+                return true;
+
+            string objectType = IFCAnyHandleUtil.GetObjectType(handle);
+            return (NamingUtil.IsEqualIgnoringCaseAndSpaces(ObjectType, objectType));
+        }
+        
         /// <summary>
         /// The name of the property or quantity set.
         /// </summary>
