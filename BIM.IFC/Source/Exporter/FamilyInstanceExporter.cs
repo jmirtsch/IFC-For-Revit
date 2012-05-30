@@ -36,42 +36,6 @@ namespace BIM.IFC.Exporter
     class FamilyInstanceExporter
     {
         /// <summary>
-        /// Creates uniformat classification.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC.</param>
-        /// <param name="file">The file.</param>
-        /// <param name="element">The element.</param>
-        /// <param name="elemHnd">The element handle.</param>
-        private static void CreateUniformatClassification(ExporterIFC exporterIFC, IFCFile file, Element element, IFCAnyHandle elemHnd)
-        {
-            // Create Uniformat classification, if it is set.
-            string uniformatCode = "";
-            if (ParameterUtil.GetStringValueFromElement(element, BuiltInParameter.UNIFORMAT_CODE, out uniformatCode) ||
-                ParameterUtil.GetStringValueFromElement(element, "Assembly Code", out uniformatCode))
-            {
-                string uniformatDescription = "";
-                if (!ParameterUtil.GetStringValueFromElement(element, BuiltInParameter.UNIFORMAT_DESCRIPTION, out uniformatDescription))
-                    ParameterUtil.GetStringValueFromElement(element, "Assembly Description", out uniformatDescription);
-
-                IFCAnyHandle classification;
-                if (!ExporterCacheManager.ClassificationCache.TryGetValue("UniFormat", out classification))
-                {
-                    classification = IFCInstanceExporter.CreateClassification(file, "http://www.csiorg.net/uniformat", "1998", null, "UniFormat");
-                    ExporterCacheManager.ClassificationCache.Add("UniFormat", classification);
-                }
-
-                IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
-                  "http://www.csiorg.net/uniformat", uniformatCode, uniformatDescription, classification);
-
-                HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
-                relatedObjects.Add(elemHnd);
-
-                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, ExporterIFCUtils.CreateGUID(),
-                   exporterIFC.GetOwnerHistoryHandle(), "UniFormatClassification", "", relatedObjects, classificationReference);
-            }
-        }
-
-        /// <summary>
         /// Exports a family instance to corresponding IFC object.
         /// </summary>
         /// <param name="exporterIFC">
@@ -563,7 +527,7 @@ namespace BIM.IFC.Exporter
                             typeInfo.ScaledOuterPerimeter = extraParams.ScaledOuterPerimeter;
                         }
 
-                        CreateUniformatClassification(exporterIFC, file, familySymbol, typeStyle);
+                        ClassificationUtil.CreateUniformatClassification(exporterIFC, file, familySymbol, typeStyle);
                     }
                 }
                 else if (!creatingType && (trySpecialColumnCreation))
@@ -829,9 +793,6 @@ namespace BIM.IFC.Exporter
                                     instanceHandle = IFCInstanceExporter.CreateBuildingElementProxy(file, instanceGUID,
                                        ownerHistory, instanceName, instanceDescription, instanceObjectType,
                                        localPlacementToUse, rep, instanceElemId, proxyType);
-
-                                    if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
-                                        CreateUniformatClassification(exporterIFC, file, familyInstance, instanceHandle);
 
                                     if (roomId == ElementId.InvalidElementId)
                                     {

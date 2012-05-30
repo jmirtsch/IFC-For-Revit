@@ -202,6 +202,32 @@ namespace BIM.IFC.Utility
             return false;
         }
 
+        /// <summary>Gets string value from built-in parameter of an element or its type.</summary>
+        /// <param name="element">The element.</param>
+        /// <param name="builtInParameter">The built-in parameter.</param>
+        /// <param name="nullAllowed">true if we allow the property value to be empty.</param>
+        /// <param name="propertyValue">The output property value.</param>
+        /// <returns>True if get the value successfully, false otherwise.</returns>
+        public static bool GetStringValueFromElementOrSymbol(Element element, BuiltInParameter builtInParameter, bool nullAllowed, out string propertyValue)
+        {
+            if (GetStringValueFromElement(element, builtInParameter, out propertyValue))
+            {
+                if (!String.IsNullOrEmpty(propertyValue))
+                    return true;
+            }
+
+            bool found = false;
+            Element elementType = element.Document.GetElement(element.GetTypeId());
+            if (elementType != null)
+            {
+                found = GetStringValueFromElement(elementType, builtInParameter, out propertyValue);
+                if (!nullAllowed && !String.IsNullOrEmpty(propertyValue))
+                    found = false;
+            }
+
+            return found;
+        }
+
         /// <summary>
         /// Sets string value of a built-in parameter of an element.
         /// </summary>

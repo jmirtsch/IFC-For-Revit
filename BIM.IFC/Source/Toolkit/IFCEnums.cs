@@ -1566,6 +1566,27 @@ namespace BIM.IFC.Toolkit
     }
 
     /// <summary>
+    /// Defines the transition type used by compositive curve segments.
+    /// </summary>
+    enum IFCTransitionCode
+    {
+        Discontinuous,
+        Continuous,
+        ContSameGradient,
+        ContSameGradientSameCurvature
+    }
+
+    /// <summary>
+    /// Defines the trimming preference used by bounded curves.
+    /// </summary>
+    enum IFCTrimmingPreference
+    {
+        Cartesian,
+        Parameter,
+        Unspecified
+    }
+
+    /// <summary>
     /// IFC entity types.
     /// </summary>
     enum IFCEntityType

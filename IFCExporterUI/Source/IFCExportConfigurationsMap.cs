@@ -100,6 +100,7 @@ namespace BIM.IFC.Export.UI
                     configuration.ExportInternalRevitPropertySets = configEntity.Get<bool>(s_setupExportRevitProps);
                     configuration.Use2DRoomBoundaryForVolume = configEntity.Get<bool>(s_setupUse2DForRoomVolume);
                     configuration.UseFamilyAndTypeNameForReference = configEntity.Get<bool>(s_setupUseFamilyAndTypeName);
+                    configuration.ExportPartsAsBuildingElements = configEntity.Get<bool>(s_setupExportPartsAsBuildingElements);
 
                     Add(configuration);
                 } 
@@ -118,6 +119,7 @@ namespace BIM.IFC.Export.UI
         private const String s_setupExportRevitProps = "ExportInternalRevitPropertySets";
         private const String s_setupUse2DForRoomVolume = "Use2DBoundariesForRoomVolume";
         private const String s_setupUseFamilyAndTypeName = "UseFamilyAndTypeNameForReference";
+        private const String s_setupExportPartsAsBuildingElements = "ExportPartsAsBuildingElements";
 
         /// <summary>
         /// Updates the setups to save into the document.
@@ -168,6 +170,7 @@ namespace BIM.IFC.Export.UI
                 builder.AddSimpleField(s_setupExportRevitProps, typeof(bool));
                 builder.AddSimpleField(s_setupUse2DForRoomVolume, typeof(bool));
                 builder.AddSimpleField(s_setupUseFamilyAndTypeName, typeof(bool));
+                builder.AddSimpleField(s_setupExportPartsAsBuildingElements, typeof(bool));
 
                 m_schema = builder.Finish();
            }
@@ -203,6 +206,7 @@ namespace BIM.IFC.Export.UI
                 entity.Set(s_setupExportRevitProps, configuration.ExportInternalRevitPropertySets);
                 entity.Set(s_setupUse2DForRoomVolume, configuration.Use2DRoomBoundaryForVolume);
                 entity.Set(s_setupUseFamilyAndTypeName, configuration.UseFamilyAndTypeNameForReference);
+                entity.Set(s_setupExportPartsAsBuildingElements, configuration.ExportPartsAsBuildingElements);
 
                 configStorage.SetEntity(entity);
             }

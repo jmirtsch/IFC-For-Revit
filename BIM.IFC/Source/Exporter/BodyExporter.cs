@@ -504,6 +504,519 @@ namespace BIM.IFC.Exporter
             return currMappedRepHnd;
         }
 
+        // This is a simplified routine for solids that are composed of planar faces with polygonal edges.  This
+        // allows us to use the edges as the boundaries of the faces.
+        private static bool ExportPlanarBodyIfPossible(ExporterIFC exporterIFC, Solid solid,
+            IList<HashSet<IFCAnyHandle>> currentFaceHashSetList)
+        {
+            IFCFile file = exporterIFC.GetFile();
+
+            foreach (Face face in solid.Faces)
+            {
+                if (!(face is PlanarFace))
+                    return false;
+            }
+
+            IList<IFCAnyHandle> vertexHandles = new List<IFCAnyHandle>();
+            HashSet<IFCAnyHandle> currentFaceSet = new HashSet<IFCAnyHandle>();
+            IDictionary<XYZ, IFCAnyHandle> vertexCache = new Dictionary<XYZ, IFCAnyHandle>();
+            IDictionary<Edge, IList<IFCAnyHandle>> edgeCache = new Dictionary<Edge, IList<IFCAnyHandle>>();
+
+            foreach (Face face in solid.Faces)
+            {
+                HashSet<IFCAnyHandle> faceBounds = new HashSet<IFCAnyHandle>();
+                EdgeArrayArray edgeArrayArray = face.EdgeLoops;
+
+                bool outerEdge = true;
+                foreach (EdgeArray edgeArray in edgeArrayArray)
+                {
+                    IList<IFCAnyHandle> vertices = new List<IFCAnyHandle>();
+                    foreach (Edge edge in edgeArray)
+                    {
+                        IList<IFCAnyHandle> edgeVertices = null;
+                        if (!edgeCache.TryGetValue(edge, out edgeVertices))
+                        {
+                            edgeVertices = new List<IFCAnyHandle>();
+                            Curve curve = edge.AsCurveFollowingFace(face);
+
+                            IList<XYZ> curvePoints = curve.Tessellate();
+                            int numPoints = curvePoints.Count;
+
+                            // Don't add last point to vertives, as this will be added in the next edge, but we do want it
+                            // in the vertex cache and the edge vertex cache.
+                            for (int idx = 0; idx < numPoints; idx++)
+                            {
+                                IFCAnyHandle pointHandle = null;
+
+                                if (!vertexCache.TryGetValue(curvePoints[idx], out pointHandle))
+                                {
+                                    XYZ pointScaled = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, curvePoints[idx]);
+                                    pointHandle = ExporterUtil.CreateCartesianPoint(file, pointScaled);
+                                    vertexCache[curvePoints[idx]] = pointHandle;
+                                    edgeVertices.Add(pointHandle);
+                                }
+
+                                if (idx != numPoints - 1)
+                                    vertices.Add(pointHandle);
+                            }
+                        }
+                        else
+                        {
+                            int numEdgePoints = edgeVertices.Count;
+                            for (int idx = numEdgePoints - 1; idx > 0; idx--)
+                            {
+                                vertices.Add(edgeVertices[idx]);
+                            }
+                        }
+                    }
+
+                    IFCAnyHandle faceLoop = IFCInstanceExporter.CreatePolyLoop(file, vertices);
+                    IFCAnyHandle faceBound = outerEdge ?
+                        IFCInstanceExporter.CreateFaceOuterBound(file, faceLoop, true) :
+                        IFCInstanceExporter.CreateFaceBound(file, faceLoop, true);
+
+                    outerEdge = false;
+                    faceBounds.Add(faceBound);
+                }
+                IFCAnyHandle currFace = IFCInstanceExporter.CreateFace(file, faceBounds);
+                currentFaceSet.Add(currFace);
+            }
+
+            currentFaceHashSetList.Add(currentFaceSet);
+            return true;
+        }
+
+        // This class allows us to merge points that are equal within a small tolerance.
+        private class FuzzyPoint
+        {
+            XYZ m_Point;
+
+            public FuzzyPoint(XYZ point)
+            {
+                m_Point = point;
+            }
+
+            public XYZ Point
+            {
+                get { return m_Point; }
+                set { m_Point = value; }
+            }
+
+            static public bool operator ==(FuzzyPoint first, FuzzyPoint second)
+            {
+                Object lhsObject = first;
+                Object rhsObject = second;
+                if (null == lhsObject)
+                {
+                    if (null == rhsObject)
+                        return true;
+                    return false;
+                }
+                if (null == rhsObject)
+                    return false;
+
+                if (!first.Point.IsAlmostEqualTo(second.Point))
+                    return false;
+
+                return true;
+            }
+
+            static public bool operator !=(FuzzyPoint first, FuzzyPoint second)
+            {
+                return !(first ==second);
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (obj == null)
+                    return false;
+
+                FuzzyPoint second = obj as FuzzyPoint;
+                return (this == second);
+            }
+
+            public override int GetHashCode()
+            {
+                double total = Point.X + Point.Y + Point.Z;
+                return Math.Floor(total * 10000.0 + 0.3142).GetHashCode();
+            }
+        }
+        
+        // This class allows us to merge Planes that have normals and origins that are equal within a small tolerance.
+        private class PlanarKey
+        {
+            FuzzyPoint m_Norm;
+            FuzzyPoint m_Origin;
+
+            public PlanarKey(XYZ norm, XYZ origin)
+            {
+                m_Norm = new FuzzyPoint(norm);
+                m_Origin = new FuzzyPoint(origin);
+            }
+
+            public XYZ Norm
+            {
+                get { return m_Norm.Point; }
+                set { m_Norm.Point = value; }
+            }
+
+            public XYZ Origin
+            {
+                get { return m_Origin.Point; }
+                set { m_Origin.Point = value; }
+            }
+
+            static public bool operator ==(PlanarKey first, PlanarKey second)
+            {
+                Object lhsObject = first;
+                Object rhsObject = second;
+                if (null == lhsObject)
+                {
+                    if (null == rhsObject)
+                        return true;
+                    return false;
+                }
+                if (null == rhsObject)
+                    return false;
+
+                if (first.m_Origin != second.m_Origin)
+                    return false;
+
+                if (first.m_Norm != second.m_Norm)
+                    return false;
+
+                return true;
+            }
+
+            static public bool operator !=(PlanarKey first, PlanarKey second)
+            {
+                return !(first ==second);
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (obj == null)
+                    return false;
+
+                PlanarKey second = obj as PlanarKey;
+                return (this == second);
+            }
+
+            public override int GetHashCode()
+            {
+                return m_Origin.GetHashCode() + m_Norm.GetHashCode();
+            }
+        }
+
+        // This class contains a listing of the indices of the triangles on the plane, and some simple
+        // connection information to speed up sewing.
+        private class PlanarInfo
+        {
+            public IList<int> TriangleList = new List<int>();
+
+            public Dictionary<int, HashSet<int>> TrianglesAtVertexList = new Dictionary<int, HashSet<int>>();
+
+            public void AddTriangleIndexToVertexGrouping(int triangleIndex, int vertex)
+            {
+                HashSet<int> trianglesAtVertex;
+                if (TrianglesAtVertexList.TryGetValue(vertex, out trianglesAtVertex))
+                    trianglesAtVertex.Add(triangleIndex);
+                else
+                {
+                    trianglesAtVertex = new HashSet<int>();
+                    trianglesAtVertex.Add(triangleIndex);
+                    TrianglesAtVertexList[vertex] = trianglesAtVertex;
+                }
+            }
+        }
+
+        private static IList<LinkedList<int>> ConvertTrianglesToPlanarFacets(TriangulatedShellComponent component)
+        {
+            IList<LinkedList<int>> facets = new List<LinkedList<int>>();
+            
+            int numTriangles = component.TriangleCount;
+
+            // sort triangles by normals.
+
+            // This is a list of triangles whose planes are difficult to calculate, so we won't try to optimize them.
+            IList<int> sliverTriangles = new List<int>();
+
+            // PlanarKey allows for planes with almost equal normals and origins to be merged.
+            Dictionary<PlanarKey, PlanarInfo> planarGroupings = new Dictionary<PlanarKey, PlanarInfo>();
+
+            for (int ii = 0; ii < numTriangles; ii++)
+            {
+                TriangleInShellComponent currTriangle = component.GetTriangle(ii);
+
+                // Normalize fails if the length is less than 1e-8 or so.  As such, normalilze the vectors
+                // along the way to make sure the CrossProduct length isn't too small. 
+                int vertex0 = currTriangle.VertexIndex0;
+                int vertex1 = currTriangle.VertexIndex1;
+                int vertex2 = currTriangle.VertexIndex2;
+
+                XYZ pt1 = component.GetVertex(vertex0);
+                XYZ pt2 = component.GetVertex(vertex1);
+                XYZ pt3 = component.GetVertex(vertex2);
+                XYZ norm = null;
+
+                try
+                {
+                    XYZ xDir = (pt2 - pt1).Normalize();
+                    norm = xDir.CrossProduct((pt3 - pt1).Normalize());
+                    norm = norm.Normalize();
+                }
+                catch
+                {
+                    sliverTriangles.Add(ii);
+                    continue;
+                }
+
+                double distToOrig = norm.DotProduct(pt1);
+                XYZ origin = new XYZ(norm.X * distToOrig, norm.Y * distToOrig, norm.Z * distToOrig);
+
+                // Go through map of existing planes and add triangle.
+                PlanarInfo planarGrouping = null;
+                
+                PlanarKey currKey = new PlanarKey(norm, origin);
+                if (planarGroupings.TryGetValue(currKey, out planarGrouping))
+                {
+                    planarGrouping.TriangleList.Add(ii);
+                }
+                else
+                {
+                    planarGrouping = new PlanarInfo();
+                    planarGrouping.TriangleList.Add(ii);
+                    planarGroupings[currKey] = planarGrouping;
+                }
+
+                planarGrouping.AddTriangleIndexToVertexGrouping(ii, vertex0);
+                planarGrouping.AddTriangleIndexToVertexGrouping(ii, vertex1);
+                planarGrouping.AddTriangleIndexToVertexGrouping(ii, vertex2);
+            }
+
+            foreach (PlanarInfo planarGroupingInfo in planarGroupings.Values)
+            {
+                IList<int> planarGrouping = planarGroupingInfo.TriangleList;
+
+                HashSet<int> visitedTriangles = new HashSet<int>();
+                int numCurrTriangles = planarGrouping.Count;
+
+                for (int ii = 0; ii < numCurrTriangles; ii++)
+                {
+                    int idx = planarGrouping[ii];
+                    if (visitedTriangles.Contains(idx))
+                        continue;
+
+                    TriangleInShellComponent currTriangle = component.GetTriangle(idx);
+
+                    HashSet<int> currFacetVertices = new HashSet<int>();
+
+                    LinkedList<int> currFacet = new LinkedList<int>();
+                    currFacet.AddLast(currTriangle.VertexIndex0);
+                    currFacet.AddLast(currTriangle.VertexIndex1);
+                    currFacet.AddLast(currTriangle.VertexIndex2);
+
+                    currFacetVertices.Add(currTriangle.VertexIndex0);
+                    currFacetVertices.Add(currTriangle.VertexIndex1);
+                    currFacetVertices.Add(currTriangle.VertexIndex2);
+
+                    visitedTriangles.Add(idx);
+
+                    bool foundTriangle;
+                    do
+                    {
+                        foundTriangle = false;
+
+                        // For each pair of adjacent vertices in the triangle, see if there is a triangle that shares that edge.
+                        int sizeOfCurrBoundary = currFacet.Count;
+                        foreach (int currVertexIndex in currFacet)
+                        {
+                            HashSet<int> trianglesAtCurrVertex = planarGroupingInfo.TrianglesAtVertexList[currVertexIndex];
+                            foreach (int potentialNeighbor in trianglesAtCurrVertex)
+                            {
+                                if (visitedTriangles.Contains(potentialNeighbor))
+                                    continue;
+
+                                TriangleInShellComponent candidateTriangle = component.GetTriangle(potentialNeighbor);
+                                int oldVertex = -1, newVertex = -1;
+
+                                // Same normal, unvisited face - see if we have a matching edge.
+                                if (currFacetVertices.Contains(candidateTriangle.VertexIndex0))
+                                {
+                                    if (currFacetVertices.Contains(candidateTriangle.VertexIndex1))
+                                    {
+                                        oldVertex = candidateTriangle.VertexIndex1;
+                                        newVertex = candidateTriangle.VertexIndex2;
+                                    }
+                                    else if (currFacetVertices.Contains(candidateTriangle.VertexIndex2))
+                                    {
+                                        oldVertex = candidateTriangle.VertexIndex0;
+                                        newVertex = candidateTriangle.VertexIndex1;
+                                    }
+                                }
+                                else if (currFacetVertices.Contains(candidateTriangle.VertexIndex1))
+                                {
+                                    if (currFacetVertices.Contains(candidateTriangle.VertexIndex2))
+                                    {
+                                        oldVertex = candidateTriangle.VertexIndex2;
+                                        newVertex = candidateTriangle.VertexIndex0;
+                                    }
+                                }
+
+                                if (oldVertex == -1 || newVertex == -1)
+                                    continue;
+
+                                // Found a matching edge, insert it into the existing list.
+                                LinkedListNode<int> newPosition = currFacet.Find(oldVertex);
+                                currFacet.AddAfter(newPosition, newVertex);
+
+                                foundTriangle = true;
+                                visitedTriangles.Add(potentialNeighbor);
+                                currFacetVertices.Add(newVertex);
+
+                                break;
+                            }
+
+                            if (foundTriangle)
+                                break;
+                        }
+                    } while (foundTriangle);
+
+                    // Check the validity of the facets.  For now, if we have a duplicated vertex,
+                    // revert to the original triangles.  TODO: split the facet into outer and inner
+                    // loops and remove unnecessary edges.
+                    if (currFacet.Count == currFacetVertices.Count)
+                        facets.Add(currFacet);
+                    else
+                    {
+                        foreach (int visitedIdx in visitedTriangles)
+                        {
+                            TriangleInShellComponent visitedTriangle = component.GetTriangle(visitedIdx);
+
+                            LinkedList<int> visitedFacet = new LinkedList<int>();
+                            visitedFacet.AddLast(visitedTriangle.VertexIndex0);
+                            visitedFacet.AddLast(visitedTriangle.VertexIndex1);
+                            visitedFacet.AddLast(visitedTriangle.VertexIndex2);
+
+                            facets.Add(visitedFacet);
+                        }
+                    }
+                }
+            }
+
+            // Add in slivery triangles.
+            foreach (int sliverIdx in sliverTriangles)
+            {
+                TriangleInShellComponent currTriangle = component.GetTriangle(sliverIdx);
+
+                LinkedList<int> currFacet = new LinkedList<int>();
+                currFacet.AddLast(currTriangle.VertexIndex0);
+                currFacet.AddLast(currTriangle.VertexIndex1);
+                currFacet.AddLast(currTriangle.VertexIndex2);
+
+                facets.Add(currFacet);
+            }
+
+            return facets;
+        }
+
+        private static bool ExportBodyAsSolid(ExporterIFC exporterIFC, Element element, BodyExporterOptions options,
+            IList<HashSet<IFCAnyHandle>> currentFaceHashSetList, GeometryObject geomObject)
+        {
+            IFCFile file = exporterIFC.GetFile();
+            Document document = element.Document;
+            bool exportedAsSolid = false;
+
+
+            try
+            {
+                if (geomObject is Solid)
+                {
+                    Solid solid = geomObject as Solid;
+                    exportedAsSolid = ExportPlanarBodyIfPossible(exporterIFC, solid, currentFaceHashSetList);
+                    if (exportedAsSolid)
+                        return exportedAsSolid;
+
+                    SolidOrShellTessellationControls tessellationControls = options.TessellationControls;
+
+                    TriangulatedSolidOrShell solidFacetation =
+                        SolidUtils.TessellateSolidOrShell(solid, tessellationControls);
+                    if (solidFacetation.ShellComponentCount == 1)
+                    {
+                        TriangulatedShellComponent component = solidFacetation.GetShellComponent(0);
+                        int numberOfTriangles = component.TriangleCount;
+                        int numberOfVertices = component.VertexCount;
+                        if (numberOfTriangles > 0 && numberOfVertices > 0)
+                        {
+                            IList<IFCAnyHandle> vertexHandles = new List<IFCAnyHandle>();
+                            HashSet<IFCAnyHandle> currentFaceSet = new HashSet<IFCAnyHandle>();
+
+                            // create list of vertices first.
+                            for (int ii = 0; ii < numberOfVertices; ii++)
+                            {
+                                XYZ vertex = component.GetVertex(ii);
+                                XYZ vertexScaled = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, vertex);
+                                IFCAnyHandle vertexHandle = ExporterUtil.CreateCartesianPoint(file, vertexScaled);
+                                vertexHandles.Add(vertexHandle);
+                            }
+
+                            try
+                            {
+                                IList<LinkedList<int>> facets = ConvertTrianglesToPlanarFacets(component);
+                                foreach (LinkedList<int> facet in facets)
+                                {
+                                    IList<IFCAnyHandle> vertices = new List<IFCAnyHandle>();
+                                    int numVertices = facet.Count;
+                                    if (numVertices < 3)
+                                        continue;
+                                    foreach (int vertexIndex in facet)
+                                    {
+                                        vertices.Add(vertexHandles[vertexIndex]);
+                                    }
+
+                                    IFCAnyHandle faceOuterLoop = IFCInstanceExporter.CreatePolyLoop(file, vertices);
+                                    IFCAnyHandle faceOuterBound = IFCInstanceExporter.CreateFaceOuterBound(file, faceOuterLoop, true);
+                                    HashSet<IFCAnyHandle> faceBounds = new HashSet<IFCAnyHandle>();
+                                    faceBounds.Add(faceOuterBound);
+                                    IFCAnyHandle face = IFCInstanceExporter.CreateFace(file, faceBounds);
+                                    currentFaceSet.Add(face);
+                                }
+                            }
+                            catch
+                            {
+                                for (int ii = 0; ii < numberOfTriangles; ii++)
+                                {
+                                    TriangleInShellComponent triangle = component.GetTriangle(ii);
+                                    IList<IFCAnyHandle> vertices = new List<IFCAnyHandle>();
+                                    vertices.Add(vertexHandles[triangle.VertexIndex0]);
+                                    vertices.Add(vertexHandles[triangle.VertexIndex1]);
+                                    vertices.Add(vertexHandles[triangle.VertexIndex2]);
+                                    IFCAnyHandle faceOuterLoop = IFCInstanceExporter.CreatePolyLoop(file, vertices);
+                                    IFCAnyHandle faceOuterBound = IFCInstanceExporter.CreateFaceOuterBound(file, faceOuterLoop, true);
+                                    HashSet<IFCAnyHandle> faceBounds = new HashSet<IFCAnyHandle>();
+                                    faceBounds.Add(faceOuterBound);
+                                    IFCAnyHandle face = IFCInstanceExporter.CreateFace(file, faceBounds);
+                                    currentFaceSet.Add(face);
+                                }
+                            }
+                            finally
+                            {
+                                currentFaceHashSetList.Add(currentFaceSet);
+                                exportedAsSolid = true;
+                            }
+                        }
+                    }
+                }
+                return exportedAsSolid;
+            }
+            catch
+            {
+                string errMsg = String.Format("TessellateSolidOrShell failed in IFC export for element \"{0}\" with id {1}", element.Name, element.Id);
+                document.Application.WriteJournalComment(errMsg, false/*timestamp*/);
+                return false;
+            }
+        }
+
         // NOTE: the useMappedGeometriesIfPossible and useGroupsIfPossible options are experimental and do not yet work well.
         // In shipped code, these are always false, and should be kept false until API support routines are proved to be reliable.
         private static BodyData ExportBodyAsBRep(ExporterIFC exporterIFC, IList<GeometryObject> splitGeometryList, 
@@ -567,89 +1080,7 @@ namespace BIM.IFC.Exporter
                 bool exportedAsSolid = false;
                 if (exportAsBReps || isCoarse)
                 {
-                    try
-                    {
-                        if (geomObject is Solid)
-                        {
-                            Solid solid = geomObject as Solid;
-
-                            SolidOrShellTessellationControls tessellationControls = options.TessellationControls;
-                            
-                            TriangulatedSolidOrShell solidFacetation =
-                                SolidUtils.TessellateSolidOrShell(solid, tessellationControls);
-                            if (solidFacetation.ShellComponentCount == 1)
-                            {
-                                TriangulatedShellComponent component = solidFacetation.GetShellComponent(0);
-                                int numberOfTriangles = component.TriangleCount;
-                                int numberOfVertices = component.VertexCount;
-                                if (numberOfTriangles > 0 && numberOfVertices > 0)
-                                {
-                                    IList<IFCAnyHandle> vertexHandles = new List<IFCAnyHandle>();
-                                    HashSet<IFCAnyHandle> currentFaceSet = new HashSet<IFCAnyHandle>();
-
-                                    // create list of vertices first.
-                                    for (int ii = 0; ii < numberOfVertices; ii++)
-                                    {
-                                        XYZ vertex = component.GetVertex(ii);
-                                        XYZ vertexScaled = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, vertex);
-                                        IFCAnyHandle vertexHandle = ExporterUtil.CreateCartesianPoint(file, vertexScaled);
-                                        vertexHandles.Add(vertexHandle);
-                                    }
-
-                                    try
-                                    {
-                                        TriangulationInterfaceForTriangulatedShellComponent componentInterface =
-                                            new TriangulationInterfaceForTriangulatedShellComponent(component);
-                                        IList<TriOrQuadFacet> facets = FacetingUtils.ConvertTrianglesToQuads(componentInterface);
-                                        foreach (TriOrQuadFacet facet in facets)
-                                        {
-                                            IList<IFCAnyHandle> vertices = new List<IFCAnyHandle>();
-                                            int numVertices = facet.NumberOfVertices;
-                                            if (numVertices < 3)
-                                                continue;
-                                            for (int jj = 0; jj < facet.NumberOfVertices; jj++)
-                                            {
-                                                vertices.Add(vertexHandles[facet.GetVertexIndex(jj)]);
-                                            }
-                                            IFCAnyHandle faceOuterLoop = IFCInstanceExporter.CreatePolyLoop(file, vertices);
-                                            IFCAnyHandle faceOuterBound = IFCInstanceExporter.CreateFaceOuterBound(file, faceOuterLoop, true);
-                                            HashSet<IFCAnyHandle> faceBounds = new HashSet<IFCAnyHandle>();
-                                            faceBounds.Add(faceOuterBound);
-                                            IFCAnyHandle face = IFCInstanceExporter.CreateFace(file, faceBounds);
-                                            currentFaceSet.Add(face);
-                                        }
-                                    }
-                                    catch
-                                    {
-                                        for (int ii = 0; ii < numberOfTriangles; ii++)
-                                        {
-                                            TriangleInShellComponent triangle = component.GetTriangle(ii);
-                                            IList<IFCAnyHandle> vertices = new List<IFCAnyHandle>();
-                                            vertices.Add(vertexHandles[triangle.VertexIndex0]);
-                                            vertices.Add(vertexHandles[triangle.VertexIndex1]);
-                                            vertices.Add(vertexHandles[triangle.VertexIndex2]);
-                                            IFCAnyHandle faceOuterLoop = IFCInstanceExporter.CreatePolyLoop(file, vertices);
-                                            IFCAnyHandle faceOuterBound = IFCInstanceExporter.CreateFaceOuterBound(file, faceOuterLoop, true);
-                                            HashSet<IFCAnyHandle> faceBounds = new HashSet<IFCAnyHandle>();
-                                            faceBounds.Add(faceOuterBound);
-                                            IFCAnyHandle face = IFCInstanceExporter.CreateFace(file, faceBounds);
-                                            currentFaceSet.Add(face);
-                                        }
-                                    }
-                                    finally
-                                    {
-                                        currentFaceHashSetList.Add(currentFaceSet);
-                                        exportedAsSolid = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        string errMsg = String.Format("TessellateSolidOrShell failed in IFC export for element \"{0}\" with id {1}", element.Name, element.Id);
-                        document.Application.WriteJournalComment(errMsg, false/*timestamp*/);
-                    }
+                    exportedAsSolid = ExportBodyAsSolid(exporterIFC, element, options, currentFaceHashSetList, geomObject);
                 }
                
                 if (!exportedAsSolid)

@@ -180,6 +180,10 @@ namespace BIM.IFC.Exporter
             if (!ElementFilteringUtil.ShouldCategoryBeExported(exporterIFC, element))
                 return;
 
+            // if we allow exporting parts as independent building elements, then prevent also exporting the host elements containing the parts.
+            if (ExporterCacheManager.ExportOptionsCache.ExportPartsAsBuildingElements && PartExporter.CanExportParts(element))
+                return;
+
             //WriteIFCExportedElements
             if (m_Writer != null)
             {
@@ -195,6 +199,8 @@ namespace BIM.IFC.Exporter
 
                     ExportElementProperties(exporterIFC, element, productWrapper);
                     ExportElementQuantities(exporterIFC, element, productWrapper);
+                    if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
+                        ExportElementClassifications(exporterIFC, element, productWrapper);
                 }
             }
             catch (System.Exception ex)
@@ -345,7 +351,10 @@ namespace BIM.IFC.Exporter
                     else if (element is Part)
                     {
                         Part part = element as Part;
-                        PartExporter.ExportStandalonePart(exporterIFC, part, geomElem, productWrapper);
+                        if (ExporterCacheManager.ExportOptionsCache.ExportPartsAsBuildingElements)
+                            PartExporter.ExportPartAsBuildingElement(exporterIFC, part, geomElem, productWrapper);
+                        else
+                            PartExporter.ExportStandalonePart(exporterIFC, part, geomElem, productWrapper);
                     }
                     else if (element is Railing)
                     {
@@ -974,7 +983,7 @@ namespace BIM.IFC.Exporter
         /// Exports the element properties.
         /// </summary>
         /// <param name="exporterIFC">The IFC exporter object.</param>
-        /// <param name="element ">The element which properties are exported.</param>
+        /// <param name="element ">The element whose properties are exported.</param>
         /// <param name="productWrapper">The IFCProductWrapper object.</param>
         internal void ExportElementProperties(ExporterIFC exporterIFC, Element element, IFCProductWrapper productWrapper)
         {
@@ -997,20 +1006,42 @@ namespace BIM.IFC.Exporter
                 {
                     IFCEntityType prodHndType = IFCAnyHandleUtil.GetEntityType(prodHnd);
                     IList<PropertySetDescription> currPsetsToCreate = null;
+
                     if (!ExporterCacheManager.PropertySetsForTypeCache.TryGetValue(prodHndType, out currPsetsToCreate))
                     {
                         currPsetsToCreate = new List<PropertySetDescription>();
+
+                        IList<PropertySetDescription> unconditionalPsetsToCreate = new List<PropertySetDescription>();
+                        IList<PropertySetDescription> conditionalPsetsToCreate = new List<PropertySetDescription>();
+
                         foreach (IList<PropertySetDescription> currStandard in psetsToCreate)
                         {
                             foreach (PropertySetDescription currDesc in currStandard)
                             {
-                                if (currDesc.IsAppropriateType(prodHnd))
+                                if (currDesc.IsAppropriateEntityType(prodHnd))
                                 {
-                                    currPsetsToCreate.Add(currDesc);
+                                    if (currDesc.IsAppropriateObjectType(prodHnd))
+                                        currPsetsToCreate.Add(currDesc);
+
+                                    if (currDesc.ObjectType == "")
+                                        unconditionalPsetsToCreate.Add(currDesc);
+                                    else
+                                        conditionalPsetsToCreate.Add(currDesc);
                                 }
                             }
                         }
-                        ExporterCacheManager.PropertySetsForTypeCache[prodHndType] = currPsetsToCreate;
+                        ExporterCacheManager.PropertySetsForTypeCache[prodHndType] = unconditionalPsetsToCreate;
+                        ExporterCacheManager.ConditionalPropertySetsForTypeCache[prodHndType] = conditionalPsetsToCreate;
+                    }
+                    else
+                    {
+                        IList<PropertySetDescription> conditionalPsetsToCreate = 
+                            ExporterCacheManager.ConditionalPropertySetsForTypeCache[prodHndType];
+                        foreach (PropertySetDescription currDesc in conditionalPsetsToCreate)
+                        {
+                            if (currDesc.IsAppropriateObjectType(prodHnd))
+                                currPsetsToCreate.Add(currDesc);
+                        }
                     }
 
                     if (currPsetsToCreate.Count == 0)
@@ -1076,7 +1107,7 @@ namespace BIM.IFC.Exporter
         /// Exports Pset_Draughting for IFC 2x2 standard.
         /// </summary>
         /// <param name="exporterIFC">The IFC exporter object.</param>
-        /// <param name="element ">The element which properties are exported.</param>
+        /// <param name="element ">The element whose properties are exported.</param>
         /// <param name="productWrapper">The IFCProductWrapper object.</param>
         void ExportPsetDraughtingFor2x2(ExporterIFC exporterIFC, Element element, IFCProductWrapper productWrapper)
         {
@@ -1118,7 +1149,7 @@ namespace BIM.IFC.Exporter
         /// Exports the IFC element quantities.
         /// </summary>
         /// <param name="exporterIFC">The IFC exporter object.</param>
-        /// <param name="element ">The element which quantities are exported.</param>
+        /// <param name="element ">The element whose quantities are exported.</param>
         /// <param name="productWrapper">The IFCProductWrapper object.</param>
         internal void ExportElementQuantities(ExporterIFC exporterIFC, Element element, IFCProductWrapper productWrapper)
         {
@@ -1178,6 +1209,28 @@ namespace BIM.IFC.Exporter
                             }
                         }
                     }
+                }
+                transaction.Commit();
+            }
+        }
+
+        /// <summary>Exports the element classification(s)./// </summary>
+        /// <param name="exporterIFC">The IFC exporter object.</param>
+        /// <param name="element">The element whose classifications are exported.</param>
+        /// <param name="productWrapper">The IFCProductWrapper object.</param>
+        internal void ExportElementClassifications(ExporterIFC exporterIFC, Element element, IFCProductWrapper productWrapper)
+        {
+            if (productWrapper.Count == 0)
+                return;
+
+            IFCFile file = exporterIFC.GetFile();
+            using (IFCTransaction transaction = new IFCTransaction(file))
+            {
+                ICollection<IFCAnyHandle> productSet = productWrapper.GetAllObjects();
+                foreach (IFCAnyHandle prodHnd in productSet)
+                {
+                    if (IFCAnyHandleUtil.IsSubTypeOf(prodHnd, IFCEntityType.IfcElement))
+                        ClassificationUtil.CreateUniformatClassification(exporterIFC, file, element, prodHnd);
                 }
                 transaction.Commit();
             }

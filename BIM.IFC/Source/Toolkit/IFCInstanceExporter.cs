@@ -1719,6 +1719,16 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandleUtil.SetAttribute(halfSpaceSolidHnd, "AgreementFlag", agreementFlag);
         }
 
+        private static void ValidateConic(IFCAnyHandle position)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(position, false, IFCEntityType.IfcAxis2Placement2D, IFCEntityType.IfcAxis2Placement3D);
+        }
+
+        private static void SetConic(IFCAnyHandle conic, IFCAnyHandle position)
+        {
+            IFCAnyHandleUtil.SetAttribute(conic, "Position", position);
+        }
+
         /// <summary>
         /// Creates a handle representing an IfcReinforcingBar and assigns it to the file.
         /// </summary>
@@ -2640,6 +2650,50 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Creates a handle representing an IfcCircle and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="position">The local coordinate system with the origin at the center of the circle.</param>
+        /// <param name="radius">The radius of the circle.  Must be positive.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateCircle(IFCFile file, IFCAnyHandle position, double radius)
+        {
+            ValidateConic(position);
+
+            if (radius < MathUtil.Eps())
+                throw new ArgumentException("Radius is tiny, zero, or negative.");
+
+            IFCAnyHandle circle = CreateInstance(file, IFCEntityType.IfcCircle);
+            SetConic(circle, position);
+            IFCAnyHandleUtil.SetAttribute(circle, "Radius", radius);
+            return circle;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcEllipse and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="position">The local coordinate system with the origin at the center of the circle.</param>
+        /// <param name="semiAxis1">The radius in the direction of X in the local coordinate system.</param>
+        /// <param name="semiAxis2">The radius in the direction of Y in the local coordinate system.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateEllipse(IFCFile file, IFCAnyHandle position, double semiAxis1, double semiAxis2)
+        {
+            ValidateConic(position);
+
+            if (semiAxis1 < MathUtil.Eps())
+                throw new ArgumentException("semiAxis1 is tiny, zero, or negative.");
+            if (semiAxis2 < MathUtil.Eps())
+                throw new ArgumentException("semiAxis2 is tiny, zero, or negative.");
+
+            IFCAnyHandle ellipse = CreateInstance(file, IFCEntityType.IfcEllipse);
+            SetConic(ellipse, position);
+            IFCAnyHandleUtil.SetAttribute(ellipse, "SemiAxis1", semiAxis1);
+            IFCAnyHandleUtil.SetAttribute(ellipse, "SemiAxis2", semiAxis2);
+            return ellipse;
+        }
+        
+        /// <summary>
         /// Creates a handle representing an IfcCartesianPoint and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -2672,6 +2726,31 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Creates a handle representing an IfcTrimmedCurve and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="basisCurve">The base curve.</param>
+        /// <param name="trim1">The cartesian point, parameter, or both of end 1.</param>
+        /// <param name="trim2">The cartesian point, parameter, or both of end 2.</param>
+        /// <param name="senseAgreement">True if the end points match the orientation of the curve.</param>
+        /// <param name="masterRepresentation">An enum stating which trim parameters are available.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateTrimmedCurve(IFCFile file, IFCAnyHandle basisCurve,
+            HashSet<IFCData> trim1, HashSet<IFCData> trim2, bool senseAgreement,
+            IFCTrimmingPreference masterRepresentation)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(basisCurve, false, IFCEntityType.IfcCurve);
+
+            IFCAnyHandle trimmedCurve = CreateInstance(file, IFCEntityType.IfcTrimmedCurve);
+            IFCAnyHandleUtil.SetAttribute(trimmedCurve, "BasisCurve", basisCurve);
+            IFCAnyHandleUtil.SetAttribute(trimmedCurve, "Trim1", trim1);
+            IFCAnyHandleUtil.SetAttribute(trimmedCurve, "Trim2", trim2);
+            IFCAnyHandleUtil.SetAttribute(trimmedCurve, "SenseAgreement", senseAgreement);
+            IFCAnyHandleUtil.SetAttribute(trimmedCurve, "MasterRepresentation", masterRepresentation);
+            return trimmedCurve;
+        }
+        
+        /// <summary>
         /// Creates a handle representing an IfcPolyLoop and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -2687,10 +2766,64 @@ namespace BIM.IFC.Toolkit
             return polyLoop;
         }
 
+        /// <summary>
+        /// Creates a handle representing an IfcCompositeCurveSegment and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="transitionCode">TheThe continuity between curve segments.</param>
+        /// <param name="sameSense">True if the segment has the same orientation as the IfcCompositeCurve.</param>
+        /// <param name="parentCurve">The curve segment geometry.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateCompositeCurveSegment(IFCFile file, IFCTransitionCode transitionCode, bool sameSense,
+            IFCAnyHandle parentCurve)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(parentCurve, false, IFCEntityType.IfcBoundedCurve);
+
+            IFCAnyHandle compositeCurveSegment = CreateInstance(file, IFCEntityType.IfcCompositeCurveSegment);
+            IFCAnyHandleUtil.SetAttribute(compositeCurveSegment, "Transition", transitionCode);
+            IFCAnyHandleUtil.SetAttribute(compositeCurveSegment, "SameSense", sameSense);
+            IFCAnyHandleUtil.SetAttribute(compositeCurveSegment, "ParentCurve", parentCurve);
+            return compositeCurveSegment;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcCompositeCurve and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="segments">The list of IfcCompositeCurveSegments.</param>
+        /// <param name="selfIntersect">True if curve self-intersects, false if not, or unknown.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateCompositeCurve(IFCFile file, IList<IFCAnyHandle> segments, IFCLogical selfIntersect)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(segments, true, IFCEntityType.IfcCompositeCurveSegment);
+
+            IFCAnyHandle compositeCurve = CreateInstance(file, IFCEntityType.IfcCompositeCurve);
+            IFCAnyHandleUtil.SetAttribute(compositeCurve, "Segments", segments);
+            IFCAnyHandleUtil.SetAttribute(compositeCurve, "SelfIntersect", selfIntersect);
+            return compositeCurve;
+        }
+
         private static void SetFaceBound(IFCAnyHandle faceBound, IFCAnyHandle bound, bool orientation)
         {
             IFCAnyHandleUtil.SetAttribute(faceBound, "Bound", bound);
             IFCAnyHandleUtil.SetAttribute(faceBound, "Orientation", orientation);
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcFaceBound and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="bound">The bounding loop.</param>
+        /// <param name="orientation">The orientation of the face relative to the loop.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateFaceBound(IFCFile file, IFCAnyHandle bound, bool orientation)
+        {
+            if (bound == null)
+                throw new ArgumentNullException("bound");
+
+            IFCAnyHandle faceBound = CreateInstance(file, IFCEntityType.IfcFaceBound);
+            SetFaceBound(faceBound, bound, orientation);
+            return faceBound;
         }
 
         /// <summary>

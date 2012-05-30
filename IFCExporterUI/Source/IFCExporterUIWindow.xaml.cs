@@ -169,6 +169,7 @@ namespace BIM.IFC.Export.UI
             checkboxVisibleElementsCurrView.IsChecked = configuration.VisibleElementsOfCurrentView;
             checkBoxUse2DRoomVolumes.IsChecked = configuration.Use2DRoomBoundaryForVolume;
             checkBoxFamilyAndTypeName.IsChecked = configuration.UseFamilyAndTypeNameForReference;
+            checkBoxExportPartsAsBuildingElements.IsChecked = configuration.ExportPartsAsBuildingElements;
 
             UIElement[] configurationElements = new UIElement[]{comboboxIfcType, 
                                                                 comboboxFileType, 
@@ -179,7 +180,8 @@ namespace BIM.IFC.Export.UI
                                                                 checkboxInternalPropertySets,
                                                                 checkboxVisibleElementsCurrView,
                                                                 checkBoxUse2DRoomVolumes,
-                                                                checkBoxFamilyAndTypeName};
+                                                                checkBoxFamilyAndTypeName,
+                                                                checkBoxExportPartsAsBuildingElements};
             foreach (UIElement element in configurationElements)
             {
                 element.IsEnabled = !configuration.IsBuiltIn;
@@ -566,6 +568,21 @@ namespace BIM.IFC.Export.UI
         {
             // Save restore bounds for the next time this window is opened
             IFCUISettings.SaveWindowBounds(m_SettingFile, this.RestoreBounds);
+        }
+
+        /// <summary>
+        /// Updates the configuration ExportPartsAsBuildingElements when the Export separate parts changed in the combobox.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments that contains the event data.</param>
+        private void checkBoxExportPartsAsBuildingElements_Checked(object sender, RoutedEventArgs e)
+        {
+            CheckBox checkBox = (CheckBox)sender;
+            IFCExportConfiguration configuration = GetSelectedConfiguration();
+            if (configuration != null)
+            {
+                configuration.ExportPartsAsBuildingElements = GetCheckbuttonChecked(checkBox);
+            }
         }
 
     }

@@ -357,72 +357,19 @@ namespace BIM.IFC.Exporter
                         bool useNewCode = false;
                         if (useNewCode && solids.Count == 1 && meshes.Count == 0)
                         {
-                            try
+                            bool completelyClipped;
+                            bodyRep = ExtrusionExporter.CreateExtrusionWithClipping(exporterIFC, wallElement, catId, solids[0], 
+                                plane, projDir, range, out completelyClipped);
+
+                            if (completelyClipped)
+                                return null;
+
+                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRep))
                             {
-                                ExtrusionAnalyzer wallAnalyzer = ExtrusionAnalyzer.Create(solids[0], plane, projDir);
-
-                                bool polygonalBoundaryOnly = ExporterCacheManager.ExportOptionsCache.ExportAs2x2;
-                                bool isPolygonalBoundary;
-                                Face extrusionBase = wallAnalyzer.GetExtrusionBase();
-                                IList<CurveLoop> extrusionBoundaryLoops =
-                                    GeometryUtil.GetFaceBoundaries(extrusionBase, polygonalBoundaryOnly, out isPolygonalBoundary);
-
-                                IFCRange extrusionRange = new IFCRange(wallAnalyzer.StartParameter, wallAnalyzer.EndParameter);
-                                double startHeight = localOrig.Z + extrusionRange.Start;
-                                double endHeight = localOrig.Z + extrusionRange.End;
-                                if ((range != null) && (startHeight >= range.End || endHeight <= range.Start))
-                                    return null;
-
-                                double scaledExtrusionDepth = (endHeight - startHeight) * scale;
-
-                                IFCAnyHandle extrusionBodyItemHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null,
-                                    extrusionBoundaryLoops, plane, projDir, scaledExtrusionDepth);
-                                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionBodyItemHnd))
-                                {
-                                    IFCAnyHandle finalExtrusionBodyItemHnd = extrusionBodyItemHnd;
-                                    IDictionary<ElementId, ICollection<ICollection<Face>>> wallCutouts = 
-                                        GeometryUtil.GetCuttingElementFaces(wallElement, wallAnalyzer);
-                                    foreach (KeyValuePair<ElementId, ICollection<ICollection<Face>>> wallCutoutsForElement in wallCutouts)
-                                    {
-                                        Element cuttingElement = document.GetElement(wallCutoutsForElement.Key);
-                                        foreach (ICollection<Face> wallCutout in wallCutoutsForElement.Value)
-                                        {
-                                            finalExtrusionBodyItemHnd =
-                                                GeometryUtil.ProcessFaceCollection(exporterIFC, cuttingElement, wallCutout, extrusionRange,
-                                                finalExtrusionBodyItemHnd);
-                                            if (finalExtrusionBodyItemHnd == null)
-                                            {
-                                                // Wall is completely clipped.
-                                                return null;
-                                            }
-                                        }
-                                    }
-
-                                    IFCAnyHandle extrusionStyledItemHnd = BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document,
-                                        extrusionBodyItemHnd, ElementId.InvalidElementId);
-
-                                    HashSet<IFCAnyHandle> extrusionBodyItems = new HashSet<IFCAnyHandle>();
-                                    extrusionBodyItems.Add(finalExtrusionBodyItemHnd);
-
-                                    if (extrusionBodyItemHnd == finalExtrusionBodyItemHnd)
-                                    {
-                                        bodyRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, catId, contextOfItemsBody, 
-                                            extrusionBodyItems, null);
-                                    }
-                                    else
-                                    {
-                                        bodyRep = RepresentationUtil.CreateClippingRep(exporterIFC, element, catId, contextOfItemsBody, 
-                                            extrusionBodyItems);
-                                    }
-
-                                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRep))
-                                    {
-                                        exportedAsWallWithAxis = true;
-                                        exportedBodyDirectly = true;
-                                    }
-                                }
+                                exportedAsWallWithAxis = true;
+                                exportedBodyDirectly = true;
                             }
-                            catch
+                            else
                             {
                                 exportedAsWallWithAxis = false;
                                 exportedBodyDirectly = false;

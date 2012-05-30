@@ -233,12 +233,17 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
-        /// Creates and returns an instance of the Options class with the detail level set to Fine.
+        /// Creates and returns an instance of the Options class with current view's DetailLevel or the detail level set to Fine if current view is not checked.
         /// </summary>
         public static Options GetIFCExportGeometryOptions()
-        {
+        { 
             Options options = new Options();
-            options.DetailLevel = ViewDetailLevel.Fine;
+            if (ExporterCacheManager.ExportOptionsCache.FilterViewForExport != null)
+            {
+                options.DetailLevel = ExporterCacheManager.ExportOptionsCache.FilterViewForExport.DetailLevel;
+            }
+            else
+                options.DetailLevel = ViewDetailLevel.Fine;
             return options;
         }
 
@@ -540,18 +545,30 @@ namespace BIM.IFC.Utility
             return pointProjUV;
         }
 
-        private static CurveLoop GetFaceBoundary(Face face, EdgeArray faceBoundary, bool polygonalOnly, out bool isPolygonalBoundary)
+        /// <summary>
+        /// Specifies the types of curves found in a boundary curve loop.
+        /// </summary>
+        public enum FaceBoundaryType
         {
-            isPolygonalBoundary = true;
+            Polygonal,  // all curves are line segments.
+            LinesAndArcs, // all curves are line segments or arcs.
+            Complex // some curves are neither line segments nor arcs.
+        }
+
+        private static CurveLoop GetFaceBoundary(Face face, EdgeArray faceBoundary, XYZ baseLoopOffset,
+            bool polygonalOnly, out FaceBoundaryType faceBoundaryType)
+        {
+            faceBoundaryType = FaceBoundaryType.Polygonal;
             CurveLoop currLoop = new CurveLoop();
             foreach (Edge faceBoundaryEdge in faceBoundary)
             {
                 Curve edgeCurve = faceBoundaryEdge.AsCurveFollowingFace(face);
-                if (!(edgeCurve is Line))
+                Curve offsetCurve = (baseLoopOffset != null) ? MoveCurve(edgeCurve, baseLoopOffset) : edgeCurve;
+                if (!(offsetCurve is Line))
                 {
                     if (polygonalOnly)
                     {
-                        IList<XYZ> tessPts = edgeCurve.Tessellate();
+                        IList<XYZ> tessPts = offsetCurve.Tessellate();
                         int numTessPts = tessPts.Count;
                         for (int ii = 0; ii < numTessPts - 1; ii++)
                         {
@@ -559,10 +576,18 @@ namespace BIM.IFC.Utility
                             currLoop.Append(line);
                         }
                     }
-                    isPolygonalBoundary = false;
+                    else
+                    {
+                        currLoop.Append(offsetCurve);
+                    }
+
+                    if (offsetCurve is Arc)
+                        faceBoundaryType = FaceBoundaryType.LinesAndArcs;
+                    else
+                        faceBoundaryType = FaceBoundaryType.Complex;
                 }
                 else
-                    currLoop.Append(edgeCurve);
+                    currLoop.Append(offsetCurve);
             }
             return currLoop;
         }
@@ -571,35 +596,33 @@ namespace BIM.IFC.Utility
         /// Gets the outer and inner boundaries of a Face as CurveLoops.
         /// </summary>
         /// <param name="face">The face.</param>
-        /// <param name="polygonalOnly">If set to true, returns a polygonal boundary.</param>
-        /// <param name="isPolygonalBoundary">Set to true if the Curve loop is polygonal.</param>
+        /// <param name="baseLoopOffset">The amount to translate the origin of the face plane.  This is used if the start of the extrusion
+        /// is offset from the base face.  The argument is null otherwise.</param>
+        /// <param name="faceBoundaryTypes">Returns whether the boundaries consist of lines only, lines and arcs, or complex curves.</param>
         /// <returns>1 outer and 0 or more inner curve loops corresponding to the face boundaries.</returns>
-        public static IList<CurveLoop> GetFaceBoundaries(Face face, bool polygonalOnly, out bool isPolygonalBoundary)
+        public static IList<CurveLoop> GetFaceBoundaries(Face face, XYZ baseLoopOffset, out IList<FaceBoundaryType> faceBoundaryTypes)
         {
-            isPolygonalBoundary = true;
+            faceBoundaryTypes = new List<FaceBoundaryType>();
 
             EdgeArrayArray faceBoundaries = face.EdgeLoops;
             IList<CurveLoop> extrusionBoundaryLoops = new List<CurveLoop>();
             foreach (EdgeArray faceBoundary in faceBoundaries)
             {
-                bool currIsPolygonalBoundary;
-                CurveLoop currLoop = GetFaceBoundary(face, faceBoundary, polygonalOnly, out currIsPolygonalBoundary);
-                isPolygonalBoundary &= currIsPolygonalBoundary;
+                FaceBoundaryType currFaceBoundaryType;
+                CurveLoop currLoop = GetFaceBoundary(face, faceBoundary, baseLoopOffset, false, out currFaceBoundaryType);
+                faceBoundaryTypes.Add(currFaceBoundaryType);
                 extrusionBoundaryLoops.Add(currLoop);
             }
             return extrusionBoundaryLoops;
         }
 
-        private static CurveLoop GetOuterFaceBoundary(Face face, bool polygonalOnly, out bool isPolygonalBoundary)
+        private static CurveLoop GetOuterFaceBoundary(Face face, XYZ baseLoopOffset, bool polygonalOnly, out FaceBoundaryType faceBoundaryType)
         {
-            isPolygonalBoundary = true;
+            faceBoundaryType = FaceBoundaryType.Polygonal;
 
             EdgeArrayArray faceBoundaries = face.EdgeLoops;
-            foreach (EdgeArray faceBoundary in faceBoundaries)
-            {
-                return GetFaceBoundary(face, faceBoundary, polygonalOnly, out isPolygonalBoundary);
-            }
-
+            foreach (EdgeArray faceOuterBoundary in faceBoundaries)
+                return GetFaceBoundary(face, faceOuterBoundary, baseLoopOffset, polygonalOnly, out faceBoundaryType);
             return null;
         }
 
@@ -694,7 +717,7 @@ namespace BIM.IFC.Utility
             return cuttingElementFaceCollections;
         }
 
-        private static IFCRange GetVerticalRangeOfCurveLoop(CurveLoop loop)
+        private static IFCRange GetExtrusionRangeOfCurveLoop(CurveLoop loop, XYZ extrusionDirection)
         {
             IFCRange range = new IFCRange();
             bool init = false;
@@ -707,83 +730,75 @@ namespace BIM.IFC.Utility
                         IList<XYZ> coords = curve.Tessellate();
                         foreach (XYZ coord in coords)
                         {
+                            double val = coord.DotProduct(extrusionDirection);
                             if (!init)
                             {
-                                range.Start = coord.Z;
-                                range.End = coord.Z;
+                                range.Start = val;
+                                range.End = val;
                                 init = true;
                             }
                             else
                             {
-                                range.Start = Math.Min(range.Start, coord.Z);
-                                range.End = Math.Max(range.End, coord.Z);
+                                range.Start = Math.Min(range.Start, val);
+                                range.End = Math.Max(range.End, val);
                             }
                         }
                     }
                     else
                     {
-                        double zend = curve.get_EndPoint(0).Z;
-                        range.Start = zend;
-                        range.End = zend;
+                        double val = curve.get_EndPoint(0).DotProduct(extrusionDirection);
+                        range.Start = val;
+                        range.End = val;
                         init = true;
                     }
                 }
                 else
                 {
-                    double zend = curve.get_EndPoint(0).Z;
-                    range.Start = Math.Min(range.Start, zend);
-                    range.End = Math.Max(range.End, zend);
+                    double val = curve.get_EndPoint(0).DotProduct(extrusionDirection);
+                    range.Start = Math.Min(range.Start, val);
+                    range.End = Math.Max(range.End, val);
                 }
             }
             return range;
         }
 
-        // for vertical extrusions only.
-        private static bool IsInRange(IFCRange range, CurveLoop loop, Plane plane, out bool clipCompletely)
+        private static bool IsInRange(IFCRange range, CurveLoop loop, Plane plane, XYZ extrusionDirection, out bool clipCompletely)
         {
             clipCompletely = false;
             if (range != null)
             {
+                // This check is only applicable for cuts that are perpendicular to the extrusion direction.
+                // For cuts that aren't, we can't easily tell if this cut is extraneous or not.
+                if (!MathUtil.IsAlmostEqual(Math.Abs(plane.Normal.DotProduct(extrusionDirection)), 1.0))
+                    return true;
+
                 double eps = MathUtil.Eps();
 
-                double BoundaryPlaneNormZ = Math.Abs(plane.Normal.Z);
-                double AbsBoundaryPlaneNormZ = Math.Abs(BoundaryPlaneNormZ);
-                if (MathUtil.IsAlmostEqual(AbsBoundaryPlaneNormZ, 1.0))
+                double parameterValue = plane.Origin.DotProduct(extrusionDirection);
+
+                if (range.Start > parameterValue - eps)
                 {
-                    double originZ = plane.Origin.Z;
-                    if (range.Start > originZ-eps)
-                    {
-                        clipCompletely = true;
-                        return false;
-                    }
-                    if (range.End < originZ+eps)
-                        return false;
+                    clipCompletely = true;
+                    return false;
                 }
-                else
-                {
-                    IFCRange curveRange = GetVerticalRangeOfCurveLoop(loop);
-                    if (curveRange.End < range.Start)
-                        return false;
-                    if (curveRange.Start > range.End-eps)
-                    {
-                        clipCompletely = true;
-                        return false;
-                    }
-                }
+                if (range.End < parameterValue + eps)
+                    return false;
             }
 
             return true;
         }
 
-        private static IList<UV> ProjectPolygonalCurveLoopToPlane(CurveLoop loop, Plane plane, double scale)
+        private static IList<UV> TransformAndProjectCurveLoopToPlane(ExporterIFC exporterIFC, CurveLoop loop, Plane projScaledPlane)
         {
             IList<UV> uvs = new List<UV>();
-         
-            XYZ projDir = plane.Normal;
+
+            XYZ projDir = projScaledPlane.Normal;
             foreach (Curve curve in loop)
             {
                 XYZ point = curve.get_EndPoint(0);
-                UV scaledUV = ProjectPointToPlane(plane, projDir, point) * scale;
+                XYZ scaledPoint = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, point);
+
+                UV scaledUV = ProjectPointToPlane(projScaledPlane, projDir, scaledPoint);
                 uvs.Add(scaledUV);
             }
             return uvs;
@@ -797,23 +812,23 @@ namespace BIM.IFC.Utility
         // return null if parent should be completely clipped.
         // TODO: determine whether or not to use face boundary.
         private static IFCAnyHandle ProcessClippingFace(ExporterIFC exporterIFC, CurveLoop outerBoundary, Plane boundaryPlane, 
-            IFCRange range, bool useFaceBoundary, IFCAnyHandle bodyItemHnd)
+            Plane extrusionBasePlane, XYZ extrusionDirection, IFCRange range, bool useFaceBoundary, IFCAnyHandle bodyItemHnd)
         {
             if (outerBoundary == null || boundaryPlane == null)
                 throw new Exception("Invalid face boundary.");
 
+            double clippingSlant = boundaryPlane.Normal.DotProduct(extrusionDirection);
             if (useFaceBoundary)
             {
-                if (MathUtil.IsAlmostZero(boundaryPlane.Normal.Z))
+                if (MathUtil.IsAlmostZero(clippingSlant))
                     return bodyItemHnd;
             }
 
             bool clipCompletely;
-            if (!IsInRange(range, outerBoundary, boundaryPlane, out clipCompletely))
+            if (!IsInRange(range, outerBoundary, boundaryPlane, extrusionDirection, out clipCompletely))
                 return clipCompletely ? null : bodyItemHnd;
 
-            double boundaryZ = boundaryPlane.Normal.Z;
-            if (MathUtil.IsAlmostZero(boundaryZ))
+            if (MathUtil.IsAlmostZero(clippingSlant))
                 throw new Exception("Can't create clipping perpendicular to extrusion.");
 
             IFCFile file = exporterIFC.GetFile();
@@ -833,17 +848,19 @@ namespace BIM.IFC.Utility
                 IFCAnyHandle boundedCurveHnd;
                 if (boundaryPlane != null)
                 {
-                    XYZ projScaledX = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, XYZ.BasisX);
-                    XYZ projScaledY = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, XYZ.BasisY);
+                    XYZ projScaledOrigin = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, extrusionBasePlane.Origin);
+                    XYZ projScaledX = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, extrusionBasePlane.XVec);
+                    XYZ projScaledY= ExporterIFCUtils.TransformAndScaleVector(exporterIFC, extrusionBasePlane.YVec);
                     XYZ projScaledNorm = projScaledX.CrossProduct(projScaledY);
+                    
+                    Plane projScaledPlane = new Plane(projScaledX, projScaledY, projScaledOrigin);
 
-                    double scale = exporterIFC.LinearScale;
-                    Plane unScaledProjectionPlane = new Plane(XYZ.BasisX, XYZ.BasisY, boundaryPlane.Origin);
-                    IList<UV> polylinePts = ProjectPolygonalCurveLoopToPlane(outerBoundary, unScaledProjectionPlane, scale);
+                    IList<UV> polylinePts = TransformAndProjectCurveLoopToPlane(exporterIFC, outerBoundary, projScaledPlane);
                     polylinePts.Add(polylinePts[0]);
                     boundedCurveHnd = ExporterUtil.CreatePolyline(file, polylinePts);
 
-                    IFCAnyHandle boundedAxisHnd = ExporterUtil.CreateAxis(file, scaledOrig, projScaledNorm, projScaledX);
+                    IFCAnyHandle boundedAxisHnd = ExporterUtil.CreateAxis(file, projScaledOrigin, projScaledNorm, projScaledX);
+
                     halfSpaceHnd = IFCInstanceExporter.CreatePolygonalBoundedHalfSpace(file, boundedAxisHnd, boundedCurveHnd, surfHnd, false);
                 }
                 else
@@ -859,27 +876,30 @@ namespace BIM.IFC.Utility
             if (halfSpaceHnd == null)
                 throw new Exception("Can't create clipping.");
 
-            return clippedBodyItemHnd = IFCInstanceExporter.CreateBooleanClippingResult(file, IFCBooleanOperator.Difference, bodyItemHnd,
-                halfSpaceHnd);
+            clippedBodyItemHnd = IFCInstanceExporter.CreateBooleanClippingResult(file, IFCBooleanOperator.Difference,
+                bodyItemHnd, halfSpaceHnd);
+            return clippedBodyItemHnd;
         }
 
-        // returns true if either the top or bottom of the extrusion is clipped.
-        private static bool CollectionClipsTopOrBottom(IList<CurveLoop> curveLoopBoundaries, IFCRange extrusionRange)
+        // returns true if either, but not both, the start or end of the extrusion is clipped.
+        private static KeyValuePair<bool, bool> CollectionClipsExtrusionEnds(IList<CurveLoop> curveLoopBoundaries, XYZ extrusionDirection, 
+            IFCRange extrusionRange)
         {
-            bool clipTop = false;
-            bool clipBottom = false;
+            bool clipStart = false;
+            bool clipEnd = false;
             double eps = MathUtil.Eps();
 
             foreach (CurveLoop curveLoop in curveLoopBoundaries)
             {
-                IFCRange loopRange = GetVerticalRangeOfCurveLoop(curveLoop);
+                IFCRange loopRange = GetExtrusionRangeOfCurveLoop(curveLoop, extrusionDirection);
                 if (loopRange.End >= extrusionRange.End - eps)
-                    clipTop = true;
+                    clipEnd = true;
                 if (loopRange.Start <= extrusionRange.Start + eps)
-                    clipBottom = true;
+                    clipStart = true;
             }
-    
-            return clipTop || clipBottom;
+
+            KeyValuePair<bool, bool> clipResults = new KeyValuePair<bool, bool>(clipStart, clipEnd);
+            return clipResults;
         }
 
         private static bool CreateOpeningForCategory(Element cuttingElement)
@@ -894,13 +914,15 @@ namespace BIM.IFC.Utility
         /// </summary>
         /// <param name="exporterIFC">The exporter.</param>
         /// <param name="cuttingElement">The cutting element.  This will help determine whether to use a clipping or opening in boundary cases.</param>
+        /// <param name="extrusionBasePlane">The plane of the extrusion base.</param>
+        /// <param name="extrusionDirection">The extrusion direction.</param>
         /// <param name="faces">The collection of faces.</param>
         /// <param name="range">The valid range of the extrusion.</param>
         /// <param name="origBodyRepHnd">The original body representation.</param>
         /// <returns>The new body representation.  If the clipping completely clips the extrusion, this will be null.  Otherwise, this
         /// will be the clipped representation if a clipping was done, or the original representation if not.</returns>
-        public static IFCAnyHandle ProcessFaceCollection(ExporterIFC exporterIFC, Element cuttingElement, ICollection<Face> faces, 
-            IFCRange range, IFCAnyHandle origBodyRepHnd)
+        public static IFCAnyHandle ProcessFaceCollection(ExporterIFC exporterIFC, Element cuttingElement, Plane extrusionBasePlane,
+            XYZ extrusionDirection, ICollection<Face> faces, IFCRange range, IFCAnyHandle origBodyRepHnd)
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(origBodyRepHnd))
                 return null;
@@ -912,25 +934,25 @@ namespace BIM.IFC.Utility
             IList<bool> boundaryIsPolygonal = new List<bool>();
 
             bool allPlanes = true;
+            UV faceOriginUV = new UV(0, 0);
             foreach (Face face in faces)
             {
-                bool isPolygonalBoundary;
-                CurveLoop curveLoop = GetOuterFaceBoundary(face, polygonalOnly, out isPolygonalBoundary);
+                FaceBoundaryType faceBoundaryType;
+                CurveLoop curveLoop = GetOuterFaceBoundary(face, null, polygonalOnly, out faceBoundaryType);
                 outerCurveLoops.Add(curveLoop);
-                boundaryIsPolygonal.Add(isPolygonalBoundary);
+                boundaryIsPolygonal.Add(faceBoundaryType == FaceBoundaryType.Polygonal);
 
                 if (face is PlanarFace)
                 {
-                    try
-                    {
-                        Plane plane = curveLoop.GetPlane();
-                        outerCurveLoopPlanes.Add(plane);
-                    }
-                    catch
-                    {
-                        outerCurveLoopPlanes.Add(null);
-                        allPlanes = false;
-                    }
+                    PlanarFace planarFace = face as PlanarFace;
+                    XYZ faceOrigin = planarFace.Origin;
+                    XYZ faceNormal = planarFace.ComputeNormal(faceOriginUV);
+
+                    Plane plane = new Plane(faceNormal, faceOrigin);
+                    outerCurveLoopPlanes.Add(plane);
+
+                    if (!curveLoop.IsCounterclockwise(faceNormal))
+                        curveLoop.Flip();
                 }
                 else
                 {
@@ -946,21 +968,76 @@ namespace BIM.IFC.Utility
                 // Special case: one face is a clip plane.
                 if (numFaces == 1)
                 {
-                    return ProcessClippingFace(exporterIFC, outerCurveLoops[0], outerCurveLoopPlanes[0], range, false, origBodyRepHnd);
+                    return ProcessClippingFace(exporterIFC, outerCurveLoops[0], outerCurveLoopPlanes[0], extrusionBasePlane,
+                        extrusionDirection, range, false, origBodyRepHnd);
                 }
 
-                bool clipsTopOrBottom = CollectionClipsTopOrBottom(outerCurveLoops, range);
-                if (clipsTopOrBottom)
+                KeyValuePair<bool, bool> clipsExtrusionEnds = CollectionClipsExtrusionEnds(outerCurveLoops, extrusionDirection, range);
+                if (clipsExtrusionEnds.Key == true || clipsExtrusionEnds.Value == true)
                 {
                     // Don't clip for a door, window or opening.
                     if (CreateOpeningForCategory(cuttingElement))
                         throw new Exception("Unhandled opening.");
 
+                    ICollection<int> facesToSkip = new HashSet<int>();
+                    bool clipStart = (clipsExtrusionEnds.Key == true);
+                    bool clipBoth = (clipsExtrusionEnds.Key == true && clipsExtrusionEnds.Value == true);
+                    if (!clipBoth)
+                    {
+                        for (int ii = 0; ii < numFaces; ii++)
+                        {
+                            double slant = outerCurveLoopPlanes[ii].Normal.DotProduct(extrusionDirection);
+                            if (!MathUtil.IsAlmostZero(slant))
+                            {
+                                if (clipStart && (slant > 0.0))
+                                    throw new Exception("Unhandled clip plane direction.");
+                                if (!clipStart && (slant < 0.0))
+                                    throw new Exception("Unhandled clip plane direction.");
+                            }
+                            else
+                            {
+                                facesToSkip.Add(ii);
+                            }
+                        }
+                    }
+                    else       
+                    {
+                        // If we are clipping both the start and end of the extrusion, we have to make sure all of the clipping
+                        // planes have the same a non-negative dot product relative to one another.
+                        int clipOrientation = 0;
+                        for (int ii = 0; ii < numFaces; ii++)
+                        {
+                            double slant = outerCurveLoopPlanes[ii].Normal.DotProduct(extrusionDirection);
+                            if (!MathUtil.IsAlmostZero(slant))
+                            {
+                                if (slant > 0.0)
+                                {
+                                    if (clipOrientation < 0)
+                                        throw new Exception("Unhandled clipping orientations.");
+                                    clipOrientation = 1;
+                                }
+                                else
+                                {
+                                    if (clipOrientation > 0)
+                                        throw new Exception("Unhandled clipping orientations.");
+                                    clipOrientation = -1;
+                                }
+                            }
+                            else
+                            {
+                                facesToSkip.Add(ii);
+                            }
+                        }
+                    }
+
                     IFCAnyHandle newBodyRepHnd = origBodyRepHnd;
                     for (int ii = 0; ii < numFaces; ii++)
                     {
-                        newBodyRepHnd = ProcessClippingFace(exporterIFC, outerCurveLoops[ii], outerCurveLoopPlanes[ii], range, true, 
-                            newBodyRepHnd);
+                        if (facesToSkip.Contains(ii))
+                            continue;
+
+                        newBodyRepHnd = ProcessClippingFace(exporterIFC, outerCurveLoops[ii], outerCurveLoopPlanes[ii], 
+                            extrusionBasePlane, extrusionDirection, range, true, newBodyRepHnd);
                         if (newBodyRepHnd == null)
                             return null;
                     }

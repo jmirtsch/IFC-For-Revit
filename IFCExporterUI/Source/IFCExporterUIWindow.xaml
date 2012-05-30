@@ -24,6 +24,7 @@
                     <Label Content="File Type" Height="29" HorizontalAlignment="Left" Margin="239,41,0,0" Name="label2" VerticalAlignment="Top" Width="60" />
                     <CheckBox Content="Use 2D room boundaries for room volume" Height="16" HorizontalAlignment="Left" Margin="6,116,0,0" Name="checkBoxUse2DRoomVolumes" VerticalAlignment="Top" Checked="checkBoxUse2DRoomVolumes_Checked" Unchecked="checkBoxUse2DRoomVolumes_Checked" />
                     <CheckBox Content="Use family and type name for reference" Height="16" HorizontalAlignment="Left" Margin="6,138,0,0" Name="checkBoxFamilyAndTypeName" VerticalAlignment="Top" Checked="checkBoxFamilyAndTypeName_Checked" Unchecked="checkBoxFamilyAndTypeName_Checked" />
+                    <CheckBox Content="Export parts as building elements" Height="16" HorizontalAlignment="Left" Margin="6,160,0,0" Name="checkBoxExportPartsAsBuildingElements" VerticalAlignment="Top" Checked="checkBoxExportPartsAsBuildingElements_Checked" Unchecked="checkBoxExportPartsAsBuildingElements_Checked" />
                 </Grid>
             </TabItem>
         </TabControl>

@@ -21,8 +21,14 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_2AF8A1C60BC57EBB4465D92E18C85C29"
+        "MsmKey" = "8:_29908E3DB4D0E5243B5D0921807F8A82"
         "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_29908E3DB4D0E5243B5D0921807F8A82"
+        "OwnerKey" = "8:_73EF5A3833D32EEF91E792E76FD70EDF"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -39,14 +45,8 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_6FB3D756DCF8979C549679683C379D9F"
+        "MsmKey" = "8:_73EF5A3833D32EEF91E792E76FD70EDF"
         "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_6FB3D756DCF8979C549679683C379D9F"
-        "OwnerKey" = "8:_2AF8A1C60BC57EBB4465D92E18C85C29"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -70,19 +70,19 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_6FB3D756DCF8979C549679683C379D9F"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_2AF8A1C60BC57EBB4465D92E18C85C29"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_73EF5A3833D32EEF91E792E76FD70EDF"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_29908E3DB4D0E5243B5D0921807F8A82"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -204,15 +204,15 @@
         }
         "File"
         {
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_2AF8A1C60BC57EBB4465D92E18C85C29"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_29908E3DB4D0E5243B5D0921807F8A82"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:RevitAPI, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
+            "AssemblyAsmDisplayName" = "8:DBManagedServices, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
                 "ScatterAssemblies"
                 {
                 }
-            "SourcePath" = "8:RevitAPI.dll"
+            "SourcePath" = "8:DBManagedServices.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_6D6AA5CC6CBC4DD6BFBAF3367D0A6D23"
@@ -250,15 +250,15 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_6FB3D756DCF8979C549679683C379D9F"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_73EF5A3833D32EEF91E792E76FD70EDF"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:DBManagedServices, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
+            "AssemblyAsmDisplayName" = "8:RevitAPI, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
                 "ScatterAssemblies"
                 {
                 }
-            "SourcePath" = "8:DBManagedServices.dll"
+            "SourcePath" = "8:RevitAPI.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_6D6AA5CC6CBC4DD6BFBAF3367D0A6D23"
@@ -407,19 +407,19 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:IFC Exporter for Revit 2013"
-        "ProductCode" = "8:{D7C2799D-6C3E-4E65-99C3-34BADA43A900}"
-        "PackageCode" = "8:{DF73C596-103C-4D5F-82C0-69AE429E4E00}"
+        "ProductCode" = "8:{3BE44CBD-45A5-4B06-B08E-DF04B18B5685}"
+        "PackageCode" = "8:{CEC5FB7D-5009-4CCE-9FD4-425C68391428}"
         "UpgradeCode" = "8:{6569B2EC-1DFF-4367-A16A-9D448E11715B}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:2.0.1"
+        "ProductVersion" = "8:2.1.0"
         "Manufacturer" = "8:IFC Exporter for Revit"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:http://sourceforge.net/projects/ifcexporter/"
-        "Title" = "8:IFC Exporter for Revit 2012 Installer"
+        "Title" = "8:IFC Exporter for Revit 2013 Installer"
         "Subject" = "8:"
         "ARPCONTACT" = "8:IFC Exporter for Revit"
         "Keywords" = "8:"
@@ -758,7 +758,7 @@
                             "ContextData" = "8:"
                             "Attributes" = "3:0"
                             "Setting" = "3:2"
-                            "Value" = "8:© 2011 Autodesk, Inc.  All rights reserved."
+                            "Value" = "8:© 2012 Autodesk, Inc.  All rights reserved."
                             "DefaultValue" = "8:#1202"
                             "UsePlugInResources" = "11:TRUE"
                             }
@@ -906,7 +906,7 @@
                             "ContextData" = "8:"
                             "Attributes" = "3:0"
                             "Setting" = "3:2"
-                            "Value" = "8:© 2011 Autodesk, Inc.  All rights reserved."
+                            "Value" = "8:© 2012 Autodesk, Inc.  All rights reserved."
                             "DefaultValue" = "8:#1202"
                             "UsePlugInResources" = "11:TRUE"
                             }
@@ -1023,7 +1023,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_02AE303CEEA349CEB9F734C84CA8CB52"
             {
-            "SourcePath" = "8:..\\..\\Source\\obj\\Release\\BIM.IFC.dll"
+            "SourcePath" = "8:..\\..\\..\\..\\Intermediate\\Releasex64\\BIM.IFC\\BIM.IFC.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_6D6AA5CC6CBC4DD6BFBAF3367D0A6D23"
@@ -1051,7 +1051,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_51B06F9B3436410A9E46C61F2CE610A0"
             {
-            "SourcePath" = "8:..\\Modify Addin file\\obj\\Release\\Modify_Addin_file.exe"
+            "SourcePath" = "8:..\\..\\..\\..\\Intermediate\\Releasex64\\Modify Addin file\\Modify_Addin_file.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_BB1073489D4245BEA82F9EC4C5FC111E"

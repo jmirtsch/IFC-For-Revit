@@ -86,7 +86,7 @@ namespace BIM.IFC.Exporter
         /// <returns>
         /// True if the floor is exported successfully, false otherwise.
         /// </returns>
-        public static void ExportFloor(ExporterIFC exporterIFC, Element floor, GeometryElement geometryElement, string ifcEnumType, 
+        public static void ExportFloor(ExporterIFC exporterIFC, Element floorElement, GeometryElement geometryElement, string ifcEnumType, 
             IFCProductWrapper productWrapper, bool exportParts)
         {
             if (geometryElement == null)
@@ -99,13 +99,14 @@ namespace BIM.IFC.Exporter
             {
                 using (IFCTransformSetter transformSetter = IFCTransformSetter.Create())
                 {
-                    using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, floor))
+                    using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, floorElement))
                     {
                         IFCAnyHandle localPlacement = placementSetter.GetPlacement();
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                        bool exportedAsInternalExtrusion = false;
 
                         double scale = exporterIFC.LinearScale;
-                        ElementId catId = CategoryUtil.GetSafeCategoryId(floor);
+                        ElementId catId = CategoryUtil.GetSafeCategoryId(floorElement);
 
                         IList<IFCAnyHandle> reps = new List<IFCAnyHandle>();
                         IList<IList<CurveLoop>> extrusionLoops = new List<IList<CurveLoop>>();
@@ -113,29 +114,80 @@ namespace BIM.IFC.Exporter
                         Plane floorPlane = GeometryUtil.CreateDefaultPlane();
 
                         IList<IFCAnyHandle> localPlacements = new List<IFCAnyHandle>();
-                        bool exportedAsExtrusion = false;
-
+                        
                         if (!exportParts)
                         {
-                            exportedAsExtrusion = ExporterIFCUtils.ExportSlabAsExtrusion(exporterIFC, floor, geometryElement,
-                                  transformSetter, localPlacement, out localPlacements, out reps, out extrusionLoops, out loopExtraParams, floorPlane);
-                            // We will use the ExtrusionAnalyzer when it is ready.
-                            //            XYZ extrusionDirection = { 0, 0, -1 };
-                            //            XYZ modelOrigin = { 0, 0, 0 };
-                            //            XYZ floorOrigin = floor.GetVerticalProjectionPoint(modelOrigin, FloorFace.Top);
-                            //            XYZ floorDir = floor.GetNormalAtVerticalProjectionPoint(floorOrigin, FloorFace.Top);
-                            //            Plane floorPlane(floorDir, floorOrigin);          
-                            //            ExtrusionAnalyzer floorExtrusion = 
-                            //                ExtrusionAnalyzer.Create(geometryElement, floorPlane, extrusionDirection);
+                            // First, try to use the ExtrusionAnalyzer for the limited cases it handles - 1 solid, no openings, end clippings only.
+                            // Also limited to cases with line and arc boundaries.
+                            //
+                            if (floorElement is Floor)
+                            {
+                                Floor floor = floorElement as Floor;
+                                SolidMeshGeometryInfo solidMeshInfo = GeometryUtil.GetSolidMeshGeometry(geometryElement, Transform.Identity);
+                                IList<Solid> solids = solidMeshInfo.GetSolids();
+                                IList<Mesh> meshes = solidMeshInfo.GetMeshes();
 
-                            if (!exportedAsExtrusion)
+                                if (solids.Count == 1 && meshes.Count == 0)
+                                {
+                                    IList<Solid> splitVolumes = SolidUtils.SplitVolumes(solids[0]);
+                                    if (splitVolumes.Count == 1)
+                                    {
+                                        bool completelyClipped;
+                                        XYZ floorExtrusionDirection = new XYZ(0, 0, -1);
+                                        XYZ modelOrigin = XYZ.Zero;
+
+                                        XYZ floorOrigin = floor.GetVerticalProjectionPoint(modelOrigin, FloorFace.Top);
+                                        if (floorOrigin == null)
+                                        {
+                                            // GetVerticalProjectionPoint may return null if FloorFace.Top is an edited face that doesn't 
+                                            // go thruough te Revit model orgigin.  We'll try the midpoint of the bounding box instead.
+                                            BoundingBoxXYZ boundingBox = floor.get_BoundingBox(null);
+                                            modelOrigin = (boundingBox.Min + boundingBox.Max) / 2.0;
+                                            floorOrigin = floor.GetVerticalProjectionPoint(modelOrigin, FloorFace.Top);
+                                        }
+
+                                        if (floorOrigin != null)
+                                        {
+                                            XYZ floorDir = floor.GetNormalAtVerticalProjectionPoint(floorOrigin, FloorFace.Top);
+                                            Plane extrusionAnalyzerFloorPlane = new Plane(floorDir, floorOrigin);
+
+                                            HandleAndData floorAndProperties =
+                                                ExtrusionExporter.CreateExtrusionWithClippingAndProperties(exporterIFC, floor,
+                                                catId, solids[0], extrusionAnalyzerFloorPlane, floorExtrusionDirection, null, out completelyClipped);
+                                            if (completelyClipped)
+                                                return;
+                                            if (floorAndProperties.Handle != null)
+                                            {
+                                                IList<IFCAnyHandle> representations = new List<IFCAnyHandle>();
+                                                representations.Add(floorAndProperties.Handle);
+                                                IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
+                                                reps.Add(prodRep);
+
+                                                if (floorAndProperties.Data != null)
+                                                    loopExtraParams.Add(floorAndProperties.Data);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        
+
+                            // Use internal routine as backup that handles openings.
+                            if (reps.Count == 0)
+                            {
+                                exportedAsInternalExtrusion = ExporterIFCUtils.ExportSlabAsExtrusion(exporterIFC, floorElement, 
+                                    geometryElement, transformSetter, localPlacement, out localPlacements, out reps, 
+                                    out extrusionLoops, out loopExtraParams, floorPlane);
+                            }
+
+                            if (reps.Count == 0)
                             {
                                 using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                                 {
                                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                                     bodyExporterOptions.TessellationLevel = BodyExporterOptions.BodyTessellationLevel.Coarse;
-                                    IFCAnyHandle prodDefHnd = RepresentationUtil.CreateBRepProductDefinitionShape(floor.Document.Application, exporterIFC,
-                                        floor, catId, geometryElement, bodyExporterOptions, null, ecData);
+                                    IFCAnyHandle prodDefHnd = RepresentationUtil.CreateBRepProductDefinitionShape(floorElement.Document.Application, exporterIFC,
+                                        floorElement, catId, geometryElement, bodyExporterOptions, null, ecData);
                                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodDefHnd))
                                     {
                                         ecData.ClearOpenings();
@@ -148,18 +200,18 @@ namespace BIM.IFC.Exporter
                         }
 
                         // Create the slab from either the extrusion or the BRep information.
-                        string ifcGUID = ExporterIFCUtils.CreateGUID(floor);
+                        string ifcGUID = ExporterIFCUtils.CreateGUID(floorElement);
 
                         int numReps = exportParts ? 1 : reps.Count;
                         for (int ii = 0; ii < numReps; ii++)
                         {
-                            string ifcName = NamingUtil.GetNameOverride(floor, NamingUtil.CreateIFCName(exporterIFC, ii == 0 ? -1 : ii + 1));
-                            string ifcDescription = NamingUtil.GetDescriptionOverride(floor, null);
-                            string ifcObjectType = NamingUtil.GetObjectTypeOverride(floor, exporterIFC.GetFamilyName());
-                            string ifcElemId = NamingUtil.CreateIFCElementId(floor);
+                            string ifcName = NamingUtil.GetNameOverride(floorElement, NamingUtil.CreateIFCName(exporterIFC, ii == 0 ? -1 : ii + 1));
+                            string ifcDescription = NamingUtil.GetDescriptionOverride(floorElement, null);
+                            string ifcObjectType = NamingUtil.GetObjectTypeOverride(floorElement, exporterIFC.GetFamilyName());
+                            string ifcElemId = NamingUtil.CreateIFCElementId(floorElement);
 
                             string currentGUID = (ii == 0) ? ifcGUID : ExporterIFCUtils.CreateGUID();
-                            IFCAnyHandle localPlacementHnd = exportedAsExtrusion ? localPlacements[ii] : localPlacement;
+                            IFCAnyHandle localPlacementHnd = exportedAsInternalExtrusion ? localPlacements[ii] : localPlacement;
                             IFCSlabType slabType = GetIFCSlabType(ifcEnumType);
 
                             IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(file, currentGUID, ownerHistory, ifcName,
@@ -170,29 +222,29 @@ namespace BIM.IFC.Exporter
 
                             if (exportParts)
                             {
-                                PartExporter.ExportHostPart(exporterIFC, floor, slabHnd, productWrapper, placementSetter, localPlacementHnd, null);
+                                PartExporter.ExportHostPart(exporterIFC, floorElement, slabHnd, productWrapper, placementSetter, localPlacementHnd, null);
                             }
 
                             slabHnds.Add(slabHnd);
                         }
 
-                        bool associateElementToLevel = LevelUtil.AssociateElementToLevel(floor);
+                        bool associateElementToLevel = LevelUtil.AssociateElementToLevel(floorElement);
                         for (int ii = 0; ii < numReps; ii++)
                         {
                             IFCExtrusionCreationData loopExtraParam = ii < loopExtraParams.Count ? loopExtraParams[ii] : null;
                             productWrapper.AddElement(slabHnds[ii], placementSetter, loopExtraParam, associateElementToLevel);
                         }
 
-                        if (exportedAsExtrusion)
-                            ExporterIFCUtils.ExportExtrudedSlabOpenings(exporterIFC, floor, placementSetter,
+                        if (exportedAsInternalExtrusion)
+                            ExporterIFCUtils.ExportExtrudedSlabOpenings(exporterIFC, floorElement, placementSetter,
                                localPlacements[0], slabHnds, extrusionLoops, floorPlane, productWrapper);
 
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, floor, productWrapper);
+                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, floorElement, productWrapper);
                     }
 
                     if (!exportParts)
                     {
-                        HostObjectExporter.ExportHostObjectMaterials(exporterIFC, floor as HostObject, slabHnds, 
+                        HostObjectExporter.ExportHostObjectMaterials(exporterIFC, floorElement as HostObject, slabHnds, 
                             geometryElement, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3);
                     }
                 }
