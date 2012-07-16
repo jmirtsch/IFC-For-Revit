@@ -59,7 +59,9 @@ namespace BIM.IFC.Utility
             cache.ExportAllLevels = false;
             cache.ExportAnnotationsOverride = null;
             cache.ExportInternalRevitPropertySetsOverride = null;
+            cache.ExportIFCCommonPropertySetsOverride = null;
             cache.FilterViewForExport = filterView;
+            cache.ExportSurfaceStylesOverride = null;
 
             String use2009GUID = Environment.GetEnvironmentVariable("Assign2009GUIDToBuildingStoriesOnIFCExport");
             cache.Use2009BuildingStoreyGUIDs = (use2009GUID != null && use2009GUID == "1");
@@ -124,8 +126,14 @@ namespace BIM.IFC.Utility
             // "Revit property sets" override
             cache.ExportInternalRevitPropertySetsOverride = GetNamedBooleanOption(options, "ExportInternalRevitPropertySets");
 
+            // "ExportIFCCommonPropertySets" override
+            cache.ExportIFCCommonPropertySetsOverride = GetNamedBooleanOption(options, "ExportIFCCommonPropertySets");
+
             // "ExportSeparateParts" override
             cache.ExportPartsAsBuildingElementsOverride = GetNamedBooleanOption(options, "ExportPartsAsBuildingElements");
+
+            // "ExportSurfaceStyles" override
+            cache.ExportSurfaceStylesOverride = GetNamedBooleanOption(options, "ExportSurfaceStyles");
 
             // "FileType" - note - setting is not respected yet
             ParseFileType(options, cache);
@@ -335,6 +343,33 @@ namespace BIM.IFC.Utility
             }
         }
 
+        
+            /// <summary>
+        /// Cache variable for the ExportSurfaceStyles override (if set independently via the UI)
+        /// </summary>
+        public bool? ExportSurfaceStylesOverride
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Whether or not export the surface styles.
+        /// </summary>
+        public bool ExportSurfaceStyles
+        {
+            get
+            {
+                // if the option is set by alternate UI, return the setting in UI.
+                if (ExportSurfaceStylesOverride != null)
+                    return (bool)ExportSurfaceStylesOverride;
+                // otherwise export the surface styles except it is 2x3 V2
+                else if (ExportAs2x3CoordinationView2)
+                    return false;
+                return true;
+            }
+        }
+
         /// <summary>
         /// A collection of elements from which to export (before filtering is applied).  If empty, all elements in the document
         /// are used as the initial set of elements before filtering is applied.
@@ -418,6 +453,30 @@ namespace BIM.IFC.Utility
             {
                 if (ExportInternalRevitPropertySetsOverride != null) return (bool)ExportInternalRevitPropertySetsOverride;
                 return !ExportAs2x3CoordinationView2;
+            }
+        }
+
+        /// <summary>
+        /// Override for the ExportIFCCommonPropertySets value from UI or API options.
+        /// </summary>
+        private bool? ExportIFCCommonPropertySetsOverride
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Whether or not to include IFCCommonPropertySets
+        /// </summary>
+        public bool ExportIFCCommonPropertySets
+        {
+            get
+            {
+                // if the option is set by alternate UI, return the setting in UI.
+                if (ExportIFCCommonPropertySetsOverride != null) 
+                    return (bool)ExportIFCCommonPropertySetsOverride;
+                // otherwise return true by default.
+                return true;
             }
         }
 

@@ -46,16 +46,16 @@ namespace BIM.IFC.Exporter
         /// </summary>
         /// <param name="propertySets">The property sets.</param>
         /// <param name="elements">The elements.</param>
-        public TypePropertyInfo(HashSet<IFCAnyHandle> propertySets, HashSet<IFCAnyHandle> elements)
+        public TypePropertyInfo(ICollection<IFCAnyHandle> propertySets, ICollection<IFCAnyHandle> elements)
         {
-            m_PropertySets = propertySets;
-            m_Elements = elements;
+            m_PropertySets = new HashSet<IFCAnyHandle>(propertySets);
+            m_Elements = new HashSet<IFCAnyHandle>(elements);
         }
 
         /// <summary>
         /// The property sets.
         /// </summary>
-        public HashSet<IFCAnyHandle> PropertySets
+        public ICollection<IFCAnyHandle> PropertySets
         {
             get { return m_PropertySets; }
         }
@@ -63,7 +63,7 @@ namespace BIM.IFC.Exporter
         /// <summary>
         /// The IFC elements.
         /// </summary>
-        public HashSet<IFCAnyHandle> Elements
+        public ICollection<IFCAnyHandle> Elements
         {
             get { return m_Elements; }
         }

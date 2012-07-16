@@ -95,6 +95,11 @@ namespace BIM.IFC.Utility
         static MaterialHandleCache m_MaterialHandleCache;
 
         /// <summary>
+        /// The MaterialHandleCache object contains material handles without representations.
+        /// </summary>
+        static MaterialHandleCache m_MaterialHandleWithoutRepCache;
+
+        /// <summary>
         /// The MaterialLayerRelationsCache object.
         /// </summary>
         static MaterialLayerRelationsCache m_MaterialLayerRelationsCache;
@@ -155,6 +160,11 @@ namespace BIM.IFC.Utility
         /// The SpatialElementHandleCache object.
         /// </summary>
         static SpatialElementHandleCache m_SpatialElementHandleCache;
+
+        /// <summary>
+        /// The SystemsCache object.
+        /// </summary>
+        static SystemsCache m_SystemsCache;
 
         /// <summary>
         /// The TypeRelationsCache object.
@@ -251,6 +261,16 @@ namespace BIM.IFC.Utility
         /// The StairRampContainerInfoCache object.
         /// </summary>
         static StairRampContainerInfoCache m_StairRampContainerInfoCache;
+
+        /// <summary>
+        /// The GridCache object.
+        /// </summary>
+        static List<Element> m_GridCache;
+
+        /// <summary>
+        /// The WallType cache that maps Revit wall type id to the IFC wall type handle.
+        /// </summary>
+        static IDictionary<ElementId, IFCAnyHandle> m_WallTypeCache;
 
         /// <summary>
         /// The ParameterCache object.
@@ -428,6 +448,19 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// The SpatialElementHandleCache object.
+        /// </summary>
+        public static SystemsCache SystemsCache
+        {
+            get
+            {
+                if (m_SystemsCache == null)
+                    m_SystemsCache = new SystemsCache();
+                return m_SystemsCache;
+            }
+        }
+
+        /// <summary>
         /// The MaterialHandleCache object.
         /// </summary>
         public static MaterialHandleCache MaterialHandleCache
@@ -437,6 +470,20 @@ namespace BIM.IFC.Utility
                 if (m_MaterialHandleCache == null)
                     m_MaterialHandleCache = new MaterialHandleCache();
                 return m_MaterialHandleCache;
+            }
+        }
+
+
+        /// <summary>
+        /// The MaterialHandleCache object contains material handles without representations.
+        /// </summary>
+        public static MaterialHandleCache MaterialHandleWithoutRepCache
+        {
+            get
+            {
+                if (m_MaterialHandleWithoutRepCache == null)
+                    m_MaterialHandleWithoutRepCache = new MaterialHandleCache();
+                return m_MaterialHandleWithoutRepCache;
             }
         }
 
@@ -802,6 +849,32 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// The GridCache object.
+        /// </summary>
+        public static List<Element> GridCache
+        {
+            get
+            {
+                if (m_GridCache == null)
+                    m_GridCache = new List<Element>();
+                return m_GridCache;
+            }
+        }
+
+        /// <summary>
+        /// The WallType cache that maps Revit wall type id to the IFC wall type handle.
+        /// </summary>
+        public static IDictionary<ElementId, IFCAnyHandle> WallTypeCache
+        {
+            get
+            {
+                if (m_WallTypeCache == null)
+                    m_WallTypeCache = new Dictionary<ElementId, IFCAnyHandle>();
+                return m_WallTypeCache;
+            }
+        }
+
+        /// <summary>
         /// Clear all caches contained in this manager.
         /// </summary>
         public static void Clear()
@@ -832,6 +905,7 @@ namespace BIM.IFC.Utility
             m_SpaceBoundaryCache = null;
             m_SpaceOccupantInfoCache = null;
             m_SpatialElementHandleCache = null;
+            m_SystemsCache = null;
             m_TypeObjectsCache = null;
             m_TypeRelationsCache = null;
             m_WallConnectionDataCache = null;
@@ -850,6 +924,9 @@ namespace BIM.IFC.Utility
             m_MaterialIdToStyleHandleCache = null;
             m_DefaultCartesianTransformationOperator3D = null;
             m_StairRampContainerInfoCache = null;
+            m_GridCache = null;
+            m_WallTypeCache = null;
+            m_MaterialHandleWithoutRepCache = null;
         }
     }
 }

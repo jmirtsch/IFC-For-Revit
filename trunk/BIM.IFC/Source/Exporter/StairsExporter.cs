@@ -726,6 +726,11 @@ namespace BIM.IFC.Exporter
                                 reps.Add(walkingLineRep);
                             }
 
+                            Transform boundingBoxTrf = bodyData.BrepOffsetTransform.Inverse;
+                            IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, runGeometryElement, boundingBoxTrf);
+                            if (boundingBoxRep != null)
+                                reps.Add(boundingBoxRep);
+
                             IFCAnyHandle representation = IFCInstanceExporter.CreateProductDefinitionShape(exporterIFC.GetFile(), null, null, reps);
 
                             string runGUID = ExporterIFCUtils.CreateGUID(run);
@@ -818,6 +823,11 @@ namespace BIM.IFC.Exporter
                                     contextOfItemsFootPrint, walkingLineItems);
                                 reps.Add(walkingLineRep);
                             }
+
+                            Transform boundingBoxTrf = bodyData.BrepOffsetTransform.Inverse;
+                            IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, landingGeometryElement, boundingBoxTrf);
+                            if (boundingBoxRep != null)
+                                reps.Add(boundingBoxRep);
 
                             string landingGUID = ExporterIFCUtils.CreateGUID(landing);
                             string origLandingName = origStairName + " Landing " + index;
@@ -1002,6 +1012,10 @@ namespace BIM.IFC.Exporter
                             }
                             representations.Add(bodyRep);
 
+                            IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geometriesOfARun, Transform.Identity);
+                            if (boundingBoxRep != null)
+                                representations.Add(boundingBoxRep);
+
                             IFCAnyHandle flightRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
                             IFCAnyHandle flightLocalPlacement = ExporterUtil.CopyLocalPlacement(file, placementSetter.GetPlacement());
 
@@ -1078,6 +1092,10 @@ namespace BIM.IFC.Exporter
                                 }
                                 representations.Add(bodyRep);
 
+                                IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geometriesOfALanding, Transform.Identity);
+                                if (boundingBoxRep != null)
+                                    representations.Add(boundingBoxRep);
+
                                 IFCAnyHandle shapeHnd = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
                                 IFCAnyHandle landingLocalPlacement = ExporterUtil.CopyLocalPlacement(file, placementSetter.GetPlacement());
                                 string stairName = NamingUtil.GetNameOverride(legacyStair, NamingUtil.CreateIFCName(exporterIFC, ii + 1));
@@ -1120,6 +1138,10 @@ namespace BIM.IFC.Exporter
 
                                 List<IFCAnyHandle> representations = new List<IFCAnyHandle>();
                                 representations.Add(bodyRep);
+
+                                IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geometriesOfStringer, Transform.Identity);
+                                if (boundingBoxRep != null)
+                                    representations.Add(boundingBoxRep);
 
                                 IFCAnyHandle stringerRepHnd = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
                                 IFCAnyHandle stringerLocalPlacement = ExporterUtil.CopyLocalPlacement(file, placementSetter.GetPlacement());

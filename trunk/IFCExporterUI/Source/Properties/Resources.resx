@@ -186,4 +186,10 @@
   <data name="ExportPartsAsBuildingElements" xml:space="preserve">
     <value>Export parts as building elements</value>
   </data>
+  <data name="ExportIFCCommonPropertySets" xml:space="preserve">
+    <value>Export IFC common property sets</value>
+  </data>
+  <data name="ExportSurfaceStyles" xml:space="preserve">
+    <value>Export surface styles</value>
+  </data>
 </root>

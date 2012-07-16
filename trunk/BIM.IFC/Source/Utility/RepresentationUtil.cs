@@ -34,6 +34,23 @@ namespace BIM.IFC.Utility
     class RepresentationUtil
     {
         /// <summary>
+        /// Creates a shape representation and register it to shape representation layer.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="identifier">The identifier for the representation.</param>
+        /// <param name="representationType">The type handle for the representation.</param>
+        /// <param name="items">Collection of geometric representation items that are defined for this representation.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateBaseShapeRepresentation(ExporterIFC exporterIFC, IFCAnyHandle contextOfItems,
+           string identifier, string representationType, ICollection<IFCAnyHandle> items)
+        {
+            IFCFile file = exporterIFC.GetFile();
+            IFCAnyHandle newShapeRepresentation = IFCInstanceExporter.CreateShapeRepresentation(file, contextOfItems, identifier, representationType, items);
+            return newShapeRepresentation;
+        }
+
+        /// <summary>
         /// Creates a shape representation or appends existing ones to original representation.
         /// </summary>
         /// <remarks>
@@ -42,30 +59,14 @@ namespace BIM.IFC.Utility
         /// If originalShapeRepresentation has a value, then it is expected to be an aggregation of representations, and the new representation
         /// will be appended to the end of the list.
         /// </remarks>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="categoryId">
-        /// The category id.
-        /// </param>
-        /// <param name="contextOfItems">
-        /// The context for which the different subtypes of representation are valid. 
-        /// </param>
-        /// <param name="identifierOpt">
-        /// The identifier for the representation.
-        /// </param>
-        /// <param name="representationTypeOpt">
-        /// The type handle for the representation.
-        /// </param>
-        /// <param name="items">
-        /// Collection of geometric representation items that are defined for this representation.
-        /// </param>
-        /// <param name="originalShapeRepresentation">
-        /// The original shape representation.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="identifierOpt">The identifier for the representation.</param>
+        /// <param name="representationTypeOpt">The type handle for the representation.</param>
+        /// <param name="items">Collection of geometric representation items that are defined for this representation.</param>
+        /// <param name="originalShapeRepresentation">The original shape representation.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateOrAppendShapeRepresentation(ExporterIFC exporterIFC, Element element, ElementId categoryId, IFCAnyHandle contextOfItems,
            string identifierOpt, string representationTypeOpt, ICollection<IFCAnyHandle> items, IFCAnyHandle originalShapeRepresentation)
         {
@@ -81,33 +82,17 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Creates a shape representation and register it to shape representation layer.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="categoryId">
-        /// The category id.
-        /// </param>
-        /// <param name="contextOfItems">
-        /// The context for which the different subtypes of representation are valid. 
-        /// </param>
-        /// <param name="identifier">
-        /// The identifier for the representation.
-        /// </param>
-        /// <param name="representationType">
-        /// The type handle for the representation.
-        /// </param>
-        /// <param name="items">
-        /// Collection of geometric representation items that are defined for this representation.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="identifier">The identifier for the representation.</param>
+        /// <param name="representationType">The type handle for the representation.</param>
+        /// <param name="items">Collection of geometric representation items that are defined for this representation.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateShapeRepresentation(ExporterIFC exporterIFC, Element element, ElementId categoryId, IFCAnyHandle contextOfItems,
            string identifier, string representationType, ICollection<IFCAnyHandle> items)
         {
-            IFCFile file = exporterIFC.GetFile();
-            HashSet<IFCAnyHandle> itemSet = new HashSet<IFCAnyHandle>(items);
-            IFCAnyHandle newShapeRepresentation = IFCInstanceExporter.CreateShapeRepresentation(file, contextOfItems, identifier, representationType, itemSet);
+            IFCAnyHandle newShapeRepresentation = CreateBaseShapeRepresentation(exporterIFC, contextOfItems, identifier, representationType, items);
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(newShapeRepresentation))
                 return newShapeRepresentation;
 
@@ -120,27 +105,13 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Creates a shape representation and register it to shape representation layer.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="categoryId">
-        /// The category id.
-        /// </param>
-        /// <param name="contextOfItems">
-        /// The context for which the different subtypes of representation are valid. 
-        /// </param>
-        /// <param name="identifierOpt">
-        /// The identifier for the representation.
-        /// </param>
-        /// <param name="representationTypeOpt">
-        /// The type handle for the representation.
-        /// </param>
-        /// <param name="items">
-        /// List of geometric representation items that are defined for this representation.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="identifierOpt">The identifier for the representation.</param>
+        /// <param name="representationTypeOpt">The type handle for the representation.</param>
+        /// <param name="items">List of geometric representation items that are defined for this representation.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateShapeRepresentation(ExporterIFC exporterIFC, Element element, ElementId categoryId, IFCAnyHandle contextOfItems,
            string identifierOpt, string representationTypeOpt, IList<IFCAnyHandle> items)
         {
@@ -153,25 +124,19 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Creates an IfcFacetedBrep handle.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="shell">
-        /// The closed shell handle.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="shell">The closed shell handle.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateFacetedBRep(ExporterIFC exporterIFC, Document document, IFCAnyHandle shell, ElementId overrideMaterialId)
         {
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle brep = IFCInstanceExporter.CreateFacetedBrep(file, shell);
 
-            // Coordination View V2 does not support styled items by default.  IFC2x2 does, even if it isn't widely used, so we can't use ExportAnnotations.
-            if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
+            // Coordination View V2 does not support styled items by default; while others support. 
+            // The option can be changed by alternate UI.
+            if (ExporterCacheManager.ExportOptionsCache.ExportSurfaceStyles)
             {
                 BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document, brep, overrideMaterialId);
-
             }
             return brep;
         }
@@ -179,24 +144,12 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Creates a sweep solid representation.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="categoryId">
-        /// The category id.
-        /// </param>
-        /// <param name="contextOfItems">
-        /// The context for which the different subtypes of representation are valid. 
-        /// </param>
-        /// <param name="bodyItems">
-        /// Set of geometric representation items that are defined for this representation.
-        /// </param>
-        /// <param name="originalShapeRepresentation">
-        /// The original shape representation.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="bodyItems">Set of geometric representation items that are defined for this representation.</param>
+        /// <param name="originalShapeRepresentation">The original shape representation.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateSweptSolidRep(ExporterIFC exporterIFC, Element element, ElementId categoryId, IFCAnyHandle contextOfItems, 
             ICollection<IFCAnyHandle> bodyItems, IFCAnyHandle originalRepresentation)
         {
@@ -211,21 +164,11 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Creates a clipping representation.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="categoryId">
-        /// The category id.
-        /// </param>
-        /// <param name="contextOfItems">
-        /// The context for which the different subtypes of representation are valid. 
-        /// </param>
-        /// <param name="bodyItems">
-        /// Set of geometric representation items that are defined for this representation.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="bodyItems">Set of geometric representation items that are defined for this representation.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateClippingRep(ExporterIFC exporterIFC, Element element, ElementId categoryId,
            IFCAnyHandle contextOfItems, HashSet<IFCAnyHandle> bodyItems)
         {
@@ -239,21 +182,11 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Creates a Brep representation.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="categoryId">
-        /// The category id.
-        /// </param>
-        /// <param name="contextOfItems">
-        /// The context for which the different subtypes of representation are valid. 
-        /// </param>
-        /// <param name="bodyItems">
-        /// Set of geometric representation items that are defined for this representation.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="bodyItems">Set of geometric representation items that are defined for this representation.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateBRepRep(ExporterIFC exporterIFC, Element element, ElementId categoryId,
            IFCAnyHandle contextOfItems, ICollection<IFCAnyHandle> bodyItems)
         {
@@ -267,21 +200,11 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Creates a Solid model representation.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="categoryId">
-        /// The category id.
-        /// </param>
-        /// <param name="contextOfItems">
-        /// The context for which the different subtypes of representation are valid. 
-        /// </param>
-        /// <param name="bodyItems">
-        /// Set of geometric representation items that are defined for this representation.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="bodyItems">Set of geometric representation items that are defined for this representation.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateSolidModelRep(ExporterIFC exporterIFC, Element element, ElementId categoryId,
            IFCAnyHandle contextOfItems, ICollection<IFCAnyHandle> bodyItems)
         {
@@ -295,28 +218,16 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Creates a Brep representation.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="categoryId">
-        /// The category id.
-        /// </param>
-        /// <param name="contextOfItems">
-        /// The context for which the different subtypes of representation are valid. 
-        /// </param>
-        /// <param name="bodyItems">
-        /// Set of geometric representation items that are defined for this representation.
-        /// </param>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="bodyItems">Set of geometric representation items that are defined for this representation.</param>
         /// <param name="exportAsFacetation">
         /// If this is true, the identifier for the representation is "Facetation" as required by IfcSite.
         /// If this is false, the identifier for the representation is "Body" as required by IfcBuildingElement.
         /// </param>
-        /// <param name="originalShapeRepresentation">
-        /// The original shape representation.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="originalShapeRepresentation">The original shape representation.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateSurfaceRep(ExporterIFC exporterIFC, Element element, ElementId categoryId,
             IFCAnyHandle contextOfItems, ICollection<IFCAnyHandle> bodyItems, bool exportAsFacetation, IFCAnyHandle originalRepresentation)
         {
@@ -335,24 +246,12 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Creates a boundary representation.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="categoryId">
-        /// The category id.
-        /// </param>
-        /// <param name="contextOfItems">
-        /// The context for which the different subtypes of representation are valid. 
-        /// </param>
-        /// <param name="bodyItems">
-        /// Collection of geometric representation items that are defined for this representation.
-        /// </param>
-        /// <param name="originalShapeRepresentation">
-        /// The original shape representation.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="bodyItems">Collection of geometric representation items that are defined for this representation.</param>
+        /// <param name="originalShapeRepresentation">The original shape representation.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateBoundaryRep(ExporterIFC exporterIFC, Element element, ElementId categoryId,
             IFCAnyHandle contextOfItems, ICollection<IFCAnyHandle> bodyItems, IFCAnyHandle originalRepresentation)
         {
@@ -367,24 +266,12 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Creates a geometric set representation.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="categoryId">
-        /// The category id.
-        /// </param>
-        /// <param name="type">
-        /// The representation type.
-        /// </param>
-        /// <param name="contextOfItems">
-        /// The context for which the different subtypes of representation are valid. 
-        /// </param>
-        /// <param name="bodyItems">
-        /// Set of geometric representation items that are defined for this representation.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="type">The representation type.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="bodyItems">Set of geometric representation items that are defined for this representation.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateGeometricSetRep(ExporterIFC exporterIFC, Element element, ElementId categoryId,
            string type, IFCAnyHandle contextOfItems, HashSet<IFCAnyHandle> bodyItems)
         {
@@ -396,23 +283,31 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Creates a body bounding box representation.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="boundingBoxItem">Set of geometric representation items that are defined for this representation.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateBoundingBoxRep(ExporterIFC exporterIFC, IFCAnyHandle contextOfItems, IFCAnyHandle boundingBoxItem)
+        {
+            string identifierOpt = "Box";	// this is by IFC2x2+ convention
+            string repTypeOpt = "BoundingBox";  // this is by IFC2x2+ convention
+            ICollection<IFCAnyHandle> bodyItems = new List<IFCAnyHandle>();
+            bodyItems.Add(boundingBoxItem);
+            IFCAnyHandle bodyRepresentation = CreateBaseShapeRepresentation(exporterIFC, contextOfItems, identifierOpt, repTypeOpt, bodyItems);
+            return bodyRepresentation;
+        }
+
+        /// <summary>
         /// Creates a body mapped item representation.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="categoryId">
-        /// The category id.
-        /// </param>
-        /// <param name="contextOfItems">
-        /// The context for which the different subtypes of representation are valid. 
-        /// </param>
-        /// <param name="bodyItems">
-        /// Set of geometric representation items that are defined for this representation.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="bodyItems">Set of geometric representation items that are defined for this representation.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateBodyMappedItemRep(ExporterIFC exporterIFC, Element element, ElementId categoryId,
            IFCAnyHandle contextOfItems, IList<IFCAnyHandle> bodyItems)
         {
@@ -426,21 +321,11 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Creates a plan mapped item representation.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="categoryId">
-        /// The category id.
-        /// </param>
-        /// <param name="contextOfItems">
-        /// The context for which the different subtypes of representation are valid. 
-        /// </param>
-        /// <param name="bodyItems">
-        /// Set of geometric representation items that are defined for this representation.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="bodyItems">Set of geometric representation items that are defined for this representation.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreatePlanMappedItemRep(ExporterIFC exporterIFC, Element element, ElementId categoryId,
             IFCAnyHandle contextOfItems, HashSet<IFCAnyHandle> bodyItems)
         {
@@ -477,30 +362,14 @@ namespace BIM.IFC.Utility
         /// <remarks>
         /// It will try to export the geometry as an extrusion if it is not exported as IFC 2x2 version.
         /// </remarks>
-        /// <param name="application">
-        /// The Revit application object.
-        /// </param>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="categoryId">
-        /// The category id.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="bodyExporterOptions">
-        /// The body exporter options.
-        /// </param>
-        /// <param name="extraReps">
-        /// Extra representations (e.g. Axis, Boundary).  May be null.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The extrusion creation data. 
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="application">The Revit application object.</param>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="bodyExporterOptions">The body exporter options.</param>
+        /// <param name="extraReps">Extra representations (e.g. Axis, Boundary).  May be null.</param>
+        /// <param name="extrusionCreationData">The extrusion creation data.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateBRepProductDefinitionShape(Autodesk.Revit.ApplicationServices.Application application,
             ExporterIFC exporterIFC, Element element, ElementId categoryId,
             GeometryElement geometryElement, BodyExporterOptions bodyExporterOptions, IList<IFCAnyHandle> extraReps, 
@@ -508,7 +377,7 @@ namespace BIM.IFC.Utility
         {
             BodyData bodyData;
             return CreateBRepProductDefinitionShape(application, exporterIFC, element, categoryId,
-            geometryElement, bodyExporterOptions, extraReps, extrusionCreationData, out bodyData);
+                geometryElement, bodyExporterOptions, extraReps, extrusionCreationData, out bodyData);
         }
 
         /// <summary>
@@ -517,37 +386,19 @@ namespace BIM.IFC.Utility
         /// <remarks>
         /// It will try to export the geometry as an extrusion if it is not exported as IFC 2x2 version.
         /// </remarks>
-        /// <param name="application">
-        /// The Revit application object.
-        /// </param>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="categoryId">
-        /// The category id.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="bodyExporterOptions">
-        /// The body exporter options.
-        /// </param>
-        /// <param name="extraReps">
-        /// Extra representations (e.g. Axis, Boundary).  May be null.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The extrusion creation data. 
-        /// </param>
-        /// <param name="bodyData">
-        /// The body data.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="application">The Revit application object.</param>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="bodyExporterOptions">The body exporter options.</param>
+        /// <param name="extraReps">Extra representations (e.g. Axis, Boundary).  May be null.</param>
+        /// <param name="extrusionCreationData">The extrusion creation data.</param>
+        /// <param name="bodyData">The body data.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateBRepProductDefinitionShape(Autodesk.Revit.ApplicationServices.Application application,
             ExporterIFC exporterIFC, Element element, ElementId categoryId,
-            GeometryElement geometryElement, BodyExporterOptions bodyExporterOptions, IList<IFCAnyHandle> extraReps, IFCExtrusionCreationData extrusionCreationData,
-            out BodyData bodyData)
+            GeometryElement geometryElement, BodyExporterOptions bodyExporterOptions, IList<IFCAnyHandle> extraReps, 
+            IFCExtrusionCreationData extrusionCreationData, out BodyData bodyData)
         {
             SolidMeshGeometryInfo info = null;
             IList<GeometryObject> solids = new List<GeometryObject>();
@@ -619,6 +470,11 @@ namespace BIM.IFC.Utility
                     bodyReps.Add(hnd);
             }
 
+            Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
+            IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, element.get_Geometry(geomOptions), Transform.Identity);
+            if (boundingBoxRep != null)
+                bodyReps.Add(boundingBoxRep);
+
             if (bodyReps.Count == 0)
                 return null;
             return IFCInstanceExporter.CreateProductDefinitionShape(exporterIFC.GetFile(), null, null, bodyReps);
@@ -627,28 +483,14 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Creates a Brep product definition shape representation.
         /// </summary>
-        /// <param name="application">
-        /// The Revit application object.
-        /// </param>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="categoryId">
-        /// The category id.
-        /// </param>
-        /// <param name="geometryObject">
-        /// The geometry object.
-        /// </param>
-        /// <param name="extraReps">
-        /// Extra representations (e.g. Axis, Footprint).  May be null.
-        /// </param>
+        /// <param name="application">The Revit application object.</param>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="geometryObject">The geometry object.</param>
+        /// <param name="extraReps">Extra representations (e.g. Axis, Footprint).  May be null.</param>
         /// <param name="options">The settings for how to export the body.</param>
-        /// <param name="extrusionCreationData">
-        /// The extrusion creation data. 
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="extrusionCreationData">The extrusion creation data.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateBRepProductDefinitionShape(Autodesk.Revit.ApplicationServices.Application application,
             ExporterIFC exporterIFC, Element element, ElementId categoryId,
             IList<GeometryObject> geometryObjectIn, IList<IFCAnyHandle> extraReps,
@@ -662,24 +504,12 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Creates a surface product definition shape representation.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="exportBoundaryRep">
-        /// If this is true, it will export boundary representations.
-        /// </param>
-        /// <param name="exportAsFacetation">
-        /// If this is true, it will export the geometry as facetation.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="exportBoundaryRep">If this is true, it will export boundary representations.</param>
+        /// <param name="exportAsFacetation">If this is true, it will export the geometry as facetation.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateSurfaceProductDefinitionShape(ExporterIFC exporterIFC, Element element,
            GeometryElement geometryElement, bool exportBoundaryRep, bool exportAsFacetation)
         {
@@ -695,30 +525,14 @@ namespace BIM.IFC.Utility
         /// If a body representation is supplied, then we expect that this is already contained in a representation list, inside
         /// a product representation. As such, just modify the list and return.
         /// </remarks>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="exportBoundaryRep">
-        /// If this is true, it will export boundary representations.
-        /// </param>
-        /// <param name="exportAsFacetation">
-        /// If this is true, it will export the geometry as facetation.
-        /// </param>
-        /// <param name="bodyRep">
-        /// Body representation.
-        /// </param>
-        /// <param name="boundaryRep">
-        /// Boundary representation.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="exportBoundaryRep">If this is true, it will export boundary representations.</param>
+        /// <param name="exportAsFacetation">If this is true, it will export the geometry as facetation.</param>
+        /// <param name="bodyRep">Body representation.</param>
+        /// <param name="boundaryRep">Boundary representation.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateSurfaceProductDefinitionShape(ExporterIFC exporterIFC, Element element,
            GeometryElement geometryElement, bool exportBoundaryRep, bool exportAsFacetation, ref IFCAnyHandle bodyRep, ref IFCAnyHandle boundaryRep)
         {
@@ -737,6 +551,10 @@ namespace BIM.IFC.Utility
             representations.Add(bodyRep);
             if (exportBoundaryRep && !IFCAnyHandleUtil.IsNullOrHasNoValue(boundaryRep))
                 representations.Add(boundaryRep);
+
+            IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geometryElement, Transform.Identity);
+            if (boundingBoxRep != null)
+                representations.Add(boundingBoxRep);
 
             return IFCInstanceExporter.CreateProductDefinitionShape(exporterIFC.GetFile(), null, null, representations);
         }

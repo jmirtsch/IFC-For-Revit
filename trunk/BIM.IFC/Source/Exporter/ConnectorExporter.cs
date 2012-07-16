@@ -99,12 +99,12 @@ namespace BIM.IFC.Exporter
                                                     {
                                                         if (connector.Direction == FlowDirectionType.Out)
                                                         {
-                                                            AddConnection(file, exporterIFC, connected.Owner, connector.Owner, false);
+                                                            AddConnection(exporterIFC, connected, connector, false);
                                                         }
                                                         else
                                                         {
                                                             bool isBiDirectional = (connector.Direction == FlowDirectionType.Bidirectional);
-                                                            AddConnection(file, exporterIFC, connector.Owner, connected.Owner, isBiDirectional);
+                                                            AddConnection(exporterIFC, connector, connected, isBiDirectional);
                                                         }
                                                     }
                                                 }
@@ -125,16 +125,11 @@ namespace BIM.IFC.Exporter
             }
         }
 
-        /// <summary>
-        /// Add IFC Nodes
-        /// </summary>
-        /// <param name="ifcFile"></param>
-        /// <param name="exporterIFC"></param>
-        /// <param name="inElement"></param>
-        /// <param name="outElement"></param>
-        /// <param name="isBiDirectional"></param>
-        static void AddConnection(IFCFile ifcFile, ExporterIFC exporterIFC, Element inElement, Element outElement, bool isBiDirectional)
+        static void AddConnection(ExporterIFC exporterIFC, Connector connector, Connector connected, bool isBiDirectional)
         {
+            Element inElement = connector.Owner;
+            Element outElement = connected.Owner;
+
             // Check if the connection already exist
             if (connectionExists(inElement.Id, outElement.Id))
                 return;
@@ -153,6 +148,7 @@ namespace BIM.IFC.Exporter
                 || !IFCAnyHandleUtil.IsSubTypeOf(outElementIFCHandle, IFCEntityType.IfcElement))
                 return;
 
+            IFCFile ifcFile = exporterIFC.GetFile();
             IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
             IFCAnyHandle portOut = null;
             IFCAnyHandle portIn = null;
@@ -190,6 +186,32 @@ namespace BIM.IFC.Exporter
                 IFCAnyHandle realizingElement = null;
                 IFCInstanceExporter.CreateRelConnectsPorts(ifcFile, guid, ownerHistory, null, null, portIn, portOut, realizingElement);
                 addConnection(inElement.Id, outElement.Id);
+            }
+
+            // Add the handles to the connector system.
+            HashSet<MEPSystem> systemList = new HashSet<MEPSystem>();
+            try
+            {
+                systemList.Add(connector.MEPSystem);
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                systemList.Add(connected.MEPSystem);
+            }
+            catch
+            {
+            }
+
+            foreach (MEPSystem system in systemList)
+            {
+                ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, inElementIFCHandle);
+                ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, outElementIFCHandle);
+                ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, portIn);
+                ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, portOut);
             }
         }
 

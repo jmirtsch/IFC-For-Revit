@@ -204,6 +204,11 @@ namespace BIM.IFC.Exporter
 
             IList<IFCAnyHandle> shapeReps = new List<IFCAnyHandle>();
             shapeReps.Add(shapeRep);
+
+            IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, wallElement.get_Geometry(geomOptions), Transform.Identity);
+            if (boundingBoxRep != null)
+                shapeReps.Add(boundingBoxRep);
+
             prodDefRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
             return prodDefRep;
         }

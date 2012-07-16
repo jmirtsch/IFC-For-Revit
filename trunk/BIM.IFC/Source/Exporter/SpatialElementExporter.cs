@@ -962,6 +962,11 @@ namespace BIM.IFC.Exporter
                         shapeRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, spatialElement, catId, exporterIFC.Get3DContextHandle("Body"), bodyItems, null);
                         IList<IFCAnyHandle> shapeReps = new List<IFCAnyHandle>();
                         shapeReps.Add(shapeRep);
+
+                        IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geomElem, Transform.Identity);
+                        if (boundingBoxRep != null)
+                            shapeReps.Add(boundingBoxRep);
+
                         repHnd = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
                     }
 
@@ -985,7 +990,8 @@ namespace BIM.IFC.Exporter
             ExporterCacheManager.SpatialElementHandleCache.Register(spatialElement.Id, spaceHnd);
             exporterIFC.RegisterSpatialElementHandle(spatialElement.Id, spaceHnd);
 
-            if (!MathUtil.IsAlmostZero(dArea) && !(ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE))
+            if (!MathUtil.IsAlmostZero(dArea) && !(ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE) &&
+                !ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2 && !ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities)
             {
                 ExporterIFCUtils.CreatePreCOBIEGSAQuantities(exporterIFC, spaceHnd, "GSA Space Areas", (isArea ? "GSA Design Gross Area" : "GSA BIM Area"), dArea);
             }
@@ -1306,7 +1312,8 @@ namespace BIM.IFC.Exporter
 
                         if (exportToCOBIE && !exportedExtraZoneInformation)
                         {
-                            if (NamingUtil.IsEqualIgnoringCaseAndSpaces(zoneObjectType, "SpatialZone"))
+                            bool isSpatialZone = NamingUtil.IsEqualIgnoringCaseAndSpaces(zoneObjectType, "SpatialZone");
+                            if (isSpatialZone)
                             {
                                 // Classifications.
                                 Document doc = element.Document;
@@ -1346,7 +1353,10 @@ namespace BIM.IFC.Exporter
                                       "ASHRAE 90.1", "Common Space Type", itemName, null);
                                     classificationHandles["ASHRAE Zone Type"] = classificationReference;
                                 }
+                            }
 
+                            if (isSpatialZone || NamingUtil.IsEqualIgnoringCaseAndSpaces(zoneObjectType, "EnergyAnalysisZone"))
+                            {
                                 // Property Sets.  We don't use the generic Property Set mechanism because Zones aren't "real" elements.
                                 energyAnalysisPSetHnd = CreateSpatialZoneEnergyAnalysisPSet(exporterIFC, file, element);
 

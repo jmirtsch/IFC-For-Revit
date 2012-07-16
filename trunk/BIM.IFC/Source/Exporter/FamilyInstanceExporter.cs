@@ -171,6 +171,7 @@ namespace BIM.IFC.Exporter
 
             IFCProductWrapper familyProductWrapper = IFCProductWrapper.Create(wrapper);
             double scale = exporterIFC.LinearScale;
+            Options options = GeometryUtil.GetIFCExportGeometryOptions();
 
             IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
 
@@ -208,6 +209,8 @@ namespace BIM.IFC.Exporter
 
                 // TODO: this code to be removed by ExtrusionAnalyzer code.
                 bool trySpecialColumnCreation = ((exportType == IFCExportType.ExportColumnType) && (!family.IsInPlace));
+                IList<GeometryObject> geomObjects = new List<GeometryObject>();
+                Transform brepOffsetTransform = null;
 
                 // We will create a new mapped type if:
                 // 1.  We are exporting part of a column or in-place wall (range != null), OR
@@ -280,14 +283,11 @@ namespace BIM.IFC.Exporter
                                 trfSetter.Initialize(exporterIFC, doorWindowTrf);
                             }
 
-                            Options options = GeometryUtil.GetIFCExportGeometryOptions();
-
                             GeometryElement exportGeometry =
                                useInstanceGeometry ? familyInstance.get_Geometry(options) : familySymbol.get_Geometry(options);
                             if (exportGeometry == null)
                                 return;
 
-                            Transform brepOffsetTransform = null;
                             if (needToCreate3d)
                             {
                                 SolidMeshGeometryInfo solidMeshCapsule = null;
@@ -304,7 +304,7 @@ namespace BIM.IFC.Exporter
                                 IList<Solid> solids = solidMeshCapsule.GetSolids();
                                 IList<Mesh> polyMeshes = solidMeshCapsule.GetMeshes();
 
-                                IList<GeometryObject> geomObjects = FamilyExporterUtil.RemoveSolidsAndMeshesSetToDontExport(doc, exporterIFC, solids, polyMeshes);
+                                geomObjects = FamilyExporterUtil.RemoveSolidsAndMeshesSetToDontExport(doc, exporterIFC, solids, polyMeshes);
                                 if (geomObjects.Count == 0 && (solids.Count > 0 || polyMeshes.Count > 0))
                                     return;
 
@@ -596,6 +596,19 @@ namespace BIM.IFC.Exporter
                     }
                 }
 
+                IFCAnyHandle boundingBoxRep = null;
+                Transform boundingBoxTrf = (brepOffsetTransform != null) ? brepOffsetTransform.Inverse : Transform.Identity;
+                if (geomObjects.Count > 0)
+                    boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geomObjects, boundingBoxTrf);
+                else
+                {
+                    boundingBoxTrf = boundingBoxTrf.Multiply(trf.Inverse);
+                    boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, familyInstance.get_Geometry(options), boundingBoxTrf);
+                }
+                
+                if (boundingBoxRep != null)
+                    shapeReps.Add(boundingBoxRep);
+
                 IFCAnyHandle rep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
 
                 IFCAnyHandle instanceHandle = null;
@@ -629,7 +642,7 @@ namespace BIM.IFC.Exporter
                                 if (!useInstanceGeometry)
                                 {
                                     bool needToCreateOpenings =
-                                        (cutPairOpeningsForColumns.Count == 0) || OpeningUtil.NeedToCreateOpenings(instanceHandle, extraParams);
+                                        (cutPairOpeningsForColumns.Count != 0) || OpeningUtil.NeedToCreateOpenings(instanceHandle, extraParams);
                                     if (needToCreateOpenings)
                                     {
                                         Transform openingTrf = new Transform(oldTrf);

@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage SchemaVersion="1.0" AutodeskProduct="Revit" ProductType="Application" Name="IFC Exporter for Revit" AppVersion="2.1.0.0" Description="This application seamlessly replaces the built-in IFC export capabilities of Revit 2013. " Author="Autodesk" Icon=".\Contents\Resources\IFCExporter2013.png" AppNameSpace="appstore.exchange.autodesk.com" OnlineDocumentation="http://www.autodesk.com" HelpFile=".\Contents\Resources\ADSKIFCExporterHelp.htm" ProductCode="{9B0CA87A-1411-49C0-BBF6-35CF5115553B}" UpgradeCode="{CF885686-3666-4AE4-AD04-888286C204E6}" SupportedLocales="Enu">
+  <CompanyDetails Name="Autodesk" Phone=" " Url="http://www.autodesk.com" Email="Revit.apps@autodesk.com" />
+  <RuntimeRequirements OS="Win32|Win64" Platform="Revit*" SeriesMin="2013" SeriesMax="2013" />
+</ApplicationPackage>

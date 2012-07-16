@@ -103,6 +103,10 @@ namespace BIM.IFC.Exporter
                         List<IFCAnyHandle> shapeReps = new List<IFCAnyHandle>();
                         shapeReps.Add(bodyMappedItemRep);
 
+                        IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geometryElement, Transform.Identity);
+                        if (boundingBoxRep != null)
+                            shapeReps.Add(boundingBoxRep);
+                        
                         IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
                         IFCAnyHandle localPlacementToUse;
                         ElementId roomId = setter.UpdateRoomRelativeCoordinates(element, out localPlacementToUse);

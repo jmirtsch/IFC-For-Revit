@@ -1367,6 +1367,20 @@ namespace BIM.IFC.Toolkit
     }
 
     /// <summary>
+    /// Defines the different types of walls an IfcWallType object can fulfill.
+    /// </summary>
+    enum IFCWallType
+    {
+        Standard,
+        Polygonal,
+        Shear,
+        ElementedWall,
+        PlumbingWall,
+        UserDefined,
+        NotDefined
+    }
+
+    /// <summary>
     /// Defines the range of different types of covering that can further specify an IfcRailing
     /// </summary>
     enum IFCRailingType

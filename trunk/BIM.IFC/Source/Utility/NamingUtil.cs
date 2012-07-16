@@ -166,6 +166,24 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Gets override long name from element.
+        /// </summary>
+        /// <param name="element">
+        /// The element.
+        /// </param>
+        /// <param name="originalValue">
+        /// The original value.
+        /// </param>
+        /// <returns>
+        /// The string contains the long name string value.
+        /// </returns>
+        public static string GetLongNameOverride(Element element, string originalValue)
+        {
+            string longNameOverride = "LongNameOverride";
+            return GetOverrideStringValue(element, longNameOverride, originalValue);
+        }
+
+        /// <summary>
         /// Gets override description from element.
         /// </summary>
         /// <param name="element">

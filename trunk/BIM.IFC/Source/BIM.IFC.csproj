@@ -42,6 +42,7 @@
     <Compile Include="Exporter\BodyExporterOptions.cs" />
     <Compile Include="Exporter\BodyGroupData.cs" />
     <Compile Include="Exporter\BodyGroupKey.cs" />
+    <Compile Include="Exporter\BoundingBoxExporter.cs" />
     <Compile Include="Exporter\CeilingExporter.cs" />
     <Compile Include="Exporter\ConnectorExporter.cs" />
     <Compile Include="Exporter\CurtainSystemExporter.cs" />
@@ -51,6 +52,7 @@
     <Compile Include="Exporter\FilledRegionExporter.cs" />
     <Compile Include="Exporter\FootingExporter.cs" />
     <Compile Include="Exporter\GenericMEPExporter.cs" />
+    <Compile Include="Exporter\GridExporter.cs" />
     <Compile Include="Exporter\HandleAndData.cs" />
     <Compile Include="Exporter\HostedSweepExporter.cs" />
     <Compile Include="Exporter\HostObjectExporter.cs" />
@@ -139,6 +141,7 @@
     <Compile Include="Utility\FamilyTypeInfo.cs" />
     <Compile Include="Utility\GeometryUtil.cs" />
     <Compile Include="Utility\GroupElementGeometryCache.cs" />
+    <Compile Include="Utility\GUIDUtil.cs" />
     <Compile Include="Utility\HandleToElementCache.cs" />
     <Compile Include="Utility\HostPartsCache.cs" />
     <Compile Include="Utility\IntegerPropertyInfoCache.cs" />
@@ -155,6 +158,7 @@
     <Compile Include="Utility\SpaceOccupantInfoCache.cs" />
     <Compile Include="Utility\StairRampContainerInfoCache.cs" />
     <Compile Include="Utility\StringPropertyInfoCache.cs" />
+    <Compile Include="Utility\SystemsCache.cs" />
     <Compile Include="Utility\TypePropertyInfoCache.cs" />
     <Compile Include="Utility\UnitsCache.cs" />
     <Compile Include="Utility\WallConnectionDataCache.cs" />

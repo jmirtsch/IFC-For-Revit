@@ -144,7 +144,7 @@ namespace BIM.IFC.Exporter
                         if (widths[i] < MathUtil.Eps())
                             continue;
 
-                        IFCAnyHandle materialHnd = CategoryUtil.GetOrCreateMaterialHandle(hostObjAttr.Document, exporterIFC, matIds[i]);
+                        IFCAnyHandle materialHnd = CategoryUtil.GetOrCreateMaterialHandle(hostObjAttr.Document, exporterIFC, matIds[i], true);
                         if (primaryMaterialHnd == null || (widths[i] > thickestLayer))
                         {
                             primaryMaterialHnd = materialHnd;

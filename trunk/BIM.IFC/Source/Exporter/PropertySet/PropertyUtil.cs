@@ -94,7 +94,7 @@ namespace BIM.IFC.Exporter.PropertySet
             bool canCache = (value == String.Empty) || cacheAllStrings;
             StringPropertyInfoCache stringInfoCache = null;
             IFCAnyHandle labelHandle = null;
-            
+
             if (canCache)
             {
                 stringInfoCache = ExporterCacheManager.StringPropertyInfoCache;
@@ -215,7 +215,7 @@ namespace BIM.IFC.Exporter.PropertySet
             stringInfoCache.Add(propertyName, value, stringHandle);
             return stringHandle;
         }
-    
+
         /// <summary>
         /// Create a boolean property.
         /// </summary>
@@ -341,7 +341,7 @@ namespace BIM.IFC.Exporter.PropertySet
             // For scale = 1.0 (feet), cache multiples of 1/2" up to 10'.
             // For scale = 0.03048 (meter), cache multiples of 50mm up to 10m.
             // For scale = 304.8 (mm), cache multiples of 50mm up to 10m.
-            
+
             if (MathUtil.IsAlmostZero(value))
             {
                 return 0.0;
@@ -986,7 +986,7 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>
         /// The created property handle.
         /// </returns>
-        public static IFCAnyHandle CreateRealPropertyFromElementOrSymbol(IFCFile file, double scale, Element elem, string revitParameterName, string ifcPropertyName, 
+        public static IFCAnyHandle CreateRealPropertyFromElementOrSymbol(IFCFile file, double scale, Element elem, string revitParameterName, string ifcPropertyName,
             PropertyValueType valueType)
         {
             double propertyValue;
@@ -1267,26 +1267,16 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <param name="element">
         /// The Element.
         /// </param>
-        /// <param name="productWrapper">
-        /// The product wrapper.
+        /// <param name="elementSets">
+        /// The collection of IFCAnyHandles to relate properties to.
         /// </param>
-        public static void CreateInternalRevitPropertySets(ExporterIFC exporterIFC, Element element, IFCProductWrapper productWrapper)
+        public static void CreateInternalRevitPropertySets(ExporterIFC exporterIFC, Element element, ICollection<IFCAnyHandle> elementSets)
         {
-            if (exporterIFC == null || element == null || productWrapper == null ||
+            if (exporterIFC == null || element == null || elementSets == null || elementSets.Count == 0 ||
                 !ExporterCacheManager.ExportOptionsCache.ExportInternalRevitPropertySets)
                 return;
 
             IFCFile file = exporterIFC.GetFile();
-
-            ICollection<IFCAnyHandle> elements = productWrapper.GetElements();
-            if (elements.Count == 0)
-            {
-                elements = productWrapper.GetProducts();
-                if (elements.Count == 0)
-                    return;
-            }
-
-            HashSet<IFCAnyHandle> elementSets = new HashSet<IFCAnyHandle>(elements);
 
             double lengthScale = exporterIFC.LinearScale;
             double angleScale = 180.0 / Math.PI;
@@ -1361,8 +1351,12 @@ namespace BIM.IFC.Exporter.PropertySet
                         case StorageType.Integer:
                             {
                                 int value;
+                                string valueAsString = null;
                                 if (parameter.HasValue)
+                                {
                                     value = parameter.AsInteger();
+                                    valueAsString = parameter.AsValueString();
+                                }
                                 else
                                 {
                                     if (!canUseElementType)
@@ -1371,7 +1365,10 @@ namespace BIM.IFC.Exporter.PropertySet
                                     Parameter elementTypeParameter = elementType.get_Parameter(parameterDefinition);
                                     if (elementTypeParameter != null && elementTypeParameter.HasValue &&
                                         elementTypeParameter.StorageType == StorageType.Integer)
+                                    {
                                         value = elementTypeParameter.AsInteger();
+                                        valueAsString = parameter.AsValueString();
+                                    }
                                     else
                                         continue;
                                 }
@@ -1380,6 +1377,11 @@ namespace BIM.IFC.Exporter.PropertySet
                                 if (parameterDefinition.ParameterType == ParameterType.YesNo)
                                 {
                                     propertyArr[which][idx].Add(CreateBooleanPropertyFromCache(file, parameterCaption, value != 0, PropertyValueType.SingleValue));
+                                }
+                                else if (parameterDefinition.ParameterType == ParameterType.Invalid && (valueAsString != null))
+                                {
+                                    // This is probably an internal enumerated type that should be exported as a string.
+                                    propertyArr[which][idx].Add(CreateIdentifierPropertyFromCache(file, parameterCaption, valueAsString, PropertyValueType.SingleValue));
                                 }
                                 else
                                 {
@@ -1533,6 +1535,37 @@ namespace BIM.IFC.Exporter.PropertySet
                 if (which == 1)
                     ExporterCacheManager.TypePropertyInfoCache.AddNewTypeProperties(typeId, propertySets, elementSets);
             }
+        }
+
+        /// <summary>
+        /// Creates property sets for Revit groups and parameters, if export options is set.
+        /// </summary>
+        /// <param name="exporterIFC">
+        /// The ExporterIFC.
+        /// </param>
+        /// <param name="element">
+        /// The Element.
+        /// </param>
+        /// <param name="productWrapper">
+        /// The product wrapper.
+        /// </param>
+        public static void CreateInternalRevitPropertySets(ExporterIFC exporterIFC, Element element, IFCProductWrapper productWrapper)
+        {
+            if (exporterIFC == null || element == null || productWrapper == null ||
+                !ExporterCacheManager.ExportOptionsCache.ExportInternalRevitPropertySets)
+                return;
+
+            IFCFile file = exporterIFC.GetFile();
+
+            ICollection<IFCAnyHandle> elements = productWrapper.GetElements();
+            if (elements.Count == 0)
+            {
+                elements = productWrapper.GetProducts();
+                if (elements.Count == 0)
+                    return;
+            }
+
+            CreateInternalRevitPropertySets(exporterIFC, element, elements);
         }
     }
 }

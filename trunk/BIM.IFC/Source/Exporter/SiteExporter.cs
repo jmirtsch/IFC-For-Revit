@@ -79,10 +79,10 @@ namespace BIM.IFC.Exporter
         /// The ExporterIFC object.
         /// </param>
         /// <param name="document">
-        /// The Revit document.
+        /// The Revit document.  It may be null if element isn't.
         /// </param>
         /// <param name="element">
-        /// The element.
+        /// The element.  It may be null if document isn't.
         /// </param>
         /// <param name="geometryElement">
         /// The geometry element.
@@ -116,6 +116,7 @@ namespace BIM.IFC.Exporter
                     // It would be possible that they actually represent several different sites with different buildings, 
                     // but until we have a concept of a building in Revit, we have to assume 0-1 sites, 1 building.
                     bool appendedToSite = false;
+                    bool exportAsFacetation = !ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2;
                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(siteHandle))
                     {
                         IList<IFCAnyHandle> representations = IFCAnyHandleUtil.GetProductRepresentations(siteHandle);
@@ -126,14 +127,14 @@ namespace BIM.IFC.Exporter
                             if (representations.Count > 1)
                                 boundaryRep = representations[1];
 
-                            siteRepresentation = RepresentationUtil.CreateSurfaceProductDefinitionShape(exporterIFC, element, geometryElement, true, true, ref bodyRep, ref boundaryRep);
+                            siteRepresentation = RepresentationUtil.CreateSurfaceProductDefinitionShape(exporterIFC, element, geometryElement, true, exportAsFacetation, ref bodyRep, ref boundaryRep);
                             appendedToSite = true;
                         }
                     }
 
                     if (!appendedToSite)
                     {
-                        siteRepresentation = RepresentationUtil.CreateSurfaceProductDefinitionShape(exporterIFC, element, geometryElement, true, true);
+                        siteRepresentation = RepresentationUtil.CreateSurfaceProductDefinitionShape(exporterIFC, element, geometryElement, true, exportAsFacetation);
                     }
                 }
 
@@ -192,15 +193,16 @@ namespace BIM.IFC.Exporter
                 {
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(siteHandle))
                     {
-                        string instanceGUID = ExporterIFCUtils.CreateGUID(element);
+                        string instanceGUID = GUIDUtil.CreateSiteGUID(doc, element);
                         string origInstanceName = exporterIFC.GetName();
                         string instanceName = NamingUtil.GetNameOverride(element, origInstanceName);
+                        string instanceLongName = NamingUtil.GetLongNameOverride(doc.ProjectInformation, NamingUtil.GetLongNameOverride(element, null));
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
                         string instanceElemId = NamingUtil.CreateIFCElementId(element);
 
                         siteHandle = IFCInstanceExporter.CreateSite(file, instanceGUID, ownerHistory, instanceName, instanceDescription, instanceObjectType, localPlacement,
-                           siteRepresentation, null, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, null, null);
+                           siteRepresentation, instanceLongName, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, null, null);
                     }
                 }
                 else
@@ -210,8 +212,9 @@ namespace BIM.IFC.Exporter
                         return;
 
                     string defaultSiteName = "Default";
-                    siteHandle = IFCInstanceExporter.CreateSite(file, ExporterIFCUtils.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Site), ownerHistory, defaultSiteName, null, objectType, localPlacement,
-                       null, null, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, null, null);
+                    string longName = NamingUtil.GetLongNameOverride(doc.ProjectInformation, null);
+                    siteHandle = IFCInstanceExporter.CreateSite(file, GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Site), ownerHistory, defaultSiteName, null, objectType, localPlacement,
+                       null, longName, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, null, null);
                 }
 
                 productWrapper.AddSite(siteHandle);

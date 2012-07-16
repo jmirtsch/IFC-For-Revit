@@ -307,6 +307,10 @@ namespace BIM.IFC.Exporter
                         IList<IFCAnyHandle> representations = new List<IFCAnyHandle>();
                         representations.Add(bodyRep);
 
+                        IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geometryElement, Transform.Identity);
+                        if (boundingBoxRep != null)
+                            representations.Add(boundingBoxRep);
+
                         IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
 
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();

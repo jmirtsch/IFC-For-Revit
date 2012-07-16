@@ -87,69 +87,19 @@ namespace BIM.IFC.Exporter
         {
             try
             {
-                // cache options
-                ExportOptionsCache exportOptionsCache = ExportOptionsCache.Create(exporterIFC, filterView);
-                ExporterCacheManager.ExportOptionsCache = exportOptionsCache;
+                BeginExport(exporterIFC, document, filterView);
 
-                ElementFilteringUtil.InitCategoryVisibilityCache();
-                
-                //begin export
-                BeginExport(exporterIFC, document);
+                ExportSpatialElements(document, exporterIFC, filterView);
 
-                FilteredElementCollector spatialElementCollector;
-                FilteredElementCollector otherElementCollector;
-                ICollection<ElementId> idsToExport = exportOptionsCache.ElementsForExport;
-                if (idsToExport.Count > 0)
-                {
-                    spatialElementCollector = new FilteredElementCollector(document, idsToExport);
-                    otherElementCollector = new FilteredElementCollector(document, idsToExport);
-                }
-                else
-                {
-                    spatialElementCollector = (filterView == null) ?
-                        new FilteredElementCollector(document) : new FilteredElementCollector(document, filterView.Id);
-                    otherElementCollector = (filterView == null) ?
-                        new FilteredElementCollector(document) : new FilteredElementCollector(document, filterView.Id);
-                }
+                ExportNonSpatialElements(document, exporterIFC, filterView);
 
-                bool spaceExported = true;
-                if (exportOptionsCache.SpaceBoundaryLevel == 2)
-                {
-                    SpatialElementExporter.ExportSpatialElement2ndLevel(this, exporterIFC, document, filterView, ref spaceExported);
-                }
+                ExportCachedRailings(document, exporterIFC, filterView);
 
-                //export spatial element - none or 1st level room boundaries
-                //  or create IFC Space only if 2nd level room boundaries export failed
-                if (exportOptionsCache.SpaceBoundaryLevel == 0 || exportOptionsCache.SpaceBoundaryLevel == 1 || !spaceExported)
-                {
-                    SpatialElementExporter.InitializeSpatialElementGeometryCalculator(document, exporterIFC);
-                    ElementFilter spatialElementFilter = ElementFilteringUtil.GetSpatialElementFilter(document, exporterIFC, filterView);
-                    spatialElementCollector.WherePasses(spatialElementFilter);
-                    foreach (Element element in spatialElementCollector)
-                    {
-                        ExportElement(exporterIFC, filterView, element);
-                    }
-                }
-
-                //export other elements
-                ElementFilter nonSpatialElementFilter = ElementFilteringUtil.GetNonSpatialElementFilter(document, exporterIFC, filterView);
-                otherElementCollector.WherePasses(nonSpatialElementFilter);
-                foreach (Element element in otherElementCollector)
-                {
-                    ExportElement(exporterIFC, filterView, element);
-                }
-
-                // Export railings cached above.  Railings are exported last as their containment is not known until all stairs have been exported.
-                // This is a very simple sorting, and further containment issues could require a more robust solution in the future.
-                foreach (ElementId elementId in ExporterCacheManager.RailingCache)
-                {
-                    Element element = document.GetElement(elementId);
-                    ExportElement(exporterIFC, filterView, element);
-                }
+                // Export the grids
+                GridExporter.Export(exporterIFC, document);
 
                 ConnectorExporter.Export(exporterIFC);
 
-                // end export
                 EndExport(exporterIFC, document);
             }
             finally
@@ -168,6 +118,83 @@ namespace BIM.IFC.Exporter
         }
 
         #endregion
+
+        private void ExportSpatialElements(Autodesk.Revit.DB.Document document, ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView)
+        {
+            ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
+
+            FilteredElementCollector spatialElementCollector;
+            ICollection<ElementId> idsToExport = exportOptionsCache.ElementsForExport;
+            if (idsToExport.Count > 0)
+            {
+                spatialElementCollector = new FilteredElementCollector(document, idsToExport);
+            }
+            else
+            {
+                spatialElementCollector = (filterView == null) ?
+                    new FilteredElementCollector(document) : new FilteredElementCollector(document, filterView.Id);
+            }
+
+            bool spaceExported = true;
+            if (exportOptionsCache.SpaceBoundaryLevel == 2)
+            {
+                SpatialElementExporter.ExportSpatialElement2ndLevel(this, exporterIFC, document, filterView, ref spaceExported);
+            }
+
+            //export spatial element - none or 1st level room boundaries
+            //  or create IFC Space only if 2nd level room boundaries export failed
+            if (exportOptionsCache.SpaceBoundaryLevel == 0 || exportOptionsCache.SpaceBoundaryLevel == 1 || !spaceExported)
+            {
+                SpatialElementExporter.InitializeSpatialElementGeometryCalculator(document, exporterIFC);
+                ElementFilter spatialElementFilter = ElementFilteringUtil.GetSpatialElementFilter(document, exporterIFC, filterView);
+                spatialElementCollector.WherePasses(spatialElementFilter);
+                foreach (Element element in spatialElementCollector)
+                {
+                    ExportElement(exporterIFC, filterView, element);
+                }
+            }
+        }
+
+        private void ExportNonSpatialElements(Autodesk.Revit.DB.Document document, ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView)
+        {
+            FilteredElementCollector otherElementCollector;
+
+            ICollection<ElementId> idsToExport = ExporterCacheManager.ExportOptionsCache.ElementsForExport;
+            if (idsToExport.Count > 0)
+            {
+                otherElementCollector = new FilteredElementCollector(document, idsToExport);
+            }
+            else
+            {
+                otherElementCollector = (filterView == null) ?
+                    new FilteredElementCollector(document) : new FilteredElementCollector(document, filterView.Id);
+            }
+
+            ElementFilter nonSpatialElementFilter = ElementFilteringUtil.GetNonSpatialElementFilter(document, exporterIFC, filterView);
+            otherElementCollector.WherePasses(nonSpatialElementFilter);
+            foreach (Element element in otherElementCollector)
+            {
+                ExportElement(exporterIFC, filterView, element);
+            }
+
+        }
+
+        /// <summary>
+        /// Export railings cached during spatial element export.  
+        /// Railings are exported last as their containment is not known until all stairs have been exported.
+        /// This is a very simple sorting, and further containment issues could require a more robust solution in the future.
+        /// </summary>
+        /// <param name="document">The Revit document.</param>
+        /// <param name="exporterIFC">The exporterIFC class.</param>
+        /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
+        private void ExportCachedRailings(Autodesk.Revit.DB.Document document, ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView)
+        {
+            foreach (ElementId elementId in ExporterCacheManager.RailingCache)
+            {
+                Element element = document.GetElement(elementId);
+                ExportElement(exporterIFC, filterView, element);
+            }
+        }
 
         /// <summary>
         /// Performs the export of elements, including spatial and non-spatial elements.
@@ -262,7 +289,6 @@ namespace BIM.IFC.Exporter
         /// <returns>True if element is of category OST_Stairs.</returns>
         private bool IsStairs(Element element)
         {
-            // FaceWall should be exported as IfcWall.
             return (CategoryUtil.GetSafeCategoryId(element) == new ElementId(BuiltInCategory.OST_Stairs));
         }
 
@@ -273,7 +299,7 @@ namespace BIM.IFC.Exporter
         /// <param name="element">The element to export.</param>
         /// <param name="filterView">The view to export, if it exists.</param>
         /// <param name="productWrapper">The IFCProductWrapper object.</param>
-        private void ExportElementImpl(ExporterIFC exporterIFC, Element element, Autodesk.Revit.DB.View filterView, 
+        private void ExportElementImpl(ExporterIFC exporterIFC, Element element, Autodesk.Revit.DB.View filterView,
             IFCProductWrapper productWrapper)
         {
             Options options;
@@ -342,6 +368,10 @@ namespace BIM.IFC.Exporter
                     {
                         FilledRegion filledRegion = element as FilledRegion;
                         FilledRegionExporter.Export(exporterIFC, filledRegion, geomElem, productWrapper);
+                    }
+                    else if (element is Grid)
+                    {
+                        ExporterCacheManager.GridCache.Add(element);
                     }
                     else if (element is HostedSweep)
                     {
@@ -433,7 +463,7 @@ namespace BIM.IFC.Exporter
                             ProxyElementExporter.Export(exporterIFC, element, geomElem, productWrapper);
                         }
                     }
-                    
+
                     if (element.AssemblyInstanceId != ElementId.InvalidElementId)
                         ExporterCacheManager.AssemblyInstanceCache.RegisterElements(element.AssemblyInstanceId, productWrapper);
 
@@ -451,8 +481,14 @@ namespace BIM.IFC.Exporter
         /// </summary>
         /// <param name="exporterIFC">The IFC exporter object.</param>
         /// <param name="document">The document to export.</param>
-        private void BeginExport(ExporterIFC exporterIFC, Document document)
+        private void BeginExport(ExporterIFC exporterIFC, Document document, Autodesk.Revit.DB.View filterView)
         {
+            // cache options
+            ExportOptionsCache exportOptionsCache = ExportOptionsCache.Create(exporterIFC, filterView);
+            ExporterCacheManager.ExportOptionsCache = exportOptionsCache;
+
+            ElementFilteringUtil.InitCategoryVisibilityCache();
+
             ExporterCacheManager.Document = document;
             String writeIFCExportedElementsVar = Environment.GetEnvironmentVariable("WriteIFCExportedElements");
             if (writeIFCExportedElementsVar != null && writeIFCExportedElementsVar.Length > 0)
@@ -483,28 +519,21 @@ namespace BIM.IFC.Exporter
             using (IFCTransaction transaction = new IFCTransaction(file))
             {
                 // create building
-                IFCAnyHandle applicationHandle = CreateApplicationInformation(file, document.Application);
+                IFCAnyHandle applicationHandle = CreateApplicationInformation(file, document);
 
                 CreateGlobalCartesianOrigin(exporterIFC);
                 CreateGlobalDirection(exporterIFC);
                 CreateGlobalDirection2D(exporterIFC);
 
-                IFCAnyHandle units = CreateDefaultUnits(exporterIFC, document);
-
                 // Start out relative to nothing, but replace with site later.
                 IFCAnyHandle relativePlacement = ExporterUtil.CreateAxis2Placement3D(file);
                 IFCAnyHandle buildingPlacement = IFCInstanceExporter.CreateLocalPlacement(file, null, relativePlacement);
 
-                HashSet<IFCAnyHandle> repContexts = CreateContextInformation(exporterIFC, document);
-                IFCAnyHandle ownerHistory = CreateGenericOwnerHistory(exporterIFC, document, applicationHandle);
-                exporterIFC.SetOwnerHistoryHandle(ownerHistory);
+                CreateProject(exporterIFC, document, applicationHandle);
 
-                IFCAnyHandle projectHandle = IFCInstanceExporter.CreateProject(file,
-                    ExporterIFCUtils.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Project), ownerHistory,
-                    null, null, null, null, null, repContexts, units);
-                exporterIFC.SetProject(projectHandle);
-
+                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                 ProjectInfo projInfo = document.ProjectInformation;
+
                 string projectAddress = projInfo != null ? projInfo.Address : String.Empty;
                 SiteLocation siteLoc = document.ActiveProjectLocation.SiteLocation;
                 string location = siteLoc != null ? siteLoc.PlaceName : String.Empty;
@@ -529,7 +558,7 @@ namespace BIM.IFC.Exporter
                 }
 
                 IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(file,
-                    ExporterIFCUtils.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building),
+                    GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building),
                     ownerHistory, buildingName, null, null, buildingPlacement, null, buildingName,
                     Toolkit.IFCElementComposition.Element, null, null, buildingAddress);
                 exporterIFC.SetBuilding(buildingHandle);
@@ -553,7 +582,7 @@ namespace BIM.IFC.Exporter
 
                 ExporterCacheManager.ExportOptionsCache.ExportAllLevels = exportAllLevels;
                 double scaleFactor = exporterIFC.LinearScale;
-                    
+
                 IFCAnyHandle prevBuildingStorey = null;
                 IFCAnyHandle prevPlacement = null;
                 double prevHeight = 0.0;
@@ -594,7 +623,7 @@ namespace BIM.IFC.Exporter
                     double elev = level.ProjectElevation;
                     double height = 0.0;
                     List<ElementId> coincidentLevels = new List<ElementId>();
-                    for (int jj = ii+1; jj < levels.Count; jj++)
+                    for (int jj = ii + 1; jj < levels.Count; jj++)
                     {
                         Level nextLevel = levels[jj];
                         if (!LevelUtil.IsBuildingStory(nextLevel))
@@ -689,13 +718,13 @@ namespace BIM.IFC.Exporter
                             continue;
 
                         Element elem = document.GetElement(stairRamp.Key);
-                        string guid = ExporterIFCUtils.CreateSubElementGUID(elem, (int) IFCStairSubElements.ContainmentRelation);
+                        string guid = ExporterIFCUtils.CreateSubElementGUID(elem, (int)IFCStairSubElements.ContainmentRelation);
                         ExporterUtil.RelateObjects(exporterIFC, guid, hnd, comps);
                     }
                 }
-                
+
                 ProjectInfo projectInfo = document.ProjectInformation;
-                    
+
                 // relate assembly elements to assemblies
                 foreach (KeyValuePair<ElementId, AssemblyInstanceInfo> assemblyInfoEntry in ExporterCacheManager.AssemblyInstanceCache)
                 {
@@ -785,14 +814,17 @@ namespace BIM.IFC.Exporter
                 foreach (IFCAnyHandle typeObj in ExporterCacheManager.TypeRelationsCache.Keys)
                 {
                     IFCInstanceExporter.CreateRelDefinesByType(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
-                        null, null,  ExporterCacheManager.TypeRelationsCache[typeObj], typeObj);
+                        null, null, ExporterCacheManager.TypeRelationsCache[typeObj], typeObj);
                 }
 
                 // create type property relations
                 foreach (TypePropertyInfo typePropertyInfo in ExporterCacheManager.TypePropertyInfoCache.Values)
                 {
-                    HashSet<IFCAnyHandle> propertySets = typePropertyInfo.PropertySets;
-                    HashSet<IFCAnyHandle> elements = typePropertyInfo.Elements;
+                    ICollection<IFCAnyHandle> propertySets = typePropertyInfo.PropertySets;
+                    ICollection<IFCAnyHandle> elements = typePropertyInfo.Elements;
+
+                    if (elements.Count == 0)
+                        continue;
 
                     foreach (IFCAnyHandle propertySet in propertySets)
                     {
@@ -848,7 +880,7 @@ namespace BIM.IFC.Exporter
 
                             HashSet<IFCAnyHandle> zoneHnds = new HashSet<IFCAnyHandle>();
                             zoneHnds.Add(zoneHandle);
-                                
+
                             foreach (KeyValuePair<string, IFCAnyHandle> classificationReference in zoneInfo.ClassificationReferences)
                             {
                                 IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, ExporterIFCUtils.CreateGUID(),
@@ -873,7 +905,7 @@ namespace BIM.IFC.Exporter
                         if (spaceOccupantInfo != null)
                         {
                             IFCAnyHandle person = IFCInstanceExporter.CreatePerson(file, null, spaceOccupantName, null, null, null, null, null, null);
-                            IFCAnyHandle spaceOccupantHandle = IFCInstanceExporter.CreateOccupant(file, ExporterIFCUtils.CreateGUID(), 
+                            IFCAnyHandle spaceOccupantHandle = IFCInstanceExporter.CreateOccupant(file, ExporterIFCUtils.CreateGUID(),
                                 exporterIFC.GetOwnerHistoryHandle(), null, null, spaceOccupantName, person, IFCOccupantType.NotDefined);
                             IFCInstanceExporter.CreateRelOccupiesSpaces(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
                                 null, null, spaceOccupantInfo.RoomHandles, null, spaceOccupantHandle, null);
@@ -894,6 +926,34 @@ namespace BIM.IFC.Exporter
                             }
                         }
                     }
+                }
+
+                // Create systems.
+                HashSet<IFCAnyHandle> relatedBuildings = new HashSet<IFCAnyHandle>();
+                relatedBuildings.Add(exporterIFC.GetBuilding());
+
+                foreach (KeyValuePair<ElementId, ICollection<IFCAnyHandle>> system in ExporterCacheManager.SystemsCache.BuiltInSystemsCache)
+                {
+                    MEPSystem systemElem = document.GetElement(system.Key) as MEPSystem;
+                    if (systemElem == null)
+                        continue;
+
+                    string desc = "";
+
+                    ElementType systemElemType = document.GetElement(systemElem.GetTypeId()) as ElementType;
+                    string objectType = (systemElemType != null) ? systemElemType.Name : "";
+
+                    IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file, ExporterIFCUtils.CreateGUID(systemElem),
+                        exporterIFC.GetOwnerHistoryHandle(), systemElem.Name, desc, objectType);
+                    ICollection<IFCAnyHandle> systemHandles = new List<IFCAnyHandle>();
+                    systemHandles.Add(systemHandle);
+                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, systemElem, systemHandles);
+
+                    IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, ExporterIFCUtils.CreateGUID(),
+                        exporterIFC.GetOwnerHistoryHandle(), null, null, systemHandle, relatedBuildings);
+
+                    IFCAnyHandle relAssignsToGroup = IFCInstanceExporter.CreateRelAssignsToGroup(file, ExporterIFCUtils.CreateGUID(),
+                        exporterIFC.GetOwnerHistoryHandle(), null, null, system.Value, IFCObjectType.Product, systemHandle);
                 }
 
                 ExporterIFCUtils.EndExportInternal(exporterIFC);
@@ -1035,7 +1095,7 @@ namespace BIM.IFC.Exporter
                     }
                     else
                     {
-                        IList<PropertySetDescription> conditionalPsetsToCreate = 
+                        IList<PropertySetDescription> conditionalPsetsToCreate =
                             ExporterCacheManager.ConditionalPropertySetsForTypeCache[prodHndType];
                         foreach (PropertySetDescription currDesc in conditionalPsetsToCreate)
                         {
@@ -1236,15 +1296,87 @@ namespace BIM.IFC.Exporter
             }
         }
 
+        private string GetLanguageExtension(LanguageType langType)
+        {
+            switch (langType)
+            {
+                case LanguageType.English_USA:
+                    return " (ENU)";
+                case LanguageType.German:
+                    return " (DEU)";
+                case LanguageType.Spanish:
+                    return " (ESP)";
+                case LanguageType.French:
+                    return " (FRA)";
+                case LanguageType.Italian:
+                    return " (ITA)";
+                case LanguageType.Dutch:
+                    return " (NLD)";
+                case LanguageType.Chinese_Simplified:
+                    return " (CHS)";
+                case LanguageType.Chinese_Traditional:
+                    return " (CHT)";
+                case LanguageType.Japanese:
+                    return " (JPN)";
+                case LanguageType.Korean:
+                    return " (KOR)";
+                case LanguageType.Russian:
+                    return " (RUS)";
+                case LanguageType.Czech:
+                    return " (CSY)";
+                case LanguageType.Polish:
+                    return " (PLK)";
+                case LanguageType.Hungarian:
+                    return " (HUN)";
+                case LanguageType.Brazilian_Portuguese:
+                    return " (PTB)";
+                default:
+                    return "";
+            }
+        }
+
+        private long GetCreationDate(Document document)
+        {
+            string pathName = document.PathName;
+            if (!String.IsNullOrEmpty(pathName))
+            {
+                FileInfo fileInfo = new FileInfo(pathName);
+                DateTime creationTimeUtc = fileInfo.CreationTimeUtc;
+                // The IfcTimeStamp is measured in seconds since 1/1/1970.  As such, we divide by 10,000,000 (100-ns ticks in a second)
+                // and subtract the 1/1/1970 offset.
+                return creationTimeUtc.ToFileTimeUtc() / 10000000 - 11644473600;
+            }
+            return 0;
+        }
+
         /// <summary>
         /// Creates the application information.
         /// </summary>
         /// <param name="file">The IFC file.</param>
         /// <param name="app">The application object.</param>
         /// <returns>The handle of IFC file.</returns>
-        private IFCAnyHandle CreateApplicationInformation(IFCFile file, Application app)
+        private IFCAnyHandle CreateApplicationInformation(IFCFile file, Document document)
         {
-            string productFullName = app.VersionName;
+            Application app = document.Application;
+            string pathName = document.PathName;
+            LanguageType langType = LanguageType.Unknown;
+            if (!String.IsNullOrEmpty(pathName))
+            {
+                try
+                {
+                    BasicFileInfo basicFileInfo = BasicFileInfo.Extract(pathName);
+                    if (basicFileInfo != null)
+                        langType = basicFileInfo.LanguageWhenSaved;
+                }
+                catch
+                {
+                } 
+            }
+            if (langType == LanguageType.Unknown)
+                langType = app.Language;
+
+            string languageExtension = GetLanguageExtension(langType);
+            string productFullName = app.VersionName + languageExtension;
             string productVersion = app.VersionNumber;
             string productIdentifier = "Revit";
 
@@ -1336,13 +1468,12 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
-        /// Creates the IfcOwnerHistory.
+        /// Creates the IfcProject.
         /// </summary>
         /// <param name="exporterIFC">The IFC exporter object.</param>
         /// <param name="doc">The document provides the owner information.</param>
         /// <param name="application">The handle of IFC file to create the owner history.</param>
-        /// <returns>The handle.</returns>
-        private IFCAnyHandle CreateGenericOwnerHistory(ExporterIFC exporterIFC, Document doc, IFCAnyHandle application)
+        private void CreateProject(ExporterIFC exporterIFC, Document doc, IFCAnyHandle application)
         {
             string familyName;
             string givenName;
@@ -1370,7 +1501,7 @@ namespace BIM.IFC.Exporter
             }
 
             NamingUtil.ParseName(author, out familyName, out givenName, out middleNames, out prefixTitles, out suffixTitles);
-            
+
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle person = IFCInstanceExporter.CreatePerson(file, null, familyName, givenName, middleNames,
                 prefixTitles, suffixTitles, null, null);
@@ -1389,14 +1520,40 @@ namespace BIM.IFC.Exporter
                 }
             }
 
+            int creationDate = (int) GetCreationDate(doc);
+            
             IFCAnyHandle organization = IFCInstanceExporter.CreateOrganization(file, null, organizationName, organizationDescription,
                 null, null);
 
             IFCAnyHandle owningUser = IFCInstanceExporter.CreatePersonAndOrganization(file, person, organization, null);
             IFCAnyHandle ownerHistory = IFCInstanceExporter.CreateOwnerHistory(file, owningUser, application, null,
-                Toolkit.IFCChangeAction.NoChange, null, null, null, 0);
+                Toolkit.IFCChangeAction.NoChange, null, null, null, creationDate);
 
-            return ownerHistory;
+            exporterIFC.SetOwnerHistoryHandle(ownerHistory);
+
+            IFCAnyHandle units = CreateDefaultUnits(exporterIFC, doc);
+            HashSet<IFCAnyHandle> repContexts = CreateContextInformation(exporterIFC, doc);
+
+            // find project description
+            string projectDescription = NamingUtil.GetDescriptionOverride(projInfo, null);
+
+            IFCAnyHandle projectHandle = IFCInstanceExporter.CreateProject(file,
+                GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Project), ownerHistory,
+                null, projectDescription, null, null, null, repContexts, units);
+            exporterIFC.SetProject(projectHandle);
+
+            if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
+            {
+                HashSet<IFCAnyHandle> projectHandles = new HashSet<IFCAnyHandle>();
+                projectHandles.Add(projectHandle);
+                string clientName = projInfo != null ? projInfo.ClientName : String.Empty;
+                IFCAnyHandle clientOrg = IFCInstanceExporter.CreateOrganization(file, null, clientName, null, null, null);
+                IFCAnyHandle actor = IFCInstanceExporter.CreateActor(file, ExporterIFCUtils.CreateGUID(), ownerHistory, null, null, null, clientOrg);
+                IFCInstanceExporter.CreateRelAssignsToActor(file, ExporterIFCUtils.CreateGUID(), ownerHistory, "Project Client/Owner", null, projectHandles, null, actor, null);
+
+                IFCAnyHandle architectActor = IFCInstanceExporter.CreateActor(file, ExporterIFCUtils.CreateGUID(), ownerHistory, null, null, null, person);
+                IFCInstanceExporter.CreateRelAssignsToActor(file, ExporterIFCUtils.CreateGUID(), ownerHistory, "Project Architect", null, projectHandles, null, architectActor, null);
+            }
         }
 
         /// <summary>
@@ -1675,7 +1832,7 @@ namespace BIM.IFC.Exporter
 
                 // Air Changes per Hour
                 {
-                    IFCUnit unitType = IFCUnit.TimeUnit;
+                    IFCUnit unitType = IFCUnit.FrequencyUnit;
                     IFCAnyHandle dims = IFCInstanceExporter.CreateDimensionalExponents(file, 0, 0, -1, 0, 0, 0, 0);
                     double factor = 1.0 / 3600.0; // --> seconds to hours
                     string convName = "ACH";
@@ -1800,7 +1957,7 @@ namespace BIM.IFC.Exporter
                 IFCLevelInfo levelInfo = ExporterCacheManager.LevelInfoCache.GetLevelInfo(exporterIFC, levelId);
                 if (levelInfo == null)
                     continue;
-                
+
                 // remove products that are aggregated (e.g., railings in stairs).
                 Element level = document.GetElement(levelId);
 
@@ -1866,7 +2023,7 @@ namespace BIM.IFC.Exporter
                     IFCLevelInfo levelInfo2 = ExporterCacheManager.LevelInfoCache.GetLevelInfo(exporterIFC, nextLevelId);
                     if (levelInfo2 == null)
                         continue;
-                    
+
                     if (!levelInfo.GetBuildingStorey().Equals(levelInfo2.GetBuildingStorey()))
                         levelInfo2.GetBuildingStorey().Delete();
                 }
