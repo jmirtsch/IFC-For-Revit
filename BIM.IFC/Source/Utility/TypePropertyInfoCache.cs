@@ -47,7 +47,7 @@ namespace BIM.IFC.Utility
         /// </summary>
         /// <param name="elementId">The element id.</param>
         /// <param name="elements">The IFC elements.</param>
-        public void AddTypeProperties(ElementId elementId, HashSet<IFCAnyHandle> elements)
+        public void AddTypeProperties(ElementId elementId, ICollection<IFCAnyHandle> elements)
         {
             TypePropertyInfo typePropertyInfo;
             if (TryGetValue(elementId, out typePropertyInfo))
@@ -65,8 +65,8 @@ namespace BIM.IFC.Utility
         /// <param name="elementId">The element id.</param>
         /// <param name="propertySets">The property sets.</param>
         /// <param name="elements">The IFC elements.</param>
-        public void AddNewTypeProperties(ElementId elementId, HashSet<IFCAnyHandle> propertySets,
-            HashSet<IFCAnyHandle> elements)
+        public void AddNewTypeProperties(ElementId elementId, ICollection<IFCAnyHandle> propertySets,
+            ICollection<IFCAnyHandle> elements)
         {
             TypePropertyInfo typePropertyInfo = new TypePropertyInfo(propertySets, elements);
             Add(elementId, typePropertyInfo);

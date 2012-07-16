@@ -93,10 +93,13 @@ namespace BIM.IFC.Exporter
                         ecData.SetLocalPlacement(setter.GetPlacement());
                       
                         IFCAnyHandle prodRep = null;
+                        ElementId matId = ElementId.InvalidElementId;
                         if (!exportParts)
                         {
                             ElementId catId = CategoryUtil.GetSafeCategoryId(element);
 
+
+                            matId = BodyExporter.GetBestMaterialIdForGeometry(geometryElement, exporterIFC);
                             BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                             prodRep = RepresentationUtil.CreateBRepProductDefinitionShape(element.Document.Application, exporterIFC,
                                element, catId, geometryElement, bodyExporterOptions, null, ecData);
@@ -121,6 +124,13 @@ namespace BIM.IFC.Exporter
                         if (exportParts)
                         {
                             PartExporter.ExportHostPart(exporterIFC, element, footing, productWrapper, setter, setter.GetPlacement(), null);
+                        }
+                        else
+                        {
+                            if (matId != ElementId.InvalidElementId)
+                            {
+                                CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, footing, matId);
+                            }
                         }
 
                         productWrapper.AddElement(footing, setter, ecData, LevelUtil.AssociateElementToLevel(element));

@@ -65,11 +65,11 @@ namespace BIM.IFC.Export.UI
         {
             // These are the built-in configurations.  Provide a more extensible means of storage.
             // Order of construction: name, version, space boundaries, QTO, split walls, internal sets, 2d elems.
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Default 2x3", IFCVersion.IFC2x3, 1, false, false, true, true));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Default 2x2", IFCVersion.IFC2x2, 1, false, false, true, false));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("BCA", IFCVersion.IFCBCA, 1, false, true, true, false));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("GSA", IFCVersion.IFCCOBIE, 2, true, true, true, true));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Coordination View 2.0", IFCVersion.IFC2x3CV2, 0, false, true, false, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Default 2x3", IFCVersion.IFC2x3, 1, false, false, true, true, true));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Default 2x2", IFCVersion.IFC2x2, 1, false, false, true, false, true));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("BCA", IFCVersion.IFCBCA, 1, false, true, true, false, true));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("GSA", IFCVersion.IFCCOBIE, 2, true, true, true, true, true));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Coordination View 2.0", IFCVersion.IFC2x3CV2, 0, false, true, false, false, false));
         }
 
         /// <summary>
@@ -98,9 +98,11 @@ namespace BIM.IFC.Export.UI
                     configuration.SplitWallsAndColumns = configEntity.Get<bool>(s_splitWallsAndColumns);
                     configuration.Export2DElements = configEntity.Get<bool>(s_setupExport2D);
                     configuration.ExportInternalRevitPropertySets = configEntity.Get<bool>(s_setupExportRevitProps);
+                    configuration.ExportIFCCommonPropertySets = configEntity.Get<bool>(s_setupExportIFCCommonProperty);
                     configuration.Use2DRoomBoundaryForVolume = configEntity.Get<bool>(s_setupUse2DForRoomVolume);
                     configuration.UseFamilyAndTypeNameForReference = configEntity.Get<bool>(s_setupUseFamilyAndTypeName);
                     configuration.ExportPartsAsBuildingElements = configEntity.Get<bool>(s_setupExportPartsAsBuildingElements);
+                    configuration.ExportSurfaceStyles = configEntity.Get<bool>(s_setupExportSurfaceStyles);
 
                     Add(configuration);
                 } 
@@ -117,9 +119,11 @@ namespace BIM.IFC.Export.UI
         private const String s_setupCurrentView = "VisibleElementsInCurrentView";
         private const String s_setupExport2D = "Export2DElements";
         private const String s_setupExportRevitProps = "ExportInternalRevitPropertySets";
+        private const String s_setupExportIFCCommonProperty = "ExportIFCCommonPropertySets";
         private const String s_setupUse2DForRoomVolume = "Use2DBoundariesForRoomVolume";
         private const String s_setupUseFamilyAndTypeName = "UseFamilyAndTypeNameForReference";
         private const String s_setupExportPartsAsBuildingElements = "ExportPartsAsBuildingElements";
+        private const String s_setupExportSurfaceStyles = "ExportSurfaceStyles";
 
         /// <summary>
         /// Updates the setups to save into the document.
@@ -168,9 +172,11 @@ namespace BIM.IFC.Export.UI
                 builder.AddSimpleField(s_setupCurrentView, typeof(bool));
                 builder.AddSimpleField(s_setupExport2D, typeof(bool));
                 builder.AddSimpleField(s_setupExportRevitProps, typeof(bool));
+                builder.AddSimpleField(s_setupExportIFCCommonProperty, typeof(bool));
                 builder.AddSimpleField(s_setupUse2DForRoomVolume, typeof(bool));
                 builder.AddSimpleField(s_setupUseFamilyAndTypeName, typeof(bool));
                 builder.AddSimpleField(s_setupExportPartsAsBuildingElements, typeof(bool));
+                builder.AddSimpleField(s_setupExportSurfaceStyles, typeof(bool));
 
                 m_schema = builder.Finish();
            }
@@ -204,9 +210,11 @@ namespace BIM.IFC.Export.UI
                 entity.Set(s_splitWallsAndColumns, configuration.SplitWallsAndColumns);
                 entity.Set(s_setupExport2D, configuration.Export2DElements);
                 entity.Set(s_setupExportRevitProps, configuration.ExportInternalRevitPropertySets);
+                entity.Set(s_setupExportIFCCommonProperty, configuration.ExportIFCCommonPropertySets);
                 entity.Set(s_setupUse2DForRoomVolume, configuration.Use2DRoomBoundaryForVolume);
                 entity.Set(s_setupUseFamilyAndTypeName, configuration.UseFamilyAndTypeNameForReference);
                 entity.Set(s_setupExportPartsAsBuildingElements, configuration.ExportPartsAsBuildingElements);
+                entity.Set(s_setupExportSurfaceStyles, configuration.ExportSurfaceStyles);
 
                 configStorage.SetEntity(entity);
             }

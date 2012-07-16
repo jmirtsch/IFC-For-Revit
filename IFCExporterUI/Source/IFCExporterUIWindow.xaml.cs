@@ -49,7 +49,7 @@ namespace BIM.IFC.Export.UI
         /// <summary>
         /// The file to store the previous window bounds.
         /// </summary>
-        string m_SettingFile = "IFCExporterUIWindowSettings.txt";
+        string m_SettingFile = "IFCExporterUIWindowSettings_v2.txt";
 
         /// <summary>
         /// Constructs a new IFC export options window.
@@ -166,10 +166,12 @@ namespace BIM.IFC.Export.UI
             checkboxSplitWalls.IsChecked = configuration.SplitWallsAndColumns;
             checkbox2dElements.IsChecked = configuration.Export2DElements;
             checkboxInternalPropertySets.IsChecked = configuration.ExportInternalRevitPropertySets;
+            checkboxIFCCommonPropertySets.IsChecked = configuration.ExportIFCCommonPropertySets;
             checkboxVisibleElementsCurrView.IsChecked = configuration.VisibleElementsOfCurrentView;
             checkBoxUse2DRoomVolumes.IsChecked = configuration.Use2DRoomBoundaryForVolume;
             checkBoxFamilyAndTypeName.IsChecked = configuration.UseFamilyAndTypeNameForReference;
             checkBoxExportPartsAsBuildingElements.IsChecked = configuration.ExportPartsAsBuildingElements;
+            checkboxExportSurfaceStyles.IsChecked = configuration.ExportSurfaceStyles;
 
             UIElement[] configurationElements = new UIElement[]{comboboxIfcType, 
                                                                 comboboxFileType, 
@@ -178,10 +180,12 @@ namespace BIM.IFC.Export.UI
                                                                 checkboxSplitWalls,
                                                                 checkbox2dElements,
                                                                 checkboxInternalPropertySets,
+                                                                checkboxIFCCommonPropertySets,
                                                                 checkboxVisibleElementsCurrView,
                                                                 checkBoxUse2DRoomVolumes,
                                                                 checkBoxFamilyAndTypeName,
-                                                                checkBoxExportPartsAsBuildingElements};
+                                                                checkboxExportSurfaceStyles
+                                                                };
             foreach (UIElement element in configurationElements)
             {
                 element.IsEnabled = !configuration.IsBuiltIn;
@@ -455,6 +459,21 @@ namespace BIM.IFC.Export.UI
         }
 
         /// <summary>
+        /// Updates the result after the InternalPropertySets is picked.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments that contains the event data.</param>
+        private void checkboxIFCCommonPropertySets_Checked(object sender, RoutedEventArgs e)
+        {
+            CheckBox checkBox = (CheckBox)sender;
+            IFCExportConfiguration configuration = GetSelectedConfiguration();
+            if (configuration != null)
+            {
+                configuration.ExportIFCCommonPropertySets = GetCheckbuttonChecked(checkBox);
+            }
+        }
+
+        /// <summary>
         /// Updates the result after the 2dElements is picked.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
@@ -481,6 +500,7 @@ namespace BIM.IFC.Export.UI
             if (configuration != null)
             {
                 configuration.VisibleElementsOfCurrentView = GetCheckbuttonChecked(checkBox);
+                checkBoxExportPartsAsBuildingElements.IsEnabled = configuration.VisibleElementsOfCurrentView;
             }
         }
 
@@ -585,5 +605,19 @@ namespace BIM.IFC.Export.UI
             }
         }
 
+        /// <summary>
+        /// Updates the configuration ExportSurfaceStyles when the Export surface styles changed in the combobox.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments that contains the event data.</param>
+        private void checkboxExportSurfaceStyles_Checked(object sender, RoutedEventArgs e)
+        {
+            CheckBox checkBox = (CheckBox)sender;
+            IFCExportConfiguration configuration = GetSelectedConfiguration();
+            if (configuration != null)
+            {
+                configuration.ExportSurfaceStyles = GetCheckbuttonChecked(checkBox);
+            }
+        }
     }
 }

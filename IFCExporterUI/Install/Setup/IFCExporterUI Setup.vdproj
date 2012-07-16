@@ -15,25 +15,55 @@
     {
         "Entry"
         {
+        "MsmKey" = "8:_0048454481344A15AB49298DC7AED07A"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_11A928B1865D4B738443F1280E091E3C"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_43D5EFFBE35045B086C4E109D0E90B69"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_8DB205F1DA1548C3A4F3DA4E18AD04D9"
+        "MsmKey" = "8:_64AB5AAA819E4DFEBEBA0CF0136961D3"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_9DCF136F9280442F8EED4344F7758463"
+        "MsmKey" = "8:_728A10AE42734AB8BC3DB3D7346BA313"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_AFBB52C8D30B4F4CAA813F58556AF1E2"
+        "MsmKey" = "8:_7C90183CE374493AB2BEEF3DB68E4731"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_92ACB509F6EC4DE2B405BD667B52C045"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_B46116F5C8074037923082ED61A0BEF3"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_D34129F791424B1189EBF9500434D614"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -41,12 +71,6 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_0BAA4D8E34C7406E9640FBDBDCDD888A"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_AFBB52C8D30B4F4CAA813F58556AF1E2"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -131,20 +155,6 @@
     {
         "CustomAction"
         {
-            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_ADB7C98D82674BAC817675E1BE023999"
-            {
-            "Name" = "8:Primary output from Modify Addin file (Active)"
-            "Condition" = "8:"
-            "Object" = "8:_AFBB52C8D30B4F4CAA813F58556AF1E2"
-            "FileType" = "3:2"
-            "InstallAction" = "3:1"
-            "Arguments" = "8:/TARGETDIR=\"[TARGETDIR] \" /AllUsersAddInFileName=\"[ALLUSERS_ADDINFOLDER]IFCExporterUI.addin\" /CurrentUserAddInFileName=\"[CURRENTUSER_ADDINFOLDER]IFCExporterUI.addin\""
-            "EntryPoint" = "8:"
-            "Sequence" = "3:1"
-            "Identifier" = "8:_3D17ABC6_3267_4FC4_899D_EB721CA0200D"
-            "InstallerClass" = "11:FALSE"
-            "CustomActionData" = "8:"
-            }
         }
         "DefaultFeature"
         {
@@ -168,12 +178,12 @@
         }
         "File"
         {
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_43D5EFFBE35045B086C4E109D0E90B69"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_0048454481344A15AB49298DC7AED07A"
             {
-            "SourcePath" = "8:..\\Program Files to Install\\LICENSE.rtf"
-            "TargetName" = "8:LICENSE.rtf"
+            "SourcePath" = "8:..\\Program Files to Install\\bundle\\Contents\\Resources\\IFCExportUI_80.png"
+            "TargetName" = "8:IFCExportUI_80.png"
             "Tag" = "8:"
-            "Folder" = "8:_70EFC661BA3348049F0947FC6CE8379F"
+            "Folder" = "8:_A9272ED414A4459A855808838E31CC9A"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -188,13 +198,13 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_8DB205F1DA1548C3A4F3DA4E18AD04D9"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_11A928B1865D4B738443F1280E091E3C"
             {
-            "SourcePath" = "8:..\\Program Files to Install\\IFCExporterUI.addin"
-            "TargetName" = "8:IFCExporterUI.addin"
+            "SourcePath" = "8:..\\Program Files to Install\\bundle\\Contents\\Resources\\Screenshot1.jpg"
+            "TargetName" = "8:Screenshot1.jpg"
             "Tag" = "8:"
-            "Folder" = "8:_9FD72D65C04445418A0AF88A6DAB4B61"
-            "Condition" = "8:ALLUSERS=1"
+            "Folder" = "8:_A9272ED414A4459A855808838E31CC9A"
+            "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
             "ReadOnly" = "11:FALSE"
@@ -208,13 +218,133 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_9DCF136F9280442F8EED4344F7758463"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_43D5EFFBE35045B086C4E109D0E90B69"
+            {
+            "SourcePath" = "8:..\\Program Files to Install\\LICENSE.rtf"
+            "TargetName" = "8:LICENSE.rtf"
+            "Tag" = "8:"
+            "Folder" = "8:_C1E5272C0F814A53BA7DB8E77FD46EA7"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_64AB5AAA819E4DFEBEBA0CF0136961D3"
+            {
+            "SourcePath" = "8:..\\Program Files to Install\\bundle\\Contents\\Resources\\ADSKIFCExportUIHelp.htm"
+            "TargetName" = "8:ADSKIFCExportUIHelp.htm"
+            "Tag" = "8:"
+            "Folder" = "8:_A9272ED414A4459A855808838E31CC9A"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_728A10AE42734AB8BC3DB3D7346BA313"
+            {
+            "SourcePath" = "8:..\\Program Files to Install\\bundle\\Contents\\Resources\\IFCExportUI_16.png"
+            "TargetName" = "8:IFCExportUI_16.png"
+            "Tag" = "8:"
+            "Folder" = "8:_A9272ED414A4459A855808838E31CC9A"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_7C90183CE374493AB2BEEF3DB68E4731"
+            {
+            "SourcePath" = "8:..\\Program Files to Install\\bundle\\Contents\\Resources\\Screenshot2.jpg"
+            "TargetName" = "8:Screenshot2.jpg"
+            "Tag" = "8:"
+            "Folder" = "8:_A9272ED414A4459A855808838E31CC9A"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_92ACB509F6EC4DE2B405BD667B52C045"
             {
             "SourcePath" = "8:..\\Program Files to Install\\IFCExporterUI.addin"
             "TargetName" = "8:IFCExporterUI.addin"
             "Tag" = "8:"
-            "Folder" = "8:_3A9E570EB86648CDB1DAFC400CBCC02F"
-            "Condition" = "8:ALLUSERS=\"\""
+            "Folder" = "8:_EF5344D648404F80AE7ADEDD5D64E05F"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B46116F5C8074037923082ED61A0BEF3"
+            {
+            "SourcePath" = "8:..\\Program Files to Install\\bundle\\Contents\\Resources\\IFCExportUI_32.png"
+            "TargetName" = "8:IFCExportUI_32.png"
+            "Tag" = "8:"
+            "Folder" = "8:_A9272ED414A4459A855808838E31CC9A"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D34129F791424B1189EBF9500434D614"
+            {
+            "SourcePath" = "8:..\\Program Files to Install\\bundle\\PackageContents.xml"
+            "TargetName" = "8:PackageContents.xml"
+            "Tag" = "8:"
+            "Folder" = "8:_89879E69B1C644E68E70B0AF9C3C2E82"
+            "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
             "ReadOnly" = "11:FALSE"
@@ -234,21 +364,9 @@
         }
         "Folder"
         {
-            "{994432C3-9487-495D-8656-3E829A8DBDDE}:_3A9E570EB86648CDB1DAFC400CBCC02F"
-            {
-            "DefaultLocation" = "8:[AppDataFolder]Autodesk\\Revit\\Addins\\2013"
-            "Name" = "8:Current User AddIn Folder"
-            "AlwaysCreate" = "11:FALSE"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Property" = "8:CURRENTUSER_ADDINFOLDER"
-                "Folders"
-                {
-                }
-            }
             "{3C67513D-01DD-4637-8A68-80971EB9504F}:_70EFC661BA3348049F0947FC6CE8379F"
             {
-            "DefaultLocation" = "8:[ProgramFilesFolder][Manufacturer]\\[ProductName]"
+            "DefaultLocation" = "8:[AppDataFolder]"
             "Name" = "8:#1925"
             "AlwaysCreate" = "11:FALSE"
             "Condition" = "8:"
@@ -256,29 +374,94 @@
             "Property" = "8:TARGETDIR"
                 "Folders"
                 {
-                    "{9EF0B969-E518-4E46-987F-47570745A589}:_3D0507F7CAF74D25A74E186A1D28DE7D"
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_B762F40870DD4798B77152B098E300B3"
                     {
-                    "Name" = "8:Support"
+                    "Name" = "8:Autodesk"
                     "AlwaysCreate" = "11:FALSE"
                     "Condition" = "8:"
                     "Transitive" = "11:FALSE"
-                    "Property" = "8:_BA4BDB2F0AFF48B5B0ECB2C2CF31239F"
+                    "Property" = "8:_9DA8619632FD4B8DBFE2204E581A0227"
                         "Folders"
                         {
+                            "{9EF0B969-E518-4E46-987F-47570745A589}:_7AEA912745BD474399D83CC5D44881C0"
+                            {
+                            "Name" = "8:ApplicationPlugins"
+                            "AlwaysCreate" = "11:FALSE"
+                            "Condition" = "8:"
+                            "Transitive" = "11:FALSE"
+                            "Property" = "8:_6D11E8B930D84AAFA45684A04596F26C"
+                                "Folders"
+                                {
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_89879E69B1C644E68E70B0AF9C3C2E82"
+                                    {
+                                    "Name" = "8:ADSK-IFCExportUI2013.bundle"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_47D1EA602CD8496A9F562287066F8445"
+                                        "Folders"
+                                        {
+                                            "{9EF0B969-E518-4E46-987F-47570745A589}:_C1E5272C0F814A53BA7DB8E77FD46EA7"
+                                            {
+                                            "Name" = "8:Contents"
+                                            "AlwaysCreate" = "11:FALSE"
+                                            "Condition" = "8:"
+                                            "Transitive" = "11:FALSE"
+                                            "Property" = "8:_141BC78C53A840309F4171EB33823EBB"
+                                                "Folders"
+                                                {
+                                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_A9272ED414A4459A855808838E31CC9A"
+                                                    {
+                                                    "Name" = "8:Resources"
+                                                    "AlwaysCreate" = "11:FALSE"
+                                                    "Condition" = "8:"
+                                                    "Transitive" = "11:FALSE"
+                                                    "Property" = "8:_BF7DF2D337FD421D889E7DB106BD017D"
+                                                        "Folders"
+                                                        {
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            "{9EF0B969-E518-4E46-987F-47570745A589}:_DE9C57F3408045498F6E0F70831F3216"
+                            {
+                            "Name" = "8:Revit"
+                            "AlwaysCreate" = "11:FALSE"
+                            "Condition" = "8:"
+                            "Transitive" = "11:FALSE"
+                            "Property" = "8:_1016C027C4E34BC3B83BCD6263C5F80A"
+                                "Folders"
+                                {
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_7256332317FE402DBB1106078A992139"
+                                    {
+                                    "Name" = "8:Addins"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_8906847B8E9246489761CB3F7BF75C91"
+                                        "Folders"
+                                        {
+                                            "{9EF0B969-E518-4E46-987F-47570745A589}:_EF5344D648404F80AE7ADEDD5D64E05F"
+                                            {
+                                            "Name" = "8:2013"
+                                            "AlwaysCreate" = "11:FALSE"
+                                            "Condition" = "8:"
+                                            "Transitive" = "11:FALSE"
+                                            "Property" = "8:_9C7FBD281AC440469A24B6EE794ABA53"
+                                                "Folders"
+                                                {
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                }
-            }
-            "{994432C3-9487-495D-8656-3E829A8DBDDE}:_9FD72D65C04445418A0AF88A6DAB4B61"
-            {
-            "DefaultLocation" = "8:[CommonAppDataFolder]Autodesk\\Revit\\Addins\\2013"
-            "Name" = "8:All Users AddIn Folder"
-            "AlwaysCreate" = "11:FALSE"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Property" = "8:ALLUSERS_ADDINFOLDER"
-                "Folders"
-                {
                 }
             }
             "{1525181F-901A-416C-8A58-119130FE478E}:_B738AAB92DE1468C87BA57BAB223FE6C"
@@ -319,15 +502,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:IFC Export UI for Autodesk Revit 2013"
-        "ProductCode" = "8:{4F038E45-7C44-4BA0-AD7A-2982100B0090}"
-        "PackageCode" = "8:{40F75FB4-B338-454B-A664-2E5E209B9FD0}"
-        "UpgradeCode" = "8:{199DBABE-637C-4D5D-9B76-A7DA98553F17}"
+        "ProductCode" = "8:{A918FF33-BA50-4ED8-8E2C-C9FBF47A7DD5}"
+        "PackageCode" = "8:{AF59C925-AC03-4B5D-861D-62442291BBFC}"
+        "UpgradeCode" = "8:{9E50B117-7C8E-4831-9318-07CC58402FB0}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
-        "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:1.1.0"
+        "InstallAllUsers" = "11:FALSE"
+        "ProductVersion" = "8:1.2.0"
         "Manufacturer" = "8:Revit IFC export alternate UI"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -613,41 +796,6 @@
                             "Setting" = "3:0"
                             "Value" = "3:4"
                             "DefaultValue" = "3:4"
-                            "UsePlugInResources" = "11:TRUE"
-                            }
-                        }
-                    }
-                    "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_C021856E1EF74D45A03422938728D1FC"
-                    {
-                    "Sequence" = "3:200"
-                    "DisplayName" = "8:Installation Folder"
-                    "UseDynamicProperties" = "11:TRUE"
-                    "IsDependency" = "11:FALSE"
-                    "SourcePath" = "8:<VsdDialogDir>\\VsdFolderDlg.wid"
-                        "Properties"
-                        {
-                            "BannerBitmap"
-                            {
-                            "Name" = "8:BannerBitmap"
-                            "DisplayName" = "8:#1001"
-                            "Description" = "8:#1101"
-                            "Type" = "3:8"
-                            "ContextData" = "8:Bitmap"
-                            "Attributes" = "3:4"
-                            "Setting" = "3:1"
-                            "UsePlugInResources" = "11:TRUE"
-                            }
-                            "InstallAllUsersVisible"
-                            {
-                            "Name" = "8:InstallAllUsersVisible"
-                            "DisplayName" = "8:#1059"
-                            "Description" = "8:#1159"
-                            "Type" = "3:5"
-                            "ContextData" = "8:1;True=1;False=0"
-                            "Attributes" = "3:0"
-                            "Setting" = "3:0"
-                            "Value" = "3:1"
-                            "DefaultValue" = "3:1"
                             "UsePlugInResources" = "11:TRUE"
                             }
                         }
@@ -938,7 +1086,7 @@
             "SourcePath" = "8:..\\..\\..\\..\\Intermediate\\Releasex64\\IFCExporterUI\\IFCExportUIOverride.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
-            "Folder" = "8:_70EFC661BA3348049F0947FC6CE8379F"
+            "Folder" = "8:_C1E5272C0F814A53BA7DB8E77FD46EA7"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -956,34 +1104,6 @@
             "OutputConfiguration" = "8:"
             "OutputGroupCanonicalName" = "8:Built"
             "OutputProjectGuid" = "8:{BF694550-5BEB-4DCF-8EC2-A5904690DC17}"
-            "ShowKeyOutput" = "11:TRUE"
-                "ExcludeFilters"
-                {
-                }
-            }
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_AFBB52C8D30B4F4CAA813F58556AF1E2"
-            {
-            "SourcePath" = "8:..\\..\\..\\..\\Intermediate\\Releasex64\\Modify Addin file\\Modify_Addin_file.exe"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_3D0507F7CAF74D25A74E186A1D28DE7D"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            "ProjectOutputGroupRegister" = "3:1"
-            "OutputConfiguration" = "8:"
-            "OutputGroupCanonicalName" = "8:Built"
-            "OutputProjectGuid" = "8:{3CDC3733-3051-446F-AAA4-CA326BA75C46}"
             "ShowKeyOutput" = "11:TRUE"
                 "ExcludeFilters"
                 {

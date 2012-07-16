@@ -343,14 +343,17 @@ namespace BIM.IFC.Exporter
                     IList<IFCExtrusionData> cutPairOpenings = new List<IFCExtrusionData>();
                     Document document = element.Document;
 
+                    IList<Solid> solids = new List<Solid>();
+                    IList<Mesh> meshes = new List<Mesh>();
+
                     if (wallElement != null && exportingAxis && curve != null)
                     {
                         SolidMeshGeometryInfo solidMeshInfo = 
                             (range == null) ? GeometryUtil.GetSolidMeshGeometry(geometryElement, Transform.Identity) :
                                 GeometryUtil.GetClippedSolidMeshGeometry(geometryElement, range);
                                 
-                        IList<Solid> solids = solidMeshInfo.GetSolids();
-                        IList<Mesh> meshes = solidMeshInfo.GetMeshes();
+                        solids = solidMeshInfo.GetSolids();
+                        meshes = solidMeshInfo.GetMeshes();
                         if (solids.Count == 0 && meshes.Count == 0)
                             return null;
 
@@ -431,8 +434,8 @@ namespace BIM.IFC.Exporter
                                 solidMeshCapsule = GeometryUtil.GetSolidMeshGeometry(geomElemToUse, trf);
                             }
 
-                            IList<Solid> solids = solidMeshCapsule.GetSolids();
-                            IList<Mesh> meshes = solidMeshCapsule.GetMeshes();
+                            solids = solidMeshCapsule.GetSolids();
+                            meshes = solidMeshCapsule.GetMeshes();
 
                             extraParams.PossibleExtrusionAxes = IFCExtrusionAxes.TryZ;   // only allow vertical extrusions!
                             extraParams.AreInnerRegionsOpenings = true;
@@ -479,6 +482,16 @@ namespace BIM.IFC.Exporter
                             representations.Add(axisRep);
 
                         representations.Add(bodyRep);
+
+                        IFCAnyHandle boundingBoxRep = null;
+                        if ((solids.Count > 0) || (meshes.Count > 0))
+                            boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, solids, meshes, Transform.Identity);
+                        else
+                            boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geometryElement, Transform.Identity);
+
+                        if (boundingBoxRep != null)
+                            representations.Add(boundingBoxRep);
+
                         prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
 
                         string objectType = NamingUtil.CreateIFCObjectName(exporterIFC, element);
@@ -528,7 +541,7 @@ namespace BIM.IFC.Exporter
                             localWrapper.AddElement(wallHnd, setter, extraParams, true);
 
                             // Only export one material for 2x2; for future versions, export the whole list.
-                            if (exporterIFC.ExportAs2x2 && (matId != ElementId.InvalidElementId) && !exportParts)
+                            if ((exporterIFC.ExportAs2x2 || famInstWallElem != null) && (matId != ElementId.InvalidElementId) && !exportParts)
                             {
                                 CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, wallHnd, matId);
                             }
@@ -551,6 +564,8 @@ namespace BIM.IFC.Exporter
                             if (!exporterIFC.ExportAs2x2 || exportedAsWallWithAxis) //will move this check into ExportHostObject
                                 HostObjectExporter.ExportHostObjectMaterials(exporterIFC, wallElement, localWrapper.GetAnElement(),
                                     geometryElement, localWrapper, wallLevelId, Toolkit.IFCLayerSetDirection.Axis2);
+
+                            ExportWallType(exporterIFC, wallHnd, wallElement.WallType, exportedAsWallWithAxis);
                         }
 
                         exporterIFC.RegisterSpaceBoundingElementHandle(wallHnd, element.Id, wallLevelId);
@@ -776,6 +791,53 @@ namespace BIM.IFC.Exporter
                 
                 return wallHnd;
             }
+        }
+        
+        /// <summary>
+        /// Exports wall types.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="elementHandle">The element handle.</param>
+        /// <param name="elementType">The type element.</param>
+        public static void ExportWallType(ExporterIFC exporterIFC, IFCAnyHandle elementHandle, Element elementType, bool isStandard)
+        {
+            if (elementHandle == null || elementType == null)
+                return;
+
+            ElementId elemId = elementType.Id;
+            IFCAnyHandle wallType = null;
+            if (ExporterCacheManager.WallTypeCache.TryGetValue(elemId, out wallType))
+            {
+                ExporterCacheManager.TypeRelationsCache.Add(wallType, elementHandle);
+                return;
+            }
+
+            string elemGUID = ExporterIFCUtils.CreateGUID(elementType);
+            string elemName = NamingUtil.GetNameOverride(elementType, elementType.Name);
+            string elemDesc = NamingUtil.GetDescriptionOverride(elementType, null);
+            string elemTag = NamingUtil.CreateIFCElementId(elementType);
+
+            HashSet<IFCAnyHandle> propertySets = null;
+            if (ExporterCacheManager.ExportOptionsCache.ExportInternalRevitPropertySets)
+            {
+                //should already be cached by wall export during create internal Revit property sets
+                TypePropertyInfo typePropertyInfo = ExporterCacheManager.TypePropertyInfoCache[elemId];
+                if (typePropertyInfo != null)
+                {
+                    propertySets = typePropertyInfo.PropertySets != null ? new HashSet<IFCAnyHandle>(typePropertyInfo.PropertySets) : null;
+                    typePropertyInfo.Elements.Remove(elementHandle); // we have property sets in type, no need to add them to element
+                }
+            }
+
+            wallType = IFCInstanceExporter.CreateWallType(exporterIFC.GetFile(), elemGUID, exporterIFC.GetOwnerHistoryHandle(),
+                elemName, elemDesc, null, propertySets, null, elemTag, null, isStandard ? IFCWallType.Standard : IFCWallType.NotDefined);
+
+            IFCAnyHandle materialLayerSet = ExporterCacheManager.MaterialLayerSetCache.Find(elemId);
+            if (materialLayerSet != null)
+                ExporterCacheManager.MaterialLayerRelationsCache.Add(materialLayerSet, wallType);
+
+            ExporterCacheManager.WallTypeCache[elemId] = wallType;
+            ExporterCacheManager.TypeRelationsCache.Add(wallType, elementHandle);
         }
 
         /// <summary>

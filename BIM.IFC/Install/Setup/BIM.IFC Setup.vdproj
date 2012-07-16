@@ -15,25 +15,25 @@
     {
         "Entry"
         {
+        "MsmKey" = "8:_01BD4122B90445C8927F72258D11B9C0"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_29908E3DB4D0E5243B5D0921807F8A82"
-        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
+        "MsmKey" = "8:_129EC112ED8F4C9B873CE25CFCEE8D51"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_29908E3DB4D0E5243B5D0921807F8A82"
-        "OwnerKey" = "8:_73EF5A3833D32EEF91E792E76FD70EDF"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_51B06F9B3436410A9E46C61F2CE610A0"
+        "MsmKey" = "8:_20F8AC54709B4A0587235DDCDBFAE2F7"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -45,26 +45,38 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_73EF5A3833D32EEF91E792E76FD70EDF"
-        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_9686F3DCC8EA4EB98EDB58907D0FC7D3"
+        "MsmKey" = "8:_69C2F6B1BA704EDFB3156F71A8FE9A81"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_FB14A19E346E432096DA2C4F4F8CCAFA"
+        "MsmKey" = "8:_6DB7FEFC48A9456E85E361E890BB72D7"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_51B06F9B3436410A9E46C61F2CE610A0"
+        "MsmKey" = "8:_9F7AA246F36844BFA6C80B53A51AFF99"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_AD033C961FD607B416C0D635713CADF8"
+        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_DDAF69606A5C015535A772921314F57F"
+        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_DDAF69606A5C015535A772921314F57F"
+        "OwnerKey" = "8:_AD033C961FD607B416C0D635713CADF8"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -76,13 +88,13 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_73EF5A3833D32EEF91E792E76FD70EDF"
+        "OwnerKey" = "8:_AD033C961FD607B416C0D635713CADF8"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_29908E3DB4D0E5243B5D0921807F8A82"
+        "OwnerKey" = "8:_DDAF69606A5C015535A772921314F57F"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -167,20 +179,6 @@
     {
         "CustomAction"
         {
-            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_9E1A29611FB74A338EA1934EE73933E4"
-            {
-            "Name" = "8:Primary output from Modify Addin file (Active)"
-            "Condition" = "8:"
-            "Object" = "8:_51B06F9B3436410A9E46C61F2CE610A0"
-            "FileType" = "3:2"
-            "InstallAction" = "3:1"
-            "Arguments" = "8:/TARGETDIR=\"[TARGETDIR] \" /AllUsersAddInFileName=\"[ALLUSERS_ADDINFOLDER]BIM.IFC.addin\" /CurrentUserAddInFileName=\"[CURRENTUSER_ADDINFOLDER]BIM.IFC.addin\""
-            "EntryPoint" = "8:"
-            "Sequence" = "3:1"
-            "Identifier" = "8:_0E21E8CC_0BE4_46B2_92C4_977DB3D981F9"
-            "InstallerClass" = "11:FALSE"
-            "CustomActionData" = "8:"
-            }
         }
         "DefaultFeature"
         {
@@ -204,38 +202,12 @@
         }
         "File"
         {
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_29908E3DB4D0E5243B5D0921807F8A82"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_01BD4122B90445C8927F72258D11B9C0"
             {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:DBManagedServices, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
-                "ScatterAssemblies"
-                {
-                }
-            "SourcePath" = "8:DBManagedServices.dll"
-            "TargetName" = "8:"
+            "SourcePath" = "8:..\\Program Files to Install\\BIM.IFC.addin"
+            "TargetName" = "8:BIM.IFC.addin"
             "Tag" = "8:"
-            "Folder" = "8:_6D6AA5CC6CBC4DD6BFBAF3367D0A6D23"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6851EFA5394545F58CC15877F7A4B056"
-            {
-            "SourcePath" = "8:..\\Program Files to Install\\LICENSE.rtf"
-            "TargetName" = "8:LICENSE.rtf"
-            "Tag" = "8:"
-            "Folder" = "8:_6D6AA5CC6CBC4DD6BFBAF3367D0A6D23"
+            "Folder" = "8:_276E5BA50C964FCA87C3840172136CE1"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -250,13 +222,138 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_73EF5A3833D32EEF91E792E76FD70EDF"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_129EC112ED8F4C9B873CE25CFCEE8D51"
+            {
+            "SourcePath" = "8:..\\Program Files to Install\\bundle\\Contents\\Resources\\IFCExporter2013_16.png"
+            "TargetName" = "8:IFCExporter2013_16.png"
+            "Tag" = "8:"
+            "Folder" = "8:_C24504E8587F423E85A0E457C212100F"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_20F8AC54709B4A0587235DDCDBFAE2F7"
+            {
+            "SourcePath" = "8:..\\Program Files to Install\\bundle\\PackageContents.xml"
+            "TargetName" = "8:PackageContents.xml"
+            "Tag" = "8:"
+            "Folder" = "8:_B4603946DE1B4107A2E9A430E4456C6B"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6851EFA5394545F58CC15877F7A4B056"
+            {
+            "SourcePath" = "8:..\\Program Files to Install\\LICENSE.rtf"
+            "TargetName" = "8:LICENSE.rtf"
+            "Tag" = "8:"
+            "Folder" = "8:_7AAFB596686C49259B5B7332069C98A5"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_69C2F6B1BA704EDFB3156F71A8FE9A81"
+            {
+            "SourcePath" = "8:..\\Program Files to Install\\bundle\\Contents\\Resources\\IFCExporter2013_32.png"
+            "TargetName" = "8:IFCExporter2013_32.png"
+            "Tag" = "8:"
+            "Folder" = "8:_C24504E8587F423E85A0E457C212100F"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6DB7FEFC48A9456E85E361E890BB72D7"
+            {
+            "SourcePath" = "8:..\\Program Files to Install\\bundle\\Contents\\Resources\\ADSKIFCExporterHelp.htm"
+            "TargetName" = "8:ADSKIFCExporterHelp.htm"
+            "Tag" = "8:"
+            "Folder" = "8:_C24504E8587F423E85A0E457C212100F"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_9F7AA246F36844BFA6C80B53A51AFF99"
+            {
+            "SourcePath" = "8:..\\Program Files to Install\\bundle\\Contents\\Resources\\IFCExporter2013.png"
+            "TargetName" = "8:IFCExporter2013.png"
+            "Tag" = "8:"
+            "Folder" = "8:_C24504E8587F423E85A0E457C212100F"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_AD033C961FD607B416C0D635713CADF8"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
             "AssemblyAsmDisplayName" = "8:RevitAPI, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
                 "ScatterAssemblies"
                 {
+                    "_AD033C961FD607B416C0D635713CADF8"
+                    {
+                    "Name" = "8:RevitAPI.dll"
+                    "Attributes" = "3:512"
+                    }
                 }
             "SourcePath" = "8:RevitAPI.dll"
             "TargetName" = "8:"
@@ -276,13 +373,24 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_9686F3DCC8EA4EB98EDB58907D0FC7D3"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_DDAF69606A5C015535A772921314F57F"
             {
-            "SourcePath" = "8:..\\Program Files to Install\\BIM.IFC.addin"
-            "TargetName" = "8:BIM.IFC.addin"
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:DBManagedServices, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
+                "ScatterAssemblies"
+                {
+                    "_DDAF69606A5C015535A772921314F57F"
+                    {
+                    "Name" = "8:DBManagedServices.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:DBManagedServices.dll"
+            "TargetName" = "8:"
             "Tag" = "8:"
-            "Folder" = "8:_AEEFE046CE824BC88C80CB81279ADC54"
-            "Condition" = "8:ALLUSERS=1"
+            "Folder" = "8:_6D6AA5CC6CBC4DD6BFBAF3367D0A6D23"
+            "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
             "ReadOnly" = "11:FALSE"
@@ -292,28 +400,8 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_FB14A19E346E432096DA2C4F4F8CCAFA"
-            {
-            "SourcePath" = "8:..\\Program Files to Install\\BIM.IFC.addin"
-            "TargetName" = "8:BIM.IFC.addin"
-            "Tag" = "8:"
-            "Folder" = "8:_C158E449FF0140B691EA19FB967B049F"
-            "Condition" = "8:ALLUSERS=\"\""
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
+            "Exclude" = "11:TRUE"
+            "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
         }
@@ -346,7 +434,7 @@
             }
             "{3C67513D-01DD-4637-8A68-80971EB9504F}:_6D6AA5CC6CBC4DD6BFBAF3367D0A6D23"
             {
-            "DefaultLocation" = "8:[ProgramFilesFolder][Manufacturer]\\[ProductName]"
+            "DefaultLocation" = "8:[AppDataFolder]"
             "Name" = "8:#1925"
             "AlwaysCreate" = "11:FALSE"
             "Condition" = "8:"
@@ -354,41 +442,94 @@
             "Property" = "8:TARGETDIR"
                 "Folders"
                 {
-                    "{9EF0B969-E518-4E46-987F-47570745A589}:_BB1073489D4245BEA82F9EC4C5FC111E"
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_3533EDE1770847009F8D0D23133C7EEB"
                     {
-                    "Name" = "8:Support"
+                    "Name" = "8:Autodesk"
                     "AlwaysCreate" = "11:FALSE"
                     "Condition" = "8:"
                     "Transitive" = "11:FALSE"
-                    "Property" = "8:_79272161B6934AABB09CFC59C437514D"
+                    "Property" = "8:_01F6DFB67340471D9C09D36267FFDB25"
                         "Folders"
                         {
+                            "{9EF0B969-E518-4E46-987F-47570745A589}:_42B0FC444C7D4ADC8C2A6551DB826807"
+                            {
+                            "Name" = "8:ApplicationPlugins"
+                            "AlwaysCreate" = "11:FALSE"
+                            "Condition" = "8:"
+                            "Transitive" = "11:FALSE"
+                            "Property" = "8:_575F7DB7AB294D27936F7823A5461616"
+                                "Folders"
+                                {
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_B4603946DE1B4107A2E9A430E4456C6B"
+                                    {
+                                    "Name" = "8:ADSK-IFCExporter2013.bundle"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_4621C1C05D2B49ADA6038DC9EDF70CFF"
+                                        "Folders"
+                                        {
+                                            "{9EF0B969-E518-4E46-987F-47570745A589}:_7AAFB596686C49259B5B7332069C98A5"
+                                            {
+                                            "Name" = "8:Contents"
+                                            "AlwaysCreate" = "11:FALSE"
+                                            "Condition" = "8:"
+                                            "Transitive" = "11:FALSE"
+                                            "Property" = "8:_8F022B4CBF7E4CE59A48DD928911E164"
+                                                "Folders"
+                                                {
+                                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_C24504E8587F423E85A0E457C212100F"
+                                                    {
+                                                    "Name" = "8:Resources"
+                                                    "AlwaysCreate" = "11:FALSE"
+                                                    "Condition" = "8:"
+                                                    "Transitive" = "11:FALSE"
+                                                    "Property" = "8:_F920A3B1D5214E1CAFCC4346BAB8D7C2"
+                                                        "Folders"
+                                                        {
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            "{9EF0B969-E518-4E46-987F-47570745A589}:_C0710FA2DA7742D984977CA5D987F1AC"
+                            {
+                            "Name" = "8:Revit"
+                            "AlwaysCreate" = "11:FALSE"
+                            "Condition" = "8:"
+                            "Transitive" = "11:FALSE"
+                            "Property" = "8:_96DDC4DE65894681B5B566AD4C58F209"
+                                "Folders"
+                                {
+                                    "{9EF0B969-E518-4E46-987F-47570745A589}:_1D477E1545F843A6856360EF64A17295"
+                                    {
+                                    "Name" = "8:Addins"
+                                    "AlwaysCreate" = "11:FALSE"
+                                    "Condition" = "8:"
+                                    "Transitive" = "11:FALSE"
+                                    "Property" = "8:_1C635058333A4F76A85B54B729CF01CF"
+                                        "Folders"
+                                        {
+                                            "{9EF0B969-E518-4E46-987F-47570745A589}:_276E5BA50C964FCA87C3840172136CE1"
+                                            {
+                                            "Name" = "8:2013"
+                                            "AlwaysCreate" = "11:FALSE"
+                                            "Condition" = "8:"
+                                            "Transitive" = "11:FALSE"
+                                            "Property" = "8:_C09649623DF5418B8B2041BD673E8731"
+                                                "Folders"
+                                                {
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                }
-            }
-            "{994432C3-9487-495D-8656-3E829A8DBDDE}:_AEEFE046CE824BC88C80CB81279ADC54"
-            {
-            "DefaultLocation" = "8:[CommonAppDataFolder]Autodesk\\Revit\\Addins\\2013"
-            "Name" = "8:All Users AddIn Folder"
-            "AlwaysCreate" = "11:FALSE"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Property" = "8:ALLUSERS_ADDINFOLDER"
-                "Folders"
-                {
-                }
-            }
-            "{994432C3-9487-495D-8656-3E829A8DBDDE}:_C158E449FF0140B691EA19FB967B049F"
-            {
-            "DefaultLocation" = "8:[AppDataFolder]Autodesk\\Revit\\Addins\\2013"
-            "Name" = "8:Current User AddIn Folder"
-            "AlwaysCreate" = "11:FALSE"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Property" = "8:CURRENTUSER_ADDINFOLDER"
-                "Folders"
-                {
                 }
             }
         }
@@ -407,15 +548,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:IFC Exporter for Revit 2013"
-        "ProductCode" = "8:{3BE44CBD-45A5-4B06-B08E-DF04B18B5685}"
-        "PackageCode" = "8:{CEC5FB7D-5009-4CCE-9FD4-425C68391428}"
-        "UpgradeCode" = "8:{6569B2EC-1DFF-4367-A16A-9D448E11715B}"
+        "ProductCode" = "8:{29A07E2D-5038-4AAC-BE5B-E4537378B46B}"
+        "PackageCode" = "8:{C5D5C97E-E6C0-451E-A23D-9BB980DB3606}"
+        "UpgradeCode" = "8:{CF885686-3666-4AE4-AD04-888286C204E6}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
-        "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:2.1.0"
+        "InstallAllUsers" = "11:FALSE"
+        "ProductVersion" = "8:2.2.0"
         "Manufacturer" = "8:IFC Exporter for Revit"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:http://sourceforge.net/projects/ifcexporter/"
@@ -625,41 +766,6 @@
             "Attributes" = "3:1"
                 "Dialogs"
                 {
-                    "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_1C531EFE85524B49848B65C299416D68"
-                    {
-                    "Sequence" = "3:300"
-                    "DisplayName" = "8:Installation Folder"
-                    "UseDynamicProperties" = "11:TRUE"
-                    "IsDependency" = "11:FALSE"
-                    "SourcePath" = "8:<VsdDialogDir>\\VsdFolderDlg.wid"
-                        "Properties"
-                        {
-                            "BannerBitmap"
-                            {
-                            "Name" = "8:BannerBitmap"
-                            "DisplayName" = "8:#1001"
-                            "Description" = "8:#1101"
-                            "Type" = "3:8"
-                            "ContextData" = "8:Bitmap"
-                            "Attributes" = "3:4"
-                            "Setting" = "3:1"
-                            "UsePlugInResources" = "11:TRUE"
-                            }
-                            "InstallAllUsersVisible"
-                            {
-                            "Name" = "8:InstallAllUsersVisible"
-                            "DisplayName" = "8:#1059"
-                            "Description" = "8:#1159"
-                            "Type" = "3:5"
-                            "ContextData" = "8:1;True=1;False=0"
-                            "Attributes" = "3:0"
-                            "Setting" = "3:0"
-                            "Value" = "3:1"
-                            "DefaultValue" = "3:1"
-                            "UsePlugInResources" = "11:TRUE"
-                            }
-                        }
-                    }
                     "{688940B3-5CA9-4162-8DEE-2993FA9D8CBC}:_7B91ACB51467415DAB9E605227CED9BD"
                     {
                     "Sequence" = "3:400"
@@ -1026,7 +1132,7 @@
             "SourcePath" = "8:..\\..\\..\\..\\Intermediate\\Releasex64\\BIM.IFC\\BIM.IFC.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
-            "Folder" = "8:_6D6AA5CC6CBC4DD6BFBAF3367D0A6D23"
+            "Folder" = "8:_7AAFB596686C49259B5B7332069C98A5"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -1044,34 +1150,6 @@
             "OutputConfiguration" = "8:"
             "OutputGroupCanonicalName" = "8:Built"
             "OutputProjectGuid" = "8:{BCE5141A-291B-4CD8-A69B-7B9345AA00E9}"
-            "ShowKeyOutput" = "11:TRUE"
-                "ExcludeFilters"
-                {
-                }
-            }
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_51B06F9B3436410A9E46C61F2CE610A0"
-            {
-            "SourcePath" = "8:..\\..\\..\\..\\Intermediate\\Releasex64\\Modify Addin file\\Modify_Addin_file.exe"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_BB1073489D4245BEA82F9EC4C5FC111E"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            "ProjectOutputGroupRegister" = "3:1"
-            "OutputConfiguration" = "8:"
-            "OutputGroupCanonicalName" = "8:Built"
-            "OutputProjectGuid" = "8:{8B9B4068-2893-4615-99B2-C4F4423BD129}"
             "ShowKeyOutput" = "11:TRUE"
                 "ExcludeFilters"
                 {

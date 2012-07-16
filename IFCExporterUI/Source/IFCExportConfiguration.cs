@@ -72,6 +72,12 @@ namespace BIM.IFC.Export.UI
         public bool ExportInternalRevitPropertySets { get; set; }
 
         /// <summary>
+        /// True to include the IFC common property sets. 
+        /// False to exclude them.
+        /// </summary>
+        public bool ExportIFCCommonPropertySets { get; set; }
+
+        /// <summary>
         /// True to include 2D elements supported by IFC export (notes and filled regions). 
         /// False to exclude them.
         /// </summary>
@@ -100,6 +106,12 @@ namespace BIM.IFC.Export.UI
         /// False to export the parts with host element.
         /// </summary>
         public bool ExportPartsAsBuildingElements { get; set; }
+
+        /// <summary>
+        /// True to export the surface styles. 
+        /// False to exclude them.
+        /// </summary>
+        public bool ExportSurfaceStyles { get; set; }
 
         private bool m_isBuiltIn = false;
         private bool m_isInSession = false;
@@ -151,8 +163,10 @@ namespace BIM.IFC.Export.UI
             this.Use2DRoomBoundaryForVolume = false;
             this.UseFamilyAndTypeNameForReference = false;
             this.ExportInternalRevitPropertySets = false;
+            this.ExportIFCCommonPropertySets = true;
             this.Export2DElements = false;
             this.ExportPartsAsBuildingElements = false;
+            this.ExportSurfaceStyles = false;
             this.m_isBuiltIn = false; 
             this.m_isInSession = false;
         }
@@ -174,7 +188,8 @@ namespace BIM.IFC.Export.UI
                                    bool exportBaseQuantities,
                                    bool splitWalls,
                                    bool internalSets,
-                                   bool PlanElems2D)
+                                   bool PlanElems2D,
+                                   bool surfaceStyles)
         {
             IFCExportConfiguration configuration = new IFCExportConfiguration();
             configuration.Name = name; 
@@ -184,11 +199,13 @@ namespace BIM.IFC.Export.UI
             configuration.ExportBaseQuantities = exportBaseQuantities;                    
             configuration.SplitWallsAndColumns = splitWalls;
             configuration.ExportInternalRevitPropertySets = internalSets;
+            configuration.ExportIFCCommonPropertySets = true;
             configuration.Export2DElements = PlanElems2D;
             configuration.VisibleElementsOfCurrentView = false;   
             configuration.Use2DRoomBoundaryForVolume = false;
             configuration.UseFamilyAndTypeNameForReference = false;
             configuration.ExportPartsAsBuildingElements = false;
+            configuration.ExportSurfaceStyles = surfaceStyles;
             configuration.m_isBuiltIn = true;
             configuration.m_isInSession = false; 
             return configuration;
@@ -212,11 +229,13 @@ namespace BIM.IFC.Export.UI
             this.ExportBaseQuantities = other.ExportBaseQuantities;
             this.SplitWallsAndColumns = other.SplitWallsAndColumns;
             this.ExportInternalRevitPropertySets = other.ExportInternalRevitPropertySets;
+            this.ExportIFCCommonPropertySets = other.ExportIFCCommonPropertySets;
             this.Export2DElements = other.Export2DElements;
             this.VisibleElementsOfCurrentView = other.VisibleElementsOfCurrentView;
             this.Use2DRoomBoundaryForVolume = other.Use2DRoomBoundaryForVolume;
             this.UseFamilyAndTypeNameForReference = other.UseFamilyAndTypeNameForReference;
             this.ExportPartsAsBuildingElements = other.ExportPartsAsBuildingElements;
+            this.ExportSurfaceStyles = other.ExportSurfaceStyles;
             this.m_isBuiltIn = other.m_isBuiltIn;
             this.m_isInSession = other.m_isInSession;
         }
@@ -245,11 +264,13 @@ namespace BIM.IFC.Export.UI
             this.ExportBaseQuantities = other.ExportBaseQuantities;
             this.SplitWallsAndColumns = other.SplitWallsAndColumns;
             this.ExportInternalRevitPropertySets = other.ExportInternalRevitPropertySets;
+            this.ExportIFCCommonPropertySets = other.ExportIFCCommonPropertySets;
             this.Export2DElements = other.Export2DElements;
             this.VisibleElementsOfCurrentView = other.VisibleElementsOfCurrentView;
             this.Use2DRoomBoundaryForVolume = other.Use2DRoomBoundaryForVolume;
             this.UseFamilyAndTypeNameForReference = other.UseFamilyAndTypeNameForReference;
             this.ExportPartsAsBuildingElements = other.ExportPartsAsBuildingElements;
+            this.ExportSurfaceStyles = other.ExportSurfaceStyles;
             this.m_isBuiltIn = false;
             this.m_isInSession = false;
         }
@@ -299,10 +320,12 @@ namespace BIM.IFC.Export.UI
             else
                 options.FilterViewId = ElementId.InvalidElementId;
             options.AddOption("ExportInternalRevitPropertySets", ExportInternalRevitPropertySets.ToString());
+            options.AddOption("ExportIFCCommonPropertySets", ExportIFCCommonPropertySets.ToString());
             options.AddOption("ExportAnnotations", Export2DElements.ToString());
             options.AddOption("Use2DRoomBoundaryForVolume",Use2DRoomBoundaryForVolume.ToString());
             options.AddOption("UseFamilyAndTypeNameForReference",UseFamilyAndTypeNameForReference.ToString());
             options.AddOption("ExportPartsAsBuildingElements", ExportPartsAsBuildingElements.ToString());
+            options.AddOption("ExportSurfaceStyles", ExportSurfaceStyles.ToString());
 
             options.AddOption("FileType", IFCFileType.ToString());
         }
@@ -330,9 +353,11 @@ namespace BIM.IFC.Export.UI
                 builder.AppendLine(GetDescriptionLine(Resources.VisibleElementsOfCurrentView, VisibleElementsOfCurrentView));
                 builder.AppendLine(GetDescriptionLine(Resources.ExportPlanViewElements, Export2DElements));
                 builder.AppendLine(GetDescriptionLine(Resources.ExportRevitPropertySets, ExportInternalRevitPropertySets));
+                builder.AppendLine(GetDescriptionLine(Resources.ExportIFCCommonPropertySets, ExportIFCCommonPropertySets));
                 builder.AppendLine(GetDescriptionLine(Resources.Use2DRoomBoundariesForRoomVolume, Use2DRoomBoundaryForVolume));
                 builder.AppendLine(GetDescriptionLine(Resources.UseFamilyAndTypeNameForReferences, UseFamilyAndTypeNameForReference));
                 builder.AppendLine(GetDescriptionLine(Resources.ExportPartsAsBuildingElements, ExportPartsAsBuildingElements));
+                builder.AppendLine(GetDescriptionLine(Resources.ExportSurfaceStyles, ExportSurfaceStyles));
 
                 return builder.ToString();
             }

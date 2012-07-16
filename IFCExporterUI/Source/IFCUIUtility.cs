@@ -57,6 +57,11 @@ namespace BIM.IFC.Export.UI
                 // * The file has been deleted
                 return new Rect();
             }
+            catch (System.Exception)
+            {
+                // Handle when other exceptions caught, e.g. cannot parse the file.
+                return new Rect();
+            }
         }
 
         /// <summary>

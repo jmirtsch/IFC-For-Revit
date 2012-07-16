@@ -331,6 +331,25 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Transforms a geometry by a given transform.
+        /// </summary>
+        /// <remarks>The geometry element created by "GetTransformed" is a copy which will have its own allocated
+        /// membership - this needs to be stored and disposed of (see AllocatedGeometryObjectCache
+        /// for details)</remarks>
+        /// <param name="geomElem">The geometry.</param>
+        /// <param name="trf">The transform.</param>
+        /// <returns>The transformed geometry.</returns>
+        public static GeometryElement GetTransformedGeometry(GeometryElement geomElem, Transform trf)
+        {
+            if (geomElem == null)
+                return null;
+
+            GeometryElement currGeomElem = geomElem.GetTransformed(trf);
+            ExporterCacheManager.AllocatedGeometryObjectCache.AddGeometryObject(currGeomElem);
+            return currGeomElem;
+        }
+
+        /// <summary>
         /// Collects all solids and meshes within all nested levels of a given GeometryElement.
         /// </summary>
         /// <remarks>
@@ -348,25 +367,18 @@ namespace BIM.IFC.Utility
         private static void CollectSolidMeshGeometry(GeometryElement geomElem, Transform trf, SolidMeshGeometryInfo solidMeshCapsule)
         {
             if (geomElem == null)
-            {
                 return;
-            }
+            
             GeometryElement currGeomElem = geomElem;
             Transform localTrf = trf;
             if (localTrf == null)
-            {
                 localTrf = Transform.Identity;
-            }
             else if (!localTrf.IsIdentity)
-            {
-                currGeomElem = geomElem.GetTransformed(localTrf);
-                // The geometry element created by "GetTransformed" is a copy which will have its own allocated
-                // membership - this needs to be stored and disposed of (see AllocatedGeometryObjectCache
-                // for details)
-                ExporterCacheManager.AllocatedGeometryObjectCache.AddGeometryObject(currGeomElem);
-            }
+                currGeomElem = GetTransformedGeometry(geomElem, localTrf);
+            
             // iterate through the GeometryObjects contained in the GeometryElement
-            foreach (GeometryObject geomObj in currGeomElem){
+            foreach (GeometryObject geomObj in currGeomElem)
+            {
                 Solid solid = geomObj as Solid;
                 if (solid != null && solid.Faces.Size > 0 && solid.Volume > 0.0)
                 {

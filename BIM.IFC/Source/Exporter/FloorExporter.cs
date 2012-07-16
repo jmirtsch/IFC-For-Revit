@@ -108,7 +108,7 @@ namespace BIM.IFC.Exporter
                         double scale = exporterIFC.LinearScale;
                         ElementId catId = CategoryUtil.GetSafeCategoryId(floorElement);
 
-                        IList<IFCAnyHandle> reps = new List<IFCAnyHandle>();
+                        IList<IFCAnyHandle> prodReps = new List<IFCAnyHandle>();
                         IList<IList<CurveLoop>> extrusionLoops = new List<IList<CurveLoop>>();
                         IList<IFCExtrusionCreationData> loopExtraParams = new List<IFCExtrusionCreationData>();
                         Plane floorPlane = GeometryUtil.CreateDefaultPlane();
@@ -161,7 +161,7 @@ namespace BIM.IFC.Exporter
                                                 IList<IFCAnyHandle> representations = new List<IFCAnyHandle>();
                                                 representations.Add(floorAndProperties.Handle);
                                                 IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
-                                                reps.Add(prodRep);
+                                                prodReps.Add(prodRep);
 
                                                 if (floorAndProperties.Data != null)
                                                     loopExtraParams.Add(floorAndProperties.Data);
@@ -173,14 +173,14 @@ namespace BIM.IFC.Exporter
                         
 
                             // Use internal routine as backup that handles openings.
-                            if (reps.Count == 0)
+                            if (prodReps.Count == 0)
                             {
                                 exportedAsInternalExtrusion = ExporterIFCUtils.ExportSlabAsExtrusion(exporterIFC, floorElement, 
-                                    geometryElement, transformSetter, localPlacement, out localPlacements, out reps, 
+                                    geometryElement, transformSetter, localPlacement, out localPlacements, out prodReps, 
                                     out extrusionLoops, out loopExtraParams, floorPlane);
                             }
 
-                            if (reps.Count == 0)
+                            if (prodReps.Count == 0)
                             {
                                 using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                                 {
@@ -194,7 +194,7 @@ namespace BIM.IFC.Exporter
                                         return;
                                     }
 
-                                    reps.Add(prodDefHnd);
+                                    prodReps.Add(prodDefHnd);
                                 }
                             }
                         }
@@ -202,7 +202,7 @@ namespace BIM.IFC.Exporter
                         // Create the slab from either the extrusion or the BRep information.
                         string ifcGUID = ExporterIFCUtils.CreateGUID(floorElement);
 
-                        int numReps = exportParts ? 1 : reps.Count;
+                        int numReps = exportParts ? 1 : prodReps.Count;
                         for (int ii = 0; ii < numReps; ii++)
                         {
                             string ifcName = NamingUtil.GetNameOverride(floorElement, NamingUtil.CreateIFCName(exporterIFC, ii == 0 ? -1 : ii + 1));
@@ -215,7 +215,7 @@ namespace BIM.IFC.Exporter
                             IFCSlabType slabType = GetIFCSlabType(ifcEnumType);
 
                             IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(file, currentGUID, ownerHistory, ifcName,
-                               ifcDescription, ifcObjectType, localPlacementHnd, exportParts ? null : reps[ii], ifcElemId, slabType);
+                               ifcDescription, ifcObjectType, localPlacementHnd, exportParts ? null : prodReps[ii], ifcElemId, slabType);
 
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(slabHnd))
                                 return;
@@ -244,8 +244,20 @@ namespace BIM.IFC.Exporter
 
                     if (!exportParts)
                     {
-                        HostObjectExporter.ExportHostObjectMaterials(exporterIFC, floorElement as HostObject, slabHnds, 
-                            geometryElement, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3);
+                        if (floorElement is HostObject)
+                        {
+                            HostObjectExporter.ExportHostObjectMaterials(exporterIFC, floorElement as HostObject, slabHnds,
+                                geometryElement, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3);
+                        }
+                        else if (floorElement is FamilyInstance && slabHnds != null)
+                        {
+                            ElementId matId = BodyExporter.GetBestMaterialIdForGeometry(geometryElement, exporterIFC);
+                            Document doc = floorElement.Document;
+                            foreach (IFCAnyHandle slabHnd in slabHnds)
+                            {
+                                CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, slabHnd, matId);
+                            }
+                        }
                     }
                 }
                 tr.Commit();

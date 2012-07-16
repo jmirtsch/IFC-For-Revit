@@ -313,6 +313,17 @@ namespace BIM.IFC.Exporter
                         IList<IFCAnyHandle> representations = new List<IFCAnyHandle>();
                         representations.Add(bodyRep);
 
+                        IList<GeometryObject> geomObjects = new List<GeometryObject>();
+                        foreach (Solid solid in solids)
+                            geomObjects.Add(solid);
+                        foreach (Mesh mesh in meshes)
+                            geomObjects.Add(mesh);
+
+                        Transform boundingBoxTrf = (bodyData.BrepOffsetTransform != null) ? bodyData.BrepOffsetTransform.Inverse : Transform.Identity;
+                        IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geomObjects, boundingBoxTrf);
+                        if (boundingBoxRep != null)
+                            representations.Add(boundingBoxRep);
+
                         IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
 
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();

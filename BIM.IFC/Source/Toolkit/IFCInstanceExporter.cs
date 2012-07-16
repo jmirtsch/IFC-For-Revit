@@ -364,7 +364,7 @@ namespace BIM.IFC.Toolkit
         /// <param name="name">The name.</param>
         /// <param name="description">The description.</param>
         /// <param name="relatedObjects">The objects to be related to a type.</param>
-        private static void ValidateRelDefines(string guid, IFCAnyHandle ownerHistory, string name, string description, HashSet<IFCAnyHandle> relatedObjects)
+        private static void ValidateRelDefines(string guid, IFCAnyHandle ownerHistory, string name, string description, ICollection<IFCAnyHandle> relatedObjects)
         {
             IFCAnyHandleUtil.ValidateSubTypeOf(relatedObjects, false, IFCEntityType.IfcObject);
 
@@ -381,7 +381,7 @@ namespace BIM.IFC.Toolkit
         /// <param name="description">The description.</param>
         /// <param name="relatedObjects">The objects to be related to a type.</param>
         private static void SetRelDefines(IFCAnyHandle relDefines,
-            string guid, IFCAnyHandle ownerHistory, string name, string description, HashSet<IFCAnyHandle> relatedObjects)
+            string guid, IFCAnyHandle ownerHistory, string name, string description, ICollection<IFCAnyHandle> relatedObjects)
         {
             IFCAnyHandleUtil.SetAttribute(relDefines, "RelatedObjects", relatedObjects);
             SetRelationship(relDefines, guid, ownerHistory, name, description);
@@ -699,7 +699,7 @@ namespace BIM.IFC.Toolkit
         /// <param name="relatedObjects">Related objects, which are assigned to a single object.</param>
         /// <param name="relatedObjectsType">Particular type of the assignment relationship.</param>
         private static void ValidateRelAssigns(string guid, IFCAnyHandle ownerHistory,
-            string name, string description, HashSet<IFCAnyHandle> relatedObjects, IFCObjectType? relatedObjectsType)
+            string name, string description, ICollection<IFCAnyHandle> relatedObjects, IFCObjectType? relatedObjectsType)
         {
             if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
             {
@@ -724,7 +724,7 @@ namespace BIM.IFC.Toolkit
         /// <param name="relatedObjects">Related objects, which are assigned to a single object.</param>
         /// <param name="relatedObjectsType">Particular type of the assignment relationship.</param>
         private static void SetRelAssigns(IFCAnyHandle relAssigns, string guid, IFCAnyHandle ownerHistory,
-            string name, string description, HashSet<IFCAnyHandle> relatedObjects, IFCObjectType? relatedObjectsType)
+            string name, string description, ICollection<IFCAnyHandle> relatedObjects, IFCObjectType? relatedObjectsType)
         {
             IFCAnyHandleUtil.SetAttribute(relAssigns, "RelatedObjects", relatedObjects);
             IFCAnyHandleUtil.SetAttribute(relAssigns, "RelatedObjectsType", relatedObjectsType);
@@ -1058,7 +1058,7 @@ namespace BIM.IFC.Toolkit
         /// <param name="identifier">The identifier.</param>
         /// <param name="type">The representation type.</param>
         /// <param name="items">The items that belong to the shape representation.</param>
-        private static void ValidateRepresentation(IFCAnyHandle contextOfItems, string identifier, string type, HashSet<IFCAnyHandle> items)
+        private static void ValidateRepresentation(IFCAnyHandle contextOfItems, string identifier, string type, ICollection<IFCAnyHandle> items)
         {
             IFCAnyHandleUtil.ValidateSubTypeOf(contextOfItems, false, IFCEntityType.IfcRepresentationContext);
             IFCAnyHandleUtil.ValidateSubTypeOf(items, false, IFCEntityType.IfcRepresentationItem);
@@ -1072,7 +1072,7 @@ namespace BIM.IFC.Toolkit
         /// <param name="identifier">The identifier.</param>
         /// <param name="type">The representation type.</param>
         /// <param name="items">The items that belong to the shape representation.</param>
-        private static void SetRepresentation(IFCAnyHandle representation, IFCAnyHandle contextOfItems, string identifier, string type, HashSet<IFCAnyHandle> items)
+        private static void SetRepresentation(IFCAnyHandle representation, IFCAnyHandle contextOfItems, string identifier, string type, ICollection<IFCAnyHandle> items)
         {
             IFCAnyHandleUtil.SetAttribute(representation, "ContextOfItems", contextOfItems);
             IFCAnyHandleUtil.SetAttribute(representation, "RepresentationIdentifier", identifier);
@@ -1342,6 +1342,34 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Creates a handle representing an IfcWallType and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID to use to label the wall.</param>
+        /// <param name="ownerHistory">The IfcOwnerHistory.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="applicableOccurrence">The attribute optionally defines the data type of the occurrence object.</param>
+        /// <param name="propertySets">The property set(s) associated with the type.</param>
+        /// <param name="representationMaps">The mapped geometries associated with the type.</param>
+        /// <param name="elementTag">The tag that represents the entity.</param>
+        /// <param name="elementType">The type name.</param>
+        /// <param name="predefinedType">The predefined types.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateWallType(IFCFile file, string guid, IFCAnyHandle ownerHistory,
+            string name, string description, string applicableOccurrence, HashSet<IFCAnyHandle> propertySets,
+            List<IFCAnyHandle> representationMaps, string elementTag, string elementType, IFCWallType predefinedType)
+        {
+            ValidateElementType(guid, ownerHistory, name, description, applicableOccurrence, propertySets, representationMaps, elementTag, elementType);
+
+            IFCAnyHandle wallType = CreateInstance(file, IFCEntityType.IfcWallType);
+            IFCAnyHandleUtil.SetAttribute(wallType, "PredefinedType", predefinedType);
+            SetElementType(wallType, guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+            return wallType;
+        }
+
+        /// <summary>
         /// Creates a handle representing an IfcProductDefinitionShape and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -1356,6 +1384,34 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandle productDefinitionShape = CreateInstance(file, IFCEntityType.IfcProductDefinitionShape);
             SetProductRepresentation(productDefinitionShape, name, description, representations);
             return productDefinitionShape;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcBoundingBox and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="corner">The lower left corner of the bounding box.</param>
+        /// <param name="xDim">The positive length in the X-direction.</param>
+        /// <param name="yDim">The positive length in the Y-direction.</param>
+        /// <param name="zDim">The positive length in the Z-direction.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateBoundingBox(IFCFile file, IFCAnyHandle corner, double xDim, double yDim, double zDim)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(corner, false, IFCEntityType.IfcCartesianPoint);
+
+            if (xDim < MathUtil.Eps())
+                throw new ArgumentOutOfRangeException("xDim", "The x-Value of the bounding box must be positive.");
+            if (yDim < MathUtil.Eps())
+                throw new ArgumentOutOfRangeException("yDim", "The y-Value of the bounding box must be positive.");
+            if (zDim < MathUtil.Eps())
+                throw new ArgumentOutOfRangeException("zDim", "The z-Value of the bounding box must be positive.");
+
+            IFCAnyHandle boundingBox = CreateInstance(file, IFCEntityType.IfcBoundingBox);
+            boundingBox.SetAttribute("Corner", corner);
+            boundingBox.SetAttribute("XDim", xDim);
+            boundingBox.SetAttribute("YDim", yDim);
+            boundingBox.SetAttribute("ZDim", zDim);
+            return boundingBox;
         }
 
         /// <summary>
@@ -2144,7 +2200,7 @@ namespace BIM.IFC.Toolkit
         /// <param name="relatingGroup">Reference to group that finally contains all assigned group members.</param>
         /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateRelAssignsToGroup(IFCFile file, string guid, IFCAnyHandle ownerHistory,
-            string name, string description, HashSet<IFCAnyHandle> relatedObjects, IFCObjectType? relatedObjectsType, IFCAnyHandle relatingGroup)
+            string name, string description, ICollection<IFCAnyHandle> relatedObjects, IFCObjectType? relatedObjectsType, IFCAnyHandle relatingGroup)
         {
             IFCAnyHandleUtil.ValidateSubTypeOf(relatingGroup, false, IFCEntityType.IfcGroup);
 
@@ -2154,6 +2210,34 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandleUtil.SetAttribute(relAssignsToGroup, "RelatingGroup", relatingGroup);
             SetRelAssigns(relAssignsToGroup, guid, ownerHistory, name, description, relatedObjects, relatedObjectsType);
             return relAssignsToGroup;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcRelAssignsToActor and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="relatedObjects">Related objects, which are assigned to a single object.</param>
+        /// <param name="relatedObjectsType">Particular type of the assignment relationship.</param>
+        /// <param name="relatingActor">Reference to the information about the actor.</param>
+        /// <param name="actingRole">Role of the actor played within the context of the assignment to the object(s).</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateRelAssignsToActor(IFCFile file, string guid, IFCAnyHandle ownerHistory,
+            string name, string description, ICollection<IFCAnyHandle> relatedObjects, IFCObjectType? relatedObjectsType, IFCAnyHandle relatingActor, IFCAnyHandle actingRole)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(relatingActor, false, IFCEntityType.IfcActor);
+            IFCAnyHandleUtil.ValidateSubTypeOf(actingRole, true, IFCEntityType.IfcActorRole);
+
+            ValidateRelAssigns(guid, ownerHistory, name, description, relatedObjects, relatedObjectsType);
+
+            IFCAnyHandle relAssignsToActor = CreateInstance(file, IFCEntityType.IfcRelAssignsToActor);
+            IFCAnyHandleUtil.SetAttribute(relAssignsToActor, "RelatingActor", relatingActor);
+            IFCAnyHandleUtil.SetAttribute(relAssignsToActor, "ActingRole", actingRole);
+            SetRelAssigns(relAssignsToActor, guid, ownerHistory, name, description, relatedObjects, relatedObjectsType);
+            return relAssignsToActor;
         }
 
         /// <summary>
@@ -2216,7 +2300,7 @@ namespace BIM.IFC.Toolkit
         /// <param name="relatingPropertyDefinition">The relating proprety definition.</param>
         /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateRelDefinesByProperties(IFCFile file, string guid, IFCAnyHandle ownerHistory,
-            string name, string description, HashSet<IFCAnyHandle> relatedObjects, IFCAnyHandle relatingPropertyDefinition)
+            string name, string description, ICollection<IFCAnyHandle> relatedObjects, IFCAnyHandle relatingPropertyDefinition)
         {
             IFCAnyHandleUtil.ValidateSubTypeOf(relatingPropertyDefinition, false, IFCEntityType.IfcPropertySetDefinition);
             ValidateRelDefines(guid, ownerHistory, name, description, relatedObjects);
@@ -5070,6 +5154,26 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Creates an IfcSystem, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="objectType">The object type.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateSystem(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
+            string description, string objectType)
+        {
+            ValidateGroup(guid, ownerHistory, name, description, objectType);
+
+            IFCAnyHandle system = CreateInstance(file, IFCEntityType.IfcSystem);
+            SetGroup(system, guid, ownerHistory, name, description, objectType);
+            return system;
+        }
+
+        /// <summary>
         /// Creates an IfcSystemFurnitureElementType, and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -5834,6 +5938,31 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Creates an IfcRelServicesBuildings and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="relatingSystem">The system handle.</param>
+        /// <param name="relatedBuildings">The related spatial structure handles.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateRelServicesBuildings(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name, string description,
+            IFCAnyHandle relatingSystem, ICollection<IFCAnyHandle> relatedBuildings)
+        {
+            ValidateRelConnects(guid, ownerHistory, name, description);
+            IFCAnyHandleUtil.ValidateSubTypeOf(relatingSystem, false, IFCEntityType.IfcSystem);
+            IFCAnyHandleUtil.ValidateSubTypeOf(relatedBuildings, false, IFCEntityType.IfcSpatialStructureElement);
+
+            IFCAnyHandle relServicesBuildings = CreateInstance(file, IFCEntityType.IfcRelServicesBuildings);
+            IFCAnyHandleUtil.SetAttribute(relServicesBuildings, "RelatingSystem", relatingSystem);
+            IFCAnyHandleUtil.SetAttribute(relServicesBuildings, "RelatedBuildings", relatedBuildings);
+            SetRelConnects(relServicesBuildings, guid, ownerHistory, name, description);
+            return relServicesBuildings;
+        }
+
+        /// <summary>
         /// Creates an IfcRelConnectsPortToElement and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -5951,7 +6080,7 @@ namespace BIM.IFC.Toolkit
         /// <param name="items">The items that belong to the shape representation.</param>
         /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateShapeRepresentation(IFCFile file,
-            IFCAnyHandle contextOfItems, string identifier, string type, HashSet<IFCAnyHandle> items)
+            IFCAnyHandle contextOfItems, string identifier, string type, ICollection<IFCAnyHandle> items)
         {
             ValidateRepresentation(contextOfItems, identifier, type, items);
 
@@ -6687,6 +6816,91 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandle planeHnd = CreateInstance(file, IFCEntityType.IfcPlane);
             SetElementarySurface(planeHnd, position);
             return planeHnd;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcActor and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name</param>
+        /// <param name="description">The description</param>
+        /// <param name="objectType">The object type.</param>
+        /// <param name="theActor">The actor.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateActor(IFCFile file, string guid, IFCAnyHandle ownerHistory,
+            string name, string description, string objectType, IFCAnyHandle theActor)
+        {
+            ValidateActor(guid, ownerHistory, name, description, objectType, theActor);
+
+            IFCAnyHandle actorHandle = CreateInstance(file, IFCEntityType.IfcActor);
+            SetActor(actorHandle, guid, ownerHistory, name, description, objectType, theActor);
+            return actorHandle;
+        }
+
+        /// Creates an IfcGrid and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="objectType">The object type.</param>
+        /// <param name="objectPlacement">The object placement.</param>
+        /// <param name="representation">The geometric representation of the entity.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateGrid(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name, string description, string objectType,
+            IFCAnyHandle objectPlacement, IFCAnyHandle representation, IList<IFCAnyHandle> uAxes, IList<IFCAnyHandle> vAxes, IList<IFCAnyHandle> wAxes)
+        {
+            ValidateProduct(guid, ownerHistory, name, description, objectType, objectPlacement, representation);
+
+            IFCAnyHandle grid = CreateInstance(file, IFCEntityType.IfcGrid);
+            IFCAnyHandleUtil.SetAttribute(grid, "UAxes", uAxes);
+            IFCAnyHandleUtil.SetAttribute(grid, "VAxes", vAxes);
+            IFCAnyHandleUtil.SetAttribute(grid, "wAxes", wAxes);
+
+            SetProduct(grid, guid, ownerHistory, name, description, objectType, objectPlacement, representation);
+            return grid;
+        }
+
+        /// <summary>
+        /// Creates an IfcGridAxis and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="axisTag">The AxisTag.</param>
+        /// <param name="axisCurve">The curve handle of the grid axis.</param>
+        /// <param name="sameSense">The SameSense.</param>
+        /// <returns>The handle</returns>
+        public static IFCAnyHandle CreateGridAxis(IFCFile file, string axisTag, IFCAnyHandle axisCurve, bool sameSense)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(axisCurve, false, IFCEntityType.IfcCurve);
+
+            IFCAnyHandle gridAxis = CreateInstance(file, IFCEntityType.IfcGridAxis);
+            if (axisTag != string.Empty)
+            {
+                IFCAnyHandleUtil.SetAttribute(gridAxis, "AxisTag", axisTag);
+            }
+            IFCAnyHandleUtil.SetAttribute(gridAxis, "AxisCurve", axisCurve);
+            IFCAnyHandleUtil.SetAttribute(gridAxis, "SameSense", sameSense);
+            return gridAxis;
+        }
+
+        /// <summary>
+        /// Creates an IfcGridPlacement and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="placementLocation">The PlacementLocation.</param>
+        /// <param name="placementRefDirection">The PlacementRefDirection.</param>
+        /// <returns>The handle</returns>
+        public static IFCAnyHandle CreateGridPlacement(IFCFile file, IFCAnyHandle placementLocation, IFCAnyHandle placementRefDirection)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(placementLocation, true, IFCEntityType.IfcObjectPlacement);
+
+            IFCAnyHandle gridPlacement = CreateInstance(file, IFCEntityType.IfcGridPlacement);
+            IFCAnyHandleUtil.SetAttribute(gridPlacement, "PlacementLocation", placementLocation);
+            IFCAnyHandleUtil.SetAttribute(gridPlacement, "PlacementRefDirection", placementRefDirection);
+            return gridPlacement;
         }
 
         #endregion

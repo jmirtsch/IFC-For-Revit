@@ -44,7 +44,8 @@ namespace BIM.IFC.Exporter
         {
             ParameterCache cache = ExporterCacheManager.ParameterCache;
 
-            InitCommonPropertySets(cache.PropertySets, fileVersion);
+            if (ExporterCacheManager.ExportOptionsCache.ExportIFCCommonPropertySets)
+                InitCommonPropertySets(cache.PropertySets, fileVersion);
 
             if (fileVersion == IFCVersion.IFCCOBIE)
             {
@@ -1031,6 +1032,7 @@ namespace BIM.IFC.Exporter
             propertySetPhotovoltaicArray.Name = "ePset_PhotovoltaicArray";
             propertySetPhotovoltaicArray.EntityTypes.Add(IFCEntityType.IfcRoof);
             propertySetPhotovoltaicArray.EntityTypes.Add(IFCEntityType.IfcWall);
+            propertySetPhotovoltaicArray.EntityTypes.Add(IFCEntityType.IfcSlab);
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("Hosts Photovoltaic Array");
             ifcPSE.PropertyName = "HostsPhotovoltaicArray";

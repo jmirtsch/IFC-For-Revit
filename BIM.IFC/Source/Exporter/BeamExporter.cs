@@ -223,6 +223,11 @@ namespace BIM.IFC.Exporter
                         }
                         representations.Add(repHnd);
 
+                        Transform boundingBoxTrf = (brepOffsetTransform == null) ? Transform.Identity : brepOffsetTransform.Inverse;
+                        IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geometryElement, boundingBoxTrf);
+                        if (boundingBoxRep != null)
+                            representations.Add(boundingBoxRep);
+
                         IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
 
                         string instanceGUID = ExporterIFCUtils.CreateGUID(element);
