@@ -28,7 +28,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of information to create zones.
     /// </summary>
-    class ZoneInfoCache : Dictionary<string, ZoneInfo>
+    public class ZoneInfoCache : Dictionary<string, ZoneInfo>
     {
         /// <summary>
         /// Adds the ZoneInfo to the dictionary.

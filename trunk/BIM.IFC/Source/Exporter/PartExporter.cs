@@ -286,14 +286,14 @@ namespace BIM.IFC.Exporter
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                         if (solids.Count > 0 || meshes.Count > 0)
                         {
-                            bodyData = BodyExporter.ExportBody(partElement.Document.Application, exporterIFC, partElement, catId, solids, meshes,
+                            bodyData = BodyExporter.ExportBody(partElement.Document.Application, exporterIFC, partElement, catId, ElementId.InvalidElementId, solids, meshes,
                                 bodyExporterOptions, extrusionCreationData);
                         }
                         else
                         {
                             IList<GeometryObject> geomlist = new List<GeometryObject>();
                             geomlist.Add(geometryElement);
-                            bodyData = BodyExporter.ExportBody(partElement.Document.Application, exporterIFC, partElement, catId, geomlist,
+                            bodyData = BodyExporter.ExportBody(partElement.Document.Application, exporterIFC, partElement, catId, ElementId.InvalidElementId, geomlist,
                                 bodyExporterOptions, extrusionCreationData);
                         }
 
@@ -316,8 +316,7 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
 
                         string partGUID = ExporterIFCUtils.CreateGUID(partElement);
-                        string origPartName = NamingUtil.CreateIFCName(exporterIFC, -1);
-                        string partName = NamingUtil.GetNameOverride(partElement, origPartName);
+                        string partName = NamingUtil.GetIFCName(partElement);
                         string partDescription = NamingUtil.GetDescriptionOverride(partElement, null);
                         string partObjectType = NamingUtil.GetObjectTypeOverride(partElement, NamingUtil.CreateIFCObjectName(exporterIFC, partElement));
                         string partElemId = NamingUtil.CreateIFCElementId(partElement);

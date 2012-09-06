@@ -31,7 +31,7 @@ namespace BIM.IFC.Exporter.PropertySet
     /// <summary>
     /// This enumerated type represents the types of quantities that can be exported.
     /// </summary>
-    enum QuantityType
+    public enum QuantityType
     {
         /// <summary>
         /// A real number quantity.
@@ -54,7 +54,7 @@ namespace BIM.IFC.Exporter.PropertySet
     /// <summary>
     /// Represents a mapping from a Revit parameter or calculated quantity to an IFC quantity.
     /// </summary>
-    class QuantityEntry : Entry
+    public class QuantityEntry : Entry
     {
         /// <summary>
         /// Defines the building code used to calculate the element quantity.

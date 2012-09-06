@@ -30,7 +30,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Provides static methods for naming and string related operations.
     /// </summary>
-    class NamingUtil
+    public class NamingUtil
     {
         /// <summary>
         /// Removes spaces in a string.
@@ -210,9 +210,7 @@ namespace BIM.IFC.Utility
         /// <param name="originalValue">
         /// The original value.
         /// </param>
-        /// <returns>
-        /// The string contains the object type string value.
-        /// </returns>
+        /// <returns>The string contains the object type string value.</returns>
         public static string GetObjectTypeOverride(Element element, string originalValue)
         {
             string nameOverride = "ObjectTypeOverride";
@@ -220,44 +218,114 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
-        /// Creates an IFC name from export state.
+        /// Generates the IFC name for the current element.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="index">
-        /// The index of the name. If it is larger than 0, it is appended to the name.
-        /// </param>
-        /// <returns>
-        /// The string contains the name string value.
-        /// </returns>
-        public static string CreateIFCName(ExporterIFC exporterIFC, int index)
+        /// <param name="element">The element.</param>
+        /// <returns> The string containing the name.</returns>
+        static private string GetIFCBaseName(Element element)
         {
-            string elementName = exporterIFC.GetName();
-            if (index >= 0)
+            if (element == null)
+                return "";
+
+            bool isType = (element is ElementType);
+
+            string elementName = element.Name;
+            if (elementName == "???")
+                elementName = "";
+
+            string familyName = "";
+            ElementType elementType = (isType ? element : element.Document.GetElement(element.GetTypeId())) as ElementType;
+            if (elementType != null)
             {
-                elementName += ":";
-                elementName += index.ToString();
+                familyName = ExporterIFCUtils.GetFamilyName(elementType);
+                if (familyName == "???")
+                    familyName = "";
             }
 
-            return elementName;
+            string fullName = familyName;
+            if (elementName != "")
+            {
+                if (fullName != "")
+                    fullName = fullName + ":" + elementName;
+                else
+                    fullName = elementName;
+            }
+
+            if (isType)
+                return fullName;
+            if (fullName != "")
+                return fullName + ":" + CreateIFCElementId(element);
+            return CreateIFCElementId(element);
         }
 
         /// <summary>
-        /// Creates an IFC family name from export state.
+        /// Generates the IFC name based on the Revit display name.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="index">
-        /// The index of the name. If it is larger than 0, it is appended to the name.
-        /// </param>
-        /// <returns>
-        /// The string contains the name string value.
-        /// </returns>
-        public static string CreateIFCFamilyName(ExporterIFC exporterIFC, int index)
+        /// <param name="element">The element.</param>
+        /// <returns> The string containing the name.</returns>
+        static private string GetRevitDisplayName(Element element)
         {
-            string elementName = exporterIFC.GetFamilyName();
+            if (element == null)
+                return "";
+
+            string fullName = (element.Category != null) ? element.Category.Name : "";
+            string typeName = element.Name;
+            string familyName = "";
+
+            ElementType elementType = null;
+            if (element is ElementType)
+                elementType = element as ElementType;
+            else
+                elementType = element.Document.GetElement(element.GetTypeId()) as ElementType;
+
+            if (elementType != null)
+                familyName = ExporterIFCUtils.GetFamilyName(elementType);
+
+            if (familyName != "")
+            {
+                if (fullName != "")
+                    fullName = fullName + " : " + familyName;
+                else
+                    fullName = familyName;
+            }
+
+            if (typeName != "")
+            {
+                if (fullName != "")
+                    fullName = fullName + " : " + typeName;
+                else
+                    fullName = typeName;
+            }
+
+            return fullName;
+        }
+
+        /// <summary>
+        /// Get the IFC name of an element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns>The name.</returns>
+        static public string GetIFCName(Element element)
+        {
+            if (element == null)
+                return "";
+
+            if (ExporterCacheManager.ExportOptionsCache.NamingOptions.UseVisibleRevitNameAsEntityName)
+                return GetRevitDisplayName(element);
+            
+            string baseName = GetIFCBaseName(element);
+            return GetNameOverride(element, baseName);
+        }
+
+        /// <summary>
+        /// Creates an IFC name for an element, with a suffix.
+        /// </summary>
+        /// <param name="element">The element./// </param>
+        /// <param name="index">/// The index of the name. If it is larger than 0, it is appended to the name./// </param>
+        /// <returns>/// The string contains the name string value./// </returns>
+        public static string GetIFCNamePlusIndex(Element element, int index)
+        {
+            string elementName = GetIFCName(element);
             if (index >= 0)
             {
                 elementName += ":";

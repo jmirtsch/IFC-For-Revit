@@ -39,9 +39,10 @@ namespace BIM.IFC.Exporter
         /// </summary>
         /// <param name="geometryObject">The geometry object to get the best material id.</param>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
-        public static ElementId SetBestMaterialIdInExporter(GeometryObject geometryObject, ExporterIFC exporterIFC)
+        public static ElementId SetBestMaterialIdInExporter(GeometryObject geometryObject, ElementId overrideMaterialId, ExporterIFC exporterIFC)
         {
-            ElementId materialId = GetBestMaterialIdForGeometry(geometryObject, exporterIFC);
+            ElementId materialId = overrideMaterialId != ElementId.InvalidElementId ? overrideMaterialId :
+                GetBestMaterialIdForGeometry(geometryObject, exporterIFC);
 
             if (materialId != ElementId.InvalidElementId)
                 exporterIFC.SetMaterialIdForCurrentExportState(materialId);
@@ -1021,7 +1022,7 @@ namespace BIM.IFC.Exporter
         // In shipped code, these are always false, and should be kept false until API support routines are proved to be reliable.
         private static BodyData ExportBodyAsBRep(ExporterIFC exporterIFC, IList<GeometryObject> splitGeometryList, 
             IList<int> exportAsBRep, IList<IFCAnyHandle> bodyItems,
-            Element element, ElementId categoryId, IFCAnyHandle contextOfItems, double eps, BodyExporterOptions options, BodyData bodyDataIn)
+            Element element, ElementId categoryId, ElementId overrideMaterialId, IFCAnyHandle contextOfItems, double eps, BodyExporterOptions options, BodyData bodyDataIn)
         {
             bool exportAsBReps = true;
             IFCFile file = exporterIFC.GetFile();
@@ -1073,7 +1074,7 @@ namespace BIM.IFC.Exporter
                 GeometryObject geomObject = selectiveBRepExport ? splitGeometryList[exportAsBRep[index]] : splitGeometryList[index];
                 startIndexForObject.Add(currentFaceHashSetList.Count);
 
-                ElementId materialId = SetBestMaterialIdInExporter(geomObject, exporterIFC);
+                ElementId materialId = SetBestMaterialIdInExporter(geomObject, overrideMaterialId, exporterIFC);
                 materialIds.Add(materialId);
                 bodyData.AddMaterial(materialId);
 
@@ -1358,6 +1359,7 @@ namespace BIM.IFC.Exporter
             ExporterIFC exporterIFC,
             Element element, 
             ElementId categoryId,
+            ElementId overrideMaterialId,
             IList<GeometryObject> geometryListIn,
             BodyExporterOptions options,
             IFCExtrusionCreationData exportBodyParams) 
@@ -1478,7 +1480,7 @@ namespace BIM.IFC.Exporter
                     for (int ii = 0; (ii < numCreatedExtrusions) && tryToExportAsExtrusion; ii++)
                     {
                         int geomIndex = exportAsExtrusion[ii];
-                        bodyData.AddMaterial(SetBestMaterialIdInExporter(splitGeometryList[geomIndex], exporterIFC));
+                        bodyData.AddMaterial(SetBestMaterialIdInExporter(splitGeometryList[geomIndex], overrideMaterialId, exporterIFC));
 
                         if (exportBodyParams != null && exportBodyParams.AreInnerRegionsOpenings)
                         {
@@ -1594,7 +1596,7 @@ namespace BIM.IFC.Exporter
                 if (exportBodyParams != null && (exportAsBRep.Count == 0))
                     bodyData.BrepOffsetTransform = transformSetter.InitializeFromBoundingBox(exporterIFC, splitGeometryList, exportBodyParams);
 
-                return ExportBodyAsBRep(exporterIFC, splitGeometryList, exportAsBRep, bodyItems, element, categoryId, contextOfItems, eps, options, bodyData);
+                return ExportBodyAsBRep(exporterIFC, splitGeometryList, exportAsBRep, bodyItems, element, categoryId, overrideMaterialId, contextOfItems, eps, options, bodyData);
             }
         }
 
@@ -1617,6 +1619,7 @@ namespace BIM.IFC.Exporter
             ExporterIFC exporterIFC, 
             Element element, 
             ElementId categoryId,
+            ElementId overrideMaterialId, 
             IList<Solid> solids, 
             IList<Mesh> meshes,
             BodyExporterOptions options,
@@ -1628,7 +1631,7 @@ namespace BIM.IFC.Exporter
             foreach (Mesh mesh in meshes)
                 objects.Add(mesh);
 
-            return ExportBody(application, exporterIFC, element, categoryId, objects, options, exportBodyParams);
+            return ExportBody(application, exporterIFC, element, categoryId, overrideMaterialId, objects, options, exportBodyParams);
         }
 
         /// <summary>
@@ -1641,14 +1644,14 @@ namespace BIM.IFC.Exporter
         /// <param name="options">The settings for how to export the body.</param>
         /// <param name="exportBodyParams">The extrusion creation data.</param>
         /// <returns>The body data.</returns>
-        public static BodyData ExportBody(Autodesk.Revit.ApplicationServices.Application application, ExporterIFC exporterIFC, 
-           Element element, ElementId categoryId,
+        public static BodyData ExportBody(Autodesk.Revit.ApplicationServices.Application application, ExporterIFC exporterIFC,
+           Element element, ElementId categoryId, ElementId overrideMaterialId,
            GeometryObject geometryObject, BodyExporterOptions options,
            IFCExtrusionCreationData exportBodyParams)
         {
             IList<GeometryObject> geomList = new List<GeometryObject>();
             geomList.Add(geometryObject);
-            return ExportBody(application, exporterIFC, element, categoryId, geomList, options, exportBodyParams);
+            return ExportBody(application, exporterIFC, element, categoryId, overrideMaterialId, geomList, options, exportBodyParams);
         }
 
         /// <summary>
@@ -1663,7 +1666,7 @@ namespace BIM.IFC.Exporter
         /// <param name="brepOffsetTransform">If the body is exported as a BRep or surface model, the transform used to shift it to the local origin.</param>
         /// <returns>The body data.</returns>
         public static BodyData ExportBody(Autodesk.Revit.ApplicationServices.Application application, ExporterIFC exporterIFC,
-           Element element, ElementId categoryId,
+           Element element, ElementId categoryId, ElementId overrideMaterialId, 
            GeometryElement geometryElement, BodyExporterOptions options,
            IFCExtrusionCreationData exportBodyParams)
         {
@@ -1687,7 +1690,7 @@ namespace BIM.IFC.Exporter
             if (geomList.Count == 0)
                 geomList.Add(geometryElement);
 
-            return ExportBody(application, exporterIFC, element, categoryId, geomList, 
+            return ExportBody(application, exporterIFC, element, categoryId, overrideMaterialId, geomList, 
                 options, exportBodyParams);
         }
     }

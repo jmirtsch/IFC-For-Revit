@@ -938,10 +938,101 @@ namespace BIM.IFC.Exporter
 
 
         private static HandleAndAnalyzer CreateExtrusionWithClippingBase(ExporterIFC exporterIFC, Element element, 
-            ElementId catId, Solid solid, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped)
-        
+            ElementId catId, IList<Solid> solids, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped, out HashSet<ElementId> materialIds)
+        {
+            IFCFile file = exporterIFC.GetFile();
+            using (IFCTransaction tr = new IFCTransaction(file))
+            {
+                completelyClipped = false;
+                materialIds = new HashSet<ElementId>();
+                HandleAndAnalyzer retVal = new HandleAndAnalyzer();
+                HashSet<IFCAnyHandle> extrusionBodyItems = new HashSet<IFCAnyHandle>();
+                HashSet<IFCAnyHandle> extrusionBooleanBodyItems = new HashSet<IFCAnyHandle>();
+                HashSet<IFCAnyHandle> extrusionClippingBodyItems = new HashSet<IFCAnyHandle>();
+                foreach (Solid solid in solids)
+                {
+                    bool hasClippingResult = false;
+                    bool hasBooleanResult = false;
+                    ElementId materialId = ElementId.InvalidElementId;
+                    retVal = CreateExtrsionWithClippingAndOpening(exporterIFC, element, catId, solid, plane, projDir, range,
+                        out completelyClipped, out hasClippingResult, out hasBooleanResult, out materialId);
+
+                    if (retVal != null && retVal.Handle != null)
+                    {
+                        materialIds.Add(materialId);
+                        IFCAnyHandle repHandle = retVal.Handle;
+                        if (hasBooleanResult) // if both have boolean and clipping result, use boolean one.
+                            extrusionBooleanBodyItems.Add(repHandle);
+                        else if (hasClippingResult)
+                            extrusionClippingBodyItems.Add(repHandle);
+                        else
+                            extrusionBodyItems.Add(repHandle);
+
+                    }
+                    else
+                    {
+                        tr.RollBack();
+                        return retVal;
+                    }
+                }
+
+                IFCAnyHandle contextOfItemsBody = exporterIFC.Get3DContextHandle("Body");
+
+                if (extrusionBodyItems.Count > 0 && (extrusionClippingBodyItems.Count == 0 && extrusionBooleanBodyItems.Count == 0))
+                {
+                    retVal.Handle = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, catId, contextOfItemsBody,
+                        extrusionBodyItems, null);
+                }
+                else if (extrusionClippingBodyItems.Count > 0 && (extrusionBodyItems.Count == 0 && extrusionBooleanBodyItems.Count == 0))
+                {
+                    retVal.Handle = RepresentationUtil.CreateClippingRep(exporterIFC, element, catId, contextOfItemsBody,
+                        extrusionClippingBodyItems);
+                }
+                else if (extrusionBooleanBodyItems.Count > 0 && (extrusionBodyItems.Count == 0 && extrusionClippingBodyItems.Count == 0))
+                {
+                    retVal.Handle = RepresentationUtil.CreateCSGRep(exporterIFC, element, catId, contextOfItemsBody,
+                        extrusionBooleanBodyItems);
+                }
+                else
+                {
+                    IFCAnyHandle finalBodyItemHnd = null;
+
+                    ICollection<IFCAnyHandle> booleanBodyItems = extrusionClippingBodyItems.Union<IFCAnyHandle>(extrusionBooleanBodyItems).ToList();
+
+                    finalBodyItemHnd = booleanBodyItems.ElementAt(0);
+                    booleanBodyItems.Remove(finalBodyItemHnd);
+
+                    // union non-boolean result first with a boolean result
+                    foreach (IFCAnyHandle bodyRep in extrusionBodyItems)
+                    {
+                        finalBodyItemHnd = IFCInstanceExporter.CreateBooleanResult(exporterIFC.GetFile(), IFCBooleanOperator.Union,
+                             finalBodyItemHnd, bodyRep);
+                    }
+
+                    foreach (IFCAnyHandle bodyRep in booleanBodyItems)
+                    {
+                        finalBodyItemHnd = IFCInstanceExporter.CreateBooleanResult(exporterIFC.GetFile(), IFCBooleanOperator.Union,
+                             finalBodyItemHnd, bodyRep);
+                    }
+
+                    extrusionBodyItems.Clear();
+                    extrusionBodyItems.Add(finalBodyItemHnd);
+                    retVal.Handle = RepresentationUtil.CreateCSGRep(exporterIFC, element, catId, contextOfItemsBody,
+                        extrusionBodyItems);
+                }
+                tr.Commit();
+                return retVal;
+            }
+        }
+
+        private static HandleAndAnalyzer CreateExtrsionWithClippingAndOpening(ExporterIFC exporterIFC, Element element, 
+            ElementId catId, Solid solid, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped,
+            out bool hasClippingResult, out bool hasBooleanResult, out ElementId materialId)
         {
             completelyClipped = false;
+            materialId = ElementId.InvalidElementId;
+            hasClippingResult = false;
+            hasBooleanResult = false;
             HandleAndAnalyzer nullVal = new HandleAndAnalyzer();
             HandleAndAnalyzer retVal = new HandleAndAnalyzer();
 
@@ -949,10 +1040,7 @@ namespace BIM.IFC.Exporter
             {
                 ExtrusionAnalyzer elementAnalyzer = ExtrusionAnalyzer.Create(solid, plane, projDir);
                 retVal.Analyzer = elementAnalyzer;
-
-                IFCAnyHandle contextOfItemsBody = exporterIFC.Get3DContextHandle("Body");
             
-                IFCAnyHandle bodyRep = null;
                 Document document = element.Document;
                 double scale = exporterIFC.LinearScale;
                 XYZ planeOrig = plane.Origin;
@@ -1009,6 +1097,7 @@ namespace BIM.IFC.Exporter
 
                 // We use a sub-transaction here in case we are able to generate the base body but not the clippings.
                 IFCFile file = exporterIFC.GetFile();
+                IFCAnyHandle finalExtrusionBodyItemHnd = null;
                 using (IFCTransaction tr = new IFCTransaction(file))
                 {
                     // For creating the actual extrusion, we want to use the calculated extrusion plane, not the input plane.
@@ -1016,18 +1105,20 @@ namespace BIM.IFC.Exporter
                         extrusionBoundaryLoops, extrusionBasePlane, projDir, scaledExtrusionDepth);
                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionBodyItemHnd))
                     {
-                        IFCAnyHandle finalExtrusionBodyItemHnd = extrusionBodyItemHnd;
+                        finalExtrusionBodyItemHnd = extrusionBodyItemHnd;
                         IDictionary<ElementId, ICollection<ICollection<Face>>> elementCutouts =
                             GeometryUtil.GetCuttingElementFaces(element, elementAnalyzer);
                         foreach (KeyValuePair<ElementId, ICollection<ICollection<Face>>> elementCutoutsForElement in elementCutouts)
                         {
+                            // process clippings first, then openings
+                            ICollection<ICollection<Face>> unhandledElementCutoutsForElement = new List<ICollection<Face>>();
                             Element cuttingElement = document.GetElement(elementCutoutsForElement.Key);
                             foreach (ICollection<Face> elementCutout in elementCutoutsForElement.Value)
                             {
                                 bool unhandledClipping = false;
                                 try
                                 {
-                                    finalExtrusionBodyItemHnd = GeometryUtil.ProcessFaceCollection(exporterIFC, cuttingElement, 
+                                    finalExtrusionBodyItemHnd = GeometryUtil.CreateClippingFromFaces(exporterIFC, cuttingElement, 
                                         extrusionBasePlane, projDir,
                                         elementCutout, extrusionRange, finalExtrusionBodyItemHnd);
                                 }
@@ -1038,35 +1129,50 @@ namespace BIM.IFC.Exporter
 
                                 if (finalExtrusionBodyItemHnd == null || unhandledClipping)
                                 {
+                                    unhandledElementCutoutsForElement.Add(elementCutout);
+                                }
+                                else if (finalExtrusionBodyItemHnd != extrusionBodyItemHnd)
+                                {
+                                    hasClippingResult = true;
+                                }
+                            }
+
+                            IFCAnyHandle finalExtrusionClippingBodyItemHnd = finalExtrusionBodyItemHnd;
+                            foreach (ICollection<Face> elementCutout in unhandledElementCutoutsForElement)
+                            {
+                                bool unhandledOpening = false;
+                                try
+                                {
+                                    finalExtrusionBodyItemHnd = GeometryUtil.CreateOpeningFromFaces(exporterIFC, cuttingElement,
+                                        extrusionBasePlane, projDir,
+                                        elementCutout, extrusionRange, finalExtrusionBodyItemHnd);
+                                }
+                                catch
+                                {
+                                    unhandledOpening = true;
+                                }
+
+                                if (finalExtrusionBodyItemHnd == null || unhandledOpening)
+                                {
                                     // Item is completely clipped.
                                     completelyClipped = (finalExtrusionBodyItemHnd == null);
                                     tr.RollBack();
                                     return nullVal;
                                 }
+                                else if (finalExtrusionBodyItemHnd != finalExtrusionClippingBodyItemHnd)
+                                {
+                                    hasBooleanResult = true;
+                                }
                             }
                         }
 
-                        IFCAnyHandle extrusionStyledItemHnd = BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document,
-                            extrusionBodyItemHnd, ElementId.InvalidElementId);
-
-                        HashSet<IFCAnyHandle> extrusionBodyItems = new HashSet<IFCAnyHandle>();
-                        extrusionBodyItems.Add(finalExtrusionBodyItemHnd);
-
-                        if (extrusionBodyItemHnd == finalExtrusionBodyItemHnd)
-                        {
-                            bodyRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, catId, contextOfItemsBody,
-                                extrusionBodyItems, null);
-                        }
-                        else
-                        {
-                            bodyRep = RepresentationUtil.CreateClippingRep(exporterIFC, element, catId, contextOfItemsBody,
-                                extrusionBodyItems);
-                        }
+                        materialId = BodyExporter.GetBestMaterialIdForGeometry(solid, exporterIFC);
+                        BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document, extrusionBodyItemHnd, materialId);
                     }
                     tr.Commit();
                 }
 
-                retVal.Handle = bodyRep;
+                retVal.Handle = finalExtrusionBodyItemHnd;
                 return retVal;
             }
             catch
@@ -1078,16 +1184,31 @@ namespace BIM.IFC.Exporter
         public static IFCAnyHandle CreateExtrusionWithClipping(ExporterIFC exporterIFC, Element element, ElementId catId,
             Solid solid, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped)
         {
+            IList<Solid> solids = new List<Solid>();
+            solids.Add(solid);
+            HashSet<ElementId> materialIds = null;
             HandleAndAnalyzer handleAndAnalyzer = CreateExtrusionWithClippingBase(exporterIFC, element, catId,
-                solid, plane, projDir, range, out completelyClipped);
+                solids, plane, projDir, range, out completelyClipped, out materialIds);
+            return handleAndAnalyzer.Handle;
+        }
+
+
+        public static IFCAnyHandle CreateExtrusionWithClipping(ExporterIFC exporterIFC, Element element, ElementId catId,
+            IList<Solid> solids, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped, out HashSet<ElementId> materialIds)
+        {
+            HandleAndAnalyzer handleAndAnalyzer = CreateExtrusionWithClippingBase(exporterIFC, element, catId,
+                solids, plane, projDir, range, out completelyClipped, out materialIds);
             return handleAndAnalyzer.Handle;
         }
 
         public static HandleAndData CreateExtrusionWithClippingAndProperties(ExporterIFC exporterIFC, 
             Element element, ElementId catId, Solid solid, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped)
         {
+            IList<Solid> solids = new List<Solid>();
+            solids.Add(solid);
+            HashSet<ElementId> materialIds = null;
             HandleAndAnalyzer handleAndAnalyzer = CreateExtrusionWithClippingBase(exporterIFC, element, catId,
-                solid, plane, projDir, range, out completelyClipped);
+                solids, plane, projDir, range, out completelyClipped, out materialIds);
 
             HandleAndData ret = new HandleAndData();
             ret.Handle = handleAndAnalyzer.Handle;

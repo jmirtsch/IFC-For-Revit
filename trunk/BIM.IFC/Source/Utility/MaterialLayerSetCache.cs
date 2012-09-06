@@ -29,7 +29,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of the element ids mapping to a IfcMaterialLayerSet handle.
     /// </summary>
-    class MaterialLayerSetCache
+    public class MaterialLayerSetCache
     {
         /// <summary>
         /// The dictionary mapping from an ElementId to an IfcMaterialLayerSet handle. 

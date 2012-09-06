@@ -30,7 +30,7 @@ namespace BIM.IFC.Exporter.PropertySet
     /// <summary>
     /// Represents the type of the container for a property.
     /// </summary>
-    enum PropertyValueType
+    public enum PropertyValueType
     {
         /// <summary>
         /// A single property (IfcSingleValue)
@@ -49,7 +49,7 @@ namespace BIM.IFC.Exporter.PropertySet
     /// <summary>
     /// Represents the type of a property.
     /// </summary>
-    enum PropertyType
+    public enum PropertyType
     {
         /// <summary>
         /// A label (string value).
@@ -86,13 +86,25 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// An identifier value.
         /// </summary>
-        Identifier
+        Identifier,
+        /// <summary>
+        /// A count value.
+        /// </summary>
+        Count,
+        /// <summary>
+        /// A thermodynamic temperature value.
+        /// </summary>
+        ThermodynamicTemperature,
+        /// <summary>
+        /// A length value.
+        /// </summary>
+        Length, // NOTE: This is currently only used for Revit internal properties, and doesn't have all support routines written.
     }
 
     /// <summary>
     /// Represents a mapping from a Revit parameter or calculated quantity to an IFC property.
     /// </summary>
-    class PropertySetEntry : Entry
+    public class PropertySetEntry : Entry
     {
         /// <summary>
         /// The type of the IFC property set entry. Default is label.
@@ -162,6 +174,22 @@ namespace BIM.IFC.Exporter.PropertySet
             return pse;
         }
 
+        /// <summary>
+        /// Creates an entry of type ThermodynamicTemperature.
+        /// </summary>
+        /// <param name="revitParameterName">
+        /// Revit parameter name.
+        /// </param>
+        /// <returns>
+        /// The PropertySetEntry.
+        /// </returns>
+        public static PropertySetEntry CreateThermodynamicTemperature(string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = PropertyType.ThermodynamicTemperature;
+            return pse;
+        }
+        
         /// <summary>
         /// Creates an entry of type boolean.
         /// </summary>
@@ -328,6 +356,18 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Creates an entry of type count.
+        /// </summary>
+        /// <param name="revitParameterName">Revit parameter name.</param>
+        /// <returns>The PropertySetEntry.</returns>
+        public static PropertySetEntry CreateCount(string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = PropertyType.Count;
+            return pse;
+        }
+
+        /// <summary>
         /// Process to create element property.
         /// </summary>
         /// <param name="file">
@@ -431,6 +471,16 @@ namespace BIM.IFC.Exporter.PropertySet
                         propHnd = PropertyUtil.CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
                         break;
                     }
+                case PropertyType.Count:
+                    {
+                        propHnd = PropertyUtil.CreateCountMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.ThermodynamicTemperature:
+                    {
+                        propHnd = PropertyUtil.CreateThermodynamicTemperaturePropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
+                        break;
+                    }
                 default:
                     throw new InvalidOperationException();
             }
@@ -512,6 +562,19 @@ namespace BIM.IFC.Exporter.PropertySet
                     case PropertyType.Area:
                         {
                             propHnd = PropertyUtil.CreateAreaMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                            break;
+                        }
+                    case PropertyType.Count:
+                        {
+                            if (PropertyCalculator.CalculatesMultipleParameters)
+                                propHnd = PropertyUtil.CreateCountMeasureProperty(file, PropertyName, PropertyCalculator.GetIntValue(PropertyName), valueType);
+                            else
+                                propHnd = PropertyUtil.CreateCountMeasureProperty(file, PropertyName, PropertyCalculator.GetIntValue(), valueType);
+                            break;
+                        }
+                    case PropertyType.ThermodynamicTemperature:
+                        {
+                            propHnd = PropertyUtil.CreateThermodynamicTemperaturePropertyFromCache(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                             break;
                         }
                     default:

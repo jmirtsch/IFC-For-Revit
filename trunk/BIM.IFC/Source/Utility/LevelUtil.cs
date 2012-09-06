@@ -29,7 +29,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Provides static methods for level related manipulations.
     /// </summary>
-    class LevelUtil
+    public class LevelUtil
     {
         private class LevelElevationComparer : IComparer<Level>
         {
@@ -251,15 +251,11 @@ namespace BIM.IFC.Utility
             return 10.0 / (12.0 * 2.54);
         }
 
-        /// <summary>
-        /// Checks if the element should be associated to its level or not in the IFC file.
-        /// </summary>
-        /// <returns>
-        /// True if the element should be associated to its level, false if not.
-        /// </returns>
+        /// <summary>Checks if the element should be associated to its level or not in the IFC file.</summary>
+        /// <param name="element">The element to check.</param>
+        /// <returns>True if the element should be associated to its level, false if not.</returns>
         public static bool AssociateElementToLevel(Element element)
         {
-            // 10cm, in feet.
             return (element.AssemblyInstanceId == ElementId.InvalidElementId);
         }
 
@@ -300,7 +296,7 @@ namespace BIM.IFC.Utility
                 }
             }
 
-            if (height <= 0.0)
+            if ((height <= 0.0) && (levelInfo != null))
                 height = levelInfo.DistanceToNextLevel;
 
             ExporterCacheManager.LevelInfoCache.Register(levelId, nextLevelId, height);

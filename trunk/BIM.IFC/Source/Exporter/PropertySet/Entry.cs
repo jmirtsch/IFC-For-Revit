@@ -44,7 +44,7 @@ namespace BIM.IFC.Exporter.PropertySet
     /// generally, parameter name is used first, followed by parameter id,
     /// then by function.
     /// </remarks>
-    abstract class Entry
+    abstract public class Entry
     {
         /// <summary>
         /// The parameter name to be used to get the parameter value.

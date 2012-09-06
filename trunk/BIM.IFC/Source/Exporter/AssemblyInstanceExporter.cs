@@ -70,7 +70,7 @@ namespace BIM.IFC.Exporter
                 {
                     string guid = ExporterIFCUtils.CreateGUID(element);
                     IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                    string name = exporterIFC.GetName();
+                    string name = NamingUtil.GetIFCName(element);
                     string objectType = exporterIFC.GetFamilyName();
                     IFCAnyHandle localPlacement = placementSetter.GetPlacement();
                     IFCAnyHandle representation = null;

@@ -111,8 +111,7 @@ namespace BIM.IFC.Exporter
                         }
 
                         string instanceGUID = ExporterIFCUtils.CreateGUID(element);
-                        string origInstanceName = exporterIFC.GetName();
-                        string instanceName = NamingUtil.GetNameOverride(element, origInstanceName);
+                        string instanceName = NamingUtil.GetIFCName(element);
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
                         string instanceElemId = NamingUtil.CreateIFCElementId(element);

@@ -35,7 +35,7 @@ namespace BIM.IFC.Exporter.PropertySet
     /// At this time, it is not possible to define a new type of this class externally. The class contains
     /// static utilities to obtain instances of the currently supported types of redirections.
     /// </remarks>
-    abstract class DescriptionCalculator
+    abstract public class DescriptionCalculator
     {
         /// <summary>
         /// Causes the calculation to be reassigned per the implementation of this particular redirection calculator.

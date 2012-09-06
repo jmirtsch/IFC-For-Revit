@@ -50,7 +50,7 @@ namespace BIM.IFC.Exporter
         /// The IFCProductWrapper.
         /// </param>
         public static void ExportCurtainObjectCommonAsContainer(ICollection<ElementId> allSubElements, Element wallElement,
-           ExporterIFC exporterIFC, IFCProductWrapper origWrapper)
+           ExporterIFC exporterIFC, IFCProductWrapper origWrapper, IFCPlacementSetter currSetter)
         {
             if (wallElement == null)
                 return;
@@ -83,14 +83,11 @@ namespace BIM.IFC.Exporter
                                         ProxyElementExporter.Export(exporterIFC, subElem, geomElem, productWrapper);
                                     else
                                     {
-                                        using (IFCPlacementSetter currSetter = IFCPlacementSetter.Create(exporterIFC, wallElement))
+                                        IFCAnyHandle currLocalPlacement = currSetter.GetPlacement();
+                                        using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
                                         {
-                                            IFCAnyHandle currLocalPlacement = currSetter.GetPlacement();
-                                            using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
-                                            {
-                                                MullionExporter.Export(exporterIFC, subElem as Mullion, geomElem, currLocalPlacement, extraParams, currSetter,
-                                                    productWrapper);
-                                            }
+                                            MullionExporter.Export(exporterIFC, subElem as Mullion, geomElem, currLocalPlacement, extraParams, currSetter,
+                                                productWrapper);
                                         }
                                     }
                                 }
@@ -116,8 +113,13 @@ namespace BIM.IFC.Exporter
                                             exportType = IFCExportType.ExportPlateType;
                                         }
                                     }
-                                    FamilyInstanceExporter.ExportFamilyInstanceAsMappedItem(exporterIFC, subFamInst, exportType, ifcEnumType, productWrapper,
-                                       ElementId.InvalidElementId, null);
+
+                                    IFCAnyHandle currLocalPlacement = currSetter.GetPlacement();
+                                    using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
+                                    {
+                                        FamilyInstanceExporter.ExportFamilyInstanceAsMappedItem(exporterIFC, subFamInst, exportType, ifcEnumType, productWrapper,
+                                       ElementId.InvalidElementId, null, currLocalPlacement);
+                                    }
                                 }
                             }
                             else if (subElem is CurtainGridLine)
@@ -237,7 +239,7 @@ namespace BIM.IFC.Exporter
             List<Type> curtainWallSubElementTypes = new List<Type>();
             curtainWallSubElementTypes.Add(typeof(FamilyInstance));
             curtainWallSubElementTypes.Add(typeof(CurtainGridLine));
-            
+
             ElementMulticlassFilter multiclassFilter = new ElementMulticlassFilter(curtainWallSubElementTypes, true);
             collector.WherePasses(multiclassFilter);
             ICollection<ElementId> filteredSubElemments = collector.ToElementIds();
@@ -278,68 +280,72 @@ namespace BIM.IFC.Exporter
             {
                 try
                 {
+                    ElementId curtainWallLevel = ElementId.InvalidElementId;
+                    if (element.Level != null)
+                    {
+                        curtainWallLevel = element.Level.Id;
+                    }
+                    Transform orientationTrf = Transform.Identity;
                     IFCAnyHandle localPlacement = null;
+                    setter = IFCPlacementSetter.Create(exporterIFC, element, null, orientationTrf, curtainWallLevel);
+                    localPlacement = setter.GetPlacement();
+
+                    string objectType = NamingUtil.CreateIFCObjectName(exporterIFC, element);
+
+                    IFCAnyHandle prodRepHnd = null;
+                    IFCAnyHandle elemHnd = null;
+                    string elemGUID = ExporterIFCUtils.CreateGUID(element);
+                    string elemName = NamingUtil.GetIFCName(element);
+                    string elemDesc = NamingUtil.GetDescriptionOverride(element, null);
+                    string elemType = NamingUtil.GetObjectTypeOverride(element, objectType);
+                    string elemId = NamingUtil.CreateIFCElementId(element);
+                    if (element is Wall || element is CurtainSystem || IsLegacyCurtainElement(element))
+                    {
+                        elemHnd = IFCInstanceExporter.CreateCurtainWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemType, localPlacement, prodRepHnd, elemId);
+                    }
+                    else if (element is RoofBase)
+                    {
+                        //need to convert the string to enum
+                        string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, element);
+                        elemHnd = IFCInstanceExporter.CreateRoof(file, elemGUID, ownerHistory, elemName, elemDesc, elemType, localPlacement,
+                            prodRepHnd, elemId, RoofExporter.GetIFCRoofType(ifcEnumType));
+                    }
+                    else
+                    {
+                        return;
+                    }
+
+                    if (IFCAnyHandleUtil.IsNullOrHasNoValue(elemHnd))
+                        return;
+
+                    wrapper.AddElement(elemHnd, setter, null, true);
+
+                    if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportIFCCommon)
+                        ExporterIFCUtils.CreateCurtainWallPropertySet(exporterIFC, element, wrapper);
+
                     bool canExportCurtainWallAsContainer = CanExportCurtainWallAsContainer(allSubElements, element.Document);
                     IFCAnyHandle rep = null;
                     if (!canExportCurtainWallAsContainer)
                     {
-                        setter = IFCPlacementSetter.Create(exporterIFC, element);
-                        localPlacement = setter.GetPlacement();
                         rep = ExportCurtainObjectCommonAsOneBRep(allSubElements, element, exporterIFC, setter, localPlacement);
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(rep))
                             return;
                     }
                     else
                     {
-                        ExportCurtainObjectCommonAsContainer(allSubElements, element, exporterIFC, curtainWallSubWrapper);
-                        // This has to go LAST.  Why?  Because otherwise we apply the level transform twice -- once in the familyTrf, once here.
-                        // This will be used just to put the CurtainWall on the right level.
-                        setter = IFCPlacementSetter.Create(exporterIFC, element);
-                        localPlacement = setter.GetPlacement();
+                        ExportCurtainObjectCommonAsContainer(allSubElements, element, exporterIFC, curtainWallSubWrapper, setter);
                     }
 
-                    string objectType = NamingUtil.CreateIFCObjectName(exporterIFC, element);
-
+                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, wrapper);
+                    ICollection<IFCAnyHandle> relatedElementIds = curtainWallSubWrapper.GetAllObjects();
+                    if (relatedElementIds.Count > 0)
                     {
-                        IFCAnyHandle prodRepHnd = null;
-                        IFCAnyHandle elemHnd = null;
-                        string elemGUID = ExporterIFCUtils.CreateGUID(element);
-                        string elemName = NamingUtil.GetNameOverride(element, exporterIFC.GetName());
-                        string elemDesc = NamingUtil.GetDescriptionOverride(element, null);
-                        string elemType = NamingUtil.GetObjectTypeOverride(element, objectType);
-                        string elemId = NamingUtil.CreateIFCElementId(element);
-                        if (element is Wall || element is CurtainSystem || IsLegacyCurtainElement(element))
-                        {
-                            elemHnd = IFCInstanceExporter.CreateCurtainWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemType, localPlacement, prodRepHnd, elemId);
-                        }
-                        else if (element is RoofBase)
-                        {
-                            //need to convert the string to enum
-                            string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, element);
-                            elemHnd = IFCInstanceExporter.CreateRoof(file, elemGUID, ownerHistory, elemName, elemDesc, elemType, localPlacement,
-                                prodRepHnd, elemId, RoofExporter.GetIFCRoofType(ifcEnumType));
-                        }
-                        else
-                        {
-                            return;
-                        }
-
-                        if (IFCAnyHandleUtil.IsNullOrHasNoValue(elemHnd))
-                            return;
-                        
-                        wrapper.AddElement(elemHnd, setter, null, true);
-
-                        ExporterIFCUtils.CreateCurtainWallPropertySet(exporterIFC, element, wrapper);
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, wrapper);
-                        ICollection<IFCAnyHandle> relatedElementIds = curtainWallSubWrapper.GetAllObjects();
-                        if (relatedElementIds.Count > 0)
-                        {
-                            string guid = ExporterIFCUtils.CreateSubElementGUID(element, (int)IFCCurtainWallSubElements.RelAggregates);
-                            HashSet<IFCAnyHandle> relatedElementIdSet = new HashSet<IFCAnyHandle>(relatedElementIds);
-                            IFCInstanceExporter.CreateRelAggregates(file, guid, ownerHistory, null, null, elemHnd, relatedElementIdSet);
-                        }
-                        exporterIFC.RegisterSpaceBoundingElementHandle(elemHnd, element.Id, ElementId.InvalidElementId);
+                        string guid = ExporterIFCUtils.CreateSubElementGUID(element, (int)IFCCurtainWallSubElements.RelAggregates);
+                        HashSet<IFCAnyHandle> relatedElementIdSet = new HashSet<IFCAnyHandle>(relatedElementIds);
+                        IFCInstanceExporter.CreateRelAggregates(file, guid, ownerHistory, null, null, elemHnd, relatedElementIdSet);
                     }
+                    exporterIFC.RegisterSpaceBoundingElementHandle(elemHnd, element.Id, ElementId.InvalidElementId);
+
                 }
                 finally
                 {
@@ -436,7 +442,7 @@ namespace BIM.IFC.Exporter
             }
             ExportBase(exporterIFC, allSubElements, hostElement, productWrapper);
         }
-		
+
         /// <summary>
         /// Exports a curtain system to IFC curtain system.
         /// </summary>
@@ -471,8 +477,8 @@ namespace BIM.IFC.Exporter
                 transaction.Commit();
             }
         }
-		
-		/// <summary>
+
+        /// <summary>
         /// Exports a legacy curtain element to IFC curtain wall.
         /// </summary>
         /// <param name="exporterIFC">The exporter.</param>

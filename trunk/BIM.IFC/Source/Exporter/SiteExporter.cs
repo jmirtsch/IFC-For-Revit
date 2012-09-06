@@ -128,6 +128,14 @@ namespace BIM.IFC.Exporter
                                 boundaryRep = representations[1];
 
                             siteRepresentation = RepresentationUtil.CreateSurfaceProductDefinitionShape(exporterIFC, element, geometryElement, true, exportAsFacetation, ref bodyRep, ref boundaryRep);
+                            if (representations.Count == 1 && !IFCAnyHandleUtil.IsNullOrHasNoValue(boundaryRep))
+                            {
+                                // If the first site has no boundaryRep,
+                                // we will add the boundaryRep from second site to it.
+                                representations.Clear();
+                                representations.Add(boundaryRep);
+                                IFCAnyHandleUtil.AddProductRepresentations(siteHandle, representations);
+                            }
                             appendedToSite = true;
                         }
                     }
@@ -194,8 +202,7 @@ namespace BIM.IFC.Exporter
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(siteHandle))
                     {
                         string instanceGUID = GUIDUtil.CreateSiteGUID(doc, element);
-                        string origInstanceName = exporterIFC.GetName();
-                        string instanceName = NamingUtil.GetNameOverride(element, origInstanceName);
+                        string instanceName = NamingUtil.GetIFCName(element);
                         string instanceLongName = NamingUtil.GetLongNameOverride(doc.ProjectInformation, NamingUtil.GetLongNameOverride(element, null));
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);

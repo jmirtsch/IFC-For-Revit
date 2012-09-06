@@ -30,7 +30,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// The cache which holds all export options.
     /// </summary>
-    class ExportOptionsCache
+    public class ExportOptionsCache
     {
         /// <summary>
         /// Private default constructor.
@@ -58,10 +58,10 @@ namespace BIM.IFC.Utility
             cache.ExportPartsAsBuildingElementsOverride = null;
             cache.ExportAllLevels = false;
             cache.ExportAnnotationsOverride = null;
-            cache.ExportInternalRevitPropertySetsOverride = null;
-            cache.ExportIFCCommonPropertySetsOverride = null;
             cache.FilterViewForExport = filterView;
             cache.ExportSurfaceStylesOverride = null;
+
+            cache.PropertySetOptions = PropertySetOptions.Create(exporterIFC, filterView, cache);
 
             String use2009GUID = Environment.GetEnvironmentVariable("Assign2009GUIDToBuildingStoriesOnIFCExport");
             cache.Use2009BuildingStoreyGUIDs = (use2009GUID != null && use2009GUID == "1");
@@ -73,8 +73,14 @@ namespace BIM.IFC.Utility
                 cache.ExportAs2x2 || 
                 (use2DRoomBoundaryOption != null && use2DRoomBoundaryOption.GetValueOrDefault()));
 
+            cache.NamingOptions = new NamingOptions();
             bool? useFamilyAndTypeNameForReference = GetNamedBooleanOption(options, "UseFamilyAndTypeNameForReference");
-            cache.UseFamilyAndTypeNameForReference = (useFamilyAndTypeNameForReference != null) && useFamilyAndTypeNameForReference.GetValueOrDefault();
+            cache.NamingOptions.UseFamilyAndTypeNameForReference = 
+                (useFamilyAndTypeNameForReference != null) && useFamilyAndTypeNameForReference.GetValueOrDefault();
+
+            bool? useVisibleRevitNameAsEntityName = GetNamedBooleanOption(options, "UseVisibleRevitNameAsEntityName");
+            cache.NamingOptions.UseVisibleRevitNameAsEntityName =
+                (useVisibleRevitNameAsEntityName != null) && useVisibleRevitNameAsEntityName.GetValueOrDefault();
 
             // "SingleElement" export option - useful for debugging - only one input element will be processed for export
             String singleElementValue;
@@ -123,17 +129,14 @@ namespace BIM.IFC.Utility
             // "ExportAnnotations" override
             cache.ExportAnnotationsOverride = GetNamedBooleanOption(options, "ExportAnnotations");
 
-            // "Revit property sets" override
-            cache.ExportInternalRevitPropertySetsOverride = GetNamedBooleanOption(options, "ExportInternalRevitPropertySets");
-
-            // "ExportIFCCommonPropertySets" override
-            cache.ExportIFCCommonPropertySetsOverride = GetNamedBooleanOption(options, "ExportIFCCommonPropertySets");
-
             // "ExportSeparateParts" override
             cache.ExportPartsAsBuildingElementsOverride = GetNamedBooleanOption(options, "ExportPartsAsBuildingElements");
 
             // "ExportSurfaceStyles" override
             cache.ExportSurfaceStylesOverride = GetNamedBooleanOption(options, "ExportSurfaceStyles");
+
+            // Whether or not to export GSA Gross Design Area.
+            cache.ExportGSAGrossDesignArea = GetNamedBooleanOption(options, "ExportGSAGrossDesignArea");
 
             // "FileType" - note - setting is not respected yet
             ParseFileType(options, cache);
@@ -147,22 +150,17 @@ namespace BIM.IFC.Utility
         /// <param name="options">The collection of named options for IFC export.</param>
         /// <param name="optionName">The name of the target option.</param>
         /// <returns>The value of the option, or null if the option is not set.</returns>
-        private static bool? GetNamedBooleanOption(IDictionary<String, String> options, String optionName)
+        public static bool? GetNamedBooleanOption(IDictionary<String, String> options, String optionName)
         {
             String optionString;
             if (options.TryGetValue(optionName, out optionString))
             {
                 bool option;
                 if (Boolean.TryParse(optionString, out option))
-                {
                     return option;
-                }
-                else
-                {
-                    // Error - the option supplied could not be mapped to ExportAnnotations.
-                    // TODO: consider logging this error later and handling results better.
-                    throw new Exception("Option '" + optionName +"' could not be parsed to boolean");
-                }
+                
+                // TODO: consider logging this error later and handling results better.
+                throw new Exception("Option '" + optionName +"' could not be parsed to boolean");
             }
             return null;
         }
@@ -223,6 +221,15 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// The property set options.
+        /// </summary>
+        public PropertySetOptions PropertySetOptions
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
         /// The file version.
         /// </summary>
         public IFCVersion FileVersion
@@ -266,6 +273,15 @@ namespace BIM.IFC.Utility
         /// Cache variable for the export annotations override (if set independently via the UI or API inputs)
         /// </summary>
         private bool? ExportAnnotationsOverride
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Cache variable for exporting GSA Gross Design Area
+        /// </summary>
+        public bool? ExportGSAGrossDesignArea
         {
             get;
             set;
@@ -423,61 +439,12 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
-        /// Determines how to generate the Reference value for elements.  There are two possibilities:
-        /// 1. true: use the family name and the type name.  Ex.  Basic Wall: Generic -8".  This allows distinguishing between two
-        /// identical type names in different families.
-        /// 2. false: use the type name only.  Ex:  Generic -8".  This allows for proper tagging when the type name is determined
-        /// by code (e.g. a construction type).
+        /// Contains options for setting how entity names are generated.
         /// </summary>
-        public bool UseFamilyAndTypeNameForReference
+        public NamingOptions NamingOptions
         {
             get;
             set;
-        }
-
-        /// <summary>
-        /// Override for the RevitPropertySets value from UI or API options.
-        /// </summary>
-        private bool? ExportInternalRevitPropertySetsOverride
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Whether or not to include RevitPropertySets
-        /// </summary>
-        public bool ExportInternalRevitPropertySets
-        {
-            get
-            {
-                if (ExportInternalRevitPropertySetsOverride != null) return (bool)ExportInternalRevitPropertySetsOverride;
-                return !ExportAs2x3CoordinationView2;
-            }
-        }
-
-        /// <summary>
-        /// Override for the ExportIFCCommonPropertySets value from UI or API options.
-        /// </summary>
-        private bool? ExportIFCCommonPropertySetsOverride
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Whether or not to include IFCCommonPropertySets
-        /// </summary>
-        public bool ExportIFCCommonPropertySets
-        {
-            get
-            {
-                // if the option is set by alternate UI, return the setting in UI.
-                if (ExportIFCCommonPropertySetsOverride != null) 
-                    return (bool)ExportIFCCommonPropertySetsOverride;
-                // otherwise return true by default.
-                return true;
-            }
         }
 
         /// <summary>

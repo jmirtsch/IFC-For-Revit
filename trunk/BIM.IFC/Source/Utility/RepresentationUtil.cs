@@ -96,12 +96,40 @@ namespace BIM.IFC.Utility
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(newShapeRepresentation))
                 return newShapeRepresentation;
 
+            string ifcCADLayer = null;
             // We are using the DWG export layer table to correctly map category to DWG layer for the 
-            // IfcPresentationLayerAsssignment.
-            exporterIFC.RegisterShapeForPresentationLayer(element, categoryId, newShapeRepresentation);
+            // IfcPresentationLayerAsssignment, if it is not overridden.
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IFCCadLayer", out ifcCADLayer) && !string.IsNullOrWhiteSpace(ifcCADLayer))
+                ExporterCacheManager.PresentationLayerSetCache.AddRepresentationToLayer(ifcCADLayer, newShapeRepresentation);
+            else
+                exporterIFC.RegisterShapeForPresentationLayer(element, categoryId, newShapeRepresentation);
             return newShapeRepresentation;
         }
 
+        /// <summary>
+        /// Creates a shape representation and register it to shape representation layer.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="identifier">The identifier for the representation.</param>
+        /// <param name="representationType">The type handle for the representation.</param>
+        /// <param name="items">Collection of geometric representation items that are defined for this representation.</param>
+        /// <param name="ifcCADLayer">The IFC CAD layer name.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateShapeRepresentation(ExporterIFC exporterIFC, IFCAnyHandle contextOfItems,
+           string identifier, string representationType, ICollection<IFCAnyHandle> items, string ifcCADLayer)
+        {
+            if (string.IsNullOrWhiteSpace(ifcCADLayer))
+                throw new ArgumentNullException("ifcCADLayer");
+
+            IFCAnyHandle newShapeRepresentation = CreateBaseShapeRepresentation(exporterIFC, contextOfItems, identifier, representationType, items);
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(newShapeRepresentation))
+                return newShapeRepresentation;
+
+            ExporterCacheManager.PresentationLayerSetCache.AddRepresentationToLayer(ifcCADLayer, newShapeRepresentation);
+            return newShapeRepresentation;
+        }
+        
         /// <summary>
         /// Creates a shape representation and register it to shape representation layer.
         /// </summary>
@@ -180,6 +208,24 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Creates a CSG representation which contains the result of boolean operations between solid models, half spaces, and other boolean operations.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="bodyItems">Set of geometric representation items that are defined for this representation.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateCSGRep(ExporterIFC exporterIFC, Element element, ElementId categoryId,
+           IFCAnyHandle contextOfItems, HashSet<IFCAnyHandle> bodyItems)
+        {
+            string identifierOpt = "Body";	// this is by IFC2x2 convention, not temporary
+            string repTypeOpt = "CSG";  // this is by IFC2x2 convention, not temporary
+            IFCAnyHandle bodyRepresentation = CreateShapeRepresentation(exporterIFC, element, categoryId,
+               contextOfItems, identifierOpt, repTypeOpt, bodyItems);
+            return bodyRepresentation;
+        }
+
+        /// <summary>
         /// Creates a Brep representation.
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
@@ -222,22 +268,27 @@ namespace BIM.IFC.Utility
         /// <param name="categoryId">The category id.</param>
         /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
         /// <param name="bodyItems">Set of geometric representation items that are defined for this representation.</param>
-        /// <param name="exportAsFacetation">
-        /// If this is true, the identifier for the representation is "Facetation" as required by IfcSite.
-        /// If this is false, the identifier for the representation is "Body" as required by IfcBuildingElement.
+        /// <param name="exportAsFacetationOrMesh">
+        /// If this is true, the identifier for the representation is "Facetation" as required by IfcSite for IFC2x2, IFC2x3, or "Mesh" for GSA.
+        /// If this is false, the identifier for the representation is "Body" as required by IfcBuildingElement, or IfcSite for IFC2x3 v2.
         /// </param>
         /// <param name="originalShapeRepresentation">The original shape representation.</param>
         /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateSurfaceRep(ExporterIFC exporterIFC, Element element, ElementId categoryId,
-            IFCAnyHandle contextOfItems, ICollection<IFCAnyHandle> bodyItems, bool exportAsFacetation, IFCAnyHandle originalRepresentation)
+            IFCAnyHandle contextOfItems, ICollection<IFCAnyHandle> bodyItems, bool exportAsFacetationOrMesh, IFCAnyHandle originalRepresentation)
         {
             string identifierOpt = null;
-            if (exportAsFacetation)
-                identifierOpt = "Facetation";
+            if (exportAsFacetationOrMesh)
+            {
+                if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
+                    identifierOpt = "Mesh"; // IFC GSA convention
+                else
+                    identifierOpt = "Facetation"; // IFC2x2+ convention
+            }
             else
-                identifierOpt = "Body";	// this is by IFC2x3 convention, not temporary
+                identifierOpt = "Body";	// IFC2x2+ convention for IfcBuildingElement, IFC2x3 v2 convention for IfcSite
 
-            string repTypeOpt = "SurfaceModel";  // this is by IFC2x2 convention, not temporary
+            string repTypeOpt = "SurfaceModel";  // IFC2x2+ convention
             IFCAnyHandle bodyRepresentation = CreateOrAppendShapeRepresentation(exporterIFC, element, categoryId,
                contextOfItems, identifierOpt, repTypeOpt, bodyItems, originalRepresentation);
             return bodyRepresentation;
@@ -452,7 +503,7 @@ namespace BIM.IFC.Utility
             BodyExporterOptions bodyExporterOptions, IFCExtrusionCreationData extrusionCreationData, out BodyData bodyData)
         {
 
-            bodyData = BodyExporter.ExportBody(application, exporterIFC, element, categoryId, geometryObjectIn,
+            bodyData = BodyExporter.ExportBody(application, exporterIFC, element, categoryId, ElementId.InvalidElementId, geometryObjectIn,
                 bodyExporterOptions, extrusionCreationData);
             IFCAnyHandle bodyRep = bodyData.RepresentationHnd;
             List<IFCAnyHandle> bodyReps = new List<IFCAnyHandle>();

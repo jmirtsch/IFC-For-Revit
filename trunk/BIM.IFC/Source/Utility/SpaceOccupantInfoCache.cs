@@ -28,7 +28,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of information to create zones.
     /// </summary>
-    class SpaceOccupantInfoCache : Dictionary<string, SpaceOccupantInfo>
+    public class SpaceOccupantInfoCache : Dictionary<string, SpaceOccupantInfo>
     {
         /// <summary>
         /// Adds the SpaceOccupantInfo to the dictionary.

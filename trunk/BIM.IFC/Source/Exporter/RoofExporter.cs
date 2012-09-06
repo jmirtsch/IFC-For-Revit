@@ -64,8 +64,9 @@ namespace BIM.IFC.Exporter
                         ElementId categoryId = CategoryUtil.GetSafeCategoryId(roof);
 
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+                        BodyData bodyData;
                         IFCAnyHandle representation = RepresentationUtil.CreateBRepProductDefinitionShape(roof.Document.Application, exporterIFC, roof,
-                            categoryId, geometryElement, bodyExporterOptions, null, ecData);
+                            categoryId, geometryElement, bodyExporterOptions, null, ecData, out bodyData);
 
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(representation))
                         {
@@ -77,8 +78,7 @@ namespace BIM.IFC.Exporter
 
                         string guid = ExporterIFCUtils.CreateGUID(roof);
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                        string origRoofName = exporterIFC.GetName();
-                        string roofName = NamingUtil.GetNameOverride(roof, origRoofName);
+                        string roofName = NamingUtil.GetIFCName(roof);
                         string roofDescription = NamingUtil.GetDescriptionOverride(roof, null);
                         string roofObjectType = NamingUtil.GetObjectTypeOverride(roof, NamingUtil.CreateIFCObjectName(exporterIFC, roof));
                         IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
@@ -89,6 +89,7 @@ namespace BIM.IFC.Exporter
                             roofObjectType, localPlacement, exportSlab ? null : representation, elementTag, roofType);
 
                         productWrapper.AddElement(roofHnd, placementSetter.GetLevelInfo(), ecData, LevelUtil.AssociateElementToLevel(roof));
+                        CategoryUtil.CreateMaterialAssociations(roof.Document, exporterIFC, roofHnd, bodyData.MaterialIds);
 
                         if (exportSlab)
                         {
@@ -104,6 +105,7 @@ namespace BIM.IFC.Exporter
                             ExporterUtil.RelateObject(exporterIFC, roofHnd, slabHnd);
 
                             productWrapper.AddElement(slabHnd, placementSetter.GetLevelInfo(), ecData, false);
+                            CategoryUtil.CreateMaterialAssociations(roof.Document, exporterIFC, slabHnd, bodyData.MaterialIds);
                         }
                     }
                     tr.Commit();
@@ -197,8 +199,7 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle prodRepHnd = null;
 
                         string elementGUID = ExporterIFCUtils.CreateGUID(element);
-                        string origElementName = exporterIFC.GetName();
-                        string elementName = NamingUtil.GetNameOverride(element, origElementName);
+                        string elementName = NamingUtil.GetIFCName(element);
                         string elementDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string elementObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
                         string elementId = NamingUtil.CreateIFCElementId(element);

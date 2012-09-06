@@ -29,7 +29,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of the heights of levels.
     /// </summary>
-    class LevelInfoCache
+    public class LevelInfoCache
     {
         /// <summary>
         /// The dictionary mapping from an ElementId to a level height.

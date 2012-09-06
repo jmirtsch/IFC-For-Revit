@@ -30,7 +30,7 @@ namespace BIM.IFC.Exporter.PropertySet
     /// <summary>
     /// A utility class that execute a calculation to determine the value of special IFC parameters.
     /// </summary>
-    abstract class PropertyCalculator
+    abstract public class PropertyCalculator
     {
         /// <summary>
         /// Performs the calculation.

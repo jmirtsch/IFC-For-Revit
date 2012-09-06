@@ -34,7 +34,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of MEP handles mapping to MEP elements in Revit.
     /// </summary>
-    class MEPCache
+    public class MEPCache
     {
         /// <summary>
         /// The dictionary mapping from a MEP element elementId to an Ifc handle. 

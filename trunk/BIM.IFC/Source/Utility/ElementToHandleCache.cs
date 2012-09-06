@@ -29,7 +29,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of a mapping of an ElementId to a handle.
     /// </summary>
-    class ElementToHandleCache
+    public class ElementToHandleCache
     {
         /// <summary>
         /// The dictionary mapping from an ElementId to an  handle. 

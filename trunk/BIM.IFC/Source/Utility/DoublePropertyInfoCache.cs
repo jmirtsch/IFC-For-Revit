@@ -28,7 +28,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of IFC double properties.
     /// </summary>
-    class DoublePropertyInfoCache : Dictionary<KeyValuePair<string, double>, IFCAnyHandle>
+    public class DoublePropertyInfoCache : Dictionary<KeyValuePair<string, double>, IFCAnyHandle>
     {
         /// <summary>
         /// Finds if it contains the property with the specified double value.

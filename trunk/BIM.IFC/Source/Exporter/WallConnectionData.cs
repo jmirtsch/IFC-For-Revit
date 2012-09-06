@@ -30,7 +30,7 @@ namespace BIM.IFC.Exporter
     /// <summary>
     /// The class contains wall connection information.
     /// </summary>
-    class WallConnectionData
+    public class WallConnectionData
     {
         /// <summary>
         /// The first connection element id.

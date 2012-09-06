@@ -31,7 +31,7 @@ namespace BIM.IFC.Utility
     /// Used to keep a cache of the geometry of elements in groups.
     /// This may be used by BodyExporter to create a set of mapped items to an already existing geometry.
     /// </summary>
-    class GroupElementGeometryCache : Dictionary<BodyGroupKey, BodyGroupData>
+    public class GroupElementGeometryCache : Dictionary<BodyGroupKey, BodyGroupData>
     {
         /// <summary>
         /// Adds a new geometry to the cache.

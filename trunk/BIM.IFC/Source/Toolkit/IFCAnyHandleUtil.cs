@@ -686,6 +686,19 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Gets the ObjectPlacement of an IfcProduct.
+        /// </summary>
+        /// <param name="product">The IfcProduct.</param>
+        /// <returns>The IfcObjectPlacement.</returns>
+        public static IFCAnyHandle GetObjectPlacement(IFCAnyHandle product)
+        {
+            if (!IsSubTypeOf(product, IFCEntityType.IfcProduct))
+                throw new ArgumentException("Not an IfcProduct handle.");
+
+            return GetInstanceAttribute(product, "ObjectPlacement");
+        }
+
+        /// <summary>
         /// Checks if an object handle has IfcRelDecomposes.
         /// </summary>
         /// <param name="objectHandle">The object handle.</param>
@@ -960,6 +973,39 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Adds representations of a product representation.
+        /// </summary>
+        /// <param name="productRepresentation">The product representation handle.</param>
+        /// <param name="representations">The representations handle.</param>
+        public static void AddRepresentations(IFCAnyHandle productRepresentation, ICollection<IFCAnyHandle> representations)
+        {
+            if (productRepresentation == null)
+                throw new ArgumentNullException("productRepresentation");
+
+            if (representations == null)
+                throw new ArgumentNullException("representations");
+
+            if (!productRepresentation.HasValue)
+                throw new ArgumentException("Invalid handle.");
+
+            if (!IsSubTypeOf(productRepresentation, IFCEntityType.IfcProductRepresentation))
+                throw new ArgumentException("The operation is not valid for this handle.");
+            
+            IFCAggregate representationsAggr = productRepresentation.GetAttribute("Representations").AsAggregate();
+            if (representationsAggr == null)
+            {
+                productRepresentation.SetAttribute("Representations", representations);
+            }
+            else
+            {
+                foreach (IFCAnyHandle representation in representations)
+                {
+                    representationsAggr.Add(IFCData.CreateIFCAnyHandle(representation));
+                }
+            }
+        }
+
+        /// <summary>
         /// Gets Name of an IfcProductDefinitionShape handle.
         /// </summary>
         /// <param name="representation">The IfcProductDefinitionShape.</param>
@@ -1032,6 +1078,29 @@ namespace BIM.IFC.Toolkit
             }
 
             return new List<IFCAnyHandle>();
+        }
+
+        /// <summary>
+        /// Adds representations to a product handle.
+        /// </summary>
+        /// <param name="productHandle">The product handle.</param>
+        /// <param name="productHandle">The collection of representation handles.</param>
+        public static void AddProductRepresentations(IFCAnyHandle productHandle, ICollection<IFCAnyHandle> representations)
+        {
+            if (productHandle == null)
+                throw new ArgumentNullException("productHandle");
+
+            if (!productHandle.HasValue)
+                throw new ArgumentException("Invalid handle.");
+
+            if (!IsSubTypeOf(productHandle, IFCEntityType.IfcProduct))
+                throw new ArgumentException("The operation is not valid for this handle.");
+
+            IFCAnyHandle representation = GetRepresentation(productHandle);
+            if (!IsNullOrHasNoValue(representation))
+            {
+                AddRepresentations(representation, representations);
+            }
         }
 
         /// <summary>

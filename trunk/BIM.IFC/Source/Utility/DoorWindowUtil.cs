@@ -172,14 +172,15 @@ namespace BIM.IFC.Utility
 
             if (!MathUtil.IsAlmostZero(totalPanelWidth))
             {
+                string baseDoorPanelName = NamingUtil.GetIFCName(familyInstance);
                 for (int panelIndex = 0; (panelIndex < panelNumber - 1); panelIndex++)
                 {
                     double? currentPanelWidth = null;
                     if (panelWidthList[panelIndex].HasValue)
                         currentPanelWidth = (double)panelWidthList[panelIndex] / totalPanelWidth;
 
+                    string doorPanelName = baseDoorPanelName;
                     string doorPanelGUID = ExporterIFCUtils.CreateGUID();
-                    string doorPanelName = exporterIFC.GetName();
                     IFCAnyHandle doorPanel = IFCInstanceExporter.CreateDoorPanelProperties(file, doorPanelGUID, ownerHistory,
                        doorPanelName, null, panelDepthList[panelIndex], panelOperationList[panelIndex],
                        currentPanelWidth, panelPositionList[panelIndex], null);
@@ -267,7 +268,7 @@ namespace BIM.IFC.Utility
             }
 
             string doorLiningGUID = ExporterIFCUtils.CreateSubElementGUID(familyInstance, (int) IFCDoorSubElements.DoorLining);
-            string doorLiningName = exporterIFC.GetName();
+            string doorLiningName = NamingUtil.GetIFCName(familyInstance);
             return IFCInstanceExporter.CreateDoorLiningProperties(file, doorLiningGUID, ownerHistory,
                doorLiningName, null, liningDepthOpt, liningThicknessOpt, thresholdDepthOpt, thresholdThicknessOpt,
                transomThicknessOpt, transomOffsetOpt, liningOffsetOpt, thresholdOffsetOpt, casingThicknessOpt,
@@ -565,7 +566,7 @@ namespace BIM.IFC.Utility
                 secondMullionOffsetOpt = value1;
 
             string windowLiningGUID = ExporterIFCUtils.CreateGUID();
-            string windowLiningName = exporterIFC.GetName();
+            string windowLiningName = NamingUtil.GetIFCName(familyInstance);
             return IFCInstanceExporter.CreateWindowLiningProperties(file, windowLiningGUID, ownerHistory,
                windowLiningName, description, liningDepthOpt, liningThicknessOpt, transomThicknessOpt, mullionThicknessOpt,
                firstTransomOffsetOpt, secondTransomOffsetOpt, firstMullionOffsetOpt, secondMullionOffsetOpt, null);
@@ -621,7 +622,7 @@ namespace BIM.IFC.Utility
                 }
 
                 string panelGUID = ExporterIFCUtils.CreateGUID();
-                string panelName = NamingUtil.CreateIFCName(exporterIFC, panelNumber);
+                string panelName = NamingUtil.GetIFCNamePlusIndex(familyInstance, panelNumber);
                 panels.Add(IFCInstanceExporter.CreateWindowPanelProperties(file, panelGUID, ownerHistory,
                    panelName, description, panelOperation, panelPosition, frameDepth, frameThickness, null));
             }

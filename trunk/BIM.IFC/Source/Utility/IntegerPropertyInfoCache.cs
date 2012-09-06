@@ -28,7 +28,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of IFC integer properties.
     /// </summary>
-    class IntegerPropertyInfoCache : Dictionary<KeyValuePair<string, int>, IFCAnyHandle>
+    public class IntegerPropertyInfoCache : Dictionary<KeyValuePair<string, int>, IFCAnyHandle>
     {
         /// <summary>
         /// Finds if it contains the property with the specified int value.

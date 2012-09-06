@@ -31,7 +31,7 @@ namespace BIM.IFC.Exporter.PropertySet
     /// The mapping includes: the name of the IFC quantity, the entity type to which this mapping of quantities apply,
     /// and an array of quantities.  A quantity description is valid for only one entity type.
     /// </remarks>
-    class QuantityDescription : Description
+    public class QuantityDescription : Description
     {
         /// <summary>
         /// Defines the building code used to calculate the element quantity.

@@ -20,10 +20,12 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 using Autodesk.Revit;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using BIM.IFC.Toolkit;
+using BIM.IFC.Exporter;
 
 
 namespace BIM.IFC.Utility
@@ -31,7 +33,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Provides static methods for geometry related manipulations.
     /// </summary>
-    class GeometryUtil
+    public class GeometryUtil
     {
         /// <summary>
         /// Creates a default plane.
@@ -700,7 +702,8 @@ namespace BIM.IFC.Utility
                     {
                         while (facesToProcess.Count > 0)
                         {
-                            EdgeArray faceOuterBoundary = facesToProcess[0].EdgeLoops.get_Item(0);
+                            currFace = facesToProcess[0];
+                            EdgeArray faceOuterBoundary = currFace.EdgeLoops.get_Item(0);
 
                             foreach (Edge edge in faceOuterBoundary)
                             {
@@ -933,7 +936,7 @@ namespace BIM.IFC.Utility
         /// <param name="origBodyRepHnd">The original body representation.</param>
         /// <returns>The new body representation.  If the clipping completely clips the extrusion, this will be null.  Otherwise, this
         /// will be the clipped representation if a clipping was done, or the original representation if not.</returns>
-        public static IFCAnyHandle ProcessFaceCollection(ExporterIFC exporterIFC, Element cuttingElement, Plane extrusionBasePlane,
+        public static IFCAnyHandle CreateClippingFromFaces(ExporterIFC exporterIFC, Element cuttingElement, Plane extrusionBasePlane,
             XYZ extrusionDirection, ICollection<Face> faces, IFCRange range, IFCAnyHandle origBodyRepHnd)
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(origBodyRepHnd))
@@ -1057,12 +1060,20 @@ namespace BIM.IFC.Utility
                 }
             }
 
-            bool unhandledCases = true;
-            if (unhandledCases)
-                throw new Exception("Unhandled opening or clipping.");
+            //not handled
+            throw new Exception("Unhandled clipping.");
+        }
 
+        public static IFCAnyHandle CreateOpeningFromFaces(ExporterIFC exporterIFC, Element cuttingElement, Plane extrusionBasePlane,
+            XYZ extrusionDirection, ICollection<Face> faces, IFCRange range, IFCAnyHandle origBodyRepHnd)
+        {
             // We will attempt to "sew" the faces, and see what we have left over.  Depending on what we have, we have an opening, recess, or clipping.
-            IList<Edge> boundaryEdges = new List<Edge>();
+
+            // top and bottom profile curves to create extrusion
+            IDictionary<Face, IList<Curve>> boundaryCurves = new Dictionary<Face, IList<Curve>>();
+            // curves on same side face to check if they are valid for extrusion
+            IDictionary<Face, IList<Curve>> boundaryCurvesInSameExistingFace = new Dictionary<Face, IList<Curve>>();
+
             foreach (Face face in faces)
             {
                 EdgeArrayArray faceBoundaries = face.EdgeLoops;
@@ -1073,12 +1084,527 @@ namespace BIM.IFC.Utility
                 EdgeArray faceBoundary = faceBoundaries.get_Item(0);
                 foreach (Edge edge in faceBoundary)
                 {
-                    if (edge.get_Face(0) == null || edge.get_Face(1) == null)
-                        boundaryEdges.Add(edge);
+                    Face face1 = edge.get_Face(0);
+                    Face face2 = edge.get_Face(1);
+                    Face missingFace = null;
+                    Face existingFace = null;
+                    if (!faces.Contains(face1))
+                    {
+                        missingFace = face1;
+                        existingFace = face2;
+                    }
+                    else if (!faces.Contains(face2))
+                    {
+                        missingFace = face2;
+                        existingFace = face1;
+                    }
+
+                    if (missingFace != null)
+                    {
+                        Curve curve = edge.AsCurve();
+                        if (!boundaryCurves.ContainsKey(missingFace))
+                            boundaryCurves[missingFace] = new List<Curve>();
+                        boundaryCurves[missingFace].Add(curve);
+                        if (!boundaryCurvesInSameExistingFace.ContainsKey(existingFace))
+                            boundaryCurvesInSameExistingFace[existingFace] = new List<Curve>();
+                        boundaryCurvesInSameExistingFace[existingFace].Add(curve);
+                    }
                 }
             }
 
-            return origBodyRepHnd;
+            //might be recess
+            if (boundaryCurves.Count == 1)
+            {
+                // boundaryCurves contains one curve loop of top profile of an extrusion
+                // try to find bottom profile
+                IList<Curve> curves1 = boundaryCurves.Values.ElementAt(0);
+                CurveLoop curveloop = CurveLoop.Create(curves1);
+
+                // find the parallel face
+                XYZ normal = curveloop.GetPlane().Normal;
+
+                PlanarFace recessFace = null;
+                foreach (Face face in faces)
+                {
+                    PlanarFace planarFace = face as PlanarFace;
+                    if (planarFace != null && MathUtil.VectorsAreParallel(planarFace.Normal, normal))
+                    {
+                        if (recessFace == null)
+                            recessFace = planarFace;
+                        else
+                            throw new Exception("Can't handle.");
+                    }
+                }
+
+                if (recessFace != null)
+                {
+                    EdgeArrayArray edgeLoops = recessFace.EdgeLoops;
+                    if (edgeLoops.Size != 1)
+                        throw new Exception("Can't handle.");
+
+                    EdgeArray edges = edgeLoops.get_Item(0);
+
+                    IList<Edge> recessFaceEdges = new List<Edge>();
+                    foreach (Edge edge in edges)
+                    {
+                        Face sideFace = edge.get_Face(0);
+                        if (sideFace == recessFace)
+                            sideFace = edge.get_Face(1);
+
+                        // there should be already one exist during above processing
+                        if (!boundaryCurvesInSameExistingFace.ContainsKey(sideFace))
+                            throw new Exception("Can't handle.");
+                        boundaryCurvesInSameExistingFace[sideFace].Add(edge.AsCurve());
+                    }
+                }
+            }
+            else if (boundaryCurves.Count == 2)
+            {
+                // might be an internal opening, process them later
+                // do nothing now
+            }
+            else if (boundaryCurves.Count == 3) //might be an opening on an edge
+            {
+                IList<Curve> curves1 = boundaryCurves.Values.ElementAt(0);
+                IList<Curve> curves2 = boundaryCurves.Values.ElementAt(1);
+                IList<Curve> curves3 = boundaryCurves.Values.ElementAt(2);
+
+                IList<Curve> firstValidCurves = null;
+                IList<Curve> secondValidCurves = null;
+
+                PlanarFace face1 = boundaryCurves.Keys.ElementAt(0) as PlanarFace;
+                PlanarFace face2 = boundaryCurves.Keys.ElementAt(1) as PlanarFace;
+                PlanarFace face3 = boundaryCurves.Keys.ElementAt(2) as PlanarFace;
+
+                if (face1 == null || face2 == null || face3 == null)
+                {
+                    //Error
+                    throw new Exception("Can't handle.");
+                }
+
+                Face removedFace = null;
+
+                // find two parallel faces
+                if (MathUtil.VectorsAreParallel(face1.Normal, face2.Normal))
+                {
+                    firstValidCurves = curves1;
+                    secondValidCurves = curves2;
+                    removedFace = face3;
+                }
+                else if (MathUtil.VectorsAreParallel(face1.Normal, face3.Normal))
+                {
+                    firstValidCurves = curves1;
+                    secondValidCurves = curves3;
+                    removedFace = face2;
+                }
+                else if (MathUtil.VectorsAreParallel(face2.Normal, face3.Normal))
+                {
+                    firstValidCurves = curves2;
+                    secondValidCurves = curves3;
+                    removedFace = face1;
+                }
+
+                // remove the third one and its edge curves
+                if (removedFace != null)
+                {
+                    foreach (Curve curve in boundaryCurves[removedFace])
+                    {
+                        foreach (KeyValuePair<Face, IList<Curve>> faceEdgePair in boundaryCurvesInSameExistingFace)
+                        {
+                            if (faceEdgePair.Value.Contains(curve))
+                                boundaryCurvesInSameExistingFace[faceEdgePair.Key].Remove(curve);
+                        }
+                    }
+                    boundaryCurves.Remove(removedFace);
+                }
+
+                // sew, “closing” them with a simple line
+                IList<IList<Curve>> curvesCollection = new List<IList<Curve>>();
+                curvesCollection.Add(firstValidCurves);
+                curvesCollection.Add(secondValidCurves);
+
+                foreach (IList<Curve> curves in curvesCollection)
+                {
+                    if (curves.Count < 2) //not valid
+                        throw new Exception("Can't handle.");
+
+                    XYZ end0 = curves[0].get_EndPoint(0);
+                    XYZ end1 = curves[0].get_EndPoint(1);
+
+                    IList<Curve> processedCurves = new List<Curve>();
+                    processedCurves.Add(curves[0]);
+                    curves.Remove(curves[0]);
+
+                    Curve nextCurve = null;
+                    Curve preCurve = null;
+
+                    // find the end points on the edges not connected
+                    while (curves.Count > 0)
+                    {
+                        foreach (Curve curve in curves)
+                        {
+                            XYZ curveEnd0 = curve.get_EndPoint(0);
+                            XYZ curveEnd1 = curve.get_EndPoint(1);
+                            if (end1.IsAlmostEqualTo(curveEnd0))
+                            {
+                                nextCurve = curve;
+                                end1 = curveEnd1;
+                            }
+                            else if (end0.IsAlmostEqualTo(curveEnd1))
+                            {
+                                preCurve = curve;
+                                end0 = curveEnd0;
+                            }
+                        }
+
+                        if (nextCurve != null)
+                        {
+                            processedCurves.Add(nextCurve);
+                            curves.Remove(nextCurve);
+                        }
+                        else if (preCurve != null)
+                        {
+                            processedCurves.Insert(0, preCurve);
+                            curves.Remove(preCurve);
+                        }
+                        else
+                            throw new Exception("Can't process edges.");
+                    }
+
+                    // connect them with a simple line
+                    Curve newCurve = Line.get_Bound(end1, end0);
+                    processedCurves.Add(newCurve);
+                    if (!boundaryCurvesInSameExistingFace.ContainsKey(removedFace))
+                        boundaryCurvesInSameExistingFace[removedFace] = new List<Curve>();
+                    boundaryCurvesInSameExistingFace[removedFace].Add(newCurve);
+                    foreach (Curve curve in processedCurves)
+                    {
+                        curves.Add(curve);
+                    }
+                }
+            }
+            else
+                throw new Exception("Can't handle.");
+
+            // now we should have 2 boundary curve loops
+            IList<Curve> firstCurves = boundaryCurves.Values.ElementAt(0);
+            IList<Curve> secondCurves = boundaryCurves.Values.ElementAt(1);
+            PlanarFace firstFace = boundaryCurves.Keys.ElementAt(0) as PlanarFace;
+            PlanarFace secondFace = boundaryCurves.Keys.ElementAt(1) as PlanarFace;
+
+            if (firstFace == null || secondFace == null)
+            {
+                //Error, can't handle this
+                throw new Exception("Can't handle.");
+            }
+
+            if (firstCurves.Count != secondCurves.Count)
+            {
+                //Error, can't handle this
+                throw new Exception("Can't handle.");
+            }
+
+            CurveLoop curveLoop1 = null;
+            CurveLoop curveLoop2 = null;
+
+            SortCurves(firstCurves);
+            curveLoop1 = CurveLoop.Create(firstCurves);
+            SortCurves(secondCurves);
+            curveLoop2 = CurveLoop.Create(secondCurves);
+
+            if (curveLoop1.IsOpen() || curveLoop2.IsOpen() || !curveLoop1.HasPlane() || !curveLoop2.HasPlane())
+            {
+                //Error, can't handle this
+                throw new Exception("Can't handle.");
+            }
+
+            Plane plane1 = curveLoop1.GetPlane();
+            Plane plane2 = curveLoop2.GetPlane();
+
+            if (!curveLoop1.IsCounterclockwise(plane1.Normal))
+            {
+                curveLoop1.Flip();
+            }
+
+            if (!curveLoop2.IsCounterclockwise(plane2.Normal))
+            {
+                curveLoop2.Flip();
+            }
+
+            // check planar and parallel and orthogonal to the main extrusion dir
+
+            if (!MathUtil.VectorsAreParallel(plane1.Normal, plane2.Normal))
+            {
+                //Error, can't handle this
+                throw new Exception("Can't handle.");
+            }
+
+            if (!MathUtil.VectorsAreOrthogonal(plane1.Normal, extrusionDirection)
+                || !MathUtil.VectorsAreOrthogonal(plane2.Normal, extrusionDirection))
+            {
+                //Error, can't handle this
+                throw new Exception("Can't handle.");
+            }
+
+            //get the distance
+            XYZ origDistance = plane1.Origin - plane2.Origin;
+            double planesDistance = Math.Abs(origDistance.DotProduct(plane1.Normal));
+
+            // check the curves on top and bottom profiles are “identical”
+            foreach (KeyValuePair<Face, IList<Curve>> faceEdgeCurvePair in boundaryCurvesInSameExistingFace)
+            {
+                IList<Curve> curves = faceEdgeCurvePair.Value;
+                if (curves.Count != 2)
+                {
+                    //Error, can't handle this
+                    throw new Exception("Can't handle.");
+                }
+
+                Curve edgeCurve1 = curves[0];
+                Curve edgeCurve2 = curves[1];
+                Face sideFace = faceEdgeCurvePair.Key;
+
+                if (!MathUtil.IsAlmostEqual(edgeCurve1.get_EndPoint(0).DistanceTo(edgeCurve2.get_EndPoint(1)), planesDistance)
+                  || !MathUtil.IsAlmostEqual(edgeCurve1.get_EndPoint(1).DistanceTo(edgeCurve2.get_EndPoint(0)), planesDistance))
+                {
+                    //Error, can't handle this
+                    throw new Exception("Can't handle.");
+                }
+
+                if (edgeCurve1 is Line)
+                {
+                    if (!(edgeCurve2 is Line) || !(sideFace is PlanarFace))
+                    {
+                        //Error, can't handle this
+                        throw new Exception("Can't handle.");
+                    }
+                }
+                else if (edgeCurve1 is Arc)
+                {
+                    if (!(edgeCurve2 is Arc) || !(sideFace is CylindricalFace))
+                    {
+                        //Error, can't handle this
+                        throw new Exception("Can't handle.");
+                    }
+
+                    Arc arc1 = edgeCurve1 as Arc;
+                    Arc arc2 = edgeCurve2 as Arc;
+
+                    if (!MathUtil.IsAlmostEqual(arc1.Center.DistanceTo(arc2.Center), planesDistance))
+                    {
+                        //Error, can't handle this
+                        throw new Exception("Can't handle.");
+                    }
+
+                    XYZ sideFaceAxis = (sideFace as CylindricalFace).Axis;
+                    if (!MathUtil.VectorsAreOrthogonal(sideFaceAxis, extrusionDirection))
+                    {
+                        throw new Exception("Can't handle.");
+                    }
+                }
+                else if (edgeCurve1 is Ellipse)
+                {
+                    if (!(edgeCurve2 is Ellipse) || !(sideFace is RuledFace))
+                    {
+                        //Error, can't handle this
+                        throw new Exception("Can't handle.");
+                    }
+
+                    Ellipse ellipse1 = edgeCurve1 as Ellipse;
+                    Ellipse ellipse2 = edgeCurve2 as Ellipse;
+
+                    if (!MathUtil.IsAlmostEqual(ellipse1.Center.DistanceTo(ellipse2.Center), planesDistance)
+                        || !MathUtil.IsAlmostEqual(ellipse1.RadiusX, ellipse2.RadiusX) || !MathUtil.IsAlmostEqual(ellipse1.RadiusY, ellipse2.RadiusY))
+                    {
+                        //Error, can't handle this
+                        throw new Exception("Can't handle.");
+                    }
+                }
+                else if (edgeCurve1 is HermiteSpline)
+                {
+                    if (!(edgeCurve2 is HermiteSpline) || !(sideFace is RuledFace))
+                    {
+                        //Error, can't handle this
+                        throw new Exception("Can't handle.");
+                    }
+
+                    HermiteSpline hermiteSpline1 = edgeCurve1 as HermiteSpline;
+                    HermiteSpline hermiteSpline2 = edgeCurve2 as HermiteSpline;
+
+                    IList<XYZ> controlPoints1 = hermiteSpline1.ControlPoints;
+                    IList<XYZ> controlPoints2 = hermiteSpline2.ControlPoints;
+
+                    int controlPointCount = controlPoints1.Count;
+                    if (controlPointCount != controlPoints2.Count)
+                    {
+                        //Error, can't handle this
+                        throw new Exception("Can't handle.");
+                    }
+
+                    for (int i = 0; i < controlPointCount; i++)
+                    {
+                        if (!MathUtil.IsAlmostEqual(controlPoints1[i].DistanceTo(controlPoints2[controlPointCount - i - 1]), planesDistance))
+                        {
+                            //Error, can't handle this
+                            throw new Exception("Can't handle.");
+                        }
+                    }
+
+                    DoubleArray parameters1 = hermiteSpline1.Parameters;
+                    DoubleArray parameters2 = hermiteSpline1.Parameters;
+
+                    int parametersCount = parameters1.Size;
+                    if (parametersCount != parameters2.Size)
+                    {
+                        //Error, can't handle this
+                        throw new Exception("Can't handle.");
+                    }
+
+                    for (int i = 0; i < parametersCount; i++)
+                    {
+                        if (!MathUtil.IsAlmostEqual(parameters1.get_Item(i), parameters2.get_Item(i)))
+                        {
+                            //Error, can't handle this
+                            throw new Exception("Can't handle.");
+                        }
+                    }
+                }
+                else if (edgeCurve1 is NurbSpline)
+                {
+                    if (!(edgeCurve2 is NurbSpline) || !(sideFace is RuledFace))
+                    {
+                        //Error, can't handle this
+                        throw new Exception("Can't handle.");
+                    }
+
+                    NurbSpline nurbSpline1 = edgeCurve1 as NurbSpline;
+                    NurbSpline nurbSpline2 = edgeCurve2 as NurbSpline;
+
+                    IList<XYZ> controlPoints1 = nurbSpline1.CtrlPoints;
+                    IList<XYZ> controlPoints2 = nurbSpline2.CtrlPoints;
+
+                    int controlPointCount = controlPoints1.Count;
+                    if (controlPointCount != controlPoints2.Count)
+                    {
+                        //Error, can't handle this
+                        throw new Exception("Can't handle.");
+                    }
+
+                    for (int i = 0; i < controlPointCount; i++)
+                    {
+                        if (!MathUtil.IsAlmostEqual(controlPoints1[i].DistanceTo(controlPoints2[controlPointCount - i - 1]), planesDistance))
+                        {
+                            //Error, can't handle this
+                            throw new Exception("Can't handle.");
+                        }
+                    }
+
+                    DoubleArray weights1 = nurbSpline1.Weights;
+                    DoubleArray weights2 = nurbSpline2.Weights;
+
+                    int weightsCount = weights1.Size;
+                    if (weightsCount != weights2.Size)
+                    {
+                        //Error, can't handle this
+                        throw new Exception("Can't handle.");
+                    }
+
+                    for (int i = 0; i < weightsCount; i++)
+                    {
+                        if (!MathUtil.IsAlmostEqual(weights1.get_Item(i), weights2.get_Item(i)))
+                        {
+                            //Error, can't handle this
+                            throw new Exception("Can't handle.");
+                        }
+                    }
+
+                    DoubleArray knots1 = nurbSpline1.Knots;
+                    DoubleArray knots2 = nurbSpline2.Knots;
+
+                    int knotsCount = knots1.Size;
+                    if (knotsCount != knots2.Size)
+                    {
+                        //Error, can't handle this
+                        throw new Exception("Can't handle.");
+                    }
+
+                    for (int i = 0; i < knotsCount; i++)
+                    {
+                        if (!MathUtil.IsAlmostEqual(knots1.get_Item(i), knots2.get_Item(i)))
+                        {
+                            //Error, can't handle this
+                            throw new Exception("Can't handle.");
+                        }
+                    }
+                }
+                else
+                {
+                    //Error, can't handle this
+                    throw new Exception("Can't handle.");
+                }
+            }
+
+            XYZ extDir = plane2.Origin - plane1.Origin;
+            XYZ plane1Normal = plane1.Normal;
+            int vecParallel = MathUtil.VectorsAreParallel2(extDir, plane1Normal);
+            if (vecParallel == 1)
+            {
+                extDir = plane1Normal;
+            }
+            else if (vecParallel == -1)
+            {
+                extDir = -plane1Normal;
+            }
+            else
+                throw new Exception("Can't handle.");
+
+            IList<CurveLoop> origCurveLoops = new List<CurveLoop>();
+            origCurveLoops.Add(curveLoop1);
+            IFCAnyHandle extrusionHandle = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, origCurveLoops, plane1, extDir, planesDistance * exporterIFC.LinearScale);
+
+            IFCAnyHandle booleanBodyItemHnd = IFCInstanceExporter.CreateBooleanResult(exporterIFC.GetFile(), IFCBooleanOperator.Difference,
+                origBodyRepHnd, extrusionHandle);
+
+            return booleanBodyItemHnd;
+        }
+
+        /// <summary>
+        /// Sorts curves to allow CurveLoop creation that means each curve end must meet next curve start.
+        /// </summary>
+        /// <param name="curves">The curves.</param>
+        public static void SortCurves(IList<Curve> curves)
+        {
+            IList<Curve> sortedCurves = new List<Curve>();
+            Curve currentCurve = curves[0];
+            sortedCurves.Add(currentCurve);
+
+            bool found = false;
+
+            do 
+            {
+                found = false;
+                for (int i = 1; i < curves.Count; i++)
+                {
+                    Curve curve = curves[i];
+                    if (currentCurve.get_EndPoint(1).IsAlmostEqualTo(curve.get_EndPoint(0)))
+                    {
+                        sortedCurves.Add(curve);
+                        currentCurve = curve;
+                        found = true;
+                        break;
+                    }
+                }
+            } while (found);
+
+            if (sortedCurves.Count != curves.Count)
+                throw new InvalidOperationException("Failed to sort curves.");
+
+            // add back
+            curves.Clear();
+            foreach (Curve curve in sortedCurves)
+            {
+                curves.Add(curve);
+            }
         }
     }
 }

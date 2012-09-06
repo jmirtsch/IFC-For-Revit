@@ -21,14 +21,29 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using BIM.IFC.Exporter;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.IFC;
 
 namespace BIM.IFC.Utility
 {
     /// <summary>
-    /// Used to keep a cache of the wall connection information.
+    /// Used to keep a cache of IfcRepresentation handles for a layer name.
     /// </summary>
-    public class WallConnectionDataCache : HashSet<WallConnectionData>
+    public class PresentationLayerSetCache : Dictionary<string, ICollection<IFCAnyHandle>>
     {
+        public void AddRepresentationToLayer(string layerName, IFCAnyHandle repHnd)
+        {
+            if (string.IsNullOrWhiteSpace(layerName))
+                throw new ArgumentException("Empty or null layer name.");
+            
+            ICollection<IFCAnyHandle> layerList = null;
+            if (!TryGetValue(layerName, out layerList))
+            {
+                layerList = new HashSet<IFCAnyHandle>();
+                this[layerName] = layerList;
+            }
+            layerList.Add(repHnd);
+        }
     }
 }
+

@@ -205,7 +205,7 @@ namespace BIM.IFC.Exporter
                         int numReps = exportParts ? 1 : prodReps.Count;
                         for (int ii = 0; ii < numReps; ii++)
                         {
-                            string ifcName = NamingUtil.GetNameOverride(floorElement, NamingUtil.CreateIFCName(exporterIFC, ii == 0 ? -1 : ii + 1));
+                            string ifcName = NamingUtil.GetIFCNamePlusIndex(floorElement, ii == 0 ? -1 : ii + 1);
                             string ifcDescription = NamingUtil.GetDescriptionOverride(floorElement, null);
                             string ifcObjectType = NamingUtil.GetObjectTypeOverride(floorElement, exporterIFC.GetFamilyName());
                             string ifcElemId = NamingUtil.CreateIFCElementId(floorElement);

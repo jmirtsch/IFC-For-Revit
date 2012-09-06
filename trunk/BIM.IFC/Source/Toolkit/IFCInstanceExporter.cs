@@ -26,7 +26,7 @@ using BIM.IFC.Utility;
 
 namespace BIM.IFC.Toolkit
 {
-    class IFCInstanceExporter
+    public class IFCInstanceExporter
     {
         /////////////////////////////////////////////////////////////////
         // SetXXX method is to set base entities' attributes.
@@ -702,13 +702,9 @@ namespace BIM.IFC.Toolkit
             string name, string description, ICollection<IFCAnyHandle> relatedObjects, IFCObjectType? relatedObjectsType)
         {
             if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
-            {
                 IFCAnyHandleUtil.ValidateSubTypeOf(relatedObjects, false, IFCEntityType.IfcObject);
-            }
             else
-            {
                 IFCAnyHandleUtil.ValidateSubTypeOf(relatedObjects, false, IFCEntityType.IfcObjectDefinition);
-            }
 
             ValidateRelationship(guid, ownerHistory, name, description);
         }
@@ -1097,6 +1093,28 @@ namespace BIM.IFC.Toolkit
         private static void SetPresentationStyle(IFCAnyHandle presentationStyle, string name)
         {
             IFCAnyHandleUtil.SetAttribute(presentationStyle, "Name", name);
+        }
+
+        /// <summary>
+        /// Validates the values to be set to IfcPresentationLayerAssignment.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        private static void ValidatePresentationLayerAssignment(string name, ICollection<IFCAnyHandle> assignedItems)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentNullException("name");
+
+            IFCAnyHandleUtil.ValidateSubTypeOf(assignedItems, false, IFCEntityType.IfcRepresentationItem, IFCEntityType.IfcRepresentation);
+            if (assignedItems.Count == 0)
+                throw new ArgumentNullException("assignedItems");
+        }
+
+        private static void SetPresentationLayerAssigment(IFCAnyHandle presentationLayerAssigment, string name, string description, ICollection<IFCAnyHandle> assignedItems, string identifier)
+        {
+            IFCAnyHandleUtil.SetAttribute(presentationLayerAssigment, "Name", name);
+            IFCAnyHandleUtil.SetAttribute(presentationLayerAssigment, "Description", description);
+            IFCAnyHandleUtil.SetAttribute(presentationLayerAssigment, "AssignedItems", assignedItems);
+            IFCAnyHandleUtil.SetAttribute(presentationLayerAssigment, "Identifier", identifier);
         }
 
         /// <summary>
@@ -5154,6 +5172,26 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Creates an IfcGroup, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="objectType">The object type.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateGroup(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
+            string description, string objectType)
+        {
+            ValidateGroup(guid, ownerHistory, name, description, objectType);
+
+            IFCAnyHandle group = CreateInstance(file, IFCEntityType.IfcGroup);
+            SetGroup(group, guid, ownerHistory, name, description, objectType);
+            return group;
+        }
+        
+        /// <summary>
         /// Creates an IfcSystem, and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -5834,6 +5872,22 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandleUtil.SetAttribute(planarExtent, "SizeInX", sizeInX);
             IFCAnyHandleUtil.SetAttribute(planarExtent, "SizeInY", sizeInY);
             return planarExtent;
+        }
+
+        /// <summary>
+        /// Creates an IfcPresentationLayerAssignment and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="styles">A set of presentation styles that are assigned to styled items.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreatePresentationLayerAssignment(IFCFile file, string name, string description,
+            ICollection<IFCAnyHandle> assignedItems, string identifier)
+        {
+            ValidatePresentationLayerAssignment(name, assignedItems);
+
+            IFCAnyHandle presentationLayerAssignment = CreateInstance(file, IFCEntityType.IfcPresentationLayerAssignment);
+            SetPresentationLayerAssigment(presentationLayerAssignment, name, description, assignedItems, identifier);
+            return presentationLayerAssignment;
         }
 
         /// <summary>
@@ -6787,6 +6841,24 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandle booleanClippingResultHnd = CreateInstance(file, IFCEntityType.IfcBooleanClippingResult);
             SetBooleanResult(booleanClippingResultHnd, clipOperator, firstOperand, secondOperand);
             return booleanClippingResultHnd;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcBooleanResult and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="boolOperator">The boolean operator.</param>
+        /// <param name="firstOperand">The first operand to be operated upon by the Boolean operation.</param>
+        /// <param name="secondOperand">The second operand specified for the operation.</param>
+        /// <returns>The IfcBooleanResult handle.</returns>
+        public static IFCAnyHandle CreateBooleanResult(IFCFile file, IFCBooleanOperator boolOperator,
+            IFCAnyHandle firstOperand, IFCAnyHandle secondOperand)
+        {
+            ValidateBooleanResult(firstOperand, secondOperand);
+
+            IFCAnyHandle booleanResultHnd = CreateInstance(file, IFCEntityType.IfcBooleanResult);
+            SetBooleanResult(booleanResultHnd, boolOperator, firstOperand, secondOperand);
+            return booleanResultHnd;
         }
 
         public static IFCAnyHandle CreatePolygonalBoundedHalfSpace(IFCFile file, IFCAnyHandle position, IFCAnyHandle polygonalBoundary,

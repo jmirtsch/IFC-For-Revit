@@ -29,7 +29,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of the IfcPresentationStyleAssignment handles mapping to a text element type in Revit.
     /// </summary>
-    class PresentationStyleAssignmentCache
+    public class PresentationStyleAssignmentCache
     {
         /// <summary>
         /// The dictionary mapping from a text element type to an IfcPresentationStyleAssignment handle. 

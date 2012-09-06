@@ -31,7 +31,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of the created IfcElementAssemblies and related IfcElement handles.
     /// </summary>
-    class AssemblyInstanceCache : Dictionary<ElementId, AssemblyInstanceInfo>
+    public class AssemblyInstanceCache : Dictionary<ElementId, AssemblyInstanceInfo>
     {
         /// <summary>
         /// Add the instance handle of an AssemblyInstance to the cache.  It will either add it

@@ -221,12 +221,13 @@ namespace BIM.IFC.Exporter
            string instanceGUID, IFCAnyHandle ownerHistory,
            string instanceName, string instanceDescription, string instanceObjectType,
            IFCAnyHandle productRepresentation,
-           string instanceElemId)
+           string instanceElemId, IFCAnyHandle overrideLocalPlacement)
         {
             IFCFile file = exporterIFC.GetFile();
             Document doc = familyInstance.Document;
 
             bool isRoomRelated = IsRoomRelated(type);
+            bool isChildInContainer = false;
 
             IFCAnyHandle localPlacementToUse = setter.GetPlacement();
             ElementId roomId = ElementId.InvalidElementId;
@@ -254,8 +255,15 @@ namespace BIM.IFC.Exporter
                     }
                 case IFCExportType.ExportPlateType:
                     {
+                        IFCAnyHandle localPlacement = localPlacementToUse;
+                        if (overrideLocalPlacement!= null)
+                        {
+                            isChildInContainer = true;
+                            localPlacement = overrideLocalPlacement;
+                        }
+
                         instanceHandle = IFCInstanceExporter.CreatePlate(file, instanceGUID, ownerHistory,
-                           instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceElemId);
+                            instanceName, instanceDescription, instanceObjectType, localPlacement, productRepresentation, instanceElemId);
                         break;
                     }
                 case IFCExportType.ExportDistributionControlElement:
@@ -331,7 +339,7 @@ namespace BIM.IFC.Exporter
             {
                 if (roomId == ElementId.InvalidElementId)
                 {
-                    wrapper.AddElement(instanceHandle, setter, extraParams, true);
+                    wrapper.AddElement(instanceHandle, setter, extraParams, !isChildInContainer);
                 }
                 else
                 {

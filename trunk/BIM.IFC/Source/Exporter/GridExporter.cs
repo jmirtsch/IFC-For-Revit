@@ -234,11 +234,34 @@ namespace BIM.IFC.Exporter
                 IFCFile ifcFile = exporterIFC.GetFile();
                 using (IFCTransaction transaction = new IFCTransaction(ifcFile))
                 {
-                    axesU = CreateIFCGridAxisAndRepresentations(exporterIFC, sameDirectionAxesU, ref representations);
-                    axesV = CreateIFCGridAxisAndRepresentations(exporterIFC, sameDirectionAxesV, ref representations);
+                    GridRepresentationData gridRepresentationData = new GridRepresentationData();
+
+                    axesU = CreateIFCGridAxisAndRepresentations(exporterIFC, sameDirectionAxesU, representations, gridRepresentationData);
+                    axesV = CreateIFCGridAxisAndRepresentations(exporterIFC, sameDirectionAxesV, representations, gridRepresentationData);
                     if (sameDirectionAxesW != null)
+                        axesW = CreateIFCGridAxisAndRepresentations(exporterIFC, sameDirectionAxesW, representations, gridRepresentationData);
+
+                    IFCAnyHandle contextOfItemsFootPrint = exporterIFC.Get3DContextHandle("FootPrint");
+                    string identifierOpt = "FootPrint";
+                    string representationTypeOpt = "GeometricCurveSet";
+
+                    int numGridsToExport = gridRepresentationData.m_Grids.Count;
+                    bool useIFCCADLayer = !string.IsNullOrWhiteSpace(gridRepresentationData.m_IFCCADLayer);
+                    for (int ii = 0; ii < numGridsToExport; ii++)
                     {
-                        axesW = CreateIFCGridAxisAndRepresentations(exporterIFC, sameDirectionAxesW, ref representations);
+                        IFCAnyHandle shapeRepresentation = null;
+                        if (useIFCCADLayer)
+                        {
+                            shapeRepresentation = RepresentationUtil.CreateShapeRepresentation(exporterIFC, contextOfItemsFootPrint,
+                                identifierOpt, representationTypeOpt, gridRepresentationData.m_curveSets[ii], gridRepresentationData.m_IFCCADLayer);
+                        }
+                        else
+                        {
+                            ElementId catId = CategoryUtil.GetSafeCategoryId(gridRepresentationData.m_Grids[ii]);
+                            shapeRepresentation = RepresentationUtil.CreateShapeRepresentation(exporterIFC, gridRepresentationData.m_Grids[ii], catId,
+                                contextOfItemsFootPrint, identifierOpt, representationTypeOpt, gridRepresentationData.m_curveSets[ii]);
+                        }
+                        representations.Add(shapeRepresentation);
                     }
 
                     IFCAnyHandle productRep = IFCInstanceExporter.CreateProductDefinitionShape(ifcFile, null, null, representations);
@@ -246,6 +269,8 @@ namespace BIM.IFC.Exporter
                     IFCLevelInfo levelInfo = ExporterCacheManager.LevelInfoCache.GetLevelInfo(exporterIFC, levelId);
 
                     string gridGUID = ExporterIFCUtils.CreateGUID();
+                    // Get the first grid's override name, if cannot find it, use null.
+                    string gridName = GetGridName(sameDirectionAxesU, sameDirectionAxesV, sameDirectionAxesW);
                     IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                     IFCAnyHandle gridLevelHandle = levelInfo.GetBuildingStorey();
                     IFCAnyHandle levelObjectPlacement = IFCAnyHandleUtil.GetInstanceAttribute(gridLevelHandle, "ObjectPlacement");
@@ -254,12 +279,24 @@ namespace BIM.IFC.Exporter
                     double elevation = elev * scaleFactor;
                     XYZ orig = new XYZ(0.0, 0.0, elevation);
                     IFCAnyHandle copyLevelPlacement = ExporterUtil.CopyLocalPlacement(ifcFile, levelObjectPlacement);
-                    IFCAnyHandle ifcGrid = IFCInstanceExporter.CreateGrid(ifcFile, gridGUID, ownerHistory, null, null, null, copyLevelPlacement, productRep, axesU, axesV, axesW);
+                    IFCAnyHandle ifcGrid = IFCInstanceExporter.CreateGrid(ifcFile, gridGUID, ownerHistory, gridName, null, null, copyLevelPlacement, productRep, axesU, axesV, axesW);
                     productWrapper.AddElement(ifcGrid, levelInfo, null, true);
 
                     transaction.Commit();
                 }
             }
+        }
+
+        public class GridRepresentationData
+        {
+            // The CAD Layer override.
+            public string m_IFCCADLayer = null;
+
+            // The ElementIds of the grids to export.
+            public List<Element> m_Grids = new List<Element>();
+
+            // The curve sets to export.
+            public List<HashSet<IFCAnyHandle>> m_curveSets = new List<HashSet<IFCAnyHandle>>();
         }
 
         /// <summary>
@@ -269,7 +306,8 @@ namespace BIM.IFC.Exporter
         /// <param name="sameDirectionAxes">The grid axes in the same direction of one level.</param>
         /// <param name="representations">The representation of grid axis.</param>
         /// <returns>The list of handles of grid axes.</returns>
-        public static List<IFCAnyHandle> CreateIFCGridAxisAndRepresentations(ExporterIFC exporterIFC, List<Grid> sameDirectionAxes, ref List<IFCAnyHandle> representations)
+        private static List<IFCAnyHandle> CreateIFCGridAxisAndRepresentations(ExporterIFC exporterIFC, IList<Grid> sameDirectionAxes, 
+            IList<IFCAnyHandle> representations, GridRepresentationData gridRepresentationData)
         {
             if (sameDirectionAxes.Count == 0)
                 return null;
@@ -283,17 +321,22 @@ namespace BIM.IFC.Exporter
             Plane plane = new Plane(XYZ.BasisX, XYZ.BasisY, XYZ.Zero);
 
             List<IFCAnyHandle> ifcGridAxes = new List<IFCAnyHandle>();
+
             foreach (Grid grid in sameDirectionAxes)
             {
+                // Because the IfcGrid is a collection of Revit Grids, any one of them can override the IFC CAD Layer.
+                // We will take the first name, and not do too much checking.
+                if (string.IsNullOrWhiteSpace(gridRepresentationData.m_IFCCADLayer))
+                    ParameterUtil.GetStringValueFromElementOrSymbol(grid, "IFCCadLayer", out gridRepresentationData.m_IFCCADLayer);
+
                 // Get the handle of curve.
                 XYZ projectionDirection = plane.Normal;
                 IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, plane, projectionDirection, false);
                 ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, grid.Curve, XYZ.Zero, false);
                 IList<IFCAnyHandle> curves = info.GetCurves();
                 if (curves.Count != 1)
-                {
                     throw new Exception("IFC: expected 1 curve when export curve element.");
-                }
+            
                 IFCAnyHandle axisCurve = curves[0];
 
                 bool sameSense = true;
@@ -301,12 +344,7 @@ namespace BIM.IFC.Exporter
                 {
                     Line baseLine = baseGrid.Curve as Line;
                     Line axisLine = grid.Curve as Line;
-                    if (axisLine.Direction.IsAlmostEqualTo(baseLine.Direction))
-                    {
-                        sameSense = true;
-                    }
-                    else
-                        sameSense = false;
+                    sameSense = (axisLine.Direction.IsAlmostEqualTo(baseLine.Direction));
                 }
 
                 IFCAnyHandle ifcGridAxis = IFCInstanceExporter.CreateGridAxis(ifcFile, grid.Name, axisCurve, sameSense);
@@ -319,13 +357,9 @@ namespace BIM.IFC.Exporter
                 IFCAnyHandle curveStyle = ifcFile.CreateStyle(exporterIFC, repItemHnd);
                 HashSet<IFCAnyHandle> curveSet = new HashSet<IFCAnyHandle>();
                 curveSet.Add(repItemHnd);
-
-                ElementId catId = CategoryUtil.GetSafeCategoryId(grid);
-                IFCAnyHandle contextOfItemsFootPrint = exporterIFC.Get3DContextHandle("FootPrint");
-                string identifierOpt = "FootPrint";
-                string representationTypeOpt = "GeometricCurveSet";
-                IFCAnyHandle shapeRepresentation = RepresentationUtil.CreateShapeRepresentation(exporterIFC, grid, catId, contextOfItemsFootPrint, identifierOpt, representationTypeOpt, curveSet);
-                representations.Add(shapeRepresentation);
+                
+                gridRepresentationData.m_Grids.Add(grid);
+                gridRepresentationData.m_curveSets.Add(curveSet);
             }
 
             return ifcGridAxes;
@@ -498,5 +532,40 @@ namespace BIM.IFC.Exporter
             return parallelGrids;
         }
 
+        /// <summary>
+        /// Get the Grid name from the U, V, W grid lines.
+        /// </summary>
+        /// <param name="sameDirectionAxesU">The U direction of grids.</param>
+        /// <param name="sameDirectionAxesV">The V direction of grids.</param>
+        /// <param name="sameDirectionAxesW">The W direction of grids.</param>
+        /// <returns>The NameOverride if any grid defines the parameter; null otherwise.</returns>
+        private static string GetGridName(List<Grid> sameDirectionAxesU, List<Grid> sameDirectionAxesV, List<Grid> sameDirectionAxesW)
+        {
+            string gridName = GetOverrideGridName(sameDirectionAxesU);
+            if (gridName == null)
+                gridName = GetOverrideGridName(sameDirectionAxesV);
+            if (gridName == null)
+                gridName = GetOverrideGridName(sameDirectionAxesW);
+            return gridName;
+        }
+
+        /// <summary>
+        /// Get the first override Grid name from a collection of grids.
+        /// </summary>
+        /// <param name="gridList">The collection of grids.</param>
+        /// <returns>The NameOverride if any grid defines the parameter; else return null.</returns>
+        private static string GetOverrideGridName(List<Grid> gridList)
+        {
+            if (gridList == null)
+                return null;
+
+            foreach (Grid grid in gridList)
+            {
+                string gridName = NamingUtil.GetNameOverride(grid, null);
+                if (gridName != null)
+                    return gridName;
+            }
+            return null;
+        }
     }
 }

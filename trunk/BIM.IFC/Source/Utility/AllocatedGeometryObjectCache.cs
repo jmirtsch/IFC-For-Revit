@@ -31,7 +31,7 @@ namespace BIM.IFC.Utility
     /// Although the garbage collector would eventually catch up and dispose of these objects on its own, doing it preemptively is 
     /// necessary in order to avoid debug errors triggered by Revit when running automated tests.
     /// </summary>
-    class AllocatedGeometryObjectCache
+    public class AllocatedGeometryObjectCache
     {
         private List<GeometryObject> m_geometryObjects = new List<GeometryObject>();
 

@@ -39,18 +39,30 @@ namespace BIM.IFC.Exporter
         /// <summary>
         /// Initializes property sets.
         /// </summary>
+        /// <param name="propertySetsToExport">Existing functions to call for property set initialization.</param>
         /// <param name="fileVersion">The IFC file version.</param>
-        public static void InitPropertySets(IFCVersion fileVersion)
+        public static void InitPropertySets(Exporter.PropertySetsToExport propertySetsToExport, IFCVersion fileVersion)
         {
             ParameterCache cache = ExporterCacheManager.ParameterCache;
 
-            if (ExporterCacheManager.ExportOptionsCache.ExportIFCCommonPropertySets)
-                InitCommonPropertySets(cache.PropertySets, fileVersion);
+            if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportIFCCommon)
+            {
+                if (propertySetsToExport == null)
+                    propertySetsToExport = InitCommonPropertySets;
+                else
+                    propertySetsToExport += InitCommonPropertySets;
+            }
 
             if (fileVersion == IFCVersion.IFCCOBIE)
             {
-                InitCOBIEPropertySets(cache.PropertySets);
+                if (propertySetsToExport == null)
+                    propertySetsToExport = InitCOBIEPropertySets;
+                else
+                    propertySetsToExport += InitCOBIEPropertySets;
             }
+
+            if (propertySetsToExport != null)
+                propertySetsToExport(cache.PropertySets, fileVersion);
         }
 
         /// <summary>
@@ -58,19 +70,28 @@ namespace BIM.IFC.Exporter
         /// </summary>
         /// <param name="fileVersion">The IFC file version.</param>
         /// <param name="exportBaseQuantities">True if export base quantities.</param>
-        public static void InitQuantities(IFCVersion fileVersion, bool exportBaseQuantities)
+        public static void InitQuantities(Exporter.QuantitiesToExport quantitiesToExport, IFCVersion fileVersion, bool exportBaseQuantities)
         {
             ParameterCache cache = ExporterCacheManager.ParameterCache;
 
             if (exportBaseQuantities)
             {
-                InitBaseQuantities(cache.Quantities);
+                if (quantitiesToExport == null)
+                    quantitiesToExport = InitBaseQuantities;
+                else
+                    quantitiesToExport += InitBaseQuantities;
             }
 
             if (fileVersion == IFCVersion.IFCCOBIE)
             {
-                InitCOBIEQuantities(cache.Quantities);
+                if (quantitiesToExport == null)
+                    quantitiesToExport = InitCOBIEQuantities;
+                else
+                    quantitiesToExport += InitCOBIEQuantities; 
             }
+
+            if (quantitiesToExport != null)
+                quantitiesToExport(cache.Quantities, fileVersion);
         }
 
         // Properties
@@ -406,11 +427,11 @@ namespace BIM.IFC.Exporter
             propertySetStairFlightCommon.Entries.Add(ifcPSE);
 
             PropertyCalculator stairRiserAndTreadsCalculator = StairRiserTreadsCalculator.Instance;
-            ifcPSE = PropertySetEntry.CreateInteger("NumberOfRiser");
+            ifcPSE = PropertySetEntry.CreateCount("NumberOfRiser");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
             propertySetStairFlightCommon.Entries.Add(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateInteger("NumberOfTreads");
+            ifcPSE = PropertySetEntry.CreateCount("NumberOfTreads");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
             propertySetStairFlightCommon.Entries.Add(ifcPSE);
 
@@ -496,11 +517,11 @@ namespace BIM.IFC.Exporter
             propertySetStairCommon.Entries.Add(ifcPSE);
 
             PropertyCalculator stairRiserAndTreadsCalculator = StairRiserTreadsCalculator.Instance;
-            ifcPSE = PropertySetEntry.CreateInteger("NumberOfRiser");
+            ifcPSE = PropertySetEntry.CreateCount("NumberOfRiser");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
             propertySetStairCommon.Entries.Add(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateInteger("NumberOfTreads");
+            ifcPSE = PropertySetEntry.CreateCount("NumberOfTreads");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
             propertySetStairCommon.Entries.Add(ifcPSE);
 
@@ -877,7 +898,7 @@ namespace BIM.IFC.Exporter
         /// Initializes COBIE property sets.
         /// </summary>
         /// <param name="propertySets">List to store property sets.</param>
-        private static void InitCOBIEPropertySets(IList<IList<PropertySetDescription>> propertySets)
+        private static void InitCOBIEPropertySets(IList<IList<PropertySetDescription>> propertySets, IFCVersion fileVersion)
         {
             IList<PropertySetDescription> cobiePSets = new List<PropertySetDescription>();
             InitCOBIEPSetSpaceThermalSimulationProperties(cobiePSets);
@@ -940,7 +961,7 @@ namespace BIM.IFC.Exporter
             propertySetSpaceThermalDesign.Name = "Pset_SpaceThermalDesign";
             propertySetSpaceThermalDesign.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateReal("Inside Dry Bulb Temperature - Heating");
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateThermodynamicTemperature("Inside Dry Bulb Temperature - Heating");
             ifcPSE.PropertyName = "HeatingDryBulb";
             propertySetSpaceThermalDesign.Entries.Add(ifcPSE);
 
@@ -948,7 +969,7 @@ namespace BIM.IFC.Exporter
             ifcPSE.PropertyName = "HeatingRelativeHumidity";
             propertySetSpaceThermalDesign.Entries.Add(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateReal("Inside Dry Bulb Temperature - Cooling");
+            ifcPSE = PropertySetEntry.CreateThermodynamicTemperature("Inside Dry Bulb Temperature - Cooling");
             ifcPSE.PropertyName = "CoolingDryBulb";
             propertySetSpaceThermalDesign.Entries.Add(ifcPSE);
 
@@ -1043,7 +1064,7 @@ namespace BIM.IFC.Exporter
             propertySetPhotovoltaicArray.Entries.Add(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateReal("DC to AC Conversion Efficiency");
-            ifcPSE.PropertyName = "DCtoACConversionEfficiency";
+            ifcPSE.PropertyName = "DcToAcConversionEfficiency";
             propertySetPhotovoltaicArray.Entries.Add(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("Photovoltaic Surface Integration");
@@ -1111,12 +1132,12 @@ namespace BIM.IFC.Exporter
             ifcSlabQuantity.Entries.Add(ifcQE);
 
             ifcQE = new QuantityEntry("GrossVolume");
-            ifcQE.QuantityType = QuantityType.Area;
+            ifcQE.QuantityType = QuantityType.Volume;
             ifcQE.PropertyCalculator = SlabGrossVolumeCalculator.Instance;
             ifcSlabQuantity.Entries.Add(ifcQE);
 
             ifcQE = new QuantityEntry("Perimeter");
-            ifcQE.QuantityType = QuantityType.Area;
+            ifcQE.QuantityType = QuantityType.PositiveLength;
             ifcQE.PropertyCalculator = SlabPerimeterCalculator.Instance;
             ifcSlabQuantity.Entries.Add(ifcQE);
 
@@ -1150,7 +1171,8 @@ namespace BIM.IFC.Exporter
         /// Initializes base quantities.
         /// </summary>
         /// <param name="quantities">List to store quantities.</param>
-        private static void InitBaseQuantities(IList<IList<QuantityDescription>> quantities)
+        /// <param name="fileVersion">The file version, currently unused.</param>
+        private static void InitBaseQuantities(IList<IList<QuantityDescription>> quantities, IFCVersion fileVersion)
         {
             IList<QuantityDescription> baseQuantities = new List<QuantityDescription>();
             InitCeilingBaseQuantities(baseQuantities);
@@ -1164,7 +1186,8 @@ namespace BIM.IFC.Exporter
         /// Initializes COBIE quantities.
         /// </summary>
         /// <param name="quantities">List to store quantities.</param>
-        private static void InitCOBIEQuantities(IList<IList<QuantityDescription>> quantities)
+        /// <param name="fileVersion">The file version, currently unused.</param>
+        private static void InitCOBIEQuantities(IList<IList<QuantityDescription>> quantities, IFCVersion fileVersion)
         {
             IList<QuantityDescription> cobieQuantities = new List<QuantityDescription>();
             InitCOBIESpaceQuantities(cobieQuantities);

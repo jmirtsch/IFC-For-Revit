@@ -28,7 +28,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of IFC boolean properties.
     /// </summary>
-    class BooleanPropertyInfoCache : Dictionary<KeyValuePair<string, bool>, IFCAnyHandle>
+    public class BooleanPropertyInfoCache : Dictionary<KeyValuePair<string, bool>, IFCAnyHandle>
     {
         /// <summary>
         /// Finds if it contains the property with the specified bool value.

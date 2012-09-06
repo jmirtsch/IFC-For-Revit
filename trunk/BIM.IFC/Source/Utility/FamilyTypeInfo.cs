@@ -32,7 +32,7 @@ namespace BIM.IFC.Exporter
     /// <summary>
     ///  An class representing data about a given family element type.
     /// </summary>
-    class FamilyTypeInfo
+    public class FamilyTypeInfo
     {
         /// <summary>
         ///  Identifies if the object represents a valid type info.

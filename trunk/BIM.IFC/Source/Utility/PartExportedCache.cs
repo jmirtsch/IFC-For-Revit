@@ -29,7 +29,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of the exported Parts.
     /// </summary>
-    class PartExportedCache
+    public class PartExportedCache
     {
         /// <summary>
         /// The dictionary mapping from a exported part and it's level and host element. 

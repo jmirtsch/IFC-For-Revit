@@ -28,7 +28,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of the IfcObject handles mapping to a IfcTypeObject handle.
     /// </summary>
-    class TypeRelationsCache : Dictionary<IFCAnyHandle, HashSet<IFCAnyHandle>>
+    public class TypeRelationsCache : Dictionary<IFCAnyHandle, HashSet<IFCAnyHandle>>
     {
         /// <summary>
         /// Adds the IfcObject to the dictionary.

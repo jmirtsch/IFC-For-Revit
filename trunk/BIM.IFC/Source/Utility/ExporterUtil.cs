@@ -30,7 +30,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Provides general utility methods for IFC export.
     /// </summary>
-    class ExporterUtil
+    public class ExporterUtil
     {
         /// <summary>
         /// Determines if the Exception is local to the element, or if export should be aborted.
@@ -79,6 +79,13 @@ namespace BIM.IFC.Utility
             }
         }
         
+        public static void UpdateBuildingPlacement(IFCAnyHandle buildingHnd, IFCAnyHandle siteHnd)
+        {
+            IFCAnyHandle buildingPlacement = IFCAnyHandleUtil.GetObjectPlacement(buildingHnd);
+            IFCAnyHandle relPlacement = IFCAnyHandleUtil.GetObjectPlacement(siteHnd);
+            IFCAnyHandleUtil.SetAttribute(buildingPlacement, "PlacementRelTo", relPlacement);
+        }
+
         /// <summary>
         /// Relates one object to another. 
         /// </summary>

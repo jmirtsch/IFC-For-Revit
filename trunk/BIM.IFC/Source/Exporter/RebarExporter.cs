@@ -83,7 +83,7 @@ namespace BIM.IFC.Exporter
                             ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
 
                             BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                            prodRep = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, categoryId, rebarGeometry, bodyExporterOptions,
+                            prodRep = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, categoryId, ElementId.InvalidElementId, rebarGeometry, bodyExporterOptions,
                                 extrusionCreationData).RepresentationHnd;
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodRep))
                                 extrusionCreationData.ClearOpenings();
@@ -109,8 +109,7 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle elemHnd = null;
 
                         string rebarGUID = ExporterIFCUtils.CreateGUID(element);
-                        string origRebarName = exporterIFC.GetName();
-                        string rebarName = NamingUtil.GetNameOverride(element, origRebarName);
+                        string rebarName = NamingUtil.GetIFCName(element);
                         string rebarDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string rebarObjectType = NamingUtil.GetObjectTypeOverride(element, NamingUtil.CreateIFCObjectName(exporterIFC, element));
                         string rebarElemId = NamingUtil.CreateIFCElementId(element);

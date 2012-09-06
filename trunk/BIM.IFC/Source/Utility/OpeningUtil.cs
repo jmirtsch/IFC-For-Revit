@@ -100,7 +100,7 @@ namespace BIM.IFC.Utility
                 IFCAnyHandle openingPlacement = ExporterUtil.CopyLocalPlacement(file, originalPlacement);
                 string guid = ExporterIFCUtils.CreateGUID();
                 IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                string openingName = NamingUtil.GetNameOverride(element, NamingUtil.CreateIFCName(exporterIFC, openingNumber++));
+                string openingName = NamingUtil.GetIFCNamePlusIndex(element, openingNumber++);
                 string elementId = NamingUtil.CreateIFCElementId(element);
                 IFCAnyHandle openingElement = IFCInstanceExporter.CreateOpeningElement(file, guid, ownerHistory,
                    openingName, null, openingObjectType, openingPlacement, openingRep, elementId);
