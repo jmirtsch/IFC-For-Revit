@@ -132,8 +132,7 @@ namespace BIM.IFC.Exporter
                        element, geomElem, false, false);
 
                     string instanceGUID = ExporterIFCUtils.CreateGUID(element);
-                    string origInstanceName = exporterIFC.GetName();
-                    string instanceName = NamingUtil.GetNameOverride(element, origInstanceName);
+                    string instanceName = NamingUtil.GetIFCName(element);
                     string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                     string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
                     string instanceElemId = NamingUtil.CreateIFCElementId(element);
@@ -155,7 +154,9 @@ namespace BIM.IFC.Exporter
                             geomElem, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3);
                     }
 
-                    ExporterIFCUtils.CreateCoveringPropertySet(exporterIFC, element, productWrapper);
+                    if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportIFCCommon)
+                        ExporterIFCUtils.CreateCoveringPropertySet(exporterIFC, element, productWrapper);
+
                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                 }
                 transaction.Commit();

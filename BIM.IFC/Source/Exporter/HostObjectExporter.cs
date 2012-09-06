@@ -71,7 +71,7 @@ namespace BIM.IFC.Exporter
                 return true; //nothing to do
 
             IFCFile file = exporterIFC.GetFile();
-            
+
             // Roofs with no components are only allowed one material.  We will arbitrarily choose the thickest material.
             IFCAnyHandle primaryMaterialHnd = null;
 
@@ -163,7 +163,7 @@ namespace BIM.IFC.Exporter
                     if (layers.Count == 0)
                         return false;
 
-                    string layerSetName = NamingUtil.CreateIFCFamilyName(exporterIFC, -1);
+                    string layerSetName = exporterIFC.GetFamilyName();
                     materialLayerSet = IFCInstanceExporter.CreateMaterialLayerSet(file, layers, layerSetName);
 
                     ExporterCacheManager.MaterialLayerSetCache.Register(typeElemId, materialLayerSet);
@@ -178,7 +178,7 @@ namespace BIM.IFC.Exporter
                         continue;
 
                     HashSet<IFCAnyHandle> relDecomposesSet = IFCAnyHandleUtil.GetRelDecomposes(elemHnd);
-                    
+
                     IList<IFCAnyHandle> subElemHnds = new List<IFCAnyHandle>();
                     if (relDecomposesSet != null && relDecomposesSet.Count == 1)
                     {
@@ -248,7 +248,7 @@ namespace BIM.IFC.Exporter
                         else if (!isRoof)
                         {
                             ExporterCacheManager.MaterialLayerRelationsCache.Add(materialLayerSet, elemHnd);
-                        }   
+                        }
                         else if (primaryMaterialHnd != null)
                         {
                             ExporterCacheManager.MaterialLayerRelationsCache.Add(primaryMaterialHnd, elemHnd);
@@ -263,7 +263,7 @@ namespace BIM.IFC.Exporter
             }
         }
 
-                /// <summary>
+        /// <summary>
         /// Exports materials for host object.
         /// </summary>
         /// <param name="exporterIFC">
@@ -297,6 +297,31 @@ namespace BIM.IFC.Exporter
             IList<IFCAnyHandle> elemHnds = new List<IFCAnyHandle>();
             elemHnds.Add(elemHnd);
             return ExportHostObjectMaterials(exporterIFC, hostObject, elemHnds, geometryElement, productWrapper, levelId, direction);
+        }
+
+        /// <summary>
+        /// Gets the material Id of the first layer of the host object.
+        /// </summary>
+        /// <param name="hostObject">The host object.</param>
+        /// <returns>The material id.</returns>
+        public static ElementId GetFirstLayerMaterialId(HostObject hostObject)
+        {
+            ElementId typeElemId = hostObject.GetTypeId();
+            HostObjAttributes hostObjAttr = hostObject.Document.GetElement(typeElemId) as HostObjAttributes;
+            if (hostObjAttr == null)
+                return ElementId.InvalidElementId;
+
+            CompoundStructure cs = hostObjAttr.GetCompoundStructure();
+            if (cs != null)
+            {
+                ElementId matId = cs.LayerCount > 0 ? cs.GetMaterialId(0) : ElementId.InvalidElementId;
+                if (matId != ElementId.InvalidElementId)
+                    return matId;
+                else
+                    return CategoryUtil.GetBaseMaterialIdForElement(hostObject);;
+            }
+
+            return ElementId.InvalidElementId;
         }
     }
 }

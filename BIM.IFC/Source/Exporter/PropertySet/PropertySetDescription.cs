@@ -31,7 +31,7 @@ namespace BIM.IFC.Exporter.PropertySet
     /// The mapping includes: the name of the IFC property set, the entity type this property to which this set applies,
     /// and an array of property set entries.  A property set description is valid for only one entity type.
     /// </remarks>
-    class PropertySetDescription : Description
+    public class PropertySetDescription : Description
     {
         /// <summary>
         /// The entries stored in this property set description.

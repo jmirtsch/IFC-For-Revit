@@ -29,7 +29,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of IfcSpace handles mapping to spatial elements in Revit.
     /// </summary>
-    class SpatialElementHandleCache
+    public class SpatialElementHandleCache
     {
         /// <summary>
         /// The dictionary mapping from a spatial element elementId to an IfcSpace handle. 

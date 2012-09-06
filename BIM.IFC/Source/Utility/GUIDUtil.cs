@@ -73,15 +73,13 @@ namespace BIM.IFC.Utility
         {
             string parameterName = "Ifc" + guidType.ToString() + " GUID";
             ProjectInfo projectInfo = document.ProjectInformation;
+
             if (projectInfo != null)
             {
-                Parameter guidParam = projectInfo.get_Parameter(parameterName);
-                if (guidParam != null)
-                {
-                    string paramValue = guidParam.AsString();
-                    if (IsValidIFCGUID(paramValue))
-                        return paramValue;
-                }
+                string paramValue = null;
+                ParameterUtil.GetStringValueFromElement(projectInfo, parameterName, out paramValue);
+                if ((paramValue != null) && (IsValidIFCGUID(paramValue)))
+                    return paramValue;
             }
 
             return ExporterIFCUtils.CreateProjectLevelGUID(document, guidType);
@@ -97,15 +95,13 @@ namespace BIM.IFC.Utility
         static public string CreateSiteGUID(Document document, Element element)
         {
             ProjectInfo projectInfo = document.ProjectInformation;
+
             if (projectInfo != null)
             {
-                Parameter guidParam = projectInfo.get_Parameter("IfcSite GUID");
-                if (guidParam != null)
-                {
-                    string paramValue = guidParam.AsString();
-                    if (IsValidIFCGUID(paramValue))
-                        return paramValue;
-                }
+                string paramValue = null;
+                ParameterUtil.GetStringValueFromElement(projectInfo, "IfcSiteGUID", out paramValue);
+                if ((paramValue != null) && (IsValidIFCGUID(paramValue)))
+                    return paramValue;
             }
 
             return ExporterIFCUtils.CreateGUID(element);

@@ -29,7 +29,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// The cache which holds host element and associated parts.
     /// </summary>
-    class HostPartsCache
+    public class HostPartsCache
     {
         /// <summary>
         /// The dictionary mapping from a host element to its parts. 

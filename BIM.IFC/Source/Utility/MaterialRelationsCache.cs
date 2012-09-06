@@ -28,7 +28,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of the IfcRoot handles mapping to an IfcMaterial or IfcMaterialList handle.
     /// </summary>
-    class MaterialRelationsCache : Dictionary<IFCAnyHandle, HashSet<IFCAnyHandle>>
+    public class MaterialRelationsCache : Dictionary<IFCAnyHandle, HashSet<IFCAnyHandle>>
     {
         /// <summary>
         /// Adds the IfcRoot handle to the dictionary.

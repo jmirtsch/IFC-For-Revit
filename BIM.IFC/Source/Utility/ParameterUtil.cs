@@ -32,6 +32,22 @@ namespace BIM.IFC.Utility
     /// </summary>
     class ParameterUtil
     {
+        // Cache the parameters for the current Element.
+        private static IDictionary<ElementId, IDictionary<string, Parameter>> m_NonIFCParameters = 
+            new Dictionary<ElementId,  IDictionary<string, Parameter>>();
+
+        private static IDictionary<ElementId, IDictionary<string, Parameter>> m_IFCParameters = 
+            new Dictionary<ElementId,  IDictionary<string, Parameter>>();
+
+        /// <summary>
+        /// Clears parameter cache.
+        /// </summary>
+        public static void ClearParameterCache()
+        {
+            m_NonIFCParameters.Clear();
+            m_IFCParameters.Clear();
+        }
+
         /// <summary>
         /// Gets string value from parameter of an element.
         /// </summary>
@@ -401,6 +417,82 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Gets the parameter by name from an element from the parameter cache.
+        /// </summary>
+        /// <param name="element">
+        /// The element.
+        /// </param>
+        /// <param name="propertyName">
+        /// The property name.
+        /// </param>
+        /// <returns>
+        /// The Parameter.
+        /// </returns>
+        static private Parameter getParameterByNameFromCache(Element element, string propertyName)
+        {
+            string cleanPropertyName;
+            NamingUtil.RemoveSpaces(propertyName, out cleanPropertyName);
+            cleanPropertyName = cleanPropertyName.ToUpper();
+
+            Parameter parameter = null;
+            if (m_IFCParameters[element.Id].TryGetValue(cleanPropertyName, out parameter))
+                return parameter;
+
+            m_NonIFCParameters[element.Id].TryGetValue(cleanPropertyName, out parameter);
+            return parameter;
+        }
+
+        /// <summary>
+        /// Cache the parameters for an element, allowing quick access later.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        static private void CacheParametersForElement(Element element)
+        {
+            if (element == null)
+                return;
+
+            ElementId id = element.Id;
+            if (m_NonIFCParameters.ContainsKey(id))
+                return;
+
+            IDictionary<string, Parameter> nonIFCParameters = new Dictionary<string, Parameter>();
+            IDictionary<string, Parameter> ifcParameters = new Dictionary<string, Parameter>();
+
+            m_NonIFCParameters[id] = nonIFCParameters;
+            m_IFCParameters[id] = ifcParameters;
+
+            ParameterSet parameterIds = element.Parameters;
+            if (parameterIds.Size == 0)
+                return;
+
+            // We will do two passes.  In the first pass, we will look at parameters in the IFC group.
+            // In the second pass, we will look at all other groups.
+            ParameterSetIterator parameterIt = parameterIds.ForwardIterator();
+
+            while (parameterIt.MoveNext())
+            {
+                Parameter parameter = parameterIt.Current as Parameter;
+                if (parameter == null)
+                    continue;
+                Definition paramDefinition = parameter.Definition;
+                if (paramDefinition == null)
+                    continue;
+
+                if (string.IsNullOrWhiteSpace(paramDefinition.Name))
+                    continue;
+
+                string cleanPropertyName;
+                NamingUtil.RemoveSpaces(paramDefinition.Name, out cleanPropertyName);
+                cleanPropertyName = cleanPropertyName.ToUpper();
+
+                if (paramDefinition.ParameterGroup != BuiltInParameterGroup.PG_IFC)
+                    nonIFCParameters[cleanPropertyName] = parameter;
+                else
+                    ifcParameters[cleanPropertyName] = parameter;
+            }
+        }
+
+        /// <summary>
         /// Gets the parameter by name from an element.
         /// </summary>
         /// <param name="element">
@@ -418,39 +510,10 @@ namespace BIM.IFC.Utility
             if (parameterIds.Size == 0)
                 return null;
 
-            IList<Parameter> parameters = new List<Parameter>();
-            IList<Definition> paramDefinitions = new List<Definition>();
-
-            // We will do two passes.  In the first pass, we will look at parameters in the IFC group.
-            // In the second pass, we will look at all other groups.
-            ParameterSetIterator parameterIt = parameterIds.ForwardIterator();
-
-            while (parameterIt.MoveNext())
-            {
-                Parameter parameter = parameterIt.Current as Parameter;
-
-                Definition paramDefinition = parameter.Definition;
-                if (paramDefinition == null)
-                    continue;
-                if (paramDefinition.ParameterGroup != BuiltInParameterGroup.PG_IFC)
-                {
-                    parameters.Add(parameter);
-                    paramDefinitions.Add(paramDefinition);
-                    continue;
-                }
-
-                if (NamingUtil.IsEqualIgnoringCaseAndSpaces(paramDefinition.Name, propertyName))
-                    return parameter;
-            }
-
-            int size = paramDefinitions.Count;
-            for (int ii = 0; ii < size; ii++)
-            {
-                if (NamingUtil.IsEqualIgnoringCaseAndSpaces(paramDefinitions[ii].Name, propertyName))
-                    return parameters[ii];
-            }
-
-            return null;
+            if (!m_IFCParameters.ContainsKey(element.Id))
+                CacheParametersForElement(element);
+                
+            return getParameterByNameFromCache(element, propertyName);
         }
 
         /// <summary>

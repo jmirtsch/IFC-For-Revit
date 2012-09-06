@@ -293,13 +293,13 @@ namespace BIM.IFC.Exporter
 
                         if (solids.Count > 0 || meshes.Count > 0)
                         {
-                            bodyData = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId, solids, meshes, bodyExporterOptions, ecData);
+                            bodyData = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId, ElementId.InvalidElementId, solids, meshes, bodyExporterOptions, ecData);
                         }
                         else
                         {
                             IList<GeometryObject> geomlist = new List<GeometryObject>();
                             geomlist.Add(geomElem);
-                            bodyData = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId, geomlist, bodyExporterOptions, ecData);
+                            bodyData = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId, ElementId.InvalidElementId, geomlist, bodyExporterOptions, ecData);
                         }
 
                         IFCAnyHandle bodyRep = bodyData.RepresentationHnd;
@@ -329,8 +329,7 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
 
                         string instanceGUID = ExporterIFCUtils.CreateGUID(element);
-                        string origInstanceName = exporterIFC.GetName();
-                        string instanceName = NamingUtil.GetNameOverride(element, origInstanceName);
+                        string instanceName = NamingUtil.GetIFCName(element);
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
                         string instanceElemId = NamingUtil.CreateIFCElementId(element);

@@ -101,49 +101,57 @@ namespace BIM.IFC.Exporter
                         IFCLevelInfo levelInfo = exporterIFC.GetLevelInfo(levelId);
                         double baseHeightNonScaled = levelInfo.Elevation;
 
-                        SpatialElementGeometryResults spatialElemGeomResult = s_SpatialElementGeometryCalculator.CalculateSpatialElementGeometry(spatialElement);
-
-                        Solid spatialElemGeomSolid = spatialElemGeomResult.GetGeometry();
-                        FaceArray faces = spatialElemGeomSolid.Faces;
-                        foreach (Face face in faces)
+                        try
                         {
-                            IList<SpatialElementBoundarySubface> spatialElemBoundarySubfaces = spatialElemGeomResult.GetBoundaryFaceInfo(face);
-                            foreach (SpatialElementBoundarySubface spatialElemBSubface in spatialElemBoundarySubfaces)
+                            // This can throw an exception.  If it does, continue to export element without boundary information.
+                            // TODO: warn user.
+                            SpatialElementGeometryResults spatialElemGeomResult = s_SpatialElementGeometryCalculator.CalculateSpatialElementGeometry(spatialElement);
+
+                            Solid spatialElemGeomSolid = spatialElemGeomResult.GetGeometry();
+                            FaceArray faces = spatialElemGeomSolid.Faces;
+                            foreach (Face face in faces)
                             {
-                                if (spatialElemBSubface.SubfaceType == SubfaceType.Side)
-                                    continue;
-
-                                if (spatialElemBSubface.GetSubface() == null)
-                                    continue;
-
-                                ElementId elemId = spatialElemBSubface.SpatialBoundaryElement.LinkInstanceId;
-                                if (elemId == ElementId.InvalidElementId)
+                                IList<SpatialElementBoundarySubface> spatialElemBoundarySubfaces = spatialElemGeomResult.GetBoundaryFaceInfo(face);
+                                foreach (SpatialElementBoundarySubface spatialElemBSubface in spatialElemBoundarySubfaces)
                                 {
-                                    elemId = spatialElemBSubface.SpatialBoundaryElement.HostElementId;
-                                }
+                                    if (spatialElemBSubface.SubfaceType == SubfaceType.Side)
+                                        continue;
 
-                                Element boundingElement = document.GetElement(elemId);
-                                if (boundingElement == null)
-                                    continue;
+                                    if (spatialElemBSubface.GetSubface() == null)
+                                        continue;
 
-                                bool isObjectExt = CategoryUtil.IsElementExternal(boundingElement);
+                                    ElementId elemId = spatialElemBSubface.SpatialBoundaryElement.LinkInstanceId;
+                                    if (elemId == ElementId.InvalidElementId)
+                                    {
+                                        elemId = spatialElemBSubface.SpatialBoundaryElement.HostElementId;
+                                    }
 
-                                IFCGeometryInfo info = IFCGeometryInfo.CreateSurfaceGeometryInfo(spatialElement.Document.Application.VertexTolerance);
+                                    Element boundingElement = document.GetElement(elemId);
+                                    if (boundingElement == null)
+                                        continue;
 
-                                Face subFace = spatialElemBSubface.GetSubface();
-                                ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, subFace, XYZ.Zero, false);
+                                    bool isObjectExt = CategoryUtil.IsElementExternal(boundingElement);
 
-                                foreach (IFCAnyHandle surfaceHnd in info.GetSurfaces())
-                                {
-                                    IFCAnyHandle connectionGeometry = IFCInstanceExporter.CreateConnectionSurfaceGeometry(file, surfaceHnd, null);
+                                    IFCGeometryInfo info = IFCGeometryInfo.CreateSurfaceGeometryInfo(spatialElement.Document.Application.VertexTolerance);
 
-                                    SpaceBoundary spaceBoundary = new SpaceBoundary(spatialElement.Id, boundingElement.Id, setter.LevelId, connectionGeometry, IFCPhysicalOrVirtual.Physical,
-                                        isObjectExt ? IFCInternalOrExternal.External : IFCInternalOrExternal.Internal);
+                                    Face subFace = spatialElemBSubface.GetSubface();
+                                    ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, subFace, XYZ.Zero, false);
 
-                                    if (!ProcessIFCSpaceBoundary(exporterIFC, spaceBoundary, file))
-                                        ExporterCacheManager.SpaceBoundaryCache.Add(spaceBoundary);
+                                    foreach (IFCAnyHandle surfaceHnd in info.GetSurfaces())
+                                    {
+                                        IFCAnyHandle connectionGeometry = IFCInstanceExporter.CreateConnectionSurfaceGeometry(file, surfaceHnd, null);
+
+                                        SpaceBoundary spaceBoundary = new SpaceBoundary(spatialElement.Id, boundingElement.Id, setter.LevelId, connectionGeometry, IFCPhysicalOrVirtual.Physical,
+                                            isObjectExt ? IFCInternalOrExternal.External : IFCInternalOrExternal.Internal);
+
+                                        if (!ProcessIFCSpaceBoundary(exporterIFC, spaceBoundary, file))
+                                            ExporterCacheManager.SpaceBoundaryCache.Add(spaceBoundary);
+                                    }
                                 }
                             }
+                        }
+                        catch
+                        {
                         }
 
                         IList<IList<BoundarySegment>> roomBoundaries = spatialElement.GetBoundarySegments(ExporterIFCUtils.GetSpatialElementBoundaryOptions(exporterIFC, spatialElement));
@@ -889,10 +897,15 @@ namespace BIM.IFC.Exporter
             }
             else
             {
-                Element level = document.GetElement(levelId);
-                if (level != null)
+                // Default to true to preserve previous behavior.
+                bool? exportGSADesignGrossArea = ExporterCacheManager.ExportOptionsCache.ExportGSAGrossDesignArea;
+                if (!exportGSADesignGrossArea.HasValue || exportGSADesignGrossArea.Value)
                 {
-                    strSpaceNumber = level.Name + " GSA Design Gross Area";
+                    Element level = document.GetElement(levelId);
+                    if (level != null)
+                    {
+                        strSpaceNumber = level.Name + " GSA Design Gross Area";
+                    }
                 }
             }
 
@@ -909,6 +922,8 @@ namespace BIM.IFC.Exporter
             double roomHeight = 0.0;
 
             roomHeight = GetHeight(spatialElement, scale, levelId, levelInfo);
+            if (roomHeight <= 0.0)
+                return false;
 
             double bottomOffset = 0.0;
             Parameter paramBottomOffset = spatialElement.get_Parameter(BuiltInParameter.ROOM_LOWER_OFFSET);
@@ -1089,7 +1104,7 @@ namespace BIM.IFC.Exporter
             if (properties.Count > 0)
             {
                 return IFCInstanceExporter.CreatePropertySet(file,
-                    ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(), "ePSet_SpatialZoneEnergyAnalysis",
+                    ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(), "ePset_SpatialZoneEnergyAnalysis",
                     null, properties);
             }
 

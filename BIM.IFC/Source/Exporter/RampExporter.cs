@@ -251,8 +251,7 @@ namespace BIM.IFC.Exporter
 
                         string containedRampGuid = ExporterIFCUtils.CreateSubElementGUID(ramp, (int)IFCRampSubElements.ContainedRamp);
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                        string origRampName = exporterIFC.GetName();
-                        string rampName = NamingUtil.GetNameOverride(ramp, origRampName);
+                        string rampName = NamingUtil.GetIFCName(ramp);
                         string rampDescription = NamingUtil.GetDescriptionOverride(ramp, null);
                         string rampObjectType = NamingUtil.GetObjectTypeOverride(ramp, NamingUtil.CreateIFCObjectName(exporterIFC, ramp));
                         IFCAnyHandle containedRampLocalPlacement = ExporterUtil.CopyLocalPlacement(file, ecData.GetLocalPlacement());

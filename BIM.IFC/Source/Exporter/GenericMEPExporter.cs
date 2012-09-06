@@ -83,8 +83,7 @@ namespace BIM.IFC.Exporter
                         if (!found)
                         {
                             string typeGUID = ExporterIFCUtils.CreateGUID(type);
-                            string origTypeName = exporterIFC.GetName();
-                            string typeName = NamingUtil.GetNameOverride(type, origTypeName);
+                            string typeName = NamingUtil.GetIFCName(type);
                             string typeObjectType = NamingUtil.CreateIFCObjectName(exporterIFC, type);
                             string applicableOccurance = NamingUtil.GetObjectTypeOverride(type, typeObjectType);
                             string typeDescription = NamingUtil.GetDescriptionOverride(type, null);
@@ -102,8 +101,7 @@ namespace BIM.IFC.Exporter
                             }
                         }
                         string instanceGUID = ExporterIFCUtils.CreateGUID(element);
-                        string origInstanceName = exporterIFC.GetName();
-                        string instanceName = NamingUtil.GetNameOverride(element, origInstanceName);
+                        string instanceName = NamingUtil.GetIFCName(element);
                         string objectType = NamingUtil.CreateIFCObjectName(exporterIFC, element);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);

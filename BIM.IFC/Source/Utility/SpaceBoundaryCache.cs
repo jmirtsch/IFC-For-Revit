@@ -29,7 +29,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of space boundaries.
     /// </summary>
-    class SpaceBoundaryCache : List<SpaceBoundary>
+    public class SpaceBoundaryCache : List<SpaceBoundary>
     {
     }
 }

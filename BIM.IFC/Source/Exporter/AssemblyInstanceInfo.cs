@@ -25,7 +25,7 @@ using Autodesk.Revit.DB.IFC;
 
 namespace BIM.IFC.Exporter
 {
-    class AssemblyInstanceInfo
+    public class AssemblyInstanceInfo
     {
         private IFCAnyHandle m_AssemblyInstanceHandle = null;
 

@@ -89,5 +89,67 @@ namespace BIM.IFC.Utility
         {
             return Math.Abs(dd) <= Eps();
         }
+
+        /// <summary>
+        /// Checks if two vectors are parallel or not.
+        /// </summary>
+        /// <param name="a">The one vector.</param>
+        /// <param name="b">The other vector.</param>
+        /// <returns>True if they are parallel, false if not.</returns>
+        public static bool VectorsAreParallel(XYZ a, XYZ b)
+        {
+            int i = VectorsAreParallel2(a, b);
+
+            return i == 1 || i == -1;
+        }
+
+        /// <summary>
+        /// Returns an integer to indicate if two vectors are parallel, antiparallel or not.
+        /// </summary>
+        /// <param name="a">The one vector.</param>
+        /// <param name="b">The other vector.</param>
+        /// <returns>1 parallel, -1 antiparallel, 0 not parallel.</returns>
+        public static int VectorsAreParallel2(XYZ a, XYZ b)
+        {
+            if (a == null || b == null)
+                return 0;
+
+            double aa, bb, ab;
+            double epsSq = Eps() * Eps();
+
+            aa = a.DotProduct(a);
+            bb = b.DotProduct(b);
+
+            if (aa < epsSq || bb < epsSq)
+                return 0;
+
+            ab = a.DotProduct(b);
+            double cosAngleSq = (ab / aa) * (ab / bb);
+            if (cosAngleSq < 1.0 - AngleEps() * AngleEps())
+                return 0;
+
+            return ab > 0 ? 1 : -1;
+        }
+
+        /// <summary>
+        /// Checks if two vectors are orthogonal or not.
+        /// </summary>
+        /// <param name="a">The one vector.</param>
+        /// <param name="b">The other vector.</param>
+        /// <returns>True if they are orthogonal, false if not.</returns>
+        public static bool VectorsAreOrthogonal(XYZ a, XYZ b)
+        {
+            if (a == null || b == null)
+                return false;
+
+            if (a.IsAlmostEqualTo(XYZ.Zero) || b.IsAlmostEqualTo(XYZ.Zero))
+                return true;
+
+            double ab = a.DotProduct(b);
+            double aa = a.DotProduct(a);
+            double bb = b.DotProduct(b);
+
+            return (ab * ab < aa * AngleEps() * bb * AngleEps()) ? true : false;
+        }
     }
 }

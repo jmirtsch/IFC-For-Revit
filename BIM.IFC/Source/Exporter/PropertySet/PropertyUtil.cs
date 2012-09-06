@@ -31,7 +31,7 @@ namespace BIM.IFC.Exporter.PropertySet
     /// <summary>
     /// Provides static methods to create varies IFC properties.
     /// </summary>
-    class PropertyUtil
+    public class PropertyUtil
     {
         /// <summary>
         /// Create a label property.
@@ -97,7 +97,7 @@ namespace BIM.IFC.Exporter.PropertySet
 
             if (canCache)
             {
-                stringInfoCache = ExporterCacheManager.StringPropertyInfoCache;
+                stringInfoCache = ExporterCacheManager.PropertyInfoCache.LabelCache;
                 labelHandle = stringInfoCache.Find(propertyName, value);
                 if (!IFCAnyHandleUtil.IsNullOrHasNoValue(labelHandle))
                     return labelHandle;
@@ -205,7 +205,7 @@ namespace BIM.IFC.Exporter.PropertySet
         /// </returns>
         public static IFCAnyHandle CreateIdentifierPropertyFromCache(IFCFile file, string propertyName, string value, PropertyValueType valueType)
         {
-            StringPropertyInfoCache stringInfoCache = ExporterCacheManager.StringPropertyInfoCache;
+            StringPropertyInfoCache stringInfoCache = ExporterCacheManager.PropertyInfoCache.IdentifierCache;
             IFCAnyHandle stringHandle = stringInfoCache.Find(propertyName, value);
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(stringHandle))
                 return stringHandle;
@@ -261,7 +261,7 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateBooleanPropertyFromCache(IFCFile file, string propertyName, bool value, PropertyValueType valueType)
         {
-            BooleanPropertyInfoCache boolInfoCache = ExporterCacheManager.BooleanPropertyInfoCache;
+            BooleanPropertyInfoCache boolInfoCache = ExporterCacheManager.PropertyInfoCache.BooleanCache;
             IFCAnyHandle boolHandle = boolInfoCache.Find(propertyName, value);
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(boolHandle))
                 return boolHandle;
@@ -321,7 +321,7 @@ namespace BIM.IFC.Exporter.PropertySet
             IntegerPropertyInfoCache intInfoCache = null;
             if (canCache)
             {
-                intInfoCache = ExporterCacheManager.IntegerPropertyInfoCache;
+                intInfoCache = ExporterCacheManager.PropertyInfoCache.IntegerCache;
                 intHandle = intInfoCache.Find(propertyName, value);
                 if (!IFCAnyHandleUtil.IsNullOrHasNoValue(intHandle))
                     return intHandle;
@@ -371,6 +371,14 @@ namespace BIM.IFC.Exporter.PropertySet
             return null;
         }
 
+        internal static double? CanCacheTemperature(double value)
+        {
+            // Allow caching of integral temperatures.
+            if (MathUtil.IsAlmostEqual(value * 2.0, Math.Truncate(value * 2.0)))
+                return Math.Truncate(value * 2.0)/2.0;
+            return null;
+        }
+        
         /// <summary>
         /// Create a real property.
         /// </summary>
@@ -406,24 +414,12 @@ namespace BIM.IFC.Exporter.PropertySet
             }
         }
 
-        /// <summary>
-        /// Create a real property, using a cached value if possible.
-        /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="propertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="value">
-        /// The value of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created or cached property handle.
-        /// </returns>
+        /// <summary>Create a real property, using a cached value if possible.</summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created or cached property handle.</returns>
         public static IFCAnyHandle CreateRealPropertyFromCache(IFCFile file, double scale, string propertyName, double value, PropertyValueType valueType)
         {
             double? adjustedValue = CanCacheDouble(scale, value);
@@ -436,7 +432,7 @@ namespace BIM.IFC.Exporter.PropertySet
             IFCAnyHandle propertyHandle;
             if (canCache)
             {
-                propertyHandle = ExporterCacheManager.DoublePropertyInfoCache.Find(propertyName, value);
+                propertyHandle = ExporterCacheManager.PropertyInfoCache.RealCache.Find(propertyName, value);
                 if (propertyHandle != null)
                     return propertyHandle;
             }
@@ -445,9 +441,38 @@ namespace BIM.IFC.Exporter.PropertySet
 
             if (canCache && !IFCAnyHandleUtil.IsNullOrHasNoValue(propertyHandle))
             {
-                ExporterCacheManager.DoublePropertyInfoCache.Add(propertyName, value, propertyHandle);
+                ExporterCacheManager.PropertyInfoCache.RealCache.Add(propertyName, value, propertyHandle);
             }
 
+            return propertyHandle;
+        }
+
+        /// <summary>Create a Thermodyanamic Temperature property, using a cached value if possible.</summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created or cached property handle.</returns>
+        public static IFCAnyHandle CreateThermodynamicTemperaturePropertyFromCache(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+        {
+            double? adjustedValue = CanCacheTemperature(value);
+            bool canCache = adjustedValue.HasValue;
+            if (canCache)
+                value = adjustedValue.GetValueOrDefault();
+
+            IFCAnyHandle propertyHandle;
+            if (canCache)
+            {
+                propertyHandle = ExporterCacheManager.PropertyInfoCache.ThermodynamicTemperatureCache.Find(propertyName, value);
+                if (propertyHandle != null)
+                    return propertyHandle;
+            }
+
+            propertyHandle = CreateThermodynamicTemperatureProperty(file, propertyName, value, valueType);
+
+            if (canCache && !IFCAnyHandleUtil.IsNullOrHasNoValue(propertyHandle))
+                ExporterCacheManager.PropertyInfoCache.ThermodynamicTemperatureCache.Add(propertyName, value, propertyHandle);
+            
             return propertyHandle;
         }
 
@@ -471,7 +496,7 @@ namespace BIM.IFC.Exporter.PropertySet
             IFCAnyHandle propertyHandle;
             if (canCache)
             {
-                propertyHandle = ExporterCacheManager.DoublePropertyInfoCache.Find(propertyName, value);
+                propertyHandle = ExporterCacheManager.PropertyInfoCache.LengthMeasureCache.Find(propertyName, value);
                 if (propertyHandle != null)
                     return propertyHandle;
             }
@@ -494,7 +519,7 @@ namespace BIM.IFC.Exporter.PropertySet
 
             if (canCache && !IFCAnyHandleUtil.IsNullOrHasNoValue(propertyHandle))
             {
-                ExporterCacheManager.DoublePropertyInfoCache.Add(propertyName, value, propertyHandle);
+                ExporterCacheManager.PropertyInfoCache.LengthMeasureCache.Add(propertyName, value, propertyHandle);
             }
 
             return propertyHandle;
@@ -671,7 +696,7 @@ namespace BIM.IFC.Exporter.PropertySet
             IFCAnyHandle propertyHandle;
             if (canCache)
             {
-                propertyHandle = ExporterCacheManager.DoublePropertyInfoCache.Find(propertyName, value);
+                propertyHandle = ExporterCacheManager.PropertyInfoCache.PlaneAngleCache.Find(propertyName, value);
                 if (propertyHandle != null)
                     return propertyHandle;
             }
@@ -680,7 +705,7 @@ namespace BIM.IFC.Exporter.PropertySet
 
             if (canCache && !IFCAnyHandleUtil.IsNullOrHasNoValue(propertyHandle))
             {
-                ExporterCacheManager.DoublePropertyInfoCache.Add(propertyName, value, propertyHandle);
+                ExporterCacheManager.PropertyInfoCache.PlaneAngleCache.Add(propertyName, value, propertyHandle);
             }
 
             return propertyHandle;
@@ -719,6 +744,107 @@ namespace BIM.IFC.Exporter.PropertySet
                 default:
                     throw new InvalidOperationException("Missing case!");
             }
+        }
+
+        /// <summary>Create a count measure property.</summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateCountMeasureProperty(IFCFile file, string propertyName, int value, PropertyValueType valueType)
+        {
+            switch (valueType)
+            {
+                case PropertyValueType.EnumeratedValue:
+                    {
+                        IList<IFCData> valueList = new List<IFCData>();
+                        valueList.Add(IFCDataUtil.CreateAsCountMeasure(value));
+                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+                    }
+                case PropertyValueType.SingleValue:
+                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsCountMeasure(value), null);
+                default:
+                    throw new InvalidOperationException("Missing case!");
+            }
+        }
+
+        /// <summary>Create a ThermodynamicTemperature property.</summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateThermodynamicTemperatureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+        {
+            switch (valueType)
+            {
+                case PropertyValueType.EnumeratedValue:
+                    {
+                        IList<IFCData> valueList = new List<IFCData>();
+                        valueList.Add(IFCDataUtil.CreateAsThermodynamicTemperatureMeasure(value));
+                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+                    }
+                case PropertyValueType.SingleValue:
+                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsThermodynamicTemperatureMeasure(value), null);
+                default:
+                    throw new InvalidOperationException("Missing case!");
+            }
+        }
+
+        /// <summary>
+        /// Create a ThermodynamicTemperature measure property from the element's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateThermodynamicTemperaturePropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        {
+            double propertyValue;
+            if (ParameterUtil.GetDoubleValueFromElement(elem, revitParameterName, out propertyValue))
+                return CreateThermodynamicTemperaturePropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
+            return null;
+        }
+
+        /// <summary>
+        /// Create a ThermodynamicTemperature measure property from the element's or type's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="revitBuiltInParam">The built in parameter to use, if revitParameterName isn't found.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateThermodynamicTemperaturePropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
+        {
+            IFCAnyHandle propHnd = CreateThermodynamicTemperaturePropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName, valueType);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                return propHnd;
+
+            if (revitBuiltInParam != BuiltInParameter.INVALID)
+            {
+                string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
+                propHnd = CreateThermodynamicTemperaturePropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName, valueType);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                    return propHnd;
+            }
+
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateThermodynamicTemperaturePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+            else
+                return null;
         }
 
         /// <summary>
@@ -962,30 +1088,14 @@ namespace BIM.IFC.Exporter.PropertySet
                 return null;
         }
 
-        /// <summary>
-        /// Create a real property from the element's or type's parameter.
-        /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="scale">
-        /// The length scale.
-        /// </param>
-        /// <param name="elem">
-        /// The Element.
-        /// </param>
-        /// <param name="revitParameterName">
-        /// The name of the parameter.
-        /// </param>
-        /// <param name="ifcPropertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <summary>Create a real property from the element's or type's parameter.</summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="scale">The length scale.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateRealPropertyFromElementOrSymbol(IFCFile file, double scale, Element elem, string revitParameterName, string ifcPropertyName,
             PropertyValueType valueType)
         {
@@ -1169,6 +1279,27 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Create a count measure property from the element's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateCountMeasurePropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        {
+            int propertyValue;
+            if (ParameterUtil.GetIntValueFromElement(elem, revitParameterName, out propertyValue))
+            {
+                return CreateCountMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Create an area measure property from the element's or type's parameter.
         /// </summary>
         /// <param name="file">
@@ -1216,6 +1347,42 @@ namespace BIM.IFC.Exporter.PropertySet
             Element elemType = document.GetElement(typeId);
             if (elemType != null)
                 return CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+            else
+                return null;
+        }
+
+        /// <summary>
+        /// Create a count measure property from the element's or type's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="revitBuiltInParam">The built in parameter to use, if revitParameterName isn't found.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateCountMeasurePropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
+        {
+            IFCAnyHandle propHnd = CreateCountMeasurePropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName, valueType);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                return propHnd;
+
+            if (revitBuiltInParam != BuiltInParameter.INVALID)
+            {
+                string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
+                propHnd = CreateCountMeasurePropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName, valueType);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                    return propHnd;
+            }
+
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateCountMeasurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
             else
                 return null;
         }
@@ -1273,7 +1440,7 @@ namespace BIM.IFC.Exporter.PropertySet
         public static void CreateInternalRevitPropertySets(ExporterIFC exporterIFC, Element element, ICollection<IFCAnyHandle> elementSets)
         {
             if (exporterIFC == null || element == null || elementSets == null || elementSets.Count == 0 ||
-                !ExporterCacheManager.ExportOptionsCache.ExportInternalRevitPropertySets)
+                !ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportInternalRevit)
                 return;
 
             IFCFile file = exporterIFC.GetFile();
@@ -1552,7 +1719,7 @@ namespace BIM.IFC.Exporter.PropertySet
         public static void CreateInternalRevitPropertySets(ExporterIFC exporterIFC, Element element, IFCProductWrapper productWrapper)
         {
             if (exporterIFC == null || element == null || productWrapper == null ||
-                !ExporterCacheManager.ExportOptionsCache.ExportInternalRevitPropertySets)
+                !ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportInternalRevit)
                 return;
 
             IFCFile file = exporterIFC.GetFile();

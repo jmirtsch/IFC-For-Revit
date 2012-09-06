@@ -30,7 +30,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of the created IfcClassifications.
     /// </summary>
-    class ClassificationCache : Dictionary<string, IFCAnyHandle>
+    public class ClassificationCache : Dictionary<string, IFCAnyHandle>
     {
     }
 }

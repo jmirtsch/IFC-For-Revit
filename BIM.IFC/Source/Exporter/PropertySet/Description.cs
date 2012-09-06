@@ -33,7 +33,7 @@ namespace BIM.IFC.Exporter.PropertySet
     /// <remarks>
     /// A property or quantity set mapping is valid for only one entity type.
     /// </remarks>
-    abstract class Description
+    abstract public class Description
     {
         /// <summary>
         /// The name to be used to create property set or quantity.

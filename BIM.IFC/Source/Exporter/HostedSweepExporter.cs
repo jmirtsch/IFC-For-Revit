@@ -71,7 +71,7 @@ namespace BIM.IFC.Exporter
                         ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
 
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions();
-                        IFCAnyHandle bodyRep = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, categoryId,
+                        IFCAnyHandle bodyRep = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, categoryId, ElementId.InvalidElementId,
                             geometryElement, bodyExporterOptions, ecData).RepresentationHnd;
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRep))
                         {
@@ -112,7 +112,7 @@ namespace BIM.IFC.Exporter
                         ElementId roomId = setter.UpdateRoomRelativeCoordinates(element, out localPlacementToUse);
                         if (roomId == ElementId.InvalidElementId)
                             localPlacementToUse = ecData.GetLocalPlacement();
-                        string name = NamingUtil.GetNameOverride(element, NamingUtil.CreateIFCName(exporterIFC, -1));
+                        string name = NamingUtil.GetIFCName(element);
                         string description = NamingUtil.GetDescriptionOverride(element, null);
                         string objectType = NamingUtil.GetObjectTypeOverride(element, elementTypeName);
                         IFCAnyHandle elemHnd = IFCInstanceExporter.CreateFlowSegment(file, ExporterIFCUtils.CreateGUID(element),

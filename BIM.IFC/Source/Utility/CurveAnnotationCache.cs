@@ -29,7 +29,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of the curve style handles mapping to curve annotations.
     /// </summary>
-    class CurveAnnotationCache
+    public class CurveAnnotationCache
     {
         /// <summary>
         /// Used as a curveAnnotationKey for a dictionary.

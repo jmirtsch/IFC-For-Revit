@@ -31,7 +31,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of systems and the elements contained in them.
     /// </summary>
-    class SystemsCache
+    public class SystemsCache
     {
         private IDictionary<ElementId, ICollection<IFCAnyHandle>> m_BuiltInSystemsCache;
         private IDictionary<string, ICollection<IFCAnyHandle>> m_CustomSystemsCache;

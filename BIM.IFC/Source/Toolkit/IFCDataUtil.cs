@@ -169,5 +169,35 @@ namespace BIM.IFC.Toolkit
         {
             return IFCData.CreateDoubleOfType(value, "IfcAreaMeasure");
         }
+
+        /// <summary>
+        /// Creates an IFCData object as IfcCountMeasure.
+        /// </summary>
+        /// <param name="value">The integer value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsCountMeasure(int value)
+        {
+            return IFCData.CreateIntegerOfType(value, "IfcCountMeasure");
+        }
+
+        /// <summary>
+        /// Creates an IFCData object as IfcParameterValue.
+        /// </summary>
+        /// <param name="value">The double value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsParameterValue(double value)
+        {
+            return IFCData.CreateDoubleOfType(value, "IfcParameterValue");
+        }
+
+        /// <summary>
+        /// Creates an IFCData object as IfcThermodynamicTemperatureMeasure.
+        /// </summary>
+        /// <param name="value">The double value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsThermodynamicTemperatureMeasure(double value)
+        {
+            return IFCData.CreateDoubleOfType(value, "IfcThermodynamicTemperatureMeasure");
+        }
     }
 }

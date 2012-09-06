@@ -21,56 +21,48 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 
 namespace BIM.IFC.Utility
 {
     /// <summary>
-    /// This maps an IFC handle to the Element that created it.
+    /// A class that controls how Revit elements are named on export.
     /// </summary>
-    /// <remarks>
-    /// This is used to identify which element should be used for properties, for elements 
-    /// (e.g. Stairs) that contain other elements.
-    /// </remarks>
-    public class HandleToElementCache
+    public class NamingOptions
     {
         /// <summary>
-        /// The dictionary mapping from an IFC handle to ElementId. 
+        /// public default constructor.
         /// </summary>
-        private Dictionary<IFCAnyHandle, ElementId> m_HandleToElementCache = new Dictionary<IFCAnyHandle, ElementId>();
-
-        /// <summary>
-        /// Finds the ElementId from the dictionary.
-        /// </summary>
-        /// <param name="hnd">
-        /// The handle.
-        /// </param>
-        /// <returns>
-        /// The ElementId.
-        /// </returns>
-        public ElementId Find(IFCAnyHandle hnd)
+        public NamingOptions()
         {
-            ElementId id;
-            if (m_HandleToElementCache.TryGetValue(hnd, out id))
-            {
-                return id;
-            }
-            return ElementId.InvalidElementId;
+            UseFamilyAndTypeNameForReference = false;
+            UseVisibleRevitNameAsEntityName = false;
         }
 
         /// <summary>
-        /// Adds the handle to the dictionary.
+        /// Determines how to generate the Reference value for elements.  There are two possibilities:
+        /// 1. true: use the family name and the type name.  Ex.  Basic Wall: Generic -8".  This allows distinguishing between two
+        /// identical type names in different families.
+        /// 2. false: use the type name only.  Ex:  Generic -8".  This allows for proper tagging when the type name is determined
+        /// by code (e.g. a construction type).
         /// </summary>
-        /// <param name="handle">
-        /// The handle.
-        /// </param>
-        /// <param name="elementId">
-        /// The material element elementId.
-        /// </param>
-        public void Register(IFCAnyHandle handle, ElementId elementId)
+        public bool UseFamilyAndTypeNameForReference
         {
-            m_HandleToElementCache[handle] = elementId;
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Determines how to set the base IFC entity name based on the Revit element name.
+        /// 1. true: Constructs the name from FamilyName:TypeName:ElementId.  Uses naming override, if one is set by user.
+        /// 2. false: Constructs the name from Category:FamilyName:TypeName.  Ignores naming overrides.
+        /// </summary>
+        public bool UseVisibleRevitNameAsEntityName
+        {
+            get;
+            set;
         }
     }
 }

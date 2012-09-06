@@ -32,7 +32,7 @@ namespace BIM.IFC.Exporter
     /// <summary>
     /// Provides methods to export the bounding box of a geometry.
     /// </summary>
-    class BoundingBoxExporter
+    public class BoundingBoxExporter
     {
         private static IFCAnyHandle ExportBoundingBoxBase(ExporterIFC exporterIFC, XYZ cornerXYZ, double xDim, double yDim, double zDim)
         {

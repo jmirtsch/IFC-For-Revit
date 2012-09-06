@@ -30,7 +30,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of the type property infos.
     /// </summary>
-    class TypePropertyInfoCache : Dictionary<ElementId, TypePropertyInfo>
+    public class TypePropertyInfoCache : Dictionary<ElementId, TypePropertyInfo>
     {
         /// <summary>
         /// Checks if the element has type properties.

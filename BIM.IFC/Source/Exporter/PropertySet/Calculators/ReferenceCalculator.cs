@@ -74,7 +74,7 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
                 m_ReferenceName = element.Name;
             else
             {
-                if (ExporterCacheManager.ExportOptionsCache.UseFamilyAndTypeNameForReference || String.IsNullOrEmpty(elementType.Name))
+                if (ExporterCacheManager.ExportOptionsCache.NamingOptions.UseFamilyAndTypeNameForReference || String.IsNullOrEmpty(elementType.Name))
                 {
                     if (!String.IsNullOrEmpty(elementType.Name))
                         m_ReferenceName = String.Format("{0}:{1}", ExporterIFCUtils.GetFamilyName(elementType), element.Name);

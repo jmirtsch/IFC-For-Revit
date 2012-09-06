@@ -29,7 +29,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of properties and quantities to be created when exporting an element.
     /// </summary>
-    class ParameterCache
+    public class ParameterCache
     {
         /// <summary>
         /// List of property sets.

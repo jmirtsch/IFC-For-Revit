@@ -33,7 +33,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Manages caches necessary for IFC export.
     /// </summary>
-    class ExporterCacheManager
+    public class ExporterCacheManager
     {
         /// <summary>
         /// The AssemblyInstanceCache object.
@@ -50,6 +50,11 @@ namespace BIM.IFC.Utility
         /// Keeps track of created IfcClassifications for re-use.
         /// </summary>
         static ClassificationCache m_ClassificationCache;
+
+        /// <summary>
+        /// The ContainmentCache object.
+        /// </summary>
+        static ContainmentCache m_ContainmentCache;
 
         /// <summary>
         /// The CurveAnnotationCache object.
@@ -130,6 +135,11 @@ namespace BIM.IFC.Utility
         static PartExportedCache m_PartExportedCache;
 
         /// <summary>
+        /// The PresentationLayerSetCache object.
+        /// </summary>
+        static PresentationLayerSetCache m_PresentationLayerSetCache;
+
+        /// <summary>
         /// The PresentationStyleAssignmentCache object.
         /// </summary>
         static PresentationStyleAssignmentCache m_PresentationStyleCache;
@@ -198,24 +208,9 @@ namespace BIM.IFC.Utility
         static TypePropertyInfoCache m_TypePropertyInfoCache;
 
         /// <summary>
-        /// The DoublePropertyInfoCache object.
+        /// The PropertyInfoCache object.
         /// </summary>
-        static DoublePropertyInfoCache m_DoublePropertyInfoCache;
-
-        /// <summary>
-        /// The BooleanPropertyInfoCache object.
-        /// </summary>
-        static BooleanPropertyInfoCache m_BooleanPropertyInfoCache;
-
-        /// <summary>
-        /// The IntegerPropertyInfoCache object.
-        /// </summary>
-        static IntegerPropertyInfoCache m_IntegerPropertyInfoCache;
-
-        /// <summary>
-        /// The StringPropertyInfoCache object.
-        /// </summary>
-        static StringPropertyInfoCache m_StringPropertyInfoCache;
+        static PropertyInfoCache m_PropertyInfoCache;
 
         /// <summary>
         /// The IFCAnyHandle to type cache.
@@ -365,6 +360,19 @@ namespace BIM.IFC.Utility
             set
             {
                 m_Document = value;
+            }
+        }
+
+        /// <summary>
+        /// The PresentationLayerSetCache object.
+        /// </summary>
+        public static PresentationLayerSetCache PresentationLayerSetCache
+        {
+            get
+            {
+                if (m_PresentationLayerSetCache == null)
+                    m_PresentationLayerSetCache = new PresentationLayerSetCache();
+                return m_PresentationLayerSetCache;
             }
         }
 
@@ -627,6 +635,20 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// The ContainmentCache object.
+        /// </summary>
+        public static ContainmentCache ContainmentCache
+        {
+            get
+            {
+                if (m_ContainmentCache == null)
+                    m_ContainmentCache = new ContainmentCache();
+                return m_ContainmentCache;
+            }
+            set { m_ContainmentCache = value; }
+        }
+
+        /// <summary>
         /// The ClassificationCache object.
         /// </summary>
         public static ClassificationCache ClassificationCache
@@ -707,57 +729,18 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
-        /// The DoublePropertyInfoCache object.
+        /// The PropertyInfoCache object.
         /// </summary>
-        public static DoublePropertyInfoCache DoublePropertyInfoCache
+        public static PropertyInfoCache PropertyInfoCache
         {
             get
             {
-                if (m_DoublePropertyInfoCache == null)
-                    m_DoublePropertyInfoCache = new DoublePropertyInfoCache();
-                return m_DoublePropertyInfoCache;
+                if (m_PropertyInfoCache == null)
+                    m_PropertyInfoCache = new PropertyInfoCache();
+                return m_PropertyInfoCache;
             }
         }
-
-        /// <summary>
-        /// The BooleanPropertyInfoCache object.
-        /// </summary>
-        public static BooleanPropertyInfoCache BooleanPropertyInfoCache
-        {
-            get
-            {
-                if (m_BooleanPropertyInfoCache == null)
-                    m_BooleanPropertyInfoCache = new BooleanPropertyInfoCache();
-                return m_BooleanPropertyInfoCache;
-            }
-        }
-
-        /// <summary>
-        /// The IntegerPropertyInfoCache object.
-        /// </summary>
-        public static IntegerPropertyInfoCache IntegerPropertyInfoCache
-        {
-            get
-            {
-                if (m_IntegerPropertyInfoCache == null)
-                    m_IntegerPropertyInfoCache = new IntegerPropertyInfoCache();
-                return m_IntegerPropertyInfoCache;
-            }
-        }
-
-        /// <summary>
-        /// The StringPropertyInfoCache object.
-        /// </summary>
-        public static StringPropertyInfoCache StringPropertyInfoCache
-        {
-            get
-            {
-                if (m_StringPropertyInfoCache == null)
-                    m_StringPropertyInfoCache = new StringPropertyInfoCache();
-                return m_StringPropertyInfoCache;
-            }
-        }
-
+        
         /// <summary>
         /// The IFCAnyHandle to type cache.
         /// </summary>
@@ -881,52 +864,50 @@ namespace BIM.IFC.Utility
         {
             if (m_AllocatedGeometryObjectCache != null)
                 m_AllocatedGeometryObjectCache.DisposeCache();
+            ParameterUtil.ClearParameterCache();
 
             m_AllocatedGeometryObjectCache = null;
             m_AssemblyInstanceCache = null;
             m_ClassificationCache = null;
+            m_ConditionalPropertySetsForTypeCache = null;
+            m_ContainmentCache = null;
             m_CurveAnnotationCache = null;
+            m_DefaultCartesianTransformationOperator3D = null;
             m_DummyHostCache = null;
             m_ElementToHandleCache = null;
             m_ExportOptionsCache = null;
+            m_GridCache = null;
+            m_GroupElementGeometryCache = null;
             m_HandleToElementCache = null;
             m_HostPartsCache = null;
             m_LevelInfoCache = null;
+            m_MaterialIdToStyleHandleCache = null;
             m_MaterialLayerRelationsCache = null;
             m_MaterialLayerSetCache = null;
             m_MaterialHandleCache = null;
+            m_MaterialHandleWithoutRepCache = null;
             m_MaterialRelationsCache = null;
             m_MEPCache = null;
-            m_RailingCache = null;
-            m_RailingSubElementCache = null;
             m_ParameterCache = null;
             m_PartExportedCache = null;
+            m_PresentationLayerSetCache = null;
             m_PresentationStyleCache = null;
+            m_PropertyInfoCache = null;
+            m_PropertySetsForTypeCache = null;
+            m_RailingCache = null;
+            m_RailingSubElementCache = null;
             m_SpaceBoundaryCache = null;
             m_SpaceOccupantInfoCache = null;
             m_SpatialElementHandleCache = null;
+            m_StairRampContainerInfoCache = null;
             m_SystemsCache = null;
             m_TypeObjectsCache = null;
+            m_TypePropertyInfoCache = null;
             m_TypeRelationsCache = null;
             m_WallConnectionDataCache = null;
+            m_WallTypeCache = null;
             m_UnitsCache = null;
             m_ZoneInfoCache = null;
-            m_TypePropertyInfoCache = null;
-            m_DoublePropertyInfoCache = null;
-            m_BooleanPropertyInfoCache = null;
-            m_IntegerPropertyInfoCache = null;
-            m_StringPropertyInfoCache = null;
-            m_HandleTypeCache = null;
-            m_HandleIsSubTypeOfCache = null;
-            m_GroupElementGeometryCache = null;
-            m_PropertySetsForTypeCache = null;
-            m_ConditionalPropertySetsForTypeCache = null;
-            m_MaterialIdToStyleHandleCache = null;
-            m_DefaultCartesianTransformationOperator3D = null;
-            m_StairRampContainerInfoCache = null;
-            m_GridCache = null;
-            m_WallTypeCache = null;
-            m_MaterialHandleWithoutRepCache = null;
         }
     }
 }

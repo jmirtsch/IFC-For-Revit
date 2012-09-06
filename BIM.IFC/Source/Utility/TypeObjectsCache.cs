@@ -30,7 +30,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of the FamilyTypeInfos mapping to ElementId.
     /// </summary>
-    class TypeObjectsCache : Dictionary<KeyValuePair<ElementId, bool>, FamilyTypeInfo>
+    public class TypeObjectsCache : Dictionary<KeyValuePair<ElementId, bool>, FamilyTypeInfo>
     {
         /// <summary>
         /// Adds the FamilyTypeInfo to the dictionary.

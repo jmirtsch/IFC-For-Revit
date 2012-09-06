@@ -51,9 +51,10 @@ namespace BIM.IFC.Exporter
                 return false;
 
             IFCGeometryInfo ifcGeomInfo = null;
+            Document doc = element.Document;
             Plane plane = GeometryUtil.CreateDefaultPlane();
             XYZ projDir = new XYZ(0, 0, 1);
-            double eps = element.Document.Application.VertexTolerance * exporterIFC.LinearScale;
+            double eps = doc.Application.VertexTolerance * exporterIFC.LinearScale;
 
             ifcGeomInfo = IFCGeometryInfo.CreateFaceGeometryInfo(exporterIFC, plane, projDir, eps, exportBoundaryRep);
 
@@ -75,6 +76,7 @@ namespace BIM.IFC.Exporter
                 return false;
 
             IFCAnyHandle surface = IFCInstanceExporter.CreateFaceBasedSurfaceModel(file, faceSets);
+            BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, doc, surface, BodyExporter.GetBestMaterialIdForGeometry(geometryElement, exporterIFC));
 
             IList<IFCAnyHandle> surfaceItems = new List<IFCAnyHandle>();
             surfaceItems.Add(surface);
@@ -89,7 +91,7 @@ namespace BIM.IFC.Exporter
             ICollection<IFCAnyHandle> boudaryRepresentations = ifcGeomInfo.GetRepresentations();
             if (exportBoundaryRep && boudaryRepresentations.Count > 1)
             {
-                boundaryRep = RepresentationUtil.CreateBoundaryRep(exporterIFC, element, catId, exporterIFC.Get3DContextHandle("Body"), boudaryRepresentations, 
+                boundaryRep = RepresentationUtil.CreateBoundaryRep(exporterIFC, element, catId, exporterIFC.Get3DContextHandle("FootPrint"), boudaryRepresentations, 
                     boundaryRep);
             }
 

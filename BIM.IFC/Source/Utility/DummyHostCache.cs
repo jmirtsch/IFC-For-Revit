@@ -30,7 +30,7 @@ namespace BIM.IFC.Utility
     /// The cache which holds dummy element and its levels and ranges.
     /// You can check, find, and crate a dummy element via the ElementId of host element. 
     /// </summary>
-    class DummyHostCache
+    public class DummyHostCache
     {
         /// <summary>
         /// The dictionary mapping from a dummy host element and its levels and ranges. 

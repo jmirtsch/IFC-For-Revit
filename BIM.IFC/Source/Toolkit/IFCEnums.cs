@@ -27,7 +27,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the basic configuration of the window type in terms of the number of window panels and the subdivision of the total window.
     /// </summary>
-    enum IFCWindowStyleOperation
+    public enum IFCWindowStyleOperation
     {
         Single_Panel,
         Double_Panel_Vertical,
@@ -45,7 +45,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the basic types of construction of windows.
     /// </summary>
-    enum IFCWindowStyleConstruction
+    public enum IFCWindowStyleConstruction
     {
         Aluminium,
         High_Grade_Steel,
@@ -60,7 +60,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the basic configuration of the window type in terms of the location of window panels.
     /// </summary>
-    enum IFCWindowPanelPosition
+    public enum IFCWindowPanelPosition
     {
         Left,
         Middle,
@@ -73,7 +73,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the basic ways to describe how window panels operate. 
     /// </summary>
-    enum IFCWindowPanelOperation
+    public enum IFCWindowPanelOperation
     {
         SideHungRightHand,
         SideHungLeftHand,
@@ -94,7 +94,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Determines the direction of the text characters in respect to each other.
     /// </summary>
-    enum IFCTextPath
+    public enum IFCTextPath
     {
         Left,
         Right,
@@ -105,7 +105,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines a list of commonly shared property set definitions of a slab and an optional set of product representations.
     /// </summary>
-    enum IFCSlabType
+    public enum IFCSlabType
     {
         Floor,
         Roof,
@@ -138,7 +138,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration denoting whether sense of direction is positive or negative along the given axis.
     /// </summary>
-    enum IFCDirectionSense
+    public enum IFCDirectionSense
     {
         Positive,
         Negative
@@ -147,7 +147,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Identification of the axis of element geometry, denoting the layer set thickness direction, or direction of layer offsets.
     /// </summary>
-    enum IFCLayerSetDirection
+    public enum IFCLayerSetDirection
     {
         Axis1,
         Axis2,
@@ -157,7 +157,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the various representation types that can be semantically distinguished.
     /// </summary>
-    enum IFCGeometricProjection
+    public enum IFCGeometricProjection
     {
         Graph_View,
         Sketch_View,
@@ -173,7 +173,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the generic footing type.
     /// </summary>
-    enum IFCFootingType
+    public enum IFCFootingType
     {
         Footing_Beam,
         Pad_Footing,
@@ -186,7 +186,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the basic types of construction of doors.
     /// </summary>
-    enum IFCDoorStyleConstruction
+    public enum IFCDoorStyleConstruction
     {
         Aluminium,
         High_Grade_Steel,
@@ -202,7 +202,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the basic ways to describe how doors operate. 
     /// </summary>
-    enum IFCDoorStyleOperation
+    public enum IFCDoorStyleOperation
     {
         Single_Swing_Left,
         Single_Swing_Right,
@@ -227,7 +227,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the basic ways to describe the location of a door panel within a door lining.
     /// </summary>
-    enum IFCDoorPanelPosition
+    public enum IFCDoorPanelPosition
     {
         Left,
         Middle,
@@ -238,7 +238,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the basic ways how individual door panels operate. 
     /// </summary>
-    enum IFCDoorPanelOperation
+    public enum IFCDoorPanelOperation
     {
         Swinging,
         Double_Acting,
@@ -253,7 +253,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the flow direction at a connection point as either a Source, Sink, or both SourceAndSink.
     /// </summary>
-    enum IFCFlowDirection
+    public enum IFCFlowDirection
     {
         Source,
         Sink,
@@ -264,7 +264,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining where the assembly is intended to take place, either in a factory or on the building site.
     /// </summary>
-    enum IFCAssemblyPlace
+    public enum IFCAssemblyPlace
     {
         Site,
         Factory,
@@ -274,7 +274,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines different types of standard assemblies.
     /// </summary>
-    enum IFCElementAssemblyType
+    public enum IFCElementAssemblyType
     {
         Accessory_Assembly,
         Arch,
@@ -292,7 +292,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of waste terminal that can be specified.
     /// </summary>
-    enum IFCWasteTerminalType
+    public enum IFCWasteTerminalType
     {
         FloorTrap,
         FloorWaste,
@@ -311,7 +311,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of valve that can be specified.
     /// </summary>
-    enum IFCValveType
+    public enum IFCValveType
     {
         AirRelease,
         AntiVacuum,
@@ -341,7 +341,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the functional type of unitary equipment.
     /// </summary>
-    enum IFCUnitaryEquipmentType
+    public enum IFCUnitaryEquipmentType
     {
         AirHandler,
         AirConditioningUnit,
@@ -354,7 +354,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the typical types of tube bundles.
     /// </summary>
-    enum IFCTubeBundleType
+    public enum IFCTubeBundleType
     {
         Finned,
         UserDefined,
@@ -364,7 +364,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Identifies primary transport element types.
     /// </summary>
-    enum IFCTransportElementType
+    public enum IFCTransportElementType
     {
         Elevator,
         Escalator,
@@ -376,7 +376,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// 
     /// </summary>
-    enum IFCTransformerType
+    public enum IFCTransformerType
     {
         Current,
         Frequency,
@@ -388,7 +388,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of transformer that can be specified.
     /// </summary>
-    enum IFCTankType
+    public enum IFCTankType
     {
         Preformed,
         Sectional,
@@ -401,7 +401,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of switch that can be specified.
     /// </summary>
-    enum IFCSwitchingDeviceType
+    public enum IFCSwitchingDeviceType
     {
         Contactor,
         EmergencyStop,
@@ -415,7 +415,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of stack terminal that can be specified for use at the top of a vertical stack subsystem.
     /// </summary>
-    enum IFCStackTerminalType
+    public enum IFCStackTerminalType
     {
         BirdCage,
         Cowl,
@@ -427,7 +427,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the functional type of space heater.
     /// </summary>
-    enum IFCSpaceHeaterType
+    public enum IFCSpaceHeaterType
     {
         SectionalRadiator,
         PanelRadiator,
@@ -443,7 +443,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of sensor that can be specified.
     /// </summary>
-    enum IFCSensorType
+    public enum IFCSensorType
     {
         Co2Sensor,
         FireSensor,
@@ -465,7 +465,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of sanitary terminal that can be specified.
     /// </summary>
-    enum IFCSanitaryTerminalType
+    public enum IFCSanitaryTerminalType
     {
         Bath,
         Bidet,
@@ -484,7 +484,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines general types of pumps.
     /// </summary>
-    enum IFCPumpType
+    public enum IFCPumpType
     {
         Circulator,
         EndSuction,
@@ -498,7 +498,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different breaker unit types that can be used in conjunction with protective device.
     /// </summary>
-    enum IFCProtectiveDeviceType
+    public enum IFCProtectiveDeviceType
     {
         FuseDisconnector,
         CircuitBreaker,
@@ -513,7 +513,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Identifies the primary purpose of a pipe segment.
     /// </summary>
-    enum IFCPipeSegmentType
+    public enum IFCPipeSegmentType
     {
         FlexibleSegment,
         RigidSegment,
@@ -526,7 +526,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Identifies the primary purpose of a pipe fitting.
     /// </summary>
-    enum IFCPipeFittingType
+    public enum IFCPipeFittingType
     {
         Bend,
         Connector,
@@ -542,7 +542,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the different types of planar elements.
     /// </summary>
-    enum IFCPlateType
+    public enum IFCPlateType
     {
         Curtain_Panel,
         Sheet,
@@ -553,7 +553,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of outlet that can be specified.
     /// </summary>
-    enum IFCOutletType
+    public enum IFCOutletType
     {
         AudiovisualOutlet,
         CommunicationsOutlet,
@@ -565,7 +565,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of motor connection that can be specified.
     /// </summary>
-    enum IFCMotorConnectionType
+    public enum IFCMotorConnectionType
     {
         BeltDrive,
         Coupling,
@@ -577,7 +577,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the different types of linear elements an IfcMemberType object can fulfill.
     /// </summary>
-    enum IFCMemberType
+    public enum IFCMemberType
     {
         Brace,
         Chord,
@@ -598,7 +598,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of light fixture available.
     /// </summary>
-    enum IFCLightFixtureType
+    public enum IFCLightFixtureType
     {
         PointSource,
         DirectionSource,
@@ -609,7 +609,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of lamp available.
     /// </summary>
-    enum IFCLampType
+    public enum IFCLampType
     {
         CompactFluorescent,
         Fluorescent,
@@ -624,7 +624,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of types of junction boxes available.
     /// </summary>
-    enum IFCJunctionBoxType
+    public enum IFCJunctionBoxType
     {
         UserDefined,
         NotDefined
@@ -633,7 +633,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the typical types of humidifiers.
     /// </summary>
-    enum IFCHumidifierType
+    public enum IFCHumidifierType
     {
         SteamInjection,
         AdiabaticAirWasher,
@@ -655,7 +655,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the typical types of heat exchangers.
     /// </summary>
-    enum IFCHeatExchangerType
+    public enum IFCHeatExchangerType
     {
         Plate,
         ShellAndTube,
@@ -666,7 +666,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the functional type of gas terminal.
     /// </summary>
-    enum IFCGasTerminalType
+    public enum IFCGasTerminalType
     {
         GasAppliance,
         GasBooster,
@@ -678,7 +678,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines various types of flow meter.
     /// </summary>
-    enum IFCFlowMeterType
+    public enum IFCFlowMeterType
     {
         ElectricMeter,
         EnergyMeter,
@@ -693,7 +693,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of flow instrument that can be specified.
     /// </summary>
-    enum IFCFlowInstrumentType
+    public enum IFCFlowInstrumentType
     {
         PressureGauge,
         Thermometer,
@@ -710,7 +710,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of fire suppression terminal that can be specified.
     /// </summary>
-    enum IFCFireSuppressionTerminalType
+    public enum IFCFireSuppressionTerminalType
     {
         BreechingInlet,
         FireHydrant,
@@ -724,7 +724,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the various types of filter typically used within building services distribution systems.
     /// </summary>
-    enum IFCFilterType
+    public enum IFCFilterType
     {
         AirParticleFilter,
         OdorFilter,
@@ -738,7 +738,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the typical types of fans.
     /// </summary>
-    enum IFCFanType
+    public enum IFCFanType
     {
         CentrifugalForwardCurved,
         CentrifugalRadial,
@@ -754,7 +754,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the typical types of evaporators.
     /// </summary>
-    enum IFCEvaporatorType
+    public enum IFCEvaporatorType
     {
         DirectExpansionShellAndTube,
         DirectExpansionTubeInTube,
@@ -768,7 +768,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the typical types of evaporative coolers. 
     /// </summary>
-    enum IFCEvaporativeCoolerType
+    public enum IFCEvaporativeCoolerType
     {
         DirectEvaporativeRandomMediaAirCooler,
         DirectEvaporativeRigidMediaAirCooler,
@@ -786,7 +786,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of types of electrical time control available.
     /// </summary>
-    enum IFCElectricTimeControlType
+    public enum IFCElectricTimeControlType
     {
         TimeClock,
         TimeDelay,
@@ -798,7 +798,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of electric motor that can be specified.
     /// </summary>
-    enum IFCElectricMotorType
+    public enum IFCElectricMotorType
     {
         DC,
         Induction,
@@ -812,7 +812,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of types of electric heater available.
     /// </summary>
-    enum IFCElectricHeaterType
+    public enum IFCElectricHeaterType
     {
         ElectricPointHeater,
         ElectricCableHeater,
@@ -824,7 +824,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of types of electric generators available.
     /// </summary>
-    enum IFCElectricGeneratorType
+    public enum IFCElectricGeneratorType
     {
         UserDefined,
         NotDefined
@@ -833,7 +833,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of electrical flow storage device available.
     /// </summary>
-    enum IFCElectricFlowStorageDeviceType
+    public enum IFCElectricFlowStorageDeviceType
     {
         Battery,
         CapacitorBank,
@@ -847,7 +847,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of electrical appliance that can be specified.
     /// </summary>
-    enum IFCElectricApplianceType
+    public enum IFCElectricApplianceType
     {
         Computer,
         DirectWaterHeater,
@@ -880,7 +880,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the typical types of duct silencers.
     /// </summary>
-    enum IFCDuctSilencerType
+    public enum IFCDuctSilencerType
     {
         FlatOval,
         Rectangular,
@@ -892,7 +892,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Identifies the primary purpose of a duct segment. 
     /// </summary>
-    enum IFCDuctSegmentType
+    public enum IFCDuctSegmentType
     {
         RigidSegment,
         FlexibleSegment,
@@ -903,7 +903,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Identifies the primary purpose of a duct fitting.
     /// </summary>
-    enum IFCDuctFittingType
+    public enum IFCDuctFittingType
     {
         Bend,
         Connector,
@@ -919,7 +919,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Identifies different types of distribution chambers.
     /// </summary>
-    enum IFCDistributionChamberElementType
+    public enum IFCDistributionChamberElementType
     {
         FormedDuct,
         InspectionChamber,
@@ -936,7 +936,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the various types of damper.
     /// </summary>
-    enum IFCDamperType
+    public enum IFCDamperType
     {
         ControlDamper,
         FireDamper,
@@ -956,7 +956,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the typical types of cooling towers.
     /// </summary>
-    enum IFCCoolingTowerType
+    public enum IFCCoolingTowerType
     {
         NaturalDraft,
         MechanicalInducedDraft,
@@ -968,7 +968,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the typical types of cooled beams.
     /// </summary>
-    enum IFCCooledBeamType
+    public enum IFCCooledBeamType
     {
         Active,
         Passive,
@@ -979,7 +979,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of controller that can be specified.
     /// </summary>
-    enum IFCControllerType
+    public enum IFCControllerType
     {
         Floating,
         Proportional,
@@ -994,7 +994,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the typical types of condensers.
     /// </summary>
-    enum IFCCondenserType
+    public enum IFCCondenserType
     {
         WaterCooledShellTube,
         WaterCooledShellCoil,
@@ -1009,7 +1009,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Types of compressors.
     /// </summary>
-    enum IFCCompressorType
+    public enum IFCCompressorType
     {
         Dynamic,
         Reciprocating,
@@ -1033,7 +1033,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the typical types of coils.
     /// </summary>
-    enum IFCCoilType
+    public enum IFCCoilType
     {
         DXCoolingCoil,
         WaterCoolingCoil,
@@ -1048,7 +1048,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the typical types of Chillers classified by their method of heat rejection.
     /// </summary>
-    enum IFCChillerType
+    public enum IFCChillerType
     {
         AirCooled,
         WaterCooled,
@@ -1060,7 +1060,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of cable segment that can be specified.
     /// </summary>
-    enum IFCCableSegmentType
+    public enum IFCCableSegmentType
     {
         CableSegment,
         ConductorSegment,
@@ -1071,7 +1071,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of cable carrier segment that can be specified.
     /// </summary>
-    enum IFCCableCarrierSegmentType
+    public enum IFCCableCarrierSegmentType
     {
         CableLadderSEGMENT,
         CableTraySegment,
@@ -1084,7 +1084,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of cable carrier fitting that can be specified.
     /// </summary>
-    enum IFCCableCarrierFittingType
+    public enum IFCCableCarrierFittingType
     {
         Bend,
         Cross,
@@ -1097,7 +1097,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the typical types of boilers.
     /// </summary>
-    enum IFCBoilerType
+    public enum IFCBoilerType
     {
         Water,
         Steam,
@@ -1108,7 +1108,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of alarm that can be specified.
     /// </summary>
-    enum IFCAlarmType
+    public enum IFCAlarmType
     {
         Bell,
         BreakGlassButton,
@@ -1123,7 +1123,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines general types of pumps.
     /// </summary>
-    enum IFCAirToAirHeatRecoveryType
+    public enum IFCAirToAirHeatRecoveryType
     {
         FixedPlateCounterFlowExchanger,
         FixedPlateCrossFlowExchanger,
@@ -1141,7 +1141,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration defining the functional types of air terminals.
     /// </summary>
-    enum IFCAirTerminalType
+    public enum IFCAirTerminalType
     {
         Grille,
         Register,
@@ -1157,7 +1157,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Identifies different types of air terminal boxes. 
     /// </summary>
-    enum IFCAirTerminalBoxType
+    public enum IFCAirTerminalBoxType
     {
         ConstantFlow,
         VariableFlowPressureDependant,
@@ -1169,7 +1169,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of actuator that can be specified.
     /// </summary>
-    enum IFCActuatorType
+    public enum IFCActuatorType
     {
         ElectricActuator,
         HandOperatedActuator,
@@ -1183,7 +1183,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the different types of linear elements an IfcColumnType object can fulfill.
     /// </summary>
-    enum IFCColumnType
+    public enum IFCColumnType
     {
         Column,
         UserDefined,
@@ -1193,7 +1193,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// The name of an SI unit.
     /// </summary>
-    enum IFCSIUnitName
+    public enum IFCSIUnitName
     {
         Ampere,
         Becquerel,
@@ -1230,7 +1230,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// The name of a prefix that may be associated with an SI unit.
     /// </summary>
-    enum IFCSIPrefix
+    public enum IFCSIPrefix
     {
         Exa,
         Peta,
@@ -1253,7 +1253,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Allowed unit types of IfcNamedUnit. 
     /// </summary>
-    enum IFCUnit
+    public enum IFCUnit
     {
         AbsorbedDoseUnit,
         AmountOfSubstanceUnit,
@@ -1290,7 +1290,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Identifies the logical location of the address.
     /// </summary>
-    enum IFCAddressType
+    public enum IFCAddressType
     {
         Office,
         Site,
@@ -1302,7 +1302,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration identifying the type of change that might have occurred to the object during the last session.
     /// </summary>
-    enum IFCChangeAction
+    public enum IFCChangeAction
     {
         NoChange,
         Modified,
@@ -1315,7 +1315,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Enumeration identifying the state or accessibility of the object.
     /// </summary>
-    enum IFCState
+    public enum IFCState
     {
         ReadWrite,
         ReadOnly,
@@ -1327,7 +1327,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Indicates the element composition type.
     /// </summary>
-    enum IFCElementComposition
+    public enum IFCElementComposition
     {
         Complex,
         Element,
@@ -1337,7 +1337,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the applicable object categories.
     /// </summary>
-    enum IFCObjectType
+    public enum IFCObjectType
     {
         Product,
         Process,
@@ -1352,7 +1352,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of covering that can further specify an IfcCovering or an IfcCoveringType. 
     /// </summary>
-    enum IFCCoveringType
+    public enum IFCCoveringType
     {
         Ceiling,
         Flooring,
@@ -1369,7 +1369,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the different types of walls an IfcWallType object can fulfill.
     /// </summary>
-    enum IFCWallType
+    public enum IFCWallType
     {
         Standard,
         Polygonal,
@@ -1383,7 +1383,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of covering that can further specify an IfcRailing
     /// </summary>
-    enum IFCRailingType
+    public enum IFCRailingType
     {
         HandRail,
         GuardRail,
@@ -1395,7 +1395,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the types of IfcReinforcingBar roles
     /// </summary>
-    enum IFCReinforcingBarRole
+    public enum IFCReinforcingBarRole
     {
         Main,
         Shear,
@@ -1411,7 +1411,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines reflectance methods for IfcSurfaceStyleRendering
     /// </summary>
-    enum IFCReflectanceMethod
+    public enum IFCReflectanceMethod
     {
         Blinn,
         Flat,
@@ -1428,7 +1428,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the types of IfcReinforcingBar surfaces
     /// </summary>
-    enum IFCReinforcingBarSurface
+    public enum IFCReinforcingBarSurface
     {
         Plain,
         Textured
@@ -1437,7 +1437,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the basic configuration of the roof in terms of the different roof shapes. 
     /// </summary>
-    enum IFCRoofType
+    public enum IFCRoofType
     {
         Flat_Roof,
         Shed_Roof,
@@ -1458,7 +1458,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the basic configuration of the ramps in terms of the different ramp shapes. 
     /// </summary>
-    enum IFCRampType
+    public enum IFCRampType
     {
         Straight_Run_Ramp,
         Two_Straight_Run_Ramp,
@@ -1473,7 +1473,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the basic configuration of the stairs in terms of the different stair shapes. 
     /// </summary>
-    enum IFCStairType
+    public enum IFCStairType
     {
         Straight_Run_Stair,
         Two_Straight_Run_Stair,
@@ -1496,7 +1496,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines suface sides for IfcSurfaceStyle
     /// </summary>
-    enum IFCSurfaceSide
+    public enum IFCSurfaceSide
     {
         Positive,
         Negative,
@@ -1506,7 +1506,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the different ways how path based elements can connect.
     /// </summary>
-    enum IFCConnectionType
+    public enum IFCConnectionType
     {
         AtPath,
         AtStart,
@@ -1517,7 +1517,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the types of occupant from which the type required can be selected.
     /// </summary>
-    enum IFCOccupantType
+    public enum IFCOccupantType
     {
         Assignee,
         Assignor,
@@ -1533,7 +1533,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Roles which may be played by an actor.
     /// </summary>
-    enum IFCRoleEnum
+    public enum IFCRoleEnum
     {
         Supplier,
         Manufacturer,
@@ -1563,7 +1563,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the range of different types of profiles.
     /// </summary>
-    enum IFCProfileType
+    public enum IFCProfileType
     {
         Curve,
         Area
@@ -1572,7 +1572,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the boolean operators used in clipping.
     /// </summary>
-    enum IFCBooleanOperator
+    public enum IFCBooleanOperator
     {
         Union,
         Intersection,
@@ -1582,7 +1582,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the transition type used by compositive curve segments.
     /// </summary>
-    enum IFCTransitionCode
+    public enum IFCTransitionCode
     {
         Discontinuous,
         Continuous,
@@ -1593,7 +1593,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// Defines the trimming preference used by bounded curves.
     /// </summary>
-    enum IFCTrimmingPreference
+    public enum IFCTrimmingPreference
     {
         Cartesian,
         Parameter,
@@ -1603,7 +1603,7 @@ namespace BIM.IFC.Toolkit
     /// <summary>
     /// IFC entity types.
     /// </summary>
-    enum IFCEntityType
+    public enum IFCEntityType
     {
         Ifc2DCompositeCurve,
         IfcActionRequest,

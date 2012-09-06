@@ -105,14 +105,14 @@ namespace BIM.IFC.Exporter
                 if (numPartsToExport == 0)
                 {
                     ExportFamilyInstanceAsMappedItem(exporterIFC, familyInstance, exportType, ifcEnumType, productWrapper,
-                       ElementId.InvalidElementId, null);
+                       ElementId.InvalidElementId, null, null);
                 }
                 else
                 {
                     for (int ii = 0; ii < numPartsToExport; ii++)
                     {
                         ExportFamilyInstanceAsMappedItem(exporterIFC, familyInstance, exportType, ifcEnumType, productWrapper,
-                          levels[ii], ranges[ii]);
+                          levels[ii], ranges[ii], null);
                     }
 
                     if (ExporterCacheManager.DummyHostCache.HasRegistered(familyInstance.Id))
@@ -120,7 +120,7 @@ namespace BIM.IFC.Exporter
                         List<KeyValuePair<ElementId, IFCRange>> levelRangeList = ExporterCacheManager.DummyHostCache.Find(familyInstance.Id);
                         foreach (KeyValuePair<ElementId, IFCRange> levelRange in levelRangeList)
                         {
-                            ExportFamilyInstanceAsMappedItem(exporterIFC, familyInstance, exportType, ifcEnumType, productWrapper, levelRange.Key, levelRange.Value);
+                            ExportFamilyInstanceAsMappedItem(exporterIFC, familyInstance, exportType, ifcEnumType, productWrapper, levelRange.Key, levelRange.Value, null);
                         }
                     }
                 }
@@ -155,7 +155,7 @@ namespace BIM.IFC.Exporter
         /// </param>
         public static void ExportFamilyInstanceAsMappedItem(ExporterIFC exporterIFC,
            FamilyInstance familyInstance, IFCExportType exportType, string ifcEnumType,
-           IFCProductWrapper wrapper, ElementId overrideLevelId, IFCRange range)
+           IFCProductWrapper wrapper, ElementId overrideLevelId, IFCRange range, IFCAnyHandle parentLocalPlacement)
         {
             bool exportParts = PartExporter.CanExportParts(familyInstance);
             bool isSplit = range != null;
@@ -184,7 +184,7 @@ namespace BIM.IFC.Exporter
 
             // A Family Instance can have its own copy of geometry, or use the symbol's copy with a transform.
             // The routine below tells us whether to use the Instance's copy or the Symbol's copy.
-            bool useInstanceGeometry = ExporterIFCUtils.UsesInstanceGeometry(familyInstance);
+            bool useInstanceGeometry = ExporterIFCUtils.UsesInstanceGeometry(familyInstance);       
 
             IList<IFCExtrusionData> cutPairOpeningsForColumns = new List<IFCExtrusionData>();
             using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
@@ -304,6 +304,9 @@ namespace BIM.IFC.Exporter
                                 IList<Solid> solids = solidMeshCapsule.GetSolids();
                                 IList<Mesh> polyMeshes = solidMeshCapsule.GetMeshes();
 
+                                if (range != null && (solids.Count == 0 && polyMeshes.Count == 0))
+                                    return; // no proper split geometry
+
                                 geomObjects = FamilyExporterUtil.RemoveSolidsAndMeshesSetToDontExport(doc, exporterIFC, solids, polyMeshes);
                                 if (geomObjects.Count == 0 && (solids.Count > 0 || polyMeshes.Count > 0))
                                     return;
@@ -313,6 +316,22 @@ namespace BIM.IFC.Exporter
                                 if (exportType == IFCExportType.ExportColumnType)
                                 {
                                     extraParams.PossibleExtrusionAxes = IFCExtrusionAxes.TryZ;
+
+                                    if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2 &&
+                                        solids.Count > 0)
+                                    {
+                                        LocationPoint point = familyInstance.Location as LocationPoint;
+                                        XYZ orig = XYZ.Zero;
+                                        if (point != null)
+                                            orig = point.Point;
+
+                                        Plane plane = new Plane(XYZ.BasisX, XYZ.BasisY, orig);
+                                        bool completelyClipped = false;
+                                        HashSet<ElementId> materialIds = null;
+                                        bodyRepresentation = ExtrusionExporter.CreateExtrusionWithClipping(exporterIFC, familyInstance,
+                                            categoryId, solids, plane, XYZ.BasisZ, null, out completelyClipped, out materialIds);
+                                        typeInfo.MaterialIds = materialIds;
+                                    }
                                 }
                                 else
                                 {
@@ -320,29 +339,31 @@ namespace BIM.IFC.Exporter
                                 }
 
                                 BodyData bodyData = null;
-                                BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(tryToExportAsExtrusion);
-                                if (geomObjects.Count > 0)
+                                if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRepresentation))
                                 {
-                                    bodyData = BodyExporter.ExportBody(familyInstance.Document.Application, exporterIFC, familyInstance, categoryId,
-                                        geomObjects, bodyExporterOptions, extraParams);
-                                    typeInfo.MaterialIds = bodyData.MaterialIds;
-                                }
-                                else
-                                {
-                                    IList<GeometryObject> exportedGeometries = new List<GeometryObject>();
-                                    exportedGeometries.Add(exportGeometry);
-                                    bodyData = BodyExporter.ExportBody(familyInstance.Document.Application, exporterIFC, familyInstance, categoryId,
-                                        exportedGeometries, bodyExporterOptions, extraParams);
+                                    BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(tryToExportAsExtrusion);
+                                    if (geomObjects.Count > 0)
+                                    {
+                                        bodyData = BodyExporter.ExportBody(familyInstance.Document.Application, exporterIFC, familyInstance, categoryId, ElementId.InvalidElementId,
+                                            geomObjects, bodyExporterOptions, extraParams);
+                                        typeInfo.MaterialIds = bodyData.MaterialIds;
+                                    }
+                                    else
+                                    {
+                                        IList<GeometryObject> exportedGeometries = new List<GeometryObject>();
+                                        exportedGeometries.Add(exportGeometry);
+                                        bodyData = BodyExporter.ExportBody(familyInstance.Document.Application, exporterIFC, familyInstance, categoryId, ElementId.InvalidElementId,
+                                            exportedGeometries, bodyExporterOptions, extraParams);
+                                    }
+                                    bodyRepresentation = bodyData.RepresentationHnd;
+                                    brepOffsetTransform = bodyData.BrepOffsetTransform;
                                 }
 
-                                bodyRepresentation = bodyData.RepresentationHnd;
                                 if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRepresentation))
                                 {
                                     extraParams.ClearOpenings();
                                     return;
                                 }
-
-                                brepOffsetTransform = bodyData.BrepOffsetTransform;
                             }
 
                             // By default: if exporting IFC2x3 or later, export 2D plan rep of family, if it exists, unless we are exporting Coordination View V2.
@@ -436,15 +457,10 @@ namespace BIM.IFC.Exporter
                                     string colElemId = null;
 
                                     if (useInstanceGeometry)
-                                    {
                                         colGUID = ExporterIFCUtils.CreateGUID();
-                                        colElemId = NamingUtil.CreateIFCElementId(familyInstance);
-                                    }
                                     else
-                                    {
                                         colGUID = guid;
-                                        colElemId = NamingUtil.CreateIFCElementId(familySymbol);
-                                    }
+                                    colElemId = NamingUtil.CreateIFCElementId(familySymbol);
 
                                     string columnType = "Column";
                                     typeStyle = IFCInstanceExporter.CreateColumnType(file, colGUID, ownerHistory, objectType,
@@ -467,7 +483,7 @@ namespace BIM.IFC.Exporter
                                     propertySets.UnionWith(doorPanels);
 
                                     string doorStyleGUID = ExporterIFCUtils.CreateGUID();
-                                    string doorStyleElemId = NamingUtil.CreateIFCElementId(familyInstance);
+                                    string doorStyleElemId = NamingUtil.CreateIFCElementId(familySymbol);
                                     typeStyle = IFCInstanceExporter.CreateDoorStyle(file, doorStyleGUID, ownerHistory, objectType,
                                        null, null, propertySets, repMapList, doorStyleElemId,
                                        GetDoorStyleOperation(doorWindowInfo.DoorOperationType), GetDoorStyleConstruction(familyInstance, constructionType),
@@ -476,7 +492,7 @@ namespace BIM.IFC.Exporter
                                 }
                             case IFCExportType.ExportSystemFurnitureElementType:
                                 {
-                                    string furnitureId = NamingUtil.CreateIFCElementId(familyInstance);
+                                    string furnitureId = NamingUtil.CreateIFCElementId(familySymbol);
                                     typeStyle = IFCInstanceExporter.CreateSystemFurnitureElementType(file, guid, ownerHistory, objectType,
                                        null, null, propertySets, repMapList, furnitureId,
                                        objectType);
@@ -496,7 +512,7 @@ namespace BIM.IFC.Exporter
                                     propertySets.UnionWith(windowPanels);
 
                                     string windowStyleGUID = ExporterIFCUtils.CreateGUID();
-                                    string windowStyleElemId = NamingUtil.CreateIFCElementId(familyInstance);
+                                    string windowStyleElemId = NamingUtil.CreateIFCElementId(familySymbol);
                                     typeStyle = IFCInstanceExporter.CreateWindowStyle(file, windowStyleGUID, ownerHistory, objectType,
                                        null, null, propertySets, repMapList, windowStyleElemId,
                                        constructionType, operationType, paramTakesPrecedence, sizeable);
@@ -516,6 +532,8 @@ namespace BIM.IFC.Exporter
 
                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(typeStyle))
                     {
+                        CategoryUtil.CreateMaterialAssociations(doc, exporterIFC, typeStyle, typeInfo.MaterialIds);
+
                         typeInfo.Style = typeStyle;
 
                         if (((exportType == IFCExportType.ExportColumnType) && trySpecialColumnCreation) ||
@@ -615,16 +633,27 @@ namespace BIM.IFC.Exporter
                 using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, familyInstance, trf, null, overrideLevelId))
                 {
                     string instanceGUID = ExporterIFCUtils.CreateGUID(familyInstance);
-                    string origInstanceName = exporterIFC.GetName();
-                    string instanceName = NamingUtil.GetNameOverride(familyInstance, origInstanceName);
+                    string instanceName = NamingUtil.GetIFCName(familyInstance);
                     string instanceDescription = NamingUtil.GetDescriptionOverride(familyInstance, null);
                     string instanceObjectType = NamingUtil.GetObjectTypeOverride(familyInstance, objectType);
                     string instanceElemId = NamingUtil.CreateIFCElementId(familyInstance);
 
                     IFCAnyHandle localPlacement = setter.GetPlacement();
+                    IFCAnyHandle overrideLocalPlacement = null;
+
+                    if (parentLocalPlacement != null)
+                    {
+                        Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(parentLocalPlacement, localPlacement);
+                        Transform inverseTrf = relTrf.Inverse;
+
+                        IFCAnyHandle relativePlacement = ExporterUtil.CreateAxis2Placement3D(file, inverseTrf.Origin, inverseTrf.BasisZ, inverseTrf.BasisX);
+                        IFCAnyHandle plateLocalPlacement = IFCInstanceExporter.CreateLocalPlacement(file, parentLocalPlacement, relativePlacement);
+                        overrideLocalPlacement = plateLocalPlacement;
+                    }
+                    
                     instanceHandle = FamilyExporterUtil.ExportGenericInstance(exportType, exporterIFC, familyInstance,
                        wrapper, setter, extraParams, instanceGUID, ownerHistory, instanceName, instanceDescription, instanceObjectType,
-                       exportParts? null : rep, instanceElemId);
+                       exportParts ? null : rep, instanceElemId, overrideLocalPlacement);
 
                     if (exportParts)
                     {
@@ -667,7 +696,9 @@ namespace BIM.IFC.Exporter
                                 //export Base Quantities.
                                 PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, instanceHandle, familyInstance, typeInfo);
 
-                                ExporterIFCUtils.CreateColumnPropertySet(exporterIFC, familyInstance, extraParams, wrapper);
+                                if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportIFCCommon)
+                                    ExporterIFCUtils.CreateColumnPropertySet(exporterIFC, familyInstance, extraParams, wrapper);
+
                                 PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
                                 break;
                             }
@@ -713,12 +744,14 @@ namespace BIM.IFC.Exporter
 
                                 if (exportType == IFCExportType.ExportDoorType)
                                 {
-                                    ExporterIFCUtils.CreateDoorPropertySet(exporterIFC, familyInstance, wrapper);
+                                    if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportIFCCommon)
+                                        ExporterIFCUtils.CreateDoorPropertySet(exporterIFC, familyInstance, wrapper);
                                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
                                 }
                                 else
                                 {
-                                    ExporterIFCUtils.CreateWindowPropertySet(exporterIFC, familyInstance, wrapper);
+                                    if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportIFCCommon)
+                                        ExporterIFCUtils.CreateWindowPropertySet(exporterIFC, familyInstance, wrapper);
                                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
                                 }
                                 break;

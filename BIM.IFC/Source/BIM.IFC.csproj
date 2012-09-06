@@ -118,6 +118,7 @@
     <Compile Include="Utility\BooleanPropertyInfoCache.cs" />
     <Compile Include="Utility\CategoryUtil.cs" />
     <Compile Include="Utility\ClassificationCache.cs" />
+    <Compile Include="Utility\ContainmentCache.cs" />
     <Compile Include="Utility\CurveAnnotationCache.cs" />
     <Compile Include="Exporter\FamilyInstanceExporter.cs" />
     <Compile Include="Exporter\PropertySet\Description.cs" />
@@ -149,10 +150,14 @@
     <Compile Include="Utility\LevelUtil.cs" />
     <Compile Include="Utility\MathUtil.cs" />
     <Compile Include="Utility\MEPCache.cs" />
+    <Compile Include="Utility\NamingOptions.cs" />
     <Compile Include="Utility\NamingUtil.cs" />
     <Compile Include="Utility\OpeningUtil.cs" />
     <Compile Include="Utility\ParameterUtil.cs" />
     <Compile Include="Utility\PartExportedCache.cs" />
+    <Compile Include="Utility\PresentationLayerSetCache.cs" />
+    <Compile Include="Utility\PropertyInfoCache.cs" />
+    <Compile Include="Utility\PropertySetOptions.cs" />
     <Compile Include="Utility\RepresentationUtil.cs" />
     <Compile Include="Utility\SolidMeshGeometryInfo.cs" />
     <Compile Include="Utility\SpaceOccupantInfoCache.cs" />

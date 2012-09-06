@@ -169,15 +169,15 @@ namespace BIM.IFC.Exporter
                             BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                             if (solids.Count > 0 || meshes.Count > 0)
                             {
-                                bodyData = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId,
+                                bodyData = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId, ElementId.InvalidElementId,
                                     solids, meshes, bodyExporterOptions, extrusionCreationData);
                             }
                             else
                             {
                                 IList<GeometryObject> geomlist = new List<GeometryObject>();
                                 geomlist.Add(geometryElement);
-                                bodyData = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId, geomlist,
-                                    bodyExporterOptions, extrusionCreationData);
+                                bodyData = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId, ElementId.InvalidElementId, 
+                                    geomlist, bodyExporterOptions, extrusionCreationData);
                             }
                             repHnd = bodyData.RepresentationHnd;
                             materialIds = bodyData.MaterialIds;
@@ -231,8 +231,7 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
 
                         string instanceGUID = ExporterIFCUtils.CreateGUID(element);
-                        string origInstanceName = exporterIFC.GetName();
-                        string instanceName = NamingUtil.GetNameOverride(element, origInstanceName);
+                        string instanceName = NamingUtil.GetIFCName(element);
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, NamingUtil.CreateIFCObjectName(exporterIFC, element));
                         string instanceElemId = NamingUtil.CreateIFCElementId(element);

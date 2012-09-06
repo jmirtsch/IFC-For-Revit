@@ -75,7 +75,41 @@ namespace BIM.IFC.Exporter
 
         #endregion
 
+        // Allow a derived class to add Element exporter routines.
+        public delegate void ElementExporter(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document, 
+            Autodesk.Revit.DB.View filterView);
+        
+        protected ElementExporter m_ElementExporter = null;
+
+        // Allow a derived class to add property sets.
+        public delegate void PropertySetsToExport(IList<IList<PropertySetDescription>> propertySets, IFCVersion fileVersion);
+
+        protected PropertySetsToExport m_PropertySetsToExport = null;
+
+        // Allow a derived class to add quantities.
+        public delegate void QuantitiesToExport(IList<IList<QuantityDescription>> propertySets, IFCVersion fileVersion);
+
+        protected QuantitiesToExport m_QuantitiesToExport = null;
+
         #region IExporterIFC Members
+
+        /// <summary>
+        /// Create the list of element export routines.  Each routine will export a subset of Revit elements,
+        /// allowing for a choice of which elements are exported, and in what order.
+        /// This routine is protected, so it could be overriden by an Exporter class that inherits from this base class.
+        /// </summary>
+        protected virtual void InitializeElementExporters()
+        {
+            // Allow another function to potentially add exporters before ExportSpatialElements.
+            if (m_ElementExporter == null)
+                m_ElementExporter = ExportSpatialElements;
+            else
+                m_ElementExporter += ExportSpatialElements;
+            m_ElementExporter += ExportNonSpatialElements;
+            m_ElementExporter += ExportCachedRailings;
+            m_ElementExporter += ExportGrids;
+            m_ElementExporter += ExportConnectors;
+        }
 
         /// <summary>
         /// Implements the method that Autodesk Revit will invoke to perform an export to IFC.
@@ -89,22 +123,16 @@ namespace BIM.IFC.Exporter
             {
                 BeginExport(exporterIFC, document, filterView);
 
-                ExportSpatialElements(document, exporterIFC, filterView);
-
-                ExportNonSpatialElements(document, exporterIFC, filterView);
-
-                ExportCachedRailings(document, exporterIFC, filterView);
-
-                // Export the grids
-                GridExporter.Export(exporterIFC, document);
-
-                ConnectorExporter.Export(exporterIFC);
+                InitializeElementExporters();
+                if (m_ElementExporter != null)
+                    m_ElementExporter(exporterIFC, document, filterView);
 
                 EndExport(exporterIFC, document);
             }
             finally
             {
                 ExporterCacheManager.Clear();
+                DelegateClear();
 
                 if (m_Writer != null)
                     m_Writer.Close();
@@ -119,7 +147,8 @@ namespace BIM.IFC.Exporter
 
         #endregion
 
-        private void ExportSpatialElements(Autodesk.Revit.DB.Document document, ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView)
+        protected void ExportSpatialElements(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document,
+            Autodesk.Revit.DB.View filterView)
         {
             ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
 
@@ -155,7 +184,8 @@ namespace BIM.IFC.Exporter
             }
         }
 
-        private void ExportNonSpatialElements(Autodesk.Revit.DB.Document document, ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView)
+        protected void ExportNonSpatialElements(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document, 
+            Autodesk.Revit.DB.View filterView)
         {
             FilteredElementCollector otherElementCollector;
 
@@ -187,7 +217,8 @@ namespace BIM.IFC.Exporter
         /// <param name="document">The Revit document.</param>
         /// <param name="exporterIFC">The exporterIFC class.</param>
         /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
-        private void ExportCachedRailings(Autodesk.Revit.DB.Document document, ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView)
+        protected void ExportCachedRailings(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document, 
+            Autodesk.Revit.DB.View filterView)
         {
             foreach (ElementId elementId in ExporterCacheManager.RailingCache)
             {
@@ -196,19 +227,47 @@ namespace BIM.IFC.Exporter
             }
         }
 
+        protected void ExportGrids(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document, 
+            Autodesk.Revit.DB.View filterView)
+        {
+            // Export the grids
+            GridExporter.Export(exporterIFC, document);
+        }
+
+        protected void ExportConnectors(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document, 
+            Autodesk.Revit.DB.View filterView)
+        {
+            ConnectorExporter.Export(exporterIFC);
+        }
+
+        /// <summary>
+        /// Determines if the selected element meets extra criteria for export.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter class.</param>
+        /// <param name="filterView">The filter view.</param>
+        /// <param name="element">The current element to export.</param>
+        /// <returns>True if the element should be exported.</returns>
+        protected virtual bool CanExportElement(ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView, Autodesk.Revit.DB.Element element)
+        {
+            if (!ElementFilteringUtil.ShouldCategoryBeExported(exporterIFC, element))
+                return false;
+
+            // if we allow exporting parts as independent building elements, then prevent also exporting the host elements containing the parts.
+            if (ExporterCacheManager.ExportOptionsCache.ExportPartsAsBuildingElements && PartExporter.CanExportParts(element))
+                return false;
+
+            return true;
+        }
+
         /// <summary>
         /// Performs the export of elements, including spatial and non-spatial elements.
         /// </summary>
         /// <param name="exporterIFC">The IFC exporter object.</param>
         /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
         /// <param name="element ">The element to export.</param>
-        internal void ExportElement(ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView, Autodesk.Revit.DB.Element element)
+        public virtual void ExportElement(ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView, Autodesk.Revit.DB.Element element)
         {
-            if (!ElementFilteringUtil.ShouldCategoryBeExported(exporterIFC, element))
-                return;
-
-            // if we allow exporting parts as independent building elements, then prevent also exporting the host elements containing the parts.
-            if (ExporterCacheManager.ExportOptionsCache.ExportPartsAsBuildingElements && PartExporter.CanExportParts(element))
+            if (!CanExportElement(exporterIFC, filterView, element))
                 return;
 
             //WriteIFCExportedElements
@@ -299,7 +358,7 @@ namespace BIM.IFC.Exporter
         /// <param name="element">The element to export.</param>
         /// <param name="filterView">The view to export, if it exists.</param>
         /// <param name="productWrapper">The IFCProductWrapper object.</param>
-        private void ExportElementImpl(ExporterIFC exporterIFC, Element element, Autodesk.Revit.DB.View filterView,
+        public virtual void ExportElementImpl(ExporterIFC exporterIFC, Element element, Autodesk.Revit.DB.View filterView,
             IFCProductWrapper productWrapper)
         {
             Options options;
@@ -429,6 +488,10 @@ namespace BIM.IFC.Exporter
                         Wall wallElem = element as Wall;
                         WallExporter.Export(exporterIFC, wallElem, geomElem, productWrapper);
                     }
+                    else if (element is FaceWall)
+                    {
+                        WallExporter.ExportWall(exporterIFC, element, geomElem, productWrapper);
+                    }
                     else if (element is WallSweep)
                     {
                         WallSweep wallSweep = element as WallSweep;
@@ -477,6 +540,41 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
+        /// Sets the schema information for the current export options.  This can be overridden.
+        /// </summary>
+        protected virtual IFCFileModelOptions CreateIFCFileModelOptions(ExporterIFC exporterIFC)
+        {
+            IFCFileModelOptions modelOptions = new IFCFileModelOptions();
+            if (exporterIFC.ExportAs2x2)
+            {
+                modelOptions.SchemaFile = Path.Combine(ExporterUtil.RevitProgramPath, "EDM\\IFC2X2_ADD1.exp");
+                modelOptions.SchemaName = "IFC2x2_FINAL";
+            }
+            else
+            {
+                modelOptions.SchemaFile = Path.Combine(ExporterUtil.RevitProgramPath, "EDM\\IFC2X3_TC1.exp");
+                modelOptions.SchemaName = "IFC2x3";
+            }
+            return modelOptions;
+        }
+
+        /// <summary>
+        /// Sets the lists of property sets to be exported.  This can be overriden.
+        /// </summary>
+        protected virtual void InitializePropertySets(IFCVersion fileVersion)
+        {
+            ExporterInitializer.InitPropertySets(m_PropertySetsToExport, ExporterCacheManager.ExportOptionsCache.FileVersion);
+        }
+
+        /// <summary>
+        /// Sets the lists of quantities to be exported.  This can be overriden.
+        /// </summary>
+        protected virtual void InitializeQuantities(IFCVersion fileVersion)
+        {
+            ExporterInitializer.InitQuantities(m_QuantitiesToExport, ExporterCacheManager.ExportOptionsCache.FileVersion, ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities);
+        }
+
+        /// <summary>
         /// Initializes the common properties at the beginning of the export process.
         /// </summary>
         /// <param name="exporterIFC">The IFC exporter object.</param>
@@ -496,24 +594,14 @@ namespace BIM.IFC.Exporter
                 m_Writer = new StreamWriter(@"c:\ifc-output-filters.txt");
             }
 
-            IFCFileModelOptions modelOptions = new IFCFileModelOptions();
-            if (exporterIFC.ExportAs2x2)
-            {
-                modelOptions.SchemaFile = Path.Combine(ExporterUtil.RevitProgramPath, "EDM\\IFC2X2_ADD1.exp");
-                modelOptions.SchemaName = "IFC2x2_FINAL";
-            }
-            else
-            {
-                modelOptions.SchemaFile = Path.Combine(ExporterUtil.RevitProgramPath, "EDM\\IFC2X3_TC1.exp");
-                modelOptions.SchemaName = "IFC2x3";
-            }
+            IFCFileModelOptions modelOptions = CreateIFCFileModelOptions(exporterIFC);
 
             m_IfcFile = IFCFile.Create(modelOptions);
             exporterIFC.SetFile(m_IfcFile);
 
             //init common properties
-            ExporterInitializer.InitPropertySets(ExporterCacheManager.ExportOptionsCache.FileVersion);
-            ExporterInitializer.InitQuantities(ExporterCacheManager.ExportOptionsCache.FileVersion, ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities);
+            InitializePropertySets(ExporterCacheManager.ExportOptionsCache.FileVersion);
+            InitializeQuantities(ExporterCacheManager.ExportOptionsCache.FileVersion);
 
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction transaction = new IFCTransaction(file))
@@ -724,6 +812,7 @@ namespace BIM.IFC.Exporter
                 }
 
                 ProjectInfo projectInfo = document.ProjectInformation;
+                IFCAnyHandle buildingHnd = exporterIFC.GetBuilding();
 
                 // relate assembly elements to assemblies
                 foreach (KeyValuePair<ElementId, AssemblyInstanceInfo> assemblyInfoEntry in ExporterCacheManager.AssemblyInstanceCache)
@@ -748,14 +837,15 @@ namespace BIM.IFC.Exporter
                     HashSet<IFCAnyHandle> relatedElementSet = new HashSet<IFCAnyHandle>(relatedElements);
                     IFCInstanceExporter.CreateRelContainedInSpatialStructure(file,
                         ExporterIFCUtils.CreateSubElementGUID(projectInfo, (int)IFCBuildingSubElements.RelContainedInSpatialStructure),
-                        exporterIFC.GetOwnerHistoryHandle(), null, null, relatedElementSet, exporterIFC.GetBuilding());
+                        exporterIFC.GetOwnerHistoryHandle(), null, null, relatedElementSet, buildingHnd);
                 }
 
                 ICollection<IFCAnyHandle> relatedProducts = exporterIFC.GetRelatedProducts();
                 if (relatedProducts.Count > 0)
                 {
                     string guid = ExporterIFCUtils.CreateSubElementGUID(projectInfo, (int)IFCBuildingSubElements.RelAggregatesProducts);
-                    ExporterUtil.RelateObjects(exporterIFC, guid, exporterIFC.GetBuilding(), relatedProducts);
+                    ExporterCacheManager.ContainmentCache.SetGUIDForRelation(buildingHnd, guid);
+                    ExporterCacheManager.ContainmentCache.AddRelations(buildingHnd, relatedProducts);
                 }
 
                 // create a default site if we have latitude and longitude information.
@@ -770,26 +860,35 @@ namespace BIM.IFC.Exporter
                 IFCAnyHandle siteHandle = exporterIFC.GetSite();
                 if (!IFCAnyHandleUtil.IsNullOrHasNoValue(siteHandle))
                 {
-                    ExporterUtil.RelateObject(exporterIFC, exporterIFC.GetProject(), siteHandle);
+                    ExporterCacheManager.ContainmentCache.AddRelation(exporterIFC.GetProject(), siteHandle);
 
                     // assoc. site to the building.
-                    ExporterUtil.RelateObject(exporterIFC, siteHandle, exporterIFC.GetBuilding());
+                    ExporterCacheManager.ContainmentCache.AddRelation(siteHandle, buildingHnd);
 
-                    ExporterIFCUtils.UpdateBuildingPlacement(exporterIFC);
+                    ExporterUtil.UpdateBuildingPlacement(buildingHnd, siteHandle);
                 }
                 else
                 {
                     // relate building and project if no site
-                    ExporterUtil.RelateObject(exporterIFC, exporterIFC.GetProject(), exporterIFC.GetBuilding());
+                    ExporterCacheManager.ContainmentCache.AddRelation(exporterIFC.GetProject(), buildingHnd);
                 }
 
                 // relate levels and products.
                 RelateLevels(exporterIFC, document);
 
+                // relate objects in containment cache.
+                foreach (KeyValuePair<IFCAnyHandle, ICollection<IFCAnyHandle>> container in ExporterCacheManager.ContainmentCache)
+                {
+                    if (container.Value.Count() > 0)
+                    {
+                        string relationGUID = ExporterCacheManager.ContainmentCache.GetGUIDForRelation(container.Key);
+                        ExporterUtil.RelateObjects(exporterIFC, relationGUID, container.Key, container.Value);
+                    }
+                }
+
                 // These elements are created internally, but we allow custom property sets for them.  Create them here.
                 using (IFCProductWrapper productWrapper = IFCProductWrapper.Create(exporterIFC, true))
                 {
-                    IFCAnyHandle buildingHnd = exporterIFC.GetBuilding();
                     productWrapper.AddBuilding(buildingHnd);
                     ExportElementProperties(exporterIFC, document.ProjectInformation, productWrapper);
                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, document.ProjectInformation, productWrapper);
@@ -930,7 +1029,7 @@ namespace BIM.IFC.Exporter
 
                 // Create systems.
                 HashSet<IFCAnyHandle> relatedBuildings = new HashSet<IFCAnyHandle>();
-                relatedBuildings.Add(exporterIFC.GetBuilding());
+                relatedBuildings.Add(buildingHnd);
 
                 foreach (KeyValuePair<ElementId, ICollection<IFCAnyHandle>> system in ExporterCacheManager.SystemsCache.BuiltInSystemsCache)
                 {
@@ -954,6 +1053,21 @@ namespace BIM.IFC.Exporter
 
                     IFCAnyHandle relAssignsToGroup = IFCInstanceExporter.CreateRelAssignsToGroup(file, ExporterIFCUtils.CreateGUID(),
                         exporterIFC.GetOwnerHistoryHandle(), null, null, system.Value, IFCObjectType.Product, systemHandle);
+                }
+
+                // Add presentation layer assignments - this is in addition to those added in EndExportInternal, and will
+                // eventually replace the internal routine.
+                foreach (KeyValuePair<string, ICollection<IFCAnyHandle>> presentationLayerSet in ExporterCacheManager.PresentationLayerSetCache)
+                {
+                    ICollection<IFCAnyHandle> validHandles = new List<IFCAnyHandle>();
+                    foreach (IFCAnyHandle handle in presentationLayerSet.Value)
+                    {
+                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(handle))
+                            validHandles.Add(handle);
+                    }
+
+                    if (validHandles.Count > 0)
+                        IFCInstanceExporter.CreatePresentationLayerAssignment(file, presentationLayerSet.Key, null, validHandles, null);
                 }
 
                 ExporterIFCUtils.EndExportInternal(exporterIFC);
@@ -1045,7 +1159,7 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The IFC exporter object.</param>
         /// <param name="element ">The element whose properties are exported.</param>
         /// <param name="productWrapper">The IFCProductWrapper object.</param>
-        internal void ExportElementProperties(ExporterIFC exporterIFC, Element element, IFCProductWrapper productWrapper)
+        public void ExportElementProperties(ExporterIFC exporterIFC, Element element, IFCProductWrapper productWrapper)
         {
             if (productWrapper.Count == 0)
                 return;
@@ -1211,7 +1325,7 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The IFC exporter object.</param>
         /// <param name="element ">The element whose quantities are exported.</param>
         /// <param name="productWrapper">The IFCProductWrapper object.</param>
-        internal void ExportElementQuantities(ExporterIFC exporterIFC, Element element, IFCProductWrapper productWrapper)
+        public void ExportElementQuantities(ExporterIFC exporterIFC, Element element, IFCProductWrapper productWrapper)
         {
             if (productWrapper.Count == 0)
                 return;
@@ -2050,8 +2164,10 @@ namespace BIM.IFC.Exporter
 
                 if (relatedProducts.Count > 0)
                 {
+                    IFCAnyHandle buildingStorey = levelInfo.GetBuildingStorey();
                     string guid = ExporterIFCUtils.CreateSubElementGUID(level, (int)IFCBuildingStoreySubElements.RelAggregates);
-                    ExporterUtil.RelateObjects(exporterIFC, guid, levelInfo.GetBuildingStorey(), relatedProducts);
+                    ExporterCacheManager.ContainmentCache.SetGUIDForRelation(buildingStorey, guid);
+                    ExporterCacheManager.ContainmentCache.AddRelations(buildingStorey, relatedProducts);
                 }
                 if (relatedElements.Count > 0)
                 {
@@ -2062,10 +2178,22 @@ namespace BIM.IFC.Exporter
 
             if (buildingStoreys.Count > 0)
             {
+                IFCAnyHandle building = exporterIFC.GetBuilding();
                 ProjectInfo projectInfo = document.ProjectInformation;
                 string guid = ExporterIFCUtils.CreateSubElementGUID(projectInfo, (int)IFCBuildingSubElements.RelAggregatesBuildingStoreys);
-                ExporterUtil.RelateObjects(exporterIFC, guid, exporterIFC.GetBuilding(), buildingStoreys);
+                ExporterCacheManager.ContainmentCache.SetGUIDForRelation(building, guid);
+                ExporterCacheManager.ContainmentCache.AddRelations(building, buildingStoreys);
             }
+        }
+
+        /// <summary>
+        /// Clear all delegates.
+        /// </summary>
+        private void DelegateClear()
+        {
+            m_ElementExporter = null;
+            m_PropertySetsToExport = null;
+            m_QuantitiesToExport = null;
         }
     }
 }

@@ -28,7 +28,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of IFC string properties.
     /// </summary>
-    class StringPropertyInfoCache : Dictionary<KeyValuePair<string, string>, IFCAnyHandle>
+    public class StringPropertyInfoCache : Dictionary<KeyValuePair<string, string>, IFCAnyHandle>
     {
         /// <summary>
         /// Finds if it contains the property with the specified string value.

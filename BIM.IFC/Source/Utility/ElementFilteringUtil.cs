@@ -30,7 +30,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// IFC export type.
     /// </summary>
-    enum IFCExportType
+    public enum IFCExportType
     {
         /// <summary>
         /// Don't export.

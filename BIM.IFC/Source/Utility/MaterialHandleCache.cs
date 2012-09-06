@@ -29,7 +29,7 @@ namespace BIM.IFC.Utility
     /// <summary>
     /// Used to keep a cache of the IfcMaterial handles mapping to a material element in Revit.
     /// </summary>
-    class MaterialHandleCache : ElementToHandleCache
+    public class MaterialHandleCache : ElementToHandleCache
     {
     }
 }

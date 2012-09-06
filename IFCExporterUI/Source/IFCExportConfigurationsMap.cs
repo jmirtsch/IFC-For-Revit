@@ -36,7 +36,9 @@ namespace BIM.IFC.Export.UI
     {
         private Dictionary<String, IFCExportConfiguration> m_configurations = new Dictionary<String, IFCExportConfiguration>();
         private Schema m_schema = null;
+        private Schema m_mapSchema = null;
         private static Guid s_schemaId = new Guid("A1E672E5-AC88-4933-A019-F9068402CFA7");
+        private static Guid s_mapSchemaId = new Guid("DCB88B13-594F-44F6-8F5D-AE9477305AC3");
 
         /// <summary>
         /// Constructs a default map.
@@ -78,37 +80,100 @@ namespace BIM.IFC.Export.UI
         /// <param name="document">The document storing the saved configuration.</param>
         public void AddSavedConfigurations(Document document)
         {
-            if (m_schema == null)
+            try
             {
-                m_schema = Schema.Lookup(s_schemaId);
-            }
-
-            if (m_schema != null)
-            {
-                foreach (DataStorage storedSetup in GetSavedConfigurations(document))
+                if (m_schema == null)
                 {
-                    Entity configEntity = storedSetup.GetEntity(m_schema);
-                    IFCExportConfiguration configuration = IFCExportConfiguration.CreateDefaultConfiguration();
-                    configuration.Name = configEntity.Get<String>(s_setupName);
-                    //configuration.Description = configEntity.Get<String>(s_setupDescription);
-                    configuration.IFCVersion = (IFCVersion)configEntity.Get<int>(s_setupVersion);
-                    configuration.IFCFileType = (IFCFileFormat)configEntity.Get<int>(s_setupFileFormat);
-                    configuration.SpaceBoundaries = configEntity.Get<int>(s_setupSpaceBoundaries);
-                    configuration.ExportBaseQuantities = configEntity.Get<bool>(s_setupQTO);
-                    configuration.SplitWallsAndColumns = configEntity.Get<bool>(s_splitWallsAndColumns);
-                    configuration.Export2DElements = configEntity.Get<bool>(s_setupExport2D);
-                    configuration.ExportInternalRevitPropertySets = configEntity.Get<bool>(s_setupExportRevitProps);
-                    configuration.ExportIFCCommonPropertySets = configEntity.Get<bool>(s_setupExportIFCCommonProperty);
-                    configuration.Use2DRoomBoundaryForVolume = configEntity.Get<bool>(s_setupUse2DForRoomVolume);
-                    configuration.UseFamilyAndTypeNameForReference = configEntity.Get<bool>(s_setupUseFamilyAndTypeName);
-                    configuration.ExportPartsAsBuildingElements = configEntity.Get<bool>(s_setupExportPartsAsBuildingElements);
-                    configuration.ExportSurfaceStyles = configEntity.Get<bool>(s_setupExportSurfaceStyles);
+                    m_schema = Schema.Lookup(s_schemaId);
+                }
+                if (m_mapSchema == null)
+                {
+                    m_mapSchema = Schema.Lookup(s_mapSchemaId);
+                }
 
-                    Add(configuration);
-                } 
-            }   
+                if (m_mapSchema != null)
+                {
+                    foreach (DataStorage storedSetup in GetSavedConfigurations(document, m_mapSchema))
+                    {
+                        Entity configEntity = storedSetup.GetEntity(m_mapSchema);
+                        IDictionary<string, string> configMap = configEntity.Get<IDictionary<string, string>>(s_configMapField);
+                        IFCExportConfiguration configuration = IFCExportConfiguration.CreateDefaultConfiguration();
+                        if (configMap.ContainsKey(s_setupName))
+                            configuration.Name = configMap[s_setupName];
+                        if (configMap.ContainsKey(s_setupVersion))
+                            configuration.IFCVersion = (IFCVersion)Enum.Parse(typeof(IFCVersion), configMap[s_setupVersion]);
+                        if (configMap.ContainsKey(s_setupFileFormat))
+                            configuration.IFCFileType = (IFCFileFormat)Enum.Parse(typeof(IFCFileFormat), configMap[s_setupFileFormat]);
+                        if (configMap.ContainsKey(s_setupSpaceBoundaries))
+                            configuration.SpaceBoundaries = int.Parse(configMap[s_setupSpaceBoundaries]);
+                        if (configMap.ContainsKey(s_setupQTO))
+                            configuration.ExportBaseQuantities = bool.Parse(configMap[s_setupQTO]);
+                        if (configMap.ContainsKey(s_setupCurrentView))
+                            configuration.VisibleElementsOfCurrentView = bool.Parse(configMap[s_setupCurrentView]);
+                        if (configMap.ContainsKey(s_splitWallsAndColumns))
+                            configuration.SplitWallsAndColumns = bool.Parse(configMap[s_splitWallsAndColumns]);
+                        if (configMap.ContainsKey(s_setupExport2D))
+                            configuration.Export2DElements = bool.Parse(configMap[s_setupExport2D]);
+                        if (configMap.ContainsKey(s_setupExportRevitProps))
+                            configuration.ExportInternalRevitPropertySets = bool.Parse(configMap[s_setupExportRevitProps]);
+                        if (configMap.ContainsKey(s_setupExportIFCCommonProperty))
+                            configuration.ExportIFCCommonPropertySets = bool.Parse(configMap[s_setupExportIFCCommonProperty]);
+                        if (configMap.ContainsKey(s_setupUse2DForRoomVolume))
+                            configuration.Use2DRoomBoundaryForVolume = bool.Parse(configMap[s_setupUse2DForRoomVolume]);
+                        if (configMap.ContainsKey(s_setupUseFamilyAndTypeName))
+                            configuration.UseFamilyAndTypeNameForReference = bool.Parse(configMap[s_setupUseFamilyAndTypeName]);
+                        if (configMap.ContainsKey(s_setupExportPartsAsBuildingElements))
+                            configuration.ExportPartsAsBuildingElements = bool.Parse(configMap[s_setupExportPartsAsBuildingElements]);
+                        if (configMap.ContainsKey(s_setupExportSurfaceStyles))
+                            configuration.ExportSurfaceStyles = bool.Parse(configMap[s_setupExportSurfaceStyles]);
+
+                        Add(configuration);
+                    }
+                    return; // if finds the config in map schema, return and skip finding the old schema.
+                }
+
+                // find the config in old schema.
+                if (m_schema != null)
+                {
+                    foreach (DataStorage storedSetup in GetSavedConfigurations(document, m_schema))
+                    {
+                        Entity configEntity = storedSetup.GetEntity(m_schema);
+                        IFCExportConfiguration configuration = IFCExportConfiguration.CreateDefaultConfiguration();
+                        configuration.Name = configEntity.Get<String>(s_setupName);
+                        //configuration.Description = configEntity.Get<String>(s_setupDescription);
+                        configuration.IFCVersion = (IFCVersion)configEntity.Get<int>(s_setupVersion);
+                        configuration.IFCFileType = (IFCFileFormat)configEntity.Get<int>(s_setupFileFormat);
+                        configuration.SpaceBoundaries = configEntity.Get<int>(s_setupSpaceBoundaries);
+                        configuration.ExportBaseQuantities = configEntity.Get<bool>(s_setupQTO);
+                        configuration.SplitWallsAndColumns = configEntity.Get<bool>(s_splitWallsAndColumns);
+                        configuration.Export2DElements = configEntity.Get<bool>(s_setupExport2D);
+                        configuration.ExportInternalRevitPropertySets = configEntity.Get<bool>(s_setupExportRevitProps);
+                        Field fieldIFCCommonPropertySets = m_schema.GetField(s_setupExportIFCCommonProperty);
+                        if (fieldIFCCommonPropertySets != null)
+                            configuration.ExportIFCCommonPropertySets = configEntity.Get<bool>(s_setupExportIFCCommonProperty);
+                        configuration.Use2DRoomBoundaryForVolume = configEntity.Get<bool>(s_setupUse2DForRoomVolume);
+                        configuration.UseFamilyAndTypeNameForReference = configEntity.Get<bool>(s_setupUseFamilyAndTypeName);
+                        Field fieldPartsAsBuildingElements = m_schema.GetField(s_setupExportPartsAsBuildingElements);
+                        if (fieldPartsAsBuildingElements != null)
+                            configuration.ExportPartsAsBuildingElements = configEntity.Get<bool>(s_setupExportPartsAsBuildingElements);
+                        Field fieldSurfaceStyles = m_schema.GetField(s_setupExportSurfaceStyles);
+                        if (fieldSurfaceStyles != null)
+                            configuration.ExportSurfaceStyles = configEntity.Get<bool>(s_setupExportSurfaceStyles);
+
+                        Add(configuration);
+                    }
+                }
+            }
+            catch (System.Exception)
+            {
+                // to avoid fail to show the dialog if any exception throws in reading schema.
+            }
         }
 
+        // The MapField is to defined the map<string,string> in schema. 
+        // Please don't change the name values, it affects the schema.
+        private const String s_configMapField = "MapField";
+        // The following are the keys in the MapFied in new schema. For old schema, they are simple fields.
         private const String s_setupName = "Name";
         private const String s_setupDescription = "Description";
         private const String s_setupVersion = "Version";
@@ -131,9 +196,32 @@ namespace BIM.IFC.Export.UI
         /// <param name="document">The document storing the saved configuration.</param>
         public void UpdateSavedConfigurations(Document document)
         {
+            // delete the old schema and the DataStorage.
             if (m_schema == null)
             {
                 m_schema = Schema.Lookup(s_schemaId);
+            }
+            if (m_schema != null)
+            {
+                IList<DataStorage> oldSavedConfigurations = GetSavedConfigurations(document, m_schema);
+                if (oldSavedConfigurations.Count > 0)
+                {
+                    Transaction deleteTransaction = new Transaction(document, "Delete old IFC export setups");
+                    deleteTransaction.Start();
+                    List<ElementId> dataStorageToDelete = new List<ElementId>();
+                    foreach (DataStorage dataStorage in oldSavedConfigurations)
+                    {
+                        dataStorageToDelete.Add(dataStorage.Id);
+                    }
+                    document.Delete(dataStorageToDelete);
+                    deleteTransaction.Commit();
+                }
+            }
+
+            // update the configurations to new map schema.
+            if (m_mapSchema == null)
+            {
+                m_mapSchema = Schema.Lookup(s_mapSchemaId);
             }
 
             // Are there any setups to save or resave?
@@ -155,36 +243,21 @@ namespace BIM.IFC.Export.UI
 
            // If there are no setups to save, and if the schema is not present (which means there are no
            // previously existing setups which might have been deleted) we can skip the rest of this method.
-           if (setupsToSave.Count <= 0 && m_schema == null)
+            if (setupsToSave.Count <= 0 && m_mapSchema == null)
                return;
 
-           if (m_schema == null)
+           if (m_mapSchema == null)
            {
-                SchemaBuilder builder = new SchemaBuilder(s_schemaId);
-                builder.SetSchemaName("IFCExportConfiguration");
-                builder.AddSimpleField(s_setupName, typeof(String));
-                builder.AddSimpleField(s_setupDescription, typeof(String));
-                builder.AddSimpleField(s_setupVersion, typeof(int));
-                builder.AddSimpleField(s_setupFileFormat, typeof(int));
-                builder.AddSimpleField(s_setupSpaceBoundaries, typeof(int));
-                builder.AddSimpleField(s_setupQTO, typeof(bool));
-                builder.AddSimpleField(s_splitWallsAndColumns, typeof(bool));
-                builder.AddSimpleField(s_setupCurrentView, typeof(bool));
-                builder.AddSimpleField(s_setupExport2D, typeof(bool));
-                builder.AddSimpleField(s_setupExportRevitProps, typeof(bool));
-                builder.AddSimpleField(s_setupExportIFCCommonProperty, typeof(bool));
-                builder.AddSimpleField(s_setupUse2DForRoomVolume, typeof(bool));
-                builder.AddSimpleField(s_setupUseFamilyAndTypeName, typeof(bool));
-                builder.AddSimpleField(s_setupExportPartsAsBuildingElements, typeof(bool));
-                builder.AddSimpleField(s_setupExportSurfaceStyles, typeof(bool));
-
-                m_schema = builder.Finish();
+               SchemaBuilder builder = new SchemaBuilder(s_mapSchemaId);
+               builder.SetSchemaName("IFCExportConfigurationMap");
+               builder.AddMapField(s_configMapField, typeof(String), typeof(String));
+               m_mapSchema = builder.Finish();
            }
 
            // Overwrite all saved configs with the new list
            Transaction transaction = new Transaction(document, "Update IFC export setups");
            transaction.Start();
-           IList<DataStorage> savedConfigurations = GetSavedConfigurations(document);
+           IList<DataStorage> savedConfigurations = GetSavedConfigurations(document, m_mapSchema);
            int savedConfigurationCount = savedConfigurations.Count<DataStorage>();
            int savedConfigurationIndex = 0;
            foreach (IFCExportConfiguration configuration in setupsToSave)
@@ -198,25 +271,28 @@ namespace BIM.IFC.Export.UI
                 {
                     configStorage = savedConfigurations[savedConfigurationIndex];
                     savedConfigurationIndex ++;
-                }
-                Entity entity = new Entity(m_schema);
-                entity.Set(s_setupName, configuration.Name);
-                entity.Set(s_setupDescription, configuration.Description);
-                entity.Set(s_setupVersion, (int)configuration.IFCVersion);
-                entity.Set(s_setupFileFormat, (int)configuration.IFCFileType);
-                entity.Set(s_setupSpaceBoundaries, configuration.SpaceBoundaries);
-                entity.Set(s_setupQTO, configuration.ExportBaseQuantities);
-                entity.Set(s_setupCurrentView, configuration.VisibleElementsOfCurrentView);
-                entity.Set(s_splitWallsAndColumns, configuration.SplitWallsAndColumns);
-                entity.Set(s_setupExport2D, configuration.Export2DElements);
-                entity.Set(s_setupExportRevitProps, configuration.ExportInternalRevitPropertySets);
-                entity.Set(s_setupExportIFCCommonProperty, configuration.ExportIFCCommonPropertySets);
-                entity.Set(s_setupUse2DForRoomVolume, configuration.Use2DRoomBoundaryForVolume);
-                entity.Set(s_setupUseFamilyAndTypeName, configuration.UseFamilyAndTypeNameForReference);
-                entity.Set(s_setupExportPartsAsBuildingElements, configuration.ExportPartsAsBuildingElements);
-                entity.Set(s_setupExportSurfaceStyles, configuration.ExportSurfaceStyles);
+                }             
 
-                configStorage.SetEntity(entity);
+                Entity mapEntity = new Entity(m_mapSchema);
+                IDictionary<string, string> mapData = new Dictionary<string, string>();
+                mapData.Add(s_setupName, configuration.Name);
+                mapData.Add(s_setupDescription, configuration.Description);
+                mapData.Add(s_setupVersion, configuration.IFCVersion.ToString());
+                mapData.Add(s_setupFileFormat, configuration.IFCFileType.ToString());
+                mapData.Add(s_setupSpaceBoundaries, configuration.SpaceBoundaries.ToString());
+                mapData.Add(s_setupQTO, configuration.ExportBaseQuantities.ToString());
+                mapData.Add(s_setupCurrentView, configuration.VisibleElementsOfCurrentView.ToString());
+                mapData.Add(s_splitWallsAndColumns, configuration.SplitWallsAndColumns.ToString());
+                mapData.Add(s_setupExport2D, configuration.Export2DElements.ToString());
+                mapData.Add(s_setupExportRevitProps, configuration.ExportInternalRevitPropertySets.ToString());
+                mapData.Add(s_setupExportIFCCommonProperty, configuration.ExportIFCCommonPropertySets.ToString());
+                mapData.Add(s_setupUse2DForRoomVolume, configuration.Use2DRoomBoundaryForVolume.ToString());
+                mapData.Add(s_setupUseFamilyAndTypeName, configuration.UseFamilyAndTypeNameForReference.ToString());
+                mapData.Add(s_setupExportPartsAsBuildingElements, configuration.ExportPartsAsBuildingElements.ToString());
+                mapData.Add(s_setupExportSurfaceStyles, configuration.ExportSurfaceStyles.ToString());
+                mapEntity.Set<IDictionary<string, String>>(s_configMapField, mapData);
+
+                configStorage.SetEntity(mapEntity);
             }
 
             List<ElementId> elementsToDelete = new List<ElementId>();
@@ -236,11 +312,11 @@ namespace BIM.IFC.Export.UI
         /// </summary>
         /// <param name="document">The document storing the saved configuration.</param>
         /// <returns>The saved configurations.</returns>
-        private IList<DataStorage> GetSavedConfigurations(Document document)
+        private IList<DataStorage> GetSavedConfigurations(Document document, Schema schema)
         {
             FilteredElementCollector collector = new FilteredElementCollector(document);
             collector.OfClass(typeof(DataStorage));
-            Func<DataStorage, bool> hasTargetData = ds => ds.GetEntity(m_schema) != null;
+            Func<DataStorage, bool> hasTargetData = ds => (ds.GetEntity(schema) != null && ds.GetEntity(schema).IsValid());
 
             return collector.Cast<DataStorage>().Where<DataStorage>(hasTargetData).ToList<DataStorage>();
         }
