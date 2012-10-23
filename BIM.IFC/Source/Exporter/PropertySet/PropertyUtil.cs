@@ -36,21 +36,11 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Create a label property.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="propertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="value">
-        /// The value of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateLabelProperty(IFCFile file, string propertyName, string value, PropertyValueType valueType)
         {
             switch (valueType)
@@ -69,26 +59,69 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
-        /// Create a label property.
+        /// Create a text property.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="propertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="value">
-        /// The value of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <param name="cacheAllStrings">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateTextProperty(IFCFile file, string propertyName, string value, PropertyValueType valueType)
+        {
+            switch (valueType)
+            {
+                case PropertyValueType.EnumeratedValue:
+                    {
+                        IList<IFCData> valueList = new List<IFCData>();
+                        valueList.Add(IFCDataUtil.CreateAsText(value));
+                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+                    }
+                case PropertyValueType.SingleValue:
+                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsText(value), null);
+                default:
+                    throw new InvalidOperationException("Missing case!");
+            }
+        }
+
+        /// <summary>
+        /// Create a text property, using the cached value if possible.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateTextPropertyFromCache(IFCFile file, string propertyName, string value, PropertyValueType valueType)
+        {
+            bool canCache = (value == String.Empty);
+            StringPropertyInfoCache stringInfoCache = null;
+            IFCAnyHandle textHandle = null;
+
+            if (canCache)
+            {
+                stringInfoCache = ExporterCacheManager.PropertyInfoCache.TextCache;
+                textHandle = stringInfoCache.Find(propertyName, value);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(textHandle))
+                    return textHandle;
+            }
+
+            textHandle = CreateTextProperty(file, propertyName, value, valueType);
+
+            if (canCache)
+                stringInfoCache.Add(propertyName, value, textHandle);
+
+            return textHandle;
+        }
+
+        /// <summary>
+        /// Create a label property, using the cached value if possible.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <param name="cacheAllStrings">Whether to cache all strings (true), or only the empty string (false).</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateLabelPropertyFromCache(IFCFile file, string propertyName, string value, PropertyValueType valueType, bool cacheAllStrings)
         {
             bool canCache = (value == String.Empty) || cacheAllStrings;
@@ -106,9 +139,7 @@ namespace BIM.IFC.Exporter.PropertySet
             labelHandle = CreateLabelProperty(file, propertyName, value, valueType);
 
             if (canCache)
-            {
                 stringInfoCache.Add(propertyName, value, labelHandle);
-            }
 
             return labelHandle;
         }
@@ -589,43 +620,53 @@ namespace BIM.IFC.Exporter.PropertySet
             return null;
         }
 
+        private static IFCAnyHandle CreateRatioMeasurePropertyCommon(IFCFile file, string propertyName, double value, PropertyValueType valueType,
+            bool positiveOnly)
+        {
+            if (positiveOnly && (value <= MathUtil.Eps()))
+                return null;
+
+            IFCData ratioData = positiveOnly ? IFCDataUtil.CreateAsPositiveRatioMeasure(value) : IFCDataUtil.CreateAsRatioMeasure(value);
+            
+            switch (valueType)
+            {
+                case PropertyValueType.EnumeratedValue:
+                    {
+                        IList<IFCData> valueList = new List<IFCData>();
+                        valueList.Add(ratioData);
+                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+                    }
+                case PropertyValueType.SingleValue:
+                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, ratioData, null);
+                default:
+                    throw new InvalidOperationException("Missing case!");
+            }
+        }
+
+        /// <summary>
+        /// Create a ratio measure property.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateRatioMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+        {
+            return CreateRatioMeasurePropertyCommon(file, propertyName, value, valueType, false);
+        }
+        
         /// <summary>
         /// Create a positive ratio measure property.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="propertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="value">
-        /// The value of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreatePositiveRatioMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
-            if (value > MathUtil.Eps())
-            {
-                switch (valueType)
-                {
-                    case PropertyValueType.EnumeratedValue:
-                        {
-                            IList<IFCData> valueList = new List<IFCData>();
-                            valueList.Add(IFCDataUtil.CreateAsPositiveRatioMeasure(value));
-                            return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
-                        }
-                    case PropertyValueType.SingleValue:
-                        return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsPositiveRatioMeasure(value), null);
-                    default:
-                        throw new InvalidOperationException("Missing case!");
-                }
-            }
-            return null;
+            return CreateRatioMeasurePropertyCommon(file, propertyName, value, valueType, true);
         }
 
         /// <summary>
@@ -752,7 +793,7 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <param name="value">The value of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateCountMeasureProperty(IFCFile file, string propertyName, int value, PropertyValueType valueType)
+        public static IFCAnyHandle CreateCountMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
             switch (valueType)
             {
@@ -1158,29 +1199,42 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Create a ratio property from the element's or type's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateRatioPropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
+           string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        {
+            double propertyValue;
+            if (ParameterUtil.GetDoubleValueFromElement(elem, revitParameterName, out propertyValue))
+                return CreateRatioMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
+
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType == null)
+                return null;
+
+            return CreateRatioPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, ifcPropertyName, valueType);
+        }
+        
+        /// <summary>
         /// Create a positive ratio property from the element's or type's parameter.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC.
-        /// </param>
-        /// <param name="elem">
-        /// The Element.
-        /// </param>
-        /// <param name="revitParameterName">
-        /// The name of the parameter.
-        /// </param>
-        /// <param name="ifcPropertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreatePositiveRatioPropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
@@ -1194,10 +1248,10 @@ namespace BIM.IFC.Exporter.PropertySet
             Document document = elem.Document;
             ElementId typeId = elem.GetTypeId();
             Element elemType = document.GetElement(typeId);
-            if (elemType != null)
-                return CreatePositiveRatioPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, ifcPropertyName, valueType);
-            else
+            if (elemType == null)
                 return null;
+
+            return CreatePositiveRatioPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, ifcPropertyName, valueType);
         }
 
         /// <summary>
@@ -1292,10 +1346,11 @@ namespace BIM.IFC.Exporter.PropertySet
             string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             int propertyValue;
+            double propertyValueReal;
             if (ParameterUtil.GetIntValueFromElement(elem, revitParameterName, out propertyValue))
-            {
                 return CreateCountMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
-            }
+            if (ParameterUtil.GetDoubleValueFromElement(elem, revitParameterName, out propertyValueReal))
+                return CreateCountMeasureProperty(file, ifcPropertyName, propertyValueReal, valueType);
             return null;
         }
 
@@ -1493,6 +1548,11 @@ namespace BIM.IFC.Exporter.PropertySet
                     if (parameterDefinition == null)
                         continue;
 
+                    // Don't export parameters that aren't visible to the user.
+                    InternalDefinition internalDefinition = parameterDefinition as InternalDefinition;
+                    if (internalDefinition != null && internalDefinition.Visible == false)
+                        continue;
+
                     // IFC parameters dealt with separately.
                     // TODO: also sort out parameters passed in Common Psets.
                     BuiltInParameterGroup parameterGroup = parameterDefinition.ParameterGroup;
@@ -1630,7 +1690,7 @@ namespace BIM.IFC.Exporter.PropertySet
                                     else
                                         continue;
                                 }
-                                propertyArr[which][idx].Add(CreateLabelPropertyFromCache(file, parameterCaption, value, PropertyValueType.SingleValue, false));
+                                propertyArr[which][idx].Add(CreateTextPropertyFromCache(file, parameterCaption, value, PropertyValueType.SingleValue));
                                 break;
                             }
                         case StorageType.ElementId:

@@ -1262,10 +1262,10 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
-        /// Validates the attributes for IfcArbitraryClosedProfileDef.
+        /// Validates the attributes for IfcArbitraryOpenProfileDef or IfcArbitraryClosedProfileDef.
         /// </summary>
         /// <param name="outerCurve">The outer curve, of type IfcCurve and non-null.</param>
-        private static void ValidateArbitraryClosedProfileDef(IFCAnyHandle outerCurve)
+        private static void ValidateArbitraryOpenOrClosedProfileDef(IFCAnyHandle outerCurve)
         {
             IFCAnyHandleUtil.ValidateSubTypeOf(outerCurve, false, IFCEntityType.IfcCurve);
         }
@@ -1307,6 +1307,17 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandleUtil.SetAttribute(sweptAreaSolid, "Position", position);
         }
 
+        /// <summary>
+        /// Sets attributes for IfcSweptSurface.
+        /// </summary>
+        /// <param name="sweptSurface">The IfcSweptSurface.</param>
+        /// <param name="sweptCurve">The curve.</param>
+        /// <param name="position">The position.</param>
+        private static void SetSweptSurface(IFCAnyHandle sweptSurface, IFCAnyHandle sweptCurve, IFCAnyHandle position)
+        {
+            IFCAnyHandleUtil.SetAttribute(sweptSurface, "SweptCurve", sweptCurve);
+            IFCAnyHandleUtil.SetAttribute(sweptSurface, "Position", position);
+        }
         #endregion
 
         #region public creation methods goes here
@@ -2905,6 +2916,30 @@ namespace BIM.IFC.Toolkit
             return compositeCurve;
         }
 
+        /// <summary>
+        /// Creates a handle representing an IfcSweptDiskSolid and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="directrix">The curve used to define the sweeping operation.</param>
+        /// <param name="radius">The radius of the circular disk to be swept along the directrix.</param>
+        /// <param name="innerRadius">This attribute is optional, if present it defines the radius of a circular hole in the centre of the disk.</param>
+        /// <param name="startParam">The parameter value on the directrix at which the sweeping operation commences.</param>
+        /// <param name="endParam">The parameter value on the directrix at which the sweeping operation ends.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateSweptDiskSolid(IFCFile file, IFCAnyHandle directrix, double radius,
+            double? innerRadius, double startParam, double endParam)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(directrix, false, IFCEntityType.IfcCurve);
+
+            IFCAnyHandle sweptDiskSolid = file.CreateInstance(IFCEntityType.IfcSweptDiskSolid.ToString());
+            IFCAnyHandleUtil.SetAttribute(sweptDiskSolid, "Directrix", directrix);
+            IFCAnyHandleUtil.SetAttribute(sweptDiskSolid, "Radius", radius);
+            IFCAnyHandleUtil.SetAttribute(sweptDiskSolid, "InnerRadius", innerRadius);
+            IFCAnyHandleUtil.SetAttribute(sweptDiskSolid, "StartParam", startParam);
+            IFCAnyHandleUtil.SetAttribute(sweptDiskSolid, "EndParam", endParam);
+            return sweptDiskSolid;
+        }
+
         private static void SetFaceBound(IFCAnyHandle faceBound, IFCAnyHandle bound, bool orientation)
         {
             IFCAnyHandleUtil.SetAttribute(faceBound, "Bound", bound);
@@ -3121,6 +3156,60 @@ namespace BIM.IFC.Toolkit
             SetElement(energyConversionDevice, guid, ownerHistory, name, description, objectType, objectPlacement, representation,
                 elementTag);
             return energyConversionDevice;
+        }
+
+        /// <summary>
+        /// Creates an IfcFastener, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="objectType">The object type.</param>
+        /// <param name="objectPlacement">The object placement.</param>
+        /// <param name="representation">The geometric representation of the entity.</param>
+        /// <param name="elementTag">The tag that represents the entity.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateFastener(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
+            string description, string objectType, IFCAnyHandle objectPlacement, IFCAnyHandle representation,
+            string elementTag)
+        {
+            ValidateElement(guid, ownerHistory, name, description, objectType, objectPlacement, representation, elementTag);
+
+            IFCAnyHandle fastener = CreateInstance(file, IFCEntityType.IfcFastener);
+            SetElement(fastener, guid, ownerHistory, name, description, objectType, objectPlacement, representation,
+                elementTag);
+            return fastener;
+        }
+
+        /// <summary>
+        /// Creates an IfcMechanicalFastener, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="objectType">The object type.</param>
+        /// <param name="objectPlacement">The object placement.</param>
+        /// <param name="representation">The geometric representation of the entity.</param>
+        /// <param name="elementTag">The tag that represents the entity.</param>
+        /// <param name="nominalDiameter">The optinal nominal diameter.</param>
+        /// <param name="nominalLength">The optional nominal length.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateMechanicalFastener(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
+            string description, string objectType, IFCAnyHandle objectPlacement, IFCAnyHandle representation,
+            string elementTag, double? nominalDiameter, double? nominalLength)
+        {
+            ValidateElement(guid, ownerHistory, name, description, objectType, objectPlacement, representation, elementTag);
+
+            IFCAnyHandle fastener = CreateInstance(file, IFCEntityType.IfcMechanicalFastener);
+            SetElement(fastener, guid, ownerHistory, name, description, objectType, objectPlacement, representation,
+                elementTag);
+            IFCAnyHandleUtil.SetAttribute(fastener, "NominalDiameter", nominalDiameter);
+            IFCAnyHandleUtil.SetAttribute(fastener, "NominalLength", nominalLength);
+            return fastener;
         }
 
         /// <summary>
@@ -4272,6 +4361,60 @@ namespace BIM.IFC.Toolkit
             return fanType;
         }
 
+        /// <summary>
+        /// Creates an IfcFastenerType, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="applicableOccurrence">The attribute optionally defines the data type of the occurrence object.</param>
+        /// <param name="propertySets">The property set(s) associated with the type.</param>
+        /// <param name="representationMaps">The mapped geometries associated with the type.</param>
+        /// <param name="elementTag">The tag that represents the entity.</param>
+        /// <param name="elementType">The type name.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateFastenerType(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
+            string description, string applicableOccurrence, HashSet<IFCAnyHandle> propertySets,
+            IList<IFCAnyHandle> representationMaps, string elementTag, string elementType)
+        {
+            ValidateElementType(guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+
+            IFCAnyHandle fastenerType = CreateInstance(file, IFCEntityType.IfcFastenerType);
+            SetElementType(fastenerType, guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+            return fastenerType;
+        }
+
+        /// <summary>
+        /// Creates an IfcMechanicalFastenerType, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="applicableOccurrence">The attribute optionally defines the data type of the occurrence object.</param>
+        /// <param name="propertySets">The property set(s) associated with the type.</param>
+        /// <param name="representationMaps">The mapped geometries associated with the type.</param>
+        /// <param name="elementTag">The tag that represents the entity.</param>
+        /// <param name="elementType">The type name.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateMechanicalFastenerType(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
+            string description, string applicableOccurrence, HashSet<IFCAnyHandle> propertySets,
+            IList<IFCAnyHandle> representationMaps, string elementTag, string elementType)
+        {
+            ValidateElementType(guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+
+            IFCAnyHandle fastenerType = CreateInstance(file, IFCEntityType.IfcMechanicalFastenerType);
+            SetElementType(fastenerType, guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+            return fastenerType;
+        }
+        
         /// <summary>
         /// Creates an IfcFilterType, and assigns it to the file.
         /// </summary>
@@ -6610,16 +6753,34 @@ namespace BIM.IFC.Toolkit
         /// <param name="file">The file.</param>
         /// <param name="profileType">The profile type.</param>
         /// <param name="profileName">The profile name.</param>
-        /// <param name="positionHnd">The profile position.</param>
-        /// <param name="radius">The profile radius.</param>
+        /// <param name="outerCurve">The profile curve.</param>
         /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateArbitraryClosedProfileDef(IFCFile file, IFCProfileType profileType, string profileName, IFCAnyHandle outerCurve)
         {
-            ValidateArbitraryClosedProfileDef(outerCurve);
+            ValidateArbitraryOpenOrClosedProfileDef(outerCurve);
 
             IFCAnyHandle arbitraryClosedProfileDef = CreateInstance(file, IFCEntityType.IfcArbitraryClosedProfileDef);
             SetArbitraryClosedProfileDef(arbitraryClosedProfileDef, profileType, profileName, outerCurve);
             return arbitraryClosedProfileDef;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcArbitraryOpenProfileDef and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="profileType">The profile type.</param>
+        /// <param name="profileName">The profile name.</param>
+        /// <param name="curve">The profile curve.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateArbitraryOpenProfileDef(IFCFile file, IFCProfileType profileType, string profileName, IFCAnyHandle curve)
+        {
+            ValidateArbitraryOpenOrClosedProfileDef(curve);
+
+            IFCAnyHandle arbitraryOpenProfileDef = CreateInstance(file, IFCEntityType.IfcArbitraryOpenProfileDef);
+            SetProfileDef(arbitraryOpenProfileDef, profileType, profileName);
+            IFCAnyHandleUtil.SetAttribute(arbitraryOpenProfileDef, "Curve", curve);
+
+            return arbitraryOpenProfileDef;
         }
         
         /// <summary>
@@ -6636,7 +6797,7 @@ namespace BIM.IFC.Toolkit
         {
             IFCAnyHandleUtil.ValidateSubTypeOf(innerCurves, false, IFCEntityType.IfcCurve);
 
-            ValidateArbitraryClosedProfileDef(outerCurve);
+            ValidateArbitraryOpenOrClosedProfileDef(outerCurve);
 
             IFCAnyHandle arbitraryProfileDefWithVoids = CreateInstance(file, IFCEntityType.IfcArbitraryProfileDefWithVoids);
             SetArbitraryClosedProfileDef(arbitraryProfileDefWithVoids, profileType, profileName, outerCurve);
@@ -6753,6 +6914,56 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandleUtil.SetAttribute(extrudedAreaSolid, "ExtrudedDirection", extrudedDirection);
             IFCAnyHandleUtil.SetAttribute(extrudedAreaSolid, "Depth", depth);
             return extrudedAreaSolid;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcSurfaceCurveSweptAreaSolid and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="sweptArea">The profile.</param>
+        /// <param name="solidAxis">The plane of the profile.</param>
+        /// <param name="directrix">The curve used to define the sweeping operation.</param>
+        /// <param name="startParam">The start parameter of sweeping.</param>
+        /// <param name="endParam">The end parameter of sweeping.</param>
+        /// <param name="referencePlane">The surface containing the Directrix.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateSurfaceCurveSweptAreaSolid(IFCFile file, IFCAnyHandle sweptArea, IFCAnyHandle solidAxis, IFCAnyHandle directrix,
+            double startParam, double endParam, IFCAnyHandle referencePlane)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(directrix, false, IFCEntityType.IfcCurve);
+            IFCAnyHandleUtil.ValidateSubTypeOf(referencePlane, false, IFCEntityType.IfcSurface);
+
+            ValidateSweptAreaSolid(sweptArea, solidAxis);
+
+            IFCAnyHandle surfaceCurveSweptAreaSolid = CreateInstance(file, IFCEntityType.IfcSurfaceCurveSweptAreaSolid);
+            SetSweptAreaSolid(surfaceCurveSweptAreaSolid, sweptArea, solidAxis);
+            IFCAnyHandleUtil.SetAttribute(surfaceCurveSweptAreaSolid, "Directrix", directrix);
+            IFCAnyHandleUtil.SetAttribute(surfaceCurveSweptAreaSolid, "StartParam", startParam);
+            IFCAnyHandleUtil.SetAttribute(surfaceCurveSweptAreaSolid, "EndParam", endParam);
+            IFCAnyHandleUtil.SetAttribute(surfaceCurveSweptAreaSolid, "ReferenceSurface", referencePlane);
+            return surfaceCurveSweptAreaSolid;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcSurfaceOfLinearExtrusion and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="sweptCurve">The swept curve.</param>
+        /// <param name="position">The position.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="depth">The depth.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateSurfaceOfLinearExtrusion(IFCFile file, IFCAnyHandle sweptCurve, IFCAnyHandle position, IFCAnyHandle direction,
+            double depth)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(direction, false, IFCEntityType.IfcDirection);
+            ValidateSweptAreaSolid(sweptCurve, position);
+
+            IFCAnyHandle surfaceOfLinearExtrusion = CreateInstance(file, IFCEntityType.IfcSurfaceOfLinearExtrusion);
+            SetSweptSurface(surfaceOfLinearExtrusion, sweptCurve, position);
+            IFCAnyHandleUtil.SetAttribute(surfaceOfLinearExtrusion, "ExtrudedDirection", direction);
+            IFCAnyHandleUtil.SetAttribute(surfaceOfLinearExtrusion, "Depth", depth);
+            return surfaceOfLinearExtrusion;
         }
 
         /// <summary>

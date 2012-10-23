@@ -258,7 +258,15 @@ namespace BIM.IFC.Exporter
                 {
                     using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                     {
-                        ecData.SetLocalPlacement(setter.GetPlacement());
+                        IFCAnyHandle localPlacement = setter.GetPlacement();
+                        StairRampContainerInfo stairRampInfo = null;
+                        ElementId hostId = GetStairOrRampHostId(exporterIFC, element as Railing);
+                        if (hostId != ElementId.InvalidElementId)
+                        {
+                            stairRampInfo = ExporterCacheManager.StairRampContainerInfoCache.GetStairRampContainerInfo(hostId);
+                            localPlacement = ExporterUtil.CreateLocalPlacement(file, stairRampInfo.LocalPlacements[0], null);
+                        }
+                        ecData.SetLocalPlacement(localPlacement);
 
                         SolidMeshGeometryInfo solidMeshInfo = GeometryUtil.GetSolidMeshGeometry(geomElem, Transform.Identity);
                         IList<Solid> solids = solidMeshInfo.GetSolids();
@@ -339,7 +347,6 @@ namespace BIM.IFC.Exporter
                             instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(),
                             prodRep, instanceElemId, railingType);
 
-                        ElementId hostId = GetStairOrRampHostId(exporterIFC, element as Railing);
                         bool associateToLevel = (hostId == ElementId.InvalidElementId) && LevelUtil.AssociateElementToLevel(element);
 
                         productWrapper.AddElement(railing, setter, ecData, associateToLevel);
@@ -348,9 +355,8 @@ namespace BIM.IFC.Exporter
                         CategoryUtil.CreateMaterialAssociations(element.Document, exporterIFC, railing, bodyData.MaterialIds);
 
                         // Create multi-story duplicates of this railing.
-                        if (hostId != ElementId.InvalidElementId)
+                        if (stairRampInfo != null)
                         {
-                            StairRampContainerInfo stairRampInfo = ExporterCacheManager.StairRampContainerInfoCache.GetStairRampContainerInfo(hostId);
                             stairRampInfo.AddComponent(0, railing);
 
                             List<IFCAnyHandle> stairHandles = stairRampInfo.StairOrRampHandles;

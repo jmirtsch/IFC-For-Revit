@@ -475,6 +475,12 @@ namespace BIM.IFC.Exporter
                                 extraParams.AreInnerRegionsOpenings = true;
 
                                 BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+
+                                // If we are exporting to CV 2.0 format, we will attempt to create a simple swept solid.
+                                // Please see SweptSolidExporter.cs for more details on what sweeps are supported.
+                                if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
+                                    bodyExporterOptions.TryToExportAsSweptSolid = true;
+
                                 ElementId overrideMaterialId = ElementId.InvalidElementId;
                                 if (wallElement != null)
                                     overrideMaterialId = HostObjectExporter.GetFirstLayerMaterialId(wallElement);

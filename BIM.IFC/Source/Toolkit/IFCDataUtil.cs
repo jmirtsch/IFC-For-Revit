@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB.IFC;
+using BIM.IFC.Utility;
 
 namespace BIM.IFC.Toolkit
 {
@@ -37,7 +38,17 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsLabel(string value)
         {
-            return IFCData.CreateStringOfType(value, "IfcLabel");
+            return IFCData.CreateStringOfType(value.Length > 255 ? value.Remove(255) : value, "IfcLabel");
+        }
+
+        /// <summary>
+        /// Creates an IFCData object as IfcText.
+        /// </summary>
+        /// <param name="value">The string value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsText(string value)
+        {
+            return IFCData.CreateStringOfType(value, "IfcText");
         }
 
         /// <summary>
@@ -47,7 +58,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsIdentifier(string value)
         {
-            return IFCData.CreateStringOfType(value, "IfcIdentifier");
+            return IFCData.CreateStringOfType(value.Length > 255 ? value.Remove(255) : value, "IfcIdentifier");
         }
 
         /// <summary>
@@ -175,9 +186,13 @@ namespace BIM.IFC.Toolkit
         /// </summary>
         /// <param name="value">The integer value.</param>
         /// <returns>The IFCData object.</returns>
-        public static IFCData CreateAsCountMeasure(int value)
+        public static IFCData CreateAsCountMeasure(double value)
         {
-            return IFCData.CreateIntegerOfType(value, "IfcCountMeasure");
+            int valueAsInt = Convert.ToInt32(value);
+            if (MathUtil.IsAlmostZero(value - valueAsInt))
+                return IFCData.CreateIntegerOfType(valueAsInt, "IfcCountMeasure");
+            else
+                return IFCData.CreateDoubleOfType(value, "IfcCountMeasure");
         }
 
         /// <summary>

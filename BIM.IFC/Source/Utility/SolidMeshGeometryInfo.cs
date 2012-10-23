@@ -166,10 +166,17 @@ namespace BIM.IFC.Utility
             Solid currSolid;
             foreach (Solid solid in solidsList)
             {
-                currSolid = BooleanOperationsUtils.ExecuteBooleanOperation(solid, intersectionSolid, BooleanOperationsType.Intersect);
-                if (currSolid != null && currSolid.Volume != 0)
+                try
                 {
-                    clippedSolidsList.Add(currSolid);
+                    // ExecuteBooleanOperation can throw if it fails.  In this case, just ignore the clipping.
+                    currSolid = BooleanOperationsUtils.ExecuteBooleanOperation(solid, intersectionSolid, BooleanOperationsType.Intersect);
+                    if (currSolid != null && currSolid.Volume != 0)
+                    {
+                        clippedSolidsList.Add(currSolid);
+                    }
+                }
+                catch
+                {
                 }
             }
             solidsList = clippedSolidsList;

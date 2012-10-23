@@ -52,6 +52,44 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Gets a scaled plane from the unscaled plane.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="unscaledPlane">The unscaled plane.</param>
+        /// <returns>The scaled plane.</returns>
+        public static Plane GetScaledPlane(ExporterIFC exporterIFC, Plane unscaledPlane)
+        {
+            if (exporterIFC == null || unscaledPlane == null)
+                throw new ArgumentNullException();
+
+            XYZ scaledOrigin = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, unscaledPlane.Origin);
+            XYZ scaledXDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, unscaledPlane.XVec);
+            XYZ scaledYDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, unscaledPlane.YVec);
+
+            return new Plane(scaledXDir, scaledYDir, scaledOrigin);
+        }
+
+        /// <summary>
+        /// Creates a scaled plane from unscaled origin, X and Y directions.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="unscaledXVec">The unscaled X direction.</param>
+        /// <param name="unscaledYVec">The unscaled Y direction.</param>
+        /// <param name="unscaledOrigin">The unscaled origin.</param>
+        /// <returns>The scaled plane.</returns>
+        public static Plane CreateScaledPlane(ExporterIFC exporterIFC, XYZ unscaledXVec, XYZ unscaledYVec, XYZ unscaledOrigin)
+        {
+            if (exporterIFC == null || unscaledXVec == null || unscaledYVec == null || unscaledOrigin == null)
+                throw new ArgumentNullException();
+
+            XYZ scaledXDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, unscaledXVec);
+            XYZ scaledYDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, unscaledYVec);
+            XYZ scaledOrigin = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, unscaledOrigin);
+
+            return new Plane(scaledXDir, scaledYDir, scaledOrigin);
+        }
+
+        /// <summary>
         /// Checks if curve is flipped to a plane.
         /// </summary>
         /// <param name="plane">
@@ -90,6 +128,20 @@ namespace BIM.IFC.Utility
                 return true;
 
             return false;
+        }
+
+        /// <summary>
+        /// Calculates the slope of an extrusion relative to an axis.
+        /// </summary>
+        /// <param name="extrusionDirection">The extrusion direction.</param>
+        /// <param name="axis">The axis.</param>
+        /// <returns>The slope.</returns>
+        /// <remarks>This is a simple routine mainly intended for beams and columns.</remarks>
+        static public double GetSimpleExtrusionSlope(XYZ extrusionDirection, IFCExtrusionBasis axis)
+        {
+            double zOff = (axis == IFCExtrusionBasis.BasisZ) ? (1.0 - Math.Abs(extrusionDirection[2])) : Math.Abs(extrusionDirection[2]);
+            double scaledAngle = Math.Asin(zOff) * 180 / Math.PI;
+            return scaledAngle;
         }
 
         /// <summary>
@@ -1605,6 +1657,163 @@ namespace BIM.IFC.Utility
             {
                 curves.Add(curve);
             }
+        }
+
+        /// <summary>
+        /// Common method to create a poly line.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="points">The line points.</param>
+        /// <param name="scaledPlane">The scaled plane.</param>
+        /// <returns>The handle.</returns>
+        static IFCAnyHandle CreatePolyLineCommon(ExporterIFC exporterIFC, IList<XYZ> points, Plane scaledPlane)
+        {
+            if (exporterIFC == null || points == null)
+                throw new ArgumentNullException();
+
+            int count = points.Count;
+            if (count < 2)
+                throw new InvalidOperationException("Invalid polyline.");
+
+            bool isClosed = points[0].IsAlmostEqualTo(points[count - 1]);
+            if (isClosed)
+                count--;
+
+            if (count < 2)
+                throw new InvalidOperationException("Invalid polyline.");
+
+            IFCFile file = exporterIFC.GetFile();
+            List<IFCAnyHandle> polyLinePoints = new List<IFCAnyHandle>();
+            for (int ii = 0; ii < count; ii++)
+            {
+                XYZ point = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, points[ii]);
+                IFCAnyHandle pointHandle = null;
+                if (scaledPlane != null)
+                {
+                    List<double> pointValues = ConvertPointToLocalCoordinatesCommon(scaledPlane, point);
+                    pointHandle = ExporterUtil.CreateCartesianPoint(file, pointValues);
+                }
+                else
+                    pointHandle = ExporterUtil.CreateCartesianPoint(file, point);
+                polyLinePoints.Add(pointHandle);
+            }
+
+            if (isClosed)
+                polyLinePoints.Add(polyLinePoints[0]);
+
+            return IFCInstanceExporter.CreatePolyline(file, polyLinePoints);
+        }
+
+        /// <summary>
+        /// Creates an IFC line from a Revit line object.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="line">The line.</param>
+        /// <param name="scaledPlane">The scaled plane.</param>
+        /// <returns>The line handle.</returns>
+        public static IFCAnyHandle CreateLine(ExporterIFC exporterIFC, Line line, Plane scaledPlane)
+        {
+            List<XYZ> points = new List<XYZ>();
+            points.Add(line.get_EndPoint(0));
+            points.Add(line.get_EndPoint(1));
+            return CreatePolyLineCommon(exporterIFC, points, scaledPlane);
+        }
+
+        /// <summary>
+        /// Creates an IFC arc from a Revit arc object.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="arc">The arc.</param>
+        /// <param name="scaledPlane">The scaled plane.</param>
+        /// <returns>The arc handle.</returns>
+        public static IFCAnyHandle CreateArc(ExporterIFC exporterIFC, Arc arc, Plane scaledPlane)
+        {
+            IFCFile file = exporterIFC.GetFile();
+
+            XYZ centerPoint = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, arc.Center);
+
+            IFCAnyHandle centerPointHandle;
+            if (scaledPlane != null)
+            {
+                List<double> centerPointValues = ConvertPointToLocalCoordinatesCommon(scaledPlane, centerPoint);
+                centerPointHandle = ExporterUtil.CreateCartesianPoint(file, centerPointValues);
+            }
+            else
+                centerPointHandle = ExporterUtil.CreateCartesianPoint(file, centerPoint);
+
+            XYZ xDirection = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, arc.XDirection);
+            IFCAnyHandle axis;
+            if (scaledPlane != null)
+            {
+                List<double> xDirectionValues = ConvertVectorToLocalCoordinates(scaledPlane, xDirection);
+                IFCAnyHandle xDirectionHandle = ExporterUtil.CreateDirection(file, xDirectionValues);
+                axis = IFCInstanceExporter.CreateAxis2Placement2D(file, centerPointHandle, null, xDirectionHandle);
+            }
+            else
+                axis = ExporterUtil.CreateAxis2Placement3D(file, centerPoint, arc.Normal, xDirection);
+
+            double arcRadius = arc.Radius * exporterIFC.LinearScale;
+
+            IFCAnyHandle circle = IFCInstanceExporter.CreateCircle(file, axis, arcRadius);
+
+            IFCAnyHandle arcHandle = circle;
+            if (arc.IsBound)
+            {
+                double endParam0 = arc.get_EndParameter(0);
+                double endParam1 = arc.get_EndParameter(1);
+                if (scaledPlane != null && MustFlipCurve(scaledPlane, arc))
+                {
+                    double oldParam0 = endParam0;
+                    endParam0 = Math.PI * 2 - endParam1;
+                    endParam1 = Math.PI * 2 - oldParam0;
+                }
+                IFCData firstParam = IFCDataUtil.CreateAsParameterValue(MathUtil.PutInRange(endParam0, Math.PI, 2 * Math.PI) * (180 / Math.PI));
+                IFCData secondParam = IFCDataUtil.CreateAsParameterValue(MathUtil.PutInRange(endParam1, Math.PI, 2 * Math.PI) * (180 / Math.PI));
+
+                // todo: check that firstParam != secondParam.
+                HashSet<IFCData> trim1 = new HashSet<IFCData>();
+                trim1.Add(firstParam);
+                HashSet<IFCData> trim2 = new HashSet<IFCData>();
+                trim2.Add(secondParam);
+
+                arcHandle = IFCInstanceExporter.CreateTrimmedCurve(file, circle, trim1, trim2, true, IFCTrimmingPreference.Parameter);
+            }
+            return arcHandle;
+        }
+
+        /// <summary>
+        /// Creates an IFC composite curve from an array of curves.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="curves">The curves.</param>
+        /// <returns>The IfcCompositeCurve handle.</returns>
+        public static IFCAnyHandle CreateCompositeCurve(ExporterIFC exporterIFC, IList<Curve> curves)
+        {
+            IFCFile file = exporterIFC.GetFile();
+            List<IFCAnyHandle> segments = new List<IFCAnyHandle>();
+            foreach (Curve curve in curves)
+            {
+                IFCAnyHandle curveHandle = null;
+                if (curve is Line)
+                {
+                    curveHandle = CreateLine(exporterIFC, curve as Line, null);
+                }
+                else if (curve is Arc)
+                {
+                    curveHandle = CreateArc(exporterIFC, curve as Arc, null);
+                }
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(curveHandle))
+                {
+                    segments.Add(IFCInstanceExporter.CreateCompositeCurveSegment(file, IFCTransitionCode.Continuous, true, curveHandle));
+                }
+            }
+
+            if (segments.Count > 0)
+            {
+                return IFCInstanceExporter.CreateCompositeCurve(file, segments, IFCLogical.False);
+            }
+
+            return null;
         }
     }
 }

@@ -140,7 +140,8 @@ namespace BIM.IFC.Utility
             {
                 if (ParameterUtil.GetStringValueFromElement(element, paramName, out strValue))
                 {
-                    return strValue;
+                    if (!String.IsNullOrWhiteSpace(strValue))
+                        return strValue;
                 }
             }
 

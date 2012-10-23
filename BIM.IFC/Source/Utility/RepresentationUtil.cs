@@ -190,6 +190,26 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Creates an advanced sweep solid representation.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="bodyItems">Set of geometric representation items that are defined for this representation.</param>
+        /// <param name="originalShapeRepresentation">The original shape representation.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateAdvancedSweptSolidRep(ExporterIFC exporterIFC, Element element, ElementId categoryId, IFCAnyHandle contextOfItems,
+            ICollection<IFCAnyHandle> bodyItems, IFCAnyHandle originalRepresentation)
+        {
+            string identifierOpt = "Body";	// this is by IFC2x2 convention, not temporary
+            string repTypeOpt = "AdvancedSweptSolid";  // this is by IFC2x2 convention, not temporary
+            IFCAnyHandle bodyRepresentation =
+               CreateOrAppendShapeRepresentation(exporterIFC, element, categoryId, contextOfItems, identifierOpt, repTypeOpt,
+                  bodyItems, originalRepresentation);
+            return bodyRepresentation;
+        }
+
+        /// <summary>
         /// Creates a clipping representation.
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC object.</param>

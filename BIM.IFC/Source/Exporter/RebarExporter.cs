@@ -50,116 +50,103 @@ namespace BIM.IFC.Exporter
         public static void ExportRebar(ExporterIFC exporterIFC,
            Rebar element, Autodesk.Revit.DB.View filterView, IFCProductWrapper productWrapper)
         {
-            IFCFile file = exporterIFC.GetFile();
-
-            using (IFCTransaction transaction = new IFCTransaction(file))
+            try
             {
-                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element))
+                IFCFile file = exporterIFC.GetFile();
+
+                using (IFCTransaction transaction = new IFCTransaction(file))
                 {
-                    GeometryElement rebarGeometry = ExporterIFCUtils.GetRebarGeometry(element, filterView);
-
-                    // only options are: Not Export, BuildingElementProxy, or ReinforcingBar/Mesh, depending on layout.
-                    // Not Export is handled previously, and ReinforcingBar vs Mesh will be determined below.
-                    string ifcEnumType;
-                    IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
-
-                    if (exportType == IFCExportType.ExportBuildingElementProxy)
+                    using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element))
                     {
-                        if (rebarGeometry != null)
+                        GeometryElement rebarGeometry = ExporterIFCUtils.GetRebarGeometry(element, filterView);
+
+                        // only options are: Not Export, BuildingElementProxy, or ReinforcingBar/Mesh, depending on layout.
+                        // Not Export is handled previously, and ReinforcingBar vs Mesh will be determined below.
+                        string ifcEnumType;
+                        IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
+
+                        if (exportType == IFCExportType.ExportBuildingElementProxy)
                         {
-                            ProxyElementExporter.ExportBuildingElementProxy(exporterIFC, element, rebarGeometry, productWrapper);
-                            transaction.Commit();
+                            if (rebarGeometry != null)
+                            {
+                                ProxyElementExporter.ExportBuildingElementProxy(exporterIFC, element, rebarGeometry, productWrapper);
+                                transaction.Commit();
+                            }
+                            return;
                         }
-                        return;
-                    }
 
-                    IFCAnyHandle prodRep = null;
-                    using (IFCExtrusionCreationData extrusionCreationData = new IFCExtrusionCreationData())
-                    {
-                        extrusionCreationData.SetLocalPlacement(setter.GetPlacement());
-
-                        if (rebarGeometry != null)
-                        {
-                            ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
-
-                            BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                            prodRep = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, categoryId, ElementId.InvalidElementId, rebarGeometry, bodyExporterOptions,
-                                extrusionCreationData).RepresentationHnd;
-                            if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodRep))
-                                extrusionCreationData.ClearOpenings();
-                        }
+                        IFCAnyHandle prodRep = null;
 
                         double scale = exporterIFC.LinearScale;
 
-                        double barLength = element.TotalLength * scale;
-                        if (MathUtil.IsAlmostZero(barLength))
-                            return;
+                        double totalBarLength = element.TotalLength * scale;
 
-                        int quantity = element.Quantity;
-                        if (quantity < 1)
+                        if (MathUtil.IsAlmostZero(totalBarLength))
                             return;
 
                         ElementId typeId = element.GetTypeId();
                         RebarBarType elementType = element.Document.GetElement(element.GetTypeId()) as RebarBarType;
-                        double diameter = elementType == null ? 1.0 / 12.0 : elementType.BarDiameter;
-                        double longitudinalBarNominalDiameter = diameter * scale;
-                        double longitudinalBarCrossSectionArea = (element.Volume * scale * scale * scale) / barLength;
+                        double diameter = (elementType == null ? 1.0 / 12.0 : elementType.BarDiameter) * scale;
+                        double radius = diameter / 2.0;
+                        double longitudinalBarNominalDiameter = diameter;
+                        double longitudinalBarCrossSectionArea = (element.Volume * scale * scale * scale) / totalBarLength;
+                        double barLength = totalBarLength / element.Quantity;
 
-                        string steelGradeOpt = null;
-                        IFCAnyHandle elemHnd = null;
-
-                        string rebarGUID = ExporterIFCUtils.CreateGUID(element);
-                        string rebarName = NamingUtil.GetIFCName(element);
-                        string rebarDescription = NamingUtil.GetDescriptionOverride(element, null);
-                        string rebarObjectType = NamingUtil.GetObjectTypeOverride(element, NamingUtil.CreateIFCObjectName(exporterIFC, element));
-                        string rebarElemId = NamingUtil.CreateIFCElementId(element);
-
-                        if (element.LayoutRule == RebarLayoutRule.Single || (quantity == 1))
+                        IList<Curve> baseCurves = element.GetCenterlineCurves(true, false, false);
+                        int numberOfBarPositions = element.NumberOfBarPositions;
+                        for (int i = 0; i < numberOfBarPositions; i++)
                         {
+                            if (!element.DoesBarExistAtPosition(i))
+                                continue;
+
+                            Transform barTrf = element.GetBarPositionTransform(i);
+
+                            IList<Curve> curves = new List<Curve>();
+                            foreach (Curve baseCurve in baseCurves)
+                            {
+                                curves.Add(baseCurve.get_Transformed(barTrf));
+                            }
+
+                            IFCAnyHandle compositeCurve = GeometryUtil.CreateCompositeCurve(exporterIFC, curves);
+                            IFCAnyHandle sweptDiskSolid = IFCInstanceExporter.CreateSweptDiskSolid(file, compositeCurve, radius, null, 0, 1);
+                            HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
+                            bodyItems.Add(sweptDiskSolid);
+                            ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
+                            IFCAnyHandle shapeRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, exporterIFC.Get3DContextHandle("Body"), bodyItems, null);
+                            IList<IFCAnyHandle> shapeReps = new List<IFCAnyHandle>();
+                            shapeReps.Add(shapeRep);
+                            prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
+
+                            string steelGradeOpt = null;
+                            IFCAnyHandle elemHnd = null;
+
+                            string rebarGUID = ExporterIFCUtils.CreateGUID(element);
+                            string rebarName = NamingUtil.GetIFCName(element);
+                            string rebarDescription = NamingUtil.GetDescriptionOverride(element, null);
+                            string rebarObjectType = NamingUtil.GetObjectTypeOverride(element, NamingUtil.CreateIFCObjectName(exporterIFC, element));
+                            string rebarElemId = NamingUtil.CreateIFCElementId(element);
+
                             IFCReinforcingBarRole role = IFCReinforcingBarRole.NotDefined;
                             elemHnd = IFCInstanceExporter.CreateReinforcingBar(file, rebarGUID, exporterIFC.GetOwnerHistoryHandle(),
-                                rebarName, rebarDescription, rebarObjectType, extrusionCreationData.GetLocalPlacement(),
+                                rebarName, rebarDescription, rebarObjectType, setter.GetPlacement(),
                                 prodRep, rebarElemId, steelGradeOpt, longitudinalBarNominalDiameter, longitudinalBarCrossSectionArea,
                                 barLength, role, null);
+
+                            productWrapper.AddElement(elemHnd, setter.GetLevelInfo(), null, true);
+
+                            PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                         }
-                        else
-                        {
-                            double meshLength;
-                            double longitudinalBarSpacing;
-                            double val = element.ArrayLength * scale;
-
-                            if (element.LayoutRule == RebarLayoutRule.NumberWithSpacing)
-                            {
-                                longitudinalBarSpacing = val;
-                                meshLength = val * (quantity - 1);
-                            }
-                            else
-                            {
-                                meshLength = val;
-                                longitudinalBarSpacing = val / (quantity - 1);
-                            }
-
-                            double meshWidth = diameter * scale; // array is in one direction only.
-                            double transverseBarNominalDiameter = longitudinalBarNominalDiameter;
-                            double transverseBarCrossSectionArea = longitudinalBarCrossSectionArea;
-                            double transverseBarSpacing = longitudinalBarSpacing;
-
-                            elemHnd = IFCInstanceExporter.CreateReinforcingMesh(file, rebarGUID,
-                                exporterIFC.GetOwnerHistoryHandle(), rebarName,
-                                rebarDescription, rebarObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, rebarElemId,
-                                steelGradeOpt, meshLength, meshWidth, longitudinalBarNominalDiameter,
-                                transverseBarNominalDiameter, longitudinalBarCrossSectionArea,
-                                transverseBarCrossSectionArea, longitudinalBarSpacing,
-                                transverseBarSpacing);
-                        }
-
-                        productWrapper.AddElement(elemHnd, setter.GetLevelInfo(), extrusionCreationData, true);
-
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }
+                    transaction.Commit();
                 }
-                transaction.Commit();
+
+            }
+            catch (Exception)
+            {
+                // It will throw exception at GetBarPositionTransform when exporting rebars with Revit 2013 UR1 and before versions, so we skip the export.
+                // It should not come here and will export the rebars properly at Revit later versions.
             }
         }
+
     }
 }

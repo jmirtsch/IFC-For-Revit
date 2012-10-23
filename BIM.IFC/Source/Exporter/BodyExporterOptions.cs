@@ -44,6 +44,11 @@ namespace BIM.IFC.Exporter
         private bool m_TryToExportAsExtrusion = false;
 
         /// <summary>
+        /// Try to export the solids as swept solids, if possible.
+        /// </summary>
+        private bool m_TryToExportAsSweptSolid = false;
+
+        /// <summary>
         /// If the body contains geometries that are identical except position and orientation, use mapped items to reuse the geometry.
         /// NOTE: This functionality is untested, and should be used with caution.
         /// </summary>
@@ -88,6 +93,15 @@ namespace BIM.IFC.Exporter
         {
             get { return m_TryToExportAsExtrusion; }
             set { m_TryToExportAsExtrusion = value; }
+        }
+
+        /// <summary>
+        /// Try to export the solids as swept solids, if possible.
+        /// </summary>
+        public bool TryToExportAsSweptSolid
+        {
+            get { return m_TryToExportAsSweptSolid; }
+            set { m_TryToExportAsSweptSolid = value; }
         }
 
         /// <summary>

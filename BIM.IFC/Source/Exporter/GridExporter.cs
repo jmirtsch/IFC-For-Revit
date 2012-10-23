@@ -26,6 +26,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using BIM.IFC.Utility;
 using BIM.IFC.Toolkit;
+using BIM.IFC.Exporter.PropertySet;
 
 namespace BIM.IFC.Exporter
 {
@@ -236,10 +237,10 @@ namespace BIM.IFC.Exporter
                 {
                     GridRepresentationData gridRepresentationData = new GridRepresentationData();
 
-                    axesU = CreateIFCGridAxisAndRepresentations(exporterIFC, sameDirectionAxesU, representations, gridRepresentationData);
-                    axesV = CreateIFCGridAxisAndRepresentations(exporterIFC, sameDirectionAxesV, representations, gridRepresentationData);
+                    axesU = CreateIFCGridAxisAndRepresentations(exporterIFC, productWrapper, sameDirectionAxesU, representations, gridRepresentationData);
+                    axesV = CreateIFCGridAxisAndRepresentations(exporterIFC, productWrapper, sameDirectionAxesV, representations, gridRepresentationData);
                     if (sameDirectionAxesW != null)
-                        axesW = CreateIFCGridAxisAndRepresentations(exporterIFC, sameDirectionAxesW, representations, gridRepresentationData);
+                        axesW = CreateIFCGridAxisAndRepresentations(exporterIFC, productWrapper, sameDirectionAxesW, representations, gridRepresentationData);
 
                     IFCAnyHandle contextOfItemsFootPrint = exporterIFC.Get3DContextHandle("FootPrint");
                     string identifierOpt = "FootPrint";
@@ -306,7 +307,7 @@ namespace BIM.IFC.Exporter
         /// <param name="sameDirectionAxes">The grid axes in the same direction of one level.</param>
         /// <param name="representations">The representation of grid axis.</param>
         /// <returns>The list of handles of grid axes.</returns>
-        private static List<IFCAnyHandle> CreateIFCGridAxisAndRepresentations(ExporterIFC exporterIFC, IList<Grid> sameDirectionAxes, 
+        private static List<IFCAnyHandle> CreateIFCGridAxisAndRepresentations(ExporterIFC exporterIFC, IFCProductWrapper productWrapper, IList<Grid> sameDirectionAxes, 
             IList<IFCAnyHandle> representations, GridRepresentationData gridRepresentationData)
         {
             if (sameDirectionAxes.Count == 0)
@@ -360,6 +361,8 @@ namespace BIM.IFC.Exporter
                 
                 gridRepresentationData.m_Grids.Add(grid);
                 gridRepresentationData.m_curveSets.Add(curveSet);
+
+                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, grid, productWrapper);
             }
 
             return ifcGridAxes;
