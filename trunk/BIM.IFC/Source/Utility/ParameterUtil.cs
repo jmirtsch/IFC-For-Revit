@@ -493,6 +493,26 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Remove an element from the parameter cache, to save space.
+        /// </summary>
+        /// <param name="element">The element to be used.</param>
+        /// <remarks>Generally speaking, we expect to need to access an element's parameters in one pass (this is not true
+        /// for types, which could get accessed repeatedly).  As such, we are wasting space keeping an element's parameters cached
+        /// after it has already been exported.</remarks>
+        static public void RemoveElementFromCache(Element element)
+        {
+            if (element == null)
+                return;
+
+            ElementId id = element.Id;
+            if (m_NonIFCParameters.ContainsKey(id))
+                return;
+
+            m_NonIFCParameters.Remove(id);
+            m_IFCParameters.Remove(id);
+        }
+
+        /// <summary>
         /// Gets the parameter by name from an element.
         /// </summary>
         /// <param name="element">

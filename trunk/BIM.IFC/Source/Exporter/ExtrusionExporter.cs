@@ -651,58 +651,9 @@ namespace BIM.IFC.Exporter
 
             scaledExtrusionSize /= slantFactor;
 
-            IFCAnyHandle sweptArea = null;
-            if (curveLoops.Count == 1)
-            {
-                sweptArea = CreateRectangleProfileDefIfPossible(exporterIFC, profileName, curveLoops[0], plane, extrDirVec);
-                if (sweptArea == null) sweptArea = CreateCircleProfileDefIfPossible(exporterIFC, profileName, curveLoops[0], plane, extrDirVec);
-                if (sweptArea == null) sweptArea = CreateIShapeProfileDefIfPossible(exporterIFC, profileName, curveLoops[0], plane, extrDirVec);
-            }
-
-            if (sweptArea == null)
-            {
-                IFCAnyHandle profileCurve = null;
-                HashSet<IFCAnyHandle> innerCurves = new HashSet<IFCAnyHandle>();
-
-                // reorient curves if necessary: outer CCW, inners CW.
-                foreach (CurveLoop curveLoop in curveLoops)
-                {
-                    bool isCCW = false;
-                    try
-                    {
-                        isCCW = curveLoop.IsCounterclockwise(planeZDir);
-                    }
-                    catch
-                    {
-                        if (profileCurve == null)
-                            return null;
-                        else
-                            continue;
-                    }
-
-                    if (profileCurve == null)
-                    {
-                        if (!isCCW)
-                            curveLoop.Flip();
-                        profileCurve = ExporterIFCUtils.CreateCurveFromCurveLoop(exporterIFC, curveLoop, plane, extrDirVec);
-                        if (IFCAnyHandleUtil.IsNullOrHasNoValue(profileCurve))
-                            return extrudedSolidHnd;
-                    }
-                    else
-                    {
-                        if (isCCW)
-                            curveLoop.Flip();
-                        IFCAnyHandle innerCurve = ExporterIFCUtils.CreateCurveFromCurveLoop(exporterIFC, curveLoop, plane, extrDirVec);
-                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(innerCurve))
-                            innerCurves.Add(innerCurve);
-                    }
-                }
-
-                if (innerCurves.Count > 0)
-                    sweptArea = IFCInstanceExporter.CreateArbitraryProfileDefWithVoids(file, IFCProfileType.Area, profileName, profileCurve, innerCurves);
-                else
-                    sweptArea = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Area, profileName, profileCurve);
-            }
+            IFCAnyHandle sweptArea = CreateSweptArea(exporterIFC, profileName, curveLoops, plane, extrDirVec);
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(sweptArea))
+                return extrudedSolidHnd;
 
             IList<double> relExtrusionDirList = new List<double>();
             relExtrusionDirList.Add(extrDirVec.DotProduct(planeXDir));
@@ -718,6 +669,73 @@ namespace BIM.IFC.Exporter
 
             extrudedSolidHnd = IFCInstanceExporter.CreateExtrudedAreaSolid(file, sweptArea, solidAxis, extrusionDirection, scaledExtrusionSize);
             return extrudedSolidHnd;
+        }
+
+        /// <summary>
+        /// Creates an IfcProfileDef for a swept area.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="profileName">The profile name.</param>
+        /// <param name="curveLoops">The curve loops.</param>
+        /// <param name="plane">The plane of the curve loops.</param>
+        /// <param name="sweptDirection">The direction.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateSweptArea(ExporterIFC exporterIFC, string profileName, IList<CurveLoop> curveLoops, Plane plane, XYZ sweptDirection)
+        {
+            IFCAnyHandle sweptArea = null;
+            if (curveLoops.Count == 1)
+            {
+                sweptArea = CreateRectangleProfileDefIfPossible(exporterIFC, profileName, curveLoops[0], plane, sweptDirection);
+                if (sweptArea == null) sweptArea = CreateCircleProfileDefIfPossible(exporterIFC, profileName, curveLoops[0], plane, sweptDirection);
+                if (sweptArea == null) sweptArea = CreateIShapeProfileDefIfPossible(exporterIFC, profileName, curveLoops[0], plane, sweptDirection);
+            }
+
+            if (sweptArea == null)
+            {
+                IFCAnyHandle profileCurve = null;
+                HashSet<IFCAnyHandle> innerCurves = new HashSet<IFCAnyHandle>();
+
+                // reorient curves if necessary: outer CCW, inners CW.
+                foreach (CurveLoop curveLoop in curveLoops)
+                {
+                    bool isCCW = false;
+                    try
+                    {
+                        isCCW = curveLoop.IsCounterclockwise(plane.Normal);
+                    }
+                    catch
+                    {
+                        if (profileCurve == null)
+                            return null;
+                        else
+                            continue;
+                    }
+
+                    if (profileCurve == null)
+                    {
+                        if (!isCCW)
+                            curveLoop.Flip();
+                        profileCurve = ExporterIFCUtils.CreateCurveFromCurveLoop(exporterIFC, curveLoop, plane, sweptDirection);
+                        if (IFCAnyHandleUtil.IsNullOrHasNoValue(profileCurve))
+                            return null;
+                    }
+                    else
+                    {
+                        if (isCCW)
+                            curveLoop.Flip();
+                        IFCAnyHandle innerCurve = ExporterIFCUtils.CreateCurveFromCurveLoop(exporterIFC, curveLoop, plane, sweptDirection);
+                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(innerCurve))
+                            innerCurves.Add(innerCurve);
+                    }
+                }
+
+                IFCFile file = exporterIFC.GetFile();
+                if (innerCurves.Count > 0)
+                    sweptArea = IFCInstanceExporter.CreateArbitraryProfileDefWithVoids(file, IFCProfileType.Area, profileName, profileCurve, innerCurves);
+                else
+                    sweptArea = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Area, profileName, profileCurve);
+            }
+            return sweptArea;
         }
  
         /// <summary>

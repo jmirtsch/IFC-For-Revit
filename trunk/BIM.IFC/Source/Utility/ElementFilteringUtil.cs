@@ -435,6 +435,14 @@ namespace BIM.IFC.Utility
         /// Waste terminal type.
         /// </summary>
         ExportWasteTerminalType,
+        /// <summary>
+        /// Fastener type.
+        /// </summary>
+        ExportFastenerType,
+        /// <summary>
+        /// MechanicalFastener type.
+        /// </summary>
+        ExportMechanicalFastenerType,
     }
 
 
@@ -746,6 +754,8 @@ namespace BIM.IFC.Utility
                 return IFCExportType.ExportEvaporativeCoolerType;
             else if (IsEqualToTypeName(ifcClassName, ("IfcEvaporator")))
                 return IFCExportType.ExportEvaporatorType;
+            else if (IsEqualToTypeName(ifcClassName, ("IfcFastener")))
+                return IFCExportType.ExportFastenerType;
             else if (IsEqualToTypeName(ifcClassName, ("IfcFan")))
                 return IFCExportType.ExportFanType;
             else if (IsEqualToTypeName(ifcClassName, ("IfcFilter")))
@@ -782,6 +792,8 @@ namespace BIM.IFC.Utility
                 return IFCExportType.ExportLampType;
             else if (IsEqualToTypeName(ifcClassName, ("IfcLightFixture")))
                 return IFCExportType.ExportLightFixtureType;
+            else if (IsEqualToTypeName(ifcClassName, ("IfcMechanicalFastener")))
+                return IFCExportType.ExportMechanicalFastenerType;
             else if (IsEqualToTypeName(ifcClassName, ("IfcMotorConnection")))
                 return IFCExportType.ExportMotorConnectionType;
             else if (IsEqualToTypeName(ifcClassName, ("IfcOutlet")))

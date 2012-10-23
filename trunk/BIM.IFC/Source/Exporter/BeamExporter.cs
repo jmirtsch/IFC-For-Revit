@@ -155,6 +155,11 @@ namespace BIM.IFC.Exporter
 
                                 if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))
                                 {
+                                    // This is used by the BeamSlopeCalculator.  This should probably be generated automatically by
+                                    // CreateExtrusionWithClipping.
+                                    IFCExtrusionBasis bestAxis = (Math.Abs(beamDirection[0]) > Math.Abs(beamDirection[1])) ?
+                                        IFCExtrusionBasis.BasisX : IFCExtrusionBasis.BasisY;
+                                    extrusionCreationData.Slope = GeometryUtil.GetSimpleExtrusionSlope(beamDirection, bestAxis);
                                     ElementId materialId = BodyExporter.GetBestMaterialIdForGeometry(solids[0], exporterIFC);
                                     if (materialId != ElementId.InvalidElementId)
                                         materialIds.Add(materialId);

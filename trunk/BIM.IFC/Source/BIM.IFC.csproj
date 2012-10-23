@@ -102,6 +102,7 @@
     <Compile Include="Exporter\StairRampContainerInfo.cs" />
     <Compile Include="Exporter\StairsExporter.cs" />
     <Compile Include="Exporter\SurfaceExporter.cs" />
+    <Compile Include="Exporter\SweptSolidExporter.cs" />
     <Compile Include="Exporter\TextNoteExporter.cs" />
     <Compile Include="Exporter\TypePropertyInfo.cs" />
     <Compile Include="Exporter\WallConnectionData.cs" />
@@ -159,6 +160,7 @@
     <Compile Include="Utility\PropertyInfoCache.cs" />
     <Compile Include="Utility\PropertySetOptions.cs" />
     <Compile Include="Utility\RepresentationUtil.cs" />
+    <Compile Include="Utility\SimpleSweptSolidAnalyzer.cs" />
     <Compile Include="Utility\SolidMeshGeometryInfo.cs" />
     <Compile Include="Utility\SpaceOccupantInfoCache.cs" />
     <Compile Include="Utility\StairRampContainerInfoCache.cs" />

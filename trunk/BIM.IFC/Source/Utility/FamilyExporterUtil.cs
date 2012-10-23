@@ -279,6 +279,28 @@ namespace BIM.IFC.Exporter
                            instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceElemId);
                         break;
                     }
+                case IFCExportType.ExportFastenerType:
+                    {
+                        instanceHandle = IFCInstanceExporter.CreateFastener(file, instanceGUID, ownerHistory,
+                           instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceElemId);
+                        break;
+                    }
+                case IFCExportType.ExportMechanicalFastenerType:
+                    {
+                        double? nominalDiameter = null;
+                        double? nominalLength = null;
+
+                        double nominalDiameterVal, nominalLengthVal;
+                        if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalDiameter", out nominalDiameterVal))
+                            nominalDiameter = nominalDiameterVal;
+                        if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalLength", out nominalLengthVal))
+                            nominalLength = nominalLengthVal;
+
+                        instanceHandle = IFCInstanceExporter.CreateMechanicalFastener(file, instanceGUID, ownerHistory,
+                           instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceElemId,
+                           nominalDiameter, nominalLength);
+                        break;
+                    }
                 default:
                     {
                         if ((type == IFCExportType.ExportFurnishingElement) || IsFurnishingElementSubType(type))
@@ -553,6 +575,10 @@ namespace BIM.IFC.Exporter
                     return IFCInstanceExporter.CreateEvaporatorType(file, guid, ownerHistory, name,
                        description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetEvaporatorType(instance, ifcEnumType));
+                case IFCExportType.ExportFastenerType:
+                    return IFCInstanceExporter.CreateFastenerType(file, guid, ownerHistory, name,
+                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                       typeName);
                 case IFCExportType.ExportFanType:
                     return IFCInstanceExporter.CreateFanType(file, guid, ownerHistory, name,
                        description, applicableOccurrence, propertySets, representationMapList, elementTag,
@@ -601,6 +627,10 @@ namespace BIM.IFC.Exporter
                     return IFCInstanceExporter.CreateLightFixtureType(file, guid, ownerHistory, name,
                        description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetLightFixtureType(instance, ifcEnumType));
+                case IFCExportType.ExportMechanicalFastenerType:
+                    return IFCInstanceExporter.CreateMechanicalFastenerType(file, guid, ownerHistory, name,
+                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                       typeName);
                 case IFCExportType.ExportMemberType:
                     return IFCInstanceExporter.CreateMemberType(file, guid, ownerHistory, name,
                        description, applicableOccurrence, propertySets, representationMapList, elementTag,

@@ -40,7 +40,7 @@ namespace BIM.IFC.Exporter
         /// <summary>
         /// The offset transform.
         /// </summary>
-        private Transform m_BrepOffsetTransform = Transform.Identity;
+        private Transform m_BrepOffsetTransform = null;
 
         /// <summary>
         /// The exported material Ids

@@ -105,6 +105,23 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// The StringPropertyInfoCache object for Text property type.
+        /// </summary>
+        public StringPropertyInfoCache TextCache
+        {
+            get
+            {
+                StringPropertyInfoCache textPropertyInfoCache;
+                if (!StringCacheMap.TryGetValue(PropertyType.Text, out textPropertyInfoCache))
+                {
+                    textPropertyInfoCache = new StringPropertyInfoCache();
+                    StringCacheMap[PropertyType.Text] = textPropertyInfoCache;
+                }
+                return textPropertyInfoCache;
+            }
+        }
+
+        /// <summary>
         /// The StringPropertyInfoCache object for Label property type.
         /// </summary>
         public StringPropertyInfoCache LabelCache

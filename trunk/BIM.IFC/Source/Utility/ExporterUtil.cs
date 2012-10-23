@@ -558,6 +558,22 @@ namespace BIM.IFC.Utility
             return IFCInstanceExporter.CreateLocalPlacement(file, placementRelToOpt, relativePlacement);
         }
 
+        /// <summary>
+        /// Creates a new local placement object.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="placementRelTo">The placement object.</param>
+        /// <param name="relativePlacement">The relative placement. Null to create a identity relative placement.</param>
+        /// <returns></returns>
+        public static IFCAnyHandle CreateLocalPlacement(IFCFile file, IFCAnyHandle placementRelTo, IFCAnyHandle relativePlacement)
+        {
+            if (relativePlacement == null)
+            {
+                relativePlacement = ExporterUtil.CreateAxis2Placement3D(file);
+            }
+            return IFCInstanceExporter.CreateLocalPlacement(file, placementRelTo, relativePlacement);
+        }
+
         public static IList<IFCAnyHandle> CopyRepresentations(ExporterIFC exporterIFC, Element element, ElementId catId, IFCAnyHandle origProductRepresentation)
         {
             IList<IFCAnyHandle> origReps = IFCAnyHandleUtil.GetRepresentations(origProductRepresentation);

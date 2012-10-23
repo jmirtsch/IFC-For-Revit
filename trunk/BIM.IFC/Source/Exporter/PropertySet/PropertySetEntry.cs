@@ -52,9 +52,13 @@ namespace BIM.IFC.Exporter.PropertySet
     public enum PropertyType
     {
         /// <summary>
-        /// A label (string value).
+        /// A label (string value), up to 255 characters in length.
         /// </summary>
         Label,
+        /// <summary>
+        /// A text (string value) of unlimited length.
+        /// </summary>
+        Text,
         /// <summary>
         /// A boolean value.
         /// </summary>
@@ -99,6 +103,10 @@ namespace BIM.IFC.Exporter.PropertySet
         /// A length value.
         /// </summary>
         Length, // NOTE: This is currently only used for Revit internal properties, and doesn't have all support routines written.
+        /// <summary>
+        /// A ratio value.
+        /// </summary>
+        Ratio,
     }
 
     /// <summary>
@@ -223,6 +231,22 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Creates an entry of type text.
+        /// </summary>
+        /// <param name="revitParameterName">
+        /// Revit parameter name.
+        /// </param>
+        /// <returns>
+        /// The PropertySetEntry.
+        /// </returns>
+        public static PropertySetEntry CreateText(string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = PropertyType.Text;
+            return pse;
+        }
+        
+        /// <summary>
         /// Creates an entry of type identifier.
         /// </summary>
         /// <param name="revitParameterName">
@@ -286,6 +310,22 @@ namespace BIM.IFC.Exporter.PropertySet
             return pse;
         }
 
+        /// <summary>
+        /// Creates an entry of type ratio.
+        /// </summary>
+        /// <param name="revitParameterName">
+        /// Revit parameter name.
+        /// </param>
+        /// <returns>
+        /// The PropertySetEntry.
+        /// </returns>
+        public static PropertySetEntry CreateRatio(string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = PropertyType.Ratio;
+            return pse;
+        }
+        
         /// <summary>
         /// Creates an entry of type positive ratio.
         /// </summary>
@@ -461,6 +501,11 @@ namespace BIM.IFC.Exporter.PropertySet
                         propHnd = PropertyUtil.CreatePositiveRatioPropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, ifcPropertyName, valueType);
                         break;
                     }
+                case PropertyType.Ratio:
+                    {
+                        propHnd = PropertyUtil.CreateRatioPropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, ifcPropertyName, valueType);
+                        break;
+                    }
                 case PropertyType.PlaneAngle:
                     {
                         propHnd = PropertyUtil.CreatePlaneAngleMeasurePropertyFromElementOrSymbol(file, element, RevitParameterName, ifcPropertyName, valueType);
@@ -552,6 +597,11 @@ namespace BIM.IFC.Exporter.PropertySet
                     case PropertyType.PositiveRatio:
                         {
                             propHnd = PropertyUtil.CreatePositiveRatioMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                            break;
+                        }
+                    case PropertyType.Ratio:
+                        {
+                            propHnd = PropertyUtil.CreateRatioMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                             break;
                         }
                     case PropertyType.PlaneAngle:

@@ -254,15 +254,18 @@ namespace BIM.IFC.Exporter
                         string rampName = NamingUtil.GetIFCName(ramp);
                         string rampDescription = NamingUtil.GetDescriptionOverride(ramp, null);
                         string rampObjectType = NamingUtil.GetObjectTypeOverride(ramp, NamingUtil.CreateIFCObjectName(exporterIFC, ramp));
-                        IFCAnyHandle containedRampLocalPlacement = ExporterUtil.CopyLocalPlacement(file, ecData.GetLocalPlacement());
+                        IFCAnyHandle containedRampLocalPlacement = ExporterUtil.CreateLocalPlacement(file, ecData.GetLocalPlacement(), null);
                         string elementTag = NamingUtil.CreateIFCElementId(ramp);
                         IFCRampType rampType = GetIFCRampType(ifcEnumType);
+                        ElementId matId = BodyExporter.GetBestMaterialIdForGeometry(geometryElement, exporterIFC);
 
                         List<IFCAnyHandle> components = new List<IFCAnyHandle>();
                         IFCAnyHandle containedRampHnd = IFCInstanceExporter.CreateRamp(file, containedRampGuid, ownerHistory, rampName,
                             rampDescription, rampObjectType, containedRampLocalPlacement, representation, elementTag, rampType);
                         components.Add(containedRampHnd);
                         productWrapper.AddElement(containedRampHnd, placementSetter.GetLevelInfo(), ecData, false);
+                        if (matId != ElementId.InvalidElementId)
+                            CategoryUtil.CreateMaterialAssociation(ramp.Document, exporterIFC, containedRampHnd, matId);
 
                         string guid = ExporterIFCUtils.CreateGUID(ramp);
                         IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
@@ -272,7 +275,7 @@ namespace BIM.IFC.Exporter
 
                         productWrapper.AddElement(rampHnd, placementSetter.GetLevelInfo(), ecData, LevelUtil.AssociateElementToLevel(ramp));
 
-                        StairRampContainerInfo stairRampInfo = new StairRampContainerInfo(rampHnd, components, null);
+                        StairRampContainerInfo stairRampInfo = new StairRampContainerInfo(rampHnd, components, localPlacement);
                         ExporterCacheManager.StairRampContainerInfoCache.AddStairRampContainerInfo(ramp.Id, stairRampInfo);
 
                         ExportMultistoryRamp(exporterIFC, ramp, numFlights,

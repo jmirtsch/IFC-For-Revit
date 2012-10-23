@@ -55,6 +55,14 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// A small value for use in comparing vertex.
+        /// </summary>
+        public static double VertexEps
+        {
+            get { return 0.0005; }
+        }
+
+        /// <summary>
         /// Check if two double variables are almost equal.
         /// </summary>
         /// <returns>
@@ -91,6 +99,35 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Returns number in range [midRange-period/2, midRange+period/2].
+        /// </summary>
+        /// <param name="number">The number.</param>
+        /// <param name="midRange">The middle range.</param>
+        /// <param name="period">The period.</param>
+        /// <returns>The number in range.</returns>
+        public static double PutInRange(double number, double midRange, double period)
+        {
+            if (period < Eps())
+                return number;
+
+            double[] range = new double[2];
+            double halfPeriod = 0.5 * period;
+            range[0] = midRange - halfPeriod;
+            range[1] = midRange + halfPeriod;
+
+            double shiftCountAsDouble = 0.0;
+            if (number < range[0])
+                shiftCountAsDouble += (1.0 + Math.Floor((range[0] - number) / period));
+            if (number >= range[1])
+                shiftCountAsDouble -= (1.0 + Math.Floor((number - range[1]) / period));
+
+            number += period * shiftCountAsDouble;
+
+            if (number > (range[1] + Eps()) || number < (range[0] - Eps()))
+                throw new InvalidOperationException("Failed to put number into range.");
+
+            return number;
+        }
         /// Checks if two vectors are parallel or not.
         /// </summary>
         /// <param name="a">The one vector.</param>

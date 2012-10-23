@@ -197,18 +197,21 @@ namespace BIM.IFC.Exporter
                 IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                 string objectType = NamingUtil.CreateIFCObjectName(exporterIFC, element);
 
+                ProjectInfo projectInfo = doc.ProjectInformation;
                 if (element != null)
                 {
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(siteHandle))
                     {
+                        // We will use the Project Information site name as the primary name, if it exists.
                         string instanceGUID = GUIDUtil.CreateSiteGUID(doc, element);
                         string instanceName = NamingUtil.GetIFCName(element);
+                        string siteName = NamingUtil.GetOverrideStringValue(projectInfo, "SiteName", instanceName);
                         string instanceLongName = NamingUtil.GetLongNameOverride(doc.ProjectInformation, NamingUtil.GetLongNameOverride(element, null));
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
                         string instanceElemId = NamingUtil.CreateIFCElementId(element);
 
-                        siteHandle = IFCInstanceExporter.CreateSite(file, instanceGUID, ownerHistory, instanceName, instanceDescription, instanceObjectType, localPlacement,
+                        siteHandle = IFCInstanceExporter.CreateSite(file, instanceGUID, ownerHistory, siteName, instanceDescription, instanceObjectType, localPlacement,
                            siteRepresentation, instanceLongName, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, null, null);
                     }
                 }
@@ -218,9 +221,9 @@ namespace BIM.IFC.Exporter
                     if ((latitude.Count == 0 || longitude.Count == 0) && IFCAnyHandleUtil.IsNullOrHasNoValue(relativePlacement))
                         return;
 
-                    string defaultSiteName = "Default";
-                    string longName = NamingUtil.GetLongNameOverride(doc.ProjectInformation, null);
-                    siteHandle = IFCInstanceExporter.CreateSite(file, GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Site), ownerHistory, defaultSiteName, null, objectType, localPlacement,
+                    string siteName = NamingUtil.GetOverrideStringValue(projectInfo, "SiteName", "Default");
+                    string longName = NamingUtil.GetLongNameOverride(projectInfo, null);
+                    siteHandle = IFCInstanceExporter.CreateSite(file, GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Site), ownerHistory, siteName, null, objectType, localPlacement,
                        null, longName, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, null, null);
                 }
 

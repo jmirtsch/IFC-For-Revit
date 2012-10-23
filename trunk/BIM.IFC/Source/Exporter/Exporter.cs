@@ -288,6 +288,11 @@ namespace BIM.IFC.Exporter
                     if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
                         ExportElementClassifications(exporterIFC, element, productWrapper);
                 }
+
+                // We are going to clear the parameter cache for the element (not the type) after the export.
+                // We do not expect to need the parameters for this element again, so we can free up the space.
+                if (!(element is ElementType))
+                    ParameterUtil.RemoveElementFromCache(element);
             }
             catch (System.Exception ex)
             {
