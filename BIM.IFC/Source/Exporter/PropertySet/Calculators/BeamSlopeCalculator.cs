@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using BIM.IFC.Utility;
 
 namespace BIM.IFC.Exporter.PropertySet.Calculators
 {
@@ -52,25 +53,29 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
         /// <summary>
         /// Calculates slope value for a beam.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
+        /// <param name="element">The element to calculate the value.</param>
+        /// <param name="elementType">The element type.</param>
+        /// <returns>True if the operation succeed, false otherwise.</returns>
         public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
         {
-            if (extrusionCreationData == null)
-                return false;
+            // We may have an extrusionCreationData that doesn't have anything set.  We will check this by seeing if there is a valid length set.
+            if (extrusionCreationData == null || MathUtil.IsAlmostZero(extrusionCreationData.ScaledLength))
+            {
+                // Try looking for parameters that we can calculate slope from.
+                double startParamHeight;
+                if (!ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.STRUCTURAL_BEAM_END0_ELEVATION, out startParamHeight))
+                    return false;
+                double endParamHeight;
+                if (!ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.STRUCTURAL_BEAM_END1_ELEVATION, out endParamHeight))
+                    return false;
+                double length;
+                if (!ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.INSTANCE_LENGTH_PARAM, out length))
+                    return false;
+                m_Slope = Math.Atan2(Math.Abs(endParamHeight - startParamHeight), length) * 180 / Math.PI;
+                return true;
+            }
             m_Slope = extrusionCreationData.Slope;
             return true;
         }

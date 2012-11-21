@@ -540,6 +540,31 @@ namespace BIM.IFC.Toolkit
     }
 
     /// <summary>
+    /// Defines the different types of piles.
+    /// </summary>
+    public enum IFCPileType
+    {
+        Cohesion,
+        Friction,
+        Support,
+        UserDefined,
+        NotDefined
+    }
+
+    /// <summary>
+    /// Defines the different materials for pile construction.
+    /// </summary>
+    public enum IFCPileConstructionEnum
+    {
+        Cast_In_Place,
+        Composite,
+        Precast_Concrete,
+        Prefab_Steel,
+        UserDefined,
+        NotDefined
+    }
+
+    /// <summary>
     /// Defines the different types of planar elements.
     /// </summary>
     public enum IFCPlateType
@@ -1188,6 +1213,62 @@ namespace BIM.IFC.Toolkit
         Column,
         UserDefined,
         NotDefined
+    }
+
+    /// <summary>
+    /// The type of a derived unit.
+    /// </summary>
+    public enum IFCDerivedUnitEnum
+    {
+        AngularVelocityUnit,
+        CompoundPlaneAngleUnit,
+        DynamicViscosityUnit,
+        HeatFluxDensityUnit,
+        IntegerCountRateUnit,
+        IsothermalMoistureCapacityUnit,
+        KinematicViscosityUnit,
+        LinearVelocityUnit,
+        MassDensityUnit,
+        MassFlowRateUnit,
+        MoistureDiffusivityUnit,
+        MolecularWeightUnit,
+        SpecificHeatCapacityUnit,
+        ThermalAdmittanceUnit,
+        ThermalConductanceUnit,
+        ThermalResistanceUnit,
+        ThermalTransmittanceUnit,
+        VaporPermeabilityUnit,
+        VolumetricFlowRateUnit,
+        RotationalFrequencyUnit,
+        Toruquenit,
+        MomentOfInertiaUnit,
+        LinearMomentUnit,
+        LinearForceUnit,
+        PlanarForceUnit,
+        ModulusOfElasticityUnit,
+        ShearModulusUnit,
+        LinearStiffnessUnit,
+        RotationalStiffnessUnit,
+        ModulusOfSubGradeReactionUnit,
+        AccelerationUnit,
+        CurvatureUnit,
+        HeatingValueUnit,
+        IonConcentrationUnit,
+        LuminousIntensityDistributionUnit,
+        MassPerLengthUnit,
+        ModulusOfLinearSubGradeReactionUnit,
+        ModulusOfRotationalSubGradeReactionUnit,
+        PhUnit,
+        RotationalMassUnit,
+        SectionAreaIntegralUnit,
+        SectionModulusUnit,
+        SoundPowerUnit,
+        SoundPressureUnit,
+        TemperatureGradientUnit,
+        ThermalExpansionCoefficientUnit,
+        WarpingConstantUnit,
+        WarpingMomentUnit,
+        UserDefined
     }
 
     /// <summary>

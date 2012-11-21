@@ -214,5 +214,25 @@ namespace BIM.IFC.Toolkit
         {
             return IFCData.CreateDoubleOfType(value, "IfcThermodynamicTemperatureMeasure");
         }
+
+        /// <summary>
+        /// Creates an IFCData object as IfcThermalTransmittanceMeasure.
+        /// </summary>
+        /// <param name="value">The double value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsThermalTransmittanceMeasure(double value)
+        {
+            return IFCData.CreateDoubleOfType(value, "IfcThermalTransmittanceMeasure");
+        }
+
+        /// <summary>
+        /// Creates an IFCData object as IfcVolumetricFlowRate.
+        /// </summary>
+        /// <param name="value">The double value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsVolumetricFlowRateMeasure(double value)
+        {
+            return IFCData.CreateDoubleOfType(value, "IfcVolumetricFlowRateMeasure");
+        }
     }
 }

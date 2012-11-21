@@ -179,7 +179,7 @@ namespace BIM.IFC.Exporter
         /// The geometry element.
         /// </param>
         /// <param name="origWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
         /// <param name="overrideLevelId">
         /// The level id.
@@ -191,12 +191,12 @@ namespace BIM.IFC.Exporter
         /// The exported wall handle.
         /// </returns>
         public static IFCAnyHandle ExportWallBase(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement,
-           IFCProductWrapper origWrapper, ElementId overrideLevelId, IFCRange range)
+           ProductWrapper origWrapper, ElementId overrideLevelId, IFCRange range)
         {
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction tr = new IFCTransaction(file))
             {
-                using (IFCProductWrapper localWrapper = IFCProductWrapper.Create(origWrapper))
+                using (ProductWrapper localWrapper = ProductWrapper.Create(origWrapper))
                 {
                     ElementId catId = CategoryUtil.GetSafeCategoryId(element);
 
@@ -222,8 +222,8 @@ namespace BIM.IFC.Exporter
                     double depth = 0.0;
                     bool validRange = (range != null && !MathUtil.IsAlmostZero(range.Start - range.End));
 
-                    bool exportParts = PartExporter.CanExportParts(wallElement);
-                    if (exportParts && !PartExporter.CanExportElementInPartExport(wallElement, validRange ? overrideLevelId : wallElement.Level.Id, validRange))
+                    bool exportParts = PartExporter.CanExportParts(element);
+                    if (exportParts && !PartExporter.CanExportElementInPartExport(element, validRange ? overrideLevelId : element.Level.Id, validRange))
                         return null;
 
                     // get bounding box height so that we can subtract out pieces properly.
@@ -349,7 +349,7 @@ namespace BIM.IFC.Exporter
 
                         // two representations: axis, body.         
                         {
-                            if ((centerCurve != null) && (GeometryUtil.CurveIsLineOrArc(centerCurve)))
+                            if (!exportParts && (centerCurve != null) && (GeometryUtil.CurveIsLineOrArc(centerCurve)))
                             {
                                 exportingAxis = true;
 
@@ -382,7 +382,7 @@ namespace BIM.IFC.Exporter
                         IList<Solid> solids = new List<Solid>();
                         IList<Mesh> meshes = new List<Mesh>();
 
-                        if (wallElement != null && exportingAxis && curve != null)
+                        if (!exportParts && wallElement != null && exportingAxis && curve != null)
                         {
                             SolidMeshGeometryInfo solidMeshInfo =
                                 (range == null) ? GeometryUtil.GetSolidMeshGeometry(geometryElement, Transform.Identity) :
@@ -484,24 +484,28 @@ namespace BIM.IFC.Exporter
                                 ElementId overrideMaterialId = ElementId.InvalidElementId;
                                 if (wallElement != null)
                                     overrideMaterialId = HostObjectExporter.GetFirstLayerMaterialId(wallElement);
-                                if ((solids.Count > 0) || (meshes.Count > 0))
-                                {
-                                    bodyRep = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId, overrideMaterialId,
-                                        solids, meshes, bodyExporterOptions, extraParams).RepresentationHnd;
-                                }
-                                else
-                                {
-                                    IList<GeometryObject> geomElemList = new List<GeometryObject>();
-                                    geomElemList.Add(geometryElement);
-                                    BodyData bodyData = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId, overrideMaterialId,
-                                        geomElemList, bodyExporterOptions, extraParams);
-                                    bodyRep = bodyData.RepresentationHnd;
-                                }
 
-                                if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRep))
+                                if (!exportParts)
                                 {
-                                    extraParams.ClearOpenings();
-                                    return null;
+                                    if ((solids.Count > 0) || (meshes.Count > 0))
+                                    {
+                                        bodyRep = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId, overrideMaterialId,
+                                            solids, meshes, bodyExporterOptions, extraParams).RepresentationHnd;
+                                    }
+                                    else
+                                    {
+                                        IList<GeometryObject> geomElemList = new List<GeometryObject>();
+                                        geomElemList.Add(geometryElement);
+                                        BodyData bodyData = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId, overrideMaterialId,
+                                            geomElemList, bodyExporterOptions, extraParams);
+                                        bodyRep = bodyData.RepresentationHnd;
+                                    }
+
+                                    if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRep))
+                                    {
+                                        extraParams.ClearOpenings();
+                                        return null;
+                                    }
                                 }
 
                                 // We will be able to export as a IfcWallStandardCase as long as we have an axis curve.
@@ -519,28 +523,31 @@ namespace BIM.IFC.Exporter
                             }
 
                             IFCAnyHandle prodRep = null;
-                            IList<IFCAnyHandle> representations = new List<IFCAnyHandle>();
-                            if (exportingAxis)
-                                representations.Add(axisRep);
+                            if (!exportParts)
+                            {
+                                IList<IFCAnyHandle> representations = new List<IFCAnyHandle>();
+                                if (exportingAxis)
+                                    representations.Add(axisRep);
 
-                            representations.Add(bodyRep);
+                                representations.Add(bodyRep);
 
-                            IFCAnyHandle boundingBoxRep = null;
-                            if ((solids.Count > 0) || (meshes.Count > 0))
-                                boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, solids, meshes, Transform.Identity);
-                            else
-                                boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geometryElement, Transform.Identity);
+                                IFCAnyHandle boundingBoxRep = null;
+                                if ((solids.Count > 0) || (meshes.Count > 0))
+                                    boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, solids, meshes, Transform.Identity);
+                                else
+                                    boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geometryElement, Transform.Identity);
 
-                            if (boundingBoxRep != null)
-                                representations.Add(boundingBoxRep);
+                                if (boundingBoxRep != null)
+                                    representations.Add(boundingBoxRep);
 
-                            prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
+                                prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
+                            }
 
                             ElementId matId = ElementId.InvalidElementId;
                             string objectType = NamingUtil.CreateIFCObjectName(exporterIFC, element);
                             IFCAnyHandle wallHnd = null;
 
-                            string elemGUID = (validRange) ? ExporterIFCUtils.CreateGUID() : ExporterIFCUtils.CreateGUID(element);
+                            string elemGUID = (validRange) ? GUIDUtil.CreateGUID() : GUIDUtil.CreateGUID(element);
                             string elemName = NamingUtil.GetIFCName(element);
                             string elemDesc = NamingUtil.GetDescriptionOverride(element, null);
                             string elemObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
@@ -548,11 +555,15 @@ namespace BIM.IFC.Exporter
 
                             if (exportedAsWallWithAxis)
                             {
-                                wallHnd = IFCInstanceExporter.CreateWallStandardCase(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                                    localPlacement, exportParts ? null : prodRep, elemId);
+                                if (exportParts)
+                                    wallHnd = IFCInstanceExporter.CreateWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
+                                    localPlacement, null, elemId);
+                                else
+                                    wallHnd = IFCInstanceExporter.CreateWallStandardCase(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
+                                        localPlacement, prodRep, elemId);
 
                                 if (exportParts)
-                                    PartExporter.ExportHostPart(exporterIFC, wallElement, wallHnd, localWrapper, setter, localPlacement, overrideLevelId);
+                                    PartExporter.ExportHostPart(exporterIFC, element, wallHnd, localWrapper, setter, localPlacement, overrideLevelId);
 
                                 localWrapper.AddElement(wallHnd, setter, extraParams, true);
 
@@ -564,7 +575,7 @@ namespace BIM.IFC.Exporter
                                 else
                                 {
                                     double scaledWidth = wallElement.Width * scale;
-                                    ExporterIFCUtils.AddOpeningsToElement(exporterIFC, wallHnd, wallElement, scaledWidth, range, setter, localPlacement, localWrapper);
+                                    ExporterIFCUtils.AddOpeningsToElement(exporterIFC, wallHnd, wallElement, scaledWidth, range, setter, localPlacement, localWrapper.ToNative());
                                 }
 
                                 // export Base Quantities
@@ -579,21 +590,21 @@ namespace BIM.IFC.Exporter
                                     localPlacement, exportParts ? null : prodRep, elemId);
 
                                 if (exportParts)
-                                    PartExporter.ExportHostPart(exporterIFC, wallElement, wallHnd, localWrapper, setter, localPlacement, overrideLevelId);
+                                    PartExporter.ExportHostPart(exporterIFC, element, wallHnd, localWrapper, setter, localPlacement, overrideLevelId);
 
                                 localWrapper.AddElement(wallHnd, setter, extraParams, true);
 
                                 // Only export one material for 2x2; for future versions, export the whole list.
                                 if ((exporterIFC.ExportAs2x2 || famInstWallElem != null) && !exportParts)
                                 {
-                                    matId = BodyExporter.GetBestMaterialIdForGeometry(solids, meshes);
+                                    matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(solids, meshes, element);
                                     if (matId != ElementId.InvalidElementId)
                                         CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, wallHnd, matId);
                                 }
 
                                 if (exportingInplaceOpenings)
                                 {
-                                    ExporterIFCUtils.AddOpeningsToElement(exporterIFC, wallHnd, famInstWallElem, 0.0, range, setter, localPlacement, localWrapper);
+                                    ExporterIFCUtils.AddOpeningsToElement(exporterIFC, wallHnd, famInstWallElem, 0.0, range, setter, localPlacement, localWrapper.ToNative());
                                 }
 
                                 if (exportedBodyDirectly)
@@ -641,10 +652,10 @@ namespace BIM.IFC.Exporter
         /// The geometry element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
         public static void ExportWall(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement,
-           IFCProductWrapper productWrapper)
+           ProductWrapper productWrapper)
         {
             IList<IFCAnyHandle> createdWalls = new List<IFCAnyHandle>();
 
@@ -710,9 +721,9 @@ namespace BIM.IFC.Exporter
         /// The geometry element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        public static void Export(ExporterIFC exporterIFC, Wall wallElement, GeometryElement geometryElement, IFCProductWrapper productWrapper)
+        public static void Export(ExporterIFC exporterIFC, Wall wallElement, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction tr = new IFCTransaction(file))
@@ -780,14 +791,14 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The wall element.</param>
         /// <param name="geometryElement">The geometry of wall.</param>
-        /// <param name="origWrapper">The IFCProductWrapper.</param>
+        /// <param name="origWrapper">The ProductWrapper.</param>
         /// <param name="overrideLevelId">The ElementId that will crate the dummy wall.</param>
         /// <param name="range">The IFCRange corresponding to the dummy wall.</param>
         /// <returns>The handle of dummy wall.</returns>
         public static IFCAnyHandle ExportDummyWall(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement,
-           IFCProductWrapper origWrapper, ElementId overrideLevelId, IFCRange range)
+           ProductWrapper origWrapper, ElementId overrideLevelId, IFCRange range)
         {
-            using (IFCProductWrapper localWrapper = IFCProductWrapper.Create(origWrapper))
+            using (ProductWrapper localWrapper = ProductWrapper.Create(origWrapper))
             {
                 ElementId catId = CategoryUtil.GetSafeCategoryId(element);
 
@@ -814,7 +825,7 @@ namespace BIM.IFC.Exporter
                 string objectType = NamingUtil.CreateIFCObjectName(exporterIFC, element);
                 IFCAnyHandle wallHnd = null;
 
-                string elemGUID = (validRange) ? ExporterIFCUtils.CreateGUID() : ExporterIFCUtils.CreateGUID(element);
+                string elemGUID = (validRange) ? GUIDUtil.CreateGUID() : GUIDUtil.CreateGUID(element);
                 string elemName = NamingUtil.GetIFCName(element);
                 string elemDesc = NamingUtil.GetDescriptionOverride(element, null);
                 string elemObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
@@ -829,7 +840,7 @@ namespace BIM.IFC.Exporter
                                     localPlacement, null, elemId);
 
                     if (exportParts)
-                        PartExporter.ExportHostPart(exporterIFC, wallElement, wallHnd, localWrapper, setter, localPlacement, overrideLevelId);
+                        PartExporter.ExportHostPart(exporterIFC, element, wallHnd, localWrapper, setter, localPlacement, overrideLevelId);
 
                     IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData();
                     extraParams.PossibleExtrusionAxes = IFCExtrusionAxes.TryZ;   // only allow vertical extrusions!
@@ -869,7 +880,7 @@ namespace BIM.IFC.Exporter
                 return;
             }
 
-            string elemGUID = ExporterIFCUtils.CreateGUID(elementType);
+            string elemGUID = GUIDUtil.CreateGUID(elementType);
             string elemName = NamingUtil.GetIFCName(elementType);
             string elemDesc = NamingUtil.GetDescriptionOverride(elementType, null);
             string elemTag = NamingUtil.CreateIFCElementId(elementType);

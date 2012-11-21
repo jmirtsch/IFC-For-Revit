@@ -58,11 +58,11 @@ namespace BIM.IFC.Utility
         /// The IFCPlacementSetter.
         /// </param>
         /// <param name="wrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
         private static void CreateOpeningsIfNecessaryBase(IFCAnyHandle elementHandle, Element element, IList<IFCExtrusionData> info,
            IFCExtrusionCreationData extraParams, ExporterIFC exporterIFC,
-           IFCAnyHandle originalPlacement, IFCPlacementSetter setter, IFCProductWrapper wrapper)
+           IFCAnyHandle originalPlacement, IFCPlacementSetter setter, ProductWrapper wrapper)
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(elementHandle))
                 return;
@@ -98,7 +98,7 @@ namespace BIM.IFC.Utility
                 IFCAnyHandle openingRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
 
                 IFCAnyHandle openingPlacement = ExporterUtil.CopyLocalPlacement(file, originalPlacement);
-                string guid = ExporterIFCUtils.CreateGUID();
+                string guid = GUIDUtil.CreateGUID();
                 IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                 string openingName = NamingUtil.GetIFCNamePlusIndex(element, openingNumber++);
                 string elementId = NamingUtil.CreateIFCElementId(element);
@@ -108,7 +108,7 @@ namespace BIM.IFC.Utility
                 if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities && (extraParams != null))
                     ExporterIFCUtils.CreateOpeningQuantities(exporterIFC, openingElement, extraParams);
 
-                string voidGuid = ExporterIFCUtils.CreateGUID();
+                string voidGuid = GUIDUtil.CreateGUID();
                 IFCInstanceExporter.CreateRelVoidsElement(file, voidGuid, ownerHistory, null, null, elementHandle, openingElement);
             }
         }
@@ -135,11 +135,11 @@ namespace BIM.IFC.Utility
         /// The IFCPlacementSetter.
         /// </param>
         /// <param name="wrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
         public static void CreateOpeningsIfNecessary(IFCAnyHandle elementHandle, Element element, IList<IFCExtrusionData> info,
            ExporterIFC exporterIFC, IFCAnyHandle originalPlacement,
-           IFCPlacementSetter setter, IFCProductWrapper wrapper)
+           IFCPlacementSetter setter, ProductWrapper wrapper)
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(elementHandle))
                 return;
@@ -172,11 +172,11 @@ namespace BIM.IFC.Utility
         /// The IFCPlacementSetter.
         /// </param>
         /// <param name="wrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
         public static void CreateOpeningsIfNecessary(IFCAnyHandle elementHandle, Element element, IFCExtrusionCreationData extraParams,
            ExporterIFC exporterIFC, IFCAnyHandle originalPlacement,
-           IFCPlacementSetter setter, IFCProductWrapper wrapper)
+           IFCPlacementSetter setter, ProductWrapper wrapper)
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(elementHandle))
                 return;

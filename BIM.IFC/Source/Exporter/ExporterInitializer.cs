@@ -107,8 +107,11 @@ namespace BIM.IFC.Exporter
             // Manufacturer type information
             InitPropertySetManufacturerTypeInformation(commonPropertySets);
 
-            // Architectural property sets.
+            // Architectural/Structural property sets.
             InitPropertySetBeamCommon(commonPropertySets);
+            InitPropertySetColumnCommon(commonPropertySets);
+            InitPropertySetDoorCommon(commonPropertySets);
+            InitPropertySetMemberCommon(commonPropertySets);
             InitPropertySetRailingCommon(commonPropertySets);
             InitPropertySetRampCommon(commonPropertySets);
             InitPropertySetRampFlightCommon(commonPropertySets);
@@ -117,6 +120,7 @@ namespace BIM.IFC.Exporter
             InitPropertySetStairCommon(commonPropertySets);
             InitPropertySetStairFlightCommon(commonPropertySets);
             InitPropertySetWallCommon(commonPropertySets);
+            InitPropertySetWindowCommon(commonPropertySets);
 
             // Building property sets.
             InitPropertySetBuildingCommon(commonPropertySets, fileVersion);
@@ -160,20 +164,20 @@ namespace BIM.IFC.Exporter
             propertySetManufacturer.EntityTypes.Add(IFCEntityType.IfcElement);
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("ArticleNumber");
-            propertySetManufacturer.Entries.Add(ifcPSE);
+            propertySetManufacturer.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("ModelReference");
-            propertySetManufacturer.Entries.Add(ifcPSE);
+            propertySetManufacturer.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("ModelLabel");
-            propertySetManufacturer.Entries.Add(ifcPSE);
+            propertySetManufacturer.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("Manufacturer");
             ifcPSE.RevitBuiltInParameter = BuiltInParameter.ALL_MODEL_MANUFACTURER;
-            propertySetManufacturer.Entries.Add(ifcPSE);
+            propertySetManufacturer.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("ProductionYear");
-            propertySetManufacturer.Entries.Add(ifcPSE);
+            propertySetManufacturer.AddEntry(ifcPSE);
 
             commonPropertySets.Add(propertySetManufacturer);
         }
@@ -193,31 +197,114 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
             ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
-            propertySetWallCommon.Entries.Add(ifcPSE);
+            propertySetWallCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("LoadBearing");
             ifcPSE.PropertyCalculator = LoadBearingCalculator.Instance;
-            propertySetWallCommon.Entries.Add(ifcPSE);
+            propertySetWallCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("ExtendToStructure");
             ifcPSE.PropertyCalculator = ExtendToStructureCalculator.Instance;
-            propertySetWallCommon.Entries.Add(ifcPSE);
+            propertySetWallCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
             ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
-            propertySetWallCommon.Entries.Add(ifcPSE);
+            propertySetWallCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("FireRating");
             ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
-            propertySetWallCommon.Entries.Add(ifcPSE);
+            propertySetWallCommon.AddEntry(ifcPSE);
 
-            propertySetWallCommon.Entries.Add(PropertySetEntry.CreateLabel("AcousticRating"));
-            propertySetWallCommon.Entries.Add(PropertySetEntry.CreateLabel("SurfaceSpreadOfFlame"));
-            propertySetWallCommon.Entries.Add(PropertySetEntry.CreateBoolean("Combustible"));
-            propertySetWallCommon.Entries.Add(PropertySetEntry.CreateBoolean("Compartmentation"));
-            propertySetWallCommon.Entries.Add(PropertySetEntry.CreateReal("ThermalTransmittance"));
+            ifcPSE = PropertySetEntry.CreateThermalTransmittance("ThermalTransmittance");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.ANALYTICAL_HEAT_TRANSFER_COEFFICIENT;
+            propertySetWallCommon.AddEntry(ifcPSE);
 
+            propertySetWallCommon.AddEntry(PropertySetEntry.CreateLabel("AcousticRating"));
+            propertySetWallCommon.AddEntry(PropertySetEntry.CreateLabel("SurfaceSpreadOfFlame"));
+            propertySetWallCommon.AddEntry(PropertySetEntry.CreateBoolean("Combustible"));
+            propertySetWallCommon.AddEntry(PropertySetEntry.CreateBoolean("Compartmentation"));
+            
             commonPropertySets.Add(propertySetWallCommon);
+        }
+
+        /// <summary>
+        /// Initializes common door property sets.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetDoorCommon(IList<PropertySetDescription> commonPropertySets)
+        {
+            //property set wall common
+            PropertySetDescription propertySetDoorCommon = new PropertySetDescription();
+            propertySetDoorCommon.Name = "Pset_DoorCommon";
+            propertySetDoorCommon.SubElementIndex = (int)IFCDoorSubElements.PSetDoorCommon;
+
+            propertySetDoorCommon.EntityTypes.Add(IFCEntityType.IfcDoor);
+
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
+            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            propertySetDoorCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
+            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            propertySetDoorCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            propertySetDoorCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateThermalTransmittance("ThermalTransmittance");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.ANALYTICAL_HEAT_TRANSFER_COEFFICIENT;
+            propertySetDoorCommon.AddEntry(ifcPSE);
+
+            propertySetDoorCommon.AddEntry(PropertySetEntry.CreateLabel("AcousticRating"));
+            propertySetDoorCommon.AddEntry(PropertySetEntry.CreateLabel("SecurityRating"));
+            propertySetDoorCommon.AddEntry(PropertySetEntry.CreateBoolean("HandicapAccessible"));
+            propertySetDoorCommon.AddEntry(PropertySetEntry.CreateBoolean("FireExit"));
+            propertySetDoorCommon.AddEntry(PropertySetEntry.CreateBoolean("SelfClosing"));
+            propertySetDoorCommon.AddEntry(PropertySetEntry.CreateBoolean("SmokeStop"));
+            propertySetDoorCommon.AddEntry(PropertySetEntry.CreateReal("GlazingAreaFraction"));
+            propertySetDoorCommon.AddEntry(PropertySetEntry.CreateVolumetricFlowRate("Infiltration"));
+
+            commonPropertySets.Add(propertySetDoorCommon);
+        }
+
+        /// <summary>
+        /// Initializes common window property sets.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetWindowCommon(IList<PropertySetDescription> commonPropertySets)
+        {
+            //property set wall common
+            PropertySetDescription propertySetWindowCommon = new PropertySetDescription();
+            propertySetWindowCommon.Name = "Pset_WindowCommon";
+            propertySetWindowCommon.SubElementIndex = (int)IFCWindowSubElements.PSetWindowCommon;
+
+            propertySetWindowCommon.EntityTypes.Add(IFCEntityType.IfcWindow);
+
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
+            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            propertySetWindowCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
+            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            propertySetWindowCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            propertySetWindowCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateThermalTransmittance("ThermalTransmittance");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.ANALYTICAL_HEAT_TRANSFER_COEFFICIENT;
+            propertySetWindowCommon.AddEntry(ifcPSE);
+
+            propertySetWindowCommon.AddEntry(PropertySetEntry.CreateLabel("AcousticRating"));
+            propertySetWindowCommon.AddEntry(PropertySetEntry.CreateLabel("SecurityRating"));
+
+            propertySetWindowCommon.AddEntry(PropertySetEntry.CreateBoolean("SmokeStop"));
+            propertySetWindowCommon.AddEntry(PropertySetEntry.CreateReal("GlazingAreaFraction"));
+            propertySetWindowCommon.AddEntry(PropertySetEntry.CreateVolumetricFlowRate("Infiltration"));
+
+            commonPropertySets.Add(propertySetWindowCommon);
         }
 
         /// <summary>
@@ -235,29 +322,107 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
             ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
-            propertySetBeamCommon.Entries.Add(ifcPSE);
+            propertySetBeamCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("LoadBearing");
             ifcPSE.PropertyCalculator = BeamLoadBearingCalculator.Instance;
-            propertySetBeamCommon.Entries.Add(ifcPSE);
+            propertySetBeamCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
             ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
-            propertySetBeamCommon.Entries.Add(ifcPSE);
+            propertySetBeamCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("FireRating");
             ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
-            propertySetBeamCommon.Entries.Add(ifcPSE);
+            propertySetBeamCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePositiveLength("Span");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.INSTANCE_LENGTH_PARAM;
             ifcPSE.PropertyCalculator = BeamSpanCalculator.Instance;
-            propertySetBeamCommon.Entries.Add(ifcPSE);
+            propertySetBeamCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePlaneAngle("Slope");
             ifcPSE.PropertyCalculator = BeamSlopeCalculator.Instance;
-            propertySetBeamCommon.Entries.Add(ifcPSE);
+            propertySetBeamCommon.AddEntry(ifcPSE);
 
             commonPropertySets.Add(propertySetBeamCommon);
+        }
+
+        /// <summary>
+        /// Initializes common IfcMember property sets.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        /// <remarks>Reuses beam calculators for some values.</remarks>
+        private static void InitPropertySetMemberCommon(IList<PropertySetDescription> commonPropertySets)
+        {
+            //property beam common
+            PropertySetDescription propertySetMemberCommon = new PropertySetDescription();
+            propertySetMemberCommon.Name = "Pset_MemberCommon";
+            propertySetMemberCommon.SubElementIndex = (int)IFCMemberSubElements.PSetMemberCommon;
+
+            propertySetMemberCommon.EntityTypes.Add(IFCEntityType.IfcMember);
+
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
+            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            propertySetMemberCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateBoolean("LoadBearing");
+            ifcPSE.PropertyCalculator = BeamLoadBearingCalculator.Instance;
+            propertySetMemberCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
+            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            propertySetMemberCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            propertySetMemberCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePositiveLength("Span");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.INSTANCE_LENGTH_PARAM;
+            ifcPSE.PropertyCalculator = BeamSpanCalculator.Instance;
+            propertySetMemberCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePlaneAngle("Slope");
+            ifcPSE.PropertyCalculator = BeamSlopeCalculator.Instance;
+            propertySetMemberCommon.AddEntry(ifcPSE);
+
+            commonPropertySets.Add(propertySetMemberCommon);
+        }
+
+        /// <summary>
+        /// Initializes common column property sets.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetColumnCommon(IList<PropertySetDescription> commonPropertySets)
+        {
+            //property column common
+            PropertySetDescription propertySetColumnCommon = new PropertySetDescription();
+            propertySetColumnCommon.Name = "Pset_ColumnCommon";
+
+            propertySetColumnCommon.EntityTypes.Add(IFCEntityType.IfcColumn);
+
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
+            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            propertySetColumnCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateBoolean("LoadBearing");
+            ifcPSE.PropertyCalculator = ColumnLoadBearingCalculator.Instance;
+            propertySetColumnCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
+            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            propertySetColumnCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            propertySetColumnCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePlaneAngle("Slope");
+            ifcPSE.PropertyCalculator = BeamSlopeCalculator.Instance;
+            propertySetColumnCommon.AddEntry(ifcPSE);
+
+            commonPropertySets.Add(propertySetColumnCommon);
         }
 
         /// <summary>
@@ -275,25 +440,25 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
             ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
-            propertySetRoofCommon.Entries.Add(ifcPSE);
+            propertySetRoofCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
             ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
-            propertySetRoofCommon.Entries.Add(ifcPSE);
+            propertySetRoofCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("FireRating");
             ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
-            propertySetRoofCommon.Entries.Add(ifcPSE);
+            propertySetRoofCommon.AddEntry(ifcPSE);
 
             if (fileVersion != IFCVersion.IFC2x2)
             {
                 ifcPSE = PropertySetEntry.CreateArea("TotalArea");
                 ifcPSE.RevitBuiltInParameter = BuiltInParameter.HOST_AREA_COMPUTED;
-                propertySetRoofCommon.Entries.Add(ifcPSE);
+                propertySetRoofCommon.AddEntry(ifcPSE);
 
                 ifcPSE = PropertySetEntry.CreateArea("ProjectedArea");
                 ifcPSE.PropertyCalculator = RoofProjectedAreaCalculator.Instance;
-                propertySetRoofCommon.Entries.Add(ifcPSE);
+                propertySetRoofCommon.AddEntry(ifcPSE);
             }
 
             commonPropertySets.Add(propertySetRoofCommon);
@@ -314,34 +479,35 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
             ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
-            propertySetSlabCommon.Entries.Add(ifcPSE);
+            propertySetSlabCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
             ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
-            propertySetSlabCommon.Entries.Add(ifcPSE);
+            propertySetSlabCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("LoadBearing");
             ifcPSE.PropertyCalculator = SlabLoadBearingCalculator.Instance; // always true
-            propertySetSlabCommon.Entries.Add(ifcPSE);
+            propertySetSlabCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("FireRating");
             ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
-            propertySetSlabCommon.Entries.Add(ifcPSE);
+            propertySetSlabCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("AcousticRating");
-            propertySetSlabCommon.Entries.Add(ifcPSE);
+            propertySetSlabCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("SurfaceSpreadOfFlame");
-            propertySetSlabCommon.Entries.Add(ifcPSE);
+            propertySetSlabCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("Combustible");
-            propertySetSlabCommon.Entries.Add(ifcPSE);
+            propertySetSlabCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("Compartmentation");
-            propertySetSlabCommon.Entries.Add(ifcPSE);
+            propertySetSlabCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateReal("ThermalTransmittance");
-            propertySetSlabCommon.Entries.Add(ifcPSE);
+            ifcPSE = PropertySetEntry.CreateThermalTransmittance("ThermalTransmittance");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.ANALYTICAL_HEAT_TRANSFER_COEFFICIENT;
+            propertySetSlabCommon.AddEntry(ifcPSE);
 
             commonPropertySets.Add(propertySetSlabCommon);
         }
@@ -360,15 +526,15 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
             ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
-            propertySetRailingCommon.Entries.Add(ifcPSE);
+            propertySetRailingCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
             ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
-            propertySetRailingCommon.Entries.Add(ifcPSE);
+            propertySetRailingCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePositiveLength("Height");
             ifcPSE.PropertyCalculator = RailingHeightCalculator.Instance;
-            propertySetRailingCommon.Entries.Add(ifcPSE);
+            propertySetRailingCommon.AddEntry(ifcPSE);
 
             // Railing diameter not supported.
 
@@ -390,21 +556,21 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
             ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
-            propertySetRampCommon.Entries.Add(ifcPSE);
+            propertySetRampCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
             ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
-            propertySetRampCommon.Entries.Add(ifcPSE);
+            propertySetRampCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("FireRating");
             ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
-            propertySetRampCommon.Entries.Add(ifcPSE);
+            propertySetRampCommon.AddEntry(ifcPSE);
 
-            propertySetRampCommon.Entries.Add(PropertySetEntry.CreateBoolean("HandicapAccessible"));
-            propertySetRampCommon.Entries.Add(PropertySetEntry.CreateBoolean("FireExit"));
-            propertySetRampCommon.Entries.Add(PropertySetEntry.CreateBoolean("HasNonSkidSurface"));
-            propertySetRampCommon.Entries.Add(PropertySetEntry.CreateReal("RequiredHeadroom"));
-            propertySetRampCommon.Entries.Add(PropertySetEntry.CreateReal("RequiredSlope"));
+            propertySetRampCommon.AddEntry(PropertySetEntry.CreateBoolean("HandicapAccessible"));
+            propertySetRampCommon.AddEntry(PropertySetEntry.CreateBoolean("FireExit"));
+            propertySetRampCommon.AddEntry(PropertySetEntry.CreateBoolean("HasNonSkidSurface"));
+            propertySetRampCommon.AddEntry(PropertySetEntry.CreateReal("RequiredHeadroom"));
+            propertySetRampCommon.AddEntry(PropertySetEntry.CreateReal("RequiredSlope"));
 
             commonPropertySets.Add(propertySetRampCommon);
         }
@@ -424,46 +590,46 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
             ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
-            propertySetStairFlightCommon.Entries.Add(ifcPSE);
+            propertySetStairFlightCommon.AddEntry(ifcPSE);
 
             PropertyCalculator stairRiserAndTreadsCalculator = StairRiserTreadsCalculator.Instance;
             ifcPSE = PropertySetEntry.CreateCount("NumberOfRiser");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
-            propertySetStairFlightCommon.Entries.Add(ifcPSE);
+            propertySetStairFlightCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateCount("NumberOfTreads");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
-            propertySetStairFlightCommon.Entries.Add(ifcPSE);
+            propertySetStairFlightCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePositiveLength("RiserHeight");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
-            propertySetStairFlightCommon.Entries.Add(ifcPSE);
+            propertySetStairFlightCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePositiveLength("TreadLength");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
-            propertySetStairFlightCommon.Entries.Add(ifcPSE);
+            propertySetStairFlightCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePositiveLength("TreadLengthAtOffset");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
-            propertySetStairFlightCommon.Entries.Add(ifcPSE);
+            propertySetStairFlightCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePositiveLength("TreadLengthAtInnerSide");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
-            propertySetStairFlightCommon.Entries.Add(ifcPSE);
+            propertySetStairFlightCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePositiveLength("NosingLength");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
-            propertySetStairFlightCommon.Entries.Add(ifcPSE);
+            propertySetStairFlightCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePositiveLength("WalkingLineOffset");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
-            propertySetStairFlightCommon.Entries.Add(ifcPSE);
+            propertySetStairFlightCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePositiveLength("WaistThickness");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
-            propertySetStairFlightCommon.Entries.Add(ifcPSE);
+            propertySetStairFlightCommon.AddEntry(ifcPSE);
 
-            propertySetStairFlightCommon.Entries.Add(PropertySetEntry.CreatePositiveLength("Headroom"));
+            propertySetStairFlightCommon.AddEntry(PropertySetEntry.CreatePositiveLength("Headroom"));
 
             commonPropertySets.Add(propertySetStairFlightCommon);
         }
@@ -482,11 +648,11 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
             ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
-            propertySetRampFlightCommon.Entries.Add(ifcPSE);
+            propertySetRampFlightCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePlaneAngle("Slope");
             ifcPSE.PropertyCalculator = RampFlightSlopeCalculator.Instance;
-            propertySetRampFlightCommon.Entries.Add(ifcPSE);
+            propertySetRampFlightCommon.AddEntry(ifcPSE);
 
             commonPropertySets.Add(propertySetRampFlightCommon);
         }
@@ -506,37 +672,37 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
             ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
-            propertySetStairCommon.Entries.Add(ifcPSE);
+            propertySetStairCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
             ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
-            propertySetStairCommon.Entries.Add(ifcPSE);
+            propertySetStairCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("FireRating");
             ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
-            propertySetStairCommon.Entries.Add(ifcPSE);
+            propertySetStairCommon.AddEntry(ifcPSE);
 
             PropertyCalculator stairRiserAndTreadsCalculator = StairRiserTreadsCalculator.Instance;
             ifcPSE = PropertySetEntry.CreateCount("NumberOfRiser");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
-            propertySetStairCommon.Entries.Add(ifcPSE);
+            propertySetStairCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateCount("NumberOfTreads");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
-            propertySetStairCommon.Entries.Add(ifcPSE);
+            propertySetStairCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePositiveLength("RiserHeight");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
-            propertySetStairCommon.Entries.Add(ifcPSE);
+            propertySetStairCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePositiveLength("TreadLength");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
-            propertySetStairCommon.Entries.Add(ifcPSE);
+            propertySetStairCommon.AddEntry(ifcPSE);
 
-            propertySetStairCommon.Entries.Add(PropertySetEntry.CreateBoolean("HandicapAccessible"));
-            propertySetStairCommon.Entries.Add(PropertySetEntry.CreateBoolean("FireExit"));
-            propertySetStairCommon.Entries.Add(PropertySetEntry.CreateBoolean("HasNonSkidSurface"));
-            propertySetStairCommon.Entries.Add(PropertySetEntry.CreateBoolean("RequiredHeadroom"));
+            propertySetStairCommon.AddEntry(PropertySetEntry.CreateBoolean("HandicapAccessible"));
+            propertySetStairCommon.AddEntry(PropertySetEntry.CreateBoolean("FireExit"));
+            propertySetStairCommon.AddEntry(PropertySetEntry.CreateBoolean("HasNonSkidSurface"));
+            propertySetStairCommon.AddEntry(PropertySetEntry.CreateBoolean("RequiredHeadroom"));
 
             commonPropertySets.Add(propertySetStairCommon);
         }
@@ -553,22 +719,22 @@ namespace BIM.IFC.Exporter
             propertySetBuildingCommon.Name = "Pset_BuildingCommon";
             propertySetBuildingCommon.EntityTypes.Add(IFCEntityType.IfcBuilding);
 
-            propertySetBuildingCommon.Entries.Add(PropertySetEntry.CreateIdentifier("BuildingID"));
-            propertySetBuildingCommon.Entries.Add(PropertySetEntry.CreateBoolean("IsPermanentID"));
-            propertySetBuildingCommon.Entries.Add(PropertySetEntry.CreateLabel("MainFireUse"));
-            propertySetBuildingCommon.Entries.Add(PropertySetEntry.CreateLabel("AncillaryFireUse"));
-            propertySetBuildingCommon.Entries.Add(PropertySetEntry.CreateBoolean("SprinklerProtection"));
-            propertySetBuildingCommon.Entries.Add(PropertySetEntry.CreateBoolean("SprinklerProtectionAutomatic"));
-            propertySetBuildingCommon.Entries.Add(PropertySetEntry.CreateLabel("OccupancyType"));
-            propertySetBuildingCommon.Entries.Add(PropertySetEntry.CreateArea("GrossPlannedArea"));
-            propertySetBuildingCommon.Entries.Add(PropertySetEntry.CreateLabel("YearOfConstruction"));
-            propertySetBuildingCommon.Entries.Add(PropertySetEntry.CreateBoolean("IsLandmarked"));
+            propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateIdentifier("BuildingID"));
+            propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateBoolean("IsPermanentID"));
+            propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("MainFireUse"));
+            propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("AncillaryFireUse"));
+            propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateBoolean("SprinklerProtection"));
+            propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateBoolean("SprinklerProtectionAutomatic"));
+            propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("OccupancyType"));
+            propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateArea("GrossPlannedArea"));
+            propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("YearOfConstruction"));
+            propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateBoolean("IsLandmarked"));
 
             if (fileVersion != IFCVersion.IFC2x2)
             {
                 PropertySetEntry ifcPSE = PropertySetEntry.CreateInteger("NumberOfStoreys");
                 ifcPSE.PropertyCalculator = NumberOfStoreysCalculator.Instance;
-                propertySetBuildingCommon.Entries.Add(ifcPSE);
+                propertySetBuildingCommon.AddEntry(ifcPSE);
             }
 
             commonPropertySets.Add(propertySetBuildingCommon);
@@ -587,24 +753,24 @@ namespace BIM.IFC.Exporter
             propertySetLevelCommon.EntityTypes.Add(IFCEntityType.IfcBuildingStorey);
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("EntranceLevel");
-            propertySetLevelCommon.Entries.Add(ifcPSE);
+            propertySetLevelCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("AboveGround");
-            propertySetLevelCommon.Entries.Add(ifcPSE);
+            propertySetLevelCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("SprinklerProtection");
-            propertySetLevelCommon.Entries.Add(ifcPSE);
+            propertySetLevelCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("SprinklerProtectionAutomatic");
-            propertySetLevelCommon.Entries.Add(ifcPSE);
+            propertySetLevelCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateReal("GrossAreaPlanned");
-            propertySetLevelCommon.Entries.Add(ifcPSE);
+            propertySetLevelCommon.AddEntry(ifcPSE);
 
             if (fileVersion != IFCVersion.IFC2x2)
             {
                 ifcPSE = PropertySetEntry.CreateReal("NetAreaPlanned");
-                propertySetLevelCommon.Entries.Add(ifcPSE);
+                propertySetLevelCommon.AddEntry(ifcPSE);
             }
 
             commonPropertySets.Add(propertySetLevelCommon);
@@ -622,13 +788,13 @@ namespace BIM.IFC.Exporter
             propertySetSiteCommon.EntityTypes.Add(IFCEntityType.IfcSite);
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateArea("BuildableArea");
-            propertySetSiteCommon.Entries.Add(ifcPSE);
+            propertySetSiteCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePositiveLength("BuildingHeightLimit");
-            propertySetSiteCommon.Entries.Add(ifcPSE);
+            propertySetSiteCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateArea("GrossAreaPlanned");
-            propertySetSiteCommon.Entries.Add(ifcPSE);
+            ifcPSE = PropertySetEntry.CreateArea("TotalArea");
+            propertySetSiteCommon.AddEntry(ifcPSE);
 
             commonPropertySets.Add(propertySetSiteCommon);
         }
@@ -646,7 +812,7 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
             ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
-            propertySetBuildingElementProxyCommon.Entries.Add(ifcPSE);
+            propertySetBuildingElementProxyCommon.AddEntry(ifcPSE);
 
             commonPropertySets.Add(propertySetBuildingElementProxyCommon);
         }
@@ -665,41 +831,41 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
             ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
-            propertySetSpaceCommon.Entries.Add(ifcPSE);
+            propertySetSpaceCommon.AddEntry(ifcPSE);
 
-            propertySetSpaceCommon.Entries.Add(PropertySetEntry.CreateBoolean("PubliclyAccessible"));
-            propertySetSpaceCommon.Entries.Add(PropertySetEntry.CreateBoolean("HandicapAccessible"));
-            propertySetSpaceCommon.Entries.Add(PropertySetEntry.CreateArea("GrossPlannedArea"));
+            propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateBoolean("PubliclyAccessible"));
+            propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateBoolean("HandicapAccessible"));
+            propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateArea("GrossPlannedArea"));
 
             if (fileVersion == IFCVersion.IFC2x2)
             {
-                propertySetSpaceCommon.Entries.Add(PropertySetEntry.CreateLabel("OccupancyType"));
-                propertySetSpaceCommon.Entries.Add(PropertySetEntry.CreateReal("OccupancyNumber"));
+                propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateLabel("OccupancyType"));
+                propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateReal("OccupancyNumber"));
             
                 ifcPSE = PropertySetEntry.CreateBoolean("Concealed");
                 ifcPSE.PropertyCalculator = SpaceConcealCalculator.Instance;
-                propertySetSpaceCommon.Entries.Add(ifcPSE);
+                propertySetSpaceCommon.AddEntry(ifcPSE);
             }
             else
             {
-                propertySetSpaceCommon.Entries.Add(PropertySetEntry.CreateLabel("Category"));
+                propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateLabel("Category"));
                 
                 ifcPSE = PropertySetEntry.CreateLabel("CeilingCovering");
                 ifcPSE.RevitBuiltInParameter = BuiltInParameter.ROOM_FINISH_CEILING;
-                propertySetSpaceCommon.Entries.Add(ifcPSE);
+                propertySetSpaceCommon.AddEntry(ifcPSE);
 
                 ifcPSE = PropertySetEntry.CreateLabel("WallCovering");
                 ifcPSE.RevitBuiltInParameter = BuiltInParameter.ROOM_FINISH_WALL;
-                propertySetSpaceCommon.Entries.Add(ifcPSE);
+                propertySetSpaceCommon.AddEntry(ifcPSE);
 
                 ifcPSE = PropertySetEntry.CreateLabel("FloorCovering");
                 ifcPSE.RevitBuiltInParameter = BuiltInParameter.ROOM_FINISH_FLOOR;
-                propertySetSpaceCommon.Entries.Add(ifcPSE);
+                propertySetSpaceCommon.AddEntry(ifcPSE);
 
-                propertySetSpaceCommon.Entries.Add(PropertySetEntry.CreateLabel("SkirtingBoard"));
-                propertySetSpaceCommon.Entries.Add(PropertySetEntry.CreateArea("NetPlannedArea"));
-                propertySetSpaceCommon.Entries.Add(PropertySetEntry.CreateBoolean("ConcealedFlooring"));
-                propertySetSpaceCommon.Entries.Add(PropertySetEntry.CreateBoolean("ConcealedCeiling"));
+                propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateLabel("SkirtingBoard"));
+                propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateArea("NetPlannedArea"));
+                propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateBoolean("ConcealedFlooring"));
+                propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateBoolean("ConcealedCeiling"));
             }
 
             commonPropertySets.Add(propertySetSpaceCommon);
@@ -716,15 +882,15 @@ namespace BIM.IFC.Exporter
 
             propertySetSpaceFireSafetyRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-            propertySetSpaceFireSafetyRequirements.Entries.Add(PropertySetEntry.CreateLabel("MainFireUse"));
-            propertySetSpaceFireSafetyRequirements.Entries.Add(PropertySetEntry.CreateLabel("AncillaryFireUse"));
-            propertySetSpaceFireSafetyRequirements.Entries.Add(PropertySetEntry.CreateLabel("FireRiskFactor"));
-            propertySetSpaceFireSafetyRequirements.Entries.Add(PropertySetEntry.CreateLabel("FireHazardFactor"));
-            propertySetSpaceFireSafetyRequirements.Entries.Add(PropertySetEntry.CreateBoolean("FlammableStorage"));
-            propertySetSpaceFireSafetyRequirements.Entries.Add(PropertySetEntry.CreateBoolean("FireExit"));
-            propertySetSpaceFireSafetyRequirements.Entries.Add(PropertySetEntry.CreateBoolean("SprinklerProtection"));
-            propertySetSpaceFireSafetyRequirements.Entries.Add(PropertySetEntry.CreateBoolean("SprinklerProtectionAutomatic"));
-            propertySetSpaceFireSafetyRequirements.Entries.Add(PropertySetEntry.CreateBoolean("AirPressurization"));
+            propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("MainFireUse"));
+            propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("AncillaryFireUse"));
+            propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("FireRiskFactor"));
+            propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("FireHazardFactor"));
+            propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateBoolean("FlammableStorage"));
+            propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateBoolean("FireExit"));
+            propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateBoolean("SprinklerProtection"));
+            propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateBoolean("SprinklerProtectionAutomatic"));
+            propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateBoolean("AirPressurization"));
 
             commonPropertySets.Add(propertySetSpaceFireSafetyRequirements);
         }
@@ -740,8 +906,8 @@ namespace BIM.IFC.Exporter
 
             propertySetSpaceLightingRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-            propertySetSpaceLightingRequirements.Entries.Add(PropertySetEntry.CreateBoolean("ArtificialLighting"));
-            propertySetSpaceLightingRequirements.Entries.Add(PropertySetEntry.CreateReal("Illuminance"));
+            propertySetSpaceLightingRequirements.AddEntry(PropertySetEntry.CreateBoolean("ArtificialLighting"));
+            propertySetSpaceLightingRequirements.AddEntry(PropertySetEntry.CreateReal("Illuminance"));
 
             commonPropertySets.Add(propertySetSpaceLightingRequirements);
         }
@@ -757,34 +923,34 @@ namespace BIM.IFC.Exporter
 
             propertySetSpaceThermalRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-            propertySetSpaceThermalRequirements.Entries.Add(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureMax"));
-            propertySetSpaceThermalRequirements.Entries.Add(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureMin"));
-            propertySetSpaceThermalRequirements.Entries.Add(PropertySetEntry.CreateRatio("SpaceHumidity"));
-            propertySetSpaceThermalRequirements.Entries.Add(PropertySetEntry.CreateRatio("SpaceHumiditySummer"));
-            propertySetSpaceThermalRequirements.Entries.Add(PropertySetEntry.CreateRatio("SpaceHumidityWinter"));
-            propertySetSpaceThermalRequirements.Entries.Add(PropertySetEntry.CreateBoolean("DiscontinuedHeating"));
-            propertySetSpaceThermalRequirements.Entries.Add(PropertySetEntry.CreateBoolean("NaturalVentilation"));
-            propertySetSpaceThermalRequirements.Entries.Add(PropertySetEntry.CreateCount("NaturalVentilationRate"));
-            propertySetSpaceThermalRequirements.Entries.Add(PropertySetEntry.CreateCount("MechanicalVentilationRate"));
-            propertySetSpaceThermalRequirements.Entries.Add(PropertySetEntry.CreateBoolean("AirConditioning"));
-            propertySetSpaceThermalRequirements.Entries.Add(PropertySetEntry.CreateBoolean("AirConditioningCentral"));
+            propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureMax"));
+            propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureMin"));
+            propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateRatio("SpaceHumidity"));
+            propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateRatio("SpaceHumiditySummer"));
+            propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateRatio("SpaceHumidityWinter"));
+            propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateBoolean("DiscontinuedHeating"));
+            propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateBoolean("NaturalVentilation"));
+            propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateCount("NaturalVentilationRate"));
+            propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateCount("MechanicalVentilationRate"));
+            propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateBoolean("AirConditioning"));
+            propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateBoolean("AirConditioningCentral"));
 
             if (fileVersion == IFCVersion.IFC2x2)
             {
                 PropertySetEntry ifcPSE = PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureSummer");
                 ifcPSE.PropertyCalculator = new SpaceTemperatureCalculator("SpaceTemperatureSummer");
-                propertySetSpaceThermalRequirements.Entries.Add(ifcPSE);
+                propertySetSpaceThermalRequirements.AddEntry(ifcPSE);
 
                 ifcPSE = PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureWinter");
                 ifcPSE.PropertyCalculator = new SpaceTemperatureCalculator("SpaceTemperatureWinter");
-                propertySetSpaceThermalRequirements.Entries.Add(ifcPSE);
+                propertySetSpaceThermalRequirements.AddEntry(ifcPSE);
             }
             else
             {
-                propertySetSpaceThermalRequirements.Entries.Add(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureSummerMax"));
-                propertySetSpaceThermalRequirements.Entries.Add(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureSummerMin"));
-                propertySetSpaceThermalRequirements.Entries.Add(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureWinterMax"));
-                propertySetSpaceThermalRequirements.Entries.Add(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureWinterMin"));
+                propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureSummerMax"));
+                propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureSummerMin"));
+                propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureWinterMax"));
+                propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureWinterMin"));
             }
 
             commonPropertySets.Add(propertySetSpaceThermalRequirements);
@@ -801,9 +967,9 @@ namespace BIM.IFC.Exporter
 
             propertySetGSASpaceCategories.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-            propertySetGSASpaceCategories.Entries.Add(PropertySetEntry.CreateLabel("GSA STAR Space Type"));
-            propertySetGSASpaceCategories.Entries.Add(PropertySetEntry.CreateLabel("GSA STAR Space Category"));
-            propertySetGSASpaceCategories.Entries.Add(PropertySetEntry.CreateLabel("ANSI/BOMA Space Category"));
+            propertySetGSASpaceCategories.AddEntry(PropertySetEntry.CreateLabel("GSA STAR Space Type"));
+            propertySetGSASpaceCategories.AddEntry(PropertySetEntry.CreateLabel("GSA STAR Space Category"));
+            propertySetGSASpaceCategories.AddEntry(PropertySetEntry.CreateLabel("ANSI/BOMA Space Category"));
 
             commonPropertySets.Add(propertySetGSASpaceCategories);
         }
@@ -819,11 +985,11 @@ namespace BIM.IFC.Exporter
 
             propertySetSpaceOccupant.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-            propertySetSpaceOccupant.Entries.Add(PropertySetEntry.CreateLabel("Occupant Organization Code"));
-            propertySetSpaceOccupant.Entries.Add(PropertySetEntry.CreateLabel("Occupant Organization Abbreviation"));
-            propertySetSpaceOccupant.Entries.Add(PropertySetEntry.CreateLabel("Occupant Organization Name"));
-            propertySetSpaceOccupant.Entries.Add(PropertySetEntry.CreateLabel("Occupant Sub-Organization Code"));
-            propertySetSpaceOccupant.Entries.Add(PropertySetEntry.CreateLabel("Occupant Billing ID"));
+            propertySetSpaceOccupant.AddEntry(PropertySetEntry.CreateLabel("Occupant Organization Code"));
+            propertySetSpaceOccupant.AddEntry(PropertySetEntry.CreateLabel("Occupant Organization Abbreviation"));
+            propertySetSpaceOccupant.AddEntry(PropertySetEntry.CreateLabel("Occupant Organization Name"));
+            propertySetSpaceOccupant.AddEntry(PropertySetEntry.CreateLabel("Occupant Sub-Organization Code"));
+            propertySetSpaceOccupant.AddEntry(PropertySetEntry.CreateLabel("Occupant Billing ID"));
 
             commonPropertySets.Add(propertySetSpaceOccupant);
         }
@@ -839,19 +1005,19 @@ namespace BIM.IFC.Exporter
 
             propertySetSpaceZones.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-            propertySetSpaceZones.Entries.Add(PropertySetEntry.CreateLabel("Security Zone"));
-            propertySetSpaceZones.Entries.Add(PropertySetEntry.CreateLabel("Preservation Zone"));
-            propertySetSpaceZones.Entries.Add(PropertySetEntry.CreateLabel("Privacy Zone"));
+            propertySetSpaceZones.AddEntry(PropertySetEntry.CreateLabel("Security Zone"));
+            propertySetSpaceZones.AddEntry(PropertySetEntry.CreateLabel("Preservation Zone"));
+            propertySetSpaceZones.AddEntry(PropertySetEntry.CreateLabel("Privacy Zone"));
             if (fileVersion != IFCVersion.IFC2x2)
             {
-                propertySetSpaceZones.Entries.Add(PropertySetEntry.CreateLabel("Zone GrossAreaPlanned"));
-                propertySetSpaceZones.Entries.Add(PropertySetEntry.CreateLabel("Zone NetAreaPlanned"));
+                propertySetSpaceZones.AddEntry(PropertySetEntry.CreateLabel("Zone GrossAreaPlanned"));
+                propertySetSpaceZones.AddEntry(PropertySetEntry.CreateLabel("Zone NetAreaPlanned"));
             }
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateListValue("Project Specific Zone", PropertyType.Label);
             ifcPSE.PropertyCalculator = SpecificZoneCalculator.Instance;
             ifcPSE.UseCalculatorOnly = true;
-            propertySetSpaceZones.Entries.Add(ifcPSE);
+            propertySetSpaceZones.AddEntry(ifcPSE);
 
             commonPropertySets.Add(propertySetSpaceZones);
         }
@@ -866,9 +1032,9 @@ namespace BIM.IFC.Exporter
             propertySetBuildingWaterStorage.Name = "Pset_BuildingWaterStorage";
             propertySetBuildingWaterStorage.EntityTypes.Add(IFCEntityType.IfcBuilding);
 
-            propertySetBuildingWaterStorage.Entries.Add(PropertySetEntry.CreateReal("OneDayPotableWater"));
-            propertySetBuildingWaterStorage.Entries.Add(PropertySetEntry.CreateReal("OneDayProcessOrProductionWater"));
-            propertySetBuildingWaterStorage.Entries.Add(PropertySetEntry.CreateReal("OneDayCoolingTowerMakeupWater"));
+            propertySetBuildingWaterStorage.AddEntry(PropertySetEntry.CreateReal("OneDayPotableWater"));
+            propertySetBuildingWaterStorage.AddEntry(PropertySetEntry.CreateReal("OneDayProcessOrProductionWater"));
+            propertySetBuildingWaterStorage.AddEntry(PropertySetEntry.CreateReal("OneDayCoolingTowerMakeupWater"));
 
             commonPropertySets.Add(propertySetBuildingWaterStorage);
         }
@@ -884,15 +1050,15 @@ namespace BIM.IFC.Exporter
             propertySetElementShading.EntityTypes.Add(IFCEntityType.IfcBuildingElementProxy);
             propertySetElementShading.ObjectType = "Solar Shade";
 
-            propertySetElementShading.Entries.Add(PropertySetEntry.CreateEnumeratedValue("ShadingDeviceType", PropertyType.Label));
-            propertySetElementShading.Entries.Add(PropertySetEntry.CreatePlaneAngle("Azimuth"));
-            propertySetElementShading.Entries.Add(PropertySetEntry.CreatePlaneAngle("Inclination"));
-            propertySetElementShading.Entries.Add(PropertySetEntry.CreatePlaneAngle("TiltRange"));
-            propertySetElementShading.Entries.Add(PropertySetEntry.CreatePositiveRatio("AverageSolarTransmittance"));
-            propertySetElementShading.Entries.Add(PropertySetEntry.CreatePositiveRatio("AverageVisibleTransmittance"));
-            propertySetElementShading.Entries.Add(PropertySetEntry.CreatePositiveRatio("Reflectance"));
-            propertySetElementShading.Entries.Add(PropertySetEntry.CreatePositiveLength("Roughness"));
-            propertySetElementShading.Entries.Add(PropertySetEntry.CreateLabel("Color"));
+            propertySetElementShading.AddEntry(PropertySetEntry.CreateEnumeratedValue("ShadingDeviceType", PropertyType.Label));
+            propertySetElementShading.AddEntry(PropertySetEntry.CreatePlaneAngle("Azimuth"));
+            propertySetElementShading.AddEntry(PropertySetEntry.CreatePlaneAngle("Inclination"));
+            propertySetElementShading.AddEntry(PropertySetEntry.CreatePlaneAngle("TiltRange"));
+            propertySetElementShading.AddEntry(PropertySetEntry.CreatePositiveRatio("AverageSolarTransmittance"));
+            propertySetElementShading.AddEntry(PropertySetEntry.CreatePositiveRatio("AverageVisibleTransmittance"));
+            propertySetElementShading.AddEntry(PropertySetEntry.CreatePositiveRatio("Reflectance"));
+            propertySetElementShading.AddEntry(PropertySetEntry.CreatePositiveLength("Roughness"));
+            propertySetElementShading.AddEntry(PropertySetEntry.CreateLabel("Color"));
 
             commonPropertySets.Add(propertySetElementShading);
         }
@@ -925,31 +1091,31 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateLabel("Space Thermal Simulation Type");
             ifcPSE.PropertyName = "SpaceThermalSimulationType";
-            propertySetSpaceThermalSimulationProperties.Entries.Add(ifcPSE);
+            propertySetSpaceThermalSimulationProperties.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("Space Conditioning Requirement");
             ifcPSE.PropertyName = "SpaceConditioningRequirement";
-            propertySetSpaceThermalSimulationProperties.Entries.Add(ifcPSE);
+            propertySetSpaceThermalSimulationProperties.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateReal("Space Occupant Density");
             ifcPSE.PropertyName = "SpaceOccupantDensity";
-            propertySetSpaceThermalSimulationProperties.Entries.Add(ifcPSE);
+            propertySetSpaceThermalSimulationProperties.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateReal("Space Occupant Heat Rate");
             ifcPSE.PropertyName = "SpaceOccupantHeatRate";
-            propertySetSpaceThermalSimulationProperties.Entries.Add(ifcPSE);
+            propertySetSpaceThermalSimulationProperties.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateReal("Space Occupant Load");
             ifcPSE.PropertyName = "SpaceOccupantLoad";
-            propertySetSpaceThermalSimulationProperties.Entries.Add(ifcPSE);
+            propertySetSpaceThermalSimulationProperties.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateReal("Space Equipment Load");
             ifcPSE.PropertyName = "SpaceEquipmentLoad";
-            propertySetSpaceThermalSimulationProperties.Entries.Add(ifcPSE);
+            propertySetSpaceThermalSimulationProperties.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateReal("Space Lighting Load");
             ifcPSE.PropertyName = "SpaceLightingLoad";
-            propertySetSpaceThermalSimulationProperties.Entries.Add(ifcPSE);
+            propertySetSpaceThermalSimulationProperties.AddEntry(ifcPSE);
 
             cobiePropertySets.Add(propertySetSpaceThermalSimulationProperties);
         }
@@ -966,23 +1132,23 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateThermodynamicTemperature("Inside Dry Bulb Temperature - Heating");
             ifcPSE.PropertyName = "HeatingDryBulb";
-            propertySetSpaceThermalDesign.Entries.Add(ifcPSE);
+            propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateReal("Inside Relative Humidity - Heating");
             ifcPSE.PropertyName = "HeatingRelativeHumidity";
-            propertySetSpaceThermalDesign.Entries.Add(ifcPSE);
+            propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateThermodynamicTemperature("Inside Dry Bulb Temperature - Cooling");
             ifcPSE.PropertyName = "CoolingDryBulb";
-            propertySetSpaceThermalDesign.Entries.Add(ifcPSE);
+            propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateReal("Inside Relative Humidity - Cooling");
             ifcPSE.PropertyName = "CoolingRelativeHumidity";
-            propertySetSpaceThermalDesign.Entries.Add(ifcPSE);
+            propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateReal("Inside Return Air Plenum");
             ifcPSE.PropertyName = "InsideReturnAirPlenum";
-            propertySetSpaceThermalDesign.Entries.Add(ifcPSE);
+            propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
             cobiePropertySets.Add(propertySetSpaceThermalDesign);
         }
@@ -999,11 +1165,11 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateLabel("Ventilation Type");
             ifcPSE.PropertyName = "VentilationType";
-            propertySetSpaceVentilationCriteria.Entries.Add(ifcPSE);
+            propertySetSpaceVentilationCriteria.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateReal("Outside Air Per Person");
             ifcPSE.PropertyName = "OutsideAirPerPerson";
-            propertySetSpaceVentilationCriteria.Entries.Add(ifcPSE);
+            propertySetSpaceVentilationCriteria.AddEntry(ifcPSE);
 
             cobiePropertySets.Add(propertySetSpaceVentilationCriteria);
         }
@@ -1020,11 +1186,11 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateReal("Building Energy Target Value");
             ifcPSE.PropertyName = "BuildingEnergyTargetValue";
-            propertySetBuildingEnergyTarget.Entries.Add(ifcPSE);
+            propertySetBuildingEnergyTarget.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("Building Energy Target Units");
             ifcPSE.PropertyName = "BuildingEnergyTargetUnits";
-            propertySetBuildingEnergyTarget.Entries.Add(ifcPSE);
+            propertySetBuildingEnergyTarget.AddEntry(ifcPSE);
 
             cobiePropertySets.Add(propertySetBuildingEnergyTarget);
         }
@@ -1041,7 +1207,7 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateLabel("Windows 6 Glazing System Name");
             ifcPSE.PropertyName = "Windows6GlazingSystemName";
-            propertySetGlazingPropertiesEnergyAnalysis.Entries.Add(ifcPSE);
+            propertySetGlazingPropertiesEnergyAnalysis.AddEntry(ifcPSE);
 
             cobiePropertySets.Add(propertySetGlazingPropertiesEnergyAnalysis);
         }
@@ -1060,23 +1226,23 @@ namespace BIM.IFC.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("Hosts Photovoltaic Array");
             ifcPSE.PropertyName = "HostsPhotovoltaicArray";
-            propertySetPhotovoltaicArray.Entries.Add(ifcPSE);
+            propertySetPhotovoltaicArray.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateReal("Active Area Ratio");
             ifcPSE.PropertyName = "ActiveAreaRatio";
-            propertySetPhotovoltaicArray.Entries.Add(ifcPSE);
+            propertySetPhotovoltaicArray.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateReal("DC to AC Conversion Efficiency");
             ifcPSE.PropertyName = "DcToAcConversionEfficiency";
-            propertySetPhotovoltaicArray.Entries.Add(ifcPSE);
+            propertySetPhotovoltaicArray.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateLabel("Photovoltaic Surface Integration");
             ifcPSE.PropertyName = "PhotovoltaicSurfaceIntegration";
-            propertySetPhotovoltaicArray.Entries.Add(ifcPSE);
+            propertySetPhotovoltaicArray.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateReal("Photovoltaic Cell Efficiency");
             ifcPSE.PropertyName = "PhotovoltaicCellEfficiency";
-            propertySetPhotovoltaicArray.Entries.Add(ifcPSE);
+            propertySetPhotovoltaicArray.AddEntry(ifcPSE);
 
             cobiePropertySets.Add(propertySetPhotovoltaicArray);
         }
@@ -1096,7 +1262,7 @@ namespace BIM.IFC.Exporter
             QuantityEntry ifcQE = new QuantityEntry("GrossCeilingArea");
             ifcQE.QuantityType = QuantityType.Area;
             ifcQE.RevitBuiltInParameter = BuiltInParameter.HOST_AREA_COMPUTED;
-            ifcCeilingQuantity.Entries.Add(ifcQE);
+            ifcCeilingQuantity.AddEntry(ifcQE);
 
             baseQuantities.Add(ifcCeilingQuantity);
         }
@@ -1114,7 +1280,7 @@ namespace BIM.IFC.Exporter
             QuantityEntry ifcQE = new QuantityEntry("Length");
             ifcQE.QuantityType = QuantityType.PositiveLength;
             ifcQE.RevitBuiltInParameter = BuiltInParameter.CURVE_ELEM_LENGTH;
-            ifcRailingQuantity.Entries.Add(ifcQE);
+            ifcRailingQuantity.AddEntry(ifcQE);
 
             baseQuantities.Add(ifcRailingQuantity);
         }
@@ -1132,22 +1298,22 @@ namespace BIM.IFC.Exporter
             QuantityEntry ifcQE = new QuantityEntry("GrossArea");
             ifcQE.QuantityType = QuantityType.Area;
             ifcQE.PropertyCalculator = SlabGrossAreaCalculator.Instance;
-            ifcSlabQuantity.Entries.Add(ifcQE);
+            ifcSlabQuantity.AddEntry(ifcQE);
 
             ifcQE = new QuantityEntry("GrossVolume");
             ifcQE.QuantityType = QuantityType.Volume;
             ifcQE.PropertyCalculator = SlabGrossVolumeCalculator.Instance;
-            ifcSlabQuantity.Entries.Add(ifcQE);
+            ifcSlabQuantity.AddEntry(ifcQE);
 
             ifcQE = new QuantityEntry("Perimeter");
             ifcQE.QuantityType = QuantityType.PositiveLength;
             ifcQE.PropertyCalculator = SlabPerimeterCalculator.Instance;
-            ifcSlabQuantity.Entries.Add(ifcQE);
+            ifcSlabQuantity.AddEntry(ifcQE);
 
             ifcQE = new QuantityEntry("Width");
             ifcQE.QuantityType = QuantityType.PositiveLength;
             ifcQE.PropertyCalculator = SlabWidthCalculator.Instance;
-            ifcSlabQuantity.Entries.Add(ifcQE);
+            ifcSlabQuantity.AddEntry(ifcQE);
 
             baseQuantities.Add(ifcSlabQuantity);
         }
@@ -1165,7 +1331,7 @@ namespace BIM.IFC.Exporter
             QuantityEntry ifcQE = new QuantityEntry("Width");
             ifcQE.QuantityType = QuantityType.PositiveLength;
             ifcQE.RevitBuiltInParameter = BuiltInParameter.STAIRS_ATTR_TREAD_WIDTH;
-            ifcBaseQuantity.Entries.Add(ifcQE);
+            ifcBaseQuantity.AddEntry(ifcQE);
 
             baseQuantities.Add(ifcBaseQuantity);
         }
@@ -1213,31 +1379,31 @@ namespace BIM.IFC.Exporter
             ifcQE.MethodOfMeasurement = "length measured in geometry";
             ifcQE.QuantityType = QuantityType.PositiveLength;
             ifcQE.PropertyCalculator = SpaceHeightCalculator.Instance;
-            ifcCOBIEQuantity.Entries.Add(ifcQE);
+            ifcCOBIEQuantity.AddEntry(ifcQE);
 
             ifcQE = new QuantityEntry("GrossPerimeter");
             ifcQE.MethodOfMeasurement = "length measured in geometry";
             ifcQE.QuantityType = QuantityType.PositiveLength;
             ifcQE.PropertyCalculator = SpacePerimeterCalculator.Instance;
-            ifcCOBIEQuantity.Entries.Add(ifcQE);
+            ifcCOBIEQuantity.AddEntry(ifcQE);
 
             ifcQE = new QuantityEntry("GrossFloorArea");
             ifcQE.MethodOfMeasurement = "area measured in geometry";
             ifcQE.QuantityType = QuantityType.Area;
             ifcQE.PropertyCalculator = SpaceAreaCalculator.Instance;
-            ifcCOBIEQuantity.Entries.Add(ifcQE);
+            ifcCOBIEQuantity.AddEntry(ifcQE);
 
             ifcQE = new QuantityEntry("NetFloorArea");
             ifcQE.MethodOfMeasurement = "area measured in geometry";
             ifcQE.QuantityType = QuantityType.Area;
             ifcQE.PropertyCalculator = SpaceAreaCalculator.Instance;
-            ifcCOBIEQuantity.Entries.Add(ifcQE);
+            ifcCOBIEQuantity.AddEntry(ifcQE);
 
             ifcQE = new QuantityEntry("GrossVolume");
             ifcQE.MethodOfMeasurement = "volume measured in geometry";
             ifcQE.QuantityType = QuantityType.Volume;
             ifcQE.PropertyCalculator = SpaceVolumeCalculator.Instance;
-            ifcCOBIEQuantity.Entries.Add(ifcQE);
+            ifcCOBIEQuantity.AddEntry(ifcQE);
 
             cobieQuantities.Add(ifcCOBIEQuantity);
         }
@@ -1257,7 +1423,7 @@ namespace BIM.IFC.Exporter
             ifcQE.MethodOfMeasurement = "area measured in geometry";
             ifcQE.QuantityType = QuantityType.Area;
             ifcQE.PropertyCalculator = SpaceLevelAreaCalculator.Instance;
-            ifcCOBIEQuantity.Entries.Add(ifcQE);
+            ifcCOBIEQuantity.AddEntry(ifcQE);
 
             cobieQuantities.Add(ifcCOBIEQuantity);
         }
@@ -1277,7 +1443,7 @@ namespace BIM.IFC.Exporter
             ifcQE.MethodOfMeasurement = "area measured in geometry";
             ifcQE.QuantityType = QuantityType.Area;
             ifcQE.PropertyCalculator = SpaceAreaCalculator.Instance;
-            ifcCOBIEQuantity.Entries.Add(ifcQE);
+            ifcCOBIEQuantity.AddEntry(ifcQE);
 
             cobieQuantities.Add(ifcCOBIEQuantity);
         }

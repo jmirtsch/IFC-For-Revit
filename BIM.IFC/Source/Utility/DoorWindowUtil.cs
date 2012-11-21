@@ -180,7 +180,7 @@ namespace BIM.IFC.Utility
                         currentPanelWidth = (double)panelWidthList[panelIndex] / totalPanelWidth;
 
                     string doorPanelName = baseDoorPanelName;
-                    string doorPanelGUID = ExporterIFCUtils.CreateGUID();
+                    string doorPanelGUID = GUIDUtil.CreateGUID();
                     IFCAnyHandle doorPanel = IFCInstanceExporter.CreateDoorPanelProperties(file, doorPanelGUID, ownerHistory,
                        doorPanelName, null, panelDepthList[panelIndex], panelOperationList[panelIndex],
                        currentPanelWidth, panelPositionList[panelIndex], null);
@@ -345,8 +345,8 @@ namespace BIM.IFC.Utility
         /// </returns>
         public static Toolkit.IFCWindowStyleOperation GetIFCWindowStyleOperation(ElementType familySymbol)
         {
-            Parameter parameter = familySymbol.get_Parameter(BuiltInParameter.WINDOW_OPERATION_TYPE);
-            string value = parameter.AsValueString();
+            string value;
+            ParameterUtil.GetStringValueFromElement(familySymbol, BuiltInParameter.WINDOW_OPERATION_TYPE, out value);
 
             if (String.IsNullOrEmpty(value))
                 return Toolkit.IFCWindowStyleOperation.NotDefined;
@@ -565,7 +565,7 @@ namespace BIM.IFC.Utility
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "SecondMullionOffset", out value1))
                 secondMullionOffsetOpt = value1;
 
-            string windowLiningGUID = ExporterIFCUtils.CreateGUID();
+            string windowLiningGUID = GUIDUtil.CreateGUID();
             string windowLiningName = NamingUtil.GetIFCName(familyInstance);
             return IFCInstanceExporter.CreateWindowLiningProperties(file, windowLiningGUID, ownerHistory,
                windowLiningName, description, liningDepthOpt, liningThicknessOpt, transomThicknessOpt, mullionThicknessOpt,
@@ -621,7 +621,7 @@ namespace BIM.IFC.Utility
                     frameThickness = value2;
                 }
 
-                string panelGUID = ExporterIFCUtils.CreateGUID();
+                string panelGUID = GUIDUtil.CreateGUID();
                 string panelName = NamingUtil.GetIFCNamePlusIndex(familyInstance, panelNumber);
                 panels.Add(IFCInstanceExporter.CreateWindowPanelProperties(file, panelGUID, ownerHistory,
                    panelName, description, panelOperation, panelPosition, frameDepth, frameThickness, null));

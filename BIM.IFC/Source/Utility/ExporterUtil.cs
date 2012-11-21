@@ -122,7 +122,7 @@ namespace BIM.IFC.Utility
         /// </param>
         public static void RelateObjects(ExporterIFC exporterIFC, string optionalGUID, IFCAnyHandle relatingObject, ICollection<IFCAnyHandle> relatedObjects)
         {
-            string guid = (optionalGUID != null) ? optionalGUID : ExporterIFCUtils.CreateGUID();
+            string guid = (optionalGUID != null) ? optionalGUID : GUIDUtil.CreateGUID();
             IFCInstanceExporter.CreateRelAggregates(exporterIFC.GetFile(), guid, exporterIFC.GetOwnerHistoryHandle(), null, null, relatingObject, new HashSet<IFCAnyHandle>(relatedObjects));
         }
 

@@ -21,68 +21,71 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.IFC;
 using BIM.IFC.Utility;
 
 namespace BIM.IFC.Exporter.PropertySet.Calculators
 {
     /// <summary>
-    /// A calculation class to calculate slope for a ramp flight.
+    /// A calculation class to calculate load bearing value for a column.
     /// </summary>
-    class RampFlightSlopeCalculator : PropertyCalculator
+    class ColumnLoadBearingCalculator : PropertyCalculator
     {
-        private double m_Slope = 0;
+        /// <summary>
+        /// A boolean variable to keep the calculated value.
+        /// </summary>
+        private bool m_LoadBearing = false;
 
         /// <summary>
         /// A static instance of this class.
         /// </summary>
-        static RampFlightSlopeCalculator s_Instance = new RampFlightSlopeCalculator();
+        static ColumnLoadBearingCalculator s_Instance = new ColumnLoadBearingCalculator();
 
         /// <summary>
-        /// The RailingHeightCalculator instance.
+        /// The ColumnLoadBearingCalculator instance.
         /// </summary>
-        public static RampFlightSlopeCalculator Instance
+        public static ColumnLoadBearingCalculator Instance
         {
             get { return s_Instance; }
         }
 
         /// <summary>
-        /// Calculates slope for a ramp flight.
+        /// Calculates load bearing value for a column.
         /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
-        /// <param name="element">The element to calculate the value.</param>
-        /// <param name="elementType">The element type.</param>
-        /// <returns>True if the operation succeed, false otherwise.</returns>
+        /// <remarks>
+        /// True for structural columns, and false for architectural ones.
+        /// </remarks>
+        /// <param name="exporterIFC">
+        /// The ExporterIFC object.
+        /// </param>
+        /// <param name="extrusionCreationData">
+        /// The IFCExtrusionCreationData.
+        /// </param>
+        /// <param name="element">
+        /// The element to calculate the value.
+        /// </param>
+        /// <param name="elementType">
+        /// The element type.
+        /// </param>
+        /// <returns>
+        /// True if the operation succeed, false otherwise.
+        /// </returns>
         public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
         {
-            if (element == null)
-                return false;
-
-            double slope;
-            if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.RAMP_ATTR_MIN_INV_SLOPE, out slope))
-            {
-                m_Slope = slope;
-                if (!MathUtil.IsAlmostZero(m_Slope))
-                {
-                    m_Slope = Math.Atan(m_Slope) * 180 / Math.PI; // ratio -> radians -> degrees
-                    return true;
-                }
-            }
-
-            return false;
+            m_LoadBearing = CategoryUtil.GetSafeCategoryId(element) == new ElementId(BuiltInCategory.OST_StructuralColumns);
+            return true;
         }
 
         /// <summary>
-        /// Gets the calculated double value.
+        /// Gets the calculated boolean value.
         /// </summary>
         /// <returns>
-        /// The double value.
+        /// The boolean value.
         /// </returns>
-        public override double GetDoubleValue()
+        public override bool GetBooleanValue()
         {
-            return m_Slope;
+            return m_LoadBearing;
         }
     }
 }

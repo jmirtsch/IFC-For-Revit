@@ -166,8 +166,11 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
                     m_WaistThickness = stairsRun.ActualRunWidth * scale;
                     m_WalkingLineOffset = m_WaistThickness / 2.0;
 
-                    Parameter treadLengthAtInnerSideParam = stairsType.get_Parameter(BuiltInParameter.STAIRSTYPE_MINIMUM_TREAD_WIDTH_INSIDE_BOUNDARY);
-                    m_TreadLengthAtInnerSide = (treadLengthAtInnerSideParam != null) ? (treadLengthAtInnerSideParam.AsDouble() * scale) : 0.0;
+                    double treadLengthAtInnerSide;
+                    if (ParameterUtil.GetDoubleValueFromElement(stairsType, BuiltInParameter.STAIRSTYPE_MINIMUM_TREAD_WIDTH_INSIDE_BOUNDARY, out treadLengthAtInnerSide))
+                        m_TreadLengthAtInnerSide = treadLengthAtInnerSide * scale;
+                    else
+                        m_TreadLengthAtInnerSide = 0.0;
                 }
                 else
                 {

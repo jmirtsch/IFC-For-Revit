@@ -33,6 +33,36 @@ namespace BIM.IFC.Utility
     /// </summary>
     class GUIDUtil
     {
+        static string s_ConversionTable_2X = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$";
+
+        static private string ConvertToIFCGuid(System.Guid guid)
+        {
+            byte[] byteArray = guid.ToByteArray();
+            ulong[] num = new ulong[6];  
+            num[0] = byteArray[3]; 
+            num[1] = byteArray[2] * (ulong) 65536 + byteArray[1] * (ulong) 256 + byteArray[0];
+            num[2] = byteArray[5] * (ulong) 65536 + byteArray[4] * (ulong) 256 + byteArray[7];
+            num[3] = byteArray[6] * (ulong) 65536 + byteArray[8] * (ulong) 256 + byteArray[9];
+            num[4] = byteArray[10] * (ulong) 65536 + byteArray[11] * (ulong) 256 + byteArray[12];
+            num[5] = byteArray[13] * (ulong) 65536 + byteArray[14] * (ulong) 256 + byteArray[15];
+
+            char[] buf = new char[22];
+            int offset = 0;
+        
+            for (int ii = 0; ii < 6; ii++) 
+            {
+                int len = (ii == 0) ? 2 : 4;
+                for (int jj = 0; jj < len; jj++) 
+                {
+                    buf[offset + len - jj - 1] = s_ConversionTable_2X[(int)(num[ii] % 64)];
+                    num[ii] /= 64;
+                }
+                offset += len;
+            }
+
+            return new string(buf);
+        }
+
         /// <summary>
         /// Checks if a GUID string is properly formatted as an IFC GUID.
         /// </summary>
@@ -104,7 +134,67 @@ namespace BIM.IFC.Utility
                     return paramValue;
             }
 
-            return ExporterIFCUtils.CreateGUID(element);
+            return CreateGUID(element);
+        }
+
+        /// <summary>
+        /// Returns the GUID for a storey level, depending on whether we are using R2009 GUIDs or current GUIDs.
+        /// </summary>
+        /// <param name="level">
+        /// The level.
+        /// </param>
+        /// <returns>
+        /// The GUID.
+        /// </returns>
+        public static string GetLevelGUID(Level level)
+        {
+            if (!ExporterCacheManager.ExportOptionsCache.GUIDOptions.Use2009BuildingStoreyGUIDs)
+                return ExporterIFCUtils.CreateAlternateGUID(level);
+            else
+            {
+                return CreateGUID(level);
+            }
+        }
+
+        /// <summary>
+        /// Create a sub-element GUID for a given element, or a random GUID if element is null, or subindex is nonpositive.
+        /// </summary>
+        /// <param name="element">The element - null allowed.</param>
+        /// <param name="subIndex">The index value - should be greater than 0.</param>
+        /// <returns></returns>
+        static public string CreateSubElementGUID(Element element, int subIndex)
+        {
+            if (element == null || subIndex <= 0)
+                return CreateGUID();
+            return ExporterIFCUtils.CreateSubElementGUID(element, subIndex);
+        }
+
+        /// <summary>
+        /// Thin wrapper for the CreateGUID Revit API function.
+        /// </summary>
+        /// <returns>A random GUID.</returns>
+        static public string CreateGUID()
+        {
+            return ExporterIFCUtils.CreateGUID();
+        }
+
+        /// <summary>
+        /// Thin wrapper for the CreateGUID(element) Revit API function.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns>A consistent GUID for the element.</returns>
+        static public string CreateGUID(Element element)
+        {
+            string ifcGUIDFromParameter = null;
+            if (ExporterCacheManager.ExportOptionsCache.GUIDOptions.AllowGUIDParameterOverride)
+                ParameterUtil.GetStringValueFromElement(element, (element is ElementType) ? BuiltInParameter.IFC_TYPE_GUID : BuiltInParameter.IFC_GUID, out ifcGUIDFromParameter);
+            if (String.IsNullOrEmpty(ifcGUIDFromParameter))
+            {
+                System.Guid guid = ExportUtils.GetExportId(element.Document, element.Id);
+                return ConvertToIFCGuid(guid);
+            }
+
+            return ifcGUIDFromParameter;
         }
     }
 }

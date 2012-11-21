@@ -23,10 +23,38 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using BIM.IFC.Utility;
 using BIM.IFC.Toolkit;
 
 namespace BIM.IFC.Exporter
 {
+    /// <summary>
+    /// Enums of shape representation type.
+    /// </summary>
+    public enum ShapeRepresentationType
+    {
+        /// <summary>
+        /// Not defined.
+        /// </summary>
+        Undefined,
+        /// <summary>
+        /// Swept solid.
+        /// </summary>
+        SweptSolid,
+        /// <summary>
+        /// Brep.
+        /// </summary>
+        Brep,
+        /// <summary>
+        /// Advanced swept solid.
+        /// </summary>
+        AdvancedSweptSolid,
+        /// <summary>
+        /// Solid model.
+        /// </summary>
+        SolidModel
+    }
+
     /// <summary>
     /// The class contains output information from ExportBody
     /// </summary>
@@ -36,6 +64,11 @@ namespace BIM.IFC.Exporter
         /// The representation handle.
         /// </summary>
         private IFCAnyHandle m_RepresentationHnd = null;
+
+        /// <summary>
+        /// The representation type.
+        /// </summary>
+        private ShapeRepresentationType m_ShapeRepresentationType = ShapeRepresentationType.Undefined;
 
         /// <summary>
         /// The offset transform.
@@ -88,6 +121,7 @@ namespace BIM.IFC.Exporter
         public BodyData(BodyData bodyData)
         {
             this.m_RepresentationHnd = bodyData.RepresentationHnd;
+            this.m_ShapeRepresentationType = bodyData.m_ShapeRepresentationType;
             this.m_BrepOffsetTransform = bodyData.BrepOffsetTransform;
             this.m_MaterialIds = bodyData.MaterialIds;
         }
@@ -99,6 +133,15 @@ namespace BIM.IFC.Exporter
         {
             get { return m_RepresentationHnd; }
             set { m_RepresentationHnd = value; }
+        }
+
+        /// <summary>
+        /// The representation type.
+        /// </summary>
+        public ShapeRepresentationType ShapeRepresentationType
+        {
+            get { return m_ShapeRepresentationType; }
+            set { m_ShapeRepresentationType = value; }
         }
 
         /// <summary>

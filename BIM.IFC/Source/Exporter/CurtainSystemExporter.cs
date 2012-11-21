@@ -47,10 +47,10 @@ namespace BIM.IFC.Exporter
         /// The ExporterIFC object.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
         public static void ExportCurtainObjectCommonAsContainer(ICollection<ElementId> allSubElements, Element wallElement,
-           ExporterIFC exporterIFC, IFCProductWrapper origWrapper, IFCPlacementSetter currSetter)
+           ExporterIFC exporterIFC, ProductWrapper origWrapper, IFCPlacementSetter currSetter)
         {
             if (wallElement == null)
                 return;
@@ -60,7 +60,7 @@ namespace BIM.IFC.Exporter
             {
                 foreach (ElementId subElemId in allSubElements)
                 {
-                    using (IFCProductWrapper productWrapper = IFCProductWrapper.Create(origWrapper))
+                    using (ProductWrapper productWrapper = ProductWrapper.Create(origWrapper))
                     {
                         Element subElem = wallElement.Document.GetElement(subElemId);
                         if (subElem == null)
@@ -266,17 +266,17 @@ namespace BIM.IFC.Exporter
         /// The element to be exported.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
         public static void ExportBase(ExporterIFC exporterIFC, ICollection<ElementId> allSubElements,
-           Element element, IFCProductWrapper wrapper)
+           Element element, ProductWrapper wrapper)
         {
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
 
             IFCPlacementSetter setter = null;
 
-            using (IFCProductWrapper curtainWallSubWrapper = IFCProductWrapper.Create(wrapper, false))
+            using (ProductWrapper curtainWallSubWrapper = ProductWrapper.Create(wrapper, false))
             {
                 try
                 {
@@ -294,7 +294,7 @@ namespace BIM.IFC.Exporter
 
                     IFCAnyHandle prodRepHnd = null;
                     IFCAnyHandle elemHnd = null;
-                    string elemGUID = ExporterIFCUtils.CreateGUID(element);
+                    string elemGUID = GUIDUtil.CreateGUID(element);
                     string elemName = NamingUtil.GetIFCName(element);
                     string elemDesc = NamingUtil.GetDescriptionOverride(element, null);
                     string elemType = NamingUtil.GetObjectTypeOverride(element, objectType);
@@ -321,7 +321,7 @@ namespace BIM.IFC.Exporter
                     wrapper.AddElement(elemHnd, setter, null, true);
 
                     if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportIFCCommon)
-                        ExporterIFCUtils.CreateCurtainWallPropertySet(exporterIFC, element, wrapper);
+                        ExporterIFCUtils.CreateCurtainWallPropertySet(exporterIFC, element, wrapper.ToNative());
 
                     bool canExportCurtainWallAsContainer = CanExportCurtainWallAsContainer(allSubElements, element.Document);
                     IFCAnyHandle rep = null;
@@ -365,9 +365,9 @@ namespace BIM.IFC.Exporter
         /// The host object element to be exported.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        public static void ExportWall(ExporterIFC exporterIFC, Wall hostElement, IFCProductWrapper productWrapper)
+        public static void ExportWall(ExporterIFC exporterIFC, Wall hostElement, ProductWrapper productWrapper)
         {
             // Don't export the Curtain Wall itself, which has no useful geometry; instead export all of the GReps of the
             // mullions and panels.
@@ -391,9 +391,9 @@ namespace BIM.IFC.Exporter
         /// The host object element to be exported.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        public static void ExportExtrusionRoof(ExporterIFC exporterIFC, ExtrusionRoof hostElement, IFCProductWrapper productWrapper)
+        public static void ExportExtrusionRoof(ExporterIFC exporterIFC, ExtrusionRoof hostElement, ProductWrapper productWrapper)
         {
             // Don't export the Curtain Wall itself, which has no useful geometry; instead export all of the GReps of the
             // mullions and panels.
@@ -422,9 +422,9 @@ namespace BIM.IFC.Exporter
         /// The host object element to be exported.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        public static void ExportFootPrintRoof(ExporterIFC exporterIFC, FootPrintRoof hostElement, IFCProductWrapper productWrapper)
+        public static void ExportFootPrintRoof(ExporterIFC exporterIFC, FootPrintRoof hostElement, ProductWrapper productWrapper)
         {
             // Don't export the Curtain Wall itself, which has no useful geometry; instead export all of the GReps of the
             // mullions and panels.
@@ -453,9 +453,9 @@ namespace BIM.IFC.Exporter
         /// The curtain system element to be exported.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        public static void ExportCurtainSystem(ExporterIFC exporterIFC, CurtainSystem curtainSystem, IFCProductWrapper productWrapper)
+        public static void ExportCurtainSystem(ExporterIFC exporterIFC, CurtainSystem curtainSystem, ProductWrapper productWrapper)
         {
             CurtainGridSet grids = curtainSystem.CurtainGrids;
             if (grids == null || grids.Size == 0)
@@ -483,8 +483,8 @@ namespace BIM.IFC.Exporter
         /// </summary>
         /// <param name="exporterIFC">The exporter.</param>
         /// <param name="curtainElement">The curtain element.</param>
-        /// <param name="productWrapper">The IFCProductWrapper.</param>
-        public static void ExportLegacyCurtainElement(ExporterIFC exporterIFC, Element curtainElement, IFCProductWrapper productWrapper)
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        public static void ExportLegacyCurtainElement(ExporterIFC exporterIFC, Element curtainElement, ProductWrapper productWrapper)
         {
             ICollection<ElementId> allSubElements = ExporterIFCUtils.GetLegacyCurtainSubElements(curtainElement);
 

@@ -77,6 +77,16 @@ namespace BIM.IFC.Exporter.PropertySet
         bool m_UseCalculatorOnly = false;
 
         /// <summary>
+        /// Calculated value indicates whether or not there is a valid parameter name associated with this entry.
+        /// </summary>
+        bool m_ParameterNameIsValid = false;
+
+        /// <summary>
+        /// The name to use for looking up the Revit parameter name.
+        /// </summary>
+        string m_ParameterNameToUse = null;
+
+        /// <summary>
         /// Constructor to create an Entry object.
         /// </summary>
         /// <param name="revitParameterName">
@@ -86,6 +96,31 @@ namespace BIM.IFC.Exporter.PropertySet
         {
             this.m_RevitParameterName = revitParameterName;
             this.m_PropertyName = revitParameterName;
+        }
+
+        /// <summary>
+        /// Updates caches to make use of this Entry faster after it is completed.
+        /// </summary>
+        public void UpdateEntry()
+        {
+            m_ParameterNameIsValid = (!UseCalculatorOnly && (!String.IsNullOrEmpty(RevitParameterName) || (RevitBuiltInParameter != BuiltInParameter.INVALID)));
+            m_ParameterNameToUse = (!String.IsNullOrEmpty(PropertyName)) ? PropertyName : RevitParameterName;
+        }
+
+        /// <summary>
+        /// Returns whether the parameter has a usable (valid) name.
+        /// </summary>
+        public bool ParameterNameIsValid
+        {
+            get { return m_ParameterNameIsValid; }
+        }
+
+        /// <summary>
+        /// Returns which name to use to look in the Revit parameters.
+        /// </summary>
+        public string ParameterNameToUse
+        {
+            get { return m_ParameterNameToUse; }
         }
 
         /// <summary>

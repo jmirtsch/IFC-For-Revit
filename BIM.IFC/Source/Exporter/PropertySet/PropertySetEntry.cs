@@ -107,6 +107,14 @@ namespace BIM.IFC.Exporter.PropertySet
         /// A ratio value.
         /// </summary>
         Ratio,
+        /// <summary>
+        /// A thermal transmittance (coefficient of heat transfer) value.
+        /// </summary>
+        ThermalTransmittance,
+        /// <summary>
+        /// A volumetric flow rate value.
+        /// </summary>
+        VolumetricFlowRate,
     }
 
     /// <summary>
@@ -183,21 +191,41 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Creates an entry of type VolumetricFlowRate.
+        /// </summary>
+        /// <param name="revitParameterName">Revit parameter name.</param>
+        /// <returns>The PropertySetEntry.</returns>
+        public static PropertySetEntry CreateVolumetricFlowRate(string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = PropertyType.VolumetricFlowRate;
+            return pse;
+        }
+        
+        /// <summary>
         /// Creates an entry of type ThermodynamicTemperature.
         /// </summary>
-        /// <param name="revitParameterName">
-        /// Revit parameter name.
-        /// </param>
-        /// <returns>
-        /// The PropertySetEntry.
-        /// </returns>
+        /// <param name="revitParameterName">Revit parameter name.</param>
+        /// <returns>The PropertySetEntry.</returns>
         public static PropertySetEntry CreateThermodynamicTemperature(string revitParameterName)
         {
             PropertySetEntry pse = new PropertySetEntry(revitParameterName);
             pse.PropertyType = PropertyType.ThermodynamicTemperature;
             return pse;
         }
-        
+
+        /// <summary>
+        /// Creates an entry of type ThermalTransmittance.
+        /// </summary>
+        /// <param name="revitParameterName">Revit parameter name.</param>
+        /// <returns>The PropertySetEntry.</returns>
+        public static PropertySetEntry CreateThermalTransmittance(string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = PropertyType.ThermalTransmittance;
+            return pse;
+        }
+
         /// <summary>
         /// Creates an entry of type boolean.
         /// </summary>
@@ -431,11 +459,9 @@ namespace BIM.IFC.Exporter.PropertySet
         public IFCAnyHandle ProcessEntry(IFCFile file, ExporterIFC exporterIFC,
            IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
         {
-            bool useProperty = (!UseCalculatorOnly && (!String.IsNullOrEmpty(RevitParameterName)) || (RevitBuiltInParameter != BuiltInParameter.INVALID));
-
             IFCAnyHandle propHnd = null;
 
-            if (useProperty)
+            if (ParameterNameIsValid)
             {
                 propHnd = CreatePropertyFromElementOrSymbol(file, exporterIFC, element);
             }
@@ -461,7 +487,7 @@ namespace BIM.IFC.Exporter.PropertySet
             PropertyType propertyType = PropertyType;
             PropertyValueType valueType = PropertyValueType;
 
-            string ifcPropertyName = (!String.IsNullOrEmpty(PropertyName)) ? PropertyName : RevitParameterName;
+            string ifcPropertyName = ParameterNameToUse;
 
             switch (propertyType)
             {
@@ -493,7 +519,7 @@ namespace BIM.IFC.Exporter.PropertySet
                     }
                 case PropertyType.PositiveLength:
                     {
-                        propHnd = PropertyUtil.CreatePositiveLengthMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, ifcPropertyName, valueType);
+                        propHnd = PropertyUtil.CreatePositiveLengthMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
                         break;
                     }
                 case PropertyType.PositiveRatio:
@@ -524,6 +550,16 @@ namespace BIM.IFC.Exporter.PropertySet
                 case PropertyType.ThermodynamicTemperature:
                     {
                         propHnd = PropertyUtil.CreateThermodynamicTemperaturePropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.ThermalTransmittance:
+                    {
+                        propHnd = PropertyUtil.CreateThermalTransmittancePropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.VolumetricFlowRate:
+                    {
+                        propHnd = PropertyUtil.CreateVolumetricFlowRatePropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
                         break;
                     }
                 default:
@@ -625,6 +661,16 @@ namespace BIM.IFC.Exporter.PropertySet
                     case PropertyType.ThermodynamicTemperature:
                         {
                             propHnd = PropertyUtil.CreateThermodynamicTemperaturePropertyFromCache(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                            break;
+                        }
+                    case PropertyType.ThermalTransmittance:
+                        {
+                            propHnd = PropertyUtil.CreateThermalTransmittancePropertyFromCache(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                            break;
+                        }
+                    case PropertyType.VolumetricFlowRate:
+                        {
+                            propHnd = PropertyUtil.CreateVolumetricFlowRateMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                             break;
                         }
                     default:

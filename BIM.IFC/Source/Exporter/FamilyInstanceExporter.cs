@@ -48,10 +48,10 @@ namespace BIM.IFC.Exporter
         /// The geometry element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
         public static void ExportFamilyInstanceElement(ExporterIFC exporterIFC,
-           FamilyInstance familyInstance, GeometryElement geometryElement, IFCProductWrapper productWrapper)
+           FamilyInstance familyInstance, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             // Don't export family if it is invisible, or has a null geometry.
             if (familyInstance.Invisible || geometryElement == null)
@@ -145,7 +145,7 @@ namespace BIM.IFC.Exporter
         /// The string value represents the IFC type.
         /// </param>
         /// <param name="wrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
         /// <param name="overrideLevelId">
         /// The level id.
@@ -155,7 +155,7 @@ namespace BIM.IFC.Exporter
         /// </param>
         public static void ExportFamilyInstanceAsMappedItem(ExporterIFC exporterIFC,
            FamilyInstance familyInstance, IFCExportType exportType, string ifcEnumType,
-           IFCProductWrapper wrapper, ElementId overrideLevelId, IFCRange range, IFCAnyHandle parentLocalPlacement)
+           ProductWrapper wrapper, ElementId overrideLevelId, IFCRange range, IFCAnyHandle parentLocalPlacement)
         {
             bool exportParts = PartExporter.CanExportParts(familyInstance);
             bool isSplit = range != null;
@@ -169,7 +169,7 @@ namespace BIM.IFC.Exporter
             if (familySymbol == null)
                 return;
 
-            IFCProductWrapper familyProductWrapper = IFCProductWrapper.Create(wrapper);
+            ProductWrapper familyProductWrapper = ProductWrapper.Create(wrapper);
             double scale = exporterIFC.LinearScale;
             Options options = GeometryUtil.GetIFCExportGeometryOptions();
 
@@ -212,6 +212,7 @@ namespace BIM.IFC.Exporter
                 IList<GeometryObject> geomObjects = new List<GeometryObject>();
                 Transform brepOffsetTransform = null;
 
+                Transform doorWindowTrf = Transform.Identity;
                 // We will create a new mapped type if:
                 // 1.  We are exporting part of a column or in-place wall (range != null), OR
                 // 2.  We are using the instance's copy of the geometry (that it, it has unique geometry), OR
@@ -259,7 +260,6 @@ namespace BIM.IFC.Exporter
                         trf.Origin = rangeOffset;
                     }
 
-                    Transform doorWindowTrf = Transform.Identity;
                     IFCAnyHandle dummyPlacement = null;
                     if (doorWindowInfo != null)
                     {
@@ -436,7 +436,7 @@ namespace BIM.IFC.Exporter
                     // for many
                     HashSet<IFCAnyHandle> propertySets = new HashSet<IFCAnyHandle>();
 
-                    string guid = ExporterIFCUtils.CreateGUID(familySymbol);
+                    string guid = GUIDUtil.CreateGUID(familySymbol);
                     string symId = NamingUtil.CreateIFCElementId(familySymbol);
 
                     // This covers many generic types.  If we can't find it in the list here, do custom exports.
@@ -457,7 +457,7 @@ namespace BIM.IFC.Exporter
                                     string colElemId = null;
 
                                     if (useInstanceGeometry)
-                                        colGUID = ExporterIFCUtils.CreateGUID();
+                                        colGUID = GUIDUtil.CreateGUID();
                                     else
                                         colGUID = guid;
                                     colElemId = NamingUtil.CreateIFCElementId(familySymbol);
@@ -482,7 +482,7 @@ namespace BIM.IFC.Exporter
                                        familyInstance);
                                     propertySets.UnionWith(doorPanels);
 
-                                    string doorStyleGUID = ExporterIFCUtils.CreateGUID();
+                                    string doorStyleGUID = GUIDUtil.CreateGUID();
                                     string doorStyleElemId = NamingUtil.CreateIFCElementId(familySymbol);
                                     typeStyle = IFCInstanceExporter.CreateDoorStyle(file, doorStyleGUID, ownerHistory, objectType,
                                        null, null, propertySets, repMapList, doorStyleElemId,
@@ -511,7 +511,7 @@ namespace BIM.IFC.Exporter
                                        DoorWindowUtil.CreateWindowPanelProperties(exporterIFC, familyInstance, null);
                                     propertySets.UnionWith(windowPanels);
 
-                                    string windowStyleGUID = ExporterIFCUtils.CreateGUID();
+                                    string windowStyleGUID = GUIDUtil.CreateGUID();
                                     string windowStyleElemId = NamingUtil.CreateIFCElementId(familySymbol);
                                     typeStyle = IFCInstanceExporter.CreateWindowStyle(file, windowStyleGUID, ownerHistory, objectType,
                                        null, null, propertySets, repMapList, windowStyleElemId,
@@ -632,7 +632,7 @@ namespace BIM.IFC.Exporter
                 IFCAnyHandle instanceHandle = null;
                 using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, familyInstance, trf, null, overrideLevelId))
                 {
-                    string instanceGUID = ExporterIFCUtils.CreateGUID(familyInstance);
+                    string instanceGUID = GUIDUtil.CreateGUID(familyInstance);
                     string instanceName = NamingUtil.GetIFCName(familyInstance);
                     string instanceDescription = NamingUtil.GetDescriptionOverride(familyInstance, null);
                     string instanceObjectType = NamingUtil.GetObjectTypeOverride(familyInstance, objectType);
@@ -696,9 +696,6 @@ namespace BIM.IFC.Exporter
                                 //export Base Quantities.
                                 PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, instanceHandle, familyInstance, typeInfo);
 
-                                if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportIFCCommon)
-                                    ExporterIFCUtils.CreateColumnPropertySet(exporterIFC, familyInstance, extraParams, wrapper);
-
                                 PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
                                 break;
                             }
@@ -736,24 +733,30 @@ namespace BIM.IFC.Exporter
 
                                 exporterIFC.RegisterSpaceBoundingElementHandle(instanceHandle, familyInstance.Id, setter.LevelId);
 
+                                IFCAnyHandle placementToUse = doorWindowLocalPlacement;
+                                if (!useInstanceGeometry)
+                                {
+                                    // correct the placement to the symbol space
+                                    bool needToCreateOpenings = OpeningUtil.NeedToCreateOpenings(instanceHandle, extraParams);
+                                    if (needToCreateOpenings)
+                                    {
+                                        Transform openingTrf = Transform.Identity;
+                                        openingTrf.Origin = new XYZ(0, 0, setter.Offset);
+                                        openingTrf = openingTrf.Multiply(doorWindowTrf);
+                                        XYZ scaledOrigin = openingTrf.Origin * exporterIFC.LinearScale;
+                                        IFCAnyHandle openingRelativePlacement = ExporterUtil.CreateAxis2Placement3D(file, scaledOrigin, openingTrf.BasisZ, openingTrf.BasisX);
+                                        IFCAnyHandle openingLocalPlacement =
+                                           IFCInstanceExporter.CreateLocalPlacement(file, doorWindowLocalPlacement, openingRelativePlacement);
+                                        placementToUse = openingLocalPlacement;
+                                    }
+                                }
                                 // only necessary when exporting as possible breps.
                                 OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, exporterIFC,
-                                   doorWindowLocalPlacement, setter, wrapper);
+                                   placementToUse, setter, wrapper);
                                 if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities)
                                     ExporterIFCUtils.CreateDoorWindowBaseQuantities(exporterIFC, instanceHandle, (doorHeight * scale), (doorWidth * scale));
 
-                                if (exportType == IFCExportType.ExportDoorType)
-                                {
-                                    if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportIFCCommon)
-                                        ExporterIFCUtils.CreateDoorPropertySet(exporterIFC, familyInstance, wrapper);
-                                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
-                                }
-                                else
-                                {
-                                    if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportIFCCommon)
-                                        ExporterIFCUtils.CreateWindowPropertySet(exporterIFC, familyInstance, wrapper);
-                                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
-                                }
+                                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
                                 break;
                             }
                         case IFCExportType.ExportMemberType:
@@ -884,7 +887,7 @@ namespace BIM.IFC.Exporter
                         {
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(doorWindowInfo.GetOpening()))
                             {
-                                string relGUID = ExporterIFCUtils.CreateGUID();
+                                string relGUID = GUIDUtil.CreateGUID();
                                 IFCInstanceExporter.CreateRelFillsElement(file, relGUID, ownerHistory, null, null, doorWindowInfo.GetOpening(), instanceHandle);
                             }
                             else if (doorWindowInfo.NeedsOpening)
@@ -913,25 +916,15 @@ namespace BIM.IFC.Exporter
         /// <summary>
         /// Exports a family instance as standard element.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="element">
-        /// The element to be exported.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="familyType">
-        /// The export type.
-        /// </param>
-        /// <param name="ifcEnumTypeString">
-        /// The string value represents the IFC type.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The IFCProductWrapper.
-        /// </param>
-        static bool ExportFamilyInstanceAsStandardElement(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, IFCExportType familyType, string ifcEnumTypeString, IFCProductWrapper productWrapper)
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="element">The element to be exported.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="familyType">The export type.</param>
+        /// <param name="ifcEnumTypeString">The string value represents the IFC type.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        /// <returns>True if the family instance was exported, false otherwise.</returns>
+        static bool ExportFamilyInstanceAsStandardElement(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, IFCExportType familyType, 
+            string ifcEnumTypeString, ProductWrapper productWrapper)
         {
             switch (familyType)
             {
@@ -947,6 +940,9 @@ namespace BIM.IFC.Exporter
                     return true;
                 case IFCExportType.ExportCovering:
                     CeilingExporter.ExportCovering(exporterIFC, element, geometryElement, ifcEnumTypeString, productWrapper);
+                    return true;
+                case IFCExportType.ExportPile:
+                    PileExporter.ExportPile(exporterIFC, element, geometryElement, ifcEnumTypeString, productWrapper);
                     return true;
                 case IFCExportType.ExportRamp:
                     RampExporter.ExportRamp(exporterIFC, ifcEnumTypeString, element, geometryElement, 1, productWrapper);

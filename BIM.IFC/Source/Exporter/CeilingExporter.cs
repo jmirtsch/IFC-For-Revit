@@ -90,9 +90,9 @@ namespace BIM.IFC.Exporter
         /// The geometry element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        public static void ExportCeilingElement(ExporterIFC exporterIFC, Ceiling ceiling, GeometryElement geomElement, IFCProductWrapper productWrapper)
+        public static void ExportCeilingElement(ExporterIFC exporterIFC, Ceiling ceiling, GeometryElement geomElement, ProductWrapper productWrapper)
         {
             string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, ceiling);
             if (String.IsNullOrEmpty(ifcEnumType))
@@ -113,9 +113,9 @@ namespace BIM.IFC.Exporter
         /// The geometry element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        public static void ExportCovering(ExporterIFC exporterIFC, Element element, GeometryElement geomElem, string ifcEnumType, IFCProductWrapper productWrapper)
+        public static void ExportCovering(ExporterIFC exporterIFC, Element element, GeometryElement geomElem, string ifcEnumType, ProductWrapper productWrapper)
         {
             bool exportParts = PartExporter.CanExportParts(element);
             if (exportParts && !PartExporter.CanExportElementInPartExport(element, element.Level.Id, false))
@@ -131,7 +131,7 @@ namespace BIM.IFC.Exporter
                     IFCAnyHandle prodRep = exportParts ? null : RepresentationUtil.CreateSurfaceProductDefinitionShape(exporterIFC,
                        element, geomElem, false, false);
 
-                    string instanceGUID = ExporterIFCUtils.CreateGUID(element);
+                    string instanceGUID = GUIDUtil.CreateGUID(element);
                     string instanceName = NamingUtil.GetIFCName(element);
                     string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                     string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
@@ -155,7 +155,7 @@ namespace BIM.IFC.Exporter
                     }
 
                     if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportIFCCommon)
-                        ExporterIFCUtils.CreateCoveringPropertySet(exporterIFC, element, productWrapper);
+                        ExporterIFCUtils.CreateCoveringPropertySet(exporterIFC, element, productWrapper.ToNative());
 
                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                 }

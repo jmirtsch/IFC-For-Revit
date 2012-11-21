@@ -35,39 +35,21 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Removes spaces in a string.
         /// </summary>
-        /// <param name="originalString">
-        /// The original string.
-        /// </param>
-        /// <param name="newString">
-        /// The output string.
-        /// </param>
-        public static void RemoveSpaces(string originalString, out string newString)
+        /// <param name="originalString">The original string.</param>
+        /// <returns>The string without spaces.</returns>
+        public static string RemoveSpaces(string originalString)
         {
-            newString = string.Empty;
-            string[] subSections = originalString.Split(' ');
-            int size = subSections.Length;
-            for (int ii = 0; ii < size; ii++)
-                newString += subSections[ii];
-            return;
+            return originalString.Replace(" ", null);
         }
 
         /// <summary>
         /// Removes underscores in a string.
         /// </summary>
-        /// <param name="originalString">
-        /// The original string.
-        /// </param>
-        /// <param name="newString">
-        /// The output string.
-        /// </param>
-        public static void RemoveUnderscores(string originalString, out string newString)
+        /// <param name="originalString">The original string.</param>
+        /// <returns>The string without underscores.</returns>
+        public static string RemoveUnderscores(string originalString)
         {
-            newString = string.Empty;
-            string[] subSections = originalString.Split('_');
-            int size = subSections.Length;
-            for (int ii = 0; ii < size; ii++)
-                newString += subSections[ii];
-            return;
+            return originalString.Replace("_", null);
         }
 
         /// <summary>
@@ -84,10 +66,8 @@ namespace BIM.IFC.Utility
         /// </returns>
         public static bool IsEqualIgnoringCaseAndSpaces(string string1, string string2)
         {
-            string nospace1 = string.Empty;
-            string nospace2 = string.Empty;
-            RemoveSpaces(string1, out nospace1);
-            RemoveSpaces(string2, out nospace2);
+            string nospace1 = RemoveSpaces(string1);
+            string nospace2 = RemoveSpaces(string2);
             return (string.Compare(nospace1, nospace2, true) == 0);
         }
 
@@ -105,14 +85,8 @@ namespace BIM.IFC.Utility
         /// </returns>
         public static bool IsEqualIgnoringCaseSpacesAndUnderscores(string string1, string string2)
         {
-            string nospace1 = string.Empty;
-            string nospace2 = string.Empty;
-            RemoveSpaces(string1, out nospace1);
-            RemoveSpaces(string2, out nospace2);
-            string nospaceOrUndescore1 = string.Empty;
-            string nospaceOrUndescore2 = string.Empty;
-            RemoveUnderscores(nospace1, out nospaceOrUndescore1);
-            RemoveUnderscores(nospace2, out nospaceOrUndescore2);
+            string nospaceOrUndescore1 = RemoveUnderscores(RemoveSpaces(string1));
+            string nospaceOrUndescore2 = RemoveUnderscores(RemoveSpaces(string2));
             return (string.Compare(nospaceOrUndescore1, nospaceOrUndescore2, true) == 0);
         }
 

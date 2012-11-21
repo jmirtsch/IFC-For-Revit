@@ -76,7 +76,7 @@ namespace BIM.IFC.Exporter
                 return false;
 
             IFCAnyHandle surface = IFCInstanceExporter.CreateFaceBasedSurfaceModel(file, faceSets);
-            BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, doc, surface, BodyExporter.GetBestMaterialIdForGeometry(geometryElement, exporterIFC));
+            BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, doc, surface, BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element));
 
             IList<IFCAnyHandle> surfaceItems = new List<IFCAnyHandle>();
             surfaceItems.Add(surface);

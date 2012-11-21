@@ -1592,6 +1592,34 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Creates a handle representing an IfcPile and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID for the entity.</param>
+        /// <param name="ownerHistory">The IfcOwnerHistory.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="objectType">The object type.</param>
+        /// <param name="objectPlacement">The local placement.</param>
+        /// <param name="representation">The geometric representation of the entity, in the IfcProductRepresentation.</param>
+        /// <param name="elementTag">The tag for the identifier of the element.</param>
+        /// <param name="predefinedType">The pile type.</param>
+        /// <param name="constructionType">The optional material for the construction of the pile.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreatePile(IFCFile file, string guid, IFCAnyHandle ownerHistory,
+            string name, string description, string objectType, IFCAnyHandle objectPlacement,
+            IFCAnyHandle representation, string elementTag, IFCPileType predefinedType, IFCPileConstructionEnum? constructionType)
+        {
+            ValidateElement(guid, ownerHistory, name, description, objectType, objectPlacement, representation, elementTag);
+
+            IFCAnyHandle pile = CreateInstance(file, IFCEntityType.IfcPile);
+            IFCAnyHandleUtil.SetAttribute(pile, "PredefinedType", predefinedType);
+            IFCAnyHandleUtil.SetAttribute(pile, "ConstructionType", constructionType);
+            SetElement(pile, guid, ownerHistory, name, description, objectType, objectPlacement, representation, elementTag);
+            return pile;
+        }
+        
+        /// <summary>
         /// Creates a handle representing an IfcRailing and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -2665,7 +2693,7 @@ namespace BIM.IFC.Toolkit
         /// <param name="prefix">The SI Prefix for defining decimal multiples and submultiples of the unit.</param>
         /// <param name="name">The word, or group of words, by which the SI unit is referred to.</param>
         /// <returns>The handle.</returns>
-        public static IFCAnyHandle CreateSIUnit(IFCFile file, /*IFCAnyHandle dimensions,*/ IFCUnit unitType, IFCSIPrefix? prefix,
+        public static IFCAnyHandle CreateSIUnit(IFCFile file, IFCUnit unitType, IFCSIPrefix? prefix,
             IFCSIUnitName name)
         {
             IFCAnyHandle siUnit = CreateInstance(file, IFCEntityType.IfcSIUnit);
@@ -2673,6 +2701,43 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandleUtil.SetAttribute(siUnit, "Name", name);
             SetNamedUnit(siUnit, null, unitType);
             return siUnit;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcDerivedUnitElement and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="unit">The base unit.</param>
+        /// <param name="exponent">The exponent of the base unit.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateDerivedUnitElement(IFCFile file, IFCAnyHandle unit, int exponent)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(unit, false, IFCEntityType.IfcNamedUnit);
+
+            IFCAnyHandle derivedUnitElement = CreateInstance(file, IFCEntityType.IfcDerivedUnitElement);
+            IFCAnyHandleUtil.SetAttribute(derivedUnitElement, "Unit", unit);
+            IFCAnyHandleUtil.SetAttribute(derivedUnitElement, "Exponent", exponent);
+            return derivedUnitElement;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcDerivedUnit and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="elements">The derived unit elements of the unit.</param>
+        /// <param name="unitType">The derived unit type.</param>
+        /// <param name="userDefinedType">The word, or group of words, by which the derived unit is referred to.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateDerivedUnit(IFCFile file, ICollection<IFCAnyHandle> elements, IFCDerivedUnitEnum unitType, 
+            string userDefinedType)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(elements, false, IFCEntityType.IfcDerivedUnitElement);
+
+            IFCAnyHandle derivedUnit = CreateInstance(file, IFCEntityType.IfcDerivedUnit);
+            IFCAnyHandleUtil.SetAttribute(derivedUnit, "Elements", elements);
+            IFCAnyHandleUtil.SetAttribute(derivedUnit, "UnitType", unitType);
+            IFCAnyHandleUtil.SetAttribute(derivedUnit, "UserDefinedType", userDefinedType);
+            return derivedUnit;
         }
 
         /// <summary>
@@ -7018,6 +7083,28 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandleUtil.SetAttribute(surfaceStyle, "Side", side);
             IFCAnyHandleUtil.SetAttribute(surfaceStyle, "Styles", styles);
             return surfaceStyle;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcCurveStyle and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="font">A curve style font which is used to present a curve.</param>
+        /// <param name="width">A positive length measure in units of the presentation area for the width of a presented curve.</param>
+        /// <param name="colour">The colour of the visible part of the curve.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateCurveStyle(IFCFile file, string name, IFCAnyHandle font, IFCData width, IFCAnyHandle colour)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(font, true, IFCEntityType.IfcPreDefinedCurveFont, IFCEntityType.IfcCurveStyleFont, IFCEntityType.IfcCurveStyleFontAndScaling);
+            IFCAnyHandleUtil.ValidateSubTypeOf(colour, true, IFCEntityType.IfcColourSpecification, IFCEntityType.IfcPreDefinedColour);
+
+            IFCAnyHandle curveStyle = CreateInstance(file, IFCEntityType.IfcCurveStyle);
+            SetPresentationStyle(curveStyle, name);
+            IFCAnyHandleUtil.SetAttribute(curveStyle, "CurveFont", font);
+            IFCAnyHandleUtil.SetAttribute(curveStyle, "CurveWidth", width);
+            IFCAnyHandleUtil.SetAttribute(curveStyle, "CurveColour", colour);
+            return curveStyle;
         }
 
         /// <summary>

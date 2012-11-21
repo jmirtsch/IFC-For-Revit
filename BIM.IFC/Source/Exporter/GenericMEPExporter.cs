@@ -47,9 +47,9 @@ namespace BIM.IFC.Exporter
         /// The geometry element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        public static void Export(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, IFCProductWrapper productWrapper)
+        public static void Export(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction tr = new IFCTransaction(file))
@@ -82,7 +82,7 @@ namespace BIM.IFC.Exporter
                         bool found = currentTypeInfo.IsValid();
                         if (!found)
                         {
-                            string typeGUID = ExporterIFCUtils.CreateGUID(type);
+                            string typeGUID = GUIDUtil.CreateGUID(type);
                             string typeName = NamingUtil.GetIFCName(type);
                             string typeObjectType = NamingUtil.CreateIFCObjectName(exporterIFC, type);
                             string applicableOccurance = NamingUtil.GetObjectTypeOverride(type, typeObjectType);
@@ -100,7 +100,7 @@ namespace BIM.IFC.Exporter
                                 ExporterCacheManager.TypeObjectsCache.Register(typeId, false, currentTypeInfo);
                             }
                         }
-                        string instanceGUID = ExporterIFCUtils.CreateGUID(element);
+                        string instanceGUID = GUIDUtil.CreateGUID(element);
                         string instanceName = NamingUtil.GetIFCName(element);
                         string objectType = NamingUtil.CreateIFCObjectName(exporterIFC, element);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);

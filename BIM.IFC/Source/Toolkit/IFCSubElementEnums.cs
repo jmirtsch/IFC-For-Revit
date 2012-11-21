@@ -61,7 +61,15 @@ namespace BIM.IFC.Toolkit
     {    
         DoorLining = 1,
         DoorPanelStart = 2,
-        DoorPanelEnd = DoorPanelStart + 15
+        DoorPanelEnd = 17, // 2 through 17 are reserved for panels.
+        PSetDoorCommon = 18,
+        DoorOpening = 19,
+        DoorOpeningRelVoid = 20,
+    }
+
+    enum IFCMemberSubElements
+    {
+        PSetMemberCommon = 1
     }
 
     enum IFCRampSubElements
@@ -94,5 +102,12 @@ namespace BIM.IFC.Toolkit
     {
         PSetWallCommon = 1,
         RelAggregatesReserved = IFCCurtainWallSubElements.RelAggregates
+    }
+
+    enum IFCWindowSubElements
+    {
+        PSetWindowCommon = 1,
+        WindowOpening = IFCDoorSubElements.DoorOpening,
+        WindowOpeningRelVoid = IFCDoorSubElements.DoorOpeningRelVoid
     }
 }

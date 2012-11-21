@@ -21,6 +21,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
+using System.Diagnostics;
 
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
@@ -63,24 +65,36 @@ namespace BIM.IFC.Utility
 
             cache.PropertySetOptions = PropertySetOptions.Create(exporterIFC, filterView, cache);
 
-            String use2009GUID = Environment.GetEnvironmentVariable("Assign2009GUIDToBuildingStoriesOnIFCExport");
-            cache.Use2009BuildingStoreyGUIDs = (use2009GUID != null && use2009GUID == "1");
-
             String use2DRoomBoundary = Environment.GetEnvironmentVariable("Use2DRoomBoundaryForRoomVolumeCalculationOnIFCExport");
             bool? use2DRoomBoundaryOption = GetNamedBooleanOption(options, "Use2DRoomBoundaryForVolume");
             cache.Use2DRoomBoundaryForRoomVolumeCreation =
-                ((use2DRoomBoundary != null && use2DRoomBoundary == "1") || 
-                cache.ExportAs2x2 || 
+                ((use2DRoomBoundary != null && use2DRoomBoundary == "1") ||
+                cache.ExportAs2x2 ||
                 (use2DRoomBoundaryOption != null && use2DRoomBoundaryOption.GetValueOrDefault()));
 
-            cache.NamingOptions = new NamingOptions();
-            bool? useFamilyAndTypeNameForReference = GetNamedBooleanOption(options, "UseFamilyAndTypeNameForReference");
-            cache.NamingOptions.UseFamilyAndTypeNameForReference = 
-                (useFamilyAndTypeNameForReference != null) && useFamilyAndTypeNameForReference.GetValueOrDefault();
+            // Set GUIDOptions here.
+            cache.GUIDOptions = new GUIDOptions();
+            {
+                // This option should be rarely used, and is only for consistency with old files.  As such, it is set by environment variable only.
+                String use2009GUID = Environment.GetEnvironmentVariable("Assign2009GUIDToBuildingStoriesOnIFCExport");
+                cache.GUIDOptions.Use2009BuildingStoreyGUIDs = (use2009GUID != null && use2009GUID == "1");
 
-            bool? useVisibleRevitNameAsEntityName = GetNamedBooleanOption(options, "UseVisibleRevitNameAsEntityName");
-            cache.NamingOptions.UseVisibleRevitNameAsEntityName =
-                (useVisibleRevitNameAsEntityName != null) && useVisibleRevitNameAsEntityName.GetValueOrDefault();
+                bool? allowGUIDParameterOverride = GetNamedBooleanOption(options, "AllowGUIDParameterOverride");
+                if (allowGUIDParameterOverride != null)
+                    cache.GUIDOptions.AllowGUIDParameterOverride = allowGUIDParameterOverride.Value;
+            }
+
+            // Set NamingOptions here.
+            cache.NamingOptions = new NamingOptions();
+            {
+                bool? useFamilyAndTypeNameForReference = GetNamedBooleanOption(options, "UseFamilyAndTypeNameForReference");
+                cache.NamingOptions.UseFamilyAndTypeNameForReference =
+                    (useFamilyAndTypeNameForReference != null) && useFamilyAndTypeNameForReference.GetValueOrDefault();
+
+                bool? useVisibleRevitNameAsEntityName = GetNamedBooleanOption(options, "UseVisibleRevitNameAsEntityName");
+                cache.NamingOptions.UseVisibleRevitNameAsEntityName =
+                    (useVisibleRevitNameAsEntityName != null) && useVisibleRevitNameAsEntityName.GetValueOrDefault();
+            }
 
             // "SingleElement" export option - useful for debugging - only one input element will be processed for export
             String singleElementValue;
@@ -137,6 +151,9 @@ namespace BIM.IFC.Utility
 
             // Whether or not to export GSA Gross Design Area.
             cache.ExportGSAGrossDesignArea = GetNamedBooleanOption(options, "ExportGSAGrossDesignArea");
+
+            // Using the alternate UI or not.
+            cache.AlternateUIVersionOverride = GetNamedStringOption(options, "AlternateUIVersion");
 
             // "FileType" - note - setting is not respected yet
             ParseFileType(options, cache);
@@ -387,6 +404,46 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Cache variable for the Alternate UI version override (if export from Alternate UI)
+        /// </summary>
+        public string AlternateUIVersionOverride
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// The UI Version of the exporter.
+        /// </summary>
+        public string ExporterUIVersion
+        {
+            get
+            {
+                if (AlternateUIVersionOverride != null)
+                    return AlternateUIVersionOverride;
+                else
+                    return "Default UI";
+            }
+        }
+
+        /// <summary>
+        /// The version of the exporter.
+        /// </summary>
+        public string ExporterVersion
+        {
+            get
+            {
+                string assemblyFile = typeof(BIM.IFC.Exporter.Exporter).Assembly.Location;
+                string exporterVersion = "Unknown Exporter version";
+                if (File.Exists(assemblyFile))
+                {
+                    exporterVersion = "Exporter " + FileVersionInfo.GetVersionInfo(assemblyFile).FileVersion;
+                }
+                return exporterVersion;
+            }
+        }
+
+        /// <summary>
         /// A collection of elements from which to export (before filtering is applied).  If empty, all elements in the document
         /// are used as the initial set of elements before filtering is applied.
         /// </summary>
@@ -400,18 +457,6 @@ namespace BIM.IFC.Utility
         /// The filter view for export.
         /// </summary>
         public View FilterViewForExport
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Whether or not to use R2009 GUIDs for exporting Levels.  If this option is set, export will write the old
-        /// GUID value into an IfcGUID parameter for the Level, requiring the user to save the file if they want to
-        /// ensure that the old GUID is used permanently.
-        /// To set this to true, add the environment variable Assign2009GUIDToBuildingStoriesOnIFCExport and set the value to 1.
-        /// </summary>
-        public bool Use2009BuildingStoreyGUIDs
         {
             get;
             set;
@@ -433,6 +478,15 @@ namespace BIM.IFC.Utility
         /// is needed for certain governmental requirements, such as in Korea for non-residental buildings.
         /// </summary>
         public bool Use2DRoomBoundaryForRoomVolumeCreation
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Contains options for controlling how IFC GUIDs are generated on export.
+        /// </summary>
+        public GUIDOptions GUIDOptions
         {
             get;
             set;

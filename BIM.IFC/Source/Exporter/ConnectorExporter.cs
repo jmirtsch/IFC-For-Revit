@@ -156,33 +156,33 @@ namespace BIM.IFC.Exporter
             {
                 // Make Source port
                 IFCAnyHandle productRepresentation = null;
-                string guid = ExporterIFCUtils.CreateGUID();
+                string guid = GUIDUtil.CreateGUID();
                 string objType = IFCEntityType.IfcDistributionPort.ToString();
                 IFCFlowDirection flowDir = (isBiDirectional) ? IFCFlowDirection.SourceAndSink : IFCFlowDirection.Sink;
                 portIn = IFCInstanceExporter.CreateDistributionPort(ifcFile, guid, ownerHistory, null, null, objType, null, productRepresentation, flowDir);
 
                 // Attach the port to the element
-                guid = ExporterIFCUtils.CreateGUID();
+                guid = GUIDUtil.CreateGUID();
                 IFCAnyHandle connectorIn = IFCInstanceExporter.CreateRelConnectsPortToElement(ifcFile, guid, ownerHistory, null, null, portIn, inElementIFCHandle);
             }
 
             // ----------------------- Out Port----------------------
             {
                 IFCAnyHandle productRepresentation = null;
-                string guid = ExporterIFCUtils.CreateGUID();
+                string guid = GUIDUtil.CreateGUID();
                 string objType = IFCEntityType.IfcDistributionPort.ToString();
                 IFCFlowDirection flowDir = (isBiDirectional) ? IFCFlowDirection.SourceAndSink : IFCFlowDirection.Source;
                 portOut = IFCInstanceExporter.CreateDistributionPort(ifcFile, guid, ownerHistory, null, null, objType, null, productRepresentation, flowDir);
 
                 // Attach the port to the element
-                guid = ExporterIFCUtils.CreateGUID();
+                guid = GUIDUtil.CreateGUID();
                 IFCAnyHandle connectorOut = IFCInstanceExporter.CreateRelConnectsPortToElement(ifcFile, guid, ownerHistory, null, null, portOut, outElementIFCHandle);
             }
 
             //  ----------------------- Out Port -> In Port ----------------------
             if (portOut != null && portIn != null)
             {
-                string guid = ExporterIFCUtils.CreateGUID();
+                string guid = GUIDUtil.CreateGUID();
                 IFCAnyHandle realizingElement = null;
                 IFCInstanceExporter.CreateRelConnectsPorts(ifcFile, guid, ownerHistory, null, null, portIn, portOut, realizingElement);
                 addConnection(inElement.Id, outElement.Id);
