@@ -178,25 +178,6 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
-        /// Returns the GUID for a storey level, depending on whether we are using R2009 GUIDs or current GUIDs.
-        /// </summary>
-        /// <param name="level">
-        /// The level.
-        /// </param>
-        /// <returns>
-        /// The GUID.
-        /// </returns>
-        public static string GetLevelGUID(Level level)
-        {
-            if (!ExporterCacheManager.ExportOptionsCache.Use2009BuildingStoreyGUIDs)
-                return ExporterIFCUtils.CreateAlternateGUID(level);
-            else
-            {
-                return ExporterIFCUtils.CreateGUID(level);
-            }
-        }
-
-        /// <summary>
         /// Gets offset of non-storey level.
         /// </summary>
         /// <param name="exporterIFC">

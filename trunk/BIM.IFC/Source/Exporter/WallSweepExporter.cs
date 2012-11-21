@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using BIM.IFC.Utility;
 
 namespace BIM.IFC.Exporter
 {
@@ -37,8 +38,8 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="wallSweep">The WallSwepp.</param>
         /// <param name="geometryElement">The geometry element.</param>
-        /// <param name="productWrapper">The IFCProductWrapper.</param>
-        public static void Export(ExporterIFC exporterIFC, WallSweep wallSweep, GeometryElement geometryElement, IFCProductWrapper productWrapper)
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        public static void Export(ExporterIFC exporterIFC, WallSweep wallSweep, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             WallSweepInfo wallSweepInfo = wallSweep.GetWallSweepInfo();
             //Reveals are exported as openings with wall exporter.

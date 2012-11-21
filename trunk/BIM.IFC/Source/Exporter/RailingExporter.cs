@@ -146,7 +146,7 @@ namespace BIM.IFC.Exporter
             string ifcEnumTypeAsString = IFCAnyHandleUtil.GetEnumerationAttribute(origRailing, "PredefinedType");
             IFCRailingType railingType = GetIFCRailingTypeFromString(ifcEnumTypeAsString);
 
-            string copyGUID = ExporterIFCUtils.CreateGUID();
+            string copyGUID = GUIDUtil.CreateGUID();
             IFCAnyHandle copyOwnerHistory = IFCAnyHandleUtil.GetInstanceAttribute(origRailing, "OwnerHistory");
             string copyName = IFCAnyHandleUtil.GetStringAttribute(origRailing, "Name");
             string copyDescription = IFCAnyHandleUtil.GetStringAttribute(origRailing, "Description");
@@ -171,9 +171,9 @@ namespace BIM.IFC.Exporter
         /// The geometry element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        public static void ExportRailingElement(ExporterIFC exporterIFC, Railing railing, IFCProductWrapper productWrapper)
+        public static void ExportRailingElement(ExporterIFC exporterIFC, Railing railing, ProductWrapper productWrapper)
         {
             if (railing == null)
                 return;
@@ -244,9 +244,9 @@ namespace BIM.IFC.Exporter
         /// The geometry element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        public static void ExportRailing(ExporterIFC exporterIFC, Element element, GeometryElement geomElem, string ifcEnumType, IFCProductWrapper productWrapper)
+        public static void ExportRailing(ExporterIFC exporterIFC, Element element, GeometryElement geomElem, string ifcEnumType, ProductWrapper productWrapper)
         {
             ElementType elemType = element.Document.GetElement(element.GetTypeId()) as ElementType;
             IFCFile file = exporterIFC.GetFile();
@@ -336,7 +336,7 @@ namespace BIM.IFC.Exporter
 
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
 
-                        string instanceGUID = ExporterIFCUtils.CreateGUID(element);
+                        string instanceGUID = GUIDUtil.CreateGUID(element);
                         string instanceName = NamingUtil.GetIFCName(element);
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());

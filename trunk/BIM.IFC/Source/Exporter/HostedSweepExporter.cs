@@ -39,8 +39,8 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="hostedSweep">The hosted sweep element.</param>
         /// <param name="geometryElement">The geometry element.</param>
-        /// <param name="productWrapper">The IFCProductWrapper.</param>
-        public static void Export(ExporterIFC exporterIFC, HostedSweep hostedSweep, GeometryElement geometryElement, IFCProductWrapper productWrapper)
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        public static void Export(ExporterIFC exporterIFC, HostedSweep hostedSweep, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             ElementId catId = CategoryUtil.GetSafeCategoryId(hostedSweep);
             if (catId == new ElementId(BuiltInCategory.OST_Gutter))
@@ -55,8 +55,8 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The element.</param>
         /// <param name="geometryElement">The geometry element.</param>
-        /// <param name="productWrapper">The IFCProductWrapper.</param>
-        public static void ExportGutter(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, IFCProductWrapper productWrapper)
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        public static void ExportGutter(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
 
@@ -85,7 +85,7 @@ namespace BIM.IFC.Exporter
                         List<IFCAnyHandle> repMapList = new List<IFCAnyHandle>();
                         repMapList.Add(repMap3dHnd);
                         string elementTypeName = NamingUtil.CreateIFCObjectName(exporterIFC, element);
-                        IFCAnyHandle style = IFCInstanceExporter.CreatePipeSegmentType(file, ExporterIFCUtils.CreateGUID(element), exporterIFC.GetOwnerHistoryHandle(),
+                        IFCAnyHandle style = IFCInstanceExporter.CreatePipeSegmentType(file, GUIDUtil.CreateGUID(element), exporterIFC.GetOwnerHistoryHandle(),
                             elementTypeName, null, null, null, repMapList, NamingUtil.CreateIFCElementId(element), elementTypeName, IFCPipeSegmentType.Gutter);
 
 
@@ -115,7 +115,7 @@ namespace BIM.IFC.Exporter
                         string name = NamingUtil.GetIFCName(element);
                         string description = NamingUtil.GetDescriptionOverride(element, null);
                         string objectType = NamingUtil.GetObjectTypeOverride(element, elementTypeName);
-                        IFCAnyHandle elemHnd = IFCInstanceExporter.CreateFlowSegment(file, ExporterIFCUtils.CreateGUID(element),
+                        IFCAnyHandle elemHnd = IFCInstanceExporter.CreateFlowSegment(file, GUIDUtil.CreateGUID(element),
                             exporterIFC.GetOwnerHistoryHandle(), name, description, objectType, localPlacementToUse, prodRep,
                             NamingUtil.CreateIFCElementId(element));
 

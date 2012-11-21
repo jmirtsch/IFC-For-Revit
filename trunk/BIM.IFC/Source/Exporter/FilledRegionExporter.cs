@@ -39,9 +39,9 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="filledRegion">The filled region element.</param>
         /// <param name="geometryElement">The geometry element.</param>
-        /// <param name="productWrapper">The IFCProductWrapper.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
         public static void Export(ExporterIFC exporterIFC, FilledRegion filledRegion,
-            GeometryElement geometryElement, IFCProductWrapper productWrapper)
+            GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             if (filledRegion == null || geometryElement == null)
                 return;
@@ -111,7 +111,7 @@ namespace BIM.IFC.Exporter
                         shapeReps.Add(bodyRepHnd);
 
                         IFCAnyHandle productShape = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
-                        IFCAnyHandle annotation = IFCInstanceExporter.CreateAnnotation(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                        IFCAnyHandle annotation = IFCInstanceExporter.CreateAnnotation(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
                             null, null, null, setter.GetPlacement(), productShape);
 
                         productWrapper.AddAnnotation(annotation, setter.GetLevelInfo(), true);

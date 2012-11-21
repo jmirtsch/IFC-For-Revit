@@ -1301,11 +1301,13 @@ namespace BIM.IFC.Utility
                             {
                                 nextCurve = curve;
                                 end1 = curveEnd1;
+                                break;
                             }
                             else if (end0.IsAlmostEqualTo(curveEnd1))
                             {
                                 preCurve = curve;
                                 end0 = curveEnd0;
+                                break;
                             }
                         }
 
@@ -1313,11 +1315,13 @@ namespace BIM.IFC.Utility
                         {
                             processedCurves.Add(nextCurve);
                             curves.Remove(nextCurve);
+                            nextCurve = null;
                         }
                         else if (preCurve != null)
                         {
                             processedCurves.Insert(0, preCurve);
                             curves.Remove(preCurve);
+                            preCurve = null;
                         }
                         else
                             throw new Exception("Can't process edges.");
@@ -1741,7 +1745,7 @@ namespace BIM.IFC.Utility
             else
                 centerPointHandle = ExporterUtil.CreateCartesianPoint(file, centerPoint);
 
-            XYZ xDirection = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, arc.XDirection);
+            XYZ xDirection = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, arc.XDirection);
             IFCAnyHandle axis;
             if (scaledPlane != null)
             {
@@ -1814,6 +1818,20 @@ namespace BIM.IFC.Utility
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Get the color RGB values from color integer value.
+        /// </summary>
+        /// <param name="color">The color integer value</param>
+        /// <param name="blueValue">The blue value.</param>
+        /// <param name="greenValue">The green value.</param>
+        /// <param name="redValue">The red value.</param>
+        public static void GetRGBFromIntValue(int color, out double blueValue, out double greenValue, out double redValue)
+        {
+            blueValue = ((double)((color & 0xff0000) >> 16)) / 255.0;
+            greenValue = ((double)((color & 0xff00) >> 8)) / 255.0;
+            redValue = ((double)(color & 0xff)) / 255.0;
         }
     }
 }

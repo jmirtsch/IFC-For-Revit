@@ -21,6 +21,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.IFC;
+using BIM.IFC.Utility;
+using BIM.IFC.Toolkit;
 
 namespace BIM.IFC.Exporter.PropertySet
 {
@@ -59,14 +63,33 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
-        /// The quantities stored in this quantity description.
+        /// The entries stored in this property set description.
         /// </summary>
-        public IList<QuantityEntry> Entries
+        public void AddEntry(QuantityEntry entry)
         {
-            get
+            entry.UpdateEntry();
+            m_Entries.Add(entry);
+        }
+
+        /// <summary>
+        /// Creates handles for the quantities.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC class.</param>
+        /// <param name="ifcParams">The extrusion creation data, used to get extra parameter information.</param>
+        /// <param name="elementToUse">The base element.</param>
+        /// <param name="elemTypeToUse">The base element type.</param>
+        /// <returns>A set of quantities handles.</returns>
+        public HashSet<IFCAnyHandle> ProcessEntries(IFCFile file, ExporterIFC exporterIFC, IFCExtrusionCreationData ifcParams, Element elementToUse, ElementType elemTypeToUse)
+        {
+            HashSet<IFCAnyHandle> props = new HashSet<IFCAnyHandle>();
+            foreach (QuantityEntry entry in m_Entries)
             {
-                return m_Entries;
+                IFCAnyHandle propHnd = entry.ProcessEntry(file, exporterIFC, ifcParams, elementToUse, elemTypeToUse);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                    props.Add(propHnd);
             }
+            return props;
         }
     }
 }

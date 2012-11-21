@@ -64,7 +64,7 @@ namespace BIM.IFC.Exporter.PropertySet
                 HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
                 relatedObjects.Add(elemHnd);
 
-                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, ExporterIFCUtils.CreateGUID(),
+                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
                    exporterIFC.GetOwnerHistoryHandle(), "UniFormat Classification", "", relatedObjects, classificationReference);
             }
         }

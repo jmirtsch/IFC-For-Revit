@@ -30,51 +30,19 @@ using BIM.IFC.Exporter.PropertySet;
 namespace BIM.IFC.Exporter
 {
     /// <summary>
-    /// Provides methods to export footing elements.
+    /// Provides methods to export Pile elements.
     /// </summary>
-    class FootingExporter
+    class PileExporter
     {
         /// <summary>
-        /// Exports a footing to IFC footing.
+        /// Exports an element to IfcPile.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="footing">
-        /// The footing element.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
-        public static void ExportFootingElement(ExporterIFC exporterIFC,
-           ContFooting footing, GeometryElement geometryElement, ProductWrapper productWrapper)
-        {
-            String ifcEnumType = "STRIP_FOOTING";
-            ExportFooting(exporterIFC, footing, geometryElement, ifcEnumType, productWrapper);
-        }
-
-        /// <summary>
-        /// Exports an element to IFC footing.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="ifcEnumType">
-        /// The string value represents the IFC type.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
-        public static void ExportFooting(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement,
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="ifcEnumType">The string value represents the IFC type.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        public static void ExportPile(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement,
            string ifcEnumType, ProductWrapper productWrapper)
         {
             // export parts or not
@@ -115,26 +83,26 @@ namespace BIM.IFC.Exporter
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
                         string instanceElemId = NamingUtil.CreateIFCElementId(element);
-                        Toolkit.IFCFootingType footingType = GetIFCFootingType(element, ifcEnumType);
+                        Toolkit.IFCPileType pileType = GetPileType(element, ifcEnumType);
 
-                        IFCAnyHandle footing = IFCInstanceExporter.CreateFooting(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
-                            instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(), prodRep, instanceElemId, footingType);
+                        IFCAnyHandle pile = IFCInstanceExporter.CreatePile(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
+                            instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(), prodRep, instanceElemId, pileType, null);
 
                         if (exportParts)
                         {
-                            PartExporter.ExportHostPart(exporterIFC, element, footing, productWrapper, setter, setter.GetPlacement(), null);
+                            PartExporter.ExportHostPart(exporterIFC, element, pile, productWrapper, setter, setter.GetPlacement(), null);
                         }
                         else
                         {
                             if (matId != ElementId.InvalidElementId)
                             {
-                                CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, footing, matId);
+                                CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, pile, matId);
                             }
                         }
 
-                        productWrapper.AddElement(footing, setter, ecData, LevelUtil.AssociateElementToLevel(element));
+                        productWrapper.AddElement(pile, setter, ecData, LevelUtil.AssociateElementToLevel(element));
 
-                        OpeningUtil.CreateOpeningsIfNecessary(footing, element, ecData, exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);
+                        OpeningUtil.CreateOpeningsIfNecessary(pile, element, ecData, exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);
 
                         PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }
@@ -144,39 +112,27 @@ namespace BIM.IFC.Exporter
             }
         }
 
-        /// <summary>
-        /// Gets IFC footing type for an element.
-        /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="typeName">
-        /// The type name.
-        /// </param>
-        public static Toolkit.IFCFootingType GetIFCFootingType(Element element, string typeName)
+        private static IFCPileType GetPileType(Element element, string ifcEnumType)
         {
             string value = null;
             if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
             {
-                value = typeName;
+                value = ifcEnumType;
             }
+
             if (String.IsNullOrEmpty(value))
-                return Toolkit.IFCFootingType.NotDefined;
+                return IFCPileType.NotDefined;
 
             string newValue = value.Replace(" ", "").Replace("_", "");
 
-            if (String.Compare(newValue, "USERDEFINED", true) == 0)
-                return Toolkit.IFCFootingType.UserDefined;
-            if (String.Compare(newValue, "FOOTINGBEAM", true) == 0)
-                return Toolkit.IFCFootingType.Footing_Beam;
-            if (String.Compare(newValue, "PADFOOTING", true) == 0)
-                return Toolkit.IFCFootingType.Pad_Footing;
-            if (String.Compare(newValue, "PILECAP", true) == 0)
-                return Toolkit.IFCFootingType.Pile_Cap;
-            if (String.Compare(newValue, "STRIPFOOTING", true) == 0)
-                return Toolkit.IFCFootingType.Strip_Footing;
+            if (String.Compare(newValue, "COHESION", true) == 0)
+                return IFCPileType.Cohesion;
+            if (String.Compare(newValue, "FRICTION", true) == 0)
+                return IFCPileType.Friction;
+            if (String.Compare(newValue, "SUPPORT", true) == 0)
+                return IFCPileType.Support;
 
-            return Toolkit.IFCFootingType.UserDefined;
+            return IFCPileType.UserDefined;
         }
     }
 }

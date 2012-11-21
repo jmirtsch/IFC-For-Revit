@@ -443,6 +443,10 @@ namespace BIM.IFC.Utility
         /// MechanicalFastener type.
         /// </summary>
         ExportMechanicalFastenerType,
+        /// <summary>
+        /// Pile - no type in IFC2x3.
+        /// </summary>
+        ExportPile,
     }
 
 
@@ -798,6 +802,8 @@ namespace BIM.IFC.Utility
                 return IFCExportType.ExportMotorConnectionType;
             else if (IsEqualToTypeName(ifcClassName, ("IfcOutlet")))
                 return IFCExportType.ExportOutletType;
+            else if (IsEqualToTypeName(ifcClassName, ("IfcPile")))
+                return IFCExportType.ExportPile;
             else if (IsEqualToTypeName(ifcClassName, ("IfcPipeFitting")))
                 return IFCExportType.ExportPipeFittingType;
             else if (IsEqualToTypeName(ifcClassName, ("IfcPipeSegment")))

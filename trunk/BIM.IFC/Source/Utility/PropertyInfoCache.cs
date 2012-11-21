@@ -222,5 +222,22 @@ namespace BIM.IFC.Utility
                 return thermodynamicTemperaturePropertyInfoCache;
             }
         }
+
+        /// <summary>
+        /// The DoublePropertyInfoCache object for ThermalTransmittance parameter types.
+        /// </summary>
+        public DoublePropertyInfoCache ThermalTransmittanceCache
+        {
+            get
+            {
+                DoublePropertyInfoCache thermalTransmittancePropertyInfoCache;
+                if (!DoubleCacheMap.TryGetValue(PropertyType.ThermalTransmittance, out thermalTransmittancePropertyInfoCache))
+                {
+                    thermalTransmittancePropertyInfoCache = new DoublePropertyInfoCache();
+                    DoubleCacheMap[PropertyType.ThermalTransmittance] = thermalTransmittancePropertyInfoCache;
+                }
+                return thermalTransmittancePropertyInfoCache;
+            }
+        }
     }
 }

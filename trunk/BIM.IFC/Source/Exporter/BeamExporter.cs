@@ -47,10 +47,10 @@ namespace BIM.IFC.Exporter
         /// The geometry element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
         public static void ExportBeam(ExporterIFC exporterIFC,
-           Element element, GeometryElement geometryElement, IFCProductWrapper productWrapper)
+           Element element, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             if (geometryElement == null)
                 return;
@@ -160,7 +160,7 @@ namespace BIM.IFC.Exporter
                                     IFCExtrusionBasis bestAxis = (Math.Abs(beamDirection[0]) > Math.Abs(beamDirection[1])) ?
                                         IFCExtrusionBasis.BasisX : IFCExtrusionBasis.BasisY;
                                     extrusionCreationData.Slope = GeometryUtil.GetSimpleExtrusionSlope(beamDirection, bestAxis);
-                                    ElementId materialId = BodyExporter.GetBestMaterialIdForGeometry(solids[0], exporterIFC);
+                                    ElementId materialId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(solids[0], exporterIFC, element);
                                     if (materialId != ElementId.InvalidElementId)
                                         materialIds.Add(materialId);
                                 }
@@ -235,7 +235,7 @@ namespace BIM.IFC.Exporter
 
                         IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
 
-                        string instanceGUID = ExporterIFCUtils.CreateGUID(element);
+                        string instanceGUID = GUIDUtil.CreateGUID(element);
                         string instanceName = NamingUtil.GetIFCName(element);
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, NamingUtil.CreateIFCObjectName(exporterIFC, element));

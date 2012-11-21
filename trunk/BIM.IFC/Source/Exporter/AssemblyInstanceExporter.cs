@@ -54,10 +54,10 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The element.</param>
         /// <param name="geometryElement">The geometry element.</param>
-        /// <param name="productWrapper">The IFCProductWrapper.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
         /// <returns>True if exported successfully, false otherwise.</returns>
         public static bool ExportAssemblyInstanceElement(ExporterIFC exporterIFC, AssemblyInstance element,
-            IFCProductWrapper productWrapper)
+            ProductWrapper productWrapper)
         {
             if (element == null)
                 return false;
@@ -68,18 +68,53 @@ namespace BIM.IFC.Exporter
             {
                 using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, element))
                 {
-                    string guid = ExporterIFCUtils.CreateGUID(element);
+                    string ifcEnumType;
+                    IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
+                    IFCAnyHandle assemblyInstanceHnd = null;
+        
+                    string guid = GUIDUtil.CreateGUID(element);
                     IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                     string name = NamingUtil.GetIFCName(element);
                     string objectType = exporterIFC.GetFamilyName();
                     IFCAnyHandle localPlacement = placementSetter.GetPlacement();
                     IFCAnyHandle representation = null;
                     string elementTag = NamingUtil.CreateIFCElementId(element);
-                    IFCElementAssemblyType predefinedType = GetPredefinedTypeFromObjectType(objectType);
 
-                    IFCAnyHandle assemblyInstanceHnd = IFCInstanceExporter.CreateElementAssembly(file, guid,
-                        ownerHistory, name, null, objectType, localPlacement, representation, elementTag,
-                        IFCAssemblyPlace.NotDefined, predefinedType);
+                    // We have limited support for exporting assemblies as other container types.
+                    switch (exportAs)
+                    {
+                        case IFCExportType.ExportRamp:
+                            IFCRampType rampPredefinedType = RampExporter.GetIFCRampType(ifcEnumType);
+                            assemblyInstanceHnd = IFCInstanceExporter.CreateRamp(file, guid,
+                                ownerHistory, name, null, objectType, localPlacement, representation, elementTag,
+                                rampPredefinedType);
+                            break;
+                        case IFCExportType.ExportRoof:
+                            IFCRoofType roofPredefinedType = RoofExporter.GetIFCRoofType(ifcEnumType);
+                            assemblyInstanceHnd = IFCInstanceExporter.CreateRoof(file, guid,
+                                ownerHistory, name, null, objectType, localPlacement, representation, elementTag,
+                                roofPredefinedType);
+                            break;
+                        case IFCExportType.ExportStair:
+                            IFCStairType stairPredefinedType = StairsExporter.GetIFCStairType(ifcEnumType);
+                            assemblyInstanceHnd = IFCInstanceExporter.CreateStair(file, guid,
+                                ownerHistory, name, null, objectType, localPlacement, representation, elementTag,
+                                stairPredefinedType);
+                            break;
+                        case IFCExportType.ExportWall:
+                            assemblyInstanceHnd = IFCInstanceExporter.CreateWall(file, guid,
+                                ownerHistory, name, null, objectType, localPlacement, representation, elementTag);
+                            break;
+                        default:
+                            IFCElementAssemblyType assemblyPredefinedType = GetPredefinedTypeFromObjectType(objectType);
+                            assemblyInstanceHnd = IFCInstanceExporter.CreateElementAssembly(file, guid,
+                                ownerHistory, name, null, objectType, localPlacement, representation, elementTag,
+                                IFCAssemblyPlace.NotDefined, assemblyPredefinedType);
+                            break;
+                    }
+
+                    if (assemblyInstanceHnd == null)
+                        return false;
 
                     productWrapper.AddElement(assemblyInstanceHnd, placementSetter.GetLevelInfo(), null, true);
 

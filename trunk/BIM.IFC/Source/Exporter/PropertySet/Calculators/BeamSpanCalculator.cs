@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using BIM.IFC.Utility;
 
 namespace BIM.IFC.Exporter.PropertySet.Calculators
 {
@@ -69,7 +70,7 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
         /// </returns>
         public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
         {
-            if (extrusionCreationData == null)
+            if (extrusionCreationData == null || MathUtil.IsAlmostZero(extrusionCreationData.ScaledLength))
                 return false;
             m_Span = extrusionCreationData.ScaledLength;
             return true;

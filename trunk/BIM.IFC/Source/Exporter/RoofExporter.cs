@@ -42,9 +42,9 @@ namespace BIM.IFC.Exporter
         /// <param name="ifcEnumType">The roof type.</param>
         /// <param name="roof">The roof element.</param>
         /// <param name="geometryElement">The geometry element.</param>
-        /// <param name="productWrapper">The IFCProductWrapper.</param>
-        public static void ExportRoof(ExporterIFC exporterIFC, string ifcEnumType, Element roof, GeometryElement geometryElement, 
-            IFCProductWrapper productWrapper)
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        public static void ExportRoof(ExporterIFC exporterIFC, string ifcEnumType, Element roof, GeometryElement geometryElement,
+            ProductWrapper productWrapper)
         {
             if (roof == null || geometryElement == null)
                 return;
@@ -76,7 +76,7 @@ namespace BIM.IFC.Exporter
 
                         bool exportSlab = ecData.ScaledLength > MathUtil.Eps();
 
-                        string guid = ExporterIFCUtils.CreateGUID(roof);
+                        string guid = GUIDUtil.CreateGUID(roof);
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                         string roofName = NamingUtil.GetIFCName(roof);
                         string roofDescription = NamingUtil.GetDescriptionOverride(roof, null);
@@ -89,7 +89,12 @@ namespace BIM.IFC.Exporter
                             roofObjectType, localPlacement, exportSlab ? null : representation, elementTag, roofType);
 
                         productWrapper.AddElement(roofHnd, placementSetter.GetLevelInfo(), ecData, LevelUtil.AssociateElementToLevel(roof));
-                        CategoryUtil.CreateMaterialAssociations(roof.Document, exporterIFC, roofHnd, bodyData.MaterialIds);
+
+                        // will export its host object materials later if it is a roof
+                        if (!(roof is RoofBase))
+                        {
+                            CategoryUtil.CreateMaterialAssociations(roof.Document, exporterIFC, roofHnd, bodyData.MaterialIds);
+                        }
 
                         if (exportSlab)
                         {
@@ -119,8 +124,8 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="roof">The roof element.</param>
         /// <param name="geometryElement">The geometry element.</param>
-        /// <param name="productWrapper">The IFCProductWrapper.</param>
-        public static void Export(ExporterIFC exporterIFC, RoofBase roof, GeometryElement geometryElement, IFCProductWrapper productWrapper)
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        public static void Export(ExporterIFC exporterIFC, RoofBase roof, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction tr = new IFCTransaction(file))
@@ -159,7 +164,7 @@ namespace BIM.IFC.Exporter
                     string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, roof);
                     
                     IFCAnyHandle roofHnd = ExporterIFCUtils.ExportRoofAsContainer(exporterIFC, ifcEnumType, roof, 
-                        geometryElement, productWrapper);
+                        geometryElement, productWrapper.ToNative());
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(roofHnd))
                         ExportRoof(exporterIFC, ifcEnumType, roof, geometryElement, productWrapper);
 
@@ -179,8 +184,8 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The roof element.</param>
         /// <param name="geometryElement">The geometry element.</param>
-        /// <param name="productWrapper">The IFCProductWrapper.</param>
-        public static void ExportRoofAsParts(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, IFCProductWrapper productWrapper)
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        public static void ExportRoofAsParts(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
 
@@ -198,7 +203,7 @@ namespace BIM.IFC.Exporter
 
                         IFCAnyHandle prodRepHnd = null;
 
-                        string elementGUID = ExporterIFCUtils.CreateGUID(element);
+                        string elementGUID = GUIDUtil.CreateGUID(element);
                         string elementName = NamingUtil.GetIFCName(element);
                         string elementDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string elementObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());

@@ -40,11 +40,11 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="hostElement">The host element having parts to export.</param>
         /// <param name="hostHandle">The host element handle.</param>
-        /// <param name="originalWrapper">The IFCProductWrapper object.</param>
+        /// <param name="originalWrapper">The ProductWrapper object.</param>
         public static void ExportHostPart(ExporterIFC exporterIFC, Element hostElement, IFCAnyHandle hostHandle,
-            IFCProductWrapper originalWrapper, IFCPlacementSetter placementSetter, IFCAnyHandle originalPlacement, ElementId overrideLevelId)
+            ProductWrapper originalWrapper, IFCPlacementSetter placementSetter, IFCAnyHandle originalPlacement, ElementId overrideLevelId)
         {
-            using (IFCProductWrapper subWrapper = IFCProductWrapper.Create(exporterIFC, true))
+            using (ProductWrapper subWrapper = ProductWrapper.Create(exporterIFC, true))
             {
                 List<ElementId> associatedPartsList = PartUtils.GetAssociatedParts(hostElement.Document, hostElement.Id, false, true).ToList();
                 if (associatedPartsList.Count == 0)
@@ -83,7 +83,7 @@ namespace BIM.IFC.Exporter
                 ICollection<IFCAnyHandle> relatedElementIds = subWrapper.GetAllObjects();
                 if (relatedElementIds.Count > 0)
                 {
-                    string guid = ExporterIFCUtils.CreateGUID();
+                    string guid = GUIDUtil.CreateGUID();
                     HashSet<IFCAnyHandle> relatedElementIdSet = new HashSet<IFCAnyHandle>(relatedElementIds);
                     IFCInstanceExporter.CreateRelAggregates(exporterIFC.GetFile(), guid, exporterIFC.GetOwnerHistoryHandle(), null, null, hostHandle, relatedElementIdSet);
                 }
@@ -107,8 +107,8 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="partElement">The standalone part to export.</param>
         /// <param name="geometryElement">The goemetry of the part.</param>
-        /// <param name="productWrapper">The IFCProductWrapper object.</param>
-        public static void ExportStandalonePart(ExporterIFC exporterIFC, Element partElement, GeometryElement geometryElement, IFCProductWrapper productWrapper)
+        /// <param name="productWrapper">The ProductWrapper object.</param>
+        public static void ExportStandalonePart(ExporterIFC exporterIFC, Element partElement, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             Part part = partElement as Part;
             if (!ExporterCacheManager.ExportOptionsCache.ExportParts || part == null || geometryElement == null)
@@ -146,8 +146,8 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="partElement">The standalone part to export.</param>
         /// <param name="geometryElement">The goemetry of the part.</param>
-        /// <param name="productWrapper">The IFCProductWrapper object.</param>
-        public static void ExportPartAsBuildingElement(ExporterIFC exporterIFC, Element partElement, GeometryElement geometryElement, IFCProductWrapper productWrapper)
+        /// <param name="productWrapper">The ProductWrapper object.</param>
+        public static void ExportPartAsBuildingElement(ExporterIFC exporterIFC, Element partElement, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             Part part = partElement as Part;
             if (!ExporterCacheManager.ExportOptionsCache.ExportParts || part == null || geometryElement == null)
@@ -200,8 +200,8 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="partElement">The part element to export.</param>
         /// <param name="geometryElement">The geometry of part.</param>
-        /// <param name="productWrapper">The IFCProductWrapper object.</param>
-        public static void ExportPart(ExporterIFC exporterIFC, Element partElement, IFCProductWrapper productWrapper,
+        /// <param name="productWrapper">The ProductWrapper object.</param>
+        public static void ExportPart(ExporterIFC exporterIFC, Element partElement, ProductWrapper productWrapper,
             IFCPlacementSetter placementSetter, IFCAnyHandle originalPlacement, IFCRange range, IFCExtrusionAxes ifcExtrusionAxes,
             Element hostElement, ElementId overrideLevelId, bool asBuildingElement)
         {
@@ -255,7 +255,9 @@ namespace BIM.IFC.Exporter
                         partPlacement = standalonePlacementSetter.GetPlacement();
                     }
                     else
-                        partPlacement = ExporterUtil.CopyLocalPlacement(file, originalPlacement);
+                    {
+                        partPlacement = ExporterUtil.CreateLocalPlacement(file, originalPlacement, null);
+                    }
 
                     bool validRange = (range != null && !MathUtil.IsAlmostZero(range.Start - range.End));
 
@@ -315,7 +317,7 @@ namespace BIM.IFC.Exporter
 
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
 
-                        string partGUID = ExporterIFCUtils.CreateGUID(partElement);
+                        string partGUID = GUIDUtil.CreateGUID(partElement);
                         string partName = NamingUtil.GetIFCName(partElement);
                         string partDescription = NamingUtil.GetDescriptionOverride(partElement, null);
                         string partObjectType = NamingUtil.GetObjectTypeOverride(partElement, NamingUtil.CreateIFCObjectName(exporterIFC, partElement));
@@ -415,7 +417,7 @@ namespace BIM.IFC.Exporter
         /// <returns>True if host element can export the parts and have any associated parts, false otherwise.</returns>
         public static bool CanExportParts(Element hostElement)
         {
-            if (ExporterCacheManager.ExportOptionsCache.ExportParts)
+            if (hostElement != null && ExporterCacheManager.ExportOptionsCache.ExportParts)
             {
                 return PartUtils.HasAssociatedParts(hostElement.Document, hostElement.Id);
             }

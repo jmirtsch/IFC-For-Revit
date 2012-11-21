@@ -40,10 +40,10 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The element.</param>
         /// <param name="geometryElement">The geometry element.</param>
-        /// <param name="productWrapper">The IFCProductWrapper.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
         /// <returns>True if exported successfully, false otherwise.</returns>
         public static bool ExportDuctInsulation(ExporterIFC exporterIFC, Element element,
-            GeometryElement geometryElement, IFCProductWrapper productWrapper)
+            GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             if (element == null || geometryElement == null)
                 return false;
@@ -70,7 +70,7 @@ namespace BIM.IFC.Exporter
                             return false;
                         }
 
-                        string guid = ExporterIFCUtils.CreateGUID(element);
+                        string guid = GUIDUtil.CreateGUID(element);
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                         string objectType = exporterIFC.GetFamilyName();
                         IFCAnyHandle localPlacement = ecData.GetLocalPlacement();

@@ -47,9 +47,9 @@ namespace BIM.IFC.Exporter
         /// The geometry element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        public static void ExportTopographySurface(ExporterIFC exporterIFC, TopographySurface topSurface, GeometryElement geometryElement, IFCProductWrapper productWrapper)
+        public static void ExportTopographySurface(ExporterIFC exporterIFC, TopographySurface topSurface, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             ExportSiteBase(exporterIFC, null, topSurface, geometryElement, productWrapper);
             PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, topSurface, productWrapper);
@@ -65,9 +65,9 @@ namespace BIM.IFC.Exporter
         /// The Revit document.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        public static void ExportDefaultSite(ExporterIFC exporterIFC, Document document, IFCProductWrapper productWrapper)
+        public static void ExportDefaultSite(ExporterIFC exporterIFC, Document document, ProductWrapper productWrapper)
         {
             ExportSiteBase(exporterIFC, document, null, null, productWrapper);
         }
@@ -88,9 +88,9 @@ namespace BIM.IFC.Exporter
         /// The geometry element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        private static void ExportSiteBase(ExporterIFC exporterIFC, Document document, Element element, GeometryElement geometryElement, IFCProductWrapper productWrapper)
+        private static void ExportSiteBase(ExporterIFC exporterIFC, Document document, Element element, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             IFCAnyHandle siteHandle = exporterIFC.GetSite();
 

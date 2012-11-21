@@ -204,7 +204,7 @@ namespace BIM.IFC.Exporter
         /// <param name="type">The export type.</param>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="familyInstance">The element.</param>
-        /// <param name="wrapper">The IFCProductWrapper.</param>
+        /// <param name="wrapper">The ProductWrapper.</param>
         /// <param name="setter">The IFCPlacementSetter.</param>
         /// <param name="extraParams">The extrusion creation data.</param>
         /// <param name="instanceGUID">The guid.</param>
@@ -217,7 +217,7 @@ namespace BIM.IFC.Exporter
         /// <returns>The handle.</returns>
         public static IFCAnyHandle ExportGenericInstance(IFCExportType type,
            ExporterIFC exporterIFC, Element familyInstance,
-           IFCProductWrapper wrapper, IFCPlacementSetter setter, IFCExtrusionCreationData extraParams,
+           ProductWrapper wrapper, IFCPlacementSetter setter, IFCExtrusionCreationData extraParams,
            string instanceGUID, IFCAnyHandle ownerHistory,
            string instanceName, string instanceDescription, string instanceObjectType,
            IFCAnyHandle productRepresentation,

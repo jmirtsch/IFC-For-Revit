@@ -137,11 +137,11 @@ namespace BIM.IFC.Exporter
         /// <param name="rampType">The ramp type.</param>
         /// <param name="ecData">The extrusion creation data.</param>
         /// <param name="placementSetter">The placement setter.</param>
-        /// <param name="productWrapper">The IFCProductWrapper.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
         public static void ExportMultistoryRamp(ExporterIFC exporterIFC, Element ramp, int numFlights,
             IFCAnyHandle ownerHistory, IFCAnyHandle localPlacement, IFCAnyHandle containedRampLocalPlacement, IFCAnyHandle representation,
             string rampName, string rampObjectType, string rampDescription, string elementTag, IFCRampType rampType,
-            IFCExtrusionCreationData ecData, IFCPlacementSetter placementSetter, IFCProductWrapper productWrapper)
+            IFCExtrusionCreationData ecData, IFCPlacementSetter placementSetter, ProductWrapper productWrapper)
         {
             if (numFlights < 2)
                 return;
@@ -195,7 +195,7 @@ namespace BIM.IFC.Exporter
                 string localRampName = rampName + ":" + (ii + 1);
 
                 List<IFCAnyHandle> components = new List<IFCAnyHandle>();
-                IFCAnyHandle containedRampCopyHnd = IFCInstanceExporter.CreateRamp(file, ExporterIFCUtils.CreateGUID(), ownerHistory,
+                IFCAnyHandle containedRampCopyHnd = IFCInstanceExporter.CreateRamp(file, GUIDUtil.CreateGUID(), ownerHistory,
                     localRampName, rampDescription, rampObjectType, containedLocalPlacementCopy, representationCopy, elementTag, rampType);
                 components.Add(containedRampCopyHnd);
 
@@ -203,7 +203,7 @@ namespace BIM.IFC.Exporter
 
                 IFCAnyHandle rampLocalPlacementCopy = ExporterUtil.CopyLocalPlacement(file, containedRampLocalPlacement);
 
-                IFCAnyHandle rampCopyHnd = IFCInstanceExporter.CreateRamp(file, ExporterIFCUtils.CreateGUID(), ownerHistory, localRampName,
+                IFCAnyHandle rampCopyHnd = IFCInstanceExporter.CreateRamp(file, GUIDUtil.CreateGUID(), ownerHistory, localRampName,
                     rampDescription, rampObjectType, rampLocalPlacementCopy, null, elementTag, rampType);
 
                 productWrapper.AddElement(rampCopyHnd, currLevelInfo, ecData, LevelUtil.AssociateElementToLevel(ramp));
@@ -221,9 +221,9 @@ namespace BIM.IFC.Exporter
         /// <param name="ramp">The ramp element.</param>
         /// <param name="geometryElement">The geometry element.</param>
         /// <param name="numFlights">The number of flights for a multistory ramp.</param>
-        /// <param name="productWrapper">The IFCProductWrapper.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
         public static void ExportRamp(ExporterIFC exporterIFC, string ifcEnumType, Element ramp, GeometryElement geometryElement,
-            int numFlights, IFCProductWrapper productWrapper)
+            int numFlights, ProductWrapper productWrapper)
         {
             if (ramp == null || geometryElement == null)
                 return;
@@ -257,7 +257,7 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle containedRampLocalPlacement = ExporterUtil.CreateLocalPlacement(file, ecData.GetLocalPlacement(), null);
                         string elementTag = NamingUtil.CreateIFCElementId(ramp);
                         IFCRampType rampType = GetIFCRampType(ifcEnumType);
-                        ElementId matId = BodyExporter.GetBestMaterialIdForGeometry(geometryElement, exporterIFC);
+                        ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, ramp);
 
                         List<IFCAnyHandle> components = new List<IFCAnyHandle>();
                         IFCAnyHandle containedRampHnd = IFCInstanceExporter.CreateRamp(file, containedRampGuid, ownerHistory, rampName,
@@ -267,7 +267,7 @@ namespace BIM.IFC.Exporter
                         if (matId != ElementId.InvalidElementId)
                             CategoryUtil.CreateMaterialAssociation(ramp.Document, exporterIFC, containedRampHnd, matId);
 
-                        string guid = ExporterIFCUtils.CreateGUID(ramp);
+                        string guid = GUIDUtil.CreateGUID(ramp);
                         IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
 
                         IFCAnyHandle rampHnd = IFCInstanceExporter.CreateRamp(file, guid, ownerHistory, rampName,
@@ -295,8 +295,8 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The ramp element.</param>
         /// <param name="geometryElement">The geometry element.</param>
-        /// <param name="productWrapper">The IFCProductWrapper.</param>
-        public static void Export(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, IFCProductWrapper productWrapper)
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        public static void Export(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, element);
             IFCFile file = exporterIFC.GetFile();

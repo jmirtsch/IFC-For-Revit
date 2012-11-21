@@ -187,28 +187,10 @@ namespace BIM.IFC.Utility
             // Look for a parameter "IsExternal"
             Document document = element.Document;
             String externalParamName = "IsExternal";
-            Parameter instParameter = element.get_Parameter(externalParamName);
-            bool isExternal = false;
-            if (instParameter != null && instParameter.HasValue && instParameter.StorageType == StorageType.Integer)
+            int isExternal;
+            if (ParameterUtil.GetIntValueFromElementOrSymbol(element, externalParamName, out isExternal))
             {
-                isExternal = instParameter.AsInteger() != 0;
-                return isExternal;
-            }
-
-            if (instParameter == null || !instParameter.HasValue)
-            {
-                ElementType elementType = document.GetElement(element.GetTypeId()) as ElementType;
-
-                if (elementType != null)
-                {
-                    Parameter typeParameter = elementType.get_Parameter(externalParamName);
-
-                    if (typeParameter != null && typeParameter.HasValue && typeParameter.StorageType == StorageType.Integer)
-                    {
-                        isExternal = typeParameter.AsInteger() != 0;
-                        return isExternal;
-                    }
-                }
+                return (isExternal != 0);
             }
 
             // Specific element types that know if they are external or not 
@@ -223,26 +205,27 @@ namespace BIM.IFC.Utility
             if (element is Wall)
             {
                 ElementType wallType = document.GetElement(element.GetTypeId()) as ElementType;
-                Parameter wallFunction = wallType.get_Parameter(BuiltInParameter.FUNCTION_PARAM);
-
-                if (wallFunction != null)
+                int wallFunction;
+                if (ParameterUtil.GetIntValueFromElement(wallType, BuiltInParameter.FUNCTION_PARAM, out wallFunction))
                 {
-                    return (wallFunction.AsInteger() != (int)WallFunction.Interior);
+                    return wallFunction != ((int)WallFunction.Interior);
                 }
             }
-
 
             // Family instances may be hosted on an external element
             if (element is FamilyInstance)
             {
                 FamilyInstance familyInstance = (FamilyInstance)element;
-                Reference familyInstanceHostReference = familyInstance.HostFace;
-
-                if (familyInstanceHostReference != null)
+                Element familyInstanceHost = familyInstance.Host;
+                if (familyInstanceHost == null)
                 {
-                    Element familyInstanceHost = document.GetElement(familyInstanceHostReference);
-                    return IsElementExternal(familyInstanceHost);
+                    Reference familyInstanceHostReference = familyInstance.HostFace;
+                    if (familyInstanceHostReference != null)
+                        familyInstanceHost = document.GetElement(familyInstanceHostReference);
                 }
+
+                if (familyInstanceHost != null)
+                    return IsElementExternal(familyInstanceHost);
             }
 
             return false;

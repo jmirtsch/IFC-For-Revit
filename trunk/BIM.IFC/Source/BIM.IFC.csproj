@@ -58,7 +58,9 @@
     <Compile Include="Exporter\HostObjectExporter.cs" />
     <Compile Include="Exporter\MullionExporter.cs" />
     <Compile Include="Exporter\PartExporter.cs" />
+    <Compile Include="Exporter\PileExporter.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamLoadBearingCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\ColumnLoadBearingCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamSlopeCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamSpanCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ExtendToStructureCalculator.cs" />
@@ -143,6 +145,7 @@
     <Compile Include="Utility\FamilyTypeInfo.cs" />
     <Compile Include="Utility\GeometryUtil.cs" />
     <Compile Include="Utility\GroupElementGeometryCache.cs" />
+    <Compile Include="Utility\GUIDOptions.cs" />
     <Compile Include="Utility\GUIDUtil.cs" />
     <Compile Include="Utility\HandleToElementCache.cs" />
     <Compile Include="Utility\HostPartsCache.cs" />
@@ -154,9 +157,11 @@
     <Compile Include="Utility\NamingOptions.cs" />
     <Compile Include="Utility\NamingUtil.cs" />
     <Compile Include="Utility\OpeningUtil.cs" />
+    <Compile Include="Utility\ParameterElementCache.cs" />
     <Compile Include="Utility\ParameterUtil.cs" />
     <Compile Include="Utility\PartExportedCache.cs" />
     <Compile Include="Utility\PresentationLayerSetCache.cs" />
+    <Compile Include="Utility\ProductWrapper.cs" />
     <Compile Include="Utility\PropertyInfoCache.cs" />
     <Compile Include="Utility\PropertySetOptions.cs" />
     <Compile Include="Utility\RepresentationUtil.cs" />

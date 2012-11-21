@@ -67,9 +67,9 @@ namespace BIM.IFC.Exporter
         /// The spatial element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        public static void ExportSpatialElement(ExporterIFC exporterIFC, SpatialElement spatialElement, IFCProductWrapper productWrapper)
+        public static void ExportSpatialElement(ExporterIFC exporterIFC, SpatialElement spatialElement, ProductWrapper productWrapper)
         {
             //quick reject
             bool isArea = spatialElement is Area;
@@ -386,7 +386,7 @@ namespace BIM.IFC.Exporter
                             {
                                 exporterIFC.PushExportState(spatialElement, geomElem);
 
-                                using (IFCProductWrapper productWrapper = IFCProductWrapper.Create(exporterIFC, true))
+                                using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, true))
                                 {
                                     ElementId levelId = spatialElement.Level != null ? spatialElement.Level.Id : ElementId.InvalidElementId;
                                     using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, spatialElement, null, null, levelId))
@@ -603,18 +603,14 @@ namespace BIM.IFC.Exporter
             Area area = spatialElement as Area;
             if (area != null)
             {
-                double scale = exporterIFC.LinearScale;
+                if (!area.IsGrossInterior)
+                    return false;
 
-                double dArea = 0.0;
-                Parameter paramRoomArea = area.get_Parameter(BuiltInParameter.ROOM_AREA);
-                if (paramRoomArea != null && paramRoomArea.StorageType == StorageType.Double)
-                {
-                    dArea = paramRoomArea.AsDouble();
-                    dArea *= (scale * scale);
-                }  // convert scale to export scale; area is scale squared.
+                double dArea;
+                if (!ParameterUtil.GetDoubleValueFromElement(area, BuiltInParameter.ROOM_AREA, out dArea))
+                    return false;
 
-                if (!MathUtil.IsAlmostZero(dArea) && area.IsGrossInterior)
-                    return true;
+                return !MathUtil.IsAlmostZero(dArea);
             }
             return false;
         }
@@ -638,22 +634,20 @@ namespace BIM.IFC.Exporter
         {
             Document document = spatialElement.Document;
 
-            double roomHeight = 0.0;
-            double bottomOffset = 0.0;
+            ElementId topLevelId;
+            ParameterUtil.GetElementIdValueFromElement(spatialElement, BuiltInParameter.ROOM_UPPER_LEVEL, out topLevelId);
 
-            Parameter paramTopLevelId = spatialElement.get_Parameter(BuiltInParameter.ROOM_UPPER_LEVEL);
-            ElementId topLevelId = paramTopLevelId != null ? paramTopLevelId.AsElementId() : ElementId.InvalidElementId;
+            double topOffset;
+            ParameterUtil.GetDoubleValueFromElement(spatialElement, BuiltInParameter.ROOM_UPPER_OFFSET, out topOffset);
 
-            Parameter paramTopOffset = spatialElement.get_Parameter(BuiltInParameter.ROOM_UPPER_OFFSET);
-            double topOffset = paramTopOffset != null ? paramTopOffset.AsDouble() : 0.0;
-
-            Parameter paramBottomOffset = spatialElement.get_Parameter(BuiltInParameter.ROOM_LOWER_OFFSET);
-            bottomOffset = paramBottomOffset != null ? paramBottomOffset.AsDouble() : 0.0;
+            double bottomOffset;
+            ParameterUtil.GetDoubleValueFromElement(spatialElement, BuiltInParameter.ROOM_LOWER_OFFSET, out bottomOffset);
 
             Level bottomLevel = document.GetElement(levelId) as Level;
             Level topLevel =
                (levelId == topLevelId) ? bottomLevel : document.GetElement(topLevelId) as Level;
 
+            double roomHeight = 0.0;
             if (bottomLevel != null && topLevel != null)
             {
                 roomHeight = (topLevel.Elevation - bottomLevel.Elevation) + (topOffset - bottomOffset);
@@ -738,7 +732,7 @@ namespace BIM.IFC.Exporter
                     return false;
             }
 
-            IFCInstanceExporter.CreateRelSpaceBoundary(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(), spaceBoundaryName, null,
+            IFCInstanceExporter.CreateRelSpaceBoundary(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(), spaceBoundaryName, null,
                spatialElemHnd, buildingElemHnd, boundary.ConnectGeometryHandle, boundaryType, boundary.InternalOrExternal);
 
             return true;
@@ -777,7 +771,7 @@ namespace BIM.IFC.Exporter
 
                 IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
                   "http://www.omniclass.org/tables/OmniClass_13_2006-03-28.pdf", itemReference, itemName, classification);
-                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, ExporterIFCUtils.CreateGUID(),
+                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
                    exporterIFC.GetOwnerHistoryHandle(), "OmniClass", null, spaceHnds, classificationReference);
             }
 
@@ -790,7 +784,7 @@ namespace BIM.IFC.Exporter
 
                 IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
                   bimStandardsLocation, itemReference, itemName, null);
-                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, ExporterIFCUtils.CreateGUID(),
+                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
                    exporterIFC.GetOwnerHistoryHandle(), "Space Type (Owner)", null, spaceHnds, classificationReference);
             }
 
@@ -803,7 +797,7 @@ namespace BIM.IFC.Exporter
 
                 IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
                   bimStandardsLocation, itemReference, itemName, null);
-                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, ExporterIFCUtils.CreateGUID(),
+                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
                    exporterIFC.GetOwnerHistoryHandle(), "Space Category (Owner)", null, spaceHnds, classificationReference);
             }
 
@@ -816,7 +810,7 @@ namespace BIM.IFC.Exporter
 
                 IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
                   "http://www.BOMA.org", itemReference, itemName, null);
-                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, ExporterIFCUtils.CreateGUID(),
+                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
                    exporterIFC.GetOwnerHistoryHandle(), "Space Category (BOMA)", "", spaceHnds, classificationReference);
             }
         }
@@ -831,7 +825,7 @@ namespace BIM.IFC.Exporter
         /// The spatial element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
         /// <param name="setter">
         /// The IFCPlacementSetter.
@@ -839,7 +833,7 @@ namespace BIM.IFC.Exporter
         /// <returns>
         /// True if created successfully, false otherwise.
         /// </returns>
-        static bool CreateIFCSpace(ExporterIFC exporterIFC, SpatialElement spatialElement, IFCProductWrapper productWrapper, IFCPlacementSetter setter)
+        static bool CreateIFCSpace(ExporterIFC exporterIFC, SpatialElement spatialElement, ProductWrapper productWrapper, IFCPlacementSetter setter)
         {
             IList<CurveLoop> curveLoops = null;
             try
@@ -860,13 +854,8 @@ namespace BIM.IFC.Exporter
             ElementId catId = spatialElement.Category != null ? spatialElement.Category.Id : ElementId.InvalidElementId;
 
             double dArea = 0.0;
-
-            Parameter param = spatialElement.get_Parameter(BuiltInParameter.ROOM_AREA);
-            if (param != null)
-            {
-                dArea = param.AsDouble();
+            if (ParameterUtil.GetDoubleValueFromElement(spatialElement, BuiltInParameter.ROOM_AREA, out dArea))
                 dArea *= (scale * scale);
-            }
 
             IFCLevelInfo levelInfo = exporterIFC.GetLevelInfo(levelId);
 
@@ -877,23 +866,14 @@ namespace BIM.IFC.Exporter
             bool isArea = spatialElement is Area;
             if (!isArea)
             {
-                Parameter paramRoomNum = spatialElement.get_Parameter(BuiltInParameter.ROOM_NUMBER);
-                if (paramRoomNum != null)
-                {
-                    strSpaceNumber = paramRoomNum.AsString();
-                }
+                if (!ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NUMBER, out strSpaceNumber))
+                    strSpaceNumber = null;
 
-                Parameter paramRoomName = spatialElement.get_Parameter(BuiltInParameter.ROOM_NAME);
-                if (paramRoomName != null)
-                {
-                    strSpaceName = paramRoomName.AsString();
-                }
+                if (!ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NAME, out strSpaceName))
+                    strSpaceName = null;
 
-                Parameter paramRoomComm = spatialElement.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS);
-                if (paramRoomComm != null)
-                {
-                    strSpaceDesc = paramRoomComm.AsString();
-                }
+                if (!ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS, out strSpaceDesc))
+                    strSpaceDesc = null;
             }
             else
             {
@@ -925,9 +905,8 @@ namespace BIM.IFC.Exporter
             if (roomHeight <= 0.0)
                 return false;
 
-            double bottomOffset = 0.0;
-            Parameter paramBottomOffset = spatialElement.get_Parameter(BuiltInParameter.ROOM_LOWER_OFFSET);
-            bottomOffset = paramBottomOffset != null ? paramBottomOffset.AsDouble() : 0.0;
+            double bottomOffset;
+            ParameterUtil.GetDoubleValueFromElement(spatialElement, BuiltInParameter.ROOM_LOWER_OFFSET, out bottomOffset);
 
             XYZ zDir = new XYZ(0, 0, 1);
             XYZ orig = new XYZ(0, 0, levelInfo.Elevation + bottomOffset);
@@ -988,7 +967,7 @@ namespace BIM.IFC.Exporter
                     extraParams.ScaledHeight = roomHeight;
                     extraParams.ScaledArea = dArea;
 
-                    spaceHnd = IFCInstanceExporter.CreateSpace(file, ExporterIFCUtils.CreateGUID(spatialElement),
+                    spaceHnd = IFCInstanceExporter.CreateSpace(file, GUIDUtil.CreateGUID(spatialElement),
                                                       exporterIFC.GetOwnerHistoryHandle(),
                                                       NamingUtil.GetNameOverride(spatialElement, name),
                                                       NamingUtil.GetDescriptionOverride(spatialElement, desc),
@@ -1104,7 +1083,7 @@ namespace BIM.IFC.Exporter
             if (properties.Count > 0)
             {
                 return IFCInstanceExporter.CreatePropertySet(file,
-                    ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(), "ePset_SpatialZoneEnergyAnalysis",
+                    GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(), "ePset_SpatialZoneEnergyAnalysis",
                     null, properties);
             }
 
@@ -1137,7 +1116,7 @@ namespace BIM.IFC.Exporter
             if (properties.Count > 0)
             {
                 return IFCInstanceExporter.CreatePropertySet(file,
-                    ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(), "ePset_SpaceOccupant", null, properties);
+                    GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(), "ePset_SpaceOccupant", null, properties);
             }
 
             return null;
@@ -1156,17 +1135,11 @@ namespace BIM.IFC.Exporter
         /// The element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        static void CreateSpaceOccupantInfo(ExporterIFC exporterIFC, IFCFile file, Element element, IFCProductWrapper productWrapper)
+        static void CreateSpaceOccupantInfo(ExporterIFC exporterIFC, IFCFile file, Element element, ProductWrapper productWrapper)
         {
-            IFCAnyHandle roomHandle = null;
-            ICollection<IFCAnyHandle> products = productWrapper.GetProducts();
-
-            if (products.Count == 0)
-                return;
-            else
-                roomHandle = products.ElementAt(0);
+            IFCAnyHandle roomHandle = productWrapper.GetElementOfType(IFCEntityType.IfcSpace);
 
             bool exportToCOBIE = ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE;
 
@@ -1270,9 +1243,9 @@ namespace BIM.IFC.Exporter
         /// The element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        static void CreateZoneInfos(ExporterIFC exporterIFC, IFCFile file, Element element, IFCProductWrapper productWrapper)
+        static void CreateZoneInfos(ExporterIFC exporterIFC, IFCFile file, Element element, ProductWrapper productWrapper)
         {
             bool exportToCOBIE = ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE;
 
@@ -1314,13 +1287,7 @@ namespace BIM.IFC.Exporter
 
                         ParameterUtil.GetStringValueFromElementOrSymbol(element, propZoneDescription, out zoneDescription);
 
-                        IFCAnyHandle roomHandle = null;
-                        ICollection<IFCAnyHandle> products = productWrapper.GetProducts();
-
-                        if (products.Count == 0)
-                            return;
-                        else
-                            roomHandle = products.ElementAt(0);
+                        IFCAnyHandle roomHandle = productWrapper.GetElementOfType(IFCEntityType.IfcSpace);
 
                         Dictionary<string, IFCAnyHandle> classificationHandles = new Dictionary<string, IFCAnyHandle>();
                         IFCAnyHandle energyAnalysisPSetHnd = null;

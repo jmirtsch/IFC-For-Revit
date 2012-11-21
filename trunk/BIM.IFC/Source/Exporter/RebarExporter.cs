@@ -36,6 +36,46 @@ namespace BIM.IFC.Exporter
     class RebarExporter
     {
         /// <summary>
+        /// Exports a Rebar, AreaReinforcement or PathReinforcement to IFC ReinforcingBar.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="filterView">The view.</param>
+        /// <param name="productWrapper">The product wrapper.</param>
+        public static void Export(ExporterIFC exporterIFC,
+           Element element, Autodesk.Revit.DB.View filterView, ProductWrapper productWrapper)
+        {
+            if (element is Rebar)
+            {
+                ExportRebar(exporterIFC, element, filterView, productWrapper);
+            }
+            else if (element is AreaReinforcement)
+            {
+                AreaReinforcement areaReinforcement = element as AreaReinforcement;
+                IList<ElementId> rebarIds = areaReinforcement.GetRebarInSystemIds();
+
+                Document doc = areaReinforcement.Document;
+                foreach (ElementId id in rebarIds)
+                {
+                    Element rebarInSystem = doc.GetElement(id);
+                    ExportRebar(exporterIFC, rebarInSystem, filterView, productWrapper);
+                }
+            }
+            else if (element is PathReinforcement)
+            {
+                PathReinforcement pathReinforcement = element as PathReinforcement;
+                IList<ElementId> rebarIds = pathReinforcement.GetRebarInSystemIds();
+
+                Document doc = pathReinforcement.Document;
+                foreach (ElementId id in rebarIds)
+                {
+                    Element rebarInSystem = doc.GetElement(id);
+                    ExportRebar(exporterIFC, rebarInSystem, filterView, productWrapper);
+                }
+            }
+        }
+
+        /// <summary>
         /// Exports a Rebar to IFC ReinforcingMesh.
         /// </summary>
         /// <param name="exporterIFC">
@@ -45,10 +85,10 @@ namespace BIM.IFC.Exporter
         /// The element to be exported.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
         public static void ExportRebar(ExporterIFC exporterIFC,
-           Rebar element, Autodesk.Revit.DB.View filterView, IFCProductWrapper productWrapper)
+           Element element, Autodesk.Revit.DB.View filterView, ProductWrapper productWrapper)
         {
             try
             {
@@ -58,28 +98,33 @@ namespace BIM.IFC.Exporter
                 {
                     using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element))
                     {
-                        GeometryElement rebarGeometry = ExporterIFCUtils.GetRebarGeometry(element, filterView);
-
-                        // only options are: Not Export, BuildingElementProxy, or ReinforcingBar/Mesh, depending on layout.
-                        // Not Export is handled previously, and ReinforcingBar vs Mesh will be determined below.
-                        string ifcEnumType;
-                        IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
-
-                        if (exportType == IFCExportType.ExportBuildingElementProxy)
+                        if (element is Rebar)
                         {
-                            if (rebarGeometry != null)
+                            GeometryElement rebarGeometry = ExporterIFCUtils.GetRebarGeometry(element as Rebar, filterView);
+
+                            // only options are: Not Export, BuildingElementProxy, or ReinforcingBar/Mesh, depending on layout.
+                            // Not Export is handled previously, and ReinforcingBar vs Mesh will be determined below.
+                            string ifcEnumType;
+                            IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
+
+                            if (exportType == IFCExportType.ExportBuildingElementProxy)
                             {
-                                ProxyElementExporter.ExportBuildingElementProxy(exporterIFC, element, rebarGeometry, productWrapper);
-                                transaction.Commit();
+                                if (rebarGeometry != null)
+                                {
+                                    ProxyElementExporter.ExportBuildingElementProxy(exporterIFC, element, rebarGeometry, productWrapper);
+                                    transaction.Commit();
+                                }
+                                return;
                             }
-                            return;
                         }
 
                         IFCAnyHandle prodRep = null;
 
                         double scale = exporterIFC.LinearScale;
 
-                        double totalBarLength = element.TotalLength * scale;
+                        double totalBarLengthUnscale = GetRebarTotalLength(element);
+                        double volumeUnscale = GetRebarVolume(element);
+                        double totalBarLength = totalBarLengthUnscale * scale;
 
                         if (MathUtil.IsAlmostZero(totalBarLength))
                             return;
@@ -89,17 +134,17 @@ namespace BIM.IFC.Exporter
                         double diameter = (elementType == null ? 1.0 / 12.0 : elementType.BarDiameter) * scale;
                         double radius = diameter / 2.0;
                         double longitudinalBarNominalDiameter = diameter;
-                        double longitudinalBarCrossSectionArea = (element.Volume * scale * scale * scale) / totalBarLength;
-                        double barLength = totalBarLength / element.Quantity;
+                        double longitudinalBarCrossSectionArea = (volumeUnscale / totalBarLengthUnscale) * scale * scale;
+                        double barLength = totalBarLength / GetRebarQuantity(element);
 
-                        IList<Curve> baseCurves = element.GetCenterlineCurves(true, false, false);
-                        int numberOfBarPositions = element.NumberOfBarPositions;
+                        IList<Curve> baseCurves = GetRebarCenterlineCurves(element, true, false, false);
+                        int numberOfBarPositions = GetNumberOfBarPositions(element);
                         for (int i = 0; i < numberOfBarPositions; i++)
                         {
-                            if (!element.DoesBarExistAtPosition(i))
+                            if (!DoesBarExistAtPosition(element, i))
                                 continue;
 
-                            Transform barTrf = element.GetBarPositionTransform(i);
+                            Transform barTrf = GetBarPositionTransform(element, i);
 
                             IList<Curve> curves = new List<Curve>();
                             foreach (Curve baseCurve in baseCurves)
@@ -120,7 +165,7 @@ namespace BIM.IFC.Exporter
                             string steelGradeOpt = null;
                             IFCAnyHandle elemHnd = null;
 
-                            string rebarGUID = ExporterIFCUtils.CreateGUID(element);
+                            string rebarGUID = GUIDUtil.CreateGUID(element);
                             string rebarName = NamingUtil.GetIFCName(element);
                             string rebarDescription = NamingUtil.GetDescriptionOverride(element, null);
                             string rebarObjectType = NamingUtil.GetObjectTypeOverride(element, NamingUtil.CreateIFCObjectName(exporterIFC, element));
@@ -148,5 +193,142 @@ namespace BIM.IFC.Exporter
             }
         }
 
+        /// <summary>
+        /// Gets total length of a rebar.
+        /// </summary>
+        /// <param name="element">The rebar element.</param>
+        /// <returns>The length.</returns>
+        static double GetRebarTotalLength(Element element)
+        {
+            if (element is Rebar)
+            {
+                return (element as Rebar).TotalLength;
+            }
+            else if (element is RebarInSystem)
+            {
+                return (element as RebarInSystem).TotalLength;
+            }
+            else
+                throw new ArgumentException("Not a rebar.");
+        }
+
+        /// <summary>
+        /// Gets volume of a rebar.
+        /// </summary>
+        /// <param name="element">The rebar element.</param>
+        /// <returns>The volume.</returns>
+        static double GetRebarVolume(Element element)
+        {
+            if (element is Rebar)
+            {
+                return (element as Rebar).Volume;
+            }
+            else if (element is RebarInSystem)
+            {
+                return (element as RebarInSystem).Volume;
+            }
+            else
+                throw new ArgumentException("Not a rebar.");
+        }
+
+        /// <summary>
+        /// Gets quantity of a rebar.
+        /// </summary>
+        /// <param name="element">The rebar element.</param>
+        /// <returns>The number.</returns>
+        static int GetRebarQuantity(Element element)
+        {
+            if (element is Rebar)
+            {
+                return (element as Rebar).Quantity;
+            }
+            else if (element is RebarInSystem)
+            {
+                return (element as RebarInSystem).Quantity;
+            }
+            else
+                throw new ArgumentException("Not a rebar.");
+        }
+
+        /// <summary>
+        /// Gets center line curves of a rebar.
+        /// </summary>
+        /// <param name="element">The rebar element.</param>
+        /// <param name="adjustForSelfIntersection">Identifies if curves should be adjusted to avoid intersection.</param>
+        /// <param name="suppressHooks">Identifies if the chain will include hooks curves.</param>
+        /// <param name="suppressBendRadius">Identifies if the connected chain will include unfilled curves.</param>
+        /// <returns></returns>
+        static IList<Curve> GetRebarCenterlineCurves(Element element, bool adjustForSelfIntersection, bool suppressHooks, bool suppressBendRadius)
+        {
+            if (element is Rebar)
+            {
+                return (element as Rebar).GetCenterlineCurves(adjustForSelfIntersection, suppressHooks, suppressBendRadius);
+            }
+            else if (element is RebarInSystem)
+            {
+                return (element as RebarInSystem).GetCenterlineCurves(adjustForSelfIntersection, suppressHooks, suppressBendRadius);
+            }
+            else
+                throw new ArgumentException("Not a rebar.");
+        }
+
+        /// <summary>
+        /// Gets number of rebar positions.
+        /// </summary>
+        /// <param name="element">The rebar element.</param>
+        /// <returns>The number.</returns>
+        static int GetNumberOfBarPositions(Element element)
+        {
+            if (element is Rebar)
+            {
+                return (element as Rebar).NumberOfBarPositions;
+            }
+            else if (element is RebarInSystem)
+            {
+                return (element as RebarInSystem).NumberOfBarPositions;
+            }
+            else
+                throw new ArgumentException("Not a rebar.");
+        }
+
+        /// <summary>
+        /// Identifies if rebar exists at a certain position.
+        /// </summary>
+        /// <param name="element">The rebar element.</param>
+        /// <param name="barPosition">The bar position.</param>
+        /// <returns>True if it exists.</returns>
+        static bool DoesBarExistAtPosition(Element element, int barPosition)
+        {
+            if (element is Rebar)
+            {
+                return (element as Rebar).DoesBarExistAtPosition(barPosition);
+            }
+            else if (element is RebarInSystem)
+            {
+                return (element as RebarInSystem).DoesBarExistAtPosition(barPosition);
+            }
+            else
+                throw new ArgumentException("Not a rebar.");
+        }
+
+        /// <summary>
+        /// Gets bar position transform.
+        /// </summary>
+        /// <param name="element">The rebar element.</param>
+        /// <param name="barPositionIndex">The bar position.</param>
+        /// <returns>The transform.</returns>
+        static Transform GetBarPositionTransform(Element element, int barPositionIndex)
+        {
+            if (element is Rebar)
+            {
+                return (element as Rebar).GetBarPositionTransform(barPositionIndex);
+            }
+            else if (element is RebarInSystem)
+            {
+                return (element as RebarInSystem).GetBarPositionTransform(barPositionIndex);
+            }
+            else
+                throw new ArgumentException("Not a rebar.");
+        }
     }
 }

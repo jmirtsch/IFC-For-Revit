@@ -1184,7 +1184,7 @@ namespace BIM.IFC.Exporter
                             }
                         }
 
-                        materialId = BodyExporter.GetBestMaterialIdForGeometry(solid, exporterIFC);
+                        materialId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(solid, exporterIFC, element);
                         BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document, extrusionBodyItemHnd, materialId);
                     }
                     tr.Commit();

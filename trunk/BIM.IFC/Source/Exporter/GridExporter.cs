@@ -230,7 +230,7 @@ namespace BIM.IFC.Exporter
             List<IFCAnyHandle> axesW = null;
             List<IFCAnyHandle> representations = new List<IFCAnyHandle>();
 
-            using (IFCProductWrapper productWrapper = IFCProductWrapper.Create(exporterIFC, true))
+            using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, true))
             {
                 IFCFile ifcFile = exporterIFC.GetFile();
                 using (IFCTransaction transaction = new IFCTransaction(ifcFile))
@@ -269,7 +269,7 @@ namespace BIM.IFC.Exporter
 
                     IFCLevelInfo levelInfo = ExporterCacheManager.LevelInfoCache.GetLevelInfo(exporterIFC, levelId);
 
-                    string gridGUID = ExporterIFCUtils.CreateGUID();
+                    string gridGUID = GUIDUtil.CreateGUID();
                     // Get the first grid's override name, if cannot find it, use null.
                     string gridName = GetGridName(sameDirectionAxesU, sameDirectionAxesV, sameDirectionAxesW);
                     IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
@@ -307,7 +307,7 @@ namespace BIM.IFC.Exporter
         /// <param name="sameDirectionAxes">The grid axes in the same direction of one level.</param>
         /// <param name="representations">The representation of grid axis.</param>
         /// <returns>The list of handles of grid axes.</returns>
-        private static List<IFCAnyHandle> CreateIFCGridAxisAndRepresentations(ExporterIFC exporterIFC, IFCProductWrapper productWrapper, IList<Grid> sameDirectionAxes, 
+        private static List<IFCAnyHandle> CreateIFCGridAxisAndRepresentations(ExporterIFC exporterIFC, ProductWrapper productWrapper, IList<Grid> sameDirectionAxes, 
             IList<IFCAnyHandle> representations, GridRepresentationData gridRepresentationData)
         {
             if (sameDirectionAxes.Count == 0)
@@ -355,7 +355,28 @@ namespace BIM.IFC.Exporter
                 AxisCurves.Add(axisCurve);
 
                 IFCAnyHandle repItemHnd = IFCInstanceExporter.CreateGeometricCurveSet(ifcFile, AxisCurves);
-                IFCAnyHandle curveStyle = ifcFile.CreateStyle(exporterIFC, repItemHnd);
+
+                // get the weight and color from the GridType to create the curve style.
+                GridType gridType = grid.Document.GetElement(grid.GetTypeId()) as GridType;
+
+                IFCData curveWidth = null;
+                if (ExporterCacheManager.ExportOptionsCache.ExportAnnotations)
+                {
+                    int outWidth;
+                    double width = ParameterUtil.GetIntValueFromElement(gridType, BuiltInParameter.GRID_END_SEGMENT_WEIGHT, out outWidth) ? outWidth : 1;
+                    curveWidth = IFCDataUtil.CreateAsPositiveLengthMeasure(width);
+                }
+
+                int outColor;
+                int color = ParameterUtil.GetIntValueFromElement(gridType, BuiltInParameter.GRID_END_SEGMENT_COLOR, out outColor) ? outColor : 0;
+                double blueVal = 0.0;
+                double greenVal = 0.0;
+                double redVal = 0.0;
+                GeometryUtil.GetRGBFromIntValue(color, out blueVal, out greenVal, out redVal);
+                IFCAnyHandle colorHnd = IFCInstanceExporter.CreateColourRgb(ifcFile, null, redVal, greenVal, blueVal);
+
+                BodyExporter.CreateCurveStyleForRepItem(exporterIFC, repItemHnd, curveWidth, colorHnd);
+
                 HashSet<IFCAnyHandle> curveSet = new HashSet<IFCAnyHandle>();
                 curveSet.Add(repItemHnd);
                 

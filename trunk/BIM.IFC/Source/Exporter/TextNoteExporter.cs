@@ -43,9 +43,9 @@ namespace BIM.IFC.Exporter
         /// The text note element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
-        public static void Export(ExporterIFC exporterIFC, TextNote textNote, IFCProductWrapper productWrapper)
+        public static void Export(ExporterIFC exporterIFC, TextNote textNote, ProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction tr = new IFCTransaction(file))
@@ -126,7 +126,7 @@ namespace BIM.IFC.Exporter
                     shapeReps.Add(bodyRepHnd);
 
                     IFCAnyHandle prodShapeHnd = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
-                    IFCAnyHandle annoHnd = IFCInstanceExporter.CreateAnnotation(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                    IFCAnyHandle annoHnd = IFCInstanceExporter.CreateAnnotation(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
                         null, null, null, setter.GetPlacement(), prodShapeHnd);
 
                     productWrapper.AddAnnotation(annoHnd, setter.GetLevelInfo(), true);
@@ -152,12 +152,13 @@ namespace BIM.IFC.Exporter
         {
             IFCFile file = exporterIFC.GetFile();
 
-            Parameter fontNameParam = textElemType.get_Parameter(BuiltInParameter.TEXT_FONT);
-            string fontName = (fontNameParam != null && fontNameParam.StorageType == StorageType.String) ? fontNameParam.AsString() : null;
+            string fontName;
+            if (!ParameterUtil.GetStringValueFromElement(textElemType, BuiltInParameter.TEXT_FONT, out fontName))
+                fontName = null;
 
-
-            Parameter fontSizeParam = textElemType.get_Parameter(BuiltInParameter.TEXT_SIZE);
-            double fontSize = (fontSizeParam != null && fontSizeParam.StorageType == StorageType.Double) ? fontSizeParam.AsDouble() : -1.0;
+            double fontSize;
+            if (!ParameterUtil.GetDoubleValueFromElement(textElemType, BuiltInParameter.TEXT_SIZE, out fontSize))
+                fontSize = -1.0;
 
             double scale = exporterIFC.LinearScale;
             double viewScale = 100.0;  // currently hardwired.
@@ -170,8 +171,8 @@ namespace BIM.IFC.Exporter
 
             IFCAnyHandle textSyleFontModelHnd = IFCInstanceExporter.CreateTextStyleFontModel(file, ifcPreDefinedItemName, fontNameList, null, null, null, IFCDataUtil.CreateAsPositiveLengthMeasure(fontSize));
 
-            Parameter fontColorParam = textElemType.get_Parameter(BuiltInParameter.LINE_COLOR);
-            int color = (fontColorParam != null && fontColorParam.StorageType == StorageType.Integer) ? fontColorParam.AsInteger() : 0;
+            int color;
+            ParameterUtil.GetIntValueFromElement(textElemType, BuiltInParameter.LINE_COLOR, out color);
 
             double blueVal = ((double)((color & 0xff0000) >> 16)) / 255.0;
             double greenVal = ((double)((color & 0xff00) >> 8)) / 255.0;

@@ -93,7 +93,7 @@ namespace BIM.IFC.Utility
         /// </summary>
         /// <param name="instanceId">The ElementId of the AssemblyInstance.</param>
         /// <param name="instanceHnd">The product wrapper.</param>
-        public void RegisterElements(ElementId assemblyId, IFCProductWrapper productWrapper)
+        public void RegisterElements(ElementId assemblyId, ProductWrapper productWrapper)
         {
             ICollection<IFCAnyHandle> objects = productWrapper.GetAllObjects();
             HashSet<IFCAnyHandle> elementsToAdd = new HashSet<IFCAnyHandle>();

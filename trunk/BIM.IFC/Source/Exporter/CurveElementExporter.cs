@@ -91,10 +91,10 @@ namespace BIM.IFC.Exporter
         /// The geometry element.
         /// </param>
         /// <param name="productWrapper">
-        /// The IFCProductWrapper.
+        /// The ProductWrapper.
         /// </param>
         public static void ExportCurveElement(ExporterIFC exporterIFC, CurveElement curveElement, GeometryElement geometryElement,
-                                               IFCProductWrapper productWrapper)
+                                               ProductWrapper productWrapper)
         {
             if (geometryElement == null || !ShouldCurveElementBeExported(curveElement))
                 return;
@@ -210,7 +210,7 @@ namespace BIM.IFC.Exporter
             IFCAnyHandle relativePlacement = ExporterUtil.CreateAxis(file, origin, zDir, xDir);
             GeometryUtil.SetRelativePlacement(localPlacement, relativePlacement);
 
-            IFCAnyHandle annotation = IFCInstanceExporter.CreateAnnotation(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+            IFCAnyHandle annotation = IFCInstanceExporter.CreateAnnotation(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
                 null, null, null, localPlacement, prodShapeHnd);
 
             return annotation;

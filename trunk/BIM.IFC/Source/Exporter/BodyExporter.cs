@@ -38,11 +38,14 @@ namespace BIM.IFC.Exporter
         /// Sets best material id for current export state.
         /// </summary>
         /// <param name="geometryObject">The geometry object to get the best material id.</param>
+        /// <param name="element">The element to get its structual material if no material found in its geometry.</param>
+        /// <param name="overrideMaterialId">The material id to override the one gets from geometry object.</param>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
-        public static ElementId SetBestMaterialIdInExporter(GeometryObject geometryObject, ElementId overrideMaterialId, ExporterIFC exporterIFC)
+        /// <returns>The material id.</returns>
+        public static ElementId SetBestMaterialIdInExporter(GeometryObject geometryObject, Element element, ElementId overrideMaterialId, ExporterIFC exporterIFC)
         {
             ElementId materialId = overrideMaterialId != ElementId.InvalidElementId ? overrideMaterialId :
-                GetBestMaterialIdForGeometry(geometryObject, exporterIFC);
+                GetBestMaterialIdFromGeometryOrParameter(geometryObject, exporterIFC, element);
 
             if (materialId != ElementId.InvalidElementId)
                 exporterIFC.SetMaterialIdForCurrentExportState(materialId);
@@ -206,6 +209,59 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
+        /// Gets the best material id from the geometry or its structural material parameter.
+        /// </summary>
+        /// <param name="solids">List of solids.</param>
+        /// <param name="meshes">List of meshes.</param>
+        /// <param name="element">The element.</param>
+        /// <returns>The material id.</returns>
+        public static ElementId GetBestMaterialIdFromGeometryOrParameter(IList<Solid> solids, IList<Mesh> meshes, Element element)
+        {
+            ElementId matId = GetBestMaterialIdForGeometry(solids, meshes);
+            if (matId == ElementId.InvalidElementId && element != null)
+            {
+                ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.STRUCTURAL_MATERIAL_PARAM, out matId);
+            }
+            return matId;
+        }
+
+        /// <summary>
+        /// Gets the best material id from the geometry or its structural material parameter.
+        /// </summary>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="range">The range to get the clipped geometry.</param>
+        /// <param name="element">The element.</param>
+        /// <returns>The material id.</returns>
+        public static ElementId GetBestMaterialIdFromGeometryOrParameter(GeometryElement geometryElement, 
+           ExporterIFC exporterIFC, IFCRange range, Element element)
+        {
+            ElementId matId = GetBestMaterialIdForGeometry(geometryElement, exporterIFC, range);
+            if (matId == ElementId.InvalidElementId && element != null)
+            {
+                ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.STRUCTURAL_MATERIAL_PARAM, out matId);
+            }
+            return matId;
+        }
+
+        /// <summary>
+        /// Gets the best material id from the geometry or its structural material parameter.
+        /// </summary>
+        /// <param name="geometryObject">The geometry object.</param>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="element">The element.</param>
+        /// <returns>The material id.</returns>
+        public static ElementId GetBestMaterialIdFromGeometryOrParameter(GeometryObject geometryObject, ExporterIFC exporterIFC, Element element)
+        {
+            ElementId matId = GetBestMaterialIdForGeometry(geometryObject, exporterIFC);
+            if (matId == ElementId.InvalidElementId && element != null)
+            {
+                ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.STRUCTURAL_MATERIAL_PARAM, out matId);
+            }
+            return matId;
+        }
+
+        /// <summary>
         /// Creates the related IfcSurfaceStyle for a representation item.
         /// </summary>
         /// <param name="exporterIFC">The exporter.</param>
@@ -248,6 +304,33 @@ namespace BIM.IFC.Exporter
                 ExporterCacheManager.PresentationStyleAssignmentCache.Register(materialId, presStyleHnd);
             }
 
+            HashSet<IFCAnyHandle> presStyleSet = new HashSet<IFCAnyHandle>();
+            presStyleSet.Add(presStyleHnd);
+
+            return IFCInstanceExporter.CreateStyledItem(file, repItemHnd, presStyleSet, null);
+        }
+
+        /// <summary>
+        /// Creates the related IfcCurveStyle for a representation item.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="repItemHnd">The representation item.</param>
+        /// <param name="curveWidth">The curve width.</param>
+        /// <param name="colorHnd">The curve color handle.</param>
+        /// <returns>The IfcCurveStyle handle.</returns>
+        public static IFCAnyHandle CreateCurveStyleForRepItem(ExporterIFC exporterIFC, IFCAnyHandle repItemHnd, IFCData curveWidth, IFCAnyHandle colorHnd)
+        {
+            if (repItemHnd == null)
+                return null;
+
+            IFCAnyHandle presStyleHnd = null;
+            IFCFile file = exporterIFC.GetFile();
+
+            IFCAnyHandle curveStyleHnd = IFCInstanceExporter.CreateCurveStyle(file, null, null, curveWidth, colorHnd);
+            ICollection<IFCAnyHandle> styles = new HashSet<IFCAnyHandle>();
+            styles.Add(curveStyleHnd);
+
+            presStyleHnd = IFCInstanceExporter.CreatePresentationStyleAssignment(file, styles);
             HashSet<IFCAnyHandle> presStyleSet = new HashSet<IFCAnyHandle>();
             presStyleSet.Add(presStyleHnd);
 
@@ -1074,7 +1157,7 @@ namespace BIM.IFC.Exporter
                 GeometryObject geomObject = selectiveBRepExport ? splitGeometryList[exportAsBRep[index]] : splitGeometryList[index];
                 startIndexForObject.Add(currentFaceHashSetList.Count);
 
-                ElementId materialId = SetBestMaterialIdInExporter(geomObject, overrideMaterialId, exporterIFC);
+                ElementId materialId = SetBestMaterialIdInExporter(geomObject, element, overrideMaterialId, exporterIFC);
                 materialIds.Add(materialId);
                 bodyData.AddMaterial(materialId);
 
@@ -1249,6 +1332,8 @@ namespace BIM.IFC.Exporter
                 groupData.Handles = repMapItems;
                 ExporterCacheManager.GroupElementGeometryCache.Register(groupKey, groupData);
             }
+
+            bodyData.ShapeRepresentationType = ShapeRepresentationType.Brep;
 
             return bodyData;
         }
@@ -1488,7 +1573,7 @@ namespace BIM.IFC.Exporter
                     for (int ii = 0; ii < numCreatedExtrusions && tryToExportAsExtrusion; ii++)
                     {
                         int geomIndex = exportAsExtrusion[ii];
-                        bodyData.AddMaterial(SetBestMaterialIdInExporter(splitGeometryList[geomIndex], overrideMaterialId, exporterIFC));
+                        bodyData.AddMaterial(SetBestMaterialIdInExporter(splitGeometryList[geomIndex], element, overrideMaterialId, exporterIFC));
 
                         if (exportBodyParams != null && exportBodyParams.AreInnerRegionsOpenings)
                         {
@@ -1615,16 +1700,19 @@ namespace BIM.IFC.Exporter
                     {
                         bodyData.RepresentationHnd =
                             RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItems, bodyData.RepresentationHnd);
+                        bodyData.ShapeRepresentationType = ShapeRepresentationType.SweptSolid;
                     }
                     else if (hasSweptSolids && !hasExtrusions)
                     {
                         bodyData.RepresentationHnd =
                             RepresentationUtil.CreateAdvancedSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItems, bodyData.RepresentationHnd);
+                        bodyData.ShapeRepresentationType = ShapeRepresentationType.AdvancedSweptSolid;
                     }
                     else
                     {
                         bodyData.RepresentationHnd =
                             RepresentationUtil.CreateSolidModelRep(exporterIFC, element, categoryId, contextOfItems, bodyItems);
+                        bodyData.ShapeRepresentationType = ShapeRepresentationType.SolidModel;
                     }
                     // TODO: include BRep, CSG, Clipping
 

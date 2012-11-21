@@ -279,7 +279,7 @@ namespace BIM.IFC.Exporter
 
             try
             {
-                using (IFCProductWrapper productWrapper = IFCProductWrapper.Create(exporterIFC, true))
+                using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, true))
                 {
                     ExportElementImpl(exporterIFC, element, filterView, productWrapper);
 
@@ -362,9 +362,9 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The IFC exporter object.</param>
         /// <param name="element">The element to export.</param>
         /// <param name="filterView">The view to export, if it exists.</param>
-        /// <param name="productWrapper">The IFCProductWrapper object.</param>
+        /// <param name="productWrapper">The ProductWrapper object.</param>
         public virtual void ExportElementImpl(ExporterIFC exporterIFC, Element element, Autodesk.Revit.DB.View filterView,
-            IFCProductWrapper productWrapper)
+            ProductWrapper productWrapper)
         {
             Options options;
             View ownerView = element.Document.GetElement(element.OwnerViewId) as View;
@@ -464,10 +464,9 @@ namespace BIM.IFC.Exporter
                     {
                         RampExporter.Export(exporterIFC, element, geomElem, productWrapper);
                     }
-                    else if (element is Rebar)
+                    else if (element is Rebar || element is AreaReinforcement || element is PathReinforcement)
                     {
-                        Rebar spatialElem = element as Rebar;
-                        RebarExporter.ExportRebar(exporterIFC, spatialElem, filterView, productWrapper);
+                        RebarExporter.Export(exporterIFC, element, filterView, productWrapper);
                     }
                     else if (element is SpatialElement)
                     {
@@ -738,14 +737,14 @@ namespace BIM.IFC.Exporter
                     IFCAnyHandle axis2Placement3D = ExporterUtil.CreateAxis2Placement3D(file, orig);
                     IFCAnyHandle placement = IFCInstanceExporter.CreateLocalPlacement(file, buildingPlacement, axis2Placement3D);
                     string levelName = level.Name;
-                    string levelGUID = LevelUtil.GetLevelGUID(level);
+                    string levelGUID = GUIDUtil.GetLevelGUID(level);
                     IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(file,
                         levelGUID, exporterIFC.GetOwnerHistoryHandle(),
                         levelName, null, null, placement,
                         null, levelName, Toolkit.IFCElementComposition.Element, elevation);
 
                     // If we are using the R2009 Level GUIDs, write it to a shared paramter in the file to ensure that it is preserved.
-                    if (ExporterCacheManager.ExportOptionsCache.Use2009BuildingStoreyGUIDs)
+                    if (ExporterCacheManager.ExportOptionsCache.GUIDOptions.Use2009BuildingStoreyGUIDs)
                     {
                         string oldLevelGUID;
                         ParameterUtil.GetStringValueFromElement(level, BuiltInParameter.IFC_GUID, out oldLevelGUID);
@@ -856,7 +855,7 @@ namespace BIM.IFC.Exporter
                 // create a default site if we have latitude and longitude information.
                 if (IFCAnyHandleUtil.IsNullOrHasNoValue(exporterIFC.GetSite()))
                 {
-                    using (IFCProductWrapper productWrapper = IFCProductWrapper.Create(exporterIFC, true))
+                    using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, true))
                     {
                         SiteExporter.ExportDefaultSite(exporterIFC, document, productWrapper);
                     }
@@ -892,7 +891,7 @@ namespace BIM.IFC.Exporter
                 }
 
                 // These elements are created internally, but we allow custom property sets for them.  Create them here.
-                using (IFCProductWrapper productWrapper = IFCProductWrapper.Create(exporterIFC, true))
+                using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, true))
                 {
                     productWrapper.AddBuilding(buildingHnd);
                     ExportElementProperties(exporterIFC, document.ProjectInformation, productWrapper);
@@ -902,7 +901,7 @@ namespace BIM.IFC.Exporter
                 // create material layer associations
                 foreach (IFCAnyHandle materialSetLayerUsageHnd in ExporterCacheManager.MaterialLayerRelationsCache.Keys)
                 {
-                    IFCInstanceExporter.CreateRelAssociatesMaterial(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                    IFCInstanceExporter.CreateRelAssociatesMaterial(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
                         null, null, ExporterCacheManager.MaterialLayerRelationsCache[materialSetLayerUsageHnd],
                         materialSetLayerUsageHnd);
                 }
@@ -910,14 +909,14 @@ namespace BIM.IFC.Exporter
                 // create material associations
                 foreach (IFCAnyHandle materialHnd in ExporterCacheManager.MaterialRelationsCache.Keys)
                 {
-                    IFCInstanceExporter.CreateRelAssociatesMaterial(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                    IFCInstanceExporter.CreateRelAssociatesMaterial(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
                         null, null, ExporterCacheManager.MaterialRelationsCache[materialHnd], materialHnd);
                 }
 
                 // create type relations
                 foreach (IFCAnyHandle typeObj in ExporterCacheManager.TypeRelationsCache.Keys)
                 {
-                    IFCInstanceExporter.CreateRelDefinesByType(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                    IFCInstanceExporter.CreateRelDefinesByType(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
                         null, null, ExporterCacheManager.TypeRelationsCache[typeObj], typeObj);
                 }
 
@@ -932,7 +931,7 @@ namespace BIM.IFC.Exporter
 
                     foreach (IFCAnyHandle propertySet in propertySets)
                     {
-                        IFCInstanceExporter.CreateRelDefinesByProperties(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                        IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
                             null, null, elements, propertySet);
                     }
                 }
@@ -962,7 +961,7 @@ namespace BIM.IFC.Exporter
 
                             // NOTE: Definition of RelConnectsPathElements has the connection information reversed
                             // with respect to the order of the paths.
-                            IFCInstanceExporter.CreateRelConnectsPathElements(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                            IFCInstanceExporter.CreateRelConnectsPathElements(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
                                 null, null, wallConnectionData.ConnectionGeometry, wallElementHandle, otherElementHandle, relatingPriorities,
                                 relatedPriorities, wallConnectionData.SecondConnectionType, wallConnectionData.FirstConnectionType);
                         }
@@ -977,9 +976,9 @@ namespace BIM.IFC.Exporter
                         ZoneInfo zoneInfo = ExporterCacheManager.ZoneInfoCache.Find(zoneName);
                         if (zoneInfo != null)
                         {
-                            IFCAnyHandle zoneHandle = IFCInstanceExporter.CreateZone(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                            IFCAnyHandle zoneHandle = IFCInstanceExporter.CreateZone(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
                                 zoneName, zoneInfo.ObjectType, zoneInfo.Description);
-                            IFCInstanceExporter.CreateRelAssignsToGroup(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                            IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
                                 relAssignsToGroupName, null, zoneInfo.RoomHandles, null, zoneHandle);
 
                             HashSet<IFCAnyHandle> zoneHnds = new HashSet<IFCAnyHandle>();
@@ -987,13 +986,13 @@ namespace BIM.IFC.Exporter
 
                             foreach (KeyValuePair<string, IFCAnyHandle> classificationReference in zoneInfo.ClassificationReferences)
                             {
-                                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, ExporterIFCUtils.CreateGUID(),
+                                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
                                     exporterIFC.GetOwnerHistoryHandle(), classificationReference.Key, "", zoneHnds, classificationReference.Value);
                             }
 
                             if (zoneInfo.EnergyAnalysisProperySetHandle != null && zoneInfo.EnergyAnalysisProperySetHandle.HasValue)
                             {
-                                IFCAnyHandle relHnd = IFCInstanceExporter.CreateRelDefinesByProperties(file, ExporterIFCUtils.CreateGUID(),
+                                IFCAnyHandle relHnd = IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
                                     exporterIFC.GetOwnerHistoryHandle(), null, null, zoneHnds, zoneInfo.EnergyAnalysisProperySetHandle);
                             }
 
@@ -1009,9 +1008,9 @@ namespace BIM.IFC.Exporter
                         if (spaceOccupantInfo != null)
                         {
                             IFCAnyHandle person = IFCInstanceExporter.CreatePerson(file, null, spaceOccupantName, null, null, null, null, null, null);
-                            IFCAnyHandle spaceOccupantHandle = IFCInstanceExporter.CreateOccupant(file, ExporterIFCUtils.CreateGUID(),
+                            IFCAnyHandle spaceOccupantHandle = IFCInstanceExporter.CreateOccupant(file, GUIDUtil.CreateGUID(),
                                 exporterIFC.GetOwnerHistoryHandle(), null, null, spaceOccupantName, person, IFCOccupantType.NotDefined);
-                            IFCInstanceExporter.CreateRelOccupiesSpaces(file, ExporterIFCUtils.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                            IFCInstanceExporter.CreateRelOccupiesSpaces(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
                                 null, null, spaceOccupantInfo.RoomHandles, null, spaceOccupantHandle, null);
 
                             HashSet<IFCAnyHandle> spaceOccupantHandles = new HashSet<IFCAnyHandle>();
@@ -1019,13 +1018,13 @@ namespace BIM.IFC.Exporter
 
                             foreach (KeyValuePair<string, IFCAnyHandle> classificationReference in spaceOccupantInfo.ClassificationReferences)
                             {
-                                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, ExporterIFCUtils.CreateGUID(),
+                                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
                                     exporterIFC.GetOwnerHistoryHandle(), classificationReference.Key, "", spaceOccupantHandles, classificationReference.Value);
                             }
 
                             if (spaceOccupantInfo.SpaceOccupantProperySetHandle != null && spaceOccupantInfo.SpaceOccupantProperySetHandle.HasValue)
                             {
-                                IFCAnyHandle relHnd = IFCInstanceExporter.CreateRelDefinesByProperties(file, ExporterIFCUtils.CreateGUID(),
+                                IFCAnyHandle relHnd = IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
                                     exporterIFC.GetOwnerHistoryHandle(), null, null, spaceOccupantHandles, spaceOccupantInfo.SpaceOccupantProperySetHandle);
                             }
                         }
@@ -1047,16 +1046,16 @@ namespace BIM.IFC.Exporter
                     ElementType systemElemType = document.GetElement(systemElem.GetTypeId()) as ElementType;
                     string objectType = (systemElemType != null) ? systemElemType.Name : "";
 
-                    IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file, ExporterIFCUtils.CreateGUID(systemElem),
+                    IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file, GUIDUtil.CreateGUID(systemElem),
                         exporterIFC.GetOwnerHistoryHandle(), systemElem.Name, desc, objectType);
                     ICollection<IFCAnyHandle> systemHandles = new List<IFCAnyHandle>();
                     systemHandles.Add(systemHandle);
                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, systemElem, systemHandles);
 
-                    IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, ExporterIFCUtils.CreateGUID(),
+                    IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
                         exporterIFC.GetOwnerHistoryHandle(), null, null, systemHandle, relatedBuildings);
 
-                    IFCAnyHandle relAssignsToGroup = IFCInstanceExporter.CreateRelAssignsToGroup(file, ExporterIFCUtils.CreateGUID(),
+                    IFCAnyHandle relAssignsToGroup = IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(),
                         exporterIFC.GetOwnerHistoryHandle(), null, null, system.Value, IFCObjectType.Product, systemHandle);
                 }
 
@@ -1123,8 +1122,10 @@ namespace BIM.IFC.Exporter
                 orginization.Add(string.Empty);
                 IFCInstanceExporter.CreateFileSchema(file);
                 IFCInstanceExporter.CreateFileDescription(file, descriptions);
+
+                string versionInfos = document.Application.VersionBuild + " - " + ExporterCacheManager.ExportOptionsCache.ExporterVersion + " - " + ExporterCacheManager.ExportOptionsCache.ExporterUIVersion;
                 IFCInstanceExporter.CreateFileName(file, projectNumber, author, orginization, document.Application.VersionName,
-                    document.Application.VersionBuild, string.Empty);
+                    versionInfos, string.Empty);
 
                 transaction.Commit();
 
@@ -1163,10 +1164,10 @@ namespace BIM.IFC.Exporter
         /// </summary>
         /// <param name="exporterIFC">The IFC exporter object.</param>
         /// <param name="element ">The element whose properties are exported.</param>
-        /// <param name="productWrapper">The IFCProductWrapper object.</param>
-        public void ExportElementProperties(ExporterIFC exporterIFC, Element element, IFCProductWrapper productWrapper)
+        /// <param name="productWrapper">The ProductWrapper object.</param>
+        public void ExportElementProperties(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
         {
-            if (productWrapper.Count == 0)
+            if (productWrapper.IsEmpty())
                 return;
 
             IFCFile file = exporterIFC.GetFile();
@@ -1236,15 +1237,7 @@ namespace BIM.IFC.Exporter
 
                     foreach (PropertySetDescription currDesc in currPsetsToCreate)
                     {
-                        HashSet<IFCAnyHandle> props = new HashSet<IFCAnyHandle>();
-                        IList<PropertySetEntry> entries = currDesc.Entries;
-                        foreach (PropertySetEntry entry in entries)
-                        {
-                            IFCAnyHandle propHnd = entry.ProcessEntry(file, exporterIFC, ifcParams, elementToUse, elemTypeToUse);
-                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
-                                props.Add(propHnd);
-                        }
-
+                        HashSet<IFCAnyHandle> props = currDesc.ProcessEntries(file, exporterIFC, ifcParams, elementToUse, elemTypeToUse);
                         if (props.Count > 0)
                         {
                             int subElementIndex = CheckElementTypeValidityForSubIndex(currDesc, prodHnd, element);
@@ -1271,7 +1264,7 @@ namespace BIM.IFC.Exporter
                             }
                             HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
                             relatedObjects.Add(prodHndToUse);
-                            IFCInstanceExporter.CreateRelDefinesByProperties(file, ExporterIFCUtils.CreateGUID(), ownerHistory, null, null, relatedObjects, propertySet);
+                            IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, propertySet);
                         }
                     }
                 }
@@ -1287,8 +1280,8 @@ namespace BIM.IFC.Exporter
         /// </summary>
         /// <param name="exporterIFC">The IFC exporter object.</param>
         /// <param name="element ">The element whose properties are exported.</param>
-        /// <param name="productWrapper">The IFCProductWrapper object.</param>
-        void ExportPsetDraughtingFor2x2(ExporterIFC exporterIFC, Element element, IFCProductWrapper productWrapper)
+        /// <param name="productWrapper">The ProductWrapper object.</param>
+        void ExportPsetDraughtingFor2x2(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction transaction = new IFCTransaction(file))
@@ -1315,10 +1308,10 @@ namespace BIM.IFC.Exporter
                 }
 
                 string name = "Pset_Draughting";   // IFC 2x2 standard
-                IFCAnyHandle propertySet2 = IFCInstanceExporter.CreatePropertySet(file, ExporterIFCUtils.CreateGUID(), ownerHistory, name, null, nameAndColorProps);
+                IFCAnyHandle propertySet2 = IFCInstanceExporter.CreatePropertySet(file, GUIDUtil.CreateGUID(), ownerHistory, name, null, nameAndColorProps);
 
                 HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>(productWrapper.GetAllObjects());
-                IFCInstanceExporter.CreateRelDefinesByProperties(file, ExporterIFCUtils.CreateGUID(), ownerHistory, null, null, relatedObjects, propertySet2);
+                IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, propertySet2);
 
                 transaction.Commit();
             }
@@ -1329,10 +1322,10 @@ namespace BIM.IFC.Exporter
         /// </summary>
         /// <param name="exporterIFC">The IFC exporter object.</param>
         /// <param name="element ">The element whose quantities are exported.</param>
-        /// <param name="productWrapper">The IFCProductWrapper object.</param>
-        public void ExportElementQuantities(ExporterIFC exporterIFC, Element element, IFCProductWrapper productWrapper)
+        /// <param name="productWrapper">The ProductWrapper object.</param>
+        public void ExportElementQuantities(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
         {
-            if (productWrapper.Count == 0)
+            if (productWrapper.IsEmpty())
                 return;
 
             IFCFile file = exporterIFC.GetFile();
@@ -1357,22 +1350,14 @@ namespace BIM.IFC.Exporter
                             {
                                 IFCExtrusionCreationData ifcParams = productWrapper.FindExtrusionCreationParameters(prodHnd);
 
-                                HashSet<IFCAnyHandle> quantities = new HashSet<IFCAnyHandle>();
-                                IList<QuantityEntry> entries = currDesc.Entries;
-                                foreach (QuantityEntry entry in entries)
-                                {
-                                    IFCAnyHandle quanHnd = entry.ProcessEntry(file, exporterIFC, ifcParams, element, elemType);
-                                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(quanHnd))
-                                        quantities.Add(quanHnd);
-                                }
-
-                                string paramSetName = currDesc.Name;
-
-                                string methodName = currDesc.MethodOfMeasurement;
+                                HashSet<IFCAnyHandle> quantities = currDesc.ProcessEntries(file, exporterIFC, ifcParams, element, elemType);
 
                                 if (quantities.Count > 0)
                                 {
-                                    IFCAnyHandle propertySet = IFCInstanceExporter.CreateElementQuantity(file, ExporterIFCUtils.CreateGUID(), ownerHistory, paramSetName, methodName, null, quantities);
+                                    string paramSetName = currDesc.Name;
+                                    string methodName = currDesc.MethodOfMeasurement;
+
+                                    IFCAnyHandle propertySet = IFCInstanceExporter.CreateElementQuantity(file, GUIDUtil.CreateGUID(), ownerHistory, paramSetName, methodName, null, quantities);
                                     IFCAnyHandle prodHndToUse = prodHnd;
                                     DescriptionCalculator ifcRDC = currDesc.DescriptionCalculator;
                                     if (ifcRDC != null)
@@ -1383,7 +1368,7 @@ namespace BIM.IFC.Exporter
                                     }
                                     HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
                                     relatedObjects.Add(prodHndToUse);
-                                    IFCInstanceExporter.CreateRelDefinesByProperties(file, ExporterIFCUtils.CreateGUID(), ownerHistory, null, null, relatedObjects, propertySet);
+                                    IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, propertySet);
                                 }
                             }
                         }
@@ -1396,10 +1381,10 @@ namespace BIM.IFC.Exporter
         /// <summary>Exports the element classification(s)./// </summary>
         /// <param name="exporterIFC">The IFC exporter object.</param>
         /// <param name="element">The element whose classifications are exported.</param>
-        /// <param name="productWrapper">The IFCProductWrapper object.</param>
-        internal void ExportElementClassifications(ExporterIFC exporterIFC, Element element, IFCProductWrapper productWrapper)
+        /// <param name="productWrapper">The ProductWrapper object.</param>
+        internal void ExportElementClassifications(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
         {
-            if (productWrapper.Count == 0)
+            if (productWrapper.IsEmpty())
                 return;
 
             IFCFile file = exporterIFC.GetFile();
@@ -1667,11 +1652,11 @@ namespace BIM.IFC.Exporter
                 projectHandles.Add(projectHandle);
                 string clientName = projInfo != null ? projInfo.ClientName : String.Empty;
                 IFCAnyHandle clientOrg = IFCInstanceExporter.CreateOrganization(file, null, clientName, null, null, null);
-                IFCAnyHandle actor = IFCInstanceExporter.CreateActor(file, ExporterIFCUtils.CreateGUID(), ownerHistory, null, null, null, clientOrg);
-                IFCInstanceExporter.CreateRelAssignsToActor(file, ExporterIFCUtils.CreateGUID(), ownerHistory, "Project Client/Owner", null, projectHandles, null, actor, null);
+                IFCAnyHandle actor = IFCInstanceExporter.CreateActor(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, null, clientOrg);
+                IFCInstanceExporter.CreateRelAssignsToActor(file, GUIDUtil.CreateGUID(), ownerHistory, "Project Client/Owner", null, projectHandles, null, actor, null);
 
-                IFCAnyHandle architectActor = IFCInstanceExporter.CreateActor(file, ExporterIFCUtils.CreateGUID(), ownerHistory, null, null, null, person);
-                IFCInstanceExporter.CreateRelAssignsToActor(file, ExporterIFCUtils.CreateGUID(), ownerHistory, "Project Architect", null, projectHandles, null, architectActor, null);
+                IFCAnyHandle architectActor = IFCInstanceExporter.CreateActor(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, null, person);
+                IFCInstanceExporter.CreateRelAssignsToActor(file, GUIDUtil.CreateGUID(), ownerHistory, "Project Architect", null, projectHandles, null, architectActor, null);
             }
         }
 
@@ -1758,6 +1743,7 @@ namespace BIM.IFC.Exporter
             HashSet<IFCAnyHandle> unitSet = new HashSet<IFCAnyHandle>();
             IFCFile file = exporterIFC.GetFile();
             bool exportToCOBIE = ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE;
+            IFCAnyHandle lenSIBaseUnit = null;
             {
                 bool conversionBased = false;
 
@@ -1869,6 +1855,10 @@ namespace BIM.IFC.Exporter
                 exporterIFC.LinearScale = scaleFactor;
 
                 IFCAnyHandle lenSiUnit = IFCInstanceExporter.CreateSIUnit(file, lenUnitType, prefix, lenUnitName);
+                if(prefix == null)
+                    lenSIBaseUnit = lenSiUnit;
+                else
+                    lenSIBaseUnit = IFCInstanceExporter.CreateSIUnit(file, lenUnitType, null, lenUnitName);
                 IFCAnyHandle areaSiUnit = IFCInstanceExporter.CreateSIUnit(file, areaUnitType, prefix, areaUnitName);
                 IFCAnyHandle volSiUnit = IFCInstanceExporter.CreateSIUnit(file, volUnitType, prefix, volUnitName);
 
@@ -1908,6 +1898,20 @@ namespace BIM.IFC.Exporter
                 unitSet.Add(planeAngleUnit);      // created above, so unique.
             }
 
+            // Mass
+            IFCAnyHandle massSIUnit = null;
+            {
+                IFCUnit unitType = IFCUnit.MassUnit;
+                IFCSIPrefix prefix = IFCSIPrefix.Kilo;
+                IFCSIUnitName unitName = IFCSIUnitName.Gram;
+
+                massSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, prefix, unitName);
+                
+                // If we are exporting to GSA standard, we will override kg with pound below.
+                if (!exportToCOBIE)
+                    unitSet.Add(massSIUnit);      // created above, so unique.
+            }
+
             // Time -- support seconds only.
             IFCAnyHandle timeSIUnit = null;
             {
@@ -1918,18 +1922,48 @@ namespace BIM.IFC.Exporter
                 unitSet.Add(timeSIUnit);      // created above, so unique.
             }
 
+            // Temperature -- support Kelvin only.
+            IFCAnyHandle temperatureSIUnit = null;
+            {
+                IFCUnit unitType = IFCUnit.ThermoDynamicTemperatureUnit;
+                IFCSIUnitName unitName = IFCSIUnitName.Kelvin;
+
+                temperatureSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+                unitSet.Add(temperatureSIUnit);      // created above, so unique.
+            }
+
+            // Thermal transmittance - support metric W/(m^2 * K) = kg/(K * s^3) only.
+            {
+                ICollection<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
+                elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, massSIUnit, 1));
+                elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, temperatureSIUnit, -1));
+                elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, timeSIUnit, -3));
+
+                IFCAnyHandle thermalTransmittanceUnit = IFCInstanceExporter.CreateDerivedUnit(file, elements,
+                    IFCDerivedUnitEnum.ThermalTransmittanceUnit, null);
+                unitSet.Add(thermalTransmittanceUnit);
+            }
+
+            // Volumetric Flow Rate - support metric m^3/s only.
+            {
+                ICollection<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
+                elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, lenSIBaseUnit, 3));
+                elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, timeSIUnit, -1));
+                
+                IFCAnyHandle volumetricFlowRateUnit = IFCInstanceExporter.CreateDerivedUnit(file, elements,
+                    IFCDerivedUnitEnum.VolumetricFlowRateUnit, null);
+                unitSet.Add(volumetricFlowRateUnit);
+
+                //double volumetricFlowRateFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_WATTS_PER_SQUARE_METER_KELVIN);
+                //ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_HVAC_Airflow, volumetricFlowRateUnit, volumetricFlowRateFactor);
+            }
 
             // GSA only units.
             if (exportToCOBIE)
             {
-                // Mass
+                // Derived imperial mass unit
                 {
                     IFCUnit unitType = IFCUnit.MassUnit;
-                    IFCSIPrefix prefix = IFCSIPrefix.Kilo;
-                    IFCSIUnitName unitName = IFCSIUnitName.Gram;
-
-                    IFCAnyHandle massSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, prefix, unitName);
-
                     IFCAnyHandle dims = IFCInstanceExporter.CreateDimensionalExponents(file, 0, 1, 0, 0, 0, 0, 0);
                     double factor = 0.45359237; // --> pound to kilogram
                     string convName = "pound";
@@ -2157,7 +2191,7 @@ namespace BIM.IFC.Exporter
                     bool added = buildingStoreys.Add(levelInfo.GetBuildingStorey());
                     if (added)
                     {
-                        using (IFCProductWrapper productWrapper = IFCProductWrapper.Create(exporterIFC, false))
+                        using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, false))
                         {
                             productWrapper.AddElement(levelInfo.GetBuildingStorey(), levelInfo, null, false);
                             Element element = document.GetElement(levelId);
