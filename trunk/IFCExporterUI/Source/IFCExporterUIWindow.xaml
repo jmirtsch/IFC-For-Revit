@@ -27,6 +27,8 @@
                     <CheckBox Content="Export parts as building elements" Height="16" HorizontalAlignment="Left" Margin="24,182,0,0" Name="checkBoxExportPartsAsBuildingElements" VerticalAlignment="Top" Checked="checkBoxExportPartsAsBuildingElements_Checked" Unchecked="checkBoxExportPartsAsBuildingElements_Checked" Visibility="Visible" IsEnabled="False" />
                     <CheckBox Content="IFC common property sets" Height="16" HorizontalAlignment="Left" Margin="6,72,0,0" Name="checkboxIFCCommonPropertySets" VerticalAlignment="Top" Checked="checkboxIFCCommonPropertySets_Checked" Unchecked="checkboxIFCCommonPropertySets_Checked"/>
                     <CheckBox Content="Export surface styles " Height="16" HorizontalAlignment="Left" Margin="6,202,0,0" Name="checkboxExportSurfaceStyles" VerticalAlignment="Top" Checked="checkboxExportSurfaceStyles_Checked" Unchecked="checkboxExportSurfaceStyles_Checked"/>
+                    <CheckBox Content="Export Advanced Swept Solids" Height="16" HorizontalAlignment="Left" Margin="6,222,0,0" Name="checkboxExportAdvancedSweptSolids" VerticalAlignment="Top" Checked="checkboxExportAdvancedSweptSolids_Checked" Unchecked="checkboxExportAdvancedSweptSolids_Checked" />
+                    <CheckBox Content="Export Bounding Box" Height="16" HorizontalAlignment="Left" Margin="6,242,0,0" Name="checkboxExportBoundingBox" VerticalAlignment="Top" Checked="checkboxExportBoundingBox_Checked" Unchecked="checkboxExportBoundingBox_Checked" />
                 </Grid>
             </TabItem>
         </TabControl>

@@ -33,6 +33,23 @@ namespace BIM.IFC.Exporter.PropertySet
     /// </summary>
     public class PropertyUtil
     {
+        private static void ValidateEnumeratedValue(string value, Type propertyEnumerationType)
+        {
+            if (propertyEnumerationType != null && propertyEnumerationType.IsEnum)
+            {
+                foreach (object enumeratedValue in Enum.GetValues(propertyEnumerationType))
+                {
+                    string enumValue = enumeratedValue.ToString();
+                    if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, enumValue))
+                    {
+                        value = enumValue;
+                        return;
+                    }
+                }
+                value = null;
+            }
+        }
+
         /// <summary>
         /// Create a label property.
         /// </summary>
@@ -41,13 +58,15 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <param name="value">The value of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateLabelProperty(IFCFile file, string propertyName, string value, PropertyValueType valueType)
+        public static IFCAnyHandle CreateLabelProperty(IFCFile file, string propertyName, string value, PropertyValueType valueType,
+            Type propertyEnumerationType)
         {
             switch (valueType)
             {
                 case PropertyValueType.EnumeratedValue:
                     {
                         IList<IFCData> valueList = new List<IFCData>();
+                        ValidateEnumeratedValue(value, propertyEnumerationType);
                         valueList.Add(IFCDataUtil.CreateAsLabel(value));
                         return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
                     }
@@ -114,6 +133,66 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Create a text property from the element's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <param name="propertyEnumerationType">The type of the enum, null if valueType isn't EnumeratedValue.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateTextPropertyFromElement(IFCFile file, Element elem, string revitParameterName, string ifcPropertyName,
+            PropertyValueType valueType, Type propertyEnumerationType)
+        {
+            string propertyValue;
+            if (ParameterUtil.GetStringValueFromElement(elem, revitParameterName, out propertyValue))
+            {
+                return CreateTextPropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Create a text property from the element's or type's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="revitBuiltInParam">The built in parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <param name="propertyEnumerationType">The type of the enum, null if valueType isn't EnumeratedValue.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateTextPropertyFromElementOrSymbol(IFCFile file, Element elem, string revitParameterName,
+           BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType, Type propertyEnumerationType)
+        {
+            // For Instance
+            IFCAnyHandle propHnd = CreateTextPropertyFromElement(file, elem, revitParameterName, ifcPropertyName, valueType,
+                propertyEnumerationType);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                return propHnd;
+
+            if (revitBuiltInParam != BuiltInParameter.INVALID)
+            {
+                string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
+                propHnd = CreateTextPropertyFromElement(file, elem, builtInParamName, ifcPropertyName, valueType, propertyEnumerationType);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                    return propHnd;
+            }
+
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateTextPropertyFromElementOrSymbol(file, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType,
+                    propertyEnumerationType);
+            else
+                return null;
+        }
+
+        /// <summary>
         /// Create a label property, using the cached value if possible.
         /// </summary>
         /// <param name="file">The IFC file.</param>
@@ -121,8 +200,10 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <param name="value">The value of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <param name="cacheAllStrings">Whether to cache all strings (true), or only the empty string (false).</param>
+        /// <param name="propertyEnumerationType">The type of the enum, null if valueType isn't EnumeratedValue.</param>
         /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateLabelPropertyFromCache(IFCFile file, string propertyName, string value, PropertyValueType valueType, bool cacheAllStrings)
+        public static IFCAnyHandle CreateLabelPropertyFromCache(IFCFile file, string propertyName, string value, PropertyValueType valueType,
+            bool cacheAllStrings, Type propertyEnumerationType)
         {
             bool canCache = (value == String.Empty) || cacheAllStrings;
             StringPropertyInfoCache stringInfoCache = null;
@@ -136,7 +217,7 @@ namespace BIM.IFC.Exporter.PropertySet
                     return labelHandle;
             }
 
-            labelHandle = CreateLabelProperty(file, propertyName, value, valueType);
+            labelHandle = CreateLabelProperty(file, propertyName, value, valueType, propertyEnumerationType);
 
             if (canCache)
                 stringInfoCache.Add(propertyName, value, labelHandle);
@@ -151,8 +232,10 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <param name="propertyName">The name of the property.</param>
         /// <param name="values">The values of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
+        /// <param name="propertyEnumerationType">The type of the enum, null if valueType isn't EnumeratedValue.</param>
         /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateLabelProperty(IFCFile file, string propertyName, IList<string> values, PropertyValueType valueType)
+        public static IFCAnyHandle CreateLabelProperty(IFCFile file, string propertyName, IList<string> values, PropertyValueType valueType,
+            Type propertyEnumerationType)
         {
             switch (valueType)
             {
@@ -283,6 +366,41 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Create a logical property.
+        /// </summary>
+        /// <param name="file">
+        /// The IFC file.
+        /// </param>
+        /// <param name="propertyName">
+        /// The name of the property.
+        /// </param>
+        /// <param name="value">
+        /// The value of the property.
+        /// </param>
+        /// <param name="valueType">
+        /// The value type of the property.
+        /// </param>
+        /// <returns>
+        /// The created property handle.
+        /// </returns>
+        public static IFCAnyHandle CreateLogicalProperty(IFCFile file, string propertyName, IFCLogical value, PropertyValueType valueType)
+        {
+            switch (valueType)
+            {
+                case PropertyValueType.EnumeratedValue:
+                    {
+                        IList<IFCData> valueList = new List<IFCData>();
+                        valueList.Add(IFCDataUtil.CreateAsLogical(value));
+                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+                    }
+                case PropertyValueType.SingleValue:
+                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsLogical(value), null);
+                default:
+                    throw new InvalidOperationException("Missing case!");
+            }
+        }
+
+        /// <summary>
         /// Create a boolean property or gets one from cache.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -300,6 +418,26 @@ namespace BIM.IFC.Exporter.PropertySet
             boolHandle = CreateBooleanProperty(file, propertyName, value, valueType);
             boolInfoCache.Add(propertyName, value, boolHandle);
             return boolHandle;
+        }
+
+        /// <summary>
+        /// Create a logical property or gets one from cache.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="propertyName">The property name.</param>
+        /// <param name="value">The value.</param>
+        /// <param name="valueType">The value type.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateLogicalPropertyFromCache(IFCFile file, string propertyName, IFCLogical value, PropertyValueType valueType)
+        {
+            LogicalPropertyInfoCache logicalInfoCache = ExporterCacheManager.PropertyInfoCache.LogicalCache;
+            IFCAnyHandle logicalHandle = logicalInfoCache.Find(propertyName, value);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(logicalHandle))
+                return logicalHandle;
+
+            logicalHandle = CreateLogicalProperty(file, propertyName, value, valueType);
+            logicalInfoCache.Add(propertyName, value, logicalHandle);
+            return logicalHandle;
         }
 
         /// <summary>
@@ -399,6 +537,17 @@ namespace BIM.IFC.Exporter.PropertySet
                     }
                 }
             }
+            return null;
+        }
+
+        internal static double? CanCachePower(double value)
+        {
+            // Allow caching of values between 0 and 300, in multiples of 5
+            double eps = MathUtil.Eps();
+            if (value < -eps || value > 300.0 + eps)
+                return null;
+            if (MathUtil.IsAlmostZero(value % 5.0))
+                return Math.Truncate(value + 0.5);
             return null;
         }
 
@@ -515,6 +664,35 @@ namespace BIM.IFC.Exporter.PropertySet
             if (canCache && !IFCAnyHandleUtil.IsNullOrHasNoValue(propertyHandle))
                 ExporterCacheManager.PropertyInfoCache.ThermodynamicTemperatureCache.Add(propertyName, value, propertyHandle);
             
+            return propertyHandle;
+        }
+
+        /// <summary>Create a Power measure property, using a cached value if possible.</summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created or cached property handle.</returns>
+        public static IFCAnyHandle CreatePowerPropertyFromCache(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+        {
+            double? adjustedValue = CanCachePower(value);
+            bool canCache = adjustedValue.HasValue;
+            if (canCache)
+                value = adjustedValue.GetValueOrDefault();
+
+            IFCAnyHandle propertyHandle;
+            if (canCache)
+            {
+                propertyHandle = ExporterCacheManager.PropertyInfoCache.PowerCache.Find(propertyName, value);
+                if (propertyHandle != null)
+                    return propertyHandle;
+            }
+
+            propertyHandle = CreatePowerProperty(file, propertyName, value, valueType);
+
+            if (canCache && !IFCAnyHandleUtil.IsNullOrHasNoValue(propertyHandle))
+                ExporterCacheManager.PropertyInfoCache.PowerCache.Add(propertyName, value, propertyHandle);
+
             return propertyHandle;
         }
 
@@ -873,6 +1051,40 @@ namespace BIM.IFC.Exporter.PropertySet
             }
         }
 
+        /// <summary>Create a ClassificationReference property.</summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateClassificationReferenceProperty(IFCFile file, string propertyName, string value)
+        {
+            IFCAnyHandle classificationReferenceHandle = IFCInstanceExporter.CreateClassificationReference(file, null, value, null, null);
+            return IFCInstanceExporter.CreatePropertyReferenceValue(file, propertyName, null, null, classificationReferenceHandle);
+        }
+
+        /// <summary>Create a PowerMeasure property.</summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreatePowerProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+        {
+            switch (valueType)
+            {
+                case PropertyValueType.EnumeratedValue:
+                    {
+                        IList<IFCData> valueList = new List<IFCData>();
+                        valueList.Add(IFCDataUtil.CreateAsPowerMeasure(value));
+                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+                    }
+                case PropertyValueType.SingleValue:
+                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsPowerMeasure(value), null);
+                default:
+                    throw new InvalidOperationException("Missing case!");
+            }
+        }
+
         /// <summary>Create a ThermalTransmittance property.</summary>
         /// <param name="file">The IFC file.</param>
         /// <param name="propertyName">The name of the property.</param>
@@ -1030,6 +1242,48 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Create an IfcClassificationReference property from the element's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateClassificationReferencePropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, string ifcPropertyName)
+        {
+            string propertyValue;
+            if (ParameterUtil.GetStringValueFromElement(elem, revitParameterName, out propertyValue))
+            {
+                return CreateClassificationReferenceProperty(file, ifcPropertyName, propertyValue);
+            }
+            return null;
+        }
+        
+        /// <summary>
+        /// Create a Power measure property from the element's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreatePowerPropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        {
+            double propertyValue;
+            if (ParameterUtil.GetDoubleValueFromElement(elem, revitParameterName, out propertyValue))
+            {
+                double scaledpropertyValue = propertyValue * (1 / 0.3048) * (1 / 0.3048);
+                return CreatePowerPropertyFromCache(file, ifcPropertyName, scaledpropertyValue, valueType);
+            }
+            return null;
+        }
+        
+        /// <summary>
         /// Create a ThermalTransmittance measure property from the element's parameter.
         /// </summary>
         /// <param name="file">The IFC file.</param>
@@ -1049,6 +1303,77 @@ namespace BIM.IFC.Exporter.PropertySet
                 return CreateThermalTransmittancePropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
             }
             return null;
+        }
+
+        /// <summary>
+        /// Create an IfcClassificationReference property from the element's or type's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="revitBuiltInParam">The built in parameter to use, if revitParameterName isn't found.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateClassificationReferencePropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName)
+        {
+            IFCAnyHandle propHnd = CreateClassificationReferencePropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                return propHnd;
+
+            if (revitBuiltInParam != BuiltInParameter.INVALID)
+            {
+                string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
+                propHnd = CreateClassificationReferencePropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                    return propHnd;
+            }
+
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateClassificationReferencePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName);
+            else
+                return null;
+        }
+
+        /// <summary>
+        /// Create a Power measure property from the element's or type's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="revitBuiltInParam">The built in parameter to use, if revitParameterName isn't found.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreatePowerPropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
+        {
+            IFCAnyHandle propHnd = CreatePowerPropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName, valueType);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                return propHnd;
+
+            if (revitBuiltInParam != BuiltInParameter.INVALID)
+            {
+                string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
+                propHnd = CreatePowerPropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName, valueType);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                    return propHnd;
+            }
+
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreatePowerPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+            else
+                return null;
         }
 
         /// <summary>
@@ -1090,30 +1415,20 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Create a label property from the element's parameter.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="elem">
-        /// The Element.
-        /// </param>
-        /// <param name="revitParameterName">
-        /// The name of the parameter.
-        /// </param>
-        /// <param name="ifcPropertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
-        public static IFCAnyHandle CreateLabelPropertyFromElement(IFCFile file, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        /// <param name="file">The IFC file.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <param name="propertyEnumerationType">The type of the enum, null if valueType isn't EnumeratedValue.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateLabelPropertyFromElement(IFCFile file, Element elem, string revitParameterName, string ifcPropertyName,
+            PropertyValueType valueType, Type propertyEnumerationType)
         {
             string propertyValue;
             if (ParameterUtil.GetStringValueFromElement(elem, revitParameterName, out propertyValue))
             {
-                return CreateLabelPropertyFromCache(file, ifcPropertyName, propertyValue, valueType, false);
+                return CreateLabelPropertyFromCache(file, ifcPropertyName, propertyValue, valueType, false, propertyEnumerationType);
             }
             return null;
         }
@@ -1121,39 +1436,27 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Create a label property from the element's or type's parameter.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="elem">
-        /// The Element.
-        /// </param>
-        /// <param name="revitParameterName">
-        /// The name of the parameter.
-        /// </param>
-        /// <param name="revitBuiltInParam">
-        /// The built in parameter.
-        /// </param>
-        /// <param name="ifcPropertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="revitBuiltInParam">The built in parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <param name="propertyEnumerationType">The type of the enum, null if valueType isn't EnumeratedValue.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateLabelPropertyFromElementOrSymbol(IFCFile file, Element elem, string revitParameterName,
-           BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
+           BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType, Type propertyEnumerationType)
         {
             // For Instance
-            IFCAnyHandle propHnd = CreateLabelPropertyFromElement(file, elem, revitParameterName, ifcPropertyName, valueType);
+            IFCAnyHandle propHnd = CreateLabelPropertyFromElement(file, elem, revitParameterName, ifcPropertyName, valueType,
+                propertyEnumerationType);
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
                 return propHnd;
 
             if (revitBuiltInParam != BuiltInParameter.INVALID)
             {
                 string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
-                propHnd = CreateLabelPropertyFromElement(file, elem, builtInParamName, ifcPropertyName, valueType);
+                propHnd = CreateLabelPropertyFromElement(file, elem, builtInParamName, ifcPropertyName, valueType, propertyEnumerationType);
                 if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
                     return propHnd;
             }
@@ -1163,7 +1466,8 @@ namespace BIM.IFC.Exporter.PropertySet
             ElementId typeId = elem.GetTypeId();
             Element elemType = document.GetElement(typeId);
             if (elemType != null)
-                return CreateLabelPropertyFromElementOrSymbol(file, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+                return CreateLabelPropertyFromElementOrSymbol(file, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType,
+                    propertyEnumerationType);
             else
                 return null;
         }
@@ -1289,6 +1593,49 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Create a logical property from the element's or type's parameter.
+        /// </summary>
+        /// <param name="file">
+        /// The IFC file.
+        /// </param>
+        /// <param name="elem">
+        /// The Element.
+        /// </param>
+        /// <param name="revitParameterName">
+        /// The name of the parameter.
+        /// </param>
+        /// <param name="ifcPropertyName">
+        /// The name of the property.
+        /// </param>
+        /// <param name="valueType">
+        /// The value type of the property.
+        /// </param>
+        /// <returns>
+        /// The created property handle.
+        /// </returns>
+        public static IFCAnyHandle CreateLogicalPropertyFromElementOrSymbol(IFCFile file, Element elem,
+           string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        {
+            IFCLogical ifcLogical = IFCLogical.Unknown;
+            int propertyValue;
+            if (ParameterUtil.GetIntValueFromElement(elem, revitParameterName, out propertyValue))
+            {
+                ifcLogical = propertyValue != 0 ? IFCLogical.True : IFCLogical.False;
+            }
+            else
+            {
+                // For Symbol
+                Document document = elem.Document;
+                ElementId typeId = elem.GetTypeId();
+                Element elemType = document.GetElement(typeId);
+                if (elemType != null)
+                    return CreateLogicalPropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
+            }
+
+            return CreateLogicalPropertyFromCache(file, ifcPropertyName, ifcLogical, valueType);
+        }
+
+        /// <summary>
         /// Create an integer property from the element's or type's parameter.
         /// </summary>
         /// <param name="file">
@@ -1361,15 +1708,22 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <param name="exporterIFC">The ExporterIFC.</param>
         /// <param name="elem">The Element.</param>
         /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="builtInParameterName">The name of the built-in parameter, can be null.</param>
         /// <param name="ifcPropertyName">The name of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreatePositiveLengthMeasurePropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
-           string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+           string revitParameterName, string builtInParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             double propertyValue;
             
             if (ParameterUtil.GetDoubleValueFromElement(elem, revitParameterName, out propertyValue))
+            {
+                propertyValue = propertyValue * exporterIFC.LinearScale;
+                return CreatePositiveLengthMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
+            }
+
+            if (builtInParameterName != null && ParameterUtil.GetDoubleValueFromElement(elem, builtInParameterName, out propertyValue))
             {
                 propertyValue = propertyValue * exporterIFC.LinearScale;
                 return CreatePositiveLengthMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
@@ -1392,27 +1746,20 @@ namespace BIM.IFC.Exporter.PropertySet
         public static IFCAnyHandle CreatePositiveLengthMeasurePropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
            string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
         {
-            double propertyValue;
-            if (ParameterUtil.GetDoubleValueFromElement(elem, revitParameterName, out propertyValue))
-            {
-                propertyValue *= exporterIFC.LinearScale;
-                return CreatePositiveLengthMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
-            }
-
+            string builtInParamName = null;
             if (revitBuiltInParam != BuiltInParameter.INVALID)
-            {
-                string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
-                IFCAnyHandle propHnd = CreatePositiveLengthMeasurePropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName, valueType);
-                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
-                    return propHnd;
-            }
+                builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
+                
+            IFCAnyHandle propHnd = CreatePositiveLengthMeasurePropertyFromElement(file, exporterIFC, elem, revitParameterName, builtInParamName, ifcPropertyName, valueType);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                return propHnd;
 
             // For Symbol
             Document document = elem.Document;
             ElementId typeId = elem.GetTypeId();
             Element elemType = document.GetElement(typeId);
             if (elemType != null)
-                return CreatePositiveLengthMeasurePropertyFromElement(file, exporterIFC, elemType, revitParameterName, ifcPropertyName, valueType);
+                return CreatePositiveLengthMeasurePropertyFromElement(file, exporterIFC, elemType, revitParameterName, builtInParamName, ifcPropertyName, valueType);
             else
                 return null;
         }
@@ -1761,8 +2108,6 @@ namespace BIM.IFC.Exporter.PropertySet
                     }
                 }
 
-                bool canUseElementType = ((which == 1) && elementType != null);
-
                 ParameterElementCache parameterElementCache = ParameterUtil.GetNonIFCParametersForElement(whichElement);
                 if (parameterElementCache == null)
                     continue;
@@ -1859,6 +2204,14 @@ namespace BIM.IFC.Exporter.PropertySet
                                             assigned = true;
                                             break;
                                         }
+                                    case ParameterType.HVACPower:
+                                        {
+                                            double scaledValue = value * (1 / 0.3048) * (1 / 0.3048);
+                                            propertyArr[which][idx].Add(CreatePowerProperty(file, parameterCaption,
+                                                scaledValue, PropertyValueType.SingleValue));
+                                            assigned = true;
+                                            break;
+                                        }
                                 }
 
                                 if (!assigned)
@@ -1893,7 +2246,7 @@ namespace BIM.IFC.Exporter.PropertySet
                                 else
                                     valueString = value.ToString();
 
-                                propertyArr[which][idx].Add(CreateLabelPropertyFromCache(file, parameterCaption, valueString, PropertyValueType.SingleValue, true));
+                                propertyArr[which][idx].Add(CreateLabelPropertyFromCache(file, parameterCaption, valueString, PropertyValueType.SingleValue, true, null));
                                 break;
                             }
                     }

@@ -53,6 +53,16 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Removes spaces and underscores in a string.
+        /// </summary>
+        /// <param name="originalString">The original string.</param>
+        /// <returns>The string without spaces or underscores.</returns>
+        public static string RemoveSpacesAndUnderscores(string originalString)
+        {
+            return originalString.Replace(" ", null).Replace("_", null);
+        }
+
+        /// <summary>
         /// Checks if two strings are equal ignoring case and spaces.
         /// </summary>
         /// <param name="string1">

@@ -172,6 +172,8 @@ namespace BIM.IFC.Export.UI
             checkBoxFamilyAndTypeName.IsChecked = configuration.UseFamilyAndTypeNameForReference;
             checkBoxExportPartsAsBuildingElements.IsChecked = configuration.ExportPartsAsBuildingElements;
             checkboxExportSurfaceStyles.IsChecked = configuration.ExportSurfaceStyles;
+            checkboxExportAdvancedSweptSolids.IsChecked = configuration.ExportAdvancedSweptSolids;
+            checkboxExportBoundingBox.IsChecked = configuration.ExportBoundingBox;
 
             UIElement[] configurationElements = new UIElement[]{comboboxIfcType, 
                                                                 comboboxFileType, 
@@ -184,7 +186,9 @@ namespace BIM.IFC.Export.UI
                                                                 checkboxVisibleElementsCurrView,
                                                                 checkBoxUse2DRoomVolumes,
                                                                 checkBoxFamilyAndTypeName,
-                                                                checkboxExportSurfaceStyles
+                                                                checkboxExportSurfaceStyles,
+                                                                checkboxExportAdvancedSweptSolids,
+                                                                checkboxExportBoundingBox
                                                                 };
             foreach (UIElement element in configurationElements)
             {
@@ -606,7 +610,7 @@ namespace BIM.IFC.Export.UI
         }
 
         /// <summary>
-        /// Updates the configuration ExportSurfaceStyles when the Export surface styles changed in the combobox.
+        /// Updates the configuration ExportSurfaceStyles when the Export surface styles changed in the check box.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">Event arguments that contains the event data.</param>
@@ -617,6 +621,36 @@ namespace BIM.IFC.Export.UI
             if (configuration != null)
             {
                 configuration.ExportSurfaceStyles = GetCheckbuttonChecked(checkBox);
+            }
+        }
+
+        /// <summary>
+        /// Updates the configuration ExportAdvancedSweptSolids when the Export Advanced Swept Solids changed in the check box.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments that contains the event data.</param>
+        private void checkboxExportAdvancedSweptSolids_Checked(object sender, RoutedEventArgs e)
+        {
+            CheckBox checkBox = (CheckBox)sender;
+            IFCExportConfiguration configuration = GetSelectedConfiguration();
+            if (configuration != null)
+            {
+                configuration.ExportAdvancedSweptSolids = GetCheckbuttonChecked(checkBox);
+            }
+        }
+
+        /// <summary>
+        /// Updates the configuration ExportBoundingBox when the Export Bounding Box changed in the check box.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments that contains the event data.</param>
+        private void checkboxExportBoundingBox_Checked(object sender, RoutedEventArgs e)
+        {
+            CheckBox checkBox = (CheckBox)sender;
+            IFCExportConfiguration configuration = GetSelectedConfiguration();
+            if (configuration != null)
+            {
+                configuration.ExportBoundingBox = GetCheckbuttonChecked(checkBox);
             }
         }
     }

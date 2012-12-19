@@ -151,13 +151,16 @@ namespace BIM.IFC.Exporter
                 ProjectLocation projLocation = doc.ActiveProjectLocation;
 
                 IFCAnyHandle relativePlacement = null;
-                double elevation = 0.0;
+                double unscaledElevation = 0.0;
                 if (projLocation != null)
                 {
                     double latitudeInDeg = projLocation.SiteLocation.Latitude * 180 / Math.PI;
                     double longitudeInDeg = projLocation.SiteLocation.Longitude * 180 / Math.PI;
 
 
+                    ProjectPosition projectPosition = projLocation.get_ProjectPosition(XYZ.Zero);
+                    unscaledElevation = projectPosition.Elevation;
+            
                     int latDeg = ((int)latitudeInDeg); latitudeInDeg -= latDeg; latitudeInDeg *= 60;
                     int latMin = ((int)latitudeInDeg); latitudeInDeg -= latMin; latitudeInDeg *= 60;
                     int latSec = ((int)latitudeInDeg); latitudeInDeg -= latSec; latitudeInDeg *= 1000000;
@@ -181,14 +184,14 @@ namespace BIM.IFC.Exporter
                     Transform siteSharedCoordinatesTrf = projLocation.GetTransform().Inverse;
                     if (!siteSharedCoordinatesTrf.IsIdentity)
                     {
-                        XYZ orig = siteSharedCoordinatesTrf.Origin;
+                        XYZ orig = siteSharedCoordinatesTrf.Origin- new XYZ(0, 0, unscaledElevation);
                         orig = orig.Multiply(exporterIFC.LinearScale);
                         relativePlacement = ExporterUtil.CreateAxis2Placement3D(file, orig, siteSharedCoordinatesTrf.BasisZ, siteSharedCoordinatesTrf.BasisX);
                     }
                 }
 
                 // Get elevation for site.
-                elevation = -LevelUtil.GetReferenceHeightForRelativeElevation(doc) * exporterIFC.LinearScale;
+                double elevation = unscaledElevation * exporterIFC.LinearScale;
 
                 if (IFCAnyHandleUtil.IsNullOrHasNoValue(relativePlacement))
                     relativePlacement = ExporterUtil.CreateAxis2Placement3D(file);

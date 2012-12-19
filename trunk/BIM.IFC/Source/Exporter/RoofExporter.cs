@@ -132,18 +132,7 @@ namespace BIM.IFC.Exporter
             {
                 // export parts or not
                 bool exportParts = PartExporter.CanExportParts(roof);
-                bool exportAsExtrusionCurtainRoof = false;
-                bool exportAsFootprintCurtainRoof = false;
-                if (roof is ExtrusionRoof)
-                {
-                    ExtrusionRoof extrusionRoof = roof as ExtrusionRoof;
-                    exportAsExtrusionCurtainRoof = ((extrusionRoof.CurtainGrids != null) && (extrusionRoof.CurtainGrids.Size != 0));
-                }
-                else if (roof is FootPrintRoof)
-                {
-                    FootPrintRoof footprintRoof = roof as FootPrintRoof;
-                    exportAsFootprintCurtainRoof = ((footprintRoof.CurtainGrids != null) && (footprintRoof.CurtainGrids.Size != 0));
-                }
+                bool exportAsCurtainRoof = CurtainSystemExporter.IsCurtainSystem(roof);
 
                 if (exportParts)
                 {
@@ -151,13 +140,9 @@ namespace BIM.IFC.Exporter
                         return;
                     ExportRoofAsParts(exporterIFC, roof, geometryElement, productWrapper); // Right now, only flat roof could have parts.
                 }
-                else if (exportAsExtrusionCurtainRoof)
+                else if (exportAsCurtainRoof)
                 {
-                    CurtainSystemExporter.ExportExtrusionRoof(exporterIFC, roof as ExtrusionRoof, productWrapper);
-                }
-                else if (exportAsFootprintCurtainRoof)
-                {
-                    CurtainSystemExporter.ExportFootPrintRoof(exporterIFC, roof as FootPrintRoof, productWrapper);
+                    CurtainSystemExporter.ExportCurtainRoof(exporterIFC, roof, productWrapper);
                 }
                 else
                 {
@@ -234,7 +219,7 @@ namespace BIM.IFC.Exporter
         /// <returns>The IFCRoofType.</returns>
         public static IFCRoofType GetIFCRoofType(string roofTypeName)
         {
-            string typeName = roofTypeName.Replace(" ", "").Replace("_", "");
+            string typeName = NamingUtil.RemoveSpacesAndUnderscores(roofTypeName);
 
             if (String.Compare(typeName, "ROOFTYPEENUM", true) == 0 ||
                 String.Compare(typeName, "ROOFTYPEENUMFREEFORM", true) == 0)

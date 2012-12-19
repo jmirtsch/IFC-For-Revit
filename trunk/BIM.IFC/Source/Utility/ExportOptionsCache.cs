@@ -62,7 +62,8 @@ namespace BIM.IFC.Utility
             cache.ExportAnnotationsOverride = null;
             cache.FilterViewForExport = filterView;
             cache.ExportSurfaceStylesOverride = null;
-
+            cache.ExportBoundingBoxOverride = null;
+            
             cache.PropertySetOptions = PropertySetOptions.Create(exporterIFC, filterView, cache);
 
             String use2DRoomBoundary = Environment.GetEnvironmentVariable("Use2DRoomBoundaryForRoomVolumeCalculationOnIFCExport");
@@ -72,6 +73,9 @@ namespace BIM.IFC.Utility
                 cache.ExportAs2x2 ||
                 (use2DRoomBoundaryOption != null && use2DRoomBoundaryOption.GetValueOrDefault()));
 
+                bool? exportAdvancedSweptSolids = GetNamedBooleanOption(options, "ExportAdvancedSweptSolids");
+            cache.ExportAdvancedSweptSolids = (exportAdvancedSweptSolids.HasValue) ? exportAdvancedSweptSolids.Value : false;
+            
             // Set GUIDOptions here.
             cache.GUIDOptions = new GUIDOptions();
             {
@@ -148,6 +152,9 @@ namespace BIM.IFC.Utility
 
             // "ExportSurfaceStyles" override
             cache.ExportSurfaceStylesOverride = GetNamedBooleanOption(options, "ExportSurfaceStyles");
+
+            // "ExportBoundingBox" override
+            cache.ExportBoundingBoxOverride = GetNamedBooleanOption(options, "ExportBoundingBox");
 
             // Whether or not to export GSA Gross Design Area.
             cache.ExportGSAGrossDesignArea = GetNamedBooleanOption(options, "ExportGSAGrossDesignArea");
@@ -315,7 +322,16 @@ namespace BIM.IFC.Utility
                 return (!ExportAs2x2 && !ExportAs2x3CoordinationView2);
             }
         }
-        
+
+        /// <summary>
+        /// Identifies if we allow exporting advanced swept solids (vs. BReps if false).
+        /// </summary>
+        public bool ExportAdvancedSweptSolids
+        {
+            get;
+            set;
+        }
+
         /// <summary>
         /// Whether or not split walls and columns.
         /// </summary>
@@ -400,6 +416,32 @@ namespace BIM.IFC.Utility
                 else if (ExportAs2x3CoordinationView2)
                     return false;
                 return true;
+            }
+        }
+
+        /// <summary>
+        /// Cache variable for the ExportBoundingBox override (if set independently via the UI)
+        /// </summary>
+        public bool? ExportBoundingBoxOverride
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Whether or not export the bounding box.
+        /// </summary>
+        public bool ExportBoundingBox
+        {
+            get
+            {
+                // if the option is set by alternate UI, return the setting in UI.
+                if (ExportBoundingBoxOverride != null)
+                    return (bool)ExportBoundingBoxOverride;
+                // otherwise export the bounding box only if it is GSA export.
+                else if (FileVersion == IFCVersion.IFCCOBIE)
+                    return true;
+                return false;
             }
         }
 

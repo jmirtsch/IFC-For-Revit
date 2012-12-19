@@ -53,7 +53,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return Toolkit.IFCCoveringType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "USERDEFINED", true) == 0)
                 return Toolkit.IFCCoveringType.UserDefined;
@@ -147,15 +147,20 @@ namespace BIM.IFC.Exporter
                     }
                     productWrapper.AddElement(covering, setter, null, LevelUtil.AssociateElementToLevel(element));
 
-                    Ceiling ceiling = element as Ceiling;
-                    if (ceiling != null && !exportParts)
+                    if (!exportParts)
                     {
-                        HostObjectExporter.ExportHostObjectMaterials(exporterIFC, ceiling, covering,
-                            geomElem, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3);
+                        Ceiling ceiling = element as Ceiling;
+                        if (ceiling != null)
+                        {
+                            HostObjectExporter.ExportHostObjectMaterials(exporterIFC, ceiling, covering,
+                                geomElem, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3);
+                        }
+                        else
+                        {
+                            ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geomElem, exporterIFC, element);
+                            CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, covering, matId);
+                        }
                     }
-
-                    if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportIFCCommon)
-                        ExporterIFCUtils.CreateCoveringPropertySet(exporterIFC, element, productWrapper.ToNative());
 
                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                 }

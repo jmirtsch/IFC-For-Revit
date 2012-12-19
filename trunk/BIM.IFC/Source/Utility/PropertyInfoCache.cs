@@ -51,6 +51,11 @@ namespace BIM.IFC.Utility
         BooleanPropertyInfoCache m_BooleanPropertyInfoCache = null;
 
         /// <summary>
+        /// The LogicalPropertyInfoCache object.
+        /// </summary>
+        LogicalPropertyInfoCache m_LogicalPropertyInfoCache = null;
+
+        /// <summary>
         /// The IntegerPropertyInfoCache object.
         /// </summary>
         IntegerPropertyInfoCache m_IntegerPropertyInfoCache = null;
@@ -88,6 +93,19 @@ namespace BIM.IFC.Utility
                 if (m_BooleanPropertyInfoCache == null)
                     m_BooleanPropertyInfoCache = new BooleanPropertyInfoCache();
                 return m_BooleanPropertyInfoCache;
+            }
+        }
+
+        /// <summary>
+        /// The LogicalPropertyInfoCache object.
+        /// </summary>
+        public LogicalPropertyInfoCache LogicalCache
+        {
+            get
+            {
+                if (m_LogicalPropertyInfoCache == null)
+                    m_LogicalPropertyInfoCache = new LogicalPropertyInfoCache();
+                return m_LogicalPropertyInfoCache;
             }
         }
 
@@ -237,6 +255,23 @@ namespace BIM.IFC.Utility
                     DoubleCacheMap[PropertyType.ThermalTransmittance] = thermalTransmittancePropertyInfoCache;
                 }
                 return thermalTransmittancePropertyInfoCache;
+            }
+        }
+
+        /// <summary>
+        /// The DoublePropertyInfoCache object for Power parameter types.
+        /// </summary>
+        public DoublePropertyInfoCache PowerCache
+        {
+            get
+            {
+                DoublePropertyInfoCache powerPropertyInfoCache;
+                if (!DoubleCacheMap.TryGetValue(PropertyType.Power, out powerPropertyInfoCache))
+                {
+                    powerPropertyInfoCache = new DoublePropertyInfoCache();
+                    DoubleCacheMap[PropertyType.Power] = powerPropertyInfoCache;
+                }
+                return powerPropertyInfoCache;
             }
         }
     }

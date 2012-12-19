@@ -447,6 +447,10 @@ namespace BIM.IFC.Utility
         /// Pile - no type in IFC2x3.
         /// </summary>
         ExportPile,
+        /// <summary>
+        /// Zone - no type in IFC2x3.
+        /// </summary>
+        ExportZone
     }
 
 

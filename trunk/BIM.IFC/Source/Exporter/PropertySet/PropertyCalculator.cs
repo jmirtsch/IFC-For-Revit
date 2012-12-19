@@ -106,6 +106,20 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Gets the calculated logical value.  Use if CalculatesMultipleParameters is false.
+        /// </summary>
+        /// <exception cref="System.NotImplementedException">
+        /// Default method is not implemented.
+        /// </exception>
+        /// <returns>
+        /// The calculated boolean value.
+        /// </returns>
+        public virtual IFCLogical GetLogicalValue()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Gets the calculated double value.  Use if CalculatesMultipleParameters is false.
         /// </summary>
         /// <exception cref="System.NotImplementedException">

@@ -192,4 +192,10 @@
   <data name="ExportSurfaceStyles" xml:space="preserve">
     <value>Export surface styles</value>
   </data>
+  <data name="ExportAdvancedSweptSolids" xml:space="preserve">
+    <value>Export advanced swept solids</value>
+  </data>
+  <data name="ExportBoundingBox" xml:space="preserve">
+    <value>Export bounding box</value>
+  </data>
 </root>

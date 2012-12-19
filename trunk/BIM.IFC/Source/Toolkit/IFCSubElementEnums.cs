@@ -50,10 +50,16 @@ namespace BIM.IFC.Toolkit
         RelAggregates = 2
     }
 
+    enum IFCCoveringSubElements
+    {
+        PSetCoveringCommon = 1
+    }
+
     // Curtain Walls can be created from a variety of elements, including Walls and Roofs.
     // As such, start their subindexes high enough to not bother potential hosts.
     enum IFCCurtainWallSubElements
     {
+        PSetCurtainWallCommon = 1,
         RelAggregates = 1024
     }
 
@@ -65,6 +71,19 @@ namespace BIM.IFC.Toolkit
         PSetDoorCommon = 18,
         DoorOpening = 19,
         DoorOpeningRelVoid = 20,
+        DoorStyle = 21,
+    }
+
+    enum IFCLightFixtureTypeSubElements
+    {
+        PSetLightFixtureTypeCommon = 1
+    }
+
+    // Family Instances can create a variety of elements.
+    // As such, start their subindexes high enough to not bother potential hosts.
+    enum IFCFamilyInstanceSubElements
+    {
+        InstanceAsType = 2048
     }
 
     enum IFCMemberSubElements
@@ -108,6 +127,7 @@ namespace BIM.IFC.Toolkit
     {
         PSetWindowCommon = 1,
         WindowOpening = IFCDoorSubElements.DoorOpening,
-        WindowOpeningRelVoid = IFCDoorSubElements.DoorOpeningRelVoid
+        WindowOpeningRelVoid = IFCDoorSubElements.DoorOpeningRelVoid,
+        WindowStyle = IFCDoorSubElements.DoorStyle,
     }
 }

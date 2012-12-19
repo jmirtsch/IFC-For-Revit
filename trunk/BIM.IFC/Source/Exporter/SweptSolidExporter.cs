@@ -198,8 +198,8 @@ namespace BIM.IFC.Exporter
             if (directrix is Line)
             {
                 Line line = directrix as Line;
-                startParam = line.get_EndParameter(0);
-                endParam = line.get_EndParameter(1);
+                startParam = 0.0;
+                endParam = 1.0;
                 profilePlaneNormal = line.Direction;
                 profilePlaneYDir = normal;
                 profilePlaneXDir = profilePlaneNormal.CrossProduct(profilePlaneYDir);
@@ -216,8 +216,9 @@ namespace BIM.IFC.Exporter
             {
                 Arc arc = directrix as Arc;
 
-                startParam = MathUtil.PutInRange(arc.get_EndParameter(0), Math.PI, 2 * Math.PI) * (180 / Math.PI);
-                endParam = MathUtil.PutInRange(arc.get_EndParameter(1), Math.PI, 2 * Math.PI) * (180 / Math.PI);
+                // profilePlaneXDir is set relative to the startPoint of the directrix.  This effectively resets the start parameter to 0.0, and end parameter = length of curve.
+                startParam = 0.0;
+                endParam = (MathUtil.PutInRange(arc.get_EndParameter(1), Math.PI, 2 * Math.PI) - MathUtil.PutInRange(arc.get_EndParameter(0), Math.PI, 2 * Math.PI)) * (180 / Math.PI);
 
                 profilePlaneNormal = directrix.ComputeDerivatives(0, true).BasisX;
                 profilePlaneXDir = (arc.Center - startPoint).Normalize();

@@ -163,7 +163,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return Toolkit.IFCFootingType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "USERDEFINED", true) == 0)
                 return Toolkit.IFCFootingType.UserDefined;

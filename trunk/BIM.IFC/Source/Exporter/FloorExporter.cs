@@ -306,7 +306,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(ifcEnumType))
                 return IFCSlabType.Floor;
 
-            string ifcEnumTypeWithoutSpaces = ifcEnumType.Replace(" ", "").Replace("_", "");
+            string ifcEnumTypeWithoutSpaces = NamingUtil.RemoveSpacesAndUnderscores(ifcEnumType);
 
             if (String.Compare(ifcEnumTypeWithoutSpaces, "USERDEFINED", true) == 0)
                 return IFCSlabType.UserDefined;

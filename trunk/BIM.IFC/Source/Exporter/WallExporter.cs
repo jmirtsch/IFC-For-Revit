@@ -476,9 +476,9 @@ namespace BIM.IFC.Exporter
 
                                 BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
 
-                                // If we are exporting to CV 2.0 format, we will attempt to create a simple swept solid.
-                                // Please see SweptSolidExporter.cs for more details on what sweeps are supported.
-                                if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
+                                // Swept solids are not natively exported as part of CV2.0.  However, we will add UI to allow a user
+                                // to switch of advanced swept solid support.
+                                if (ExporterCacheManager.ExportOptionsCache.ExportAdvancedSweptSolids)
                                     bodyExporterOptions.TryToExportAsSweptSolid = true;
 
                                 ElementId overrideMaterialId = ElementId.InvalidElementId;
@@ -732,16 +732,8 @@ namespace BIM.IFC.Exporter
                 if (wallElement.WallType.Kind == WallKind.Stacked)
                     return;
 
-                bool exportAsCurtainWall = wallElement.CurtainGrid != null;
-                bool isOldCurtainWall = IsLegacyCurtainWall(wallElement); ;
-
-                if (exportAsCurtainWall)
-                {
-                    if (!isOldCurtainWall)
-                        CurtainSystemExporter.ExportWall(exporterIFC, wallElement, productWrapper);
-                    else
-                        CurtainSystemExporter.ExportLegacyCurtainElement(exporterIFC, wallElement, productWrapper);
-                }
+                if (CurtainSystemExporter.IsCurtainSystem(wallElement))                
+                    CurtainSystemExporter.ExportWall(exporterIFC, wallElement, productWrapper);
                 else
                     ExportWall(exporterIFC, wallElement, geometryElement, productWrapper);
 
@@ -1182,34 +1174,6 @@ namespace BIM.IFC.Exporter
                 default:
                     throw new ArgumentException("Invalid IFCConnectedWallDataLocation", "location");
             }
-        }
-
-        /// <summary>
-        /// Checks if the wall is legacy curtain wall.
-        /// </summary>
-        /// <param name="wall">The wall.</param>
-        /// <returns>True if it is legacy curtain wall, false otherwise.</returns>
-        static bool IsLegacyCurtainWall(Wall wall)
-        {
-            try
-            {
-                CurtainGrid curtainGrid = wall.CurtainGrid;
-                if (curtainGrid != null)
-                {
-                    curtainGrid.GetPanelIds();
-                }
-                else
-                    return false;
-            }
-            catch (Autodesk.Revit.Exceptions.InvalidOperationException ex)
-            {
-                if (ex.Message == "The host object is obsolete.")
-                    return true;
-                else
-                    throw ex;
-            }
-
-            return false;
         }
     }
 }

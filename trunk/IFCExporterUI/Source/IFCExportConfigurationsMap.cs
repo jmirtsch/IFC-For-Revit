@@ -66,12 +66,12 @@ namespace BIM.IFC.Export.UI
         public void AddBuiltInConfigurations()
         {
             // These are the built-in configurations.  Provide a more extensible means of storage.
-            // Order of construction: name, version, space boundaries, QTO, split walls, internal sets, 2d elems.
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Default 2x3", IFCVersion.IFC2x3, 1, false, false, true, true, true));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Default 2x2", IFCVersion.IFC2x2, 1, false, false, true, false, true));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("BCA", IFCVersion.IFCBCA, 1, false, true, true, false, true));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("GSA", IFCVersion.IFCCOBIE, 2, true, true, true, true, true));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Coordination View 2.0", IFCVersion.IFC2x3CV2, 0, false, true, false, false, false));
+            // Order of construction: name, version, space boundaries, QTO, split walls, internal sets, 2d elems, surfaceStyles, boundingBox.
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Default 2x3", IFCVersion.IFC2x3, 1, false, false, true, true, true, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Default 2x2", IFCVersion.IFC2x2, 1, false, false, true, false, true, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("BCA", IFCVersion.IFCBCA, 1, false, true, true, false, true, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("GSA", IFCVersion.IFCCOBIE, 2, true, true, true, true, true, true));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Coordination View 2.0", IFCVersion.IFC2x3CV2, 0, false, true, false, false, false, false));
         }
 
         /// <summary>
@@ -126,6 +126,10 @@ namespace BIM.IFC.Export.UI
                             configuration.ExportPartsAsBuildingElements = bool.Parse(configMap[s_setupExportPartsAsBuildingElements]);
                         if (configMap.ContainsKey(s_setupExportSurfaceStyles))
                             configuration.ExportSurfaceStyles = bool.Parse(configMap[s_setupExportSurfaceStyles]);
+                        if (configMap.ContainsKey(s_setupExportAdvancedSweptSolids))
+                            configuration.ExportAdvancedSweptSolids = bool.Parse(configMap[s_setupExportAdvancedSweptSolids]);
+                        if (configMap.ContainsKey(s_setupExportBoundingBox))
+                            configuration.ExportBoundingBox = bool.Parse(configMap[s_setupExportBoundingBox]);
 
                         Add(configuration);
                     }
@@ -159,6 +163,12 @@ namespace BIM.IFC.Export.UI
                         Field fieldSurfaceStyles = m_schema.GetField(s_setupExportSurfaceStyles);
                         if (fieldSurfaceStyles != null)
                             configuration.ExportSurfaceStyles = configEntity.Get<bool>(s_setupExportSurfaceStyles);
+                        Field fieldExportAdvancedSweptSolids = m_schema.GetField(s_setupExportAdvancedSweptSolids);
+                        if (fieldExportAdvancedSweptSolids != null)
+                            configuration.ExportAdvancedSweptSolids = configEntity.Get<bool>(s_setupExportAdvancedSweptSolids);
+                        Field fieldExportBoundingBox = m_schema.GetField(s_setupExportBoundingBox);
+                        if (fieldExportBoundingBox != null)
+                            configuration.ExportBoundingBox = configEntity.Get<bool>(s_setupExportBoundingBox);
 
                         Add(configuration);
                     }
@@ -189,6 +199,8 @@ namespace BIM.IFC.Export.UI
         private const String s_setupUseFamilyAndTypeName = "UseFamilyAndTypeNameForReference";
         private const String s_setupExportPartsAsBuildingElements = "ExportPartsAsBuildingElements";
         private const String s_setupExportSurfaceStyles = "ExportSurfaceStyles";
+        private const String s_setupExportAdvancedSweptSolids = "ExportAdvancedSweptSolids";
+        private const String s_setupExportBoundingBox = "ExportBoundingBox";
 
         /// <summary>
         /// Updates the setups to save into the document.
@@ -290,6 +302,8 @@ namespace BIM.IFC.Export.UI
                 mapData.Add(s_setupUseFamilyAndTypeName, configuration.UseFamilyAndTypeNameForReference.ToString());
                 mapData.Add(s_setupExportPartsAsBuildingElements, configuration.ExportPartsAsBuildingElements.ToString());
                 mapData.Add(s_setupExportSurfaceStyles, configuration.ExportSurfaceStyles.ToString());
+                mapData.Add(s_setupExportAdvancedSweptSolids, configuration.ExportAdvancedSweptSolids.ToString());
+                mapData.Add(s_setupExportBoundingBox, configuration.ExportBoundingBox.ToString());
                 mapEntity.Set<IDictionary<string, String>>(s_configMapField, mapData);
 
                 configStorage.SetEntity(mapEntity);

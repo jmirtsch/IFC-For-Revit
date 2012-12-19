@@ -6,7 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" WindowStyle="SingleBorderWindow" ResizeMode="CanMinimize" Closing="Window_Closing" Height="379" Width="366">
     <Grid Width="342" Height="342">
         <ComboBox Height="23" HorizontalAlignment="Left" Margin="12,35,0,0" Name="currentSelectedSetup" VerticalAlignment="Top" Width="190" SelectionChanged="currentSelectedSetup_SelectionChanged" />
-        <TextBox Height="233" HorizontalAlignment="Left" Margin="12,72,0,0" Name="textBoxSetupDescription" VerticalAlignment="Top" Width="314" IsEnabled="False" TextWrapping="WrapWithOverflow" />
+        <TextBox Height="233" HorizontalAlignment="Left" Margin="12,72,0,0" Name="textBoxSetupDescription" VerticalAlignment="Top" Width="314" IsEnabled="True" IsReadOnly="True"  TextWrapping="WrapWithOverflow" VerticalScrollBarVisibility="Auto" />
         <Button Content="..." Height="23" HorizontalAlignment="Left" Margin="208,35,0,0" Name="buttonEditSetup" VerticalAlignment="Top" Width="29" Click="buttonEditSetup_Click" />
         <Button Content="Cancel" Height="23" HorizontalAlignment="Right" Margin="0,311,16,0" Name="buttonCancel" VerticalAlignment="Top" Width="75" Click="buttonCancel_Click" />
         <Button Content="Save Setup &amp; Close" Height="23" HorizontalAlignment="Left" Margin="117,311,0,0" Name="buttonSaveSetAndClose" VerticalAlignment="Top" Width="120" Click="buttonSaveSetAndClose_Click" />

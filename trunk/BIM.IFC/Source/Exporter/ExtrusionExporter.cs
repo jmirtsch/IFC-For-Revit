@@ -1199,6 +1199,18 @@ namespace BIM.IFC.Exporter
             }
         }
 
+        /// <summary>
+        /// Creates an extrusion with potential clipping from a solid representation of an element.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC class.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="catId">The category of the element and/or the solid geometry.</param>
+        /// <param name="solid">The solid geometry.</param>
+        /// <param name="plane">The extrusion base plane.</param>
+        /// <param name="projDir">The projection direction.</param>
+        /// <param name="range">The upper and lower limits of the extrusion, in the projection direction.</param>
+        /// <param name="completelyClipped">Returns true if the extrusion is completely outside the range.</param>
+        /// <returns>The extrusion handle.</returns>
         public static IFCAnyHandle CreateExtrusionWithClipping(ExporterIFC exporterIFC, Element element, ElementId catId,
             Solid solid, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped)
         {
@@ -1211,6 +1223,19 @@ namespace BIM.IFC.Exporter
         }
 
 
+        /// <summary>
+        /// Creates an extrusion with potential clipping from a list of solids corresponding to an element.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC class.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="catId">The category of the element and/or the solid geometry.</param>
+        /// <param name="solids">The list of solid geometries.</param>
+        /// <param name="plane">The extrusion base plane.</param>
+        /// <param name="projDir">The projection direction.</param>
+        /// <param name="range">The upper and lower limits of the extrusion, in the projection direction.</param>
+        /// <param name="completelyClipped">Returns true if the extrusion is completely outside the range.</param>
+        /// <param name="materialIds">The material ids of the solid geometry.</param>
+        /// <returns>The extrusion handle.</returns>
         public static IFCAnyHandle CreateExtrusionWithClipping(ExporterIFC exporterIFC, Element element, ElementId catId,
             IList<Solid> solids, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped, out HashSet<ElementId> materialIds)
         {
@@ -1219,6 +1244,18 @@ namespace BIM.IFC.Exporter
             return handleAndAnalyzer.Handle;
         }
 
+        /// <summary>
+        /// Creates an extrusion with potential clipping from a solid corresponding to an element, and supplies ExtrusionCreationData for the result.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC class.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="catId">The category of the element and/or the solid geometry.</param>
+        /// <param name="solid">The solid geometry.</param>
+        /// <param name="plane">The extrusion base plane.</param>
+        /// <param name="projDir">The projection direction.</param>
+        /// <param name="range">The upper and lower limits of the extrusion, in the projection direction.</param>
+        /// <param name="completelyClipped">Returns true if the extrusion is completely outside the range.</param>
+        /// <returns>The extrusion handle.</returns>
         public static HandleAndData CreateExtrusionWithClippingAndProperties(ExporterIFC exporterIFC, 
             Element element, ElementId catId, Solid solid, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped)
         {
@@ -1236,6 +1273,46 @@ namespace BIM.IFC.Exporter
             }
 
             return ret;
+        }
+
+        /// <summary>
+        /// Creates an extruded surface of type IfcSurfaceOfLinearExtrusion given a base 2D curve, a direction and a length.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC class.</param>
+        /// <param name="baseCurve">The curve to be extruded.</param>
+        /// <param name="extrusionDir">The direction of the extrusion.</param>
+        /// <param name="scaledExtrusionSize">The length of the extrusion, in IFC unit scale.</param>
+        /// <param name="unscaledBaseHeight">The Z value of the base level for the surface, in Revit unit scale.</param>
+        /// <returns>The extrusion handle.</returns>
+        /// <remarks>Note that scaledExtrusionSize and unscaledBaseHeight are in potentially different scaling units.</remarks>
+        public static IFCAnyHandle CreateExtrudedSurfaceFromCurve(ExporterIFC exporterIFC, Curve baseCurve, XYZ extrusionDir,
+            double scaledExtrusionSize, double unscaledBaseHeight)
+        {
+            IFCFile file = exporterIFC.GetFile();
+
+            Plane plane = new Plane(extrusionDir,XYZ.Zero);
+
+            // A list of IfcCurve entities.
+            IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, plane, extrusionDir, true);
+            ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, baseCurve, XYZ.Zero, true);
+
+            IList<IFCAnyHandle> profileCurves = info.GetCurves();
+
+            if ((profileCurves.Count != 1) || (!IFCAnyHandleUtil.IsSubTypeOf(profileCurves[0], IFCEntityType.IfcBoundedCurve)))
+                return null;
+
+            IFCAnyHandle sweptCurve = IFCInstanceExporter.CreateArbitraryOpenProfileDef(file, IFCProfileType.Curve, null, profileCurves[0]);
+
+            XYZ oCurveOrig = baseCurve.get_EndPoint(0);
+            XYZ orig = (new XYZ(0.0, 0.0, oCurveOrig[2] - unscaledBaseHeight)) * exporterIFC.LinearScale;
+
+            IFCAnyHandle surfaceAxis = ExporterUtil.CreateAxis(file, orig, null, null);
+            IFCAnyHandle direction = ExporterUtil.CreateDirection(file, extrusionDir);     // zDir
+
+            IFCAnyHandle surfOnRelatingElement = IFCInstanceExporter.CreateSurfaceOfLinearExtrusion(file, sweptCurve, surfaceAxis, direction, scaledExtrusionSize);
+
+            IFCAnyHandle extrudedSurfFromCurveHnd = IFCInstanceExporter.CreateConnectionSurfaceGeometry(file, surfOnRelatingElement, null);
+            return extrudedSurfFromCurveHnd;
         }
     }
 }

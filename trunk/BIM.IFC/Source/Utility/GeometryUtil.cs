@@ -1833,5 +1833,34 @@ namespace BIM.IFC.Utility
             greenValue = ((double)((color & 0xff00) >> 8)) / 255.0;
             redValue = ((double)(color & 0xff)) / 255.0;
         }
+
+        /// <summary>
+        /// Checks if the edge array on a face is oriented counter-clockwise (CCW).
+        /// </summary>
+        /// <param name="plannarFace">The face.</param>
+        /// <param name="edgeArray">The edge array.</param>
+        /// <returns>True if it is CCW.</returns>
+        public static bool IsEdgeArrayCCW(PlanarFace plannarFace, EdgeArray edgeArray)
+        {
+            bool isCCW = false;
+            CurveLoop curveLoop = new CurveLoop();
+            foreach (Edge edge in edgeArray)
+            {
+                Curve curve = edge.AsCurveFollowingFace(plannarFace);
+
+                curveLoop.Append(curve);
+            }
+
+            try
+            {
+                isCCW = curveLoop.IsCounterclockwise(-plannarFace.Normal);
+            }
+            catch (Exception)
+            {
+
+            }
+
+            return isCCW;
+        }
     }
 }

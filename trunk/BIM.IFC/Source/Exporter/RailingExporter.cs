@@ -71,7 +71,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return Toolkit.IFCRailingType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
             return GetIFCRailingTypeFromString(newValue);
         }
 
@@ -264,7 +264,13 @@ namespace BIM.IFC.Exporter
                         if (hostId != ElementId.InvalidElementId)
                         {
                             stairRampInfo = ExporterCacheManager.StairRampContainerInfoCache.GetStairRampContainerInfo(hostId);
-                            localPlacement = ExporterUtil.CreateLocalPlacement(file, stairRampInfo.LocalPlacements[0], null);
+                            IFCAnyHandle stairRampLocalPlacement = stairRampInfo.LocalPlacements[0];
+                            Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(stairRampLocalPlacement, localPlacement);
+                            Transform inverseTrf = relTrf.Inverse;
+
+                            IFCAnyHandle relativePlacement = ExporterUtil.CreateAxis2Placement3D(file, inverseTrf.Origin, inverseTrf.BasisZ, inverseTrf.BasisX);
+                            IFCAnyHandle railingLocalPlacement = ExporterUtil.CreateLocalPlacement(file, stairRampLocalPlacement, relativePlacement);
+                            localPlacement = railingLocalPlacement;
                         }
                         ecData.SetLocalPlacement(localPlacement);
 

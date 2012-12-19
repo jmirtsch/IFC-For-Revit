@@ -359,5 +359,44 @@ namespace BIM.IFC.Exporter
 
             return matIds;
         }
+
+        /// <summary>
+        /// Gets the material ids of finish function of the host object.
+        /// </summary>
+        /// <param name="hostObject">The host object.</param>
+        /// <returns>The material ids.</returns>
+        public static IList<ElementId> GetFinishMaterialIds(HostObject hostObject)
+        {
+            List<ElementId> matIds = new List<ElementId>();
+
+            ElementId typeElemId = hostObject.GetTypeId();
+            HostObjAttributes hostObjAttr = hostObject.Document.GetElement(typeElemId) as HostObjAttributes;
+            if (hostObjAttr == null)
+                return matIds;
+
+            ElementId baseMatId = CategoryUtil.GetBaseMaterialIdForElement(hostObject);
+            CompoundStructure cs = hostObjAttr.GetCompoundStructure();
+            if (cs != null)
+            {
+                for (int i = 0; i < cs.LayerCount; ++i)
+                {
+                    MaterialFunctionAssignment function = cs.GetLayerFunction(i);
+                    if (function == MaterialFunctionAssignment.Finish1 || function == MaterialFunctionAssignment.Finish2)
+                    {
+                        ElementId matId = cs.GetMaterialId(i);
+                        if (matId != ElementId.InvalidElementId)
+                        {
+                            matIds.Add(matId);
+                        }
+                        else
+                        {
+                            matIds.Add(baseMatId);
+                        }
+                    }
+                }
+            }
+
+            return matIds;
+        }
     }
 }

@@ -113,6 +113,18 @@ namespace BIM.IFC.Export.UI
         /// </summary>
         public bool ExportSurfaceStyles { get; set; }
 
+        /// <summary>
+        /// True to export advanced Swept Solids.
+        /// False to exclude them.
+        /// </summary>
+        public bool ExportAdvancedSweptSolids { get; set; }
+
+        /// <summary>
+        /// True to export bounding box.
+        /// False to exclude them.
+        /// </summary>
+        public bool ExportBoundingBox { get; set; }
+
         private bool m_isBuiltIn = false;
         private bool m_isInSession = false;
         private static IFCExportConfiguration s_inSessionConfiguration = null;
@@ -167,6 +179,8 @@ namespace BIM.IFC.Export.UI
             this.Export2DElements = false;
             this.ExportPartsAsBuildingElements = false;
             this.ExportSurfaceStyles = false;
+            this.ExportAdvancedSweptSolids = false;
+            this.ExportBoundingBox = false;
             this.m_isBuiltIn = false; 
             this.m_isInSession = false;
         }
@@ -181,6 +195,8 @@ namespace BIM.IFC.Export.UI
         /// <param name="splitWalls">The SplitWallsAndColumns.</param>
         /// <param name="internalSets">The ExportInternalRevitPropertySets.</param>
         /// <param name="PlanElems2D">The Export2DElements.</param>
+        /// <param name="surfaceStyles">The ExportSurfaceStyles.</param>
+        /// <param name="exportBoundingBox">The exportBoundingBox.</param>
         /// <returns>The builtIn configuration.</returns>
         public static IFCExportConfiguration CreateBuiltInConfiguration(string name, 
                                    IFCVersion ifcVersion, 
@@ -189,7 +205,8 @@ namespace BIM.IFC.Export.UI
                                    bool splitWalls,
                                    bool internalSets,
                                    bool PlanElems2D,
-                                   bool surfaceStyles)
+                                   bool surfaceStyles, 
+                                   bool exportBoundingBox)
         {
             IFCExportConfiguration configuration = new IFCExportConfiguration();
             configuration.Name = name; 
@@ -206,6 +223,8 @@ namespace BIM.IFC.Export.UI
             configuration.UseFamilyAndTypeNameForReference = false;
             configuration.ExportPartsAsBuildingElements = false;
             configuration.ExportSurfaceStyles = surfaceStyles;
+            configuration.ExportAdvancedSweptSolids = false;
+            configuration.ExportBoundingBox = exportBoundingBox;
             configuration.m_isBuiltIn = true;
             configuration.m_isInSession = false; 
             return configuration;
@@ -236,6 +255,8 @@ namespace BIM.IFC.Export.UI
             this.UseFamilyAndTypeNameForReference = other.UseFamilyAndTypeNameForReference;
             this.ExportPartsAsBuildingElements = other.ExportPartsAsBuildingElements;
             this.ExportSurfaceStyles = other.ExportSurfaceStyles;
+            this.ExportAdvancedSweptSolids = other.ExportAdvancedSweptSolids;
+            this.ExportBoundingBox = other.ExportBoundingBox;
             this.m_isBuiltIn = other.m_isBuiltIn;
             this.m_isInSession = other.m_isInSession;
         }
@@ -271,6 +292,8 @@ namespace BIM.IFC.Export.UI
             this.UseFamilyAndTypeNameForReference = other.UseFamilyAndTypeNameForReference;
             this.ExportPartsAsBuildingElements = other.ExportPartsAsBuildingElements;
             this.ExportSurfaceStyles = other.ExportSurfaceStyles;
+            this.ExportAdvancedSweptSolids = other.ExportAdvancedSweptSolids;
+            this.ExportBoundingBox = other.ExportBoundingBox;
             this.m_isBuiltIn = false;
             this.m_isInSession = false;
         }
@@ -326,8 +349,12 @@ namespace BIM.IFC.Export.UI
             options.AddOption("UseFamilyAndTypeNameForReference",UseFamilyAndTypeNameForReference.ToString());
             options.AddOption("ExportPartsAsBuildingElements", ExportPartsAsBuildingElements.ToString());
             options.AddOption("ExportSurfaceStyles", ExportSurfaceStyles.ToString());
+            options.AddOption("ExportAdvancedSweptSolids", ExportAdvancedSweptSolids.ToString());
+            options.AddOption("ExportBoundingBox", ExportBoundingBox.ToString());
 
             options.AddOption("FileType", IFCFileType.ToString());
+            string uiVersion = IFCUISettings.GetAssemblyVersion();
+            options.AddOption("AlternateUIVersion", uiVersion);
         }
 
         /// <summary>
@@ -358,6 +385,8 @@ namespace BIM.IFC.Export.UI
                 builder.AppendLine(GetDescriptionLine(Resources.UseFamilyAndTypeNameForReferences, UseFamilyAndTypeNameForReference));
                 builder.AppendLine(GetDescriptionLine(Resources.ExportPartsAsBuildingElements, ExportPartsAsBuildingElements));
                 builder.AppendLine(GetDescriptionLine(Resources.ExportSurfaceStyles, ExportSurfaceStyles));
+                builder.AppendLine(GetDescriptionLine(Resources.ExportAdvancedSweptSolids, ExportAdvancedSweptSolids));
+                builder.AppendLine(GetDescriptionLine(Resources.ExportBoundingBox, ExportBoundingBox));
 
                 return builder.ToString();
             }

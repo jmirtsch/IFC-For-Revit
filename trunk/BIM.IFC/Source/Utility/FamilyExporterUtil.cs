@@ -227,7 +227,7 @@ namespace BIM.IFC.Exporter
             Document doc = familyInstance.Document;
 
             bool isRoomRelated = IsRoomRelated(type);
-            bool isChildInContainer = false;
+            bool isChildInContainer = familyInstance.AssemblyInstanceId != ElementId.InvalidElementId;
 
             IFCAnyHandle localPlacementToUse = setter.GetPlacement();
             ElementId roomId = ElementId.InvalidElementId;
@@ -379,11 +379,10 @@ namespace BIM.IFC.Exporter
         /// This method will override the default value of the elemId label for certain element types, and then pass it on
         /// to the generic routine.
         /// </remarks>
-        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC class.</param>
         /// <param name="type">The export type.</param>
         /// <param name="ifcEnumType">The string value represents the IFC type.</param>
         /// <param name="guid">The guid.</param>
-        /// <param name="ownerHistory">The owner history handle.</param>
         /// <param name="name">The name.</param>
         /// <param name="description">The description.</param>
         /// <param name="applicableOccurrence">The optional data type of the entity.</param>
@@ -394,11 +393,10 @@ namespace BIM.IFC.Exporter
         /// <param name="instance">The family instance.</param>
         /// <param name="symbol">The element type.</param>
         /// <returns>The handle.</returns>
-        public static IFCAnyHandle ExportGenericType(IFCFile file,
+        public static IFCAnyHandle ExportGenericType(ExporterIFC exporterIFC,
            IFCExportType type,
            string ifcEnumType,
            string guid,
-           IFCAnyHandle ownerHistory,
            string name,
            string description,
            string applicableOccurrence,
@@ -409,6 +407,9 @@ namespace BIM.IFC.Exporter
            Element instance,
            ElementType symbol)
         {
+            IFCFile file = exporterIFC.GetFile();
+            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+
             string elemIdToUse = elemId;
             switch (type)
             {
@@ -420,8 +421,13 @@ namespace BIM.IFC.Exporter
                         break;
                     }
             }
-            return ExportGenericTypeBase(file, type, ifcEnumType, guid, ownerHistory, name, description, applicableOccurrence,
-               propertySets, representationMapList, elemIdToUse, typeName, instance, symbol);
+            
+            IFCAnyHandle typeHandle = ExportGenericTypeBase(file, type, ifcEnumType, guid, ownerHistory, name, description, applicableOccurrence,
+               null, representationMapList, elemIdToUse, typeName, instance, symbol);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(typeHandle))
+                Exporter.CreateElementTypeProperties(exporterIFC, symbol, propertySets, typeHandle);
+            
+            return typeHandle;
         }
 
         /// <summary>
@@ -599,6 +605,10 @@ namespace BIM.IFC.Exporter
                     return IFCInstanceExporter.CreateFlowMeterType(file, guid, ownerHistory, name,
                        description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetFlowMeterType(instance, ifcEnumType));
+                case IFCExportType.ExportFurnishingElement:
+                    return IFCInstanceExporter.CreateFurnishingElementType(file, guid, ownerHistory, name,
+                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                       typeName);
                 case IFCExportType.ExportFurnitureType:
                     return IFCInstanceExporter.CreateFurnitureType(file, guid, ownerHistory, name,
                        description, applicableOccurrence, propertySets, representationMapList, elementTag,
@@ -747,7 +757,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCActuatorType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "USERDEFINED", true) == 0)
                 return IFCActuatorType.UserDefined;
@@ -778,7 +788,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCAirTerminalBoxType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "USERDEFINED", true) == 0)
                 return IFCAirTerminalBoxType.UserDefined;
@@ -803,7 +813,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCAirTerminalType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "USERDEFINED", true) == 0)
                 return IFCAirTerminalType.UserDefined;
@@ -836,7 +846,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCAirToAirHeatRecoveryType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "USERDEFINED", true) == 0)
                 return IFCAirToAirHeatRecoveryType.UserDefined;
@@ -873,7 +883,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCAlarmType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "USERDEFINED", true) == 0)
                 return IFCAlarmType.UserDefined;
@@ -904,7 +914,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCBoilerType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "WATER", true) == 0)
                 return IFCBoilerType.Water;
@@ -925,7 +935,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCCableCarrierFittingType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "BEND", true) == 0)
                 return IFCCableCarrierFittingType.Bend;
@@ -950,7 +960,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCCableCarrierSegmentType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "CABLELADDERSEGMENT", true) == 0)
                 return IFCCableCarrierSegmentType.CableLadderSEGMENT;
@@ -975,7 +985,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCCableSegmentType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "CABLESEGMENT", true) == 0)
                 return IFCCableSegmentType.CableSegment;
@@ -996,7 +1006,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCChillerType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "AIRCOOLED", true) == 0)
                 return IFCChillerType.AirCooled;
@@ -1019,7 +1029,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCCoilType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "DXCOOLINGCOIL", true) == 0)
                 return IFCCoilType.DXCoolingCoil;
@@ -1048,7 +1058,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCCompressorType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "DYNAMIC", true) == 0)
                 return IFCCompressorType.Dynamic;
@@ -1095,7 +1105,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCCondenserType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "WATERCOOLEDSHELLTUBE", true) == 0)
                 return IFCCondenserType.WaterCooledShellTube;
@@ -1124,7 +1134,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCControllerType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "FLOATING", true) == 0)
                 return IFCControllerType.Floating;
@@ -1153,7 +1163,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCCooledBeamType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "ACTIVE", true) == 0)
                 return IFCCooledBeamType.Active;
@@ -1174,7 +1184,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCCoolingTowerType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "NATURALDRAFT", true) == 0)
                 return IFCCoolingTowerType.NaturalDraft;
@@ -1197,7 +1207,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCDamperType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "CONTROLDAMPER", true) == 0)
                 return IFCDamperType.ControlDamper;
@@ -1236,7 +1246,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCDistributionChamberElementType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "FORMEDDUCT", true) == 0)
                 return IFCDistributionChamberElementType.FormedDuct;
@@ -1269,7 +1279,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCDuctFittingType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "BEND", true) == 0)
                 return IFCDuctFittingType.Bend;
@@ -1300,7 +1310,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCDuctSegmentType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "RIGIDSEGMENT", true) == 0)
                 return IFCDuctSegmentType.RigidSegment;
@@ -1321,7 +1331,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCDuctSilencerType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "FLATOVAL", true) == 0)
                 return IFCDuctSilencerType.FlatOval;
@@ -1344,7 +1354,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCElectricApplianceType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "COMPUTER", true) == 0)
                 return IFCElectricApplianceType.Computer;
@@ -1409,7 +1419,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCElectricFlowStorageDeviceType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "BATTERY", true) == 0)
                 return IFCElectricFlowStorageDeviceType.Battery;
@@ -1450,7 +1460,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCElectricHeaterType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "ELECTRICPOINTHEATER", true) == 0)
                 return IFCElectricHeaterType.ElectricPointHeater;
@@ -1473,7 +1483,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCElectricMotorType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "DC", true) == 0)
                 return IFCElectricMotorType.DC;
@@ -1500,7 +1510,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCElectricTimeControlType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "TIMECLOCK", true) == 0)
                 return IFCElectricTimeControlType.TimeClock;
@@ -1523,7 +1533,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCEvaporativeCoolerType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "DIRECTEVAPORATIVERANDOMMEDIAAIRCOOLER", true) == 0)
                 return IFCEvaporativeCoolerType.DirectEvaporativeRandomMediaAirCooler;
@@ -1558,7 +1568,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCEvaporatorType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "DIRECTEXPANSIONSHELLANDTUBE", true) == 0)
                 return IFCEvaporatorType.DirectExpansionShellAndTube;
@@ -1585,7 +1595,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCFanType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "CENTRIFUGALFORWARDCURVED", true) == 0)
                 return IFCFanType.CentrifugalForwardCurved;
@@ -1616,7 +1626,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCFilterType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "AIRPARTICLEFILTER", true) == 0)
                 return IFCFilterType.AirParticleFilter;
@@ -1643,7 +1653,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCFireSuppressionTerminalType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "BREECHINGINLET", true) == 0)
                 return IFCFireSuppressionTerminalType.BreechingInlet;
@@ -1670,7 +1680,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCFlowInstrumentType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "PRESSUREGAUGE", true) == 0)
                 return IFCFlowInstrumentType.PressureGauge;
@@ -1703,7 +1713,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCFlowMeterType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "ELECTRICMETER", true) == 0)
                 return IFCFlowMeterType.ElectricMeter;
@@ -1732,7 +1742,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCGasTerminalType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "GASAPPLIANCE", true) == 0)
                 return IFCGasTerminalType.GasAppliance;
@@ -1755,7 +1765,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCHeatExchangerType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "PLATE", true) == 0)
                 return IFCHeatExchangerType.Plate;
@@ -1776,7 +1786,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCHumidifierType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "STEAMINJECTION", true) == 0)
                 return IFCHumidifierType.SteamInjection;
@@ -1833,7 +1843,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCLampType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "COMPACTFLUORESCENT", true) == 0)
                 return IFCLampType.CompactFluorescent;
@@ -1862,7 +1872,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCLightFixtureType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "POINTSOURCE", true) == 0)
                 return IFCLightFixtureType.PointSource;
@@ -1883,7 +1893,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCMemberType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "BRACE", true) == 0)
                 return IFCMemberType.Brace;
@@ -1924,7 +1934,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCMotorConnectionType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "BELTDRIVE", true) == 0)
                 return IFCMotorConnectionType.BeltDrive;
@@ -1947,7 +1957,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCOutletType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "AUDIOVISUALOUTLET", true) == 0)
                 return IFCOutletType.AudiovisualOutlet;
@@ -1970,7 +1980,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCPlateType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "CURTAINPANEL", true) == 0)
                 return IFCPlateType.Curtain_Panel;
@@ -1991,7 +2001,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCPipeFittingType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "BEND", true) == 0)
                 return IFCPipeFittingType.Bend;
@@ -2022,7 +2032,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCPipeSegmentType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "FLEXIBLESEGMENT", true) == 0)
                 return IFCPipeSegmentType.FlexibleSegment;
@@ -2047,7 +2057,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCProtectiveDeviceType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "FUSEDISCONNECTOR", true) == 0)
                 return IFCProtectiveDeviceType.FuseDisconnector;
@@ -2076,7 +2086,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCPumpType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "CIRCULATOR", true) == 0)
                 return IFCPumpType.Circulator;
@@ -2103,7 +2113,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCSanitaryTerminalType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "BATH", true) == 0)
                 return IFCSanitaryTerminalType.Bath;
@@ -2140,7 +2150,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCSensorType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "CO2SENSOR", true) == 0)
                 return IFCSensorType.Co2Sensor;
@@ -2183,7 +2193,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCSpaceHeaterType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "SECTIONALRADIATOR", true) == 0)
                 return IFCSpaceHeaterType.SectionalRadiator;
@@ -2214,7 +2224,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCStackTerminalType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "BIRDCAGE", true) == 0)
                 return IFCStackTerminalType.BirdCage;
@@ -2237,7 +2247,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCSwitchingDeviceType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "CONTACTOR", true) == 0)
                 return IFCSwitchingDeviceType.Contactor;
@@ -2264,7 +2274,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCTankType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "PREFORMED", true) == 0)
                 return IFCTankType.Preformed;
@@ -2289,7 +2299,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCTransformerType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "CURRENT", true) == 0)
                 return IFCTransformerType.Current;
@@ -2312,7 +2322,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCTransportElementType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "ELEVATOR", true) == 0)
                 return IFCTransportElementType.Elevator;
@@ -2335,7 +2345,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCTubeBundleType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "FINNED", true) == 0)
                 return IFCTubeBundleType.Finned;
@@ -2354,7 +2364,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCUnitaryEquipmentType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "AIRHANDLER", true) == 0)
                 return IFCUnitaryEquipmentType.AirHandler;
@@ -2379,7 +2389,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCValveType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "AIRRELEASE", true) == 0)
                 return IFCValveType.AirRelease;
@@ -2438,7 +2448,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCWasteTerminalType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "FLOORTRAP", true) == 0)
                 return IFCWasteTerminalType.FloorTrap;
@@ -2475,7 +2485,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCAssemblyPlace.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "SITE", true) == 0)
                 return IFCAssemblyPlace.Site;
