@@ -72,6 +72,20 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Creates an IFCData object as IfcLogical.
+        /// </summary>
+        /// <param name="value">The logical value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsLogical(IFCLogical value)
+        {
+            IFCData ifcData = IFCData.CreateLogical(value);
+            IList<string> types = new List<string>();
+            types.Add("IfcLogical");
+            ifcData.SetTypeList(types);
+            return ifcData;
+        }
+
+        /// <summary>
         /// Creates an IFCData object as IfcInteger.
         /// </summary>
         /// <param name="value">The integer value.</param>
@@ -205,6 +219,16 @@ namespace BIM.IFC.Toolkit
             return IFCData.CreateDoubleOfType(value, "IfcParameterValue");
         }
 
+        /// <summary>
+        /// Creates an IFCData object as IfcPowerMeasure.
+        /// </summary>
+        /// <param name="value">The double value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsPowerMeasure(double value)
+        {
+            return IFCData.CreateDoubleOfType(value, "IfcPowerMeasure");
+        }
+        
         /// <summary>
         /// Creates an IFCData object as IfcThermodynamicTemperatureMeasure.
         /// </summary>

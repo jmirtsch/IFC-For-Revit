@@ -146,21 +146,31 @@ namespace BIM.IFC.Exporter
 
                             Transform barTrf = GetBarPositionTransform(element, i);
 
-                            IList<Curve> curves = new List<Curve>();
-                            foreach (Curve baseCurve in baseCurves)
+                        IList<Curve> curves = new List<Curve>();
+                        double endParam = 0.0;
+                        foreach (Curve baseCurve in baseCurves)
+                        {
+                            if (baseCurve is Arc || baseCurve is Ellipse)
                             {
-                                curves.Add(baseCurve.get_Transformed(barTrf));
+                                if (baseCurve.IsBound)
+                                    endParam += (baseCurve.get_EndParameter(1) - baseCurve.get_EndParameter(0)) * 180 / Math.PI;
+                                else
+                                    endParam += (2 * Math.PI) * 180 / Math.PI;
                             }
+                            else
+                                endParam += 1.0;
+                            curves.Add(baseCurve.get_Transformed(barTrf));
+                        }
 
-                            IFCAnyHandle compositeCurve = GeometryUtil.CreateCompositeCurve(exporterIFC, curves);
-                            IFCAnyHandle sweptDiskSolid = IFCInstanceExporter.CreateSweptDiskSolid(file, compositeCurve, radius, null, 0, 1);
-                            HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
-                            bodyItems.Add(sweptDiskSolid);
-                            ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
-                            IFCAnyHandle shapeRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, exporterIFC.Get3DContextHandle("Body"), bodyItems, null);
-                            IList<IFCAnyHandle> shapeReps = new List<IFCAnyHandle>();
-                            shapeReps.Add(shapeRep);
-                            prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
+                        IFCAnyHandle compositeCurve = GeometryUtil.CreateCompositeCurve(exporterIFC, curves);
+                        IFCAnyHandle sweptDiskSolid = IFCInstanceExporter.CreateSweptDiskSolid(file, compositeCurve, radius, null, 0, endParam);
+                        HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
+                        bodyItems.Add(sweptDiskSolid);
+                        ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
+                        IFCAnyHandle shapeRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, exporterIFC.Get3DContextHandle("Body"), bodyItems, null);
+                        IList<IFCAnyHandle> shapeReps = new List<IFCAnyHandle>();
+                        shapeReps.Add(shapeRep);
+                        prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
 
                             string steelGradeOpt = null;
                             IFCAnyHandle elemHnd = null;

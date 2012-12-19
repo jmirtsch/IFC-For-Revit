@@ -24,6 +24,7 @@ using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using BIM.IFC.Toolkit;
+using BIM.IFC.Utility;
 
 namespace BIM.IFC.Exporter.PropertySet
 {
@@ -43,7 +44,11 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// A list property (IfcListValue)
         /// </summary>
-        ListValue
+        ListValue,
+        /// <summary>
+        /// A reference property (IfcPropertyReferenceValue)
+        /// </summary>
+        ReferenceValue
     }
 
     /// <summary>
@@ -115,6 +120,18 @@ namespace BIM.IFC.Exporter.PropertySet
         /// A volumetric flow rate value.
         /// </summary>
         VolumetricFlowRate,
+        /// <summary>
+        /// A logical value: true, false, or unknown.
+        /// </summary>
+        Logical,
+        /// <summary>
+        /// A power value.
+        /// </summary>
+        Power,
+        /// <summary>
+        /// An IfcClassificationReference value.
+        /// </summary>
+        ClassificationReference
     }
 
     /// <summary>
@@ -131,6 +148,11 @@ namespace BIM.IFC.Exporter.PropertySet
         /// The value type of the IFC property set entry.
         /// </summary>
         PropertyValueType m_PropertyValueType = PropertyValueType.SingleValue;
+
+        /// <summary>
+        /// The type of the Enum that will validate the value for an enumeration.
+        /// </summary>
+        Type m_PropertyEnumerationType = null;
 
         /// <summary>
         /// Constructs a PropertySetEntry object.
@@ -175,6 +197,21 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
+        /// The type of the Enum that will validate the value for an enumeration.
+        /// </summary>
+        public Type PropertyEnumerationType
+        {
+            get
+            {
+                return m_PropertyEnumerationType;
+            }
+            private set
+            {
+                m_PropertyEnumerationType = value;
+            }
+        }
+
+        /// <summary>
         /// Creates an entry of type real.
         /// </summary>
         /// <param name="revitParameterName">
@@ -187,6 +224,18 @@ namespace BIM.IFC.Exporter.PropertySet
         {
             PropertySetEntry pse = new PropertySetEntry(revitParameterName);
             pse.PropertyType = PropertyType.Real;
+            return pse;
+        }
+
+        /// <summary>
+        /// Creates an entry of type Power.
+        /// </summary>
+        /// <param name="revitParameterName">Revit parameter name.</param>
+        /// <returns>The PropertySetEntry.</returns>
+        public static PropertySetEntry CreatePower(string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = PropertyType.Power;
             return pse;
         }
 
@@ -239,6 +288,22 @@ namespace BIM.IFC.Exporter.PropertySet
         {
             PropertySetEntry pse = new PropertySetEntry(revitParameterName);
             pse.PropertyType = PropertyType.Boolean;
+            return pse;
+        }
+
+        /// <summary>
+        /// Creates an entry of type logical.
+        /// </summary>
+        /// <param name="revitParameterName">
+        /// Revit parameter name.
+        /// </param>
+        /// <returns>
+        /// The PropertySetEntry.
+        /// </returns>
+        public static PropertySetEntry CreateLogical(string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = PropertyType.Logical;
             return pse;
         }
 
@@ -384,11 +449,25 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>
         /// The PropertySetEntry.
         /// </returns>
-        public static PropertySetEntry CreateEnumeratedValue(string revitParameterName, PropertyType propertyType)
+        public static PropertySetEntry CreateEnumeratedValue(string revitParameterName, PropertyType propertyType, Type enumType)
         {
             PropertySetEntry pse = new PropertySetEntry(revitParameterName);
             pse.PropertyType = propertyType;
             pse.PropertyValueType = PropertyValueType.EnumeratedValue;
+            pse.PropertyEnumerationType = enumType;
+            return pse;
+        }
+
+        /// <summary>
+        /// Creates an external reference to IfcClassificationReference.
+        /// </summary>
+        /// <param name="revitParameterName">Revit parameter name.</param>
+        /// <returns>The PropertySetEntry.</returns>
+        public static PropertySetEntry CreateClassificationReference(string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = PropertyType.ClassificationReference;
+            pse.PropertyValueType = PropertyValueType.ReferenceValue;
             return pse;
         }
 
@@ -486,14 +565,20 @@ namespace BIM.IFC.Exporter.PropertySet
             IFCAnyHandle propHnd = null;
             PropertyType propertyType = PropertyType;
             PropertyValueType valueType = PropertyValueType;
+            Type propertyEnumerationType = PropertyEnumerationType;
 
             string ifcPropertyName = ParameterNameToUse;
 
             switch (propertyType)
             {
+                case PropertyType.Text:
+                    {
+                        propHnd = PropertyUtil.CreateTextPropertyFromElementOrSymbol(file, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType, propertyEnumerationType);
+                        break;
+                    }
                 case PropertyType.Label:
                     {
-                        propHnd = PropertyUtil.CreateLabelPropertyFromElementOrSymbol(file, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
+                        propHnd = PropertyUtil.CreateLabelPropertyFromElementOrSymbol(file, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType, propertyEnumerationType);
                         break;
                     }
                 case PropertyType.Identifier:
@@ -504,6 +589,11 @@ namespace BIM.IFC.Exporter.PropertySet
                 case PropertyType.Boolean:
                     {
                         propHnd = PropertyUtil.CreateBooleanPropertyFromElementOrSymbol(file, element, RevitParameterName, ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.Logical:
+                    {
+                        propHnd = PropertyUtil.CreateLogicalPropertyFromElementOrSymbol(file, element, RevitParameterName, ifcPropertyName, valueType);
                         break;
                     }
                 case PropertyType.Integer:
@@ -547,6 +637,11 @@ namespace BIM.IFC.Exporter.PropertySet
                         propHnd = PropertyUtil.CreateCountMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
                         break;
                     }
+                case PropertyType.Power:
+                    {
+                        propHnd = PropertyUtil.CreatePowerPropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
+                        break;
+                    }
                 case PropertyType.ThermodynamicTemperature:
                     {
                         propHnd = PropertyUtil.CreateThermodynamicTemperaturePropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
@@ -560,6 +655,11 @@ namespace BIM.IFC.Exporter.PropertySet
                 case PropertyType.VolumetricFlowRate:
                     {
                         propHnd = PropertyUtil.CreateVolumetricFlowRatePropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.ClassificationReference:
+                    {
+                        propHnd = PropertyUtil.CreateClassificationReferencePropertyFromElementOrSymbol(file, exporterIFC, element, RevitParameterName, RevitBuiltInParameter, ifcPropertyName);
                         break;
                     }
                 default:
@@ -587,15 +687,21 @@ namespace BIM.IFC.Exporter.PropertySet
             {
                 PropertyType propertyType = PropertyType;
                 PropertyValueType valueType = PropertyValueType;
+                Type propertyEnumerationType = PropertyEnumerationType;
 
                 switch (propertyType)
                 {
                     case PropertyType.Label:
                         {
                             if (PropertyCalculator.CalculatesMutipleValues)
-                                propHnd = PropertyUtil.CreateLabelProperty(file, PropertyName, PropertyCalculator.GetStringValues(), valueType);
+                                propHnd = PropertyUtil.CreateLabelProperty(file, PropertyName, PropertyCalculator.GetStringValues(), valueType, propertyEnumerationType);
                             else
-                                propHnd = PropertyUtil.CreateLabelPropertyFromCache(file, PropertyName, PropertyCalculator.GetStringValue(), valueType, false);
+                                propHnd = PropertyUtil.CreateLabelPropertyFromCache(file, PropertyName, PropertyCalculator.GetStringValue(), valueType, false, propertyEnumerationType);
+                            break;
+                        }
+                    case PropertyType.Text:
+                        {
+                            propHnd = PropertyUtil.CreateTextPropertyFromCache(file, PropertyName, PropertyCalculator.GetStringValue(), valueType);
                             break;
                         }
                     case PropertyType.Identifier:
@@ -606,6 +712,11 @@ namespace BIM.IFC.Exporter.PropertySet
                     case PropertyType.Boolean:
                         {
                             propHnd = PropertyUtil.CreateBooleanPropertyFromCache(file, PropertyName, PropertyCalculator.GetBooleanValue(), valueType);
+                            break;
+                        }
+                    case PropertyType.Logical:
+                        {
+                            propHnd = PropertyUtil.CreateLogicalPropertyFromCache(file, PropertyName, PropertyCalculator.GetLogicalValue(), valueType);
                             break;
                         }
                     case PropertyType.Integer:
@@ -656,6 +767,11 @@ namespace BIM.IFC.Exporter.PropertySet
                                 propHnd = PropertyUtil.CreateCountMeasureProperty(file, PropertyName, PropertyCalculator.GetIntValue(PropertyName), valueType);
                             else
                                 propHnd = PropertyUtil.CreateCountMeasureProperty(file, PropertyName, PropertyCalculator.GetIntValue(), valueType);
+                            break;
+                        }
+                    case PropertyType.Power:
+                        {
+                            propHnd = PropertyUtil.CreatePowerPropertyFromCache(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                             break;
                         }
                     case PropertyType.ThermodynamicTemperature:

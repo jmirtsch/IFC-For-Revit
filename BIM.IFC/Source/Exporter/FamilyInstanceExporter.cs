@@ -57,16 +57,11 @@ namespace BIM.IFC.Exporter
             if (familyInstance.Invisible || geometryElement == null)
                 return;
 
-            // Don't export mullions and panels if they have a host and their host is not a mass
-            // as they will be exported with the host (curtain wall/roof).
-            if (familyInstance.Category.Id == new ElementId(BuiltInCategory.OST_CurtainWallMullions) ||
-                familyInstance.Category.Id == new ElementId(BuiltInCategory.OST_CurtainWallPanels))
-            {
-                Element host = familyInstance.Host;
-                if (host != null && host.Category.Id != new ElementId(BuiltInCategory.OST_Mass))
-                    return;
-            }
-
+            // Don't export family instance if it has a curtain grid host; the host will be in charge of exporting.
+            Element host = familyInstance.Host;
+            if (CurtainSystemExporter.IsCurtainSystem(host))
+                return;
+            
             FamilySymbol familySymbol = familyInstance.Symbol;
             Family family = familySymbol.Family;
             if (family == null)
@@ -165,8 +160,10 @@ namespace BIM.IFC.Exporter
             Document doc = familyInstance.Document;
             IFCFile file = exporterIFC.GetFile();
 
-            FamilySymbol familySymbol = ExporterIFCUtils.GetOriginalSymbol(familyInstance);
-            if (familySymbol == null)
+            // The "originalFamilySymbol" has the right geometry, but should be used as little as possible.
+            FamilySymbol originalFamilySymbol = ExporterIFCUtils.GetOriginalSymbol(familyInstance);
+            FamilySymbol familySymbol = familyInstance.Symbol;
+            if (originalFamilySymbol == null || familySymbol == null)
                 return;
 
             ProductWrapper familyProductWrapper = ProductWrapper.Create(wrapper);
@@ -184,7 +181,7 @@ namespace BIM.IFC.Exporter
 
             // A Family Instance can have its own copy of geometry, or use the symbol's copy with a transform.
             // The routine below tells us whether to use the Instance's copy or the Symbol's copy.
-            bool useInstanceGeometry = ExporterIFCUtils.UsesInstanceGeometry(familyInstance);       
+            bool useInstanceGeometry = ExporterIFCUtils.UsesInstanceGeometry(familyInstance);
 
             IList<IFCExtrusionData> cutPairOpeningsForColumns = new List<IFCExtrusionData>();
             using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
@@ -194,15 +191,15 @@ namespace BIM.IFC.Exporter
                 // Extra information if we are exporting a door or a window.
                 IFCDoorWindowInfo doorWindowInfo = null;
                 if (exportType == IFCExportType.ExportDoorType)
-                    doorWindowInfo = IFCDoorWindowInfo.CreateDoorInfo(exporterIFC, familyInstance, familySymbol, hostElement, overrideLevelId, trf);
+                    doorWindowInfo = IFCDoorWindowInfo.CreateDoorInfo(exporterIFC, familyInstance, originalFamilySymbol, hostElement, overrideLevelId, trf);
                 else if (exportType == IFCExportType.ExportWindowType)
-                    doorWindowInfo = IFCDoorWindowInfo.CreateWindowInfo(exporterIFC, familyInstance, familySymbol, hostElement, overrideLevelId, trf);
+                    doorWindowInfo = IFCDoorWindowInfo.CreateWindowInfo(exporterIFC, familyInstance, originalFamilySymbol, hostElement, overrideLevelId, trf);
 
                 FamilyTypeInfo typeInfo = new FamilyTypeInfo();
                 XYZ extraOffset = XYZ.Zero;
 
                 bool flipped = doorWindowInfo != null ? doorWindowInfo.IsSymbolFlipped : false;
-                FamilyTypeInfo currentTypeInfo = ExporterCacheManager.TypeObjectsCache.Find(familySymbol.Id, flipped);
+                FamilyTypeInfo currentTypeInfo = ExporterCacheManager.TypeObjectsCache.Find(originalFamilySymbol.Id, flipped);
                 bool found = currentTypeInfo.IsValid();
 
                 Family family = familySymbol.Family;
@@ -263,7 +260,7 @@ namespace BIM.IFC.Exporter
                     IFCAnyHandle dummyPlacement = null;
                     if (doorWindowInfo != null)
                     {
-                        doorWindowTrf = ExporterIFCUtils.GetTransformForDoorOrWindow(familyInstance, familySymbol, doorWindowInfo);
+                        doorWindowTrf = ExporterIFCUtils.GetTransformForDoorOrWindow(familyInstance, originalFamilySymbol, doorWindowInfo);
                     }
                     else
                     {
@@ -284,7 +281,7 @@ namespace BIM.IFC.Exporter
                             }
 
                             GeometryElement exportGeometry =
-                               useInstanceGeometry ? familyInstance.get_Geometry(options) : familySymbol.get_Geometry(options);
+                               useInstanceGeometry ? familyInstance.get_Geometry(options) : originalFamilySymbol.get_Geometry(options);
                             if (exportGeometry == null)
                                 return;
 
@@ -436,12 +433,14 @@ namespace BIM.IFC.Exporter
                     // for many
                     HashSet<IFCAnyHandle> propertySets = new HashSet<IFCAnyHandle>();
 
-                    string guid = GUIDUtil.CreateGUID(familySymbol);
-                    string symId = NamingUtil.CreateIFCElementId(familySymbol);
+                    string guid = useInstanceGeometry ?
+                        GUIDUtil.CreateSubElementGUID(familyInstance, (int)IFCFamilyInstanceSubElements.InstanceAsType) :
+                        GUIDUtil.CreateGUID(originalFamilySymbol);
+                    string symId = NamingUtil.CreateIFCElementId(originalFamilySymbol);
 
                     // This covers many generic types.  If we can't find it in the list here, do custom exports.
-                    IFCAnyHandle typeStyle = FamilyExporterUtil.ExportGenericType(file, exportType, ifcEnumType, guid,
-                       ownerHistory, objectType, null, null, propertySets, repMapList, symId, objectType,
+                    IFCAnyHandle typeStyle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, guid,
+                       objectType, null, null, propertySets, repMapList, symId, objectType,
                        familyInstance, familySymbol);
 
                     // Cover special cases not covered above.
@@ -451,20 +450,9 @@ namespace BIM.IFC.Exporter
                         {
                             case IFCExportType.ExportColumnType:
                                 {
-                                    // If we are using the instance GRep, then we have to create a generic GUID for the
-                                    // column type, as they share the same ElementId.
-                                    string colGUID = null;
-                                    string colElemId = null;
-
-                                    if (useInstanceGeometry)
-                                        colGUID = GUIDUtil.CreateGUID();
-                                    else
-                                        colGUID = guid;
-                                    colElemId = NamingUtil.CreateIFCElementId(familySymbol);
-
                                     string columnType = "Column";
-                                    typeStyle = IFCInstanceExporter.CreateColumnType(file, colGUID, ownerHistory, objectType,
-                                       null, null, propertySets, repMapList, colElemId,
+                                    typeStyle = IFCInstanceExporter.CreateColumnType(file, guid, ownerHistory, objectType,
+                                       null, null, propertySets, repMapList, symId,
                                        objectType, GetColumnType(familyInstance, columnType));
 
                                     break;
@@ -482,25 +470,24 @@ namespace BIM.IFC.Exporter
                                        familyInstance);
                                     propertySets.UnionWith(doorPanels);
 
-                                    string doorStyleGUID = GUIDUtil.CreateGUID();
-                                    string doorStyleElemId = NamingUtil.CreateIFCElementId(familySymbol);
+                                    string doorStyleGUID = GUIDUtil.CreateSubElementGUID(originalFamilySymbol, (int)IFCDoorSubElements.DoorStyle);
                                     typeStyle = IFCInstanceExporter.CreateDoorStyle(file, doorStyleGUID, ownerHistory, objectType,
-                                       null, null, propertySets, repMapList, doorStyleElemId,
-                                       GetDoorStyleOperation(doorWindowInfo.DoorOperationType), GetDoorStyleConstruction(familyInstance, constructionType),
+                                       null, null, propertySets, repMapList, symId,
+                                       GetDoorStyleOperation(doorWindowInfo.DoorOperationType),
+                                       GetDoorStyleConstruction(familyInstance, constructionType),
                                        paramTakesPrecedence, sizeable);
                                     break;
                                 }
                             case IFCExportType.ExportSystemFurnitureElementType:
                                 {
-                                    string furnitureId = NamingUtil.CreateIFCElementId(familySymbol);
-                                    typeStyle = IFCInstanceExporter.CreateSystemFurnitureElementType(file, guid, ownerHistory, objectType,
-                                       null, null, propertySets, repMapList, furnitureId,
+                                    typeStyle = IFCInstanceExporter.CreateSystemFurnitureElementType(file, guid, ownerHistory,
+                                        objectType, null, null, propertySets, repMapList, symId,
                                        objectType);
                                     break;
                                 }
                             case IFCExportType.ExportWindowType:
                                 {
-                                    Toolkit.IFCWindowStyleOperation operationType = DoorWindowUtil.GetIFCWindowStyleOperation(familySymbol);
+                                    Toolkit.IFCWindowStyleOperation operationType = DoorWindowUtil.GetIFCWindowStyleOperation(originalFamilySymbol);
                                     IFCWindowStyleConstruction constructionType = DoorWindowUtil.GetIFCWindowStyleConstruction(familyInstance, "");
 
                                     IFCAnyHandle windowLining = DoorWindowUtil.CreateWindowLiningProperties(exporterIFC, familyInstance, null);
@@ -511,10 +498,9 @@ namespace BIM.IFC.Exporter
                                        DoorWindowUtil.CreateWindowPanelProperties(exporterIFC, familyInstance, null);
                                     propertySets.UnionWith(windowPanels);
 
-                                    string windowStyleGUID = GUIDUtil.CreateGUID();
-                                    string windowStyleElemId = NamingUtil.CreateIFCElementId(familySymbol);
+                                    string windowStyleGUID = GUIDUtil.CreateSubElementGUID(originalFamilySymbol, (int)IFCWindowSubElements.WindowStyle);
                                     typeStyle = IFCInstanceExporter.CreateWindowStyle(file, windowStyleGUID, ownerHistory, objectType,
-                                       null, null, propertySets, repMapList, windowStyleElemId,
+                                       null, null, propertySets, repMapList, symId,
                                        constructionType, operationType, paramTakesPrecedence, sizeable);
                                     break;
                                 }
@@ -545,7 +531,7 @@ namespace BIM.IFC.Exporter
                             typeInfo.ScaledOuterPerimeter = extraParams.ScaledOuterPerimeter;
                         }
 
-                        ClassificationUtil.CreateUniformatClassification(exporterIFC, file, familySymbol, typeStyle);
+                        ClassificationUtil.CreateUniformatClassification(exporterIFC, file, originalFamilySymbol, typeStyle);
                     }
                 }
                 else if (!creatingType && (trySpecialColumnCreation))
@@ -565,7 +551,7 @@ namespace BIM.IFC.Exporter
 
                 // add to the map, as long as we are not using range, not using instance geometry, and don't have extra openings.
                 if ((range == null) && !useInstanceGeometry && (extraParams.GetOpenings().Count == 0))
-                    ExporterCacheManager.TypeObjectsCache.Register(familySymbol.Id, flipped, typeInfo);
+                    ExporterCacheManager.TypeObjectsCache.Register(originalFamilySymbol.Id, flipped, typeInfo);
 
                 Transform oldTrf = new Transform(trf);
                 XYZ scaledMapOrigin = XYZ.Zero;
@@ -595,7 +581,7 @@ namespace BIM.IFC.Exporter
                     {
                         IList<IFCAnyHandle> representations = new List<IFCAnyHandle>();
                         representations.Add(ExporterUtil.CreateDefaultMappedItem(file, repMap3dHnd, scaledMapOrigin));
-                        IFCAnyHandle shapeRep = RepresentationUtil.CreateBodyMappedItemRep(exporterIFC, familyInstance, categoryId, contextOfItems3d, 
+                        IFCAnyHandle shapeRep = RepresentationUtil.CreateBodyMappedItemRep(exporterIFC, familyInstance, categoryId, contextOfItems3d,
                             representations);
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(shapeRep))
                             return;
@@ -606,7 +592,7 @@ namespace BIM.IFC.Exporter
                     {
                         HashSet<IFCAnyHandle> representations = new HashSet<IFCAnyHandle>();
                         representations.Add(ExporterUtil.CreateDefaultMappedItem(file, repMap2dHnd, scaledMapOrigin));
-                        IFCAnyHandle shapeRep = RepresentationUtil.CreatePlanMappedItemRep(exporterIFC, familyInstance, categoryId, contextOfItems2d, 
+                        IFCAnyHandle shapeRep = RepresentationUtil.CreatePlanMappedItemRep(exporterIFC, familyInstance, categoryId, contextOfItems2d,
                             representations);
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(shapeRep))
                             return;
@@ -623,100 +609,104 @@ namespace BIM.IFC.Exporter
                     boundingBoxTrf = boundingBoxTrf.Multiply(trf.Inverse);
                     boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, familyInstance.get_Geometry(options), boundingBoxTrf);
                 }
-                
+
                 if (boundingBoxRep != null)
                     shapeReps.Add(boundingBoxRep);
 
-                IFCAnyHandle rep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
+                IFCAnyHandle repHnd = (shapeReps.Count > 0) ? IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps) : null;
 
-                IFCAnyHandle instanceHandle = null;
-                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, familyInstance, trf, null, overrideLevelId))
+                if (!(repHnd == null && ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2))
                 {
-                    string instanceGUID = GUIDUtil.CreateGUID(familyInstance);
-                    string instanceName = NamingUtil.GetIFCName(familyInstance);
-                    string instanceDescription = NamingUtil.GetDescriptionOverride(familyInstance, null);
-                    string instanceObjectType = NamingUtil.GetObjectTypeOverride(familyInstance, objectType);
-                    string instanceElemId = NamingUtil.CreateIFCElementId(familyInstance);
-
-                    IFCAnyHandle localPlacement = setter.GetPlacement();
-                    IFCAnyHandle overrideLocalPlacement = null;
-
-                    if (parentLocalPlacement != null)
+                    IFCAnyHandle instanceHandle = null;
+                    using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, familyInstance, trf, null, overrideLevelId))
                     {
-                        Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(parentLocalPlacement, localPlacement);
-                        Transform inverseTrf = relTrf.Inverse;
+                        string instanceGUID = GUIDUtil.CreateGUID(familyInstance);
+                        string instanceName = NamingUtil.GetIFCName(familyInstance);
+                        string instanceDescription = NamingUtil.GetDescriptionOverride(familyInstance, null);
+                        string instanceObjectType = NamingUtil.GetObjectTypeOverride(familyInstance, objectType);
+                        string instanceElemId = NamingUtil.CreateIFCElementId(familyInstance);
 
-                        IFCAnyHandle relativePlacement = ExporterUtil.CreateAxis2Placement3D(file, inverseTrf.Origin, inverseTrf.BasisZ, inverseTrf.BasisX);
-                        IFCAnyHandle plateLocalPlacement = IFCInstanceExporter.CreateLocalPlacement(file, parentLocalPlacement, relativePlacement);
-                        overrideLocalPlacement = plateLocalPlacement;
-                    }
-                    
-                    instanceHandle = FamilyExporterUtil.ExportGenericInstance(exportType, exporterIFC, familyInstance,
-                       wrapper, setter, extraParams, instanceGUID, ownerHistory, instanceName, instanceDescription, instanceObjectType,
-                       exportParts ? null : rep, instanceElemId, overrideLocalPlacement);
+						bool isChildInContainer = familyInstance.AssemblyInstanceId != ElementId.InvalidElementId;
 
-                    if (exportParts)
-                    {
-                        PartExporter.ExportHostPart(exporterIFC, familyInstance, instanceHandle, familyProductWrapper, setter, setter.GetPlacement(), overrideLevelId);
-                    }
+                        IFCAnyHandle localPlacement = setter.GetPlacement();
+                        IFCAnyHandle overrideLocalPlacement = null;                
 
-                    if (ElementFilteringUtil.IsMEPType(exportType))
-                        ExporterCacheManager.MEPCache.Register(familyInstance, instanceHandle);
+                        if (parentLocalPlacement != null)
+                        {
+                            Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(parentLocalPlacement, localPlacement);
+                            Transform inverseTrf = relTrf.Inverse;
 
-                    switch (exportType)
-                    {
-                        case IFCExportType.ExportColumnType:
-                            {
-                                IFCAnyHandle placementToUse = localPlacement;
-                                if (!useInstanceGeometry)
+                            IFCAnyHandle relativePlacement = ExporterUtil.CreateAxis2Placement3D(file, inverseTrf.Origin, inverseTrf.BasisZ, inverseTrf.BasisX);
+                            IFCAnyHandle plateLocalPlacement = IFCInstanceExporter.CreateLocalPlacement(file, parentLocalPlacement, relativePlacement);
+                            overrideLocalPlacement = plateLocalPlacement;
+                        }
+
+                        instanceHandle = FamilyExporterUtil.ExportGenericInstance(exportType, exporterIFC, familyInstance,
+                           wrapper, setter, extraParams, instanceGUID, ownerHistory, instanceName, instanceDescription, instanceObjectType,
+                           exportParts ? null : repHnd, instanceElemId, overrideLocalPlacement);
+
+                        if (exportParts)
+                        {
+                            PartExporter.ExportHostPart(exporterIFC, familyInstance, instanceHandle, familyProductWrapper, setter, setter.GetPlacement(), overrideLevelId);
+                        }
+
+                        if (ElementFilteringUtil.IsMEPType(exportType))
+                            ExporterCacheManager.MEPCache.Register(familyInstance, instanceHandle);
+
+                        switch (exportType)
+                        {
+                            case IFCExportType.ExportColumnType:
                                 {
-                                    bool needToCreateOpenings =
-                                        (cutPairOpeningsForColumns.Count != 0) || OpeningUtil.NeedToCreateOpenings(instanceHandle, extraParams);
-                                    if (needToCreateOpenings)
+                                    IFCAnyHandle placementToUse = localPlacement;
+                                    if (!useInstanceGeometry)
                                     {
-                                        Transform openingTrf = new Transform(oldTrf);
-                                        Transform extraRot = new Transform(oldTrf);
-                                        extraRot.Origin = XYZ.Zero;
-                                        openingTrf = openingTrf.Multiply(extraRot);
-                                        openingTrf = openingTrf.Multiply(typeInfo.StyleTransform);
+                                        bool needToCreateOpenings =
+                                            (cutPairOpeningsForColumns.Count != 0) || OpeningUtil.NeedToCreateOpenings(instanceHandle, extraParams);
+                                        if (needToCreateOpenings)
+                                        {
+                                            Transform openingTrf = new Transform(oldTrf);
+                                            Transform extraRot = new Transform(oldTrf);
+                                            extraRot.Origin = XYZ.Zero;
+                                            openingTrf = openingTrf.Multiply(extraRot);
+                                            openingTrf = openingTrf.Multiply(typeInfo.StyleTransform);
 
-                                        IFCAnyHandle openingRelativePlacement = ExporterUtil.CreateAxis2Placement3D(file, openingTrf.Origin * scale,
-                                           openingTrf.get_Basis(2), openingTrf.get_Basis(0));
-                                        IFCAnyHandle openingPlacement = ExporterUtil.CopyLocalPlacement(file, localPlacement);
-                                        GeometryUtil.SetRelativePlacement(openingPlacement, openingRelativePlacement);
-                                        placementToUse = openingPlacement;
+                                           	IFCAnyHandle openingRelativePlacement = ExporterUtil.CreateAxis2Placement3D(file, openingTrf.Origin * scale,
+                                            	openingTrf.get_Basis(2), openingTrf.get_Basis(0));
+                                           	IFCAnyHandle openingPlacement = ExporterUtil.CopyLocalPlacement(file, localPlacement);
+                                        	GeometryUtil.SetRelativePlacement(openingPlacement, openingRelativePlacement);
+                                        	placementToUse = openingPlacement;
+										}
                                     }
+
+                                    OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, cutPairOpeningsForColumns,
+                                       exporterIFC, placementToUse, setter, wrapper);
+                                    OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, exporterIFC,
+                                       placementToUse, setter, wrapper);
+
+                                    //export Base Quantities.
+                                    PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, instanceHandle, familyInstance, typeInfo);
+
+                                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
+                                    break;
                                 }
+                            case IFCExportType.ExportDoorType:
+                            case IFCExportType.ExportWindowType:
+                                {
+                                    double doorHeight = doorWindowInfo.OpeningHeight;
+                                    if (doorHeight < MathUtil.Eps())
+                                        doorHeight = GetMinSymbolHeight(originalFamilySymbol);
+                                    double doorWidth = doorWindowInfo.OpeningWidth;
+                                    if (doorWidth < MathUtil.Eps())
+                                        doorWidth = GetMinSymbolWidth(originalFamilySymbol);
 
-                                OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, cutPairOpeningsForColumns,
-                                   exporterIFC, placementToUse, setter, wrapper);
-                                OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, exporterIFC,
-                                   placementToUse, setter, wrapper);
+                                	double height = doorHeight * scale;
+                                	double width = doorWidth * scale;
 
-                                //export Base Quantities.
-                                PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, instanceHandle, familyInstance, typeInfo);
+                                	if (IFCAnyHandleUtil.IsNullOrHasNoValue(doorWindowInfo.GetLocalPlacement()))
+                                    	doorWindowInfo.SetLocalPlacement(localPlacement);
 
-                                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
-                                break;
-                            }
-                        case IFCExportType.ExportDoorType:
-                        case IFCExportType.ExportWindowType:
-                            {
-                                double doorHeight = doorWindowInfo.OpeningHeight;
-                                if (doorHeight < MathUtil.Eps())
-                                    doorHeight = GetMinSymbolHeight(familySymbol);
-                                double doorWidth = doorWindowInfo.OpeningWidth;
-                                if (doorWidth < MathUtil.Eps())
-                                    doorWidth = GetMinSymbolWidth(familySymbol);
-
-                                double height = doorHeight * scale;
-                                double width = doorWidth * scale;
-
-                                if (IFCAnyHandleUtil.IsNullOrHasNoValue(doorWindowInfo.GetLocalPlacement()))
-                                    doorWindowInfo.SetLocalPlacement(localPlacement);
-
-                                IFCAnyHandle doorWindowOrigLocalPlacement = doorWindowInfo.GetLocalPlacement();
-                                Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(localPlacement, doorWindowOrigLocalPlacement);
+                                	IFCAnyHandle doorWindowOrigLocalPlacement = doorWindowInfo.GetLocalPlacement();
+                                	Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(localPlacement, doorWindowOrigLocalPlacement);
 
                                 IFCAnyHandle doorWindowRelativePlacement = ExporterUtil.CreateAxis2Placement3D(file, relTrf.Origin, relTrf.BasisZ, relTrf.BasisX);
                                 IFCAnyHandle doorWindowLocalPlacement =
@@ -724,124 +714,71 @@ namespace BIM.IFC.Exporter
                                 if (exportType == IFCExportType.ExportDoorType)
                                     instanceHandle = IFCInstanceExporter.CreateDoor(file, instanceGUID, ownerHistory,
                                        instanceName, instanceDescription, instanceObjectType, doorWindowLocalPlacement,
-                                       rep, instanceElemId, height, width);
+                                       repHnd, instanceElemId, height, width);
                                 else if (exportType == IFCExportType.ExportWindowType)
                                     instanceHandle = IFCInstanceExporter.CreateWindow(file, instanceGUID, ownerHistory,
                                        instanceName, instanceDescription, instanceObjectType, doorWindowLocalPlacement,
-                                       rep, instanceElemId, height, width);
+                                       repHnd, instanceElemId, height, width);
                                 wrapper.AddElement(instanceHandle, setter, extraParams, true);
 
                                 exporterIFC.RegisterSpaceBoundingElementHandle(instanceHandle, familyInstance.Id, setter.LevelId);
 
-                                IFCAnyHandle placementToUse = doorWindowLocalPlacement;
-                                if (!useInstanceGeometry)
-                                {
-                                    // correct the placement to the symbol space
-                                    bool needToCreateOpenings = OpeningUtil.NeedToCreateOpenings(instanceHandle, extraParams);
-                                    if (needToCreateOpenings)
+                                    IFCAnyHandle placementToUse = doorWindowLocalPlacement;
+                                    if (!useInstanceGeometry)
                                     {
-                                        Transform openingTrf = Transform.Identity;
-                                        openingTrf.Origin = new XYZ(0, 0, setter.Offset);
-                                        openingTrf = openingTrf.Multiply(doorWindowTrf);
-                                        XYZ scaledOrigin = openingTrf.Origin * exporterIFC.LinearScale;
-                                        IFCAnyHandle openingRelativePlacement = ExporterUtil.CreateAxis2Placement3D(file, scaledOrigin, openingTrf.BasisZ, openingTrf.BasisX);
-                                        IFCAnyHandle openingLocalPlacement =
-                                           IFCInstanceExporter.CreateLocalPlacement(file, doorWindowLocalPlacement, openingRelativePlacement);
-                                        placementToUse = openingLocalPlacement;
-                                    }
-                                }
-                                // only necessary when exporting as possible breps.
-                                OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, exporterIFC,
-                                   placementToUse, setter, wrapper);
-                                if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities)
-                                    ExporterIFCUtils.CreateDoorWindowBaseQuantities(exporterIFC, instanceHandle, (doorHeight * scale), (doorWidth * scale));
-
-                                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
-                                break;
-                            }
-                        case IFCExportType.ExportMemberType:
-                            {
-                                OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, exporterIFC,
-                                   localPlacement, setter, wrapper);
-
-                                //export Base Quantities.
-                                PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, instanceHandle, familyInstance, typeInfo);
-                                // TODO: create PropertySet!
-                                //createMemberPropertySet(exporter, pFamInst, pWrapper, extraParams);
-                                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
-                                break;
-                            }
-                        case IFCExportType.ExportPlateType:
-                            {
-                                OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, exporterIFC,
-                                   localPlacement, setter, wrapper);
-
-                                // TODO: create PropertySet!
-                                //createPlatePropertySet(exporter, pFamInst, pWrapper, extraParams);
-                                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
-                                break;
-                            }
-                        case IFCExportType.ExportTransportElementType:
-                            {
-                                IFCAnyHandle localPlacementToUse;
-                                ElementId roomId = setter.UpdateRoomRelativeCoordinates(familyInstance, out localPlacementToUse);
-
-                                instanceHandle = IFCInstanceExporter.CreateTransportElement(file, instanceGUID, ownerHistory,
-                                   instanceName, instanceDescription, instanceObjectType,
-                                   localPlacementToUse, rep, instanceElemId, null, null, null);
-
-                                if (roomId == ElementId.InvalidElementId)
-                                {
-                                    wrapper.AddElement(instanceHandle, setter, extraParams, true);
-                                }
-                                else
-                                {
-                                    exporterIFC.RelateSpatialElement(roomId, instanceHandle);
-                                    wrapper.AddElement(instanceHandle, setter, extraParams, false);
-                                }
-
-                                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
-                                break;
-                            }
-                        case IFCExportType.ExportBuildingElementProxy:
-                        default:
-                            {
-                                bool isBuildingElementProxy = (exportType == IFCExportType.ExportBuildingElementProxy);
-
-                                IFCAnyHandle localPlacementToUse;
-                                ElementId roomId = setter.UpdateRoomRelativeCoordinates(familyInstance, out localPlacementToUse);
-
-                                if (!isBuildingElementProxy)
-                                {
-                                    if (FamilyExporterUtil.IsDistributionControlElementSubType(exportType))
-                                    {
-                                        instanceHandle = IFCInstanceExporter.CreateDistributionControlElement(file, instanceGUID,
-                                           ownerHistory, instanceName, instanceDescription, instanceObjectType,
-                                           localPlacementToUse, rep, instanceElemId, null);
-
-                                        if (roomId == ElementId.InvalidElementId)
+                                        // correct the placement to the symbol space
+                                        bool needToCreateOpenings = OpeningUtil.NeedToCreateOpenings(instanceHandle, extraParams);
+                                        if (needToCreateOpenings)
                                         {
-                                            wrapper.AddElement(instanceHandle, setter, extraParams, true);
-                                        }
-                                        else
-                                        {
-                                            exporterIFC.RelateSpatialElement(roomId, instanceHandle);
-                                            wrapper.AddElement(instanceHandle, setter, extraParams, false);
+                                            Transform openingTrf = Transform.Identity;
+                                            openingTrf.Origin = new XYZ(0, 0, setter.Offset);
+                                            openingTrf = openingTrf.Multiply(doorWindowTrf);
+                                            XYZ scaledOrigin = openingTrf.Origin * exporterIFC.LinearScale;
+                                            IFCAnyHandle openingRelativePlacement = ExporterUtil.CreateAxis2Placement3D(file, scaledOrigin, openingTrf.BasisZ, openingTrf.BasisX);
+                                        	IFCAnyHandle openingLocalPlacement =
+                                           		IFCInstanceExporter.CreateLocalPlacement(file, doorWindowLocalPlacement, openingRelativePlacement);
+                                            placementToUse = openingLocalPlacement;
                                         }
                                     }
-                                    else if (IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
-                                    {
-                                        isBuildingElementProxy = true;
-                                    }
+                                    // only necessary when exporting as possible breps.
+                                    OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, exporterIFC,
+                                       placementToUse, setter, wrapper);
+                                    if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities)
+                                        ExporterIFCUtils.CreateDoorWindowBaseQuantities(exporterIFC, instanceHandle, height, width);
+
+                                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
+                                    break;
                                 }
-
-                                if (isBuildingElementProxy)
+                            case IFCExportType.ExportMemberType:
                                 {
-                                    Toolkit.IFCElementComposition proxyType = Toolkit.IFCElementComposition.Element;
+                                    OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, exporterIFC,
+                                       localPlacement, setter, wrapper);
 
-                                    instanceHandle = IFCInstanceExporter.CreateBuildingElementProxy(file, instanceGUID,
-                                       ownerHistory, instanceName, instanceDescription, instanceObjectType,
-                                       localPlacementToUse, rep, instanceElemId, proxyType);
+                                    //export Base Quantities.
+                                    PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, instanceHandle, familyInstance, typeInfo);
+                                    // TODO: create PropertySet!
+                                    //createMemberPropertySet(exporter, pFamInst, pWrapper, extraParams);
+                                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
+                                    break;
+                                }
+                            case IFCExportType.ExportPlateType:
+                                {
+                                    OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, exporterIFC,
+                                       localPlacement, setter, wrapper);
+
+                                    // TODO: create PropertySet!
+                                    //createPlatePropertySet(exporter, pFamInst, pWrapper, extraParams);
+                                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
+                                    break;
+                                }
+                            case IFCExportType.ExportTransportElementType:
+                                {
+                                    IFCAnyHandle localPlacementToUse;
+                                    ElementId roomId = setter.UpdateRoomRelativeCoordinates(familyInstance, out localPlacementToUse);
+
+                                    instanceHandle = IFCInstanceExporter.CreateTransportElement(file, instanceGUID, ownerHistory,
+                                       instanceName, instanceDescription, instanceObjectType,
+                                       localPlacementToUse, repHnd, instanceElemId, null, null, null);
 
                                     if (roomId == ElementId.InvalidElementId)
                                     {
@@ -852,62 +789,117 @@ namespace BIM.IFC.Exporter
                                         exporterIFC.RelateSpatialElement(roomId, instanceHandle);
                                         wrapper.AddElement(instanceHandle, setter, extraParams, false);
                                     }
-                                }
 
-                                IFCAnyHandle placementToUse = localPlacement;
-                                if (!useInstanceGeometry)
+                                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
+                                    break;
+                                }
+                            case IFCExportType.ExportBuildingElementProxy:
+                            default:
                                 {
-                                    bool needToCreateOpenings = OpeningUtil.NeedToCreateOpenings(instanceHandle, extraParams);
-                                    if (needToCreateOpenings)
+                                    bool isBuildingElementProxy = (exportType == IFCExportType.ExportBuildingElementProxy);
+
+                                    IFCAnyHandle localPlacementToUse;
+                                    ElementId roomId = setter.UpdateRoomRelativeCoordinates(familyInstance, out localPlacementToUse);
+
+                                    if (!isBuildingElementProxy)
                                     {
-                                        Transform openingTrf = new Transform(oldTrf);
-                                        Transform extraRot = new Transform(oldTrf);
-                                        extraRot.Origin = XYZ.Zero;
-                                        openingTrf = openingTrf.Multiply(extraRot);
-                                        openingTrf = openingTrf.Multiply(typeInfo.StyleTransform);
+                                        if (FamilyExporterUtil.IsDistributionControlElementSubType(exportType))
+                                        {
+                                            instanceHandle = IFCInstanceExporter.CreateDistributionControlElement(file, instanceGUID,
+                                               ownerHistory, instanceName, instanceDescription, instanceObjectType,
+                                               localPlacementToUse, repHnd, instanceElemId, null);
 
-                                        IFCAnyHandle openingRelativePlacement = ExporterUtil.CreateAxis2Placement3D(file, openingTrf.Origin * scale,
-                                           openingTrf.get_Basis(2), openingTrf.get_Basis(0));
-                                        IFCAnyHandle openingPlacement = ExporterUtil.CopyLocalPlacement(file, localPlacement);
-                                        GeometryUtil.SetRelativePlacement(openingPlacement, openingRelativePlacement);
-                                        placementToUse = openingPlacement;
+                                            if (roomId == ElementId.InvalidElementId)
+                                            {
+                                                wrapper.AddElement(instanceHandle, setter, extraParams, true);
+                                            }
+                                            else
+                                            {
+                                                exporterIFC.RelateSpatialElement(roomId, instanceHandle);
+                                                wrapper.AddElement(instanceHandle, setter, extraParams, false);
+                                            }
+                                        }
+                                        else if (IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
+                                        {
+                                            isBuildingElementProxy = true;
+                                        }
                                     }
-                                }
 
-                                OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, exporterIFC,
-                                   placementToUse, setter, wrapper);
-                                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
-                                break;
-                            }
-                    }
+                                    if (isBuildingElementProxy)
+                                    {
+                                        Toolkit.IFCElementComposition proxyType = Toolkit.IFCElementComposition.Element;
 
-                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
-                    {
-                        if (doorWindowInfo != null)
-                        {
-                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(doorWindowInfo.GetOpening()))
-                            {
-                                string relGUID = GUIDUtil.CreateGUID();
-                                IFCInstanceExporter.CreateRelFillsElement(file, relGUID, ownerHistory, null, null, doorWindowInfo.GetOpening(), instanceHandle);
-                            }
-                            else if (doorWindowInfo.NeedsOpening)
-                            {
-                                bool added = doorWindowInfo.SetDelayedFamilyInstance(instanceHandle, localPlacement, doorWindowInfo.AssignedLevelId);
-                                if (added)
-                                    exporterIFC.RegisterDoorWindowForOpeningUpdate(doorWindowInfo);
-                                else
-                                {
-                                    // we need to fill a later opening.
-                                    exporterIFC.RegisterDoorWindowForUncreatedOpening(familyInstance.Id, instanceHandle);
+                                        instanceHandle = IFCInstanceExporter.CreateBuildingElementProxy(file, instanceGUID,
+                                           ownerHistory, instanceName, instanceDescription, instanceObjectType,
+                                           localPlacementToUse, repHnd, instanceElemId, proxyType);
+
+                                        if (roomId == ElementId.InvalidElementId)
+                                        {
+                                            wrapper.AddElement(instanceHandle, setter, extraParams, !isChildInContainer);
+                                        }
+                                        else
+                                        {
+                                            exporterIFC.RelateSpatialElement(roomId, instanceHandle);
+                                            wrapper.AddElement(instanceHandle, setter, extraParams, false);
+                                        }
+                                    }
+
+                                    IFCAnyHandle placementToUse = localPlacement;
+                                    if (!useInstanceGeometry)
+                                    {
+                                        bool needToCreateOpenings = OpeningUtil.NeedToCreateOpenings(instanceHandle, extraParams);
+                                        if (needToCreateOpenings)
+                                        {
+                                            Transform openingTrf = new Transform(oldTrf);
+                                            Transform extraRot = new Transform(oldTrf);
+                                            extraRot.Origin = XYZ.Zero;
+                                            openingTrf = openingTrf.Multiply(extraRot);
+                                            openingTrf = openingTrf.Multiply(typeInfo.StyleTransform);
+
+                                            XYZ scaledOrigin = openingTrf.Origin * scale;
+                                            IFCAnyHandle openingRelativePlacement = ExporterUtil.CreateAxis2Placement3D(file, scaledOrigin,
+                                               openingTrf.get_Basis(2), openingTrf.get_Basis(0));
+                                            IFCAnyHandle openingPlacement = ExporterUtil.CopyLocalPlacement(file, localPlacement);
+                                            GeometryUtil.SetRelativePlacement(openingPlacement, openingRelativePlacement);
+                                            placementToUse = openingPlacement;
+                                        }
+                                    }
+
+                                    OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, exporterIFC,
+                                       placementToUse, setter, wrapper);
+                                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
+                                    break;
                                 }
-                            }
                         }
 
-                        if (!exportParts)
-                            CategoryUtil.CreateMaterialAssociations(doc, exporterIFC, instanceHandle, typeInfo.MaterialIds);
-                        
-                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(typeInfo.Style))
-                            ExporterCacheManager.TypeRelationsCache.Add(typeInfo.Style, instanceHandle);
+                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
+                        {
+                            if (doorWindowInfo != null)
+                            {
+                                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(doorWindowInfo.GetOpening()))
+                                {
+                                    string relGUID = GUIDUtil.CreateGUID();
+                                    IFCInstanceExporter.CreateRelFillsElement(file, relGUID, ownerHistory, null, null, doorWindowInfo.GetOpening(), instanceHandle);
+                                }
+                                else if (doorWindowInfo.NeedsOpening)
+                                {
+                                    bool added = doorWindowInfo.SetDelayedFamilyInstance(instanceHandle, localPlacement, doorWindowInfo.AssignedLevelId);
+                                    if (added)
+                                        exporterIFC.RegisterDoorWindowForOpeningUpdate(doorWindowInfo);
+                                    else
+                                    {
+                                        // we need to fill a later opening.
+                                        exporterIFC.RegisterDoorWindowForUncreatedOpening(familyInstance.Id, instanceHandle);
+                                    }
+                                }
+                            }
+
+                            if (!exportParts)
+                                CategoryUtil.CreateMaterialAssociations(doc, exporterIFC, instanceHandle, typeInfo.MaterialIds);
+
+                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(typeInfo.Style))
+                                ExporterCacheManager.TypeRelationsCache.Add(typeInfo.Style, instanceHandle);
+                        }
                     }
                 }
             }
@@ -1043,7 +1035,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCColumnType.Column;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "USERDEFINED", true) == 0)
                 return IFCColumnType.UserDefined;
@@ -1118,7 +1110,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCDoorStyleConstruction.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "USERDEFINED", true) == 0)
                 return IFCDoorStyleConstruction.UserDefined;

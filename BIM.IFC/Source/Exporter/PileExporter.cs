@@ -123,7 +123,7 @@ namespace BIM.IFC.Exporter
             if (String.IsNullOrEmpty(value))
                 return IFCPileType.NotDefined;
 
-            string newValue = value.Replace(" ", "").Replace("_", "");
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "COHESION", true) == 0)
                 return IFCPileType.Cohesion;

@@ -52,7 +52,7 @@ namespace BIM.IFC.Exporter
                 string stringerTypeDescription = NamingUtil.GetDescriptionOverride(stringerType, null);
                 string stringerTypeElemId = NamingUtil.CreateIFCElementId(stringerType);
 
-                memberType = IFCInstanceExporter.CreateMemberType(file, GUIDUtil.CreateGUID(),
+                memberType = IFCInstanceExporter.CreateMemberType(file, stringerTypeGUID,
                     ownerHistory, stringerTypeName, stringerTypeDescription, null, null, null, stringerTypeElemId,
                     null, IFCMemberType.Stringer);
                 ExporterCacheManager.ElementToHandleCache.Register(stringerType.Id, memberType);
@@ -232,7 +232,7 @@ namespace BIM.IFC.Exporter
         /// <returns>The IFCStairType.</returns>
         public static IFCStairType GetIFCStairType(string stairTypeName)
         {
-            string typeName = stairTypeName.Replace(" ", "").Replace("_", "");
+            string typeName = NamingUtil.RemoveSpacesAndUnderscores(stairTypeName);
 
             if (String.Compare(typeName, "StraightRun", true) == 0 ||
                 String.Compare(typeName, "StraightRunStair", true) == 0)
@@ -666,8 +666,8 @@ namespace BIM.IFC.Exporter
                         using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                         {
                             ecData.AllowVerticalOffsetOfBReps = false;
-                            ecData.SetLocalPlacement(placementSetter.GetPlacement());
-                            ecData.ReuseLocalPlacement = false;
+                            ecData.SetLocalPlacement(ExporterUtil.CreateLocalPlacement(file, placementSetter.GetPlacement(), null));
+                            ecData.ReuseLocalPlacement = true;
 
                             GeometryElement runGeometryElement = run.get_Geometry(geomOptions);
 
@@ -685,40 +685,43 @@ namespace BIM.IFC.Exporter
                             IList<IFCAnyHandle> reps = new List<IFCAnyHandle>();
                             reps.Add(bodyRep);
 
-                            Transform runBoundaryTrf = (bodyData.BrepOffsetTransform == null) ? trf : trf.Multiply(bodyData.BrepOffsetTransform);
-                            Plane runBoundaryPlane = new Plane(runBoundaryTrf.BasisX, runBoundaryTrf.BasisY, runBoundaryTrf.Origin);
-                            XYZ runBoundaryProjDir = runBoundaryTrf.BasisZ;
-
-                            CurveLoop boundary = run.GetFootprintBoundary();
-                            IFCAnyHandle boundaryHnd = ExporterIFCUtils.CreateCurveFromCurveLoop(exporterIFC, boundary,
-                                runBoundaryPlane, runBoundaryProjDir);
-                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(boundaryHnd))
+                            if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
                             {
-                                HashSet<IFCAnyHandle> geomSelectSet = new HashSet<IFCAnyHandle>();
-                                geomSelectSet.Add(boundaryHnd);
+                                Transform runBoundaryTrf = (bodyData.BrepOffsetTransform == null) ? trf : trf.Multiply(bodyData.BrepOffsetTransform);
+                                Plane runBoundaryPlane = new Plane(runBoundaryTrf.BasisX, runBoundaryTrf.BasisY, runBoundaryTrf.Origin);
+                                XYZ runBoundaryProjDir = runBoundaryTrf.BasisZ;
 
-                                HashSet<IFCAnyHandle> boundaryItems = new HashSet<IFCAnyHandle>();
-                                boundaryItems.Add(IFCInstanceExporter.CreateGeometricSet(file, geomSelectSet));
+                                CurveLoop boundary = run.GetFootprintBoundary();
+                                IFCAnyHandle boundaryHnd = ExporterIFCUtils.CreateCurveFromCurveLoop(exporterIFC, boundary,
+                                    runBoundaryPlane, runBoundaryProjDir);
+                                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(boundaryHnd))
+                                {
+                                    HashSet<IFCAnyHandle> geomSelectSet = new HashSet<IFCAnyHandle>();
+                                    geomSelectSet.Add(boundaryHnd);
 
-                                IFCAnyHandle boundaryRep = RepresentationUtil.CreateGeometricSetRep(exporterIFC, run, categoryId, "FootPrint",
-                                    contextOfItemsFootPrint, boundaryItems);
-                                reps.Add(boundaryRep);
-                            }
+                                    HashSet<IFCAnyHandle> boundaryItems = new HashSet<IFCAnyHandle>();
+                                    boundaryItems.Add(IFCInstanceExporter.CreateGeometricSet(file, geomSelectSet));
 
-                            CurveLoop walkingLine = run.GetStairsPath();
-                            IFCAnyHandle walkingLineHnd = ExporterIFCUtils.CreateCurveFromCurveLoop(exporterIFC, walkingLine,
-                                runBoundaryPlane, runBoundaryProjDir);
-                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(walkingLineHnd))
-                            {
-                                HashSet<IFCAnyHandle> geomSelectSet = new HashSet<IFCAnyHandle>();
-                                geomSelectSet.Add(walkingLineHnd);
+                                    IFCAnyHandle boundaryRep = RepresentationUtil.CreateGeometricSetRep(exporterIFC, run, categoryId, "FootPrint",
+                                        contextOfItemsFootPrint, boundaryItems);
+                                    reps.Add(boundaryRep);
+                                }
 
-                                HashSet<IFCAnyHandle> walkingLineItems = new HashSet<IFCAnyHandle>();
-                                walkingLineItems.Add(IFCInstanceExporter.CreateGeometricSet(file, geomSelectSet));
+                                CurveLoop walkingLine = run.GetStairsPath();
+                                IFCAnyHandle walkingLineHnd = ExporterIFCUtils.CreateCurveFromCurveLoop(exporterIFC, walkingLine,
+                                    runBoundaryPlane, runBoundaryProjDir);
+                                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(walkingLineHnd))
+                                {
+                                    HashSet<IFCAnyHandle> geomSelectSet = new HashSet<IFCAnyHandle>();
+                                    geomSelectSet.Add(walkingLineHnd);
 
-                                IFCAnyHandle walkingLineRep = RepresentationUtil.CreateGeometricSetRep(exporterIFC, run, categoryId, "Axis",
-                                    contextOfItemsAxis, walkingLineItems);
-                                reps.Add(walkingLineRep);
+                                    HashSet<IFCAnyHandle> walkingLineItems = new HashSet<IFCAnyHandle>();
+                                    walkingLineItems.Add(IFCInstanceExporter.CreateGeometricSet(file, geomSelectSet));
+
+                                    IFCAnyHandle walkingLineRep = RepresentationUtil.CreateGeometricSetRep(exporterIFC, run, categoryId, "Axis",
+                                        contextOfItemsAxis, walkingLineItems);
+                                    reps.Add(walkingLineRep);
+                                }
                             }
 
                             Transform boundingBoxTrf = (bodyData.BrepOffsetTransform == null) ? Transform.Identity : bodyData.BrepOffsetTransform.Inverse;
@@ -762,8 +765,8 @@ namespace BIM.IFC.Exporter
                         using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                         {
                             ecData.AllowVerticalOffsetOfBReps = false;
-                            ecData.SetLocalPlacement(placementSetter.GetPlacement());
-                            ecData.ReuseLocalPlacement = false;
+                            ecData.SetLocalPlacement(ExporterUtil.CreateLocalPlacement(file, placementSetter.GetPlacement(), null));
+                            ecData.ReuseLocalPlacement = true;
 
                             GeometryElement landingGeometryElement = landing.get_Geometry(geomOptions);
 
@@ -782,40 +785,43 @@ namespace BIM.IFC.Exporter
                             IList<IFCAnyHandle> reps = new List<IFCAnyHandle>();
                             reps.Add(bodyRep);
 
-                            Transform landingBoundaryTrf = (bodyData.BrepOffsetTransform == null) ? trf : trf.Multiply(bodyData.BrepOffsetTransform);
-                            Plane landingBoundaryPlane = new Plane(landingBoundaryTrf.BasisX, landingBoundaryTrf.BasisY, landingBoundaryTrf.Origin);
-                            XYZ landingBoundaryProjDir = landingBoundaryTrf.BasisZ;
-
-                            CurveLoop boundary = landing.GetFootprintBoundary();
-                            IFCAnyHandle boundaryHnd = ExporterIFCUtils.CreateCurveFromCurveLoop(exporterIFC, boundary,
-                                landingBoundaryPlane, landingBoundaryProjDir);
-                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(boundaryHnd))
+                            if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
                             {
-                                HashSet<IFCAnyHandle> geomSelectSet = new HashSet<IFCAnyHandle>();
-                                geomSelectSet.Add(boundaryHnd);
+                                Transform landingBoundaryTrf = (bodyData.BrepOffsetTransform == null) ? trf : trf.Multiply(bodyData.BrepOffsetTransform);
+                                Plane landingBoundaryPlane = new Plane(landingBoundaryTrf.BasisX, landingBoundaryTrf.BasisY, landingBoundaryTrf.Origin);
+                                XYZ landingBoundaryProjDir = landingBoundaryTrf.BasisZ;
 
-                                HashSet<IFCAnyHandle> boundaryItems = new HashSet<IFCAnyHandle>();
-                                boundaryItems.Add(IFCInstanceExporter.CreateGeometricSet(file, geomSelectSet));
+                                CurveLoop boundary = landing.GetFootprintBoundary();
+                                IFCAnyHandle boundaryHnd = ExporterIFCUtils.CreateCurveFromCurveLoop(exporterIFC, boundary,
+                                    landingBoundaryPlane, landingBoundaryProjDir);
+                                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(boundaryHnd))
+                                {
+                                    HashSet<IFCAnyHandle> geomSelectSet = new HashSet<IFCAnyHandle>();
+                                    geomSelectSet.Add(boundaryHnd);
 
-                                IFCAnyHandle boundaryRep = RepresentationUtil.CreateGeometricSetRep(exporterIFC, landing, categoryId, "FootPrint",
-                                    contextOfItemsFootPrint, boundaryItems);
-                                reps.Add(boundaryRep);
-                            }
+                                    HashSet<IFCAnyHandle> boundaryItems = new HashSet<IFCAnyHandle>();
+                                    boundaryItems.Add(IFCInstanceExporter.CreateGeometricSet(file, geomSelectSet));
 
-                            CurveLoop walkingLine = landing.GetStairsPath();
-                            IFCAnyHandle walkingLineHnd = ExporterIFCUtils.CreateCurveFromCurveLoop(exporterIFC, walkingLine,
-                                landingBoundaryPlane, landingBoundaryProjDir);
-                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(walkingLineHnd))
-                            {
-                                HashSet<IFCAnyHandle> geomSelectSet = new HashSet<IFCAnyHandle>();
-                                geomSelectSet.Add(walkingLineHnd);
+                                    IFCAnyHandle boundaryRep = RepresentationUtil.CreateGeometricSetRep(exporterIFC, landing, categoryId, "FootPrint",
+                                        contextOfItemsFootPrint, boundaryItems);
+                                    reps.Add(boundaryRep);
+                                }
 
-                                HashSet<IFCAnyHandle> walkingLineItems = new HashSet<IFCAnyHandle>();
-                                walkingLineItems.Add(IFCInstanceExporter.CreateGeometricSet(file, geomSelectSet));
+                                CurveLoop walkingLine = landing.GetStairsPath();
+                                IFCAnyHandle walkingLineHnd = ExporterIFCUtils.CreateCurveFromCurveLoop(exporterIFC, walkingLine,
+                                    landingBoundaryPlane, landingBoundaryProjDir);
+                                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(walkingLineHnd))
+                                {
+                                    HashSet<IFCAnyHandle> geomSelectSet = new HashSet<IFCAnyHandle>();
+                                    geomSelectSet.Add(walkingLineHnd);
 
-                                IFCAnyHandle walkingLineRep = RepresentationUtil.CreateGeometricSetRep(exporterIFC, landing, categoryId, "Axis",
-                                    contextOfItemsAxis, walkingLineItems);
-                                reps.Add(walkingLineRep);
+                                    HashSet<IFCAnyHandle> walkingLineItems = new HashSet<IFCAnyHandle>();
+                                    walkingLineItems.Add(IFCInstanceExporter.CreateGeometricSet(file, geomSelectSet));
+
+                                    IFCAnyHandle walkingLineRep = RepresentationUtil.CreateGeometricSetRep(exporterIFC, landing, categoryId, "Axis",
+                                        contextOfItemsAxis, walkingLineItems);
+                                    reps.Add(walkingLineRep);
+                                }
                             }
 
                             Transform boundingBoxTrf = (bodyData.BrepOffsetTransform == null) ? Transform.Identity : bodyData.BrepOffsetTransform.Inverse;
@@ -857,8 +863,8 @@ namespace BIM.IFC.Exporter
 
                         using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                         {
-                            ecData.SetLocalPlacement(placementSetter.GetPlacement());
-                            ecData.ReuseLocalPlacement = false;
+                            ecData.SetLocalPlacement(ExporterUtil.CreateLocalPlacement(file, placementSetter.GetPlacement(), null));
+                            ecData.ReuseLocalPlacement = true;
 
                             GeometryElement supportGeometryElement = support.get_Geometry(geomOptions);
                             BodyData bodyData;

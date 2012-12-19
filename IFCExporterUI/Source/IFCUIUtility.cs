@@ -24,6 +24,7 @@ using System.Text;
 using System.IO;
 using System.IO.IsolatedStorage;
 using System.Windows;
+using System.Diagnostics;
 
 namespace BIM.IFC.Export.UI
 {
@@ -79,6 +80,21 @@ namespace BIM.IFC.Export.UI
                 // Write restore bounds value to file
                 writer.WriteLine(restoreBounds.ToString());
             }
+        }
+
+        /// <summary>
+        /// Get the assembly version of the UI.
+        /// </summary>
+        /// <returns>The version string.</returns>
+        static public string GetAssemblyVersion()
+        {
+            string assemblyFile = typeof(IFCCommandOverrideApplication).Assembly.Location;
+            string uiVersion = "Unknown Alternate UI version";
+            if (File.Exists(assemblyFile))
+            {
+                uiVersion = "Alternate UI " + FileVersionInfo.GetVersionInfo(assemblyFile).FileVersion;
+            }
+            return uiVersion;
         }
     }
 }

@@ -193,7 +193,7 @@ namespace BIM.IFC.Exporter
         /// <returns>The handle to the bounding box representation, or null if not valid or not exported.</returns>
         public static IFCAnyHandle ExportBoundingBox(ExporterIFC exporterIFC, GeometryElement geomElement, Transform trf)
         {
-            if (ExporterCacheManager.ExportOptionsCache.FileVersion != IFCVersion.IFCCOBIE)
+            if (!ExporterCacheManager.ExportOptionsCache.ExportBoundingBox)
                 return null;
 
             if (geomElement == null)
@@ -216,7 +216,7 @@ namespace BIM.IFC.Exporter
         /// <returns>The handle to the bounding box representation, or null if not valid or not exported.</returns>
         public static IFCAnyHandle ExportBoundingBox(ExporterIFC exporterIFC, IList<Solid> solids, IList<Mesh> meshes, Transform trf)
         {
-            if (ExporterCacheManager.ExportOptionsCache.FileVersion != IFCVersion.IFCCOBIE)
+            if (!ExporterCacheManager.ExportOptionsCache.ExportBoundingBox)
                 return null;
 
             IList<Face> faces = new List<Face>();
@@ -235,7 +235,7 @@ namespace BIM.IFC.Exporter
         /// <returns>The handle to the bounding box representation, or null if not valid or not exported.</returns>
         public static IFCAnyHandle ExportBoundingBox(ExporterIFC exporterIFC, IList<GeometryObject> geometryObjects, Transform trf)
         {
-            if (ExporterCacheManager.ExportOptionsCache.FileVersion != IFCVersion.IFCCOBIE)
+            if (!ExporterCacheManager.ExportOptionsCache.ExportBoundingBox)
                 return null;
 
             IList<Solid> solids = new List<Solid>();

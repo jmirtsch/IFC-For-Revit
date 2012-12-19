@@ -94,7 +94,7 @@ namespace BIM.IFC.Exporter
         /// <returns>The IFCRampType.</returns>
         public static IFCRampType GetIFCRampType(string rampTypeName)
         {
-            string typeName = rampTypeName.Replace(" ", "").Replace("_", "");
+            string typeName = NamingUtil.RemoveSpacesAndUnderscores(rampTypeName);
 
             if (String.Compare(typeName, "StraightRun", true) == 0 ||
                 String.Compare(typeName, "StraightRunRamp", true) == 0)

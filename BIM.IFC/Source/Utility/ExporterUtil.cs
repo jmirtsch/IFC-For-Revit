@@ -707,6 +707,10 @@ namespace BIM.IFC.Utility
                         case Autodesk.Revit.DB.Structure.StructuralType.Beam:
                             exportType = IFCExportType.ExportBeam;
                             break;
+                        case Autodesk.Revit.DB.Structure.StructuralType.Brace:
+                            exportType = IFCExportType.ExportMemberType;
+                            enumTypeValue = "BRACE";
+                            break;
                         case Autodesk.Revit.DB.Structure.StructuralType.Footing:
                             exportType = IFCExportType.ExportFooting;
                             break;

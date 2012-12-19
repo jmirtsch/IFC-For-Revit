@@ -831,7 +831,21 @@ namespace BIM.IFC.Exporter
                         Element assemblyInstance = document.GetElement(assemblyInfoEntry.Key);
                         string guid = ExporterIFCUtils.CreateSubElementGUID(assemblyInstance, (int)IFCAssemblyInstanceSubElements.RelContainedInSpatialStructure);
                         ExporterUtil.RelateObjects(exporterIFC, guid, assemblyInfo.AssemblyInstanceHandle, assemblyInfo.ElementHandles);
-                    }
+
+                        // Set the PlacementRelTo of assembly elements to assembly instance.
+                        IFCAnyHandle assemblyPlacement = IFCAnyHandleUtil.GetObjectPlacement(assemblyInfo.AssemblyInstanceHandle);
+                        foreach (IFCAnyHandle elementHandle in assemblyInfo.ElementHandles)
+                        {
+                            // NOTE: caution that old IFCAXIS2PLACEMENT3D will be unused as the new one replace it. 
+                            //       But we cannot delete it safely yet because we don't know if any handle is referencing it.
+                            IFCAnyHandle elementPlacement = IFCAnyHandleUtil.GetObjectPlacement(elementHandle);
+                            Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(assemblyPlacement, elementPlacement);
+                            Transform inverseTrf = relTrf.Inverse;
+                            IFCAnyHandle relLocalPlacement = ExporterUtil.CreateAxis2Placement3D(file, inverseTrf.Origin, inverseTrf.BasisZ, inverseTrf.BasisX);
+                            IFCAnyHandleUtil.SetAttribute(elementPlacement, "PlacementRelTo", assemblyPlacement);
+                            GeometryUtil.SetRelativePlacement(elementPlacement, relLocalPlacement);
+                        }
+                    }                  
                 }
 
                 // create spatial structure holder
@@ -977,7 +991,7 @@ namespace BIM.IFC.Exporter
                         if (zoneInfo != null)
                         {
                             IFCAnyHandle zoneHandle = IFCInstanceExporter.CreateZone(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
-                                zoneName, zoneInfo.ObjectType, zoneInfo.Description);
+                                zoneName, zoneInfo.Description, zoneInfo.ObjectType);
                             IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
                                 relAssignsToGroupName, null, zoneInfo.RoomHandles, null, zoneHandle);
 
@@ -1159,11 +1173,57 @@ namespace BIM.IFC.Exporter
             return originalIndex;
         }
 
+        private static IList<PropertySetDescription> GetCurrPSetsToCreate(IFCAnyHandle prodHnd,
+            IList<IList<PropertySetDescription>> psetsToCreate)
+        {
+            IList<PropertySetDescription> currPsetsToCreate = null;
+            IFCEntityType prodHndType = IFCAnyHandleUtil.GetEntityType(prodHnd);
+                    
+            if (!ExporterCacheManager.PropertySetsForTypeCache.TryGetValue(prodHndType, out currPsetsToCreate))
+            {
+                currPsetsToCreate = new List<PropertySetDescription>();
+
+                IList<PropertySetDescription> unconditionalPsetsToCreate = new List<PropertySetDescription>();
+                IList<PropertySetDescription> conditionalPsetsToCreate = new List<PropertySetDescription>();
+
+                foreach (IList<PropertySetDescription> currStandard in psetsToCreate)
+                {
+                    foreach (PropertySetDescription currDesc in currStandard)
+                    {
+                        if (currDesc.IsAppropriateEntityType(prodHnd))
+                        {
+                            if (currDesc.IsAppropriateObjectType(prodHnd))
+                                currPsetsToCreate.Add(currDesc);
+
+                            if (currDesc.ObjectType == "")
+                                unconditionalPsetsToCreate.Add(currDesc);
+                            else
+                                conditionalPsetsToCreate.Add(currDesc);
+                        }
+                    }
+                }
+                ExporterCacheManager.PropertySetsForTypeCache[prodHndType] = unconditionalPsetsToCreate;
+                ExporterCacheManager.ConditionalPropertySetsForTypeCache[prodHndType] = conditionalPsetsToCreate;
+            }
+            else
+            {
+                IList<PropertySetDescription> conditionalPsetsToCreate =
+                    ExporterCacheManager.ConditionalPropertySetsForTypeCache[prodHndType];
+                foreach (PropertySetDescription currDesc in conditionalPsetsToCreate)
+                {
+                    if (currDesc.IsAppropriateObjectType(prodHnd))
+                        currPsetsToCreate.Add(currDesc);
+                }
+            }
+
+            return currPsetsToCreate;
+        }
+
         /// <summary>
         /// Exports the element properties.
         /// </summary>
         /// <param name="exporterIFC">The IFC exporter object.</param>
-        /// <param name="element ">The element whose properties are exported.</param>
+        /// <param name="element">The element whose properties are exported.</param>
         /// <param name="productWrapper">The ProductWrapper object.</param>
         public void ExportElementProperties(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
         {
@@ -1184,46 +1244,7 @@ namespace BIM.IFC.Exporter
 
                 foreach (IFCAnyHandle prodHnd in productSet)
                 {
-                    IFCEntityType prodHndType = IFCAnyHandleUtil.GetEntityType(prodHnd);
-                    IList<PropertySetDescription> currPsetsToCreate = null;
-
-                    if (!ExporterCacheManager.PropertySetsForTypeCache.TryGetValue(prodHndType, out currPsetsToCreate))
-                    {
-                        currPsetsToCreate = new List<PropertySetDescription>();
-
-                        IList<PropertySetDescription> unconditionalPsetsToCreate = new List<PropertySetDescription>();
-                        IList<PropertySetDescription> conditionalPsetsToCreate = new List<PropertySetDescription>();
-
-                        foreach (IList<PropertySetDescription> currStandard in psetsToCreate)
-                        {
-                            foreach (PropertySetDescription currDesc in currStandard)
-                            {
-                                if (currDesc.IsAppropriateEntityType(prodHnd))
-                                {
-                                    if (currDesc.IsAppropriateObjectType(prodHnd))
-                                        currPsetsToCreate.Add(currDesc);
-
-                                    if (currDesc.ObjectType == "")
-                                        unconditionalPsetsToCreate.Add(currDesc);
-                                    else
-                                        conditionalPsetsToCreate.Add(currDesc);
-                                }
-                            }
-                        }
-                        ExporterCacheManager.PropertySetsForTypeCache[prodHndType] = unconditionalPsetsToCreate;
-                        ExporterCacheManager.ConditionalPropertySetsForTypeCache[prodHndType] = conditionalPsetsToCreate;
-                    }
-                    else
-                    {
-                        IList<PropertySetDescription> conditionalPsetsToCreate =
-                            ExporterCacheManager.ConditionalPropertySetsForTypeCache[prodHndType];
-                        foreach (PropertySetDescription currDesc in conditionalPsetsToCreate)
-                        {
-                            if (currDesc.IsAppropriateObjectType(prodHnd))
-                                currPsetsToCreate.Add(currDesc);
-                        }
-                    }
-
+                    IList<PropertySetDescription> currPsetsToCreate = GetCurrPSetsToCreate(prodHnd, psetsToCreate);
                     if (currPsetsToCreate.Count == 0)
                         continue;
 
@@ -1276,6 +1297,50 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
+        /// Creates and associates the common property sets associated with ElementTypes.  These are handled differently than for elements.
+        /// </summary>
+        /// <param name="exporterIFC">The IFC exporter object.</param>
+        /// <param name="elementType">The element type whose properties are exported.</param>
+        /// <param name="existingPropertySets">The handles of property sets already associated with the type.</param>
+        /// <param name="prodTypeHnd">The handle of the entity associated with the element type object.</param>
+        public static void CreateElementTypeProperties(ExporterIFC exporterIFC, ElementType elementType, 
+            HashSet<IFCAnyHandle> existingPropertySets, IFCAnyHandle prodTypeHnd)
+        {
+            HashSet<IFCAnyHandle> propertySets = new HashSet<IFCAnyHandle>();
+            propertySets.UnionWith(existingPropertySets);
+
+            IFCFile file = exporterIFC.GetFile();
+            using (IFCTransaction transaction = new IFCTransaction(file))
+            {
+                Document doc = elementType.Document;
+
+                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+
+                IList<IList<PropertySetDescription>> psetsToCreate = ExporterCacheManager.ParameterCache.PropertySets;
+
+                IList<PropertySetDescription> currPsetsToCreate = GetCurrPSetsToCreate(prodTypeHnd, psetsToCreate);
+                foreach (PropertySetDescription currDesc in currPsetsToCreate)
+                {
+                    HashSet<IFCAnyHandle> props = currDesc.ProcessEntries(file, exporterIFC, null, elementType, elementType);
+                    if (props.Count > 0)
+                    {
+                        int subElementIndex = currDesc.SubElementIndex;
+                        string guid = GUIDUtil.CreateSubElementGUID(elementType, subElementIndex);
+
+                        string paramSetName = currDesc.Name;
+                        IFCAnyHandle propertySet = IFCInstanceExporter.CreatePropertySet(file, guid, ownerHistory, paramSetName, null, props);
+                        propertySets.Add(propertySet);
+                    }
+                }
+
+                if (propertySets.Count != 0)
+                    prodTypeHnd.SetAttribute("HasPropertySets", propertySets);
+
+                transaction.Commit();
+            }
+        }
+
+        /// <summary>
         /// Exports Pset_Draughting for IFC 2x2 standard.
         /// </summary>
         /// <param name="exporterIFC">The IFC exporter object.</param>
@@ -1294,7 +1359,7 @@ namespace BIM.IFC.Exporter
 
                 HashSet<IFCAnyHandle> nameAndColorProps = new HashSet<IFCAnyHandle>();
 
-                nameAndColorProps.Add(PropertyUtil.CreateLabelPropertyFromCache(file, "Layername", catName, PropertyValueType.SingleValue, true));
+                nameAndColorProps.Add(PropertyUtil.CreateLabelPropertyFromCache(file, "Layername", catName, PropertyValueType.SingleValue, true, null));
 
                 //color
                 {
@@ -1779,7 +1844,6 @@ namespace BIM.IFC.Exporter
                         partialScaleFactor = 1000.0;
                         break;
                     case DisplayUnitType.DUT_DECIMAL_FEET:
-                    case DisplayUnitType.DUT_FRACTIONAL_INCHES:
                     case DisplayUnitType.DUT_FEET_FRACTIONAL_INCHES:
                         {
                             if (exportToCOBIE)
@@ -1798,6 +1862,7 @@ namespace BIM.IFC.Exporter
                             conversionBased = true;
                         }
                         break;
+                    case DisplayUnitType.DUT_FRACTIONAL_INCHES:
                     case DisplayUnitType.DUT_DECIMAL_INCHES:
                         {
                             if (exportToCOBIE)
@@ -1906,7 +1971,7 @@ namespace BIM.IFC.Exporter
                 IFCSIUnitName unitName = IFCSIUnitName.Gram;
 
                 massSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, prefix, unitName);
-                
+
                 // If we are exporting to GSA standard, we will override kg with pound below.
                 if (!exportToCOBIE)
                     unitSet.Add(massSIUnit);      // created above, so unique.
@@ -1949,13 +2014,19 @@ namespace BIM.IFC.Exporter
                 ICollection<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
                 elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, lenSIBaseUnit, 3));
                 elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, timeSIUnit, -1));
-                
+
                 IFCAnyHandle volumetricFlowRateUnit = IFCInstanceExporter.CreateDerivedUnit(file, elements,
                     IFCDerivedUnitEnum.VolumetricFlowRateUnit, null);
                 unitSet.Add(volumetricFlowRateUnit);
+            }
 
-                //double volumetricFlowRateFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_WATTS_PER_SQUARE_METER_KELVIN);
-                //ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_HVAC_Airflow, volumetricFlowRateUnit, volumetricFlowRateFactor);
+            // Power - support metric watt only.
+            {
+                IFCUnit unitType = IFCUnit.PowerUnit;
+                IFCSIUnitName unitName = IFCSIUnitName.Watt;
+
+                IFCAnyHandle powerSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+                unitSet.Add(powerSIUnit);      // created above, so unique.
             }
 
             // GSA only units.

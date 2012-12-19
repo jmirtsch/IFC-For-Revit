@@ -5351,6 +5351,33 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Creates an IfcFurnishingElementType, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="applicableOccurrence">The attribute optionally defines the data type of the occurrence object.</param>
+        /// <param name="propertySets">The property set(s) associated with the type.</param>
+        /// <param name="representationMaps">The mapped geometries associated with the type.</param>
+        /// <param name="elementTag">The tag that represents the entity.</param>
+        /// <param name="elementType">The type name.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateFurnishingElementType(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
+            string description, string applicableOccurrence, HashSet<IFCAnyHandle> propertySets,
+            IList<IFCAnyHandle> representationMaps, string elementTag, string elementType)
+        {
+            ValidateElementType(guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+
+            IFCAnyHandle furnishingElementType = CreateInstance(file, IFCEntityType.IfcFurnishingElementType);
+            SetElementType(furnishingElementType, guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+            return furnishingElementType;
+        }
+
+        /// <summary>
         /// Creates an IfcFurnitureType, and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -6634,6 +6661,32 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandleUtil.SetAttribute(propertyEnumeratedValue, "EnumerationReference", enumerationReference);
             SetProperty(propertyEnumeratedValue, name, description);
             return propertyEnumeratedValue;
+        }
+
+        /// <summary>
+        /// Creates an IfcPropertyReferenceValue and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="usageName">The use of the value within the property.</param>
+        /// <param name="propertyReference">The entity being referenced.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreatePropertyReferenceValue(IFCFile file,
+            string name, string description, string usageName, IFCAnyHandle propertyReference)
+        {
+            ValidateProperty(name, description);
+            IFCAnyHandleUtil.ValidateSubTypeOf(propertyReference, false,
+                IFCEntityType.IfcMaterial, IFCEntityType.IfcPerson, IFCEntityType.IfcDateAndTime, IFCEntityType.IfcMaterialList,
+                IFCEntityType.IfcOrganization, IFCEntityType.IfcCalendarDate, IFCEntityType.IfcLocalTime, IFCEntityType.IfcPersonAndOrganization,
+                IFCEntityType.IfcMaterialLayer, IFCEntityType.IfcExternalReference, IFCEntityType.IfcTimeSeries, IFCEntityType.IfcAddress,
+                IFCEntityType.IfcAppliedValue);
+
+            IFCAnyHandle propertyReferenceValue = CreateInstance(file, IFCEntityType.IfcPropertyReferenceValue);
+            IFCAnyHandleUtil.SetAttribute(propertyReferenceValue, "UsageName", usageName);
+            IFCAnyHandleUtil.SetAttribute(propertyReferenceValue, "PropertyReference", propertyReference);
+            SetProperty(propertyReferenceValue, name, description);
+            return propertyReferenceValue;
         }
 
         /// <summary>

@@ -92,7 +92,7 @@ namespace BIM.IFC.Exporter
                             HashSet<IFCAnyHandle> propertySetsOpt = new HashSet<IFCAnyHandle>();
                             IList<IFCAnyHandle> repMapListOpt = new List<IFCAnyHandle>();
 
-                            IFCAnyHandle styleHandle = FamilyExporterUtil.ExportGenericType(file, exportType, ifcEnumType, typeGUID, ownerHistory, typeName,
+                            IFCAnyHandle styleHandle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, typeGUID, typeName,
                                typeDescription, applicableOccurance, propertySetsOpt, repMapListOpt, typeElemId, typeName, element, type);
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(styleHandle))
                             {

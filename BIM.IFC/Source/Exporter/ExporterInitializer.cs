@@ -110,7 +110,10 @@ namespace BIM.IFC.Exporter
             // Architectural/Structural property sets.
             InitPropertySetBeamCommon(commonPropertySets);
             InitPropertySetColumnCommon(commonPropertySets);
+            InitPropertySetCoveringCommon(commonPropertySets, fileVersion);
+            InitPropertySetCurtainWallCommon(commonPropertySets);
             InitPropertySetDoorCommon(commonPropertySets);
+            InitPropertySetLightFixtureTypeCommon(commonPropertySets);
             InitPropertySetMemberCommon(commonPropertySets);
             InitPropertySetRailingCommon(commonPropertySets);
             InitPropertySetRampCommon(commonPropertySets);
@@ -228,6 +231,85 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
+        /// Initializes common curtain wall property sets.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetCurtainWallCommon(IList<PropertySetDescription> commonPropertySets)
+        {
+            //property set curtain wall common
+            PropertySetDescription propertySetCurtainWallCommon = new PropertySetDescription();
+            propertySetCurtainWallCommon.Name = "Pset_CurtainWallCommon";
+            propertySetCurtainWallCommon.SubElementIndex = (int)IFCCurtainWallSubElements.PSetCurtainWallCommon;
+
+            propertySetCurtainWallCommon.EntityTypes.Add(IFCEntityType.IfcCurtainWall);
+
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
+            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            propertySetCurtainWallCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
+            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            propertySetCurtainWallCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            propertySetCurtainWallCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateThermalTransmittance("ThermalTransmittance");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.ANALYTICAL_HEAT_TRANSFER_COEFFICIENT;
+            propertySetCurtainWallCommon.AddEntry(ifcPSE);
+
+            propertySetCurtainWallCommon.AddEntry(PropertySetEntry.CreateLabel("AcousticRating"));
+            propertySetCurtainWallCommon.AddEntry(PropertySetEntry.CreateLabel("SurfaceSpreadOfFlame"));
+            propertySetCurtainWallCommon.AddEntry(PropertySetEntry.CreateBoolean("Combustible"));
+
+            commonPropertySets.Add(propertySetCurtainWallCommon);
+        }
+
+        /// <summary>
+        /// Initializes common covering property sets.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetCoveringCommon(IList<PropertySetDescription> commonPropertySets, IFCVersion fileVersion)
+        {
+            //property set covering common
+            PropertySetDescription propertySetCoveringCommon = new PropertySetDescription();
+            propertySetCoveringCommon.Name = "Pset_CoveringCommon";
+            propertySetCoveringCommon.SubElementIndex = (int)IFCCoveringSubElements.PSetCoveringCommon;
+
+            propertySetCoveringCommon.EntityTypes.Add(IFCEntityType.IfcCovering);
+
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
+            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            propertySetCoveringCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            propertySetCoveringCommon.AddEntry(ifcPSE);
+
+            propertySetCoveringCommon.AddEntry(PropertySetEntry.CreateLabel("AcousticRating"));
+            propertySetCoveringCommon.AddEntry(PropertySetEntry.CreateLabel("FlammabilityRating"));
+            propertySetCoveringCommon.AddEntry(PropertySetEntry.CreateLabel("SurfaceSpreadOfFlame"));
+            propertySetCoveringCommon.AddEntry(PropertySetEntry.CreateBoolean("Combustible"));
+
+
+            if (fileVersion == IFCVersion.IFC2x2)
+                propertySetCoveringCommon.AddEntry(PropertySetEntry.CreateLabel("Fragility"));
+            else
+                propertySetCoveringCommon.AddEntry(PropertySetEntry.CreateLabel("FragilityRating"));
+
+            ifcPSE = PropertySetEntry.CreateText("Finish");
+            ifcPSE.PropertyCalculator = CoveringFinishCalculator.Instance;
+            propertySetCoveringCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePositiveLength("TotalThickness");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.CEILING_THICKNESS;
+            propertySetCoveringCommon.AddEntry(ifcPSE);
+
+            commonPropertySets.Add(propertySetCoveringCommon);
+        }
+
+        /// <summary>
         /// Initializes common door property sets.
         /// </summary>
         /// <param name="commonPropertySets">List to store property sets.</param>
@@ -305,6 +387,41 @@ namespace BIM.IFC.Exporter
             propertySetWindowCommon.AddEntry(PropertySetEntry.CreateVolumetricFlowRate("Infiltration"));
 
             commonPropertySets.Add(propertySetWindowCommon);
+        }
+
+        /// <summary>
+        /// Initializes common LightFixtureType property sets.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetLightFixtureTypeCommon(IList<PropertySetDescription> commonPropertySets)
+        {
+            //property beam common
+            PropertySetDescription propertySetLightFixtureTypeCommon = new PropertySetDescription();
+            propertySetLightFixtureTypeCommon.Name = "Pset_LightFixtureTypeCommon";
+            propertySetLightFixtureTypeCommon.SubElementIndex = (int)IFCLightFixtureTypeSubElements.PSetLightFixtureTypeCommon;
+
+            propertySetLightFixtureTypeCommon.EntityTypes.Add(IFCEntityType.IfcLightFixtureType);
+
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateInteger("NumberOfSources");
+            propertySetLightFixtureTypeCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePower("TotalWattage");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.LIGHTING_FIXTURE_WATTAGE;
+            propertySetLightFixtureTypeCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateEnumeratedValue("LightFixtureMountingType", PropertyType.Label,
+                typeof(PSetLightFixtureTypeCommon_LightFixtureMountingType));
+            propertySetLightFixtureTypeCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateEnumeratedValue("LightFixturePlacingType", PropertyType.Label,
+                typeof(PSetLightFixtureTypeCommon_LightFixturePlacingType));
+            propertySetLightFixtureTypeCommon.AddEntry(ifcPSE);
+
+            propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntry.CreateReal("MaintenanceFactor"));
+            propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntry.CreateText("ManufacturersSpecificInformation"));
+            propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntry.CreateClassificationReference("ArticleNumber"));
+
+            commonPropertySets.Add(propertySetLightFixtureTypeCommon);
         }
 
         /// <summary>
@@ -755,7 +872,7 @@ namespace BIM.IFC.Exporter
             PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("EntranceLevel");
             propertySetLevelCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("AboveGround");
+            ifcPSE = PropertySetEntry.CreateLogical("AboveGround");
             propertySetLevelCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateBoolean("SprinklerProtection");
@@ -869,6 +986,31 @@ namespace BIM.IFC.Exporter
             }
 
             commonPropertySets.Add(propertySetSpaceCommon);
+        }
+
+        /// <summary>
+        /// Initializes common zone property sets.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetZoneCommon(IList<PropertySetDescription> commonPropertySets, IFCVersion fileVersion)
+        {
+            //property set zone common
+            PropertySetDescription propertySetZoneCommon = new PropertySetDescription();
+            propertySetZoneCommon.Name = "Pset_ZoneCommon";
+
+            propertySetZoneCommon.EntityTypes.Add(IFCEntityType.IfcZone);
+
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
+            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            propertySetZoneCommon.AddEntry(ifcPSE);
+
+            propertySetZoneCommon.AddEntry(PropertySetEntry.CreateLabel("Category"));
+            propertySetZoneCommon.AddEntry(PropertySetEntry.CreateArea("GrossPlannedArea"));
+            propertySetZoneCommon.AddEntry(PropertySetEntry.CreateArea("NetPlannedArea"));
+            propertySetZoneCommon.AddEntry(PropertySetEntry.CreateBoolean("PubliclyAccessible"));
+            propertySetZoneCommon.AddEntry(PropertySetEntry.CreateBoolean("HandicapAccessible"));
+
+            commonPropertySets.Add(propertySetZoneCommon);
         }
 
         /// <summary>
@@ -1050,7 +1192,8 @@ namespace BIM.IFC.Exporter
             propertySetElementShading.EntityTypes.Add(IFCEntityType.IfcBuildingElementProxy);
             propertySetElementShading.ObjectType = "Solar Shade";
 
-            propertySetElementShading.AddEntry(PropertySetEntry.CreateEnumeratedValue("ShadingDeviceType", PropertyType.Label));
+            propertySetElementShading.AddEntry(PropertySetEntry.CreateEnumeratedValue("ShadingDeviceType", PropertyType.Label,
+                typeof(PSetElementShading_ShadingDeviceType)));
             propertySetElementShading.AddEntry(PropertySetEntry.CreatePlaneAngle("Azimuth"));
             propertySetElementShading.AddEntry(PropertySetEntry.CreatePlaneAngle("Inclination"));
             propertySetElementShading.AddEntry(PropertySetEntry.CreatePlaneAngle("TiltRange"));

@@ -654,6 +654,11 @@ namespace BIM.IFC.Exporter
                         }
                     }
 
+                    if (edgeArrayArray.Size > 1)
+                    {
+                        outerEdge = GeometryUtil.IsEdgeArrayCCW(face as PlanarFace, edgeArray);
+                    }
+
                     IFCAnyHandle faceLoop = IFCInstanceExporter.CreatePolyLoop(file, vertices);
                     IFCAnyHandle faceBound = outerEdge ?
                         IFCInstanceExporter.CreateFaceOuterBound(file, faceLoop, true) :

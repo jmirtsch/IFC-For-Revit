@@ -61,6 +61,7 @@
     <Compile Include="Exporter\PileExporter.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamLoadBearingCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ColumnLoadBearingCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\CoveringFinishCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamSlopeCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamSpanCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ExtendToStructureCalculator.cs" />
@@ -152,6 +153,7 @@
     <Compile Include="Utility\IntegerPropertyInfoCache.cs" />
     <Compile Include="Utility\LevelInfoCache.cs" />
     <Compile Include="Utility\LevelUtil.cs" />
+    <Compile Include="Utility\LogicalPropertyInfoCache.cs" />
     <Compile Include="Utility\MathUtil.cs" />
     <Compile Include="Utility\MEPCache.cs" />
     <Compile Include="Utility\NamingOptions.cs" />

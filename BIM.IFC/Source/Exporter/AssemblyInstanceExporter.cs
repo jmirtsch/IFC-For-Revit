@@ -83,6 +83,10 @@ namespace BIM.IFC.Exporter
                     // We have limited support for exporting assemblies as other container types.
                     switch (exportAs)
                     {
+                        case IFCExportType.ExportCurtainWall:
+                            assemblyInstanceHnd = IFCInstanceExporter.CreateCurtainWall(file, guid,
+                                ownerHistory, name, null, objectType, localPlacement, representation, elementTag);
+                            break;
                         case IFCExportType.ExportRamp:
                             IFCRampType rampPredefinedType = RampExporter.GetIFCRampType(ifcEnumType);
                             assemblyInstanceHnd = IFCInstanceExporter.CreateRamp(file, guid,

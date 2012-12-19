@@ -2341,4 +2341,52 @@ namespace BIM.IFC.Toolkit
         IfcZone,
         UnKnown
     }
+
+    /// <summary>
+    /// Defines the PSetElementShading::ShadingDeviceType possible values.
+    /// </summary>
+    public enum PSetElementShading_ShadingDeviceType
+    {
+        Fixed,
+        Movable,
+        Exterior,
+        Interior,
+        Overhang,
+        SideFin,
+        UserDefined,
+        NotDefined
+    }
+
+    /// <summary>
+    /// Defines the PSetLightFixtureTypeCommon::LightFixtureMountingType possible values.
+    /// </summary>
+    public enum PSetLightFixtureTypeCommon_LightFixtureMountingType
+    {
+        CableSpanned,
+        FreeStanding,
+        Pole_Side,
+        Pole_Top,
+        Recessed,
+        Surface,
+        Suspended,
+        TrackMounted,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    /// <summary>
+    /// Defines the PSetLightFixtureTypeCommon::LightFixturePlacingType possible values.
+    /// </summary>
+    public enum PSetLightFixtureTypeCommon_LightFixturePlacingType
+    {
+        Ceiling,
+        Floor,
+        Furniture,
+        Pole,
+        Wall,
+        Other,
+        NotKnown,
+        Unset
+    }
 }

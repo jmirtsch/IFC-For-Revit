@@ -174,7 +174,7 @@ namespace BIM.IFC.Exporter
                                     continue;
 
                                 //trimmedCurve.Visibility = Visibility.Visible; readonly
-                                IFCAnyHandle connectionGeometry = ExporterIFCUtils.CreateExtrudedSurfaceFromCurve(
+                                IFCAnyHandle connectionGeometry = ExtrusionExporter.CreateExtrudedSurfaceFromCurve(
                                    exporterIFC, trimmedCurve, zDir, roomHeight, baseHeightNonScaled);
 
                                 IFCPhysicalOrVirtual physOrVirt = IFCPhysicalOrVirtual.Physical;
@@ -198,7 +198,18 @@ namespace BIM.IFC.Exporter
                                 if (isObjectPhys && boundingElement is HostObject)
                                 {
                                     HostObject hostObj = boundingElement as HostObject;
-                                    IList<ElementId> elemIds = hostObj.FindInserts(false, false, false, false);
+                                    HashSet<ElementId> elemIds = new HashSet<ElementId>();
+                                    elemIds.UnionWith(hostObj.FindInserts(false, false, false, false));
+                                    if (elemIds.Count == 0)
+                                    {
+                                        CurtainGridSet curtainGridSet = CurtainSystemExporter.GetCurtainGridSet(hostObj);
+                                        if (curtainGridSet != null)
+                                        {
+                                            foreach (CurtainGrid curtainGrid in curtainGridSet)
+                                                elemIds.UnionWith(curtainGrid.GetPanelIds());
+                                        }
+                                    }
+
                                     foreach (ElementId elemId in elemIds)
                                     {
                                         // we are going to do a simple bbox export, not complicated geometry.
@@ -207,6 +218,8 @@ namespace BIM.IFC.Exporter
                                             continue;
 
                                         BoundingBoxXYZ instBBox = instElem.get_BoundingBox(null);
+                                        if (instBBox == null)
+                                            continue;
 
                                         // make copy of original trimmed curve.
                                         Curve instCurve = trimmedCurve.Clone();
@@ -238,12 +251,9 @@ namespace BIM.IFC.Exporter
 
                                         double[] parameters = new double[2];
                                         double[] origEndParams = new double[2];
-                                        if (isHorizOrVert)
-                                        {
-                                            parameters[0] = instCurve.Project(instBBox.Min).Parameter;
-                                            parameters[1] = instCurve.Project(instBBox.Max).Parameter;
-                                        }
-                                        else
+                                        bool paramsSet = false;
+
+                                        if (!isHorizOrVert)
                                         {
                                             FamilyInstance famInst = instElem as FamilyInstance;
                                             if (famInst == null)
@@ -254,12 +264,22 @@ namespace BIM.IFC.Exporter
                                                 continue;
 
                                             BoundingBoxXYZ symBBox = elementType.get_BoundingBox(null);
-                                            Curve symCurve = trimmedCurve.Clone();
-                                            Transform trf = famInst.GetTransform();
-                                            Transform invTrf = trf.Inverse;
-                                            Curve trfCurve = symCurve.get_Transformed(invTrf);
-                                            parameters[0] = trfCurve.Project(symBBox.Min).Parameter;
-                                            parameters[1] = trfCurve.Project(symBBox.Max).Parameter;
+                                            if (symBBox != null)
+                                            {
+                                                Curve symCurve = trimmedCurve.Clone();
+                                                Transform trf = famInst.GetTransform();
+                                                Transform invTrf = trf.Inverse;
+                                                Curve trfCurve = symCurve.get_Transformed(invTrf);
+                                                parameters[0] = trfCurve.Project(symBBox.Min).Parameter;
+                                                parameters[1] = trfCurve.Project(symBBox.Max).Parameter;
+                                                paramsSet = true;
+                                            }
+                                        }
+
+                                        if (!paramsSet)
+                                        {
+                                            parameters[0] = instCurve.Project(instBBox.Min).Parameter;
+                                            parameters[1] = instCurve.Project(instBBox.Max).Parameter;
                                         }
 
                                         // ignore if less than 1/16".
@@ -286,8 +306,9 @@ namespace BIM.IFC.Exporter
                                         if (parameters[1] < origEndParams[1])
                                             instCurve.set_EndParameter(1, parameters[1]);
 
-                                        IFCAnyHandle insConnectionGeom = ExporterIFCUtils.CreateExtrudedSurfaceFromCurve(exporterIFC, instCurve, zDir,
-                                           insHeight, baseHeightNonScaled);
+                                        double insHeightScaled = insHeight * exporterIFC.LinearScale;
+                                        IFCAnyHandle insConnectionGeom = ExtrusionExporter.CreateExtrudedSurfaceFromCurve(exporterIFC, instCurve, zDir,
+                                           insHeightScaled, baseHeightNonScaled);
 
                                         SpaceBoundary instBoundary = new SpaceBoundary(spatialElement.Id, elemId, setter.LevelId, !IFCAnyHandleUtil.IsNullOrHasNoValue(insConnectionGeom) ? insConnectionGeom : null, physOrVirt,
                                             isObjectExt ? IFCInternalOrExternal.External : IFCInternalOrExternal.Internal);

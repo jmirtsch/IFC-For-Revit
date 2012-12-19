@@ -96,8 +96,15 @@ namespace BIM.IFC.Exporter
                                     FamilyInstance subFamInst = subElem as FamilyInstance;
 
                                     string ifcEnumType;
-                                    ElementId catId = CategoryUtil.GetSafeCategoryId(subElem);
-                                    IFCExportType exportType = ElementFilteringUtil.GetExportTypeFromCategoryId(catId, out ifcEnumType);
+                                    IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, subElem, out ifcEnumType);
+                                    if (exportType == IFCExportType.ExportCurtainWall)
+                                    {
+                                        // By default, panels and mullions are set to the same category as their parent.  In this case,
+                                        // ask to get the exportType from the category id, since we don't want to inherit the parent class.
+                                        ElementId catId = CategoryUtil.GetSafeCategoryId(subElem);
+                                        exportType = ElementFilteringUtil.GetExportTypeFromCategoryId(catId, out ifcEnumType);
+                                    }
+                                     
 
                                     if (exporterIFC.ExportAs2x2)
                                     {
@@ -118,7 +125,7 @@ namespace BIM.IFC.Exporter
                                     using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
                                     {
                                         FamilyInstanceExporter.ExportFamilyInstanceAsMappedItem(exporterIFC, subFamInst, exportType, ifcEnumType, productWrapper,
-                                       ElementId.InvalidElementId, null, currLocalPlacement);
+                                            ElementId.InvalidElementId, null, currLocalPlacement);
                                     }
                                 }
                             }
@@ -256,20 +263,11 @@ namespace BIM.IFC.Exporter
         /// <summary>
         /// Export Curtain Walls and Roofs.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="allSubElements">
-        /// Collection of elements contained in the host curtain element.
-        /// </param>
-        /// <param name="element">
-        /// The element to be exported.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
-        public static void ExportBase(ExporterIFC exporterIFC, ICollection<ElementId> allSubElements,
-           Element element, ProductWrapper wrapper)
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="allSubElements">Collection of elements contained in the host curtain element.</param>
+        /// <param name="element">The element to be exported.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        private static void ExportBase(ExporterIFC exporterIFC, ICollection<ElementId> allSubElements, Element element, ProductWrapper wrapper)
         {
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
@@ -320,9 +318,6 @@ namespace BIM.IFC.Exporter
 
                     wrapper.AddElement(elemHnd, setter, null, true);
 
-                    if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportIFCCommon)
-                        ExporterIFCUtils.CreateCurtainWallPropertySet(exporterIFC, element, wrapper.ToNative());
-
                     bool canExportCurtainWallAsContainer = CanExportCurtainWallAsContainer(allSubElements, element.Document);
                     IFCAnyHandle rep = null;
                     if (!canExportCurtainWallAsContainer)
@@ -356,91 +351,69 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
+        /// Export non-legacy Curtain Walls and Roofs.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="allSubElements">Collection of elements contained in the host curtain element.</param>
+        /// <param name="element">The element to be exported.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        private static void ExportBaseWithGrids(ExporterIFC exporterIFC, Element hostElement, ProductWrapper wrapper)
+        {
+            // Don't export the Curtain Wall itself, which has no useful geometry; instead export all of the GReps of the
+            // mullions and panels.
+            CurtainGridSet gridSet = CurtainSystemExporter.GetCurtainGridSet(hostElement);
+            if (gridSet == null || gridSet.Size == 0)
+                return;
+
+            HashSet<ElementId> allSubElements = new HashSet<ElementId>();
+            foreach (CurtainGrid grid in gridSet)
+            {
+                allSubElements.UnionWith(grid.GetPanelIds());
+                allSubElements.UnionWith(grid.GetMullionIds());
+            }
+
+            ExportBase(exporterIFC, allSubElements, hostElement, wrapper);
+        }
+
+        /// <summary>
         /// Exports a curtain wall to IFC curtain wall.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="hostElement">
-        /// The host object element to be exported.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="hostElement">The host object element to be exported.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
         public static void ExportWall(ExporterIFC exporterIFC, Wall hostElement, ProductWrapper productWrapper)
         {
             // Don't export the Curtain Wall itself, which has no useful geometry; instead export all of the GReps of the
             // mullions and panels.
-            CurtainGrid grid = hostElement.CurtainGrid;
-            if (grid == null)
+            CurtainGridSet gridSet = CurtainSystemExporter.GetCurtainGridSet(hostElement);
+            if (gridSet == null)
+            {
+                ExportLegacyCurtainElement(exporterIFC, hostElement, productWrapper);
+                return;
+            }
+
+            if (gridSet.Size == 0)
                 return;
 
-            ICollection<ElementId> allSubElements = grid.GetPanelIds();
-            foreach (ElementId subElem in grid.GetMullionIds())
-                allSubElements.Add(subElem);
+            HashSet<ElementId> allSubElements = new HashSet<ElementId>();
+            foreach (CurtainGrid grid in gridSet)
+            {
+                allSubElements.UnionWith(grid.GetPanelIds());
+                allSubElements.UnionWith(grid.GetMullionIds());
+            }
+
             ExportBase(exporterIFC, allSubElements, hostElement, productWrapper);
         }
 
         /// <summary>
         /// Exports a curtain roof to IFC curtain wall.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="hostElement">
-        /// The host object element to be exported.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
-        public static void ExportExtrusionRoof(ExporterIFC exporterIFC, ExtrusionRoof hostElement, ProductWrapper productWrapper)
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="hostElement">The host object element to be exported.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        public static void ExportCurtainRoof(ExporterIFC exporterIFC, RoofBase hostElement, ProductWrapper productWrapper)
         {
-            // Don't export the Curtain Wall itself, which has no useful geometry; instead export all of the GReps of the
-            // mullions and panels.
-            CurtainGridSet grids = hostElement.CurtainGrids;
-            if (grids == null || grids.Size == 0)
-                return;
-
-            ICollection<ElementId> allSubElements = new HashSet<ElementId>();
-            foreach (CurtainGrid grid in grids)
-            {
-                foreach (ElementId panelId in grid.GetPanelIds())
-                    allSubElements.Add(panelId);
-                foreach (ElementId subElem in grid.GetMullionIds())
-                    allSubElements.Add(subElem);
-            }
-            ExportBase(exporterIFC, allSubElements, hostElement, productWrapper);
-        }
-
-        /// <summary>
-        /// Exports a curtain roof to IFC curtain wall.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="hostElement">
-        /// The host object element to be exported.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
-        public static void ExportFootPrintRoof(ExporterIFC exporterIFC, FootPrintRoof hostElement, ProductWrapper productWrapper)
-        {
-            // Don't export the Curtain Wall itself, which has no useful geometry; instead export all of the GReps of the
-            // mullions and panels.
-            CurtainGridSet grids = hostElement.CurtainGrids;
-            if (grids == null || grids.Size == 0)
-                return;
-
-            ICollection<ElementId> allSubElements = new HashSet<ElementId>();
-            foreach (CurtainGrid grid in grids)
-            {
-                foreach (ElementId panelId in grid.GetPanelIds())
-                    allSubElements.Add(panelId);
-                foreach (ElementId subElem in grid.GetMullionIds())
-                    allSubElements.Add(subElem);
-            }
-            ExportBase(exporterIFC, allSubElements, hostElement, productWrapper);
+            ExportBaseWithGrids(exporterIFC, hostElement, productWrapper);
         }
 
         /// <summary>
@@ -457,23 +430,10 @@ namespace BIM.IFC.Exporter
         /// </param>
         public static void ExportCurtainSystem(ExporterIFC exporterIFC, CurtainSystem curtainSystem, ProductWrapper productWrapper)
         {
-            CurtainGridSet grids = curtainSystem.CurtainGrids;
-            if (grids == null || grids.Size == 0)
-                return;
-
-            ICollection<ElementId> allSubElements = new HashSet<ElementId>();
-            foreach (CurtainGrid grid in grids)
-            {
-                foreach (ElementId panelId in grid.GetPanelIds())
-                    allSubElements.Add(panelId);
-                foreach (ElementId subElem in grid.GetMullionIds())
-                    allSubElements.Add(subElem);
-            }
-
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction transaction = new IFCTransaction(file))
             {
-                ExportBase(exporterIFC, allSubElements, curtainSystem, productWrapper);
+                ExportBaseWithGrids(exporterIFC, curtainSystem, productWrapper);
                 transaction.Commit();
             }
         }
@@ -505,6 +465,88 @@ namespace BIM.IFC.Exporter
         {
             //for now, it is sufficient to check its category.
             return (CategoryUtil.GetSafeCategoryId(element) == new ElementId(BuiltInCategory.OST_Curtain_Systems));
+        }
+            
+        /// <summary>
+        /// Checks if the wall is legacy curtain wall.
+        /// </summary>
+        /// <param name="wall">The wall.</param>
+        /// <returns>True if it is legacy curtain wall, false otherwise.</returns>
+        public static bool IsLegacyCurtainWall(Wall wall)
+        {
+            try
+            {
+                CurtainGrid curtainGrid = wall.CurtainGrid;
+                if (curtainGrid != null)
+                {
+                    curtainGrid.GetPanelIds();
+                }
+                else
+                    return false;
+            }
+            catch (Autodesk.Revit.Exceptions.InvalidOperationException ex)
+            {
+                if (ex.Message == "The host object is obsolete.")
+                    return true;
+                else
+                    throw ex;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Returns if an element is a legacy or non-legacy curtain system of any base element type.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns>True if it is a legacy or non-legacy curtain system of any base element type, false otherwise.</returns>
+        public static bool IsCurtainSystem(Element element)
+        {
+            if (element == null)
+                return false;
+
+            CurtainGridSet curtainGridSet = GetCurtainGridSet(element);
+            if (curtainGridSet == null)
+                return (element is Wall);
+            return (curtainGridSet.Size > 0);
+        }
+
+        /// <summary>
+        /// Provides a unified interface to get the curtain grids associated with an element.
+        /// </summary>
+        /// <param name="element">The host element.</param>
+        /// <returns>A CurtainGridSet with 0 or more CurtainGrids, or null if invalid.</returns>
+        public static CurtainGridSet GetCurtainGridSet(Element element)
+        {
+            CurtainGridSet curtainGridSet = null;
+            if (element is Wall)
+            {
+                Wall wall = element as Wall;
+                if (!CurtainSystemExporter.IsLegacyCurtainWall(wall))
+                {
+                    CurtainGrid curtainGrid = wall.CurtainGrid;
+                    curtainGridSet = new CurtainGridSet();
+                    if (curtainGrid != null)
+                        curtainGridSet.Insert(curtainGrid);
+                }
+            }
+            else if (element is FootPrintRoof)
+            {
+                FootPrintRoof footPrintRoof = element as FootPrintRoof;
+                curtainGridSet = footPrintRoof.CurtainGrids;
+            }
+            else if (element is ExtrusionRoof)
+            {
+                ExtrusionRoof extrusionRoof = element as ExtrusionRoof;
+                curtainGridSet = extrusionRoof.CurtainGrids;
+            }
+            else if (element is CurtainSystem)
+            {
+                CurtainSystem curtainSystem = element as CurtainSystem;
+                curtainGridSet = curtainSystem.CurtainGrids;
+            }
+
+            return curtainGridSet;
         }
     }
 }
