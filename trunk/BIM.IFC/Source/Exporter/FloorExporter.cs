@@ -216,17 +216,17 @@ namespace BIM.IFC.Exporter
                         int numReps = exportParts ? 1 : prodReps.Count;
                         for (int ii = 0; ii < numReps; ii++)
                         {
-                            string ifcName = NamingUtil.GetIFCNamePlusIndex(floorElement, ii == 0 ? -1 : ii + 1);
+                            string ifcName = NamingUtil.GetNameOverride(floorElement, NamingUtil.GetIFCNamePlusIndex(floorElement, ii == 0 ? -1 : ii + 1));
                             string ifcDescription = NamingUtil.GetDescriptionOverride(floorElement, null);
                             string ifcObjectType = NamingUtil.GetObjectTypeOverride(floorElement, exporterIFC.GetFamilyName());
-                            string ifcElemId = NamingUtil.CreateIFCElementId(floorElement);
+                            string ifcTag = NamingUtil.GetTagOverride(floorElement, NamingUtil.CreateIFCElementId(floorElement));
 
                             string currentGUID = (ii == 0) ? ifcGUID : GUIDUtil.CreateGUID();
                             IFCAnyHandle localPlacementHnd = exportedAsInternalExtrusion ? localPlacements[ii] : localPlacement;
                             IFCSlabType slabType = GetIFCSlabType(ifcEnumType);
 
                             IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(file, currentGUID, ownerHistory, ifcName,
-                               ifcDescription, ifcObjectType, localPlacementHnd, exportParts ? null : prodReps[ii], ifcElemId, slabType);
+                               ifcDescription, ifcObjectType, localPlacementHnd, exportParts ? null : prodReps[ii], ifcTag, slabType);
 
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(slabHnd))
                                 return;

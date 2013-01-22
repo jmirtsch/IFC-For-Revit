@@ -48,13 +48,15 @@ namespace BIM.IFC.Exporter
                 IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
 
                 string stringerTypeGUID = GUIDUtil.CreateGUID(stringerType);
-                string stringerTypeName = NamingUtil.GetIFCName(stringerType);
+                string stringerTypeName = NamingUtil.GetNameOverride(stringerType, NamingUtil.GetIFCName(stringerType));
                 string stringerTypeDescription = NamingUtil.GetDescriptionOverride(stringerType, null);
-                string stringerTypeElemId = NamingUtil.CreateIFCElementId(stringerType);
+                string stringerTypeTag = NamingUtil.GetTagOverride(stringerType, NamingUtil.CreateIFCElementId(stringerType));
+                string stringerApplicableOccurence = NamingUtil.GetOverrideStringValue(stringerType, "ApplicableOccurence", null);
+                string stringerElementType = NamingUtil.GetOverrideStringValue(stringerType, "ElementType", null);
 
                 memberType = IFCInstanceExporter.CreateMemberType(file, stringerTypeGUID,
-                    ownerHistory, stringerTypeName, stringerTypeDescription, null, null, null, stringerTypeElemId,
-                    null, IFCMemberType.Stringer);
+                    ownerHistory, stringerTypeName, stringerTypeDescription, stringerApplicableOccurence, null, null, stringerTypeTag,
+                    stringerElementType, IFCMemberType.Stringer);
                 ExporterCacheManager.ElementToHandleCache.Register(stringerType.Id, memberType);
             }
             return memberType;
@@ -572,11 +574,11 @@ namespace BIM.IFC.Exporter
 
                         string containedStairGuid = ExporterIFCUtils.CreateSubElementGUID(stair, (int)IFCStairSubElements.ContainedStair);
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                        string stairName = NamingUtil.GetIFCName(stair);
+                        string stairName = NamingUtil.GetNameOverride(stair, NamingUtil.GetIFCName(stair));
                         string stairDescription = NamingUtil.GetDescriptionOverride(stair, null);
                         string stairObjectType = NamingUtil.GetObjectTypeOverride(stair, NamingUtil.CreateIFCObjectName(exporterIFC, stair));
                         IFCAnyHandle containedStairLocalPlacement = ecData.GetLocalPlacement();
-                        string elementTag = NamingUtil.CreateIFCElementId(stair);
+                        string elementTag = NamingUtil.GetTagOverride(stair, NamingUtil.CreateIFCElementId(stair));
                         IFCStairType stairType = GetIFCStairType(ifcEnumType);
 
                         List<IFCAnyHandle> components = new List<IFCAnyHandle>();
@@ -644,11 +646,11 @@ namespace BIM.IFC.Exporter
 
                     IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                     string stairGUID = GUIDUtil.CreateGUID(stair);
-                    string stairName = NamingUtil.GetIFCName(stair);
+                    string stairName = NamingUtil.GetNameOverride(stair, NamingUtil.GetIFCName(stair));
                     string stairDescription = NamingUtil.GetDescriptionOverride(stair, null);
                     string stairObjectType = NamingUtil.GetObjectTypeOverride(stair, NamingUtil.CreateIFCObjectName(exporterIFC, stair));
                     IFCAnyHandle stairLocalPlacement = placementSetter.GetPlacement();
-                    string stairElementTag = NamingUtil.CreateIFCElementId(stair);
+                    string stairElementTag = NamingUtil.GetTagOverride(stair, NamingUtil.CreateIFCElementId(stair));
                     IFCStairType stairType = GetIFCStairType(ifcEnumType);
 
                     IFCAnyHandle stairContainerHnd = IFCInstanceExporter.CreateStair(file, stairGUID, ownerHistory, stairName,
@@ -737,7 +739,7 @@ namespace BIM.IFC.Exporter
                             string runDescription = NamingUtil.GetDescriptionOverride(run, stairDescription);
                             string runObjectType = NamingUtil.GetObjectTypeOverride(run, stairObjectType);
                             IFCAnyHandle runLocalPlacement = ecData.GetLocalPlacement();
-                            string runElementTag = NamingUtil.CreateIFCElementId(run);
+                            string runElementTag = NamingUtil.GetTagOverride(run, NamingUtil.CreateIFCElementId(run));
 
                             IFCAnyHandle stairFlightHnd = IFCInstanceExporter.CreateStairFlight(file, runGUID, ownerHistory,
                                 runName, runDescription, runObjectType, runLocalPlacement, representation, runElementTag,
@@ -835,7 +837,7 @@ namespace BIM.IFC.Exporter
                             string landingDescription = NamingUtil.GetDescriptionOverride(landing, stairDescription);
                             string landingObjectType = NamingUtil.GetObjectTypeOverride(landing, stairObjectType);
                             IFCAnyHandle landingLocalPlacement = ecData.GetLocalPlacement();
-                            string landingElementTag = NamingUtil.CreateIFCElementId(landing);
+                            string landingElementTag = NamingUtil.GetTagOverride(landing, NamingUtil.CreateIFCElementId(landing));
 
                             IFCAnyHandle representation = IFCInstanceExporter.CreateProductDefinitionShape(exporterIFC.GetFile(), null, null, reps);
 
@@ -884,7 +886,7 @@ namespace BIM.IFC.Exporter
                             string supportDescription = NamingUtil.GetDescriptionOverride(support, stairDescription);
                             string supportObjectType = NamingUtil.GetObjectTypeOverride(support, stairObjectType);
                             IFCAnyHandle supportLocalPlacement = ecData.GetLocalPlacement();
-                            string supportElementTag = NamingUtil.CreateIFCElementId(support);
+                            string supportElementTag = NamingUtil.GetTagOverride(support, NamingUtil.CreateIFCElementId(support));
 
                             IFCAnyHandle type = GetMemberTypeHandle(exporterIFC, support);
 
@@ -944,7 +946,7 @@ namespace BIM.IFC.Exporter
 
                         string stairDescription = NamingUtil.GetDescriptionOverride(legacyStair, null);
                         string stairObjectType = NamingUtil.GetObjectTypeOverride(legacyStair, NamingUtil.CreateIFCObjectName(exporterIFC, legacyStair));
-                        string stairElementTag = NamingUtil.CreateIFCElementId(legacyStair);
+                        string stairElementTag = NamingUtil.GetTagOverride(legacyStair, NamingUtil.CreateIFCElementId(legacyStair));
 
                         double defaultHeight = GetDefaultHeightForLegacyStair(exporterIFC.LinearScale);
                         double stairHeight = GetStairsHeightForLegacyStair(exporterIFC, legacyStair, defaultHeight);
@@ -1019,7 +1021,8 @@ namespace BIM.IFC.Exporter
                             IFCAnyHandle flightLocalPlacement = ExporterUtil.CreateLocalPlacement(file, placementSetter.GetPlacement(), null);
 
                             IFCAnyHandle flightHnd;
-                            string stairName = NamingUtil.GetIFCNamePlusIndex(legacyStair, ii + 1);
+                            string stairName = NamingUtil.GetOverrideStringValue(legacyStair, "Name", NamingUtil.GetIFCNamePlusIndex(legacyStair, ii + 1));
+                            
                             if (isRamp)
                             {
                                 flightHnd = IFCInstanceExporter.CreateRampFlight(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),

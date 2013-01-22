@@ -236,13 +236,13 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
 
                         string instanceGUID = GUIDUtil.CreateGUID(element);
-                        string instanceName = NamingUtil.GetIFCName(element);
+                        string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, NamingUtil.CreateIFCObjectName(exporterIFC, element));
-                        string instanceElemId = NamingUtil.CreateIFCElementId(element);
+                        string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
                         IFCAnyHandle beam = IFCInstanceExporter.CreateBeam(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
-                            instanceName, instanceDescription, instanceObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, instanceElemId);
+                            instanceName, instanceDescription, instanceObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, instanceTag);
 
                         productWrapper.AddElement(beam, setter, extrusionCreationData, LevelUtil.AssociateElementToLevel(element));
 

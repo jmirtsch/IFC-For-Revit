@@ -112,12 +112,14 @@ namespace BIM.IFC.Exporter
                         ElementId roomId = setter.UpdateRoomRelativeCoordinates(element, out localPlacementToUse);
                         if (roomId == ElementId.InvalidElementId)
                             localPlacementToUse = ecData.GetLocalPlacement();
-                        string name = NamingUtil.GetIFCName(element);
+                        string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                         string description = NamingUtil.GetDescriptionOverride(element, null);
                         string objectType = NamingUtil.GetObjectTypeOverride(element, elementTypeName);
+                        string Tag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
+
                         IFCAnyHandle elemHnd = IFCInstanceExporter.CreateFlowSegment(file, GUIDUtil.CreateGUID(element),
                             exporterIFC.GetOwnerHistoryHandle(), name, description, objectType, localPlacementToUse, prodRep,
-                            NamingUtil.CreateIFCElementId(element));
+                            Tag);
 
                         if (roomId == ElementId.InvalidElementId)
                         {

@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 
@@ -87,6 +88,11 @@ namespace BIM.IFC.Utility
         /// This is used to identify which element should be used for properties, for elements (e.g. Stairs) that contain other elements.
         /// </summary>
         static HandleToElementCache m_HandleToElementCache;
+
+        /// <summary>
+        /// The language of the current Revit document.
+        /// </summary>
+        static LanguageType m_LanguageType;
 
         /// <summary>
         /// The LevelInfoCache object.  This contains extra information on top of
@@ -317,7 +323,16 @@ namespace BIM.IFC.Utility
                     m_HandleToElementCache = new HandleToElementCache();
                 return m_HandleToElementCache;
             }
-        } 
+        }
+
+        /// <summary>
+        /// The language of the current Revit document.
+        /// </summary>
+        public static LanguageType LanguageType
+        {
+            get { return m_LanguageType; }
+            set { m_LanguageType = value; }
+        }
 
         /// <summary>
         /// The ParameterCache object.

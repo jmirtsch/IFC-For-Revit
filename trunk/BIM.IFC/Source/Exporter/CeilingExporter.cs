@@ -132,14 +132,14 @@ namespace BIM.IFC.Exporter
                        element, geomElem, false, false);
 
                     string instanceGUID = GUIDUtil.CreateGUID(element);
-                    string instanceName = NamingUtil.GetIFCName(element);
+                    string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                     string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                     string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
-                    string instanceElemId = NamingUtil.CreateIFCElementId(element);
+                    string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
                     Toolkit.IFCCoveringType coveringType = GetIFCCoveringType(element, ifcEnumType);
 
                     IFCAnyHandle covering = IFCInstanceExporter.CreateCovering(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
-                        instanceName, instanceDescription, instanceObjectType, setter.GetPlacement(), prodRep, instanceElemId, coveringType);
+                        instanceName, instanceDescription, instanceObjectType, setter.GetPlacement(), prodRep, instanceTag, coveringType);
 
                     if (exportParts)
                     {

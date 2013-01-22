@@ -11,7 +11,7 @@
         <TabControl Height="309" HorizontalAlignment="Left" Name="tabControl" VerticalAlignment="Top" Width="540" Grid.Column="1">
             <TabItem Header="Include" Name="tabItem2">
                 <Grid Height="269" Width="524">
-                    <ComboBox Height="23" HorizontalAlignment="Left" Margin="385,76,0,0" Name="comboboxSpaceBoundaries" VerticalAlignment="Top" Width="133" ItemsSource="{Binding}" SelectionChanged="comboboxSpaceBoundaries_SelectionChanged" />
+                    <ComboBox Height="23" HorizontalAlignment="Left" Margin="393,77,0,0" Name="comboboxSpaceBoundaries" VerticalAlignment="Top" Width="133" ItemsSource="{Binding}" SelectionChanged="comboboxSpaceBoundaries_SelectionChanged" />
                     <CheckBox Content="Export base quantities" Height="16" HorizontalAlignment="Left" Margin="6,6,0,0" Name="checkboxExportBaseQuantities" VerticalAlignment="Top" Checked="checkboxExportBaseQuantities_Checked" Unchecked="checkboxExportBaseQuantities_Checked" />
                     <CheckBox Content="Split walls and columns by level" Height="16" HorizontalAlignment="Left" Margin="6,28,0,0" Name="checkboxSplitWalls" VerticalAlignment="Top" Checked="checkboxSplitWalls_Checked" Unchecked="checkboxSplitWalls_Checked" />
                     <CheckBox Content="Internal Revit property sets" HorizontalAlignment="Left" Margin="6,50,0,132" Name="checkboxInternalPropertySets" Checked="checkboxInternalPropertySets_Checked" Unchecked="checkboxInternalPropertySets_Checked" />

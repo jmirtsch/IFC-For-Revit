@@ -74,45 +74,46 @@ namespace BIM.IFC.Exporter
         
                     string guid = GUIDUtil.CreateGUID(element);
                     IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                    string name = NamingUtil.GetIFCName(element);
-                    string objectType = exporterIFC.GetFamilyName();
+                    string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
+                    string description = NamingUtil.GetDescriptionOverride(element, null);
+                    string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
                     IFCAnyHandle localPlacement = placementSetter.GetPlacement();
                     IFCAnyHandle representation = null;
-                    string elementTag = NamingUtil.CreateIFCElementId(element);
+                    string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
                     // We have limited support for exporting assemblies as other container types.
                     switch (exportAs)
                     {
                         case IFCExportType.ExportCurtainWall:
                             assemblyInstanceHnd = IFCInstanceExporter.CreateCurtainWall(file, guid,
-                                ownerHistory, name, null, objectType, localPlacement, representation, elementTag);
+                                ownerHistory, name, description, objectType, localPlacement, representation, elementTag);
                             break;
                         case IFCExportType.ExportRamp:
                             IFCRampType rampPredefinedType = RampExporter.GetIFCRampType(ifcEnumType);
                             assemblyInstanceHnd = IFCInstanceExporter.CreateRamp(file, guid,
-                                ownerHistory, name, null, objectType, localPlacement, representation, elementTag,
+                                ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
                                 rampPredefinedType);
                             break;
                         case IFCExportType.ExportRoof:
                             IFCRoofType roofPredefinedType = RoofExporter.GetIFCRoofType(ifcEnumType);
                             assemblyInstanceHnd = IFCInstanceExporter.CreateRoof(file, guid,
-                                ownerHistory, name, null, objectType, localPlacement, representation, elementTag,
+                                ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
                                 roofPredefinedType);
                             break;
                         case IFCExportType.ExportStair:
                             IFCStairType stairPredefinedType = StairsExporter.GetIFCStairType(ifcEnumType);
                             assemblyInstanceHnd = IFCInstanceExporter.CreateStair(file, guid,
-                                ownerHistory, name, null, objectType, localPlacement, representation, elementTag,
+                                ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
                                 stairPredefinedType);
                             break;
                         case IFCExportType.ExportWall:
                             assemblyInstanceHnd = IFCInstanceExporter.CreateWall(file, guid,
-                                ownerHistory, name, null, objectType, localPlacement, representation, elementTag);
+                                ownerHistory, name, description, objectType, localPlacement, representation, elementTag);
                             break;
                         default:
                             IFCElementAssemblyType assemblyPredefinedType = GetPredefinedTypeFromObjectType(objectType);
                             assemblyInstanceHnd = IFCInstanceExporter.CreateElementAssembly(file, guid,
-                                ownerHistory, name, null, objectType, localPlacement, representation, elementTag,
+                                ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
                                 IFCAssemblyPlace.NotDefined, assemblyPredefinedType);
                             break;
                     }

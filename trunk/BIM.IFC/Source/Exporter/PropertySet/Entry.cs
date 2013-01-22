@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
 using Autodesk.Revit;
+using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 
@@ -47,12 +48,17 @@ namespace BIM.IFC.Exporter.PropertySet
     abstract public class Entry
     {
         /// <summary>
-        /// The parameter name to be used to get the parameter value.
+        /// The parameter name to be used to get the parameter value.  This is generally in English (ENU).
         /// </summary>
         string m_RevitParameterName = String.Empty;
 
         /// <summary>
-        /// The name for IFC property.
+        /// The parameter name to be used to get the parameter value in other locales.
+        /// </summary>
+        Dictionary<LanguageType, string> m_LocalizedRevitParameterNames = null;
+
+        /// <summary>
+        /// The default name for IFC property.  This is generally assumed to be in English (ENU).
         /// </summary>
         string m_PropertyName = String.Empty;
 
@@ -124,7 +130,7 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
-        /// The internationalized name of the parameter in Revit (if it exists).
+        /// The standard name of the parameter in Revit (if it exists).
         /// </summary>
         public string RevitParameterName
         {
@@ -136,6 +142,37 @@ namespace BIM.IFC.Exporter.PropertySet
             {
                 m_RevitParameterName = value;
             }
+        }
+
+        /// <summary>
+        /// The localized name of the parameter in Revit (if it exists).
+        /// </summary>
+        /// <param name="locale">The language.</param>
+        /// <returns>The localized name, or null if it does not exist.</returns>
+        public string LocalizedRevitParameterName(LanguageType locale)
+        {
+            string localizedName = null;
+            if (m_LocalizedRevitParameterNames != null)
+            {
+                if (m_LocalizedRevitParameterNames.TryGetValue(locale, out localizedName))
+                    return localizedName;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Adds a localized name for the entry.
+        /// </summary>
+        /// <param name="locale">The language.</param>
+        /// <param name="localizedName">The name for that language.</param>
+        public void AddLocalizedParameterName(LanguageType locale, string localizedName)
+        {
+            if (m_LocalizedRevitParameterNames == null)
+                m_LocalizedRevitParameterNames = new Dictionary<LanguageType, string>();
+
+            if (m_LocalizedRevitParameterNames.ContainsKey(locale))
+                throw new ArgumentException("Locale value already defined.");
+            m_LocalizedRevitParameterNames[locale] = localizedName;
         }
 
         /// <summary>

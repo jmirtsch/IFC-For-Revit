@@ -611,7 +611,19 @@ namespace BIM.IFC.Exporter
                 HashSet<IFCAnyHandle> faceBounds = new HashSet<IFCAnyHandle>();
                 EdgeArrayArray edgeArrayArray = face.EdgeLoops;
 
-                bool outerEdge = true;
+                int edgeArraySize = edgeArrayArray.Size;
+                int outerEdgeArrayIndex = 0;
+                if (edgeArraySize > 1)
+                {
+                    if (GeometryUtil.IsPlanarFaceNormalFlipped(face as PlanarFace))
+                    {
+                        outerEdgeArrayIndex = edgeArraySize - 1;
+                    }
+                    else
+                        outerEdgeArrayIndex = 0;
+                }
+
+                int edgeArrayIndex = 0;
                 foreach (EdgeArray edgeArray in edgeArrayArray)
                 {
                     IList<IFCAnyHandle> vertices = new List<IFCAnyHandle>();
@@ -654,17 +666,12 @@ namespace BIM.IFC.Exporter
                         }
                     }
 
-                    if (edgeArrayArray.Size > 1)
-                    {
-                        outerEdge = GeometryUtil.IsEdgeArrayCCW(face as PlanarFace, edgeArray);
-                    }
-
                     IFCAnyHandle faceLoop = IFCInstanceExporter.CreatePolyLoop(file, vertices);
-                    IFCAnyHandle faceBound = outerEdge ?
+                    IFCAnyHandle faceBound = edgeArrayIndex == outerEdgeArrayIndex ?
                         IFCInstanceExporter.CreateFaceOuterBound(file, faceLoop, true) :
                         IFCInstanceExporter.CreateFaceBound(file, faceLoop, true);
 
-                    outerEdge = false;
+                    edgeArrayIndex++;
                     faceBounds.Add(faceBound);
                 }
                 IFCAnyHandle currFace = IFCInstanceExporter.CreateFace(file, faceBounds);

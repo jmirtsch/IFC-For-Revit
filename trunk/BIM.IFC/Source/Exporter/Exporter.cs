@@ -36,6 +36,7 @@ using BIM.IFC.Exporter.PropertySet;
 using BIM.IFC.Utility;
 using System.Reflection;
 using BIM.IFC.Toolkit;
+using Revit.IFC.Common.Extensions;
 
 namespace BIM.IFC.Exporter
 {
@@ -589,6 +590,26 @@ namespace BIM.IFC.Exporter
             ExportOptionsCache exportOptionsCache = ExportOptionsCache.Create(exporterIFC, filterView);
             ExporterCacheManager.ExportOptionsCache = exportOptionsCache;
 
+            // Set language.
+            Application app = document.Application;
+            string pathName = document.PathName;
+            LanguageType langType = LanguageType.Unknown;
+            if (!String.IsNullOrEmpty(pathName))
+            {
+                try
+                {
+                    BasicFileInfo basicFileInfo = BasicFileInfo.Extract(pathName);
+                    if (basicFileInfo != null)
+                        langType = basicFileInfo.LanguageWhenSaved;
+                }
+                catch
+                {
+                }
+            }
+            if (langType == LanguageType.Unknown)
+                langType = app.Language;
+            ExporterCacheManager.LanguageType = langType;
+
             ElementFilteringUtil.InitCategoryVisibilityCache();
 
             ExporterCacheManager.Document = document;
@@ -625,18 +646,7 @@ namespace BIM.IFC.Exporter
 
                 IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                 ProjectInfo projInfo = document.ProjectInformation;
-
-                string projectAddress = projInfo != null ? projInfo.Address : String.Empty;
-                SiteLocation siteLoc = document.ActiveProjectLocation.SiteLocation;
-                string location = siteLoc != null ? siteLoc.PlaceName : String.Empty;
-
-                if (projectAddress == null)
-                    projectAddress = String.Empty;
-                if (location == null)
-                    location = String.Empty;
-
-                IFCAnyHandle buildingAddress = CreateIFCAddress(file, projectAddress, location);
-
+              
                 string buildingName = String.Empty;
                 if (projInfo != null)
                 {
@@ -648,6 +658,8 @@ namespace BIM.IFC.Exporter
                     {
                     }
                 }
+
+                IFCAnyHandle buildingAddress = CreateIFCAddress(file, document, projInfo);
 
                 IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(file,
                     GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building),
@@ -1108,11 +1120,24 @@ namespace BIM.IFC.Exporter
                 else
                 {
                     string currentLine;
-                    currentLine = string.Format("ViewDefinition [{0}{1}]",
-                       coordinationView,
-                       exportOptionsCache.ExportBaseQuantities ? ", QuantityTakeOffAddOnView" : "");
+                    bool exportFMHandOverView = String.Compare(exportOptionsCache.SelectedConfigName, "FMHandOverView") == 0;
+
+                    if (exportFMHandOverView)
+                    {
+                        currentLine = string.Format("ViewDefinition [{0}{1}{2}{3}]",
+                           coordinationView,
+                           exportOptionsCache.ExportBaseQuantities ? ", QuantityTakeOffAddOnView" : "",
+                           ", ", exportOptionsCache.SelectedConfigName);
+                    }
+                    else
+                    {
+                        currentLine = string.Format("ViewDefinition [{0}{1}]",
+                           coordinationView,
+                           exportOptionsCache.ExportBaseQuantities ? ", QuantityTakeOffAddOnView" : "");
+                    }
 
                     descriptions.Add(currentLine);
+                  
                 }
 
                 string projectNumber = projectInfo.Number;
@@ -1130,16 +1155,33 @@ namespace BIM.IFC.Exporter
                 if (!IFCAnyHandleUtil.IsNullOrHasNoValue(project))
                     IFCAnyHandleUtil.UpdateProject(project, projectNumber, projectName, projectStatus);
 
-                List<string> author = new List<string>();
-                author.Add(string.Empty);
-                List<string> orginization = new List<string>();
-                orginization.Add(string.Empty);
                 IFCInstanceExporter.CreateFileSchema(file);
                 IFCInstanceExporter.CreateFileDescription(file, descriptions);
+                // Get stored File Header information from the UI and use it for export
+                IFCFileHeader fHeader = new IFCFileHeader();
+                IFCFileHeaderItem fHItem = null;
+
+                fHeader.GetSavedFileHeader(document, out fHItem);
+
+                List<string> author = new List<string>();
+                if (String.IsNullOrEmpty(fHItem.AuthorName) == false)
+                {
+                    author.Add(fHItem.AuthorName);
+                    if (String.IsNullOrEmpty(fHItem.AuthorEmail) == false)
+                        author.Add(fHItem.AuthorEmail);
+                }
+                else
+                    author.Add(String.Empty);
+
+                List<string> organization = new List<string>();
+                if (String.IsNullOrEmpty(fHItem.Organization) == false)
+                    organization.Add(fHItem.Organization);
+                else
+                    organization.Add(String.Empty);
 
                 string versionInfos = document.Application.VersionBuild + " - " + ExporterCacheManager.ExportOptionsCache.ExporterVersion + " - " + ExporterCacheManager.ExportOptionsCache.ExporterUIVersion;
-                IFCInstanceExporter.CreateFileName(file, projectNumber, author, orginization, document.Application.VersionName,
-                    versionInfos, string.Empty);
+                IFCInstanceExporter.CreateFileName(file, projectNumber, author, organization, document.Application.VersionName,
+                    versionInfos, fHItem.Authorization);
 
                 transaction.Commit();
 
@@ -1528,22 +1570,7 @@ namespace BIM.IFC.Exporter
         {
             Application app = document.Application;
             string pathName = document.PathName;
-            LanguageType langType = LanguageType.Unknown;
-            if (!String.IsNullOrEmpty(pathName))
-            {
-                try
-                {
-                    BasicFileInfo basicFileInfo = BasicFileInfo.Extract(pathName);
-                    if (basicFileInfo != null)
-                        langType = basicFileInfo.LanguageWhenSaved;
-                }
-                catch
-                {
-                } 
-            }
-            if (langType == LanguageType.Unknown)
-                langType = app.Language;
-
+            LanguageType langType = ExporterCacheManager.LanguageType;
             string languageExtension = GetLanguageExtension(langType);
             string productFullName = app.VersionName + languageExtension;
             string productVersion = app.VersionNumber;
@@ -1703,12 +1730,20 @@ namespace BIM.IFC.Exporter
             IFCAnyHandle units = CreateDefaultUnits(exporterIFC, doc);
             HashSet<IFCAnyHandle> repContexts = CreateContextInformation(exporterIFC, doc);
 
-            // find project description
+            // As per IFC implementer's agreement, we get IfcProject.Name from ProjectInfo.Number and IfcProject.Longname from ProjectInfo.Name 
+            string projectName = projInfo.Number;
+            string projectLongName = projInfo.Name;
+
+            // Get project description if it is set in the Project info
             string projectDescription = NamingUtil.GetDescriptionOverride(projInfo, null);
+            string projectObjectType = NamingUtil.GetObjectTypeOverride(projInfo, null);
+
+            string projectPhase = null;
+            ParameterUtil.GetStringValueFromElement(projInfo, "Project Phase", out projectPhase);
 
             IFCAnyHandle projectHandle = IFCInstanceExporter.CreateProject(file,
                 GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Project), ownerHistory,
-                null, projectDescription, null, null, null, repContexts, units);
+                projectName, projectDescription, projectObjectType, projectLongName, projectPhase, repContexts, units);
             exporterIFC.SetProject(projectHandle);
 
             if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
@@ -1726,21 +1761,87 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
+        /// Create IFC Address from the saved data obtained by the UI and saved in the extensible storage
+        /// </summary>
+        /// <param name="file"></param>
+        /// <param name="document"></param>
+        /// <returns>The handle of IFC file.</returns>
+        private IFCAnyHandle CreateIFCAddressFromExtStorage (IFCFile file, Document document)
+        {
+            IFCAddress savedAddress = new IFCAddress();
+            IFCAddressItem savedAddressItem;
+
+            if ( savedAddress.GetSavedAddress(document, out savedAddressItem) == true)
+            {
+                IFCAnyHandle postalAddress;
+                
+                // We have address saved in the extensible storage
+                List<string> addressLines = new List<string>();
+                if (!String.IsNullOrEmpty(savedAddressItem.AddressLine1))
+                {
+                    addressLines.Add(savedAddressItem.AddressLine1);
+                    if (!String.IsNullOrEmpty(savedAddressItem.AddressLine2))
+                        addressLines.Add(savedAddressItem.AddressLine2);
+                }
+
+                IFCAddressType? addressPurpose = null;
+                if (!String.IsNullOrEmpty(savedAddressItem.Purpose))
+                {
+                    addressPurpose = IFCAddressType.UserDefined;     // set this as default value
+                    if (String.Compare(savedAddressItem.Purpose, "OFFICE", true) == 0)
+                        addressPurpose = Toolkit.IFCAddressType.Office;
+                    else if (String.Compare(savedAddressItem.Purpose, "SITE", true) == 0)
+                        addressPurpose = Toolkit.IFCAddressType.Site;
+                    else if (String.Compare(savedAddressItem.Purpose, "HOME", true) == 0)
+                        addressPurpose = Toolkit.IFCAddressType.Home;
+                    else if (String.Compare(savedAddressItem.Purpose, "DISTRIBUTIONPOINT", true) == 0)
+                        addressPurpose = Toolkit.IFCAddressType.DistributionPoint;
+                    else if (String.Compare(savedAddressItem.Purpose, "USERDEFINED", true) == 0)
+                        addressPurpose = Toolkit.IFCAddressType.UserDefined;
+                }
+                
+                postalAddress = IFCInstanceExporter.CreatePostalAddress(file, addressPurpose, savedAddressItem.Description, savedAddressItem.UserDefinedPurpose,
+                    savedAddressItem.InternalLocation, addressLines, savedAddressItem.POBox, savedAddressItem.TownOrCity, savedAddressItem.RegionOrState, savedAddressItem.PostalCode, 
+                    savedAddressItem.Country);
+
+                return postalAddress;
+
+            }
+
+            return null;
+
+        }
+
+        /// <summary>
         /// Creates the IfcPostalAddress, and assigns it to the file.
         /// </summary>
         /// <param name="file">The IFC file.</param>
         /// <param name="address">The address string.</param>
         /// <param name="town">The town string.</param>
         /// <returns>The handle of IFC file.</returns>
-        private IFCAnyHandle CreateIFCAddress(IFCFile file, string address, string town)
+        private IFCAnyHandle CreateIFCAddress(IFCFile file, Document document, ProjectInfo projInfo)
         {
+            IFCAnyHandle postalAddress = null;
+            postalAddress = CreateIFCAddressFromExtStorage(file, document);
+            if (postalAddress != null)
+                return postalAddress;
+
+            string projectAddress = projInfo != null ? projInfo.Address : String.Empty;
+            SiteLocation siteLoc = document.ActiveProjectLocation.SiteLocation;
+            string location = siteLoc != null ? siteLoc.PlaceName : String.Empty;
+
+            if (projectAddress == null)
+                projectAddress = String.Empty;
+            if (location == null)
+                location = String.Empty;
+
             List<string> parsedAddress = new List<string>();
             string city = String.Empty;
             string state = String.Empty;
             string postCode = String.Empty;
             string country = String.Empty;
 
-            string parsedTown = town;
+            string parsedTown = location;
             int commaLoc = -1;
             do
             {
@@ -1782,16 +1883,15 @@ namespace BIM.IFC.Exporter
             }
 
             List<string> addressLines = new List<string>();
-            if (!String.IsNullOrEmpty(address))
-                addressLines.Add(address);
+            if (!String.IsNullOrEmpty(projectAddress))
+                addressLines.Add(projectAddress);
 
             for (int ii = 0; ii < numLines; ii++)
             {
                 addressLines.Add(parsedAddress[ii]);
             }
 
-
-            IFCAnyHandle postalAddress = IFCInstanceExporter.CreatePostalAddress(file, null, null, null,
+            postalAddress = IFCInstanceExporter.CreatePostalAddress(file, null, null, null,
                null, addressLines, null, city, state, postCode, country);
 
             return postalAddress;

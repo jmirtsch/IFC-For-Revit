@@ -203,6 +203,22 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Gets Tag override from element.
+        /// </summary>
+        /// <param name="element">
+        /// The element.
+        /// </param>
+        /// <param name="originalValue">
+        /// The original value.
+        /// </param>
+        /// <returns>The string contains the object type string value.</returns>
+        public static string GetTagOverride(Element element, string originalValue)
+        {
+            string nameOverride = "Tag";
+            return GetOverrideStringValue(element, nameOverride, originalValue);
+        }
+       
+        /// <summary>
         /// Generates the IFC name for the current element.
         /// </summary>
         /// <param name="element">The element.</param>

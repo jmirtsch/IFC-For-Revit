@@ -66,12 +66,14 @@ namespace BIM.IFC.Export.UI
         public void AddBuiltInConfigurations()
         {
             // These are the built-in configurations.  Provide a more extensible means of storage.
-            // Order of construction: name, version, space boundaries, QTO, split walls, internal sets, 2d elems, surfaceStyles, boundingBox.
+            // Order of construction: name, version, space boundaries, QTO, split walls, internal sets, 2d elems, surfaceStyles, boundingBox
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("Default 2x3", IFCVersion.IFC2x3, 1, false, false, true, true, true, false));
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("Default 2x2", IFCVersion.IFC2x2, 1, false, false, true, false, true, false));
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("BCA", IFCVersion.IFCBCA, 1, false, true, true, false, true, false));
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("GSA", IFCVersion.IFCCOBIE, 2, true, true, true, true, true, true));
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("Coordination View 2.0", IFCVersion.IFC2x3CV2, 0, false, true, false, false, false, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("FMHandOverView", IFCVersion.IFC2x3, 1, true, true, false, true, true, false));
+
         }
 
         /// <summary>

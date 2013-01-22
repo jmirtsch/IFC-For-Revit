@@ -207,15 +207,15 @@ namespace BIM.IFC.Exporter
                     {
                         // We will use the Project Information site name as the primary name, if it exists.
                         string instanceGUID = GUIDUtil.CreateSiteGUID(doc, element);
-                        string instanceName = NamingUtil.GetIFCName(element);
+                        string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                         string siteName = NamingUtil.GetOverrideStringValue(projectInfo, "SiteName", instanceName);
                         string instanceLongName = NamingUtil.GetLongNameOverride(doc.ProjectInformation, NamingUtil.GetLongNameOverride(element, null));
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
-                        string instanceElemId = NamingUtil.CreateIFCElementId(element);
+                        string siteLandTitleNumber = NamingUtil.GetOverrideStringValue(element, "LandTitleNumber", null);
 
                         siteHandle = IFCInstanceExporter.CreateSite(file, instanceGUID, ownerHistory, siteName, instanceDescription, instanceObjectType, localPlacement,
-                           siteRepresentation, instanceLongName, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, null, null);
+                           siteRepresentation, instanceLongName, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, siteLandTitleNumber, null);
                     }
                 }
                 else

@@ -466,7 +466,7 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Indicates whether or not the loop has the same sense when used to bound the face as when first defined.
         /// </summary>
-        /// <param name="boundary">The boudary.</param>
+        /// <param name="boundary">The boundary.</param>
         /// <returns>If false the senses of all its component oriented edges are implicitly reversed when used in the face.</returns>
         public static bool BoundaryHasSameSense(IFCAnyHandle boundary)
         {
@@ -1835,32 +1835,17 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
-        /// Checks if the edge array on a face is oriented counter-clockwise (CCW).
+
+        /// <summary>
+        /// Determines if the Normal of the PlanarFace is flipped.
         /// </summary>
-        /// <param name="plannarFace">The face.</param>
-        /// <param name="edgeArray">The edge array.</param>
-        /// <returns>True if it is CCW.</returns>
-        public static bool IsEdgeArrayCCW(PlanarFace plannarFace, EdgeArray edgeArray)
+        /// <param name="planarFace">The planar face.</param>
+        /// <returns>True if the normal is flipped.</returns>
+        public static bool IsPlanarFaceNormalFlipped(PlanarFace planarFace)
         {
-            bool isCCW = false;
-            CurveLoop curveLoop = new CurveLoop();
-            foreach (Edge edge in edgeArray)
-            {
-                Curve curve = edge.AsCurveFollowingFace(plannarFace);
-
-                curveLoop.Append(curve);
-            }
-
-            try
-            {
-                isCCW = curveLoop.IsCounterclockwise(-plannarFace.Normal);
-            }
-            catch (Exception)
-            {
-
-            }
-
-            return isCCW;
+            XYZ planarFaceNormal = planarFace.Normal;
+            XYZ faceNormal = planarFace.ComputeNormal(new UV(0, 0));
+            return MathUtil.VectorsAreParallel2(planarFaceNormal, faceNormal) == -1;
         }
     }
 }
