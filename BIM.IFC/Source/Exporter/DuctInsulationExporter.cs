@@ -72,12 +72,16 @@ namespace BIM.IFC.Exporter
 
                         string guid = GUIDUtil.CreateGUID(element);
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                        string objectType = exporterIFC.GetFamilyName();
+                        string revitObjectType = exporterIFC.GetFamilyName();
+                        string name = NamingUtil.GetNameOverride(element, revitObjectType);
+                        string description = NamingUtil.GetDescriptionOverride(element, null);
+                        string objectType = NamingUtil.GetObjectTypeOverride(element, revitObjectType);
+                        
                         IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
-                        string elementTag = NamingUtil.CreateIFCElementId(element);
+                        string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
                         IFCAnyHandle ductInsulation = IFCInstanceExporter.CreateCovering(file, guid,
-                            ownerHistory, objectType, null, objectType, localPlacement, representation, elementTag, IFCCoveringType.Insulation);
+                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag, IFCCoveringType.Insulation);
 
                         productWrapper.AddElement(ductInsulation, placementSetter.GetLevelInfo(), ecData, LevelUtil.AssociateElementToLevel(element));
 

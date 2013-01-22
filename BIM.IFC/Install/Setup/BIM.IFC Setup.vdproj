@@ -69,6 +69,18 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_AD033C961FD607B416C0D635713CADF8"
+        "OwnerKey" = "8:_D58E8C2962DCFB4B97A6389C8C040BC5"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_D58E8C2962DCFB4B97A6389C8C040BC5"
+        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_DDAF69606A5C015535A772921314F57F"
         "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
         "MsmSig" = "8:_UNDEFINED"
@@ -83,6 +95,12 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_D58E8C2962DCFB4B97A6389C8C040BC5"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -373,6 +391,37 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_D58E8C2962DCFB4B97A6389C8C040BC5"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:IFCExtension, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_D58E8C2962DCFB4B97A6389C8C040BC5"
+                    {
+                    "Name" = "8:IFCExtension.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:IFCExtension.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_7AAFB596686C49259B5B7332069C98A5"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_DDAF69606A5C015535A772921314F57F"
             {
             "AssemblyRegister" = "3:1"
@@ -548,15 +597,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:IFC Exporter for Revit 2013"
-        "ProductCode" = "8:{931DECED-5CE4-4BC2-9525-D8B4180769E6}"
-        "PackageCode" = "8:{DF3918DB-CC1B-4D62-884B-0454496AFBFC}"
+        "ProductCode" = "8:{912CF03C-C63B-4D05-B556-5D7B9DFB1CA9}"
+        "PackageCode" = "8:{60B0BE2F-6853-4239-8E2C-C8A7140A8806}"
         "UpgradeCode" = "8:{CF885686-3666-4AE4-AD04-888286C204E6}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:2.6.0"
+        "ProductVersion" = "8:2.7.0"
         "Manufacturer" = "8:IFC Exporter for Revit"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:http://sourceforge.net/projects/ifcexporter/"

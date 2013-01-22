@@ -78,11 +78,11 @@ namespace BIM.IFC.Exporter
 
                         string guid = GUIDUtil.CreateGUID(roof);
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                        string roofName = NamingUtil.GetIFCName(roof);
+                        string roofName = NamingUtil.GetNameOverride(roof, NamingUtil.GetIFCName(roof));
                         string roofDescription = NamingUtil.GetDescriptionOverride(roof, null);
                         string roofObjectType = NamingUtil.GetObjectTypeOverride(roof, NamingUtil.CreateIFCObjectName(exporterIFC, roof));
                         IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
-                        string elementTag = NamingUtil.CreateIFCElementId(roof);
+                        string elementTag = NamingUtil.GetTagOverride(roof, NamingUtil.CreateIFCElementId(roof));
                         IFCRoofType roofType = GetIFCRoofType(ifcEnumType);
 
                         IFCAnyHandle roofHnd = IFCInstanceExporter.CreateRoof(file, guid, ownerHistory, roofName, roofDescription,
@@ -189,14 +189,14 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle prodRepHnd = null;
 
                         string elementGUID = GUIDUtil.CreateGUID(element);
-                        string elementName = NamingUtil.GetIFCName(element);
+                        string elementName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                         string elementDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string elementObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
-                        string elementId = NamingUtil.CreateIFCElementId(element);
+                        string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
                         //need to convert the string to enum
                         string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, element);
-                        IFCAnyHandle roofHandle = IFCInstanceExporter.CreateRoof(file, elementGUID, ownerHistory, elementName, elementDescription, elementObjectType, localPlacement, prodRepHnd, elementId, GetIFCRoofType(ifcEnumType));
+                        IFCAnyHandle roofHandle = IFCInstanceExporter.CreateRoof(file, elementGUID, ownerHistory, elementName, elementDescription, elementObjectType, localPlacement, prodRepHnd, elementTag, GetIFCRoofType(ifcEnumType));
 
                         // Export the parts
                         PartExporter.ExportHostPart(exporterIFC, element, roofHandle, productWrapper, setter, localPlacement, null);

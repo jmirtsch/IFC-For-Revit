@@ -355,6 +355,8 @@ namespace BIM.IFC.Export.UI
             options.AddOption("FileType", IFCFileType.ToString());
             string uiVersion = IFCUISettings.GetAssemblyVersion();
             options.AddOption("AlternateUIVersion", uiVersion);
+
+            options.AddOption("ConfigName", Name);      // Add config name into the option for use in the exporter
         }
 
         /// <summary>

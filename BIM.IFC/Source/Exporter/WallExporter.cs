@@ -167,6 +167,195 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
+        /// Computes the area of a simple face.
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <param name="facePlane">The plane of the face.</param>
+        /// <param name="refPoint">Reference point for area computation.</param>
+        /// <returns>The area.</returns>
+        private static double ComputeSimpleFaceArea(IList<XYZ> face, Plane facePlane, XYZ refPoint)
+        {
+            double area = 0.0;
+            int numVertices = face.Count;
+            XYZ normal = facePlane.Normal;
+            for (int ii = 0; ii < numVertices; ii++)
+            {
+                XYZ currEdge = face[(ii + 1) % numVertices] - face[ii];
+                double length = currEdge.GetLength();
+
+                XYZ heightVec = normal.CrossProduct(currEdge).Normalize();
+                XYZ otherEdge = refPoint - face[ii];
+                double height = heightVec.DotProduct(otherEdge);
+                area += (length * height);
+            }
+            return area / 2.0;
+        }
+
+        /// <summary>
+        /// Computes the signed volume of a polyhedral cone formed by a simpleface and a reference point.
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <param name="centroid">The centroid of the face.</param>
+        /// <param name="refPoint">The vertex of the cone.</param>
+        /// <param name="orientation">The orientation of the boundary.  If false, the volume should be reversed.</param>
+        /// <returns>The signed volume.</returns>
+        private static double ComputeSimpleFaceVolume(IList<XYZ> face, XYZ centroid, XYZ refPoint, bool orientation)
+        {
+            Plane facePlane = ComputeSimpleFacePlane(face, orientation);
+            double area = ComputeSimpleFaceArea(face, facePlane, centroid);
+            XYZ heightVec = refPoint - facePlane.Origin;
+            double height = -facePlane.Normal.DotProduct(heightVec);
+            double volume = area * height / 3.0;
+            return volume;
+        }
+
+        /// <summary>
+        /// Compute the plane of a polygonal face.
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <param name="orientation">The orientation of the boundary.  If false, the normal should be reversed.</param>
+        /// <returns>The normal.</returns>
+        private static Plane ComputeSimpleFacePlane(IList<XYZ> face, bool orientation)
+        {
+            int numVertices = face.Count;
+
+            // Calculate normal of face and projected angle at vertex.
+            XYZ dir1 = (face[1] - face[0]).Normalize();
+            XYZ dir2 = null;
+            for (int nextDirIndex = 2; nextDirIndex < numVertices; nextDirIndex++)
+            {
+                XYZ nextDir = (face[nextDirIndex] - face[1]).Normalize();
+                if (MathUtil.IsAlmostEqual(Math.Abs(nextDir.DotProduct(dir1)), 1.0))
+                    continue;
+                dir2 = nextDir;
+                break;
+            }
+
+            if (dir2 == null)
+                throw new InvalidOperationException("Invalid outer face boundary.");
+
+            XYZ faceNormal = dir1.CrossProduct(dir2).Normalize();
+            if (!orientation)
+                faceNormal = -faceNormal;
+            return new Plane(faceNormal, face[0]);
+        }
+
+        /// <summary>
+        /// This routine corrects the orientation of a polyhedron whose normals face inwards instead of outwards.  The assumption
+        /// is made that all of the faces have either the correct or incorrect orientation for simplicity and performance issues.
+        /// </summary>
+        /// <param name="openingHnd">The opening handle.</param>
+        private static void PotentiallyCorrectOpeningOrientation(IFCAnyHandle openingHnd)
+        {
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(openingHnd))
+                return;
+
+            IFCAnyHandle prodRep = IFCAnyHandleUtil.GetInstanceAttribute(openingHnd, "Representation");
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodRep))
+                return;
+
+            HashSet<IFCAnyHandle> reps = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(prodRep, "Representations");
+            if (reps == null || reps.Count != 1)
+                return;
+
+            double eps = MathUtil.Eps();
+
+            foreach (IFCAnyHandle rep in reps)
+            {
+                HashSet<IFCAnyHandle> repItems = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(rep, "Items");
+                if (repItems == null)
+                    continue;
+                foreach (IFCAnyHandle repItem in repItems)
+                {
+                    if (!IFCAnyHandleUtil.IsSubTypeOf(repItem, IFCEntityType.IfcFacetedBrep))
+                        continue;
+
+
+                    IFCAnyHandle outer = IFCAnyHandleUtil.GetInstanceAttribute(repItem, "Outer");
+                    if (IFCAnyHandleUtil.IsNullOrHasNoValue(outer))
+                        continue;
+
+                    HashSet<IFCAnyHandle> cfsFaces = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(outer, "CfsFaces");
+                    if (cfsFaces == null || cfsFaces.Count == 0)
+                        continue;
+
+                    // We are going to get all of the faces and compute the volume of the solid.  If it is negative, the solid is reversed.
+
+                    // Generate bounding box, generate solid outline.
+                    IList<IFCAnyHandle> listOfAllBoundaries = new List<IFCAnyHandle>();
+                    IList<bool> listOfAllOrientations = new List<bool>();
+                    double volume = 0.0;
+                    XYZ basePoint = null;
+
+                    try
+                    {
+                        foreach (IFCAnyHandle cfsFace in cfsFaces)
+                        {
+                            HashSet<IFCAnyHandle> bounds = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(cfsFace, "Bounds");
+                            if (bounds == null || bounds.Count == 0)
+                                throw new InvalidOperationException("Expected bounded face.");
+
+                            foreach (IFCAnyHandle bound in bounds)
+                            {
+                                IFCAnyHandle boundLoop = IFCAnyHandleUtil.GetInstanceAttribute(bound, "Bound");
+                                if (IFCAnyHandleUtil.IsNullOrHasNoValue(boundLoop))
+                                    throw new InvalidOperationException("Expected bounded face.");
+
+                                if (!IFCAnyHandleUtil.IsSubTypeOf(boundLoop, IFCEntityType.IfcPolyLoop))
+                                    throw new InvalidOperationException("Expected IfcPolyLoop.");
+
+                                bool? orientationOpt = IFCAnyHandleUtil.GetBooleanAttribute(bound, "Orientation");
+                                bool orientation = orientationOpt.HasValue ? orientationOpt.Value : true;
+
+                                listOfAllBoundaries.Add(bound);
+                                listOfAllOrientations.Add(orientation);
+                                
+                                IList<IFCAnyHandle> polygon = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(boundLoop, "Polygon");
+
+                                IList<XYZ> currBound = new List<XYZ>();
+
+                                XYZ currBasePoint = new XYZ(0, 0, 0);
+                                foreach (IFCAnyHandle vertex in polygon)
+                                {
+                                    IList<double> vertices = IFCAnyHandleUtil.GetAggregateDoubleAttribute<List<double>>(vertex, "Coordinates");
+                                    if (vertices == null || vertices.Count != 3)
+                                        throw new InvalidOperationException("Expected IfcCartesianPoint of dimensionality 3.");
+
+                                    XYZ currPoint = new XYZ(vertices[0], vertices[1], vertices[2]);
+                                    currBound.Add(currPoint);
+
+                                    currBasePoint += currPoint;
+                                }
+
+                                int numVertices = currBound.Count;
+                                if (numVertices < 3)
+                                    throw new InvalidOperationException("Invalid outer face boundary.");
+
+                                currBasePoint /= numVertices;
+                                if (basePoint == null)
+                                    basePoint = currBasePoint;
+                                volume += ComputeSimpleFaceVolume(currBound, currBasePoint, basePoint, orientation);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+
+                    if (volume < -eps)
+                    {
+                        int currIndex = 0;
+                        foreach (IFCAnyHandle boundary in listOfAllBoundaries)
+                        {
+                            IFCAnyHandleUtil.SetAttribute(boundary, "Orientation", !listOfAllOrientations[currIndex++]);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Main implementation to export walls.
         /// </summary>
         /// <param name="exporterIFC">
@@ -548,19 +737,19 @@ namespace BIM.IFC.Exporter
                             IFCAnyHandle wallHnd = null;
 
                             string elemGUID = (validRange) ? GUIDUtil.CreateGUID() : GUIDUtil.CreateGUID(element);
-                            string elemName = NamingUtil.GetIFCName(element);
+                            string elemName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                             string elemDesc = NamingUtil.GetDescriptionOverride(element, null);
                             string elemObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
-                            string elemId = NamingUtil.CreateIFCElementId(element);
+                            string elemTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
                             if (exportedAsWallWithAxis)
                             {
                                 if (exportParts)
                                     wallHnd = IFCInstanceExporter.CreateWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                                    localPlacement, null, elemId);
+                                    localPlacement, null, elemTag);
                                 else
                                     wallHnd = IFCInstanceExporter.CreateWallStandardCase(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                                        localPlacement, prodRep, elemId);
+                                        localPlacement, prodRep, elemTag);
 
                                 if (exportParts)
                                     PartExporter.ExportHostPart(exporterIFC, element, wallHnd, localWrapper, setter, localPlacement, overrideLevelId);
@@ -574,8 +763,19 @@ namespace BIM.IFC.Exporter
                                 }
                                 else
                                 {
+                                    ICollection<IFCAnyHandle> beforeOpenings = localWrapper.GetAllObjects();
                                     double scaledWidth = wallElement.Width * scale;
                                     ExporterIFCUtils.AddOpeningsToElement(exporterIFC, wallHnd, wallElement, scaledWidth, range, setter, localPlacement, localWrapper.ToNative());
+                                    ICollection<IFCAnyHandle> afterOpenings = localWrapper.GetAllObjects();
+                                    if (beforeOpenings.Count != afterOpenings.Count)
+                                    {
+                                        foreach (IFCAnyHandle before in beforeOpenings)
+                                            afterOpenings.Remove(before);
+                                        foreach (IFCAnyHandle potentiallyBadOpening in afterOpenings)
+                                        {
+                                            PotentiallyCorrectOpeningOrientation(potentiallyBadOpening);
+                                        }
+                                    }
                                 }
 
                                 // export Base Quantities
@@ -587,7 +787,7 @@ namespace BIM.IFC.Exporter
                             else
                             {
                                 wallHnd = IFCInstanceExporter.CreateWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                                    localPlacement, exportParts ? null : prodRep, elemId);
+                                    localPlacement, exportParts ? null : prodRep, elemTag);
 
                                 if (exportParts)
                                     PartExporter.ExportHostPart(exporterIFC, element, wallHnd, localWrapper, setter, localPlacement, overrideLevelId);
@@ -818,10 +1018,10 @@ namespace BIM.IFC.Exporter
                 IFCAnyHandle wallHnd = null;
 
                 string elemGUID = (validRange) ? GUIDUtil.CreateGUID() : GUIDUtil.CreateGUID(element);
-                string elemName = NamingUtil.GetIFCName(element);
+                string elemName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                 string elemDesc = NamingUtil.GetDescriptionOverride(element, null);
                 string elemObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
-                string elemId = NamingUtil.CreateIFCElementId(element);
+                string elemTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
                 Transform orientationTrf = Transform.Identity;
 
@@ -829,7 +1029,7 @@ namespace BIM.IFC.Exporter
                 {
                     IFCAnyHandle localPlacement = setter.GetPlacement();
                     wallHnd = IFCInstanceExporter.CreateWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                                    localPlacement, null, elemId);
+                                    localPlacement, null, elemTag);
 
                     if (exportParts)
                         PartExporter.ExportHostPart(exporterIFC, element, wallHnd, localWrapper, setter, localPlacement, overrideLevelId);
@@ -873,9 +1073,11 @@ namespace BIM.IFC.Exporter
             }
 
             string elemGUID = GUIDUtil.CreateGUID(elementType);
-            string elemName = NamingUtil.GetIFCName(elementType);
+            string elemName = NamingUtil.GetNameOverride(elementType, NamingUtil.GetIFCName(elementType));
             string elemDesc = NamingUtil.GetDescriptionOverride(elementType, null);
-            string elemTag = NamingUtil.CreateIFCElementId(elementType);
+            string elemTag = NamingUtil.GetTagOverride(elementType, NamingUtil.CreateIFCElementId(elementType));
+            string elemApplicableOccurence = NamingUtil.GetOverrideStringValue(elementType, "ApplicableOccurence", null);
+            string elemElementType = NamingUtil.GetOverrideStringValue(elementType, "ElementType", null);
 
             HashSet<IFCAnyHandle> propertySets = null;
             if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportInternalRevit)
@@ -890,7 +1092,7 @@ namespace BIM.IFC.Exporter
             }
 
             wallType = IFCInstanceExporter.CreateWallType(exporterIFC.GetFile(), elemGUID, exporterIFC.GetOwnerHistoryHandle(),
-                elemName, elemDesc, null, propertySets, null, elemTag, null, isStandard ? IFCWallType.Standard : IFCWallType.NotDefined);
+                elemName, elemDesc, elemApplicableOccurence, propertySets, null, elemTag, elemElementType, isStandard ? IFCWallType.Standard : IFCWallType.NotDefined);
 
             if (overrideMaterialId != ElementId.InvalidElementId)
             {

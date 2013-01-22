@@ -70,7 +70,7 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
         /// </returns>
         public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
         {
-            m_IsExternal = CategoryUtil.IsElementExternal(element);
+            m_IsExternal = CategoryUtil.IsElementExternal(element, false);
             return true;
         }
 

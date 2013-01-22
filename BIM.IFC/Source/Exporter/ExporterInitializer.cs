@@ -198,34 +198,28 @@ namespace BIM.IFC.Exporter
 
             propertySetWallCommon.EntityTypes.Add(IFCEntityType.IfcWall);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetWallCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("LoadBearing");
-            ifcPSE.PropertyCalculator = LoadBearingCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateLoadBearingEntry(LoadBearingCalculator.Instance);
             propertySetWallCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("ExtendToStructure");
-            ifcPSE.PropertyCalculator = ExtendToStructureCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateExtendToStructureEntry();
             propertySetWallCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
-            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
             propertySetWallCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
             propertySetWallCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateThermalTransmittance("ThermalTransmittance");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.ANALYTICAL_HEAT_TRANSFER_COEFFICIENT;
+            ifcPSE = PropertySetEntryUtil.CreateThermalTransmittanceEntry();
             propertySetWallCommon.AddEntry(ifcPSE);
 
-            propertySetWallCommon.AddEntry(PropertySetEntry.CreateLabel("AcousticRating"));
-            propertySetWallCommon.AddEntry(PropertySetEntry.CreateLabel("SurfaceSpreadOfFlame"));
-            propertySetWallCommon.AddEntry(PropertySetEntry.CreateBoolean("Combustible"));
-            propertySetWallCommon.AddEntry(PropertySetEntry.CreateBoolean("Compartmentation"));
+            propertySetWallCommon.AddEntry(PropertySetEntryUtil.CreateAcousticRatingEntry());
+            propertySetWallCommon.AddEntry(PropertySetEntryUtil.CreateSurfaceSpreadOfFlameEntry());
+            propertySetWallCommon.AddEntry(PropertySetEntryUtil.CreateCombustibleEntry());
+            propertySetWallCommon.AddEntry(PropertySetEntryUtil.CreateCompartmentationEntry());
             
             commonPropertySets.Add(propertySetWallCommon);
         }
@@ -243,25 +237,21 @@ namespace BIM.IFC.Exporter
 
             propertySetCurtainWallCommon.EntityTypes.Add(IFCEntityType.IfcCurtainWall);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetCurtainWallCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
-            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
             propertySetCurtainWallCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
             propertySetCurtainWallCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateThermalTransmittance("ThermalTransmittance");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.ANALYTICAL_HEAT_TRANSFER_COEFFICIENT;
+            ifcPSE = PropertySetEntryUtil.CreateThermalTransmittanceEntry();
             propertySetCurtainWallCommon.AddEntry(ifcPSE);
 
-            propertySetCurtainWallCommon.AddEntry(PropertySetEntry.CreateLabel("AcousticRating"));
-            propertySetCurtainWallCommon.AddEntry(PropertySetEntry.CreateLabel("SurfaceSpreadOfFlame"));
-            propertySetCurtainWallCommon.AddEntry(PropertySetEntry.CreateBoolean("Combustible"));
+            propertySetCurtainWallCommon.AddEntry(PropertySetEntryUtil.CreateAcousticRatingEntry());
+            propertySetCurtainWallCommon.AddEntry(PropertySetEntryUtil.CreateSurfaceSpreadOfFlameEntry());
+            propertySetCurtainWallCommon.AddEntry(PropertySetEntryUtil.CreateCombustibleEntry());
 
             commonPropertySets.Add(propertySetCurtainWallCommon);
         }
@@ -279,18 +269,16 @@ namespace BIM.IFC.Exporter
 
             propertySetCoveringCommon.EntityTypes.Add(IFCEntityType.IfcCovering);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetCoveringCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
             propertySetCoveringCommon.AddEntry(ifcPSE);
 
-            propertySetCoveringCommon.AddEntry(PropertySetEntry.CreateLabel("AcousticRating"));
+            propertySetCoveringCommon.AddEntry(PropertySetEntryUtil.CreateAcousticRatingEntry());
             propertySetCoveringCommon.AddEntry(PropertySetEntry.CreateLabel("FlammabilityRating"));
-            propertySetCoveringCommon.AddEntry(PropertySetEntry.CreateLabel("SurfaceSpreadOfFlame"));
-            propertySetCoveringCommon.AddEntry(PropertySetEntry.CreateBoolean("Combustible"));
+            propertySetCoveringCommon.AddEntry(PropertySetEntryUtil.CreateSurfaceSpreadOfFlameEntry());
+            propertySetCoveringCommon.AddEntry(PropertySetEntryUtil.CreateCombustibleEntry());
 
 
             if (fileVersion == IFCVersion.IFC2x2)
@@ -322,23 +310,19 @@ namespace BIM.IFC.Exporter
 
             propertySetDoorCommon.EntityTypes.Add(IFCEntityType.IfcDoor);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetDoorCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
-            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
             propertySetDoorCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
             propertySetDoorCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateThermalTransmittance("ThermalTransmittance");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.ANALYTICAL_HEAT_TRANSFER_COEFFICIENT;
+            ifcPSE = PropertySetEntryUtil.CreateThermalTransmittanceEntry();
             propertySetDoorCommon.AddEntry(ifcPSE);
 
-            propertySetDoorCommon.AddEntry(PropertySetEntry.CreateLabel("AcousticRating"));
+            propertySetDoorCommon.AddEntry(PropertySetEntryUtil.CreateAcousticRatingEntry());
             propertySetDoorCommon.AddEntry(PropertySetEntry.CreateLabel("SecurityRating"));
             propertySetDoorCommon.AddEntry(PropertySetEntry.CreateBoolean("HandicapAccessible"));
             propertySetDoorCommon.AddEntry(PropertySetEntry.CreateBoolean("FireExit"));
@@ -363,23 +347,19 @@ namespace BIM.IFC.Exporter
 
             propertySetWindowCommon.EntityTypes.Add(IFCEntityType.IfcWindow);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetWindowCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
-            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
             propertySetWindowCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
             propertySetWindowCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateThermalTransmittance("ThermalTransmittance");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.ANALYTICAL_HEAT_TRANSFER_COEFFICIENT;
+            ifcPSE = PropertySetEntryUtil.CreateThermalTransmittanceEntry();
             propertySetWindowCommon.AddEntry(ifcPSE);
 
-            propertySetWindowCommon.AddEntry(PropertySetEntry.CreateLabel("AcousticRating"));
+            propertySetWindowCommon.AddEntry(PropertySetEntryUtil.CreateAcousticRatingEntry());
             propertySetWindowCommon.AddEntry(PropertySetEntry.CreateLabel("SecurityRating"));
 
             propertySetWindowCommon.AddEntry(PropertySetEntry.CreateBoolean("SmokeStop"));
@@ -437,20 +417,16 @@ namespace BIM.IFC.Exporter
 
             propertySetBeamCommon.EntityTypes.Add(IFCEntityType.IfcBeam);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetBeamCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("LoadBearing");
-            ifcPSE.PropertyCalculator = BeamLoadBearingCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateLoadBearingEntry(BeamLoadBearingCalculator.Instance);
             propertySetBeamCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
-            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
             propertySetBeamCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
             propertySetBeamCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePositiveLength("Span");
@@ -479,20 +455,16 @@ namespace BIM.IFC.Exporter
 
             propertySetMemberCommon.EntityTypes.Add(IFCEntityType.IfcMember);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetMemberCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("LoadBearing");
-            ifcPSE.PropertyCalculator = BeamLoadBearingCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateLoadBearingEntry(BeamLoadBearingCalculator.Instance);
             propertySetMemberCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
-            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
             propertySetMemberCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
             propertySetMemberCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePositiveLength("Span");
@@ -519,20 +491,16 @@ namespace BIM.IFC.Exporter
 
             propertySetColumnCommon.EntityTypes.Add(IFCEntityType.IfcColumn);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetColumnCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("LoadBearing");
-            ifcPSE.PropertyCalculator = ColumnLoadBearingCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateLoadBearingEntry(ColumnLoadBearingCalculator.Instance);
             propertySetColumnCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
-            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
             propertySetColumnCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
             propertySetColumnCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePlaneAngle("Slope");
@@ -555,16 +523,13 @@ namespace BIM.IFC.Exporter
 
             propertySetRoofCommon.EntityTypes.Add(IFCEntityType.IfcRoof);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetRoofCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
-            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
             propertySetRoofCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
             propertySetRoofCommon.AddEntry(ifcPSE);
 
             if (fileVersion != IFCVersion.IFC2x2)
@@ -594,36 +559,31 @@ namespace BIM.IFC.Exporter
             
             propertySetSlabCommon.EntityTypes.Add(IFCEntityType.IfcSlab);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetSlabCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
-            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
             propertySetSlabCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("LoadBearing");
-            ifcPSE.PropertyCalculator = SlabLoadBearingCalculator.Instance; // always true
+            ifcPSE = PropertySetEntryUtil.CreateLoadBearingEntry(SlabLoadBearingCalculator.Instance); // always true
             propertySetSlabCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
             propertySetSlabCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateLabel("AcousticRating");
+            ifcPSE = PropertySetEntryUtil.CreateAcousticRatingEntry();
             propertySetSlabCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateLabel("SurfaceSpreadOfFlame");
+            ifcPSE = PropertySetEntryUtil.CreateSurfaceSpreadOfFlameEntry();
             propertySetSlabCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("Combustible");
+            ifcPSE = PropertySetEntryUtil.CreateCombustibleEntry();
             propertySetSlabCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("Compartmentation");
+            ifcPSE = PropertySetEntryUtil.CreateCompartmentationEntry();
             propertySetSlabCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateThermalTransmittance("ThermalTransmittance");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.ANALYTICAL_HEAT_TRANSFER_COEFFICIENT;
+            ifcPSE = PropertySetEntryUtil.CreateThermalTransmittanceEntry();
             propertySetSlabCommon.AddEntry(ifcPSE);
 
             commonPropertySets.Add(propertySetSlabCommon);
@@ -641,12 +601,10 @@ namespace BIM.IFC.Exporter
 
             propertySetRailingCommon.EntityTypes.Add(IFCEntityType.IfcRailing);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetRailingCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
-            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
             propertySetRailingCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePositiveLength("Height");
@@ -671,16 +629,13 @@ namespace BIM.IFC.Exporter
 
             propertySetRampCommon.EntityTypes.Add(IFCEntityType.IfcRamp);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetRampCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
-            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
             propertySetRampCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
             propertySetRampCommon.AddEntry(ifcPSE);
 
             propertySetRampCommon.AddEntry(PropertySetEntry.CreateBoolean("HandicapAccessible"));
@@ -705,8 +660,7 @@ namespace BIM.IFC.Exporter
 
             propertySetStairFlightCommon.EntityTypes.Add(IFCEntityType.IfcStairFlight);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetStairFlightCommon.AddEntry(ifcPSE);
 
             PropertyCalculator stairRiserAndTreadsCalculator = StairRiserTreadsCalculator.Instance;
@@ -763,8 +717,7 @@ namespace BIM.IFC.Exporter
 
             propertySetRampFlightCommon.EntityTypes.Add(IFCEntityType.IfcRampFlight);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetRampFlightCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreatePlaneAngle("Slope");
@@ -787,16 +740,13 @@ namespace BIM.IFC.Exporter
 
             propertySetStairCommon.EntityTypes.Add(IFCEntityType.IfcStair);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetStairCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
-            ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
+            ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
             propertySetStairCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateLabel("FireRating");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.DOOR_FIRE_RATING;
+            ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
             propertySetStairCommon.AddEntry(ifcPSE);
 
             PropertyCalculator stairRiserAndTreadsCalculator = StairRiserTreadsCalculator.Instance;
@@ -927,8 +877,7 @@ namespace BIM.IFC.Exporter
             propertySetBuildingElementProxyCommon.Name = "Pset_BuildingElementProxyCommon";
             propertySetBuildingElementProxyCommon.EntityTypes.Add(IFCEntityType.IfcBuildingElementProxy);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetBuildingElementProxyCommon.AddEntry(ifcPSE);
 
             commonPropertySets.Add(propertySetBuildingElementProxyCommon);
@@ -946,8 +895,7 @@ namespace BIM.IFC.Exporter
 
             propertySetSpaceCommon.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetSpaceCommon.AddEntry(ifcPSE);
 
             propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateBoolean("PubliclyAccessible"));
@@ -1000,8 +948,7 @@ namespace BIM.IFC.Exporter
 
             propertySetZoneCommon.EntityTypes.Add(IFCEntityType.IfcZone);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
-            ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetZoneCommon.AddEntry(ifcPSE);
 
             propertySetZoneCommon.AddEntry(PropertySetEntry.CreateLabel("Category"));

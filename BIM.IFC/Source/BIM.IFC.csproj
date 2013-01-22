@@ -32,9 +32,6 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="Exporter\AssemblyInstanceExporter.cs" />
     <Compile Include="Exporter\AssemblyInstanceInfo.cs" />
     <Compile Include="Exporter\BeamExporter.cs" />
@@ -79,6 +76,7 @@
     <Compile Include="Exporter\PropertySet\ClassificationUtil.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDescription.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetEntry.cs" />
+    <Compile Include="Exporter\PropertySet\PropertySetEntryUtil.cs" />
     <Compile Include="Exporter\PropertySet\PropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\QuantityDescription.cs" />
     <Compile Include="Exporter\PropertySet\QuantityEntry.cs" />
@@ -212,6 +210,15 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\IFCExtension\Source\IFCExtension.csproj">
+      <Project>{7105F582-7439-42C8-9B48-0F144E4CB164}</Project>
+      <Name>IFCExtension</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup />
   <ItemGroup />
   <Import Project=".\BIM.IFC.props" />
 </Project>

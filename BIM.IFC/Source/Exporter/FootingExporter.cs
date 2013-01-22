@@ -111,14 +111,14 @@ namespace BIM.IFC.Exporter
                         }
 
                         string instanceGUID = GUIDUtil.CreateGUID(element);
-                        string instanceName = NamingUtil.GetIFCName(element);
+                        string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
-                        string instanceElemId = NamingUtil.CreateIFCElementId(element);
+                        string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
                         Toolkit.IFCFootingType footingType = GetIFCFootingType(element, ifcEnumType);
 
                         IFCAnyHandle footing = IFCInstanceExporter.CreateFooting(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
-                            instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(), prodRep, instanceElemId, footingType);
+                            instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(), prodRep, instanceTag, footingType);
 
                         if (exportParts)
                         {

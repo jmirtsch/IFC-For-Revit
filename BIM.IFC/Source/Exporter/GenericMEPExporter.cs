@@ -83,17 +83,18 @@ namespace BIM.IFC.Exporter
                         if (!found)
                         {
                             string typeGUID = GUIDUtil.CreateGUID(type);
-                            string typeName = NamingUtil.GetIFCName(type);
-                            string typeObjectType = NamingUtil.CreateIFCObjectName(exporterIFC, type);
-                            string applicableOccurance = NamingUtil.GetObjectTypeOverride(type, typeObjectType);
+                            string typeName = NamingUtil.GetNameOverride(type, NamingUtil.GetIFCName(type));
+                            string typeObjectType = NamingUtil.GetObjectTypeOverride(type, NamingUtil.CreateIFCObjectName(exporterIFC, type));
+                            string applicableOccurence = NamingUtil.GetOverrideStringValue(type, "ApplicableOccurrence", typeObjectType);
                             string typeDescription = NamingUtil.GetDescriptionOverride(type, null);
-                            string typeElemId = NamingUtil.CreateIFCElementId(type);
+                            string typeTag = NamingUtil.GetTagOverride(type, NamingUtil.CreateIFCElementId(type));
+                            string typeElementType = NamingUtil.GetOverrideStringValue(type, "ElementType", typeName);
 
                             HashSet<IFCAnyHandle> propertySetsOpt = new HashSet<IFCAnyHandle>();
                             IList<IFCAnyHandle> repMapListOpt = new List<IFCAnyHandle>();
 
                             IFCAnyHandle styleHandle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, typeGUID, typeName,
-                               typeDescription, applicableOccurance, propertySetsOpt, repMapListOpt, typeElemId, typeName, element, type);
+                               typeDescription, applicableOccurence, propertySetsOpt, repMapListOpt, typeTag, typeElementType, element, type);
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(styleHandle))
                             {
                                 currentTypeInfo.Style = styleHandle;
@@ -101,11 +102,10 @@ namespace BIM.IFC.Exporter
                             }
                         }
                         string instanceGUID = GUIDUtil.CreateGUID(element);
-                        string instanceName = NamingUtil.GetIFCName(element);
-                        string objectType = NamingUtil.CreateIFCObjectName(exporterIFC, element);
-                        string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
+                        string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
+                        string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, NamingUtil.CreateIFCObjectName(exporterIFC, element));
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
-                        string instanceElemId = NamingUtil.CreateIFCElementId(element);
+                        string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
                         bool roomRelated = !FamilyExporterUtil.IsDistributionFlowElementSubType(exportType);
 
@@ -119,52 +119,52 @@ namespace BIM.IFC.Exporter
                         if (FamilyExporterUtil.IsFurnishingElementSubType(exportType))
                         {
                             instanceHandle = IFCInstanceExporter.CreateFurnishingElement(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceElemId);
+                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
                         }
                         else if (FamilyExporterUtil.IsDistributionFlowElementSubType(exportType))
                         {
                             instanceHandle = IFCInstanceExporter.CreateDistributionFlowElement(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceElemId);
+                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
                         }
                         else if (FamilyExporterUtil.IsEnergyConversionDeviceSubType(exportType))
                         {
                             instanceHandle = IFCInstanceExporter.CreateEnergyConversionDevice(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceElemId);
+                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
                         }
                         else if (FamilyExporterUtil.IsFlowFittingSubType(exportType))
                         {
                             instanceHandle = IFCInstanceExporter.CreateFlowFitting(file, instanceGUID, ownerHistory,
-                              instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceElemId);
+                              instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
                         }
                         else if (FamilyExporterUtil.IsFlowMovingDeviceSubType(exportType))
                         {
                             instanceHandle = IFCInstanceExporter.CreateFlowMovingDevice(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceElemId);
+                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
                         }
                         else if (FamilyExporterUtil.IsFlowSegmentSubType(exportType))
                         {
                             instanceHandle = IFCInstanceExporter.CreateFlowSegment(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceElemId);
+                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
                         }
                         else if (FamilyExporterUtil.IsFlowStorageDeviceSubType(exportType))
                         {
                             instanceHandle = IFCInstanceExporter.CreateFlowStorageDevice(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceElemId);
+                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
                         }
                         else if (FamilyExporterUtil.IsFlowTerminalSubType(exportType))
                         {
                             instanceHandle = IFCInstanceExporter.CreateFlowTerminal(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceElemId);
+                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
                         }
                         else if (FamilyExporterUtil.IsFlowTreatmentDeviceSubType(exportType))
                         {
                             instanceHandle = IFCInstanceExporter.CreateFlowTreatmentDevice(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceElemId);
+                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
                         }
                         else if (FamilyExporterUtil.IsFlowControllerSubType(exportType))
                         {
                             instanceHandle = IFCInstanceExporter.CreateFlowController(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceElemId);
+                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
                         }
 
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))

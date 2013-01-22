@@ -192,6 +192,9 @@
   <data name="ExportSurfaceStyles" xml:space="preserve">
     <value>Export surface styles</value>
   </data>
+  <data name="IFCMVDFMHandOver" xml:space="preserve">
+    <value>2x3 FMHandOver</value>
+  </data>
   <data name="ExportAdvancedSweptSolids" xml:space="preserve">
     <value>Export advanced swept solids</value>
   </data>

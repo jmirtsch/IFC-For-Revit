@@ -43,6 +43,8 @@ namespace BIM.IFC.Export.UI
         // The list of available configurations
         IFCExportConfigurationsMap m_configMap;
 
+        private Document m_document = null;
+
         /// <summary>
         /// The dialog result.
         /// </summary>
@@ -58,9 +60,10 @@ namespace BIM.IFC.Export.UI
         /// </summary>
         /// <param name="configurationsMap">The configurations to show in the dialog.</param>
         /// <param name="selectedConfigName">The current selected configuration name.</param>
-        public IFCExport(IFCExportConfigurationsMap configurationsMap, String selectedConfigName)
+        public IFCExport(Document doc, IFCExportConfigurationsMap configurationsMap, String selectedConfigName)
         {
             m_configMap = configurationsMap;
+            m_document = doc;
 
             InitializeComponent();
 
@@ -254,6 +257,17 @@ namespace BIM.IFC.Export.UI
         {
             // Save restore bounds for the next time this window is opened
             IFCUISettings.SaveWindowBounds(m_SettingFile, this.RestoreBounds);
+        }
+
+        /// <summary>
+        /// Saves the window bounds when close the window.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments that contains the event data.</param>
+        private void buttonAssignment_Click(object sender, RoutedEventArgs e)
+        {
+            IFCAssignment assignmentWindow = new IFCAssignment(m_document);
+            assignmentWindow.ShowDialog();
         }
     }
 }

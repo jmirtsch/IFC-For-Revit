@@ -144,47 +144,47 @@ namespace BIM.IFC.Exporter
                             if (!DoesBarExistAtPosition(element, i))
                                 continue;
 
+                            string rebarGUID = ExporterIFCUtils.CreateGUID(element);
+                            string rebarName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
+                            string rebarDescription = NamingUtil.GetDescriptionOverride(element, null);
+                            string rebarObjectType = NamingUtil.GetObjectTypeOverride(element, NamingUtil.CreateIFCObjectName(exporterIFC, element));
+                            string rebarTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
+
                             Transform barTrf = GetBarPositionTransform(element, i);
 
-                        IList<Curve> curves = new List<Curve>();
-                        double endParam = 0.0;
-                        foreach (Curve baseCurve in baseCurves)
-                        {
-                            if (baseCurve is Arc || baseCurve is Ellipse)
+                            IList<Curve> curves = new List<Curve>();
+                            double endParam = 0.0;
+                            foreach (Curve baseCurve in baseCurves)
                             {
-                                if (baseCurve.IsBound)
-                                    endParam += (baseCurve.get_EndParameter(1) - baseCurve.get_EndParameter(0)) * 180 / Math.PI;
+                                if (baseCurve is Arc || baseCurve is Ellipse)
+                                {
+                                    if (baseCurve.IsBound)
+                                        endParam += (baseCurve.get_EndParameter(1) - baseCurve.get_EndParameter(0)) * 180 / Math.PI;
+                                    else
+                                        endParam += (2 * Math.PI) * 180 / Math.PI;
+                                }
                                 else
-                                    endParam += (2 * Math.PI) * 180 / Math.PI;
+                                    endParam += 1.0;
+                                curves.Add(baseCurve.get_Transformed(barTrf));
                             }
-                            else
-                                endParam += 1.0;
-                            curves.Add(baseCurve.get_Transformed(barTrf));
-                        }
 
-                        IFCAnyHandle compositeCurve = GeometryUtil.CreateCompositeCurve(exporterIFC, curves);
-                        IFCAnyHandle sweptDiskSolid = IFCInstanceExporter.CreateSweptDiskSolid(file, compositeCurve, radius, null, 0, endParam);
-                        HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
-                        bodyItems.Add(sweptDiskSolid);
-                        ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
-                        IFCAnyHandle shapeRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, exporterIFC.Get3DContextHandle("Body"), bodyItems, null);
-                        IList<IFCAnyHandle> shapeReps = new List<IFCAnyHandle>();
-                        shapeReps.Add(shapeRep);
-                        prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
+                            IFCAnyHandle compositeCurve = GeometryUtil.CreateCompositeCurve(exporterIFC, curves);
+                            IFCAnyHandle sweptDiskSolid = IFCInstanceExporter.CreateSweptDiskSolid(file, compositeCurve, radius, null, 0, endParam);
+                            HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
+                            bodyItems.Add(sweptDiskSolid);
+                            ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
+                            IFCAnyHandle shapeRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, exporterIFC.Get3DContextHandle("Body"), bodyItems, null);
+                            IList<IFCAnyHandle> shapeReps = new List<IFCAnyHandle>();
+                            shapeReps.Add(shapeRep);
+                            prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
 
                             string steelGradeOpt = null;
                             IFCAnyHandle elemHnd = null;
 
-                            string rebarGUID = GUIDUtil.CreateGUID(element);
-                            string rebarName = NamingUtil.GetIFCName(element);
-                            string rebarDescription = NamingUtil.GetDescriptionOverride(element, null);
-                            string rebarObjectType = NamingUtil.GetObjectTypeOverride(element, NamingUtil.CreateIFCObjectName(exporterIFC, element));
-                            string rebarElemId = NamingUtil.CreateIFCElementId(element);
-
                             IFCReinforcingBarRole role = IFCReinforcingBarRole.NotDefined;
                             elemHnd = IFCInstanceExporter.CreateReinforcingBar(file, rebarGUID, exporterIFC.GetOwnerHistoryHandle(),
                                 rebarName, rebarDescription, rebarObjectType, setter.GetPlacement(),
-                                prodRep, rebarElemId, steelGradeOpt, longitudinalBarNominalDiameter, longitudinalBarCrossSectionArea,
+                                prodRep, rebarTag, steelGradeOpt, longitudinalBarNominalDiameter, longitudinalBarCrossSectionArea,
                                 barLength, role, null);
 
                             productWrapper.AddElement(elemHnd, setter.GetLevelInfo(), null, true);
@@ -221,6 +221,7 @@ namespace BIM.IFC.Exporter
             else
                 throw new ArgumentException("Not a rebar.");
         }
+
 
         /// <summary>
         /// Gets volume of a rebar.

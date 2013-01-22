@@ -21,10 +21,11 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Autodesk.Revit;
+using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using BIM.IFC.Exporter.PropertySet;
 using BIM.IFC.Toolkit;
-
 
 namespace BIM.IFC.Utility
 {
@@ -173,24 +174,26 @@ namespace BIM.IFC.Utility
         ///   <li> The element itself has information about being an external element.</li>
         /// All other elements are internal.
         /// </remarks>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <returns>
-        /// True if the element is external, false otherwise.
-        /// </returns>
-        public static bool IsElementExternal(Element element)
+        /// <param name="element">The element.</param>
+        /// <param name="useParameterIfFound">Looks for the (potentially localized) IsExternal parameter if set.</param>
+        /// <returns>True if the element is external, false otherwise.</returns>
+        public static bool IsElementExternal(Element element, bool useParameterIfFound)
         {
             if (element == null)
                 return false;
 
-            // Look for a parameter "IsExternal"
             Document document = element.Document;
-            String externalParamName = "IsExternal";
-            int isExternal;
-            if (ParameterUtil.GetIntValueFromElementOrSymbol(element, externalParamName, out isExternal))
+            
+            // Look for a parameter "IsExternal", potentially localized.
+            if (useParameterIfFound)
             {
-                return (isExternal != 0);
+                int isExternal;
+                string localExternalParamName = PropertySetEntryUtil.GetLocalizedIsExternal(ExporterCacheManager.LanguageType);
+                if ((localExternalParamName != null) && ParameterUtil.GetIntValueFromElementOrSymbol(element, localExternalParamName, out isExternal))
+                    return (isExternal != 0);
+                string externalParamName = PropertySetEntryUtil.GetLocalizedIsExternal(LanguageType.English_USA);
+                if (ParameterUtil.GetIntValueFromElementOrSymbol(element, externalParamName, out isExternal))
+                    return (isExternal != 0);
             }
 
             // Specific element types that know if they are external or not 
@@ -225,7 +228,7 @@ namespace BIM.IFC.Utility
                 }
 
                 if (familyInstanceHost != null)
-                    return IsElementExternal(familyInstanceHost);
+                    return IsElementExternal(familyInstanceHost, true);
             }
 
             return false;

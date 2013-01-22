@@ -343,15 +343,15 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
 
                         string instanceGUID = GUIDUtil.CreateGUID(element);
-                        string instanceName = NamingUtil.GetIFCName(element);
+                        string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
-                        string instanceElemId = NamingUtil.CreateIFCElementId(element);
+                        string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
                         Toolkit.IFCRailingType railingType = GetIFCRailingType(element, ifcEnumType);
 
                         IFCAnyHandle railing = IFCInstanceExporter.CreateRailing(file, instanceGUID, ownerHistory,
                             instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(),
-                            prodRep, instanceElemId, railingType);
+                            prodRep, instanceTag, railingType);
 
                         bool associateToLevel = (hostId == ElementId.InvalidElementId) && LevelUtil.AssociateElementToLevel(element);
 

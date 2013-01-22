@@ -89,10 +89,13 @@ namespace BIM.IFC.Exporter
                 string elemGUID = GUIDUtil.CreateGUID(mullion);
                 IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                 string elemObjectType = NamingUtil.CreateIFCObjectName(exporterIFC, mullion);
-                string elemId = NamingUtil.CreateIFCElementId(mullion);
+                string name = NamingUtil.GetNameOverride(mullion, elemObjectType);
+                string description = NamingUtil.GetDescriptionOverride(mullion, null);
+                string objectType = NamingUtil.GetObjectTypeOverride(mullion, elemObjectType);
+                string elemTag = NamingUtil.GetTagOverride(mullion, NamingUtil.CreateIFCElementId(mullion));
 
-                IFCAnyHandle mullionHnd = IFCInstanceExporter.CreateMember(file, elemGUID, ownerHistory, elemObjectType, null, elemObjectType,
-                   mullionLocalPlacement, repHnd, elemId);
+                IFCAnyHandle mullionHnd = IFCInstanceExporter.CreateMember(file, elemGUID, ownerHistory, name, description, objectType,
+                   mullionLocalPlacement, repHnd, elemTag);
                 productWrapper.AddElement(mullionHnd, mullionSetter, extraParams, false);
 
                 ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, mullion);

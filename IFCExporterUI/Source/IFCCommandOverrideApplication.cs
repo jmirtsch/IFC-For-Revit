@@ -104,7 +104,7 @@ namespace BIM.IFC.Export.UI
                 if (m_mruConfiguration != null && configurationsMap.HasName(m_mruConfiguration))
                     mruSelection =  m_mruConfiguration;
 
-                IFCExport mainWindow = new IFCExport(configurationsMap, mruSelection);
+                IFCExport mainWindow = new IFCExport(doc, configurationsMap, mruSelection);
                 mainWindow.ShowDialog();
 
                 // If user chose to continue

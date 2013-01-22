@@ -293,20 +293,20 @@ namespace BIM.IFC.Exporter
                     IFCAnyHandle prodRepHnd = null;
                     IFCAnyHandle elemHnd = null;
                     string elemGUID = GUIDUtil.CreateGUID(element);
-                    string elemName = NamingUtil.GetIFCName(element);
+                    string elemName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                     string elemDesc = NamingUtil.GetDescriptionOverride(element, null);
                     string elemType = NamingUtil.GetObjectTypeOverride(element, objectType);
-                    string elemId = NamingUtil.CreateIFCElementId(element);
+                    string elemTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
                     if (element is Wall || element is CurtainSystem || IsLegacyCurtainElement(element))
                     {
-                        elemHnd = IFCInstanceExporter.CreateCurtainWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemType, localPlacement, prodRepHnd, elemId);
+                        elemHnd = IFCInstanceExporter.CreateCurtainWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemType, localPlacement, prodRepHnd, elemTag);
                     }
                     else if (element is RoofBase)
                     {
                         //need to convert the string to enum
                         string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, element);
                         elemHnd = IFCInstanceExporter.CreateRoof(file, elemGUID, ownerHistory, elemName, elemDesc, elemType, localPlacement,
-                            prodRepHnd, elemId, RoofExporter.GetIFCRoofType(ifcEnumType));
+                            prodRepHnd, elemTag, RoofExporter.GetIFCRoofType(ifcEnumType));
                     }
                     else
                     {

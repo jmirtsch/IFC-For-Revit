@@ -88,10 +88,10 @@ namespace BIM.IFC.Exporter
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRep))
                 return false;
 
-            ICollection<IFCAnyHandle> boudaryRepresentations = ifcGeomInfo.GetRepresentations();
-            if (exportBoundaryRep && boudaryRepresentations.Count > 1)
+            ICollection<IFCAnyHandle> boundaryRepresentations = ifcGeomInfo.GetRepresentations();
+            if (exportBoundaryRep && boundaryRepresentations.Count > 0)
             {
-                boundaryRep = RepresentationUtil.CreateBoundaryRep(exporterIFC, element, catId, exporterIFC.Get3DContextHandle("FootPrint"), boudaryRepresentations, 
+                boundaryRep = RepresentationUtil.CreateBoundaryRep(exporterIFC, element, catId, exporterIFC.Get3DContextHandle("FootPrint"), boundaryRepresentations, 
                     boundaryRep);
             }
 

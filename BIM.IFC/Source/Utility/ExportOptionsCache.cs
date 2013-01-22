@@ -165,6 +165,8 @@ namespace BIM.IFC.Utility
             // "FileType" - note - setting is not respected yet
             ParseFileType(options, cache);
 
+            cache.SelectedConfigName = GetNamedStringOption(options, "ConfigName");
+
             return cache;
         }
 
@@ -552,5 +554,15 @@ namespace BIM.IFC.Utility
             get;
             set;
         }
+
+        /// <summary>
+        /// Select export Config Name from the UI
+        /// </summary>
+        public String SelectedConfigName
+        {
+            get;
+            set;
+        }
+
     }
 }

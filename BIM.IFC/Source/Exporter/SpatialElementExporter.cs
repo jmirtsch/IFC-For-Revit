@@ -130,7 +130,7 @@ namespace BIM.IFC.Exporter
                                     if (boundingElement == null)
                                         continue;
 
-                                    bool isObjectExt = CategoryUtil.IsElementExternal(boundingElement);
+                                    bool isObjectExt = CategoryUtil.IsElementExternal(boundingElement, true);
 
                                     IFCGeometryInfo info = IFCGeometryInfo.CreateSurfaceGeometryInfo(spatialElement.Document.Application.VertexTolerance);
 
@@ -183,7 +183,7 @@ namespace BIM.IFC.Exporter
                                 else if (boundingElement is Autodesk.Revit.DB.Architecture.Room)
                                     physOrVirt = IFCPhysicalOrVirtual.NotDefined;
 
-                                bool isObjectExt = CategoryUtil.IsElementExternal(boundingElement);
+                                bool isObjectExt = CategoryUtil.IsElementExternal(boundingElement, true);
                                 bool isObjectPhys = (physOrVirt == IFCPhysicalOrVirtual.Physical);
 
                                 ElementId actualBuildingElemId = isObjectPhys ? buildingElemId : ElementId.InvalidElementId;
@@ -497,7 +497,7 @@ namespace BIM.IFC.Exporter
             else if (boundingElement is Autodesk.Revit.DB.Architecture.Room)
                 physOrVirt = IFCPhysicalOrVirtual.NotDefined;
 
-            bool isObjectExt = CategoryUtil.IsElementExternal(boundingElement);
+            bool isObjectExt = CategoryUtil.IsElementExternal(boundingElement, true);
 
             SpaceBoundary spaceBoundary = new SpaceBoundary(spatialElement.Id, boundingElement != null ? boundingElement.Id : ElementId.InvalidElementId,
                 levelId, connectionGeometry, physOrVirt, isObjectExt ? IFCInternalOrExternal.External : IFCInternalOrExternal.Internal);
@@ -918,7 +918,7 @@ namespace BIM.IFC.Exporter
 
             IFCAnyHandle localPlacement = setter.GetPlacement();
             ElementType elemType = document.GetElement(spatialElement.GetTypeId()) as ElementType;
-            IFCInternalOrExternal internalOrExternal = CategoryUtil.IsElementExternal(spatialElement) ? IFCInternalOrExternal.External : IFCInternalOrExternal.Internal;
+            IFCInternalOrExternal internalOrExternal = CategoryUtil.IsElementExternal(spatialElement, true) ? IFCInternalOrExternal.External : IFCInternalOrExternal.Internal;
 
             double roomHeight = 0.0;
 
@@ -988,13 +988,22 @@ namespace BIM.IFC.Exporter
                     extraParams.ScaledHeight = roomHeight;
                     extraParams.ScaledArea = dArea;
 
+
+                    string spatialElementName = NamingUtil.GetNameOverride(spatialElement, name);
+                    string spatialElementDescription = NamingUtil.GetDescriptionOverride(spatialElement, desc);
+                    string spatialElementObjectType = NamingUtil.GetObjectTypeOverride(spatialElement, null);
+
+                    double? spaceElevationWithFlooring = null;
+                    double elevationWithFlooring = 0.0;
+                    if (ParameterUtil.GetDoubleValueFromElement(spatialElement, "ElevationWithFlooring", out elevationWithFlooring) == true)
+                        spaceElevationWithFlooring = elevationWithFlooring;
+
                     spaceHnd = IFCInstanceExporter.CreateSpace(file, GUIDUtil.CreateGUID(spatialElement),
-                                                      exporterIFC.GetOwnerHistoryHandle(),
-                                                      NamingUtil.GetNameOverride(spatialElement, name),
-                                                      NamingUtil.GetDescriptionOverride(spatialElement, desc),
-                                                      NamingUtil.GetObjectTypeOverride(spatialElement, null),
-                                                      extraParams.GetLocalPlacement(), repHnd, longName, Toolkit.IFCElementComposition.Element
-                                                      , internalOrExternal, null);
+                                                  exporterIFC.GetOwnerHistoryHandle(),
+                                                  spatialElementName, spatialElementDescription, spatialElementObjectType,
+                                                  extraParams.GetLocalPlacement(), repHnd, longName, Toolkit.IFCElementComposition.Element,
+                                                  internalOrExternal, spaceElevationWithFlooring);
+
                     transaction2.Commit();
                 }
 
