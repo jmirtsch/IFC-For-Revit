@@ -104,17 +104,17 @@ namespace BIM.IFC.Exporter
         {
             IList<PropertySetDescription> commonPropertySets = new List<PropertySetDescription>();
 
-            // Manufacturer type information
-            InitPropertySetManufacturerTypeInformation(commonPropertySets);
+            // Building/Site property sets.
+            InitPropertySetBuildingCommon(commonPropertySets, fileVersion);
+            InitPropertySetBuildingWaterStorage(commonPropertySets);
+            InitPropertySetSiteCommon(commonPropertySets);
 
-            // Architectural/Structural property sets.
-            InitPropertySetBeamCommon(commonPropertySets);
-            InitPropertySetColumnCommon(commonPropertySets);
+            // Architectural property sets.
+            InitPropertySetBuildingElementProxyCommon(commonPropertySets);
             InitPropertySetCoveringCommon(commonPropertySets, fileVersion);
             InitPropertySetCurtainWallCommon(commonPropertySets);
             InitPropertySetDoorCommon(commonPropertySets);
-            InitPropertySetLightFixtureTypeCommon(commonPropertySets);
-            InitPropertySetMemberCommon(commonPropertySets);
+            InitPropertySetLevelCommon(commonPropertySets, fileVersion);
             InitPropertySetRailingCommon(commonPropertySets);
             InitPropertySetRampCommon(commonPropertySets);
             InitPropertySetRampFlightCommon(commonPropertySets);
@@ -125,30 +125,38 @@ namespace BIM.IFC.Exporter
             InitPropertySetWallCommon(commonPropertySets);
             InitPropertySetWindowCommon(commonPropertySets);
 
-            // Building property sets.
-            InitPropertySetBuildingCommon(commonPropertySets, fileVersion);
-            InitPropertySetBuildingWaterStorage(commonPropertySets);
-
-            // Proxy property sets.
-            InitPropertySetElementShading(commonPropertySets);
-
-            // Level property sets.
-            InitPropertySetLevelCommon(commonPropertySets, fileVersion);
-
-            // Site property sets.
-            InitPropertySetSiteCommon(commonPropertySets);
-
-            // Building Element Proxy
-            InitPropertySetBuildingElementProxyCommon(commonPropertySets);
-
-            // Space
+            // Space property sets.
             InitPropertySetSpaceCommon(commonPropertySets, fileVersion);
             InitPropertySetSpaceFireSafetyRequirements(commonPropertySets);
             InitPropertySetSpaceLightingRequirements(commonPropertySets);
             InitPropertySetSpaceThermalRequirements(commonPropertySets, fileVersion);
             InitPropertySetGSASpaceCategories(commonPropertySets);
             InitPropertySetSpaceOccupant(commonPropertySets);
+            InitPropertySetSpaceOccupancyRequirements(commonPropertySets);
             InitPropertySetSpaceZones(commonPropertySets, fileVersion);
+
+            // Structural property sets.
+            InitPropertySetBeamCommon(commonPropertySets);
+            InitPropertySetColumnCommon(commonPropertySets);
+            InitPropertySetMemberCommon(commonPropertySets);
+            InitPropertySetPlateCommon(commonPropertySets);
+            InitPropertySetReinforcingBarBendingsBECCommon(commonPropertySets);
+            InitPropertySetReinforcingBarBendingsBS8666Common(commonPropertySets);
+            InitPropertySetReinforcingBarBendingsDIN135610Common(commonPropertySets);
+            InitPropertySetReinforcingBarBendingsISOCD3766Common(commonPropertySets);
+
+            // MEP property sets.
+            InitPropertySetAirTerminalTypeCommon(commonPropertySets);
+            InitPropertySetDistributionFlowElementCommon(commonPropertySets);
+            InitPropertySetFlowTerminalAirTerminal(commonPropertySets);
+            InitPropertySetLightFixtureTypeCommon(commonPropertySets);
+            InitPropertySetProvisionForVoid(commonPropertySets);
+
+            // Energy Analysis property sets.
+            InitPropertySetElementShading(commonPropertySets);
+
+            // Misc. property sets
+            InitPropertySetManufacturerTypeInformation(commonPropertySets);
 
             propertySets.Add(commonPropertySets);
         }
@@ -399,11 +407,100 @@ namespace BIM.IFC.Exporter
 
             propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntry.CreateReal("MaintenanceFactor"));
             propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntry.CreateText("ManufacturersSpecificInformation"));
-            propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntry.CreateClassificationReference("ArticleNumber"));
+
+            // The value below is incorrect.  Although it is specified in IFC2x3, it is a duplicate of Pset_ManufacturerTypeInformation,
+            // where it is correctly labelled as IfcIdentifier.
+            //propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntry.CreateClassificationReference("ArticleNumber"));
 
             commonPropertySets.Add(propertySetLightFixtureTypeCommon);
         }
 
+        /// <summary>
+        /// Initializes the Pset_DistributionFlowElementCommon property set.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetDistributionFlowElementCommon(IList<PropertySetDescription> commonPropertySets)
+        {
+            //property beam common
+            PropertySetDescription propertyDistributionFlowElementCommon = new PropertySetDescription();
+            propertyDistributionFlowElementCommon.Name = "Pset_DistributionFlowElementCommon";
+            propertyDistributionFlowElementCommon.SubElementIndex = (int)IFCDistributionFlowElementSubElements.PSetDistributionFlowElementCommon;
+
+            propertyDistributionFlowElementCommon.EntityTypes.Add(IFCEntityType.IfcDistributionFlowElement);
+
+            PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
+            propertyDistributionFlowElementCommon.AddEntry(ifcPSE);
+
+            commonPropertySets.Add(propertyDistributionFlowElementCommon);
+        }
+
+        /// <summary>
+        /// Initializes the Pset_DistributionFlowElementCommon property set.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetFlowTerminalAirTerminal(IList<PropertySetDescription> commonPropertySets)
+        {
+            //property beam common
+            PropertySetDescription propertyFlowTerminalAirTerminal = new PropertySetDescription();
+            propertyFlowTerminalAirTerminal.Name = "Pset_FlowTerminalAirTerminal";
+            propertyFlowTerminalAirTerminal.SubElementIndex = (int)IFCDistributionFlowElementSubElements.PSetFlowTerminalAirTerminal;
+
+            propertyFlowTerminalAirTerminal.EntityTypes.Add(IFCEntityType.IfcFlowTerminal);
+
+            propertyFlowTerminalAirTerminal.AddEntry(PropertySetEntry.CreateEnumeratedValue("AirflowType", PropertyType.Label,
+                typeof(PSetFlowTerminalAirTerminal_AirTerminalAirflowType)));
+            propertyFlowTerminalAirTerminal.AddEntry(PropertySetEntry.CreateEnumeratedValue("Location", PropertyType.Label,
+                typeof(PSetFlowTerminalAirTerminal_AirTerminalLocation)));
+            
+            commonPropertySets.Add(propertyFlowTerminalAirTerminal);
+        }
+
+        /// <summary>
+        /// Initializes the Pset_AirTerminalTypeCommon property set.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetAirTerminalTypeCommon(IList<PropertySetDescription> commonPropertySets)
+        {
+            //property air terminal type common
+            PropertySetDescription propertyAirTerminalTypeCommon = new PropertySetDescription();
+            propertyAirTerminalTypeCommon.Name = "Pset_AirTerminalTypeCommon";
+            propertyAirTerminalTypeCommon.SubElementIndex = (int)IFCDistributionFlowElementSubElements.PSetAirTerminalTypeCommon;
+
+            propertyAirTerminalTypeCommon.EntityTypes.Add(IFCEntityType.IfcAirTerminalType);
+
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("Shape", PropertyType.Label,
+                typeof(PSetAirTerminalTypeCommon_AirTerminalShape)));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("FlowPattern", PropertyType.Label,
+                typeof(PSetAirTerminalTypeCommon_AirTerminalFlowPattern)));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateVolumetricFlowRate("AirFlowrateRange"));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("TemperatureRange"));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("DischargeDirection", PropertyType.Label,
+                typeof(PSetAirTerminalTypeCommon_AirTerminalDischargeDirection)));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateLength("ThrowLength"));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateReal("AirDiffusionPerformanceIndex"));
+            //propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateMaterial("Material"));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("FinishType", PropertyType.Label,
+                typeof(PSetAirTerminalTypeCommon_AirTerminalFinishType)));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateLabel("FinishColor"));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("MountingType", PropertyType.Label,
+                typeof(PSetAirTerminalTypeCommon_AirTerminalMountingType)));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("CoreType", PropertyType.Label,
+                typeof(PSetAirTerminalTypeCommon_AirTerminalCoreType)));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreatePlaneAngle("CoreSetHorizontal"));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreatePlaneAngle("CoreSetVertical"));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateBoolean("HasIntegralControl"));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("FlowControlType", PropertyType.Label,
+                typeof(PSetAirTerminalTypeCommon_AirTerminalFlowControlType)));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateBoolean("HasSoundAttenuator"));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateBoolean("HasThermalInsulation"));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateArea("NeckArea"));
+            propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateArea("EffectiveArea"));
+            //propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateMass("Weight"));
+            //AirFlowrateVersusFlowControlElement: IfcPropertyTableValue not supported.
+            
+            commonPropertySets.Add(propertyAirTerminalTypeCommon);
+        }
+        
         /// <summary>
         /// Initializes common beam property sets.
         /// </summary>
@@ -480,6 +577,146 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
+        /// Initializes Pset_PlateCommon.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        /// <remarks>Reuses BeamLoadBearingCalculator for load bearing calculation.</remarks>
+        private static void InitPropertySetPlateCommon(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetPlateCommon = new PropertySetDescription();
+            propertySetPlateCommon.Name = "Pset_PlateCommon";
+            propertySetPlateCommon.SubElementIndex = (int)IFCPlateSubElements.PSetPlateCommon;
+
+            propertySetPlateCommon.EntityTypes.Add(IFCEntityType.IfcPlate);
+
+            propertySetPlateCommon.AddEntry(PropertySetEntryUtil.CreateReferenceEntry());
+            propertySetPlateCommon.AddEntry(PropertySetEntryUtil.CreateIsExternalEntry());
+            propertySetPlateCommon.AddEntry(PropertySetEntryUtil.CreateLoadBearingEntry(BeamLoadBearingCalculator.Instance));
+            propertySetPlateCommon.AddEntry(PropertySetEntryUtil.CreateAcousticRatingEntry());
+            propertySetPlateCommon.AddEntry(PropertySetEntryUtil.CreateFireRatingEntry());
+            propertySetPlateCommon.AddEntry(PropertySetEntryUtil.CreateThermalTransmittanceEntry());
+
+            commonPropertySets.Add(propertySetPlateCommon);
+        }
+
+        /// <summary>
+        /// Initializes Pset_ReinforcingBarBendingsBECCommon.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetReinforcingBarBendingsBECCommon(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetReinforcingBarCommon = new PropertySetDescription();
+            propertySetReinforcingBarCommon.Name = "Pset_ReinforcingBarBendingsBECCommon";
+            propertySetReinforcingBarCommon.SubElementIndex = (int)IFCReinforcingBarSubElements.PSetBECCommon;
+
+            propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
+
+            propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreateLabel("BECBarShapeCode"));
+            for (char shapeParameterSuffix = 'a'; shapeParameterSuffix <= 'l'; shapeParameterSuffix++)
+                propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreatePositiveLength("BECShapeParameter_" + shapeParameterSuffix.ToString()));
+            propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreatePlaneAngle("BECBendingParameter_u"));
+            propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreatePlaneAngle("BECBendingParameter_v"));
+            propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreatePlaneAngle("BECBendingParameter_ul"));
+            propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreatePlaneAngle("BECBendingParameter_vl"));
+            propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreatePositiveLength("BECShapeAid_x"));
+            propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreatePositiveLength("BECShapeAid_y"));
+            propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreatePositiveLength("BECRollerDiameter"));
+            
+            commonPropertySets.Add(propertySetReinforcingBarCommon);
+        }
+
+        /// <summary>
+        /// Initializes Pset_ReinforcingBarBendingsBS8666Common.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetReinforcingBarBendingsBS8666Common(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetReinforcingBarCommon = new PropertySetDescription();
+            propertySetReinforcingBarCommon.Name = "Pset_ReinforcingBarBendingsBS8666Common";
+            propertySetReinforcingBarCommon.SubElementIndex = (int)IFCReinforcingBarSubElements.PSetBS8666Common;
+
+            propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
+
+            propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreateLabel("BS8666ShapeCode"));
+            for (char shapeParameterSuffix = 'A'; shapeParameterSuffix <= 'E'; shapeParameterSuffix++)
+                propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreatePositiveLength("BS8666ShapeParameter_" + shapeParameterSuffix.ToString()));
+            propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreatePositiveLength("BS8666ShapeParameter_R"));
+            
+            commonPropertySets.Add(propertySetReinforcingBarCommon);
+        }
+
+        /// <summary>
+        /// Initializes Pset_ReinforcingBarBendingsDIN135610Common.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetReinforcingBarBendingsDIN135610Common(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetReinforcingBarCommon = new PropertySetDescription();
+            propertySetReinforcingBarCommon.Name = "Pset_ReinforcingBarBendingsDIN135610Common";
+            propertySetReinforcingBarCommon.SubElementIndex = (int)IFCReinforcingBarSubElements.PSetDIN135610Common;
+
+            propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
+
+            propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreateLabel("DIN135610ShapeCode"));
+            for (char shapeParameterSuffix = 'a'; shapeParameterSuffix <= 'e'; shapeParameterSuffix++)
+                propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreatePositiveLength("DIN135610ShapeParameter_" + shapeParameterSuffix.ToString()));
+            propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreatePositiveLength("DIN135610ShapeParameter_z"));
+
+            commonPropertySets.Add(propertySetReinforcingBarCommon);
+        }
+
+        /// <summary>
+        /// Initializes Pset_ReinforcingBarBendingsISOCD3766Common.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetReinforcingBarBendingsISOCD3766Common(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetReinforcingBarCommon = new PropertySetDescription();
+            propertySetReinforcingBarCommon.Name = "Pset_ReinforcingBarBendingsISOCD3766Common";
+            propertySetReinforcingBarCommon.SubElementIndex = (int)IFCReinforcingBarSubElements.PSetISOCD3766Common;
+
+            propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
+
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateLabel("ISOCD3766ShapeCode");
+            ifcPSE.PropertyCalculator = ISOCD3766ShapeCodeCalculator.Instance;
+            propertySetReinforcingBarCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePositiveLength("ISOCD3766ShapeParameter_a");
+            ifcPSE.PropertyCalculator = ISOCD3766ShapeParameterACalculator.Instance;
+            propertySetReinforcingBarCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePositiveLength("ISOCD3766ShapeParameter_b");
+            ifcPSE.PropertyCalculator = ISOCD3766ShapeParameterBCalculator.Instance;
+            propertySetReinforcingBarCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePositiveLength("ISOCD3766ShapeParameter_c");
+            ifcPSE.PropertyCalculator = ISOCD3766ShapeParameterCCalculator.Instance;
+            propertySetReinforcingBarCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePositiveLength("ISOCD3766ShapeParameter_d");
+            ifcPSE.PropertyCalculator = ISOCD3766ShapeParameterDCalculator.Instance;
+            propertySetReinforcingBarCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePositiveLength("ISOCD3766ShapeParameter_e");
+            ifcPSE.PropertyCalculator = ISOCD3766ShapeParameterECalculator.Instance;
+            propertySetReinforcingBarCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePositiveLength("ISOCD3766ShapeParameter_R");
+            ifcPSE.PropertyCalculator = ISOCD3766BendingRadiusCalculator.Instance;
+            propertySetReinforcingBarCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePlaneAngle("ISOCD3766BendingStartHook");
+            ifcPSE.PropertyCalculator = ISOCD3766BendingStartHookCalculator.Instance;
+            propertySetReinforcingBarCommon.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePlaneAngle("ISOCD3766BendingEndHook");
+            ifcPSE.PropertyCalculator = ISOCD3766BendingEndHookCalculator.Instance;
+            propertySetReinforcingBarCommon.AddEntry(ifcPSE);
+            
+            commonPropertySets.Add(propertySetReinforcingBarCommon);
+        }
+
+        /// <summary>
         /// Initializes common column property sets.
         /// </summary>
         /// <param name="commonPropertySets">List to store property sets.</param>
@@ -516,7 +753,7 @@ namespace BIM.IFC.Exporter
         /// <param name="commonPropertySets">List to store property sets.</param>
         private static void InitPropertySetRoofCommon(IList<PropertySetDescription> commonPropertySets, IFCVersion fileVersion)
         {
-            // PSet_RoofCommon
+            // Pset_RoofCommon
             PropertySetDescription propertySetRoofCommon = new PropertySetDescription();
             propertySetRoofCommon.Name = "Pset_RoofCommon";
             propertySetRoofCommon.SubElementIndex = (int)IFCRoofSubElements.PSetRoofCommon;
@@ -552,7 +789,7 @@ namespace BIM.IFC.Exporter
         /// <param name="commonPropertySets">List to store property sets.</param>
         private static void InitPropertySetSlabCommon(IList<PropertySetDescription> commonPropertySets)
         {
-            // PSet_SlabCommon
+            // Pset_SlabCommon
             PropertySetDescription propertySetSlabCommon = new PropertySetDescription();
             propertySetSlabCommon.Name = "Pset_SlabCommon";
             propertySetSlabCommon.SubElementIndex = (int)IFCSlabSubElements.PSetSlabCommon;
@@ -595,7 +832,7 @@ namespace BIM.IFC.Exporter
         /// <param name="commonPropertySets">List to store property sets.</param>
         private static void InitPropertySetRailingCommon(IList<PropertySetDescription> commonPropertySets)
         {
-            // PSet_RailingCommon
+            // Pset_RailingCommon
             PropertySetDescription propertySetRailingCommon = new PropertySetDescription();
             propertySetRailingCommon.Name = "Pset_RailingCommon";
 
@@ -622,7 +859,7 @@ namespace BIM.IFC.Exporter
         /// <param name="commonPropertySets">List to store property sets.</param>
         private static void InitPropertySetRampCommon(IList<PropertySetDescription> commonPropertySets)
         {
-            // PSet_RampCommon
+            // Pset_RampCommon
             PropertySetDescription propertySetRampCommon = new PropertySetDescription();
             propertySetRampCommon.Name = "Pset_RampCommon";
             propertySetRampCommon.SubElementIndex = (int)IFCRampSubElements.PSetRampCommon;
@@ -653,7 +890,7 @@ namespace BIM.IFC.Exporter
         /// <param name="commonPropertySets">List to store property sets.</param>
         private static void InitPropertySetStairFlightCommon(IList<PropertySetDescription> commonPropertySets)
         {
-            // PSet_StairFlightCommon
+            // Pset_StairFlightCommon
             PropertySetDescription propertySetStairFlightCommon = new PropertySetDescription();
             propertySetStairFlightCommon.Name = "Pset_StairFlightCommon";
             // Add Calculator for SubElementIndex.
@@ -688,7 +925,7 @@ namespace BIM.IFC.Exporter
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
             propertySetStairFlightCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreatePositiveLength("NosingLength");
+            ifcPSE = PropertySetEntry.CreateLength("NosingLength");
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
             propertySetStairFlightCommon.AddEntry(ifcPSE);
 
@@ -733,7 +970,7 @@ namespace BIM.IFC.Exporter
         /// <param name="commonPropertySets">List to store property sets.</param>
         private static void InitPropertySetStairCommon(IList<PropertySetDescription> commonPropertySets)
         {
-            // PSet_StairCommon
+            // Pset_StairCommon
             PropertySetDescription propertySetStairCommon = new PropertySetDescription();
             propertySetStairCommon.Name = "Pset_StairCommon";
             propertySetStairCommon.SubElementIndex = (int)IFCStairSubElements.PSetStairCommon;
@@ -781,10 +1018,11 @@ namespace BIM.IFC.Exporter
         /// <param name="fileVersion">The IFC file version.</param>
         private static void InitPropertySetBuildingCommon(IList<PropertySetDescription> commonPropertySets, IFCVersion fileVersion)
         {
-            // PSet_BuildingCommon
+            // Pset_BuildingCommon
             PropertySetDescription propertySetBuildingCommon = new PropertySetDescription();
             propertySetBuildingCommon.Name = "Pset_BuildingCommon";
             propertySetBuildingCommon.EntityTypes.Add(IFCEntityType.IfcBuilding);
+            propertySetBuildingCommon.SubElementIndex = (int)IFCProjectSubElements.PSetBuildingCommon;
 
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateIdentifier("BuildingID"));
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateBoolean("IsPermanentID"));
@@ -818,6 +1056,7 @@ namespace BIM.IFC.Exporter
             PropertySetDescription propertySetLevelCommon = new PropertySetDescription();
             propertySetLevelCommon.Name = "Pset_BuildingStoreyCommon";
             propertySetLevelCommon.EntityTypes.Add(IFCEntityType.IfcBuildingStorey);
+            propertySetLevelCommon.SubElementIndex = (int)IFCLevelSubElements.PSetBuildingStoreyCommon;
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("EntranceLevel");
             propertySetLevelCommon.AddEntry(ifcPSE);
@@ -853,6 +1092,7 @@ namespace BIM.IFC.Exporter
             PropertySetDescription propertySetSiteCommon = new PropertySetDescription();
             propertySetSiteCommon.Name = "Pset_SiteCommon";
             propertySetSiteCommon.EntityTypes.Add(IFCEntityType.IfcSite);
+            propertySetSiteCommon.SubElementIndex = (int)IFCProjectSubElements.PSetSiteCommon;
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateArea("BuildableArea");
             propertySetSiteCommon.AddEntry(ifcPSE);
@@ -934,6 +1174,29 @@ namespace BIM.IFC.Exporter
             }
 
             commonPropertySets.Add(propertySetSpaceCommon);
+        }
+
+        /// <summary>
+        /// Initializes SpaceOccupancyRequirements property set.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetSpaceOccupancyRequirements(IList<PropertySetDescription> commonPropertySets)
+        {
+            //property set space common
+            PropertySetDescription propertySetSpaceOccupancyRequirements = new PropertySetDescription();
+            propertySetSpaceOccupancyRequirements.Name = "Pset_SpaceOccupancyRequirements";
+
+            propertySetSpaceOccupancyRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
+
+            propertySetSpaceOccupancyRequirements.AddEntry(PropertySetEntry.CreateLabel("OccupancyType"));
+            propertySetSpaceOccupancyRequirements.AddEntry(PropertySetEntry.CreateCount("OccupancyNumber"));
+            propertySetSpaceOccupancyRequirements.AddEntry(PropertySetEntry.CreateCount("OccupancyNumberPeak"));
+            //propertySetSpaceOccupancyRequirements.AddEntry(PropertySetEntry.CreateTime("OccupancyTimePerDay"));
+            propertySetSpaceOccupancyRequirements.AddEntry(PropertySetEntry.CreateArea("AreaPerOccupant"));
+            propertySetSpaceOccupancyRequirements.AddEntry(PropertySetEntry.CreateLength("MinimumHeadroom"));
+            propertySetSpaceOccupancyRequirements.AddEntry(PropertySetEntry.CreateBoolean("IsOutlookDesirable"));
+
+            commonPropertySets.Add(propertySetSpaceOccupancyRequirements);
         }
 
         /// <summary>
@@ -1151,6 +1414,44 @@ namespace BIM.IFC.Exporter
             propertySetElementShading.AddEntry(PropertySetEntry.CreateLabel("Color"));
 
             commonPropertySets.Add(propertySetElementShading);
+        }
+
+        /// <summary>
+        /// Initializes Pset_ProvisionForVoid.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetProvisionForVoid(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetProvisionForVoid= new PropertySetDescription();
+            propertySetProvisionForVoid.Name = "Pset_ProvisionForVoid";
+            propertySetProvisionForVoid.EntityTypes.Add(IFCEntityType.IfcBuildingElementProxy);
+            propertySetProvisionForVoid.ObjectType = "ProvisionForVoid";
+
+            // The Shape value must be determined first, as other calculators will use the value stored.
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateLabel("Shape");
+            ifcPSE.PropertyCalculator = ProvisionForVoidShapeCalculator.Instance;
+            propertySetProvisionForVoid.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateLength("Width");
+            ifcPSE.PropertyCalculator = ProvisionForVoidWidthCalculator.Instance;
+            propertySetProvisionForVoid.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateLength("Height");
+            ifcPSE.PropertyCalculator = ProvisionForVoidHeightCalculator.Instance;
+            propertySetProvisionForVoid.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateLength("Diameter");
+            ifcPSE.PropertyCalculator = ProvisionForVoidDiameterCalculator.Instance;
+            propertySetProvisionForVoid.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateLength("Depth");
+            ifcPSE.PropertyCalculator = ProvisionForVoidDepthCalculator.Instance;
+            propertySetProvisionForVoid.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateLabel("System");
+            propertySetProvisionForVoid.AddEntry(ifcPSE);
+
+            commonPropertySets.Add(propertySetProvisionForVoid);
         }
 
         /// <summary>
@@ -1425,7 +1726,223 @@ namespace BIM.IFC.Exporter
 
             baseQuantities.Add(ifcBaseQuantity);
         }
-        
+
+        /// <summary>
+        /// Initializes Building Storey base quantity
+        /// </summary>
+        /// <param name="baseQuantities"></param>
+        private static void InitBuildingStoreyBaseQuantities(IList<QuantityDescription> baseQuantities)
+        {
+            QuantityDescription ifcBaseQuantity = new QuantityDescription();
+            ifcBaseQuantity.Name = "BaseQuantities";
+            ifcBaseQuantity.EntityTypes.Add(IFCEntityType.IfcBuildingStorey);
+
+            QuantityEntry ifcQE = new QuantityEntry("NetHeight");
+            ifcQE.QuantityType = QuantityType.PositiveLength;
+            ifcQE.RevitParameterName = "IfcQtyNetHeight";
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ifcQE = new QuantityEntry("GrossHeight");
+            ifcQE.QuantityType = QuantityType.PositiveLength;
+            ifcQE.RevitParameterName = "IfcQtyGrossHeight";
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
+            if (String.Compare(exportOptionsCache.SelectedConfigName, "FMHandOverView") != 0)   // FMHandOver view exclude NetArea, GrossArea, NetVolume and GrossVolumne
+            {
+                ifcQE = new QuantityEntry("NetFloorArea");
+                ifcQE.QuantityType = QuantityType.Area;
+                ifcQE.PropertyCalculator = SpaceLevelAreaCalculator.Instance;
+                ifcBaseQuantity.AddEntry(ifcQE);
+
+                ifcQE = new QuantityEntry("GrossFloorArea");
+                ifcQE.QuantityType = QuantityType.Area;
+                ifcQE.PropertyCalculator = SpaceLevelAreaCalculator.Instance;
+                ifcBaseQuantity.AddEntry(ifcQE);
+
+                ifcQE = new QuantityEntry("GrossPerimeter");
+                ifcQE.QuantityType = QuantityType.PositiveLength;
+                ifcQE.RevitParameterName = "IfcQtyGrossPerimeter";
+                ifcBaseQuantity.AddEntry(ifcQE);
+
+                ifcQE = new QuantityEntry("NetVolume");
+                ifcQE.QuantityType = QuantityType.Volume;
+                ifcQE.RevitParameterName = "IfcQtyNetVolume";
+                ifcBaseQuantity.AddEntry(ifcQE);
+
+                ifcQE = new QuantityEntry("GrossVolume");
+                ifcQE.QuantityType = QuantityType.Volume;
+                ifcQE.RevitParameterName = "IfcQtyGrossVolume";
+                ifcBaseQuantity.AddEntry(ifcQE);
+            }
+
+            baseQuantities.Add(ifcBaseQuantity);
+        }
+
+        /// <summary>
+        /// Initializes Space base quantity
+        /// </summary>
+        /// <param name="baseQuantities"></param>
+        private static void InitSpaceBaseQuantities(IList<QuantityDescription> baseQuantities)
+        {
+            QuantityDescription ifcBaseQuantity = new QuantityDescription();
+            ifcBaseQuantity.Name = "BaseQuantities";
+            ifcBaseQuantity.EntityTypes.Add(IFCEntityType.IfcSpace);
+
+            QuantityEntry ifcQE = new QuantityEntry("NetFloorArea");
+            ifcQE.MethodOfMeasurement = "area measured in geometry";
+            ifcQE.QuantityType = QuantityType.Area;
+            ifcQE.PropertyCalculator = SpaceAreaCalculator.Instance;
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ifcQE = new QuantityEntry("FinishCeilingHeight");
+            ifcQE.QuantityType = QuantityType.PositiveLength;
+            ifcQE.RevitParameterName = "IfcQtyFinishCeilingHeight";
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ifcQE = new QuantityEntry("NetCeilingArea");
+            ifcQE.QuantityType = QuantityType.Area;
+            ifcQE.RevitParameterName = "IfcQtyNetCeilingArea";
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ifcQE = new QuantityEntry("GrossCeilingArea");
+            ifcQE.QuantityType = QuantityType.Area;
+            ifcQE.RevitParameterName = "IfcQtyGrossCeilingArea";
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ifcQE = new QuantityEntry("NetWallArea");
+            ifcQE.QuantityType = QuantityType.Area;
+            ifcQE.RevitParameterName = "IfcQtyNetWallArea";
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ifcQE = new QuantityEntry("GrossWallArea");
+            ifcQE.QuantityType = QuantityType.Area;
+            ifcQE.RevitParameterName = "IfcQtyGrossWallArea";
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ifcQE = new QuantityEntry("Height");
+            ifcQE.MethodOfMeasurement = "length measured in geometry";
+            ifcQE.QuantityType = QuantityType.PositiveLength;
+            ifcQE.PropertyCalculator = SpaceHeightCalculator.Instance;
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ifcQE = new QuantityEntry("NetPerimeter");
+            ifcQE.MethodOfMeasurement = "length measured in geometry";
+            ifcQE.QuantityType = QuantityType.PositiveLength;
+            ifcQE.RevitParameterName = "IfcQtyNetPerimeter";
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ifcQE = new QuantityEntry("GrossPerimeter");
+            ifcQE.MethodOfMeasurement = "length measured in geometry";
+            ifcQE.QuantityType = QuantityType.PositiveLength;
+            ifcQE.PropertyCalculator = SpacePerimeterCalculator.Instance;
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ifcQE = new QuantityEntry("GrossFloorArea");
+            ifcQE.MethodOfMeasurement = "area measured in geometry";
+            ifcQE.QuantityType = QuantityType.Area;
+            ifcQE.PropertyCalculator = SpaceAreaCalculator.Instance;
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
+            if (String.Compare(exportOptionsCache.SelectedConfigName, "FMHandOverView") != 0)   // FMHandOver view exclude GrossVolumne, FinishFloorHeight
+            {
+                ifcQE = new QuantityEntry("GrossVolume");
+                ifcQE.MethodOfMeasurement = "volume measured in geometry";
+                ifcQE.QuantityType = QuantityType.Volume;
+                ifcQE.PropertyCalculator = SpaceVolumeCalculator.Instance;
+                ifcBaseQuantity.AddEntry(ifcQE);
+
+                ifcQE = new QuantityEntry("FinishFloorHeight");
+                ifcQE.QuantityType = QuantityType.PositiveLength;
+                ifcQE.RevitParameterName = "IfcQtyFinishFloorHeight";
+                ifcBaseQuantity.AddEntry(ifcQE);
+            }
+
+            baseQuantities.Add(ifcBaseQuantity);
+        }
+
+        /// <summary>
+        /// Initializes Covering base quantity
+        /// </summary>
+        /// <param name="baseQuantities"></param>
+        private static void InitCoveringBaseQuantities(IList<QuantityDescription> baseQuantities)
+        {
+            QuantityDescription ifcBaseQuantity = new QuantityDescription();
+            ifcBaseQuantity.Name = "BaseQuantities";
+            ifcBaseQuantity.EntityTypes.Add(IFCEntityType.IfcCovering);
+
+            QuantityEntry ifcQE = new QuantityEntry("GrossArea");
+            ifcQE.QuantityType = QuantityType.Area;
+            ifcQE.RevitParameterName = "IfcQtyGrossArea";
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ifcQE = new QuantityEntry("NetArea");
+            ifcQE.QuantityType = QuantityType.Area;
+            ifcQE.RevitParameterName = "IfcQtyNetArea";
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            baseQuantities.Add(ifcBaseQuantity);
+        }
+
+        /// <summary>
+        /// Initializes Window base quantity
+        /// </summary>
+        /// <param name="baseQuantities"></param>
+        private static void InitWindowBaseQuantities(IList<QuantityDescription> baseQuantities)
+        {
+            QuantityDescription ifcBaseQuantity = new QuantityDescription();
+            ifcBaseQuantity.Name = "BaseQuantities";
+            ifcBaseQuantity.EntityTypes.Add(IFCEntityType.IfcWindow);
+
+            QuantityEntry ifcQE = new QuantityEntry("Height");
+            ifcQE.QuantityType = QuantityType.PositiveLength;
+            ifcQE.RevitBuiltInParameter = BuiltInParameter.WINDOW_HEIGHT;
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ifcQE = new QuantityEntry("Width");
+            ifcQE.QuantityType = QuantityType.PositiveLength;
+            ifcQE.RevitBuiltInParameter = BuiltInParameter.WINDOW_WIDTH;
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ifcQE = new QuantityEntry("Area");
+            ifcQE.MethodOfMeasurement = "area measured in geometry";
+            ifcQE.QuantityType = QuantityType.Area;
+            ifcQE.PropertyCalculator = WindowAreaCalculator.Instance;
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            baseQuantities.Add(ifcBaseQuantity);
+        }
+
+        /// <summary>
+        /// Initializes Door base quantity
+        /// </summary>
+        /// <param name="baseQuantities"></param>
+        private static void InitDoorBaseQuantities(IList<QuantityDescription> baseQuantities)
+        {
+            QuantityDescription ifcBaseQuantity = new QuantityDescription();
+            ifcBaseQuantity.Name = "BaseQuantities";
+            ifcBaseQuantity.EntityTypes.Add(IFCEntityType.IfcDoor);
+
+            QuantityEntry ifcQE = new QuantityEntry("Height");
+            ifcQE.QuantityType = QuantityType.PositiveLength;
+            ifcQE.RevitBuiltInParameter = BuiltInParameter.DOOR_HEIGHT;
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ifcQE = new QuantityEntry("Width");
+            ifcQE.QuantityType = QuantityType.PositiveLength;
+            ifcQE.RevitBuiltInParameter = BuiltInParameter.DOOR_WIDTH;
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            ifcQE = new QuantityEntry("Area");
+            ifcQE.MethodOfMeasurement = "area measured in geometry";
+            ifcQE.QuantityType = QuantityType.Area;
+            ifcQE.PropertyCalculator = DoorAreaCalculator.Instance;
+            ifcBaseQuantity.AddEntry(ifcQE);
+
+            baseQuantities.Add(ifcBaseQuantity);
+        }
+
         /// <summary>
         /// Initializes base quantities.
         /// </summary>
@@ -1438,6 +1955,12 @@ namespace BIM.IFC.Exporter
             InitRailingBaseQuantities(baseQuantities);
             InitSlabBaseQuantities(baseQuantities);
             InitRampFlightBaseQuantities(baseQuantities);
+            InitBuildingStoreyBaseQuantities(baseQuantities);
+            InitSpaceBaseQuantities(baseQuantities);
+            InitCoveringBaseQuantities(baseQuantities);
+            InitWindowBaseQuantities(baseQuantities);
+            InitDoorBaseQuantities(baseQuantities);
+
             quantities.Add(baseQuantities);
         }
 

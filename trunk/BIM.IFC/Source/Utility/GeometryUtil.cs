@@ -307,12 +307,8 @@ namespace BIM.IFC.Utility
         /// <remarks>
         /// Added in 2013 to replace the temporary API method ExporterIFCUtils.GetSolidMeshGeometry.
         /// </remarks>
-        /// <param name="geomElemToUse">
-        /// The GeometryElement.
-        /// </param>
-        /// <param name="trf">
-        /// The initial Transform applied on the GeometryElement.
-        /// </param>
+        /// <param name="geomElemToUse">The GeometryElement.</param>
+        /// <param name="trf">The initial Transform applied on the GeometryElement.</param>
         /// <returns>The collection of solids and meshes.</returns>
         public static SolidMeshGeometryInfo GetSolidMeshGeometry(GeometryElement geomElemToUse, Transform trf)
         {
@@ -357,12 +353,27 @@ namespace BIM.IFC.Utility
         /// Added in 2013 to replace the temporary API method ExporterIFCUtils.GetSplitSolidMeshGeometry.
         /// </remarks>
         /// <param name="geomElemToUse">The GeometryElement.</param>
+        /// <param name="trf">The transform.</param>
         /// <returns>The collection of solids and meshes.</returns>
-        public static SolidMeshGeometryInfo GetSplitSolidMeshGeometry(GeometryElement geomElemToUse)
+        public static SolidMeshGeometryInfo GetSplitSolidMeshGeometry(GeometryElement geomElemToUse, Transform trf)
         {
             SolidMeshGeometryInfo geometryInfo = GetSolidMeshGeometry(geomElemToUse, Transform.Identity);
             geometryInfo.SplitSolidsList();
             return geometryInfo;
+        }
+        
+        /// <summary>
+        /// Collects all solids and meshes within a GeometryElement; the solids which consist of multiple closed volumes
+        /// will be split into single closed volume Solids.
+        /// </summary>
+        /// <remarks>
+        /// Added in 2013 to replace the temporary API method ExporterIFCUtils.GetSplitSolidMeshGeometry.
+        /// </remarks>
+        /// <param name="geomElemToUse">The GeometryElement.</param>
+        /// <returns>The collection of solids and meshes.</returns>
+        public static SolidMeshGeometryInfo GetSplitSolidMeshGeometry(GeometryElement geomElemToUse)
+        {
+            return GetSplitSolidMeshGeometry(geomElemToUse, Transform.Identity);
         }
 
         /// <summary>
@@ -409,15 +420,9 @@ namespace BIM.IFC.Utility
         /// <remarks>
         /// This is a private helper method for the GetSolidMeshGeometry type collection methods.
         /// </remarks>
-        /// <param name="geomElem">
-        /// The GeometryElement we are collecting solids and meshes from.
-        /// </param>
-        /// <param name="trf">
-        /// The initial Transform applied on the GeometryElement.
-        /// </param>
-        /// <param name="solidMeshCapsule">
-        /// The SolidMeshGeometryInfo object that contains the lists of collected solids and meshes.
-        /// </param>
+        /// <param name="geomElem">The GeometryElement we are collecting solids and meshes from.</param>
+        /// <param name="trf">The initial Transform applied on the GeometryElement.</param>
+        /// <param name="solidMeshCapsule">The SolidMeshGeometryInfo object that contains the lists of collected solids and meshes.</param>
         private static void CollectSolidMeshGeometry(GeometryElement geomElem, Transform trf, SolidMeshGeometryInfo solidMeshCapsule)
         {
             if (geomElem == null)
@@ -579,7 +584,13 @@ namespace BIM.IFC.Utility
                 // a more general technique of getting geometry below, which will unfortanately result in worse
                 // representations.  If this is a concern, please upgrade the railings to any format since 2006.
                 if (symbolGeomElement != null)
-                    return symbolGeomElement;
+                {
+                    Transform trf = geomInstance.Transform;
+                    if (trf != null && !trf.IsIdentity)
+                        return symbolGeomElement.GetTransformed(trf);
+                    else
+                        return symbolGeomElement;
+                }
             }
 
             return geomElement;
@@ -943,8 +954,14 @@ namespace BIM.IFC.Utility
             if (halfSpaceHnd == null)
                 throw new Exception("Can't create clipping.");
 
-            clippedBodyItemHnd = IFCInstanceExporter.CreateBooleanClippingResult(file, IFCBooleanOperator.Difference,
-                bodyItemHnd, halfSpaceHnd);
+            if (IFCAnyHandleUtil.IsSubTypeOf(bodyItemHnd, IFCEntityType.IfcBooleanClippingResult) || 
+                IFCAnyHandleUtil.IsSubTypeOf(bodyItemHnd, IFCEntityType.IfcSweptAreaSolid))
+                clippedBodyItemHnd = IFCInstanceExporter.CreateBooleanClippingResult(file, IFCBooleanOperator.Difference,
+                    bodyItemHnd, halfSpaceHnd);
+            else
+                clippedBodyItemHnd = IFCInstanceExporter.CreateBooleanResult(file, IFCBooleanOperator.Difference,
+                    bodyItemHnd, halfSpaceHnd);
+
             return clippedBodyItemHnd;
         }
 
@@ -1846,6 +1863,25 @@ namespace BIM.IFC.Utility
             XYZ planarFaceNormal = planarFace.Normal;
             XYZ faceNormal = planarFace.ComputeNormal(new UV(0, 0));
             return MathUtil.VectorsAreParallel2(planarFaceNormal, faceNormal) == -1;
+        }
+
+        /// <summary>
+        /// Splits a Solid into distinct volumes.
+        /// </summary>
+        /// <param name="solid">The initial solid.</param>
+        /// <returns>The list of volumes.</returns>
+        /// <remarks>This calls the internal SolidUtils.SplitVolumes routine, but does additional cleanup work to properly dispose of stale data.</remarks>
+        public static IList<Solid> SplitVolumes(Solid solid)
+        {
+            IList<Solid> splitVolumes = SolidUtils.SplitVolumes(solid);
+            foreach (Solid currSolid in splitVolumes)
+            {
+                // The geometry element created by SplitVolumes is a copy which will have its own allocated
+                // membership - this needs to be stored and disposed of (see AllocatedGeometryObjectCache
+                // for details)
+                ExporterCacheManager.AllocatedGeometryObjectCache.AddGeometryObject(currSolid);
+            }
+            return splitVolumes;
         }
     }
 }

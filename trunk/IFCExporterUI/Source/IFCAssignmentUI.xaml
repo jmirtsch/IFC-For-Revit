@@ -7,7 +7,7 @@
             <RowDefinition Height="461*" />
             <RowDefinition Height="59*" />
         </Grid.RowDefinitions>
-        <TabControl Height="436" HorizontalAlignment="Stretch" Margin="0,12,0,0" Name="AssignmenttabControl" VerticalAlignment="Stretch" Width="536" >
+        <TabControl Height="436" HorizontalAlignment="Stretch" Margin="0,12,0,0" Name="AssignmenttabControl" VerticalAlignment="Stretch" Width="536" SelectionChanged="AssignmenttabControl_SelectionChanged">
             <TabItem Header="File Header" Name="FileHeaderTab" Initialized="FileHeaderTab_Initialized"  >
                 <Grid Width="522">
                     <Grid.ColumnDefinitions>
@@ -61,6 +61,21 @@
                     <StackPanel Height="33" HorizontalAlignment="Left" Margin="6,357,0,0" Name="stackPanel4" VerticalAlignment="Top" Width="514" >
                         <CheckBox Content="Update Project Information" Height="16" Name="UpdateProjInfocheckBox" Width="491" Margin="0,10,0,0" Checked="UpdateProjInfocheckBox_Checked" Unchecked="UpdateProjInfocheckBox_Unchecked"/>
                     </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Classification" Name="ClassificationTab" Initialized="ClassificationTab_Initialized"  >
+                <Grid>
+                    <Label Content="Name" Height="28" HorizontalAlignment="Left" Margin="16,10,0,0" Name="ClassificationName" VerticalAlignment="Top" Foreground="#FFF80A0A" />
+                    <TextBox Text="{Binding Path=ClassificationName, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="182,10,30,0" Name="ClassificationNameTextBox" VerticalAlignment="Top" Width="300" HorizontalContentAlignment="Stretch" ToolTip="Name of the Classification System" />
+                    <Label Content="Source (Publisher)" Height="28" HorizontalAlignment="Left" Margin="16,39,0,0" Name="SourceOrPublisher" VerticalAlignment="Top" Foreground="#FFF80606" />
+                    <TextBox Text="{Binding Path=ClassificationSource, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="182,39,30,0" Name="ClassificationSourceTextBox" VerticalAlignment="Top" Width="300" HorizontalContentAlignment="Stretch" ToolTip="Source or publisher of the Classification System" />
+                    <Label Content="Edition" Height="28" HorizontalAlignment="Left" Margin="16,68,0,0" Name="Edition" VerticalAlignment="Top" IsEnabled="True" Foreground="#FFFF0D0D" />
+                    <TextBox Text="{Binding Path=ClassificationEdition, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="182,68,30,0" Name="ClassificationEditionTextBox" VerticalAlignment="Top" Width="300" HorizontalContentAlignment="Stretch" ToolTip="Edition number of the Classification system" />
+                    <Label Content="Edition Date" Height="28" HorizontalAlignment="Left" Margin="16,97,0,0" Name="EditionDate" VerticalAlignment="Top" />
+                    <DatePicker SelectedDate="{Binding Path=ClassificationEditionDate}" Height="25" HorizontalAlignment="Left" Margin="189,99,0,0" Name="datePicker1" VerticalAlignment="Top" Width="115" />
+                    <Label Content="Documentation location" Height="28" HorizontalAlignment="Left" Margin="16,132,0,0" Name="location" VerticalAlignment="Top" />
+                    <TextBox Text="{Binding Path=ClassificationLocation, UpdateSourceTrigger=PropertyChanged}" Height="28" HorizontalAlignment="Right" Margin="0,132,37,0" Name="ClassificationLocationtextBox" VerticalAlignment="Top" Width="300" ToolTip="Location of the documentation (usually URL)"/>
+                    <TextBlock Text="{Binding Path=ClassificationTabMsg, UpdateSourceTrigger=PropertyChanged}" Height="70" HorizontalAlignment="Stretch" Margin="16,317,37,0" Name="MessageTextBlock" VerticalAlignment="Top" FontWeight="Bold" FontStyle="Italic" FontFamily="Calibri" TextWrapping="Wrap" FontSize="14" TextAlignment="Center" Foreground="#FFF91010" />
                 </Grid>
             </TabItem>
         </TabControl>

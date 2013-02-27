@@ -71,7 +71,7 @@ namespace BIM.IFC.Exporter
                         ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
 
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions();
-                        IFCAnyHandle bodyRep = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, categoryId, ElementId.InvalidElementId,
+                        IFCAnyHandle bodyRep = BodyExporter.ExportBody(exporterIFC, element, categoryId, ElementId.InvalidElementId,
                             geometryElement, bodyExporterOptions, ecData).RepresentationHnd;
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRep))
                         {
@@ -131,8 +131,8 @@ namespace BIM.IFC.Exporter
                             productWrapper.AddElement(elemHnd, setter.GetLevelInfo(), ecData, false);
                         }
 
-                        OpeningUtil.CreateOpeningsIfNecessary(elemHnd, element, ecData, exporterIFC,
-                           localPlacementToUse, setter, productWrapper);
+                        OpeningUtil.CreateOpeningsIfNecessary(elemHnd, element, ecData, null,
+                            exporterIFC, localPlacementToUse, setter, productWrapper);
                     }
 
                     tr.Commit();

@@ -108,6 +108,7 @@ namespace BIM.IFC.Exporter
                 m_ElementExporter += ExportSpatialElements;
             m_ElementExporter += ExportNonSpatialElements;
             m_ElementExporter += ExportCachedRailings;
+            m_ElementExporter += ExportCachedFabricAreas;
             m_ElementExporter += ExportGrids;
             m_ElementExporter += ExportConnectors;
         }
@@ -228,6 +229,23 @@ namespace BIM.IFC.Exporter
             }
         }
 
+        /// <summary>
+        /// Export FabricAreas cached during non-spatial element export.  
+        /// We export whatever FabricAreas actually have handles as IfcGroup.
+        /// </summary>
+        /// <param name="document">The Revit document.</param>
+        /// <param name="exporterIFC">The exporterIFC class.</param>
+        /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
+        protected void ExportCachedFabricAreas(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document,
+            Autodesk.Revit.DB.View filterView)
+        {
+            foreach (ElementId elementId in ExporterCacheManager.FabricAreaHandleCache.Keys)
+            {
+                Element element = document.GetElement(elementId);
+                ExportElement(exporterIFC, filterView, element);
+            }
+        }
+
         protected void ExportGrids(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document, 
             Autodesk.Revit.DB.View filterView)
         {
@@ -284,10 +302,14 @@ namespace BIM.IFC.Exporter
                 {
                     ExportElementImpl(exporterIFC, element, filterView, productWrapper);
 
+                    // Export PropertySet, Quantity (if set) and Classification (or Uniformat for COBIE) here
                     ExportElementProperties(exporterIFC, element, productWrapper);
-                    ExportElementQuantities(exporterIFC, element, productWrapper);
+                    if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities && !(ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE))
+                        ExportElementQuantities(exporterIFC, element, productWrapper);
+                    ExportElementClassifications(exporterIFC, element, productWrapper);                     // Exporting ClassificationCode from IFC parameter 
                     if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
-                        ExportElementClassifications(exporterIFC, element, productWrapper);
+                        ExportElementUniformatClassifications(exporterIFC, element, productWrapper);
+
                 }
 
                 // We are going to clear the parameter cache for the element (not the type) after the export.
@@ -423,6 +445,16 @@ namespace BIM.IFC.Exporter
                     {
                         DuctLining ductLining = element as DuctLining;
                         DuctLiningExporter.ExportDuctLining(exporterIFC, ductLining, geomElem, productWrapper);
+                    }
+                    else if (element is FabricArea)
+                    {
+                        // We are exporting the fabric area as a group only.
+                        FabricSheetExporter.ExportFabricArea(exporterIFC, element, productWrapper);
+                    }
+                    else if (element is FabricSheet)
+                    {
+                        FabricSheet fabricSheet = element as FabricSheet;
+                        FabricSheetExporter.ExportFabricSheet(exporterIFC, fabricSheet, geomElem, productWrapper);
                     }
                     else if (element is FamilyInstance)
                     {
@@ -658,7 +690,7 @@ namespace BIM.IFC.Exporter
                     {
                     }
                 }
-
+                
                 IFCAnyHandle buildingAddress = CreateIFCAddress(file, document, projInfo);
 
                 IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(file,
@@ -791,6 +823,18 @@ namespace BIM.IFC.Exporter
                     }
 
                     ii += coincidentLevels.Count;
+
+                    using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, false))
+                    {
+                        // Add Property set, quantities and classification of Building Storey also to IFC
+                        productWrapper.AddElement(levelInfo.GetBuildingStorey(), levelInfo, null, false);
+
+                        // Create Quantities (if set) and Classification for Levels (Building Stories) here 
+                        // ExportElementProperties(exporterIFC, level, productWrapper);     // PSet creation is done somewhere else (?), so skip it here
+                        if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities && !(ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE))
+                            ExportElementQuantities(exporterIFC, level, productWrapper);
+                        ExportElementClassifications(exporterIFC, level, productWrapper);
+                    }
                 }
                 transaction.Commit();
             }
@@ -1016,12 +1060,17 @@ namespace BIM.IFC.Exporter
                                     exporterIFC.GetOwnerHistoryHandle(), classificationReference.Key, "", zoneHnds, classificationReference.Value);
                             }
 
-                            if (zoneInfo.EnergyAnalysisProperySetHandle != null && zoneInfo.EnergyAnalysisProperySetHandle.HasValue)
+                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.EnergyAnalysisProperySetHandle))
                             {
-                                IFCAnyHandle relHnd = IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
+                                IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
                                     exporterIFC.GetOwnerHistoryHandle(), null, null, zoneHnds, zoneInfo.EnergyAnalysisProperySetHandle);
                             }
 
+                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.ZoneCommonProperySetHandle))
+                            {
+                                IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
+                                    exporterIFC.GetOwnerHistoryHandle(), null, null, zoneHnds, zoneInfo.ZoneCommonProperySetHandle);
+                            }
                         }
                     }
                 }
@@ -1081,8 +1130,11 @@ namespace BIM.IFC.Exporter
                     IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
                         exporterIFC.GetOwnerHistoryHandle(), null, null, systemHandle, relatedBuildings);
 
+                    IFCObjectType? objType = null;
+                    if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
+                        objType = IFCObjectType.Product;
                     IFCAnyHandle relAssignsToGroup = IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(),
-                        exporterIFC.GetOwnerHistoryHandle(), null, null, system.Value, IFCObjectType.Product, systemHandle);
+                        exporterIFC.GetOwnerHistoryHandle(), null, null, system.Value, objType, systemHandle);
                 }
 
                 // Add presentation layer assignments - this is in addition to those added in EndExportInternal, and will
@@ -1120,9 +1172,7 @@ namespace BIM.IFC.Exporter
                 else
                 {
                     string currentLine;
-                    bool exportFMHandOverView = String.Compare(exportOptionsCache.SelectedConfigName, "FMHandOverView") == 0;
-
-                    if (exportFMHandOverView)
+                    if (String.Compare(exportOptionsCache.SelectedConfigName, "FMHandOverView") == 0)
                     {
                         currentLine = string.Format("ViewDefinition [{0}{1}{2}{3}]",
                            coordinationView,
@@ -1180,6 +1230,7 @@ namespace BIM.IFC.Exporter
                     organization.Add(String.Empty);
 
                 string versionInfos = document.Application.VersionBuild + " - " + ExporterCacheManager.ExportOptionsCache.ExporterVersion + " - " + ExporterCacheManager.ExportOptionsCache.ExporterUIVersion;
+
                 IFCInstanceExporter.CreateFileName(file, projectNumber, author, organization, document.Application.VersionName,
                     versionInfos, fHItem.Authorization);
 
@@ -1489,7 +1540,7 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The IFC exporter object.</param>
         /// <param name="element">The element whose classifications are exported.</param>
         /// <param name="productWrapper">The ProductWrapper object.</param>
-        internal void ExportElementClassifications(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
+        internal void ExportElementUniformatClassifications(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
         {
             if (productWrapper.IsEmpty())
                 return;
@@ -1502,6 +1553,25 @@ namespace BIM.IFC.Exporter
                 {
                     if (IFCAnyHandleUtil.IsSubTypeOf(prodHnd, IFCEntityType.IfcElement))
                         ClassificationUtil.CreateUniformatClassification(exporterIFC, file, element, prodHnd);
+                }
+                transaction.Commit();
+            }
+        }
+
+        internal void ExportElementClassifications(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
+        {
+            if (productWrapper.IsEmpty())
+                return;
+
+            IFCFile file = exporterIFC.GetFile();
+            using (IFCTransaction transaction = new IFCTransaction(file))
+            {
+                ICollection<IFCAnyHandle> productSet = productWrapper.GetAllObjects();
+                foreach (IFCAnyHandle prodHnd in productSet)
+                {
+                    // No need to check the subtype since Classification can be assigned to IfcRoot
+                    // if (IFCAnyHandleUtil.IsSubTypeOf(prodHnd, IFCEntityType.IfcElement))
+                        ClassificationUtil.CreateClassification(exporterIFC, file, element, prodHnd, "");
                 }
                 transaction.Commit();
             }
@@ -1799,10 +1869,10 @@ namespace BIM.IFC.Exporter
                     else if (String.Compare(savedAddressItem.Purpose, "USERDEFINED", true) == 0)
                         addressPurpose = Toolkit.IFCAddressType.UserDefined;
                 }
-                
+
                 postalAddress = IFCInstanceExporter.CreatePostalAddress(file, addressPurpose, savedAddressItem.Description, savedAddressItem.UserDefinedPurpose,
-                    savedAddressItem.InternalLocation, addressLines, savedAddressItem.POBox, savedAddressItem.TownOrCity, savedAddressItem.RegionOrState, savedAddressItem.PostalCode, 
-                    savedAddressItem.Country);
+                   savedAddressItem.InternalLocation, addressLines, savedAddressItem.POBox, savedAddressItem.TownOrCity, savedAddressItem.RegionOrState, savedAddressItem.PostalCode, 
+                   savedAddressItem.Country);
 
                 return postalAddress;
 

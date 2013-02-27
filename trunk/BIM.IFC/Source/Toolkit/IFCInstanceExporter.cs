@@ -197,7 +197,8 @@ namespace BIM.IFC.Toolkit
             string applicableOccurrence, HashSet<IFCAnyHandle> propertySets,
             IList<IFCAnyHandle> representationMaps, string elementTag)
         {
-            IFCAnyHandleUtil.SetAttribute(typeProduct, "RepresentationMaps", representationMaps);
+            if (representationMaps != null && representationMaps.Count > 0)
+                IFCAnyHandleUtil.SetAttribute(typeProduct, "RepresentationMaps", representationMaps);
             IFCAnyHandleUtil.SetAttribute(typeProduct, "Tag", elementTag);
 
             SetTypeObject(typeProduct, guid, ownerHistory, name, description, applicableOccurrence, propertySets);
@@ -1249,6 +1250,19 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Validates attributes for IfcCircleProfileDef.
+        /// </summary>
+        /// <param name="position">The profile position.</param>
+        /// <param name="radius">The profile radius.</param>
+        private static void ValidateCircleProfileDef(IFCAnyHandle position, double radius)
+        {
+            if (radius < MathUtil.Eps())
+                throw new ArgumentException("Non-positive radius parameter.", "radius");
+
+            ValidateParameterizedProfileDef(position);
+        }
+
+        /// <summary>
         /// Sets attributes for IfcParameterizedProfileDef.
         /// </summary>
         /// <param name="profileDef">The IfcProfileDef.</param>
@@ -1261,6 +1275,19 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandleUtil.SetAttribute(profileDef, "Position", position);
         }
 
+        /// <summary>
+        /// Sets attributes for IfcCircleProfileDef.
+        /// </summary>
+        /// <param name="profileDef">The IfcCircleProfileDef.</param>
+        /// <param name="profileType">The profile type.</param>
+        /// <param name="profileName">The profile name.</param>
+        /// <param name="position">The profile position.</param>
+        private static void SetCircleProfileDef(IFCAnyHandle profileDef, IFCProfileType profileType, string profileName, IFCAnyHandle position, double radius)
+        {
+            SetParameterizedProfileDef(profileDef, profileType, profileName, position);
+            IFCAnyHandleUtil.SetAttribute(profileDef, "Radius", radius);
+        }
+        
         /// <summary>
         /// Validates the attributes for IfcArbitraryOpenProfileDef or IfcArbitraryClosedProfileDef.
         /// </summary>
@@ -3249,6 +3276,31 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Creates an IfcDiscreteAccessory, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="objectType">The object type.</param>
+        /// <param name="objectPlacement">The object placement.</param>
+        /// <param name="representation">The geometric representation of the entity.</param>
+        /// <param name="elementTag">The tag that represents the entity.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateDiscreteAccessory(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
+            string description, string objectType, IFCAnyHandle objectPlacement, IFCAnyHandle representation,
+            string elementTag)
+        {
+            ValidateElement(guid, ownerHistory, name, description, objectType, objectPlacement, representation, elementTag);
+
+            IFCAnyHandle accessory = CreateInstance(file, IFCEntityType.IfcDiscreteAccessory);
+            SetElement(accessory, guid, ownerHistory, name, description, objectType, objectPlacement, representation,
+                elementTag);
+            return accessory;
+        }
+        
+        /// <summary>
         /// Creates an IfcMechanicalFastener, and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -4049,6 +4101,33 @@ namespace BIM.IFC.Toolkit
             return camperType;
         }
 
+        /// <summary>
+        /// Creates an IfcDiscreteAccessoryType, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="applicableOccurrence">The attribute optionally defines the data type of the occurrence object.</param>
+        /// <param name="propertySets">The property set(s) associated with the type.</param>
+        /// <param name="representationMaps">The mapped geometries associated with the type.</param>
+        /// <param name="elementTag">The tag that represents the entity.</param>
+        /// <param name="elementType">The type name.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateDiscreteAccessoryType(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
+            string description, string applicableOccurrence, HashSet<IFCAnyHandle> propertySets,
+            IList<IFCAnyHandle> representationMaps, string elementTag, string elementType)
+        {
+            ValidateElementType(guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+
+            IFCAnyHandle discreteAccessoryType = CreateInstance(file, IFCEntityType.IfcDiscreteAccessoryType);
+            SetElementType(discreteAccessoryType, guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+            return discreteAccessoryType;
+        }
+        
         /// <summary>
         /// Creates an IfcDistributionChamberElementType, and assigns it to the file.
         /// </summary>
@@ -6935,17 +7014,37 @@ namespace BIM.IFC.Toolkit
         public static IFCAnyHandle CreateCircleProfileDef(IFCFile file, IFCProfileType profileType, string profileName, IFCAnyHandle positionHnd,
             double radius)
         {
-            if (radius < MathUtil.Eps())
-                throw new ArgumentException("Non-positive radius parameter.", "radius");
-
-            ValidateParameterizedProfileDef(positionHnd);
+            ValidateCircleProfileDef(positionHnd, radius);
 
             IFCAnyHandle circleProfileDef = CreateInstance(file, IFCEntityType.IfcCircleProfileDef);
-            SetParameterizedProfileDef(circleProfileDef, profileType, profileName, positionHnd);
-            IFCAnyHandleUtil.SetAttribute(circleProfileDef, "Radius", radius);
+            SetCircleProfileDef(circleProfileDef, profileType, profileName, positionHnd, radius);
             return circleProfileDef;
         }
-        
+
+        /// <summary>
+        /// Creates a handle representing an IfcCircleHollowProfileDef and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="profileType">The profile type.</param>
+        /// <param name="profileName">The profile name.</param>
+        /// <param name="positionHnd">The profile position.</param>
+        /// <param name="radius">The profile radius.</param>
+        /// <param name="wallThickness">The wall thickness.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateCircleHollowProfileDef(IFCFile file, IFCProfileType profileType, string profileName, IFCAnyHandle positionHnd,
+            double radius, double wallThickness)
+        {
+            if (wallThickness < MathUtil.Eps())
+                throw new ArgumentException("Non-positive wall thickness parameter.", "wallThickness");
+
+            ValidateCircleProfileDef(positionHnd, radius);
+
+            IFCAnyHandle circleHollowProfileDef = CreateInstance(file, IFCEntityType.IfcCircleHollowProfileDef);
+            SetCircleProfileDef(circleHollowProfileDef, profileType, profileName, positionHnd, radius);
+            IFCAnyHandleUtil.SetAttribute(circleHollowProfileDef, "WallThickness", wallThickness);
+            return circleHollowProfileDef;
+        }
+
         /// <summary>
         /// Creates a handle representing an IfcRectangleProfileDef and assigns it to the file.
         /// </summary>

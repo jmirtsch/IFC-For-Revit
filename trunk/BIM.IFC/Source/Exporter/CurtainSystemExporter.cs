@@ -84,11 +84,8 @@ namespace BIM.IFC.Exporter
                                     else
                                     {
                                         IFCAnyHandle currLocalPlacement = currSetter.GetPlacement();
-                                        using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
-                                        {
-                                            MullionExporter.Export(exporterIFC, subElem as Mullion, geomElem, currLocalPlacement, extraParams, currSetter,
-                                                productWrapper);
-                                        }
+                                        MullionExporter.Export(exporterIFC, subElem as Mullion, geomElem, currLocalPlacement, currSetter,
+                                            productWrapper);
                                     }
                                 }
                                 else
@@ -104,9 +101,9 @@ namespace BIM.IFC.Exporter
                                         ElementId catId = CategoryUtil.GetSafeCategoryId(subElem);
                                         exportType = ElementFilteringUtil.GetExportTypeFromCategoryId(catId, out ifcEnumType);
                                     }
-                                     
 
-                                    if (exporterIFC.ExportAs2x2)
+
+                                    if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
                                     {
                                         if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.ExportPlateType) ||
                                            (exportType == IFCExportType.ExportMemberType))

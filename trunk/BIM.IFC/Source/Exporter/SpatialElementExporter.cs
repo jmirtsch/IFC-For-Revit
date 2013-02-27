@@ -959,7 +959,7 @@ namespace BIM.IFC.Exporter
                     {
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                         bodyExporterOptions.TessellationLevel = BodyExporterOptions.BodyTessellationLevel.Coarse;
-                        repHnd = RepresentationUtil.CreateBRepProductDefinitionShape(spatialElement.Document.Application, exporterIFC, spatialElement,
+                        repHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, spatialElement,
                             catId, geomElem, bodyExporterOptions, null, extraParams);
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))
                             extraParams.ClearOpenings();
@@ -988,19 +988,17 @@ namespace BIM.IFC.Exporter
                     extraParams.ScaledHeight = roomHeight;
                     extraParams.ScaledArea = dArea;
 
-
                     string spatialElementName = NamingUtil.GetNameOverride(spatialElement, name);
                     string spatialElementDescription = NamingUtil.GetDescriptionOverride(spatialElement, desc);
                     string spatialElementObjectType = NamingUtil.GetObjectTypeOverride(spatialElement, null);
 
                     double? spaceElevationWithFlooring = null;
                     double elevationWithFlooring = 0.0;
-                    if (ParameterUtil.GetDoubleValueFromElement(spatialElement, "ElevationWithFlooring", out elevationWithFlooring) == true)
+                    if (ParameterUtil.GetDoubleValueFromElement(spatialElement, null, "IfcElevationWithFlooring", out elevationWithFlooring) == true)
                         spaceElevationWithFlooring = elevationWithFlooring;
-
                     spaceHnd = IFCInstanceExporter.CreateSpace(file, GUIDUtil.CreateGUID(spatialElement),
                                                   exporterIFC.GetOwnerHistoryHandle(),
-                                                  spatialElementName, spatialElementDescription, spatialElementObjectType,
+                                                  spatialElementName,spatialElementDescription, spatialElementObjectType,
                                                   extraParams.GetLocalPlacement(), repHnd, longName, Toolkit.IFCElementComposition.Element,
                                                   internalOrExternal, spaceElevationWithFlooring);
 
@@ -1014,6 +1012,9 @@ namespace BIM.IFC.Exporter
             ExporterCacheManager.SpatialElementHandleCache.Register(spatialElement.Id, spaceHnd);
             exporterIFC.RegisterSpatialElementHandle(spatialElement.Id, spaceHnd);
 
+            // Find Ceiling as a Space boundary and keep the relationship in a cache for use later
+            Boolean ret = getCeilingSpaceBoundary(spatialElement);
+
             if (!MathUtil.IsAlmostZero(dArea) && !(ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE) &&
                 !ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2 && !ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities)
             {
@@ -1023,13 +1024,67 @@ namespace BIM.IFC.Exporter
             // Export BaseQuantities for SpatialElement
             if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities && !(ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE))
             {
-                ExporterIFCUtils.CreateNonCOBIERoomQuantities(exporterIFC, spaceHnd, spatialElement, dArea, roomHeight);
+                // Skip this step. The "standard" quantities will be exported at the end of export element process in exportElement (Exporter.cs)
+                // ExporterIFCUtils.CreateNonCOBIERoomQuantities(exporterIFC, spaceHnd, spatialElement, dArea, roomHeight);
             }
+
+            // Create general classification for Spatial element from ClassificationCode(s). This is not done here but rather at the end of exportElement process
+            // ClassificationUtil.CreateClassification(exporterIFC, file, spatialElement, spaceHnd, "");
 
             // Export Classifications for SpatialElement for GSA/COBIE.
             if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
             {
                 CreateCOBIESpaceClassifications(exporterIFC, file, spaceHnd, document.ProjectInformation, spatialElement);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Collect relationship information from Ceiling to Room to be used later to determine whether a Ceiling can be contained in a Room
+        /// </summary>
+        /// <param name="spatialElement">The revit spatial object to process</param>
+        /// <returns></returns>
+        static private bool getCeilingSpaceBoundary(SpatialElement spatialElement)
+        {
+            // Represents the criteria for boundary elements to be considered bounding Ceiling
+            LogicalOrFilter categoryFilter = new LogicalOrFilter(new ElementCategoryFilter(BuiltInCategory.OST_Ceilings),
+                                                        new ElementCategoryFilter(BuiltInCategory.OST_Ceilings));
+
+            SpatialElementGeometryCalculator calculator = new SpatialElementGeometryCalculator(spatialElement.Document);
+            SpatialElementGeometryResults results = calculator.CalculateSpatialElementGeometry((SpatialElement)spatialElement);
+            Solid geometry = results.GetGeometry();
+
+            // Go through the boundary faces to identify whether it is bounded by a Ceiling. If it is Ceiling, add into the Cache
+            foreach (Face face in geometry.Faces)
+            {
+                IList<SpatialElementBoundarySubface> boundaryFaces = results.GetBoundaryFaceInfo(face);
+                foreach (SpatialElementBoundarySubface boundaryFace in boundaryFaces)
+                {
+                    // Get boundary element
+                    LinkElementId boundaryElementId = boundaryFace.SpatialBoundaryElement;
+
+                    // Only considering local file room bounding elements
+                    ElementId localElementId = boundaryElementId.HostElementId;
+                    // Evaluate if element meets criteria using PassesFilter()
+                    if (localElementId != ElementId.InvalidElementId && categoryFilter.PassesFilter(spatialElement.Document, localElementId))
+                    {
+                        if (ExporterCacheManager.CeilingSpaceRelCache.ContainsKey(localElementId))
+                        {
+                            // The ceiling already exists in the Dictionary, add the Space into list
+                            IList<ElementId> roomlist = ExporterCacheManager.CeilingSpaceRelCache[localElementId];
+                            roomlist.Add(spatialElement.Id);
+                        }
+                        else
+                        {
+                            // The first time this Ceiling Id appears
+                            IList<ElementId> roomlist = new List<ElementId>();
+                            roomlist.Add(spatialElement.Id);
+                            ExporterCacheManager.CeilingSpaceRelCache.Add(localElementId, roomlist);
+                        }
+
+                    }
+                }
             }
 
             return true;
@@ -1070,7 +1125,7 @@ namespace BIM.IFC.Exporter
             }
 
             double infiltrationRate = 0.0;
-            if (ParameterUtil.GetDoubleValueFromElement(element, "Infiltration Rate", out infiltrationRate))
+            if (ParameterUtil.GetDoubleValueFromElement(element, null, "Infiltration Rate", out infiltrationRate))
             {
                 IFCData paramVal = BIM.IFC.Toolkit.IFCDataUtil.CreateAsReal(infiltrationRate);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "InfiltrationRate", null, paramVal,
@@ -1095,7 +1150,7 @@ namespace BIM.IFC.Exporter
             }
 
             double designIlluminance = 0.0;
-            if (ParameterUtil.GetDoubleValueFromElement(element, "Design Illuminance", out designIlluminance))
+            if (ParameterUtil.GetDoubleValueFromElement(element, null, "Design Illuminance", out designIlluminance))
             {
                 IFCData paramVal = BIM.IFC.Toolkit.IFCDataUtil.CreateAsReal(designIlluminance);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "DesignIlluminance", null, paramVal, 
@@ -1121,9 +1176,69 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
-        /// Creates the ePSet_SpaceOccupant.
+        /// Creates zone common property set.
         /// </summary>
-        /// <param name="cobiePropertySets">List to store property sets.</param>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="file">The file.</param>
+        /// <param name="element">The element.</param>
+        /// <returns>The handle.</returns>
+        static private IFCAnyHandle CreateZoneCommonPSet(ExporterIFC exporterIFC, IFCFile file, Element element)
+        {
+            // Property Sets.  We don't use the generic Property Set mechanism because Zones aren't "real" elements.
+            HashSet<IFCAnyHandle> properties = new HashSet<IFCAnyHandle>();
+
+            IFCAnyHandle propSingleValue = PropertyUtil.CreateLabelPropertyFromElementOrSymbol(file, element,
+                "Category", BuiltInParameter.INVALID, "Category", PropertyValueType.SingleValue, null);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
+            {
+                properties.Add(propSingleValue);
+            }
+
+            propSingleValue = PropertyUtil.CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, element,
+                "GrossPlannedArea", BuiltInParameter.INVALID, "GrossPlannedArea", PropertyValueType.SingleValue);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
+            {
+                properties.Add(propSingleValue);
+            }
+
+            propSingleValue = PropertyUtil.CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, element,
+                "NetPlannedArea", BuiltInParameter.INVALID, "NetPlannedArea", PropertyValueType.SingleValue);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
+            {
+                properties.Add(propSingleValue);
+            }
+
+            propSingleValue = PropertyUtil.CreateBooleanPropertyFromElementOrSymbol(file, element,
+                "PubliclyAccessible", "PubliclyAccessible", PropertyValueType.SingleValue);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
+            {
+                properties.Add(propSingleValue);
+            }
+
+            propSingleValue = PropertyUtil.CreateBooleanPropertyFromElementOrSymbol(file, element,
+                "HandicapAccessible", "HandicapAccessible", PropertyValueType.SingleValue);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
+            {
+                properties.Add(propSingleValue);
+            }
+
+            if (properties.Count > 0)
+            {
+                return IFCInstanceExporter.CreatePropertySet(file,
+                    GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(), "Pset_ZoneCommon",
+                    null, properties);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Creates the ePset_SpaceOccupant.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="file">The file.</param>
+        /// <param name="element">The element.</param>
+        /// <returns>The handle.</returns>
         private static IFCAnyHandle CreatePSetSpaceOccupant(ExporterIFC exporterIFC, IFCFile file, Element element)
         {
             HashSet<IFCAnyHandle> properties = new HashSet<IFCAnyHandle>();
@@ -1380,7 +1495,8 @@ namespace BIM.IFC.Exporter
                         ZoneInfo zoneInfo = ExporterCacheManager.ZoneInfoCache.Find(zoneName);
                         if (zoneInfo == null)
                         {
-                            zoneInfo = new ZoneInfo(zoneObjectType, zoneDescription, roomHandle, classificationHandles, energyAnalysisPSetHnd);
+                            IFCAnyHandle zoneCommonPropertySetHandle = CreateZoneCommonPSet(exporterIFC, file, element);
+                            zoneInfo = new ZoneInfo(zoneObjectType, zoneDescription, roomHandle, classificationHandles, energyAnalysisPSetHnd, zoneCommonPropertySetHandle);
                             ExporterCacheManager.ZoneInfoCache.Register(zoneName, zoneInfo);
                         }
                         else
@@ -1403,10 +1519,15 @@ namespace BIM.IFC.Exporter
                                 }
                             }
 
-                            if (zoneInfo.EnergyAnalysisProperySetHandle == null || !zoneInfo.EnergyAnalysisProperySetHandle.HasValue)
+                            if (IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.EnergyAnalysisProperySetHandle))
                                 zoneInfo.EnergyAnalysisProperySetHandle = energyAnalysisPSetHnd;
                             else if (energyAnalysisPSetHnd.HasValue)
                                 energyAnalysisPSetHnd.Delete();
+
+                            if (IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.ZoneCommonProperySetHandle))
+                            {
+                                zoneInfo.ZoneCommonProperySetHandle = CreateZoneCommonPSet(exporterIFC, file, element);
+                            }
                         }
                     }
                     else

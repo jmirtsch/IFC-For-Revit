@@ -53,6 +53,11 @@ namespace BIM.IFC.Utility
         static ClassificationCache m_ClassificationCache;
 
         /// <summary>
+        /// The Classification location cache.
+        /// </summary>
+        static ClassificationLocationCache m_ClassificationLocationCache;
+
+        /// <summary>
         /// The ContainmentCache object.
         /// </summary>
         static ContainmentCache m_ContainmentCache;
@@ -272,6 +277,16 @@ namespace BIM.IFC.Utility
         /// The WallType cache that maps Revit wall type id to the IFC wall type handle.
         /// </summary>
         static IDictionary<ElementId, IFCAnyHandle> m_WallTypeCache;
+
+        /// <summary>
+        /// Keeps relationship of Ceiling to the Space(s) where it belongs to. Used to determine Space containment for Ceiling object that is fully contained in Space (for FMHandOverView)
+        /// </summary>
+        static IDictionary<ElementId, IList<ElementId>> m_CeilingSpaceRelCache;
+
+        /// <summary>
+        /// The FabricArea id to FabricSheet handle cache.
+        /// </summary>
+        static IDictionary<ElementId, HashSet<IFCAnyHandle>> m_FabricAreaHandleCache;
 
         /// <summary>
         /// The ParameterCache object.
@@ -677,6 +692,17 @@ namespace BIM.IFC.Utility
             set { m_ClassificationCache = value; }
         }
 
+        public static ClassificationLocationCache ClassificationLocationCache
+        {
+            get
+            {
+                if (m_ClassificationLocationCache == null)
+                    m_ClassificationLocationCache = new ClassificationLocationCache();
+                return m_ClassificationLocationCache;
+            }
+            set { m_ClassificationLocationCache = value; }
+        }
+
         /// <summary>
         /// The UnitsCache object.
         /// </summary>
@@ -873,6 +899,33 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Ceiling and Space relationship cache. We need it to check whether a Ceiling should be contained in a Space later on when exporting Ceiling
+        /// </summary>
+        public static IDictionary<ElementId, IList<ElementId>> CeilingSpaceRelCache
+        {
+            get
+            {
+                if (m_CeilingSpaceRelCache == null)
+                    m_CeilingSpaceRelCache = new Dictionary<ElementId, IList<ElementId>>();
+                return m_CeilingSpaceRelCache;
+            }
+        }
+
+        /// <summary>
+        /// The FabricArea id to FabricSheet handle cache.
+        /// </summary>
+        public static IDictionary<ElementId, HashSet<IFCAnyHandle>> FabricAreaHandleCache
+        {
+            get
+            {
+                if (m_FabricAreaHandleCache == null)
+                    m_FabricAreaHandleCache = new Dictionary<ElementId, HashSet<IFCAnyHandle>>();
+                return m_FabricAreaHandleCache;
+            }
+        }
+
+        
+        /// <summary>
         /// Clear all caches contained in this manager.
         /// </summary>
         public static void Clear()
@@ -884,6 +937,7 @@ namespace BIM.IFC.Utility
             m_AllocatedGeometryObjectCache = null;
             m_AssemblyInstanceCache = null;
             m_ClassificationCache = null;
+            m_ClassificationLocationCache = null;
             m_ConditionalPropertySetsForTypeCache = null;
             m_ContainmentCache = null;
             m_CurveAnnotationCache = null;
@@ -891,6 +945,7 @@ namespace BIM.IFC.Utility
             m_DummyHostCache = null;
             m_ElementToHandleCache = null;
             m_ExportOptionsCache = null;
+            m_FabricAreaHandleCache = null;
             m_GridCache = null;
             m_GroupElementGeometryCache = null;
             m_HandleToElementCache = null;
@@ -923,6 +978,7 @@ namespace BIM.IFC.Utility
             m_WallTypeCache = null;
             m_UnitsCache = null;
             m_ZoneInfoCache = null;
+            m_CeilingSpaceRelCache = null;
         }
     }
 }

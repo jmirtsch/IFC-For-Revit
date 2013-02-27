@@ -264,13 +264,13 @@ namespace BIM.IFC.Exporter
                     SolidMeshGeometryInfo solidMeshInfo;
                     if (validRange)
                     {
-                        solidMeshInfo = GeometryUtil.GetClippedSolidMeshGeometry(geometryElement, range);
+                        solidMeshInfo = GeometryUtil.GetSplitClippedSolidMeshGeometry(geometryElement, range);
                         if (solidMeshInfo.GetSolids().Count == 0 && solidMeshInfo.GetMeshes().Count == 0)
                             return;
                     }
                     else
                     {
-                        solidMeshInfo = GeometryUtil.GetSolidMeshGeometry(geometryElement, Transform.Identity);
+                        solidMeshInfo = GeometryUtil.GetSplitSolidMeshGeometry(geometryElement);
                     }
 
                     using (IFCExtrusionCreationData extrusionCreationData = new IFCExtrusionCreationData())
@@ -288,14 +288,14 @@ namespace BIM.IFC.Exporter
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                         if (solids.Count > 0 || meshes.Count > 0)
                         {
-                            bodyData = BodyExporter.ExportBody(partElement.Document.Application, exporterIFC, partElement, catId, ElementId.InvalidElementId, solids, meshes,
+                            bodyData = BodyExporter.ExportBody(exporterIFC, partElement, catId, ElementId.InvalidElementId, solids, meshes,
                                 bodyExporterOptions, extrusionCreationData);
                         }
                         else
                         {
                             IList<GeometryObject> geomlist = new List<GeometryObject>();
                             geomlist.Add(geometryElement);
-                            bodyData = BodyExporter.ExportBody(partElement.Document.Application, exporterIFC, partElement, catId, ElementId.InvalidElementId, geomlist,
+                            bodyData = BodyExporter.ExportBody(exporterIFC, partElement, catId, ElementId.InvalidElementId, geomlist,
                                 bodyExporterOptions, extrusionCreationData);
                         }
 

@@ -201,4 +201,7 @@
   <data name="ExportBoundingBox" xml:space="preserve">
     <value>Export bounding box</value>
   </data>
+  <data name="IncludeIfcSiteElevation" xml:space="preserve">
+    <value>Include IFCSITE elevation in the site local placement origin</value>
+  </data>
 </root>

@@ -482,6 +482,16 @@ namespace BIM.IFC.Toolkit
     }
 
     /// <summary>
+    /// Defines shape types for provisions for voids.
+    /// </summary>
+    public enum IFCProvisionForVoidShapeType
+    {
+        Round,
+        Rectangle,
+        Undefined
+    }
+    
+    /// <summary>
     /// Defines general types of pumps.
     /// </summary>
     public enum IFCPumpType
@@ -2385,6 +2395,133 @@ namespace BIM.IFC.Toolkit
         Furniture,
         Pole,
         Wall,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    /// <summary>
+    /// Defines the PSetFlowTerminalAirTerminal::AirTerminalAirflowType possible values.
+    /// </summary>
+    public enum PSetFlowTerminalAirTerminal_AirTerminalAirflowType
+    {
+        SupplyAir,
+        ReturnAir,
+        ExhaustAir,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    /// <summary>
+    /// Defines the PSetFlowTerminalAirTerminal::AirTerminalLocation possible values.
+    /// </summary>
+    public enum PSetFlowTerminalAirTerminal_AirTerminalLocation
+    {
+        SideWallHigh,
+        SideWallLow,
+        CeilingPerimeter,
+        CeilingInterior,
+        Floor,
+        Sill,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    /// <summary>
+    /// Defines the PSetAirTerminalTypeCommon::AirTerminalShape possible values.
+    /// </summary>
+    public enum PSetAirTerminalTypeCommon_AirTerminalShape
+    {
+        Round,
+        Rectangular,
+        Square,
+        Slot,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    /// <summary>
+    /// Defines the PSetAirTerminalTypeCommon::AirTerminalFlowPattern possible values.
+    /// </summary>
+    public enum PSetAirTerminalTypeCommon_AirTerminalFlowPattern
+    {
+        LinearSingle,
+        LinearDouble,
+        LinearFourWay,
+        Radial,
+        Swirl,
+        Displacement, // Official Displacment in IFC2x3_TC1 help.
+        CompactJet,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    /// <summary>
+    /// Defines the PSetAirTerminalTypeCommon::AirTerminalDischargeDirection possible values.
+    /// </summary>
+    public enum PSetAirTerminalTypeCommon_AirTerminalDischargeDirection
+    {
+        Parallel,
+        Perpendicular,
+        Adjustable,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    /// <summary>
+    /// Defines the PSetAirTerminalTypeCommon::AirTerminalFinishType possible values.
+    /// </summary>
+    public enum PSetAirTerminalTypeCommon_AirTerminalFinishType
+    {
+        Annodized,
+        Painted,
+        None,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    /// <summary>
+    /// Defines the PSetAirTerminalTypeCommon::AirTerminalMountingType possible values.
+    /// </summary>
+    public enum PSetAirTerminalTypeCommon_AirTerminalMountingType
+    {
+        Surface,
+        FlatFlush,
+        LayIn,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    /// <summary>
+    /// Defines the PSetAirTerminalTypeCommon::AirTerminalCoreType possible values.
+    /// </summary>
+    public enum PSetAirTerminalTypeCommon_AirTerminalCoreType
+    {
+        ShutterBlade,
+        CurvedBlade,
+        Removable,
+        Reversible,
+        None,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    /// <summary>
+    /// Defines the PSetAirTerminalTypeCommon::AirTerminalFlowControlType possible values.
+    /// </summary>
+    public enum PSetAirTerminalTypeCommon_AirTerminalFlowControlType
+    {
+        Damper,
+        Bellows,
+        None,
         Other,
         NotKnown,
         Unset

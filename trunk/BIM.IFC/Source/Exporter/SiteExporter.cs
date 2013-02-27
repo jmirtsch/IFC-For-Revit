@@ -184,7 +184,8 @@ namespace BIM.IFC.Exporter
                     Transform siteSharedCoordinatesTrf = projLocation.GetTransform().Inverse;
                     if (!siteSharedCoordinatesTrf.IsIdentity)
                     {
-                        XYZ orig = siteSharedCoordinatesTrf.Origin- new XYZ(0, 0, unscaledElevation);
+                        double unscaledSiteElevation = ExporterCacheManager.ExportOptionsCache.IncludeSiteElevation ? 0.0 : unscaledElevation;
+                        XYZ orig = siteSharedCoordinatesTrf.Origin- new XYZ(0, 0, unscaledSiteElevation);
                         orig = orig.Multiply(exporterIFC.LinearScale);
                         relativePlacement = ExporterUtil.CreateAxis2Placement3D(file, orig, siteSharedCoordinatesTrf.BasisZ, siteSharedCoordinatesTrf.BasisX);
                     }
@@ -212,7 +213,8 @@ namespace BIM.IFC.Exporter
                         string instanceLongName = NamingUtil.GetLongNameOverride(doc.ProjectInformation, NamingUtil.GetLongNameOverride(element, null));
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
-                        string siteLandTitleNumber = NamingUtil.GetOverrideStringValue(element, "LandTitleNumber", null);
+                        string siteLandTitleNumber = NamingUtil.GetOverrideStringValue(element, "IfcLandTitleNumber", null);
+
 
                         siteHandle = IFCInstanceExporter.CreateSite(file, instanceGUID, ownerHistory, siteName, instanceDescription, instanceObjectType, localPlacement,
                            siteRepresentation, instanceLongName, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, siteLandTitleNumber, null);

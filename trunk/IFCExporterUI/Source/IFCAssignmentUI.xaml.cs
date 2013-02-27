@@ -52,6 +52,10 @@ namespace BIM.IFC.Export.UI
         private IFCAddressItem m_savedAddressItem = new IFCAddressItem();
         private IFCFileHeaderItem m_newFileHeaderItem = new IFCFileHeaderItem();
         private IFCFileHeaderItem m_savedFileHeaderItem = new IFCFileHeaderItem();
+        private IFCClassification m_newClassification = new IFCClassification();
+        private List<IFCClassification> m_newClassificationList = new List<IFCClassification>();
+        private IFCClassification m_savedClassification = new IFCClassification();
+        private IFCClassificationMgr m_newClassificationMgr = new IFCClassificationMgr();
 
         /// <summary>
         /// initialization of IFCAssignemt class
@@ -72,6 +76,7 @@ namespace BIM.IFC.Export.UI
         {
             AddressTab.DataContext = m_newAddressItem;
             FileHeaderTab.DataContext = m_newFileHeaderItem;
+            ClassificationTab.DataContext = m_newClassification;
         }
 
         /// <summary>
@@ -88,15 +93,15 @@ namespace BIM.IFC.Export.UI
         }
 
         /// <summary>
-        /// Event when selection pf combo box item is changed
+        /// Event when selection of combo box item is changed
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void PurposeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            m_newAddressItem.Purpose = (string) PurposeComboBox.SelectedItem;
-            if ( String.Compare(m_newAddressItem.Purpose, "USERDEFINED") != 0 )
-                m_newAddressItem.UserDefinedPurpose = null;         // Rest USer Defined Purpose field to null if the Purpose is changed to other values
+            m_newAddressItem.Purpose = (string)PurposeComboBox.SelectedItem;
+            if (String.Compare(m_newAddressItem.Purpose, "USERDEFINED") != 0)
+                m_newAddressItem.UserDefinedPurpose = "";         // Set User Defined Purpose field to empty if the Purpose is changed to other values
         }
 
         /// <summary>
@@ -106,13 +111,14 @@ namespace BIM.IFC.Export.UI
         /// <param name="args"></param>
         private void buttonOK_Click(object sender, RoutedEventArgs args)
         {
+
             // Saved changes to both Address Tab items and File Header Tab items if they have changed
 
             if (m_newAddressItem.isUnchanged(m_savedAddressItem) == false)
             {
                 m_newAddress.UpdateAddress(m_document, m_newAddressItem);
             }
-            
+
             if (m_newFileHeaderItem.isUnchanged(m_savedFileHeaderItem) == false)
             {
                 m_newFileHeader.UpdateFileHeader(m_document, m_newFileHeaderItem);
@@ -158,10 +164,10 @@ namespace BIM.IFC.Export.UI
                 if (String.IsNullOrEmpty(m_newAddressItem.InternalLocation) == false)
                     address += string.Format("\r\nInternal address: {0}\r\n", m_newAddressItem.InternalLocation);
 
- 
+
                 if (String.IsNullOrEmpty(m_newAddressItem.TownOrCity) == false)
                     geographicMapLocation = m_newAddressItem.TownOrCity;
-                
+
                 if (String.IsNullOrEmpty(m_newAddressItem.RegionOrState) == false)
                 {
                     if (String.IsNullOrEmpty(geographicMapLocation) == false)
@@ -184,10 +190,16 @@ namespace BIM.IFC.Export.UI
                 ProjectInfo projectInfo = m_document.ProjectInformation;
                 projectInfo.Address = address;    // set project address information using the IFC Address Information when requested
 
-                if ( String.IsNullOrEmpty(geographicMapLocation) == false)
+                if (String.IsNullOrEmpty(geographicMapLocation) == false)
                     m_document.ActiveProjectLocation.SiteLocation.PlaceName = geographicMapLocation;    // Update also Revit Site location on the Map using City, State and Country when they are not null
-               
+
                 transaction.Commit();
+            }
+
+            // Update Classification if it has changed or the mandatory fields are filled. If mandatory fields are not filled (we are not supposed to arrive here in this case!) we will ignore the classification
+            if (m_newClassification.isUnchanged(m_savedClassification) == false && m_newClassification.isMandatoryEmpty() == false)
+            {
+                m_newClassificationMgr.UpdateClassification(m_document, m_newClassification);
             }
 
             Close();
@@ -230,9 +242,49 @@ namespace BIM.IFC.Export.UI
         /// <param name="e"></param>
         private void AssignmenttabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            TabItem tItem = this.AssignmenttabControl.Items.CurrentItem as TabItem;
+            bool status = classificationTabMandatoryItemCheck(sender, e);
         }
 
+        /// <summary>
+        /// Checking Mandatory fields are being filled otherwise do not allow user to leave the Tab
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private Boolean classificationTabMandatoryItemCheck(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.RemovedItems.Count > 0)
+            {
+                TabItem tItemRemoved = e.RemovedItems[0] as TabItem;
+                TabItem tItemAdded = e.AddedItems[0] as TabItem;
+
+                if (tItemRemoved != null && tItemAdded != null)  // skip if it is not a TabItem type
+                {
+                    if (String.Compare(tItemRemoved.Header.ToString(), "Classification") == 0 && tItemAdded != tItemRemoved)  // avoid loop when we force the Tab back to the same one
+                    {
+                        // Current tab item is Classification Tab
+                        if (m_newClassification.isMandatoryEmpty() == false) // we will skip the mandatory field check when all are empty (i.e. user does not intend to create any Classification)
+                        {
+                            if (m_newClassification.areMandatoryFieldsFilled() == false)
+                            {
+                                m_newClassification.ClassificationTabMsg = "Mandatory fields Name, Source or Publisher, and Edition cannot be NULL!";
+                                AssignmenttabControl.SelectedItem = tItemRemoved;  // Force the tab to return to Classification
+                                return false;
+                            }
+                            else
+                                m_newClassification.ClassificationTabMsg = null;        // reset the message
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Upon AddressTab initialization
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void AddressTab_Initialized(object sender, EventArgs e)
         {
             bool hasSavedItem = m_newAddress.GetSavedAddress(m_document, out m_newAddressItem);
@@ -291,5 +343,29 @@ namespace BIM.IFC.Export.UI
             }
         }
 
+
+        /// <summary>
+        /// Initialization of the Classification Tab when there is saved item
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ClassificationTab_Initialized(object sender, EventArgs e)
+        {
+            bool hasSavedItem = m_newClassificationMgr.GetSavedClassification(m_document, out m_newClassificationList);
+            m_newClassification = m_newClassificationList[0];                        // Set the default first Classification item to the first member of the List
+
+            if (hasSavedItem == true)
+            {
+                 m_savedClassification = m_newClassification.Clone();
+            }
+
+            if (m_newClassification.ClassificationEditionDate <= DateTime.MinValue || m_newClassification.ClassificationEditionDate >= DateTime.MaxValue)
+            {
+                 DateTime today = DateTime.Now;
+                m_newClassification.ClassificationEditionDate = today;
+            }
+        }
+
     }
 }
+

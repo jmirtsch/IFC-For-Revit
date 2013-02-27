@@ -69,6 +69,14 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Determines if the calculator allows string values to be cached.
+        /// </summary>
+        public virtual bool CacheStringValues
+        {
+            get { return false; }
+        }
+
+        /// <summary>
         /// Gets the calculated string value.  Use if CalculatesMultipleParameters is false.
         /// </summary>
         /// <exception cref="System.NotImplementedException">

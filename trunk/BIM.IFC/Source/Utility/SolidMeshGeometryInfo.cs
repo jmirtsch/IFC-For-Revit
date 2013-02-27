@@ -190,7 +190,7 @@ namespace BIM.IFC.Utility
             List<Solid> splitSolidsList = new List<Solid>();
             foreach (Solid solid in solidsList)
             {
-                splitSolidsList.AddRange(SolidUtils.SplitVolumes(solid));
+                splitSolidsList.AddRange(GeometryUtil.SplitVolumes(solid));
             }
             solidsList = splitSolidsList;
         }

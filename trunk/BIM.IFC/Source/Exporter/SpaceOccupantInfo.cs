@@ -41,7 +41,7 @@ namespace BIM.IFC.Exporter
         private Dictionary<string, IFCAnyHandle> m_ClassificationReferences = new Dictionary<string, IFCAnyHandle>();
 
         /// <summary>
-        /// The associated PSet_SpaceOccupant handle, if any.
+        /// The associated Pset_SpaceOccupant handle, if any.
         /// </summary>
         private IFCAnyHandle m_SpaceOccupantProperySetHandle = null;
 
@@ -50,7 +50,7 @@ namespace BIM.IFC.Exporter
         /// </summary>
         /// <param name="roomHandle">The room handle for this space occupant.</param>
         /// <param name="classificationReferences">The classification references for this space occupant.</param>
-        /// <param name="psetHnd">The PSet_SpaceOccupant handle for this space occupant.</param>
+        /// <param name="psetHnd">The Pset_SpaceOccupant handle for this space occupant.</param>
         public SpaceOccupantInfo(IFCAnyHandle roomHandle, Dictionary<string, IFCAnyHandle> classificationReferences, IFCAnyHandle psetHnd)
         {
             RoomHandles.Add(roomHandle);

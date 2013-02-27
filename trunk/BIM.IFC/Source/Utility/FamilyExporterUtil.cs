@@ -266,6 +266,12 @@ namespace BIM.IFC.Exporter
                             instanceName, instanceDescription, instanceObjectType, localPlacement, productRepresentation, instanceTag);
                         break;
                     }
+                case IFCExportType.ExportDiscreteAccessoryType:
+                    {
+                        instanceHandle = IFCInstanceExporter.CreateDiscreteAccessory(file, instanceGUID, ownerHistory,
+                           instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
+                        break;
+                    }
                 case IFCExportType.ExportDistributionControlElement:
                     {
                         instanceHandle = IFCInstanceExporter.CreateDistributionControlElement(file, instanceGUID, ownerHistory,
@@ -419,7 +425,7 @@ namespace BIM.IFC.Exporter
                 case IFCExportType.ExportPlateType:
                     {
                         elemIdToUse = NamingUtil.GetTagOverride(instance, NamingUtil.CreateIFCElementId(instance));
-                        instanceElementType = NamingUtil.GetOverrideStringValue(instance, "ElementType", typeName);
+                        instanceElementType = NamingUtil.GetOverrideStringValue(instance, "IfcElementType", typeName);
                         break;
                     }
             }
@@ -431,6 +437,7 @@ namespace BIM.IFC.Exporter
                 Exporter.CreateElementTypeProperties(exporterIFC, symbol, propertySets, typeHandle);
             
             return typeHandle;
+
         }
 
         /// <summary>
@@ -536,6 +543,10 @@ namespace BIM.IFC.Exporter
                     return IFCInstanceExporter.CreateDamperType(file, guid, ownerHistory, name,
                        description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetDamperType(instance, ifcEnumType));
+                case IFCExportType.ExportDiscreteAccessoryType:
+                    return IFCInstanceExporter.CreateDiscreteAccessoryType(file, guid, ownerHistory, name,
+                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                       typeName);
                 case IFCExportType.ExportDistributionChamberElementType:
                     return IFCInstanceExporter.CreateDistributionChamberElementType(file, guid, ownerHistory, name,
                        description, applicableOccurrence, propertySets, representationMapList, elementTag,

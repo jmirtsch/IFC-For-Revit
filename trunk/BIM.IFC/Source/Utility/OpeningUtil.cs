@@ -36,32 +36,17 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Creates openings if there is necessary.
         /// </summary>
-        /// <param name="elementHandle">
-        /// The element handle to create openings.
-        /// </param>
-        /// <param name="element">
-        /// The element to create openings.
-        /// </param>
-        /// <param name="info">
-        /// The extrusion datas.
-        /// </param>
-        /// <param name="extraParams">
-        /// The extrusion creation data.
-        /// </param>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="originalPlacement">
-        /// The original placement handle.
-        /// </param>
-        /// <param name="setter">
-        /// The IFCPlacementSetter.
-        /// </param>
-        /// <param name="wrapper">
-        /// The ProductWrapper.
-        /// </param>
+        /// <param name="elementHandle">The element handle to create openings.</param>
+        /// <param name="element">The element to create openings.</param>
+        /// <param name="info">The extrusion data.</param>
+        /// <param name="extraParams">The extrusion creation data.</param>
+        /// <param name="offsetTransform">The offset transform from ExportBody, or the identity transform.</param>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="originalPlacement">The original placement handle.</param>
+        /// <param name="setter">The PlacementSetter.</param>
+        /// <param name="wrapper">The ProductWrapper.</param>
         private static void CreateOpeningsIfNecessaryBase(IFCAnyHandle elementHandle, Element element, IList<IFCExtrusionData> info,
-           IFCExtrusionCreationData extraParams, ExporterIFC exporterIFC,
+           IFCExtrusionCreationData extraParams, Transform offsetTransform, ExporterIFC exporterIFC,
            IFCAnyHandle originalPlacement, IFCPlacementSetter setter, ProductWrapper wrapper)
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(elementHandle))
@@ -70,6 +55,11 @@ namespace BIM.IFC.Utility
             int sz = info.Count;
             if (sz == 0)
                 return;
+
+            using (IFCTransformSetter transformSetter = IFCTransformSetter.Create())
+            {
+                if (offsetTransform != null)
+                    transformSetter.Initialize(exporterIFC, offsetTransform.Inverse);
 
             IFCFile file = exporterIFC.GetFile();
             ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
@@ -112,32 +102,20 @@ namespace BIM.IFC.Utility
                 IFCInstanceExporter.CreateRelVoidsElement(file, voidGuid, ownerHistory, null, null, elementHandle, openingElement);
             }
         }
+        }
 
         /// <summary>
-        /// Creates openings if there is necessary.
+        /// Creates openings associated with an extrusion, if there are any.
         /// </summary>
-        /// <param name="elementHandle">
-        /// The element handle to create openings.
-        /// </param>
-        /// <param name="element">
-        /// The element to create openings.
-        /// </param>
-        /// <param name="info">
-        /// The extrusion datas.
-        /// </param>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="originalPlacement">
-        /// The original placement handle.
-        /// </param>
-        /// <param name="setter">
-        /// The IFCPlacementSetter.
-        /// </param>
-        /// <param name="wrapper">
-        /// The ProductWrapper.
-        /// </param>
-        public static void CreateOpeningsIfNecessary(IFCAnyHandle elementHandle, Element element, IList<IFCExtrusionData> info,
+        /// <param name="elementHandle">The element handle to create openings.</param>
+        /// <param name="element">The element to create openings.</param>
+        /// <param name="info">The extrusion data.</param>
+        /// <param name="offsetTransform">The offset transform from ExportBody, or the identity transform.</param>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="originalPlacement">The original placement handle.</param>
+        /// <param name="setter">The PlacementSetter.</param>
+        /// <param name="wrapper">The ProductWrapper.</param>
+        public static void CreateOpeningsIfNecessary(IFCAnyHandle elementHandle, Element element, IList<IFCExtrusionData> info, Transform offsetTransform,
            ExporterIFC exporterIFC, IFCAnyHandle originalPlacement,
            IFCPlacementSetter setter, ProductWrapper wrapper)
         {
@@ -146,36 +124,22 @@ namespace BIM.IFC.Utility
 
             using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
             {
-                CreateOpeningsIfNecessaryBase(elementHandle, element, info, extraParams, exporterIFC, originalPlacement, setter, wrapper);
+                CreateOpeningsIfNecessaryBase(elementHandle, element, info, extraParams, offsetTransform, exporterIFC, originalPlacement, setter, wrapper);
             }
         }
 
         /// <summary>
-        /// Creates openings if there is necessary.
+        /// Creates openings associated with an extrusion, if there are any.
         /// </summary>
-        /// <param name="elementHandle">
-        /// The element handle to create openings.
-        /// </param>
-        /// <param name="element">
-        /// The element to create openings.
-        /// </param>
-        /// <param name="extraParams">
-        /// The extrusion creation data.
-        /// </param>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="originalPlacement">
-        /// The original placement handle.
-        /// </param>
-        /// <param name="setter">
-        /// The IFCPlacementSetter.
-        /// </param>
-        /// <param name="wrapper">
-        /// The ProductWrapper.
-        /// </param>
+        /// <param name="elementHandle">The element handle to create openings.</param>
+        /// <param name="element">The element to create openings.</param>
+        /// <param name="extraParams">The extrusion creation data.</param>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="originalPlacement">The original placement handle.</param>
+        /// <param name="setter">The PlacementSetter.</param>
+        /// <param name="wrapper">The ProductWrapper.</param>
         public static void CreateOpeningsIfNecessary(IFCAnyHandle elementHandle, Element element, IFCExtrusionCreationData extraParams,
-           ExporterIFC exporterIFC, IFCAnyHandle originalPlacement,
+           Transform offsetTransform, ExporterIFC exporterIFC, IFCAnyHandle originalPlacement,
            IFCPlacementSetter setter, ProductWrapper wrapper)
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(elementHandle))
@@ -184,7 +148,7 @@ namespace BIM.IFC.Utility
             ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
 
             IList<IFCExtrusionData> info = extraParams.GetOpenings();
-            CreateOpeningsIfNecessaryBase(elementHandle, element, info, extraParams, exporterIFC, originalPlacement, setter, wrapper);
+            CreateOpeningsIfNecessaryBase(elementHandle, element, info, extraParams, offsetTransform, exporterIFC, originalPlacement, setter, wrapper);
             extraParams.ClearOpenings();
         }
 

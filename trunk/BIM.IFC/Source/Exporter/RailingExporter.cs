@@ -274,7 +274,7 @@ namespace BIM.IFC.Exporter
                         }
                         ecData.SetLocalPlacement(localPlacement);
 
-                        SolidMeshGeometryInfo solidMeshInfo = GeometryUtil.GetSolidMeshGeometry(geomElem, Transform.Identity);
+                        SolidMeshGeometryInfo solidMeshInfo = GeometryUtil.GetSplitSolidMeshGeometry(geomElem);
                         IList<Solid> solids = solidMeshInfo.GetSolids();
                         IList<Mesh> meshes = solidMeshInfo.GetMeshes();
 
@@ -288,7 +288,7 @@ namespace BIM.IFC.Exporter
                             {
                                 GeometryElement subElementGeom = GeometryUtil.GetOneLevelGeometryElement(subElement.get_Geometry(geomOptions));
 
-                                SolidMeshGeometryInfo subElementSolidMeshInfo = GeometryUtil.GetSolidMeshGeometry(subElementGeom, Transform.Identity);
+                                SolidMeshGeometryInfo subElementSolidMeshInfo = GeometryUtil.GetSplitSolidMeshGeometry(subElementGeom);
                                 IList<Solid> subElementSolids = subElementSolidMeshInfo.GetSolids();
                                 IList<Mesh> subElementMeshes = subElementSolidMeshInfo.GetMeshes();
                                 foreach (Solid subElementSolid in subElementSolids)
@@ -307,13 +307,13 @@ namespace BIM.IFC.Exporter
 
                         if (solids.Count > 0 || meshes.Count > 0)
                         {
-                            bodyData = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId, ElementId.InvalidElementId, solids, meshes, bodyExporterOptions, ecData);
+                            bodyData = BodyExporter.ExportBody(exporterIFC, element, catId, ElementId.InvalidElementId, solids, meshes, bodyExporterOptions, ecData);
                         }
                         else
                         {
                             IList<GeometryObject> geomlist = new List<GeometryObject>();
                             geomlist.Add(geomElem);
-                            bodyData = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId, ElementId.InvalidElementId, geomlist, bodyExporterOptions, ecData);
+                            bodyData = BodyExporter.ExportBody(exporterIFC, element, catId, ElementId.InvalidElementId, geomlist, bodyExporterOptions, ecData);
                         }
 
                         IFCAnyHandle bodyRep = bodyData.RepresentationHnd;
@@ -333,7 +333,7 @@ namespace BIM.IFC.Exporter
                         foreach (Mesh mesh in meshes)
                             geomObjects.Add(mesh);
 
-                        Transform boundingBoxTrf = (bodyData.BrepOffsetTransform != null) ? bodyData.BrepOffsetTransform.Inverse : Transform.Identity;
+                        Transform boundingBoxTrf = (bodyData.OffsetTransform != null) ? bodyData.OffsetTransform.Inverse : Transform.Identity;
                         IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geomObjects, boundingBoxTrf);
                         if (boundingBoxRep != null)
                             representations.Add(boundingBoxRep);
@@ -356,7 +356,8 @@ namespace BIM.IFC.Exporter
                         bool associateToLevel = (hostId == ElementId.InvalidElementId) && LevelUtil.AssociateElementToLevel(element);
 
                         productWrapper.AddElement(railing, setter, ecData, associateToLevel);
-                        OpeningUtil.CreateOpeningsIfNecessary(railing, element, ecData, exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);
+                        OpeningUtil.CreateOpeningsIfNecessary(railing, element, ecData, bodyData.OffsetTransform,
+                            exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);
 
                         CategoryUtil.CreateMaterialAssociations(element.Document, exporterIFC, railing, bodyData.MaterialIds);
 

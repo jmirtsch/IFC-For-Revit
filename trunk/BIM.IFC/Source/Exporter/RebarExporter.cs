@@ -75,6 +75,28 @@ namespace BIM.IFC.Exporter
             }
         }
 
+        private static IFCReinforcingBarRole GetReinforcingBarRole(string role)
+        {
+            if (String.IsNullOrWhiteSpace(role))
+                return IFCReinforcingBarRole.NotDefined;
+
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(role, "Main"))
+                return IFCReinforcingBarRole.Main;
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(role, "Shear"))
+                return IFCReinforcingBarRole.Shear;
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(role, "Ligature"))
+                return IFCReinforcingBarRole.Ligature;
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(role, "Stud"))
+                return IFCReinforcingBarRole.Stud;
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(role, "Punching"))
+                return IFCReinforcingBarRole.Punching;
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(role, "Edge"))
+                return IFCReinforcingBarRole.Edge;
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(role, "Ring"))
+                return IFCReinforcingBarRole.Ring;
+            return IFCReinforcingBarRole.UserDefined;
+        }
+
         /// <summary>
         /// Exports a Rebar to IFC ReinforcingMesh.
         /// </summary>
@@ -93,7 +115,6 @@ namespace BIM.IFC.Exporter
             try
             {
                 IFCFile file = exporterIFC.GetFile();
-
                 using (IFCTransaction transaction = new IFCTransaction(file))
                 {
                     using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element))
@@ -129,6 +150,10 @@ namespace BIM.IFC.Exporter
                         if (MathUtil.IsAlmostZero(totalBarLength))
                             return;
 
+                        ElementId materialId = ElementId.InvalidElementId;
+                        ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.MATERIAL_ID_PARAM, out materialId);
+
+                        Document doc = element.Document;
                         ElementId typeId = element.GetTypeId();
                         RebarBarType elementType = element.Document.GetElement(element.GetTypeId()) as RebarBarType;
                         double diameter = (elementType == null ? 1.0 / 12.0 : elementType.BarDiameter) * scale;
@@ -139,16 +164,24 @@ namespace BIM.IFC.Exporter
 
                         IList<Curve> baseCurves = GetRebarCenterlineCurves(element, true, false, false);
                         int numberOfBarPositions = GetNumberOfBarPositions(element);
+
+                        string steelGrade = NamingUtil.GetOverrideStringValue(element, "SteelGrade", null);
+                        IFCReinforcingBarRole role = GetReinforcingBarRole(NamingUtil.GetOverrideStringValue(element, "BarRole", null));
+
+                        string origRebarName = NamingUtil.GetIFCName(element);
+                        string rebarDescription = NamingUtil.GetDescriptionOverride(element, null);
+                        string rebarObjectType = NamingUtil.GetObjectTypeOverride(element, NamingUtil.CreateIFCObjectName(exporterIFC, element));
+                        string rebarElemId = NamingUtil.CreateIFCElementId(element);
+
+                        const int maxBarGUIDS = IFCReinforcingBarSubElements.BarEnd - IFCReinforcingBarSubElements.BarStart + 1;
+                        ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
+
                         for (int i = 0; i < numberOfBarPositions; i++)
                         {
                             if (!DoesBarExistAtPosition(element, i))
                                 continue;
 
-                            string rebarGUID = ExporterIFCUtils.CreateGUID(element);
-                            string rebarName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-                            string rebarDescription = NamingUtil.GetDescriptionOverride(element, null);
-                            string rebarObjectType = NamingUtil.GetObjectTypeOverride(element, NamingUtil.CreateIFCObjectName(exporterIFC, element));
-                            string rebarTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
+                            string rebarName = NamingUtil.GetNameOverride(element, origRebarName + ": " + i);
 
                             Transform barTrf = GetBarPositionTransform(element, i);
 
@@ -172,22 +205,24 @@ namespace BIM.IFC.Exporter
                             IFCAnyHandle sweptDiskSolid = IFCInstanceExporter.CreateSweptDiskSolid(file, compositeCurve, radius, null, 0, endParam);
                             HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
                             bodyItems.Add(sweptDiskSolid);
-                            ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
-                            IFCAnyHandle shapeRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, exporterIFC.Get3DContextHandle("Body"), bodyItems, null);
+
+                            IFCAnyHandle shapeRep = RepresentationUtil.CreateAdvancedSweptSolidRep(exporterIFC, element, categoryId, exporterIFC.Get3DContextHandle("Body"), bodyItems, null);
                             IList<IFCAnyHandle> shapeReps = new List<IFCAnyHandle>();
                             shapeReps.Add(shapeRep);
                             prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
 
-                            string steelGradeOpt = null;
-                            IFCAnyHandle elemHnd = null;
-
-                            IFCReinforcingBarRole role = IFCReinforcingBarRole.NotDefined;
-                            elemHnd = IFCInstanceExporter.CreateReinforcingBar(file, rebarGUID, exporterIFC.GetOwnerHistoryHandle(),
+                            string rebarGUID = (i < maxBarGUIDS) ?
+                                GUIDUtil.CreateSubElementGUID(element, i + (int)IFCReinforcingBarSubElements.BarStart) :
+                                GUIDUtil.CreateGUID();
+                            IFCAnyHandle elemHnd = IFCInstanceExporter.CreateReinforcingBar(file, rebarGUID, exporterIFC.GetOwnerHistoryHandle(),
                                 rebarName, rebarDescription, rebarObjectType, setter.GetPlacement(),
-                                prodRep, rebarTag, steelGradeOpt, longitudinalBarNominalDiameter, longitudinalBarCrossSectionArea,
+                                prodRep, rebarElemId, steelGrade, longitudinalBarNominalDiameter, longitudinalBarCrossSectionArea,
                                 barLength, role, null);
 
                             productWrapper.AddElement(elemHnd, setter.GetLevelInfo(), null, true);
+                            ExporterCacheManager.HandleToElementCache.Register(elemHnd, element.Id);
+
+                            CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, elemHnd, materialId);
 
                             PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                         }
