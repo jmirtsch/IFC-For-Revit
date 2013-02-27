@@ -28,7 +28,7 @@ using Autodesk.Revit.DB.IFC;
 namespace BIM.IFC.Utility
 {
     /// <summary>
-    /// Contains a cache from parameter name to parameter.
+    /// Contains a cache from parameter name to parameter.  Intended to be grouped by BuiltInParameterGroup.
     /// </summary>
     public class ParameterElementCache
     {
@@ -42,7 +42,7 @@ namespace BIM.IFC.Utility
         /// </summary>
         public ParameterElementCache()
         {
-            ParameterCache = new Dictionary<string, Parameter>(StringComparer.InvariantCultureIgnoreCase);
+            ParameterCache = new SortedDictionary<string, Parameter>(StringComparer.InvariantCultureIgnoreCase);
         }
     }
 }

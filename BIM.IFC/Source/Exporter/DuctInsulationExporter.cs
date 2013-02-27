@@ -61,7 +61,7 @@ namespace BIM.IFC.Exporter
                         ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
 
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                        IFCAnyHandle representation = RepresentationUtil.CreateBRepProductDefinitionShape(element.Document.Application, exporterIFC, element,
+                        IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, element,
                             categoryId, geometryElement, bodyExporterOptions, null, ecData);
 
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(representation))
@@ -76,7 +76,6 @@ namespace BIM.IFC.Exporter
                         string name = NamingUtil.GetNameOverride(element, revitObjectType);
                         string description = NamingUtil.GetDescriptionOverride(element, null);
                         string objectType = NamingUtil.GetObjectTypeOverride(element, revitObjectType);
-                        
                         IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
                         string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 

@@ -168,19 +168,62 @@ namespace BIM.IFC.Exporter
             return rectangularProfileDef;
         }
 
+        private static bool GetCenterAndRadiusOfCurveLoop(CurveLoop curveLoop, out XYZ center, out double radius)
+        {
+            IList<Arc> arcs = new List<Arc>();
+            center = new XYZ();
+            radius = 0.0;
+
+            foreach (Curve curve in curveLoop)
+            {
+                if (!(curve is Arc))
+                    return false;
+
+                arcs.Add(curve as Arc);
+            }
+
+            int numArcs = arcs.Count;
+            if (numArcs == 0)
+                return false;
+
+            radius = arcs[0].Radius;
+            center = arcs[0].Center;
+
+            for (int ii = 1; ii < numArcs; ii++)
+            {
+                XYZ newCenter = arcs[ii].Center;
+                if (!newCenter.IsAlmostEqualTo(center))
+                    return false;
+            }
+
+            return true;
+        }
+
         private static IFCAnyHandle CreateCircleProfileDefIfPossible(ExporterIFC exporterIFC, string profileName, CurveLoop curveLoop, Plane origPlane,
             XYZ projDir)
         {
+            IList<CurveLoop> curveLoops = new List<CurveLoop>();
+            curveLoops.Add(curveLoop);
+            return CreateCircleProfileDefIfPossible(exporterIFC, profileName, curveLoops, origPlane, projDir);
+        }
+
+        private static IFCAnyHandle CreateCircleProfileDefIfPossible(ExporterIFC exporterIFC, string profileName, IList<CurveLoop> curveLoops, Plane origPlane,
+            XYZ projDir)
+        {
+            int numLoops = curveLoops.Count;
+            if (numLoops > 2)
+                return null;
+
             IFCFile file = exporterIFC.GetFile();
 	
-            if (curveLoop.IsOpen())
+            if (curveLoops[0].IsOpen() || (numLoops == 2 && curveLoops[1].IsOpen()))
                 return null;
 
             XYZ origPlaneNorm = origPlane.Normal;
             Plane curveLoopPlane = null;
             try
             {
-                curveLoopPlane = curveLoop.GetPlane();
+                curveLoopPlane = curveLoops[0].GetPlane();
             }
             catch
             {
@@ -191,31 +234,41 @@ namespace BIM.IFC.Exporter
             if (!MathUtil.IsAlmostEqual(Math.Abs(origPlaneNorm.DotProduct(curveLoopPlaneNorm)), 1.0))
                 return null;
 
-            IList<Arc> arcs = new List<Arc>();   
-            foreach (Curve curve in curveLoop)
+            if (numLoops == 2)
             {
-                if (!(curve is Arc))
+                Plane secondCurveLoopPlane = null;
+                try
+                {
+                    secondCurveLoopPlane = curveLoops[1].GetPlane();
+                }
+                catch
+                {
                     return null;
+                }
 
-                arcs.Add(curve as Arc);
+                XYZ secondCurveLoopPlaneNorm = secondCurveLoopPlane.Normal;
+                if (!MathUtil.IsAlmostEqual(Math.Abs(curveLoopPlaneNorm.DotProduct(secondCurveLoopPlaneNorm)), 1.0))
+                    return null;
             }
 
-            int numArcs = arcs.Count;
-            if (numArcs == 0)
+            IList<Arc> arcs = new List<Arc>();
+            XYZ ctr;
+            double radius, innerRadius = 0.0;
+            if (!GetCenterAndRadiusOfCurveLoop(curveLoops[0], out ctr, out radius))
                 return null;
 
-            double radius = arcs[0].Radius;
-            XYZ ctr = arcs[0].Center;
-   
-            for (int ii = 1; ii < numArcs; ii++)
+            if (numLoops == 2)
             {
-                XYZ newCenter = arcs[ii].Center;
-                if (!newCenter.IsAlmostEqualTo(ctr))
+                XYZ checkCtr;
+                if (!GetCenterAndRadiusOfCurveLoop(curveLoops[1], out checkCtr, out innerRadius))
+                    return null;
+                if (!ctr.IsAlmostEqualTo(checkCtr))
                     return null;
             }
         
             double scale = exporterIFC.LinearScale;
             radius *= scale;
+			innerRadius *= scale;
    
             XYZ xDir = origPlane.XVec;
             XYZ yDir = origPlane.YVec;
@@ -236,7 +289,10 @@ namespace BIM.IFC.Exporter
 
 		    IFCAnyHandle defPosition = IFCInstanceExporter.CreateAxis2Placement2D(file, location, null, refDirectionOpt);
 
-            return IFCInstanceExporter.CreateCircleProfileDef(file, IFCProfileType.Area, profileName, defPosition, radius);
+            if (MathUtil.IsAlmostZero(innerRadius))
+                return IFCInstanceExporter.CreateCircleProfileDef(file, IFCProfileType.Area, profileName, defPosition, radius);
+            else
+                return IFCInstanceExporter.CreateCircleHollowProfileDef(file, IFCProfileType.Area, profileName, defPosition, radius, radius-innerRadius);
 	    }
 
         /// <summary>
@@ -688,6 +744,10 @@ namespace BIM.IFC.Exporter
                 sweptArea = CreateRectangleProfileDefIfPossible(exporterIFC, profileName, curveLoops[0], plane, sweptDirection);
                 if (sweptArea == null) sweptArea = CreateCircleProfileDefIfPossible(exporterIFC, profileName, curveLoops[0], plane, sweptDirection);
                 if (sweptArea == null) sweptArea = CreateIShapeProfileDefIfPossible(exporterIFC, profileName, curveLoops[0], plane, sweptDirection);
+            }
+            else if (curveLoops.Count == 2)
+            {
+                sweptArea = CreateCircleProfileDefIfPossible(exporterIFC, profileName, curveLoops, plane, sweptDirection);
             }
 
             if (sweptArea == null)

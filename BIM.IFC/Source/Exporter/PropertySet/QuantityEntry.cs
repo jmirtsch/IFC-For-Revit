@@ -141,6 +141,25 @@ namespace BIM.IFC.Exporter.PropertySet
                 success = ParameterUtil.GetDoubleValueFromElementOrSymbol(element, RevitParameterName, out val);
                 if (!success && RevitBuiltInParameter != BuiltInParameter.INVALID)
                     success = ParameterUtil.GetDoubleValueFromElementOrSymbol(element, RevitBuiltInParameter, out val);
+
+                if (success) // factor in the scale factor for all the parameters depending of the data type to get the correct value
+                {
+                    double scale = exporterIFC.LinearScale;
+                    switch (m_QuantityType)
+                    {
+                        case QuantityType.PositiveLength:
+                            val = val * scale;
+                            break;
+                        case QuantityType.Area:
+                            val = val * scale * scale;
+                            break;
+                        case QuantityType.Volume:
+                            val = val * scale * scale * scale;
+                            break;
+                        default:
+                            break;
+                    }
+                }
             }
 
             if (PropertyCalculator != null && !success)

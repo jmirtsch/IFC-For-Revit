@@ -147,8 +147,10 @@ namespace BIM.IFC.Utility
 
                 if (foundDepth && foundWidth)
                 {
-                    panelDepthList.Add(value1);
-                    panelWidthList.Add(value2);
+                    double lengthScale = exporterIFC.LinearScale;
+
+                    panelDepthList.Add(value1 * lengthScale);
+                    panelWidthList.Add(value2 * lengthScale);
                 }
                 else
                 {
@@ -375,24 +377,53 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Gets IFCDoorStyleConstruction from construction type name.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <returns>The IFCDoorStyleConstruction.</returns>
+        public static IFCDoorStyleConstruction GetDoorStyleConstruction(Element element)
+        {
+            string value = null;
+            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "Construction", out value))
+                ParameterUtil.GetStringValueFromElementOrSymbol(element, BuiltInParameter.DOOR_CONSTRUCTION_TYPE, false, out value);
+
+            if (String.IsNullOrEmpty(value))
+                return IFCDoorStyleConstruction.NotDefined;
+
+            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
+
+            if (String.Compare(newValue, "USERDEFINED", true) == 0)
+                return IFCDoorStyleConstruction.UserDefined;
+            if (String.Compare(newValue, "ALUMINIUM", true) == 0)
+                return IFCDoorStyleConstruction.Aluminium;
+            if (String.Compare(newValue, "HIGH_GRADE_STEEL", true) == 0)
+                return IFCDoorStyleConstruction.High_Grade_Steel;
+            if (String.Compare(newValue, "STEEL", true) == 0)
+                return IFCDoorStyleConstruction.Steel;
+            if (String.Compare(newValue, "WOOD", true) == 0)
+                return IFCDoorStyleConstruction.Wood;
+            if (String.Compare(newValue, "ALUMINIUM_WOOD", true) == 0)
+                return IFCDoorStyleConstruction.Aluminium_Wood;
+            if (String.Compare(newValue, "ALUMINIUM_PLASTIC", true) == 0)
+                return IFCDoorStyleConstruction.Aluminium_Plastic;
+            if (String.Compare(newValue, "PLASTIC", true) == 0)
+                return IFCDoorStyleConstruction.Plastic;
+
+            return IFCDoorStyleConstruction.UserDefined;
+        }
+    
+        /// <summary>
         /// Gets window style construction.
         /// </summary>
-        /// <param name="element">
-        /// The window element.
-        /// </param>
-        /// <param name="initialValue">
-        /// The initial value.
-        /// </param>
-        /// <returns>
-        /// The string represents the window style construction.
-        /// </returns>
-        public static IFCWindowStyleConstruction GetIFCWindowStyleConstruction(Element element, string initialValue)
+        /// <param name="element">The window element.</param>
+        /// <returns>The string represents the window style construction.</returns>
+        public static IFCWindowStyleConstruction GetIFCWindowStyleConstruction(Element element)
         {
             string value;
             if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "Construction", out value))
-                value = initialValue;
+                ParameterUtil.GetStringValueFromElementOrSymbol(element, BuiltInParameter.WINDOW_CONSTRUCTION_TYPE, false, out value);
 
-            if (value == "")
+            if (String.IsNullOrWhiteSpace(value))
                 return IFCWindowStyleConstruction.NotDefined;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Aluminum"))
                 return IFCWindowStyleConstruction.Aluminium;
@@ -406,10 +437,9 @@ namespace BIM.IFC.Utility
                 return IFCWindowStyleConstruction.Aluminium_Wood;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Plastic"))
                 return IFCWindowStyleConstruction.Plastic;
-            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "OtherConstruction"))
-                return IFCWindowStyleConstruction.Other_Construction;
-
-            return IFCWindowStyleConstruction.NotDefined;
+            
+            //else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "OtherConstruction"))
+            return IFCWindowStyleConstruction.Other_Construction;
         }
 
         /// <summary>
@@ -597,6 +627,8 @@ namespace BIM.IFC.Utility
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
 
+            double lengthScale = exporterIFC.LinearScale;
+
             const int maxPanels = 1000;  // arbitrary large number to prevent infinite loops.
             for (int panelNumber = 1; panelNumber < maxPanels; panelNumber++)
             {
@@ -617,8 +649,8 @@ namespace BIM.IFC.Utility
                    (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, frameThicknessCurrString, out value2) ||
                     ((panelNumber == 1) && (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FrameThickness", out value2)))))
                 {
-                    frameDepth = value1;
-                    frameThickness = value2;
+                    frameDepth = value1 * lengthScale;
+                    frameThickness = value2 * lengthScale;
                 }
 
                 string panelGUID = GUIDUtil.CreateGUID();
@@ -627,6 +659,56 @@ namespace BIM.IFC.Utility
                    panelName, description, panelOperation, panelPosition, frameDepth, frameThickness, null));
             }
             return panels;
+        }
+
+        /// <summary>
+        /// Gets IFCDoorStyleOperation from Revit IFCDoorStyleOperation.
+        /// </summary>
+        /// <param name="operation">The Revit IFCDoorStyleOperation.</param>
+        /// <returns>The IFCDoorStyleOperation.</returns>
+        public static Toolkit.IFCDoorStyleOperation GetDoorStyleOperation(Autodesk.Revit.DB.IFC.IFCDoorStyleOperation operation)
+        {
+            switch (operation)
+            {
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorDoubleSwing:
+                    return Toolkit.IFCDoorStyleOperation.Double_Door_Double_Swing;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorFolding:
+                    return Toolkit.IFCDoorStyleOperation.Double_Door_Folding;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorSingleSwing:
+                    return Toolkit.IFCDoorStyleOperation.Double_Door_Single_Swing;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeLeft:
+                    return Toolkit.IFCDoorStyleOperation.Double_Door_Single_Swing_Opposite_Left;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeRight:
+                    return Toolkit.IFCDoorStyleOperation.Double_Door_Single_Swing_Opposite_Right;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorSliding:
+                    return Toolkit.IFCDoorStyleOperation.Double_Door_Sliding;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleSwingLeft:
+                    return Toolkit.IFCDoorStyleOperation.Double_Swing_Left;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleSwingRight:
+                    return Toolkit.IFCDoorStyleOperation.Double_Swing_Right;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.FoldingToLeft:
+                    return Toolkit.IFCDoorStyleOperation.Folding_To_Left;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.FoldingToRight:
+                    return Toolkit.IFCDoorStyleOperation.Folding_To_Right;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.Revolving:
+                    return Toolkit.IFCDoorStyleOperation.Revolving;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.RollingUp:
+                    return Toolkit.IFCDoorStyleOperation.RollingUp;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.SingleSwingLeft:
+                    return Toolkit.IFCDoorStyleOperation.Single_Swing_Left;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.SingleSwingRight:
+                    return Toolkit.IFCDoorStyleOperation.Single_Swing_Right;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.SlidingToLeft:
+                    return Toolkit.IFCDoorStyleOperation.Sliding_To_Left;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.SlidingToRight:
+                    return Toolkit.IFCDoorStyleOperation.Sliding_To_Right;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.UserDefined:
+                    return Toolkit.IFCDoorStyleOperation.UserDefined;
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.NotDefined:
+                    return Toolkit.IFCDoorStyleOperation.NotDefined;
+                default:
+                    throw new ArgumentException("No corresponding type.", "operation");
+            }
         }
     }
 }

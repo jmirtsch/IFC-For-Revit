@@ -661,6 +661,16 @@ namespace BIM.IFC.Utility
                 ParameterUtil.GetStringValueFromElementOrSymbol(element, exportAsEntity, out symbolClassName);
                 ParameterUtil.GetStringValueFromElementOrSymbol(element, exportAsType, out enumTypeValue);
 
+                // We are expanding IfcExportAs format to support also format: <IfcTypeEntity>.<predefinedType>. Therefore we need to parse here. This format will override value in
+                // IFCExportType if any
+                string[] splitResult = symbolClassName.Split(new Char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+                if (splitResult.Length > 1)
+                {
+                    // found <IfcTypeEntity>.<PredefinedType>
+                    symbolClassName = splitResult[0].Trim();
+                    enumTypeValue = splitResult[1].Trim();
+                }
+
                 if (!String.IsNullOrEmpty(symbolClassName))
                 {
                     exportType = ElementFilteringUtil.GetExportTypeFromClassName(symbolClassName);

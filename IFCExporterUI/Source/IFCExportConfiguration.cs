@@ -125,6 +125,11 @@ namespace BIM.IFC.Export.UI
         /// </summary>
         public bool ExportBoundingBox { get; set; }
 
+        /// <summary>
+        /// True to include IFCSITE elevation in the site local placement origin.
+        /// </summary>
+        public bool IncludeSiteElevation { get; set; }
+
         private bool m_isBuiltIn = false;
         private bool m_isInSession = false;
         private static IFCExportConfiguration s_inSessionConfiguration = null;
@@ -181,6 +186,7 @@ namespace BIM.IFC.Export.UI
             this.ExportSurfaceStyles = false;
             this.ExportAdvancedSweptSolids = false;
             this.ExportBoundingBox = false;
+            this.IncludeSiteElevation = false;
             this.m_isBuiltIn = false; 
             this.m_isInSession = false;
         }
@@ -225,6 +231,7 @@ namespace BIM.IFC.Export.UI
             configuration.ExportSurfaceStyles = surfaceStyles;
             configuration.ExportAdvancedSweptSolids = false;
             configuration.ExportBoundingBox = exportBoundingBox;
+            configuration.IncludeSiteElevation = false;
             configuration.m_isBuiltIn = true;
             configuration.m_isInSession = false; 
             return configuration;
@@ -257,6 +264,7 @@ namespace BIM.IFC.Export.UI
             this.ExportSurfaceStyles = other.ExportSurfaceStyles;
             this.ExportAdvancedSweptSolids = other.ExportAdvancedSweptSolids;
             this.ExportBoundingBox = other.ExportBoundingBox;
+            this.IncludeSiteElevation = other.IncludeSiteElevation;
             this.m_isBuiltIn = other.m_isBuiltIn;
             this.m_isInSession = other.m_isInSession;
         }
@@ -294,6 +302,7 @@ namespace BIM.IFC.Export.UI
             this.ExportSurfaceStyles = other.ExportSurfaceStyles;
             this.ExportAdvancedSweptSolids = other.ExportAdvancedSweptSolids;
             this.ExportBoundingBox = other.ExportBoundingBox;
+            this.IncludeSiteElevation = other.IncludeSiteElevation;
             this.m_isBuiltIn = false;
             this.m_isInSession = false;
         }
@@ -351,6 +360,7 @@ namespace BIM.IFC.Export.UI
             options.AddOption("ExportSurfaceStyles", ExportSurfaceStyles.ToString());
             options.AddOption("ExportAdvancedSweptSolids", ExportAdvancedSweptSolids.ToString());
             options.AddOption("ExportBoundingBox", ExportBoundingBox.ToString());
+            options.AddOption("IncludeSiteElevation", IncludeSiteElevation.ToString());
 
             options.AddOption("FileType", IFCFileType.ToString());
             string uiVersion = IFCUISettings.GetAssemblyVersion();
@@ -389,6 +399,7 @@ namespace BIM.IFC.Export.UI
                 builder.AppendLine(GetDescriptionLine(Resources.ExportSurfaceStyles, ExportSurfaceStyles));
                 builder.AppendLine(GetDescriptionLine(Resources.ExportAdvancedSweptSolids, ExportAdvancedSweptSolids));
                 builder.AppendLine(GetDescriptionLine(Resources.ExportBoundingBox, ExportBoundingBox));
+                builder.AppendLine(GetDescriptionLine(Resources.IncludeIfcSiteElevation, IncludeSiteElevation));
 
                 return builder.ToString();
             }

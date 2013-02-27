@@ -71,7 +71,7 @@ namespace BIM.IFC.Export.UI
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("Default 2x2", IFCVersion.IFC2x2, 1, false, false, true, false, true, false));
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("BCA", IFCVersion.IFCBCA, 1, false, true, true, false, true, false));
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("GSA", IFCVersion.IFCCOBIE, 2, true, true, true, true, true, true));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Coordination View 2.0", IFCVersion.IFC2x3CV2, 0, false, true, false, false, false, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Coordination View 2.0", IFCVersion.IFC2x3CV2, 0, false, true, false, false, true, false));
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("FMHandOverView", IFCVersion.IFC2x3, 1, true, true, false, true, true, false));
 
         }
@@ -132,6 +132,8 @@ namespace BIM.IFC.Export.UI
                             configuration.ExportAdvancedSweptSolids = bool.Parse(configMap[s_setupExportAdvancedSweptSolids]);
                         if (configMap.ContainsKey(s_setupExportBoundingBox))
                             configuration.ExportBoundingBox = bool.Parse(configMap[s_setupExportBoundingBox]);
+                        if (configMap.ContainsKey(s_setupIncludeSiteElevation))
+                            configuration.IncludeSiteElevation = bool.Parse(configMap[s_setupIncludeSiteElevation]);
 
                         Add(configuration);
                     }
@@ -171,6 +173,9 @@ namespace BIM.IFC.Export.UI
                         Field fieldExportBoundingBox = m_schema.GetField(s_setupExportBoundingBox);
                         if (fieldExportBoundingBox != null)
                             configuration.ExportBoundingBox = configEntity.Get<bool>(s_setupExportBoundingBox);
+                        Field fieldIncludeSiteElevation = m_schema.GetField(s_setupIncludeSiteElevation);
+                        if (fieldIncludeSiteElevation != null)
+                            configuration.IncludeSiteElevation = configEntity.Get<bool>(s_setupIncludeSiteElevation);
 
                         Add(configuration);
                     }
@@ -203,6 +208,7 @@ namespace BIM.IFC.Export.UI
         private const String s_setupExportSurfaceStyles = "ExportSurfaceStyles";
         private const String s_setupExportAdvancedSweptSolids = "ExportAdvancedSweptSolids";
         private const String s_setupExportBoundingBox = "ExportBoundingBox";
+        private const String s_setupIncludeSiteElevation = "IncludeSiteElevation";
 
         /// <summary>
         /// Updates the setups to save into the document.
@@ -287,26 +293,27 @@ namespace BIM.IFC.Export.UI
                     savedConfigurationIndex ++;
                 }             
 
-                Entity mapEntity = new Entity(m_mapSchema);
-                IDictionary<string, string> mapData = new Dictionary<string, string>();
-                mapData.Add(s_setupName, configuration.Name);
-                mapData.Add(s_setupDescription, configuration.Description);
-                mapData.Add(s_setupVersion, configuration.IFCVersion.ToString());
-                mapData.Add(s_setupFileFormat, configuration.IFCFileType.ToString());
-                mapData.Add(s_setupSpaceBoundaries, configuration.SpaceBoundaries.ToString());
-                mapData.Add(s_setupQTO, configuration.ExportBaseQuantities.ToString());
-                mapData.Add(s_setupCurrentView, configuration.VisibleElementsOfCurrentView.ToString());
-                mapData.Add(s_splitWallsAndColumns, configuration.SplitWallsAndColumns.ToString());
-                mapData.Add(s_setupExport2D, configuration.Export2DElements.ToString());
-                mapData.Add(s_setupExportRevitProps, configuration.ExportInternalRevitPropertySets.ToString());
-                mapData.Add(s_setupExportIFCCommonProperty, configuration.ExportIFCCommonPropertySets.ToString());
-                mapData.Add(s_setupUse2DForRoomVolume, configuration.Use2DRoomBoundaryForVolume.ToString());
-                mapData.Add(s_setupUseFamilyAndTypeName, configuration.UseFamilyAndTypeNameForReference.ToString());
-                mapData.Add(s_setupExportPartsAsBuildingElements, configuration.ExportPartsAsBuildingElements.ToString());
-                mapData.Add(s_setupExportSurfaceStyles, configuration.ExportSurfaceStyles.ToString());
-                mapData.Add(s_setupExportAdvancedSweptSolids, configuration.ExportAdvancedSweptSolids.ToString());
-                mapData.Add(s_setupExportBoundingBox, configuration.ExportBoundingBox.ToString());
-                mapEntity.Set<IDictionary<string, String>>(s_configMapField, mapData);
+                   Entity mapEntity = new Entity(m_mapSchema);
+                   IDictionary<string, string> mapData = new Dictionary<string, string>();
+                   mapData.Add(s_setupName, configuration.Name);
+                   mapData.Add(s_setupDescription, configuration.Description);
+                   mapData.Add(s_setupVersion, configuration.IFCVersion.ToString());
+                   mapData.Add(s_setupFileFormat, configuration.IFCFileType.ToString());
+                   mapData.Add(s_setupSpaceBoundaries, configuration.SpaceBoundaries.ToString());
+                   mapData.Add(s_setupQTO, configuration.ExportBaseQuantities.ToString());
+                   mapData.Add(s_setupCurrentView, configuration.VisibleElementsOfCurrentView.ToString());
+                   mapData.Add(s_splitWallsAndColumns, configuration.SplitWallsAndColumns.ToString());
+                   mapData.Add(s_setupExport2D, configuration.Export2DElements.ToString());
+                   mapData.Add(s_setupExportRevitProps, configuration.ExportInternalRevitPropertySets.ToString());
+                   mapData.Add(s_setupExportIFCCommonProperty, configuration.ExportIFCCommonPropertySets.ToString());
+                   mapData.Add(s_setupUse2DForRoomVolume, configuration.Use2DRoomBoundaryForVolume.ToString());
+                   mapData.Add(s_setupUseFamilyAndTypeName, configuration.UseFamilyAndTypeNameForReference.ToString());
+                   mapData.Add(s_setupExportPartsAsBuildingElements, configuration.ExportPartsAsBuildingElements.ToString());
+                   mapData.Add(s_setupExportSurfaceStyles, configuration.ExportSurfaceStyles.ToString());
+                   mapData.Add(s_setupExportAdvancedSweptSolids, configuration.ExportAdvancedSweptSolids.ToString());
+                   mapData.Add(s_setupExportBoundingBox, configuration.ExportBoundingBox.ToString());
+                   mapData.Add(s_setupIncludeSiteElevation, configuration.IncludeSiteElevation.ToString());
+                   mapEntity.Set<IDictionary<string, String>>(s_configMapField, mapData);
 
                 configStorage.SetEntity(mapEntity);
             }

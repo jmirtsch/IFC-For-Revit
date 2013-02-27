@@ -51,8 +51,8 @@ namespace BIM.IFC.Exporter
                 string stringerTypeName = NamingUtil.GetNameOverride(stringerType, NamingUtil.GetIFCName(stringerType));
                 string stringerTypeDescription = NamingUtil.GetDescriptionOverride(stringerType, null);
                 string stringerTypeTag = NamingUtil.GetTagOverride(stringerType, NamingUtil.CreateIFCElementId(stringerType));
-                string stringerApplicableOccurence = NamingUtil.GetOverrideStringValue(stringerType, "ApplicableOccurence", null);
-                string stringerElementType = NamingUtil.GetOverrideStringValue(stringerType, "ElementType", null);
+                string stringerApplicableOccurence = NamingUtil.GetOverrideStringValue(stringerType, "IfcApplicableOccurence", null);
+                string stringerElementType = NamingUtil.GetOverrideStringValue(stringerType, "IfcElementType", null);
 
                 memberType = IFCInstanceExporter.CreateMemberType(file, stringerTypeGUID,
                     ownerHistory, stringerTypeName, stringerTypeDescription, stringerApplicableOccurence, null, null, stringerTypeTag,
@@ -563,7 +563,7 @@ namespace BIM.IFC.Exporter
                         ElementId categoryId = CategoryUtil.GetSafeCategoryId(stair);
 
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions();
-                        IFCAnyHandle representation = RepresentationUtil.CreateBRepProductDefinitionShape(stair.Document.Application, exporterIFC,
+                        IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
                             stair, categoryId, stairsGeom, bodyExporterOptions, null, ecData, out bodyData);
 
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(representation))
@@ -625,7 +625,6 @@ namespace BIM.IFC.Exporter
                 return;
 
             Document doc = stair.Document;
-            Autodesk.Revit.ApplicationServices.Application app = doc.Application;
             IFCFile file = exporterIFC.GetFile();
             Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
             ElementId categoryId = CategoryUtil.GetSafeCategoryId(stair);
@@ -674,7 +673,7 @@ namespace BIM.IFC.Exporter
                             GeometryElement runGeometryElement = run.get_Geometry(geomOptions);
 
                             BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                            BodyData bodyData = BodyExporter.ExportBody(app, exporterIFC, run, categoryId, ElementId.InvalidElementId, runGeometryElement,
+                            BodyData bodyData = BodyExporter.ExportBody(exporterIFC, run, categoryId, ElementId.InvalidElementId, runGeometryElement,
                                 bodyExporterOptions, ecData);
 
                             IFCAnyHandle bodyRep = bodyData.RepresentationHnd;
@@ -689,7 +688,7 @@ namespace BIM.IFC.Exporter
 
                             if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
                             {
-                                Transform runBoundaryTrf = (bodyData.BrepOffsetTransform == null) ? trf : trf.Multiply(bodyData.BrepOffsetTransform);
+                                Transform runBoundaryTrf = (bodyData.OffsetTransform == null) ? trf : trf.Multiply(bodyData.OffsetTransform);
                                 Plane runBoundaryPlane = new Plane(runBoundaryTrf.BasisX, runBoundaryTrf.BasisY, runBoundaryTrf.Origin);
                                 XYZ runBoundaryProjDir = runBoundaryTrf.BasisZ;
 
@@ -726,7 +725,7 @@ namespace BIM.IFC.Exporter
                                 }
                             }
 
-                            Transform boundingBoxTrf = (bodyData.BrepOffsetTransform == null) ? Transform.Identity : bodyData.BrepOffsetTransform.Inverse;
+                            Transform boundingBoxTrf = (bodyData.OffsetTransform == null) ? Transform.Identity : bodyData.OffsetTransform.Inverse;
                             IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, runGeometryElement, boundingBoxTrf);
                             if (boundingBoxRep != null)
                                 reps.Add(boundingBoxRep);
@@ -773,7 +772,7 @@ namespace BIM.IFC.Exporter
                             GeometryElement landingGeometryElement = landing.get_Geometry(geomOptions);
 
                             BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                            BodyData bodyData = BodyExporter.ExportBody(app, exporterIFC, landing, categoryId, ElementId.InvalidElementId, landingGeometryElement,
+                            BodyData bodyData = BodyExporter.ExportBody(exporterIFC, landing, categoryId, ElementId.InvalidElementId, landingGeometryElement,
                                 bodyExporterOptions, ecData);
 
                             IFCAnyHandle bodyRep = bodyData.RepresentationHnd;
@@ -789,7 +788,7 @@ namespace BIM.IFC.Exporter
 
                             if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
                             {
-                                Transform landingBoundaryTrf = (bodyData.BrepOffsetTransform == null) ? trf : trf.Multiply(bodyData.BrepOffsetTransform);
+                                Transform landingBoundaryTrf = (bodyData.OffsetTransform == null) ? trf : trf.Multiply(bodyData.OffsetTransform);
                                 Plane landingBoundaryPlane = new Plane(landingBoundaryTrf.BasisX, landingBoundaryTrf.BasisY, landingBoundaryTrf.Origin);
                                 XYZ landingBoundaryProjDir = landingBoundaryTrf.BasisZ;
 
@@ -826,7 +825,7 @@ namespace BIM.IFC.Exporter
                                 }
                             }
 
-                            Transform boundingBoxTrf = (bodyData.BrepOffsetTransform == null) ? Transform.Identity : bodyData.BrepOffsetTransform.Inverse;
+                            Transform boundingBoxTrf = (bodyData.OffsetTransform == null) ? Transform.Identity : bodyData.OffsetTransform.Inverse;
                             IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, landingGeometryElement, boundingBoxTrf);
                             if (boundingBoxRep != null)
                                 reps.Add(boundingBoxRep);
@@ -871,7 +870,7 @@ namespace BIM.IFC.Exporter
                             GeometryElement supportGeometryElement = support.get_Geometry(geomOptions);
                             BodyData bodyData;
                             BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                            IFCAnyHandle representation = RepresentationUtil.CreateBRepProductDefinitionShape(app, exporterIFC,
+                            IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
                                 support, categoryId, supportGeometryElement, bodyExporterOptions, null, ecData, out bodyData);
 
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(representation))
@@ -927,7 +926,6 @@ namespace BIM.IFC.Exporter
             bool useCoarseTessellation, ProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
-            Autodesk.Revit.ApplicationServices.Application app = legacyStair.Document.Application;
             ElementId categoryId = CategoryUtil.GetSafeCategoryId(legacyStair);
 
             using (IFCTransaction tr = new IFCTransaction(file))
@@ -991,7 +989,7 @@ namespace BIM.IFC.Exporter
                                 bodyExporterOptions.TessellationLevel = BodyExporterOptions.BodyTessellationLevel.Coarse;
 
                             IList<GeometryObject> geometriesOfARun = geometriesOfRuns[ii];
-                            BodyData bodyData = BodyExporter.ExportBody(app, exporterIFC, legacyStair, categoryId, ElementId.InvalidElementId, geometriesOfARun,
+                            BodyData bodyData = BodyExporter.ExportBody(exporterIFC, legacyStair, categoryId, ElementId.InvalidElementId, geometriesOfARun,
                                 bodyExporterOptions, null);
 
                             IFCAnyHandle bodyRep = bodyData.RepresentationHnd;
@@ -1075,7 +1073,7 @@ namespace BIM.IFC.Exporter
                                 BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                                 bodyExporterOptions.TessellationLevel = BodyExporterOptions.BodyTessellationLevel.Coarse;
                                 IList<GeometryObject> geometriesOfALanding = geometriesOfLandings[ii];
-                                BodyData bodyData = BodyExporter.ExportBody(app, exporterIFC, legacyStair, categoryId, ElementId.InvalidElementId, geometriesOfALanding,
+                                BodyData bodyData = BodyExporter.ExportBody(exporterIFC, legacyStair, categoryId, ElementId.InvalidElementId, geometriesOfALanding,
                                     bodyExporterOptions, ecData);
 
                                 IFCAnyHandle bodyRep = bodyData.RepresentationHnd;
@@ -1132,7 +1130,7 @@ namespace BIM.IFC.Exporter
                                 BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                                 bodyExporterOptions.TessellationLevel = BodyExporterOptions.BodyTessellationLevel.Coarse;
                                 GeometryObject geometryOfStringer = geometriesOfStringer[ii];
-                                BodyData bodyData = BodyExporter.ExportBody(app, exporterIFC, legacyStair, categoryId, ElementId.InvalidElementId, geometryOfStringer,
+                                BodyData bodyData = BodyExporter.ExportBody(exporterIFC, legacyStair, categoryId, ElementId.InvalidElementId, geometryOfStringer,
                                     bodyExporterOptions, ecData);
 
                                 IFCAnyHandle bodyRep = bodyData.RepresentationHnd;

@@ -24,6 +24,7 @@ using System.Text;
 using Autodesk.Revit;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Autodesk.Revit.DB.Structure;
 
 namespace BIM.IFC.Utility
 {
@@ -450,7 +451,14 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Zone - no type in IFC2x3.
         /// </summary>
-        ExportZone
+        ExportZone,
+        /// <summary>
+        /// Grid - no type in IFC2x3.
+        /// </summary>
+        ExportGrid,
+        /// DiscreteAccessory type.
+        /// </summary>
+        ExportDiscreteAccessoryType,
     }
 
 
@@ -635,6 +643,8 @@ namespace BIM.IFC.Utility
             }
             else if (IsEqualToTypeName(ifcClassName, ("IfcFooting")))
                 return IFCExportType.ExportFooting;
+            else if (String.Compare(ifcClassName, "IfcGrid", true) == 0)
+                return IFCExportType.ExportGrid;
             else if (String.Compare(ifcClassName, "IfcMember", true) == 0)
                 return IFCExportType.ExportMemberType;
             else if (String.Compare(ifcClassName, "IfcOpeningElement", true) == 0)
@@ -734,6 +744,8 @@ namespace BIM.IFC.Utility
                 return IFCExportType.ExportCoolingTowerType;
             else if (IsEqualToTypeName(ifcClassName, ("IfcDamper")))
                 return IFCExportType.ExportDamperType;
+            else if (IsEqualToTypeName(ifcClassName, ("IfcDiscreteAccessory")))
+                return IFCExportType.ExportDiscreteAccessoryType;
             else if (IsEqualToTypeName(ifcClassName, ("IfcDistributionChamberElement")))
                 return IFCExportType.ExportDistributionChamberElementType;
             else if (IsEqualToTypeName(ifcClassName, ("IfcDuctFitting")))
@@ -842,7 +854,7 @@ namespace BIM.IFC.Utility
                 return IFCExportType.ExportValveType;
             else if (IsEqualToTypeName(ifcClassName, ("IfcWasteTerminal")))
                 return IFCExportType.ExportWasteTerminalType;
-            else if (ifcClassName.StartsWith("Ifc"))
+            else if (ifcClassName.StartsWith("Ifc", true, null))
             {
                 // This used to throw an exception, but this could abort export if the user enters a bad IFC class name
                 // in the ExportLayerOptions table.  In the future, we should log this.
@@ -966,7 +978,11 @@ namespace BIM.IFC.Utility
                 // FamilyInstances are handled in separate filter.
                 excludedTypes.Add(typeof(FamilyInstance));
 
+                // Spatial element are exported in a separate pass.
                 excludedTypes.Add(typeof(SpatialElement));
+
+                // FabricArea elements are exported as groups after all FabricSheets have been exported.
+                excludedTypes.Add(typeof(FabricArea));
 
                 if (!ExporterCacheManager.ExportOptionsCache.ExportAnnotations)
                     excludedTypes.Add(typeof(CurveElement));

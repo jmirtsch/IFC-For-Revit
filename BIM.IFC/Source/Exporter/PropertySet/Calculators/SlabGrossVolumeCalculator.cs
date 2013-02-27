@@ -35,7 +35,7 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
         /// <summary>
         /// A double variable to keep the calculated value.
         /// </summary>
-        private double m_Volumn = 0;
+        private double m_Volume = 0;
 
         /// <summary>
         /// A static instance of this class.
@@ -78,7 +78,7 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
                 return false;
             else
             {
-                m_Volumn = area * length;
+                m_Volume = area * length;
                 return true;
             }
         }
@@ -91,7 +91,7 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
         /// </returns>
         public override double GetDoubleValue()
         {
-            return m_Volumn;
+            return m_Volume;
         }
     }
 }

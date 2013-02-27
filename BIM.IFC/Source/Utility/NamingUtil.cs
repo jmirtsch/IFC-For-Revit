@@ -147,7 +147,15 @@ namespace BIM.IFC.Utility
         public static string GetNameOverride(Element element, string originalValue)
         {
             string nameOverride = "NameOverride";
-            return GetOverrideStringValue(element, nameOverride, originalValue);
+            string overrideValue = GetOverrideStringValue(element, nameOverride, originalValue);
+            if ((String.Compare(originalValue, overrideValue) == 0) || overrideValue == null)
+            {
+                //if NameOverride is not used or does not exist, test for the actual IFC attribute name: Name (using parameter name: IfcName)
+                nameOverride = "IfcName";
+                overrideValue = GetOverrideStringValue(element, nameOverride, originalValue);
+            }
+            //GetOverrideStringValue will return the override value from the parameter specified, otherwise it will return the originalValue
+            return overrideValue;
         }
 
         /// <summary>
@@ -165,7 +173,15 @@ namespace BIM.IFC.Utility
         public static string GetLongNameOverride(Element element, string originalValue)
         {
             string longNameOverride = "LongNameOverride";
-            return GetOverrideStringValue(element, longNameOverride, originalValue);
+            string overrideValue = GetOverrideStringValue(element, longNameOverride, originalValue);
+            if ((String.Compare(originalValue, overrideValue) == 0) || overrideValue == null)
+            {
+                //if LongNameOverride is not used or does not exist, test for the actual IFC attribute name: LongName (using parameter name IfcLongName)
+                longNameOverride = "IfcLongName";
+                overrideValue = GetOverrideStringValue(element, longNameOverride, originalValue);
+            }
+            //GetOverrideStringValue will return the override value from the parameter specified, otherwise it will return the originalValue
+            return overrideValue;
         }
 
         /// <summary>
@@ -183,7 +199,9 @@ namespace BIM.IFC.Utility
         public static string GetDescriptionOverride(Element element, string originalValue)
         {
             string nameOverride = "IfcDescription";
-            return GetOverrideStringValue(element, nameOverride, originalValue);
+            string overrideValue = GetOverrideStringValue(element, nameOverride, originalValue);
+            //GetOverrideStringValue will return the override value from the parameter specified, otherwise it will return the originalValue
+            return overrideValue;
         }
 
         /// <summary>
@@ -199,7 +217,16 @@ namespace BIM.IFC.Utility
         public static string GetObjectTypeOverride(Element element, string originalValue)
         {
             string nameOverride = "ObjectTypeOverride";
-            return GetOverrideStringValue(element, nameOverride, originalValue);
+            string overrideValue = GetOverrideStringValue(element, nameOverride, originalValue);
+            if ((String.Compare(originalValue, overrideValue) == 0) || overrideValue == null)
+            {
+                //if ObjectTypeOverride is not used or does not exist, test for the actual IFC attribute name: ObjectType (using IfcObjectType)
+                nameOverride = "IfcObjectType";
+                overrideValue = GetOverrideStringValue(element, nameOverride, originalValue);
+            }
+            //GetOverrideStringValue will return the override value from the parameter specified, otherwise it will return the originalValue
+            return overrideValue;
+
         }
 
         /// <summary>
@@ -214,7 +241,7 @@ namespace BIM.IFC.Utility
         /// <returns>The string contains the object type string value.</returns>
         public static string GetTagOverride(Element element, string originalValue)
         {
-            string nameOverride = "Tag";
+            string nameOverride = "IfcTag";
             return GetOverrideStringValue(element, nameOverride, originalValue);
         }
        

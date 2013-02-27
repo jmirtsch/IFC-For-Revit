@@ -108,7 +108,7 @@ namespace BIM.IFC.Exporter
                 using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element, null, canExportAxis ? orientTrf : null, ElementId.InvalidElementId))
                 {
                     IFCAnyHandle localPlacement = setter.GetPlacement();
-                    SolidMeshGeometryInfo solidMeshInfo = GeometryUtil.GetSolidMeshGeometry(geometryElement, Transform.Identity);
+                    SolidMeshGeometryInfo solidMeshInfo = GeometryUtil.GetSplitSolidMeshGeometry(geometryElement);
 
                     using (IFCExtrusionCreationData extrusionCreationData = new IFCExtrusionCreationData())
                     {
@@ -132,9 +132,9 @@ namespace BIM.IFC.Exporter
                         // The list of materials in the solids or meshes.
                         ICollection<ElementId> materialIds = new HashSet<ElementId>();
 
-                        // If we can only export as a BRep, there may be an offset to make the BRep local coordinate system
+                        // There may be an offset to make the local coordinate system
                         // be near the origin.  This offset will be used to move the axis to the new LCS.
-                        Transform brepOffsetTransform = null;
+                        Transform offsetTransform = null;
                         
                         // If we have a beam with a Linear location line that only has one solid geometry,
                         // we will try to use the ExtrusionAnalyzer to generate an extrusion with 0 or more clippings.
@@ -142,28 +142,24 @@ namespace BIM.IFC.Exporter
                         // use other methods below if this one fails.
                         if (solids.Count == 1 && meshes.Count == 0 && (canExportAxis && (curve is Line)))
                         {
-                            IList<Solid> splitVolumes = SolidUtils.SplitVolumes(solids[0]);
-                            if (splitVolumes.Count == 1)
-                            {
-                                bool completelyClipped;
-                                beamDirection = orientTrf.BasisX;
-                                Plane beamExtrusionPlane = new Plane(orientTrf.BasisY, orientTrf.BasisZ, orientTrf.Origin);
-                                repHnd = ExtrusionExporter.CreateExtrusionWithClipping(exporterIFC, element,
-                                    catId, solids[0], beamExtrusionPlane, beamDirection, null, out completelyClipped);
-                                if (completelyClipped)
-                                    return;
+                            bool completelyClipped;
+                            beamDirection = orientTrf.BasisX;
+                            Plane beamExtrusionPlane = new Plane(orientTrf.BasisY, orientTrf.BasisZ, orientTrf.Origin);
+                            repHnd = ExtrusionExporter.CreateExtrusionWithClipping(exporterIFC, element,
+                                catId, solids[0], beamExtrusionPlane, beamDirection, null, out completelyClipped);
+                            if (completelyClipped)
+                                return;
 
-                                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))
-                                {
-                                    // This is used by the BeamSlopeCalculator.  This should probably be generated automatically by
-                                    // CreateExtrusionWithClipping.
-                                    IFCExtrusionBasis bestAxis = (Math.Abs(beamDirection[0]) > Math.Abs(beamDirection[1])) ?
-                                        IFCExtrusionBasis.BasisX : IFCExtrusionBasis.BasisY;
-                                    extrusionCreationData.Slope = GeometryUtil.GetSimpleExtrusionSlope(beamDirection, bestAxis);
-                                    ElementId materialId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(solids[0], exporterIFC, element);
-                                    if (materialId != ElementId.InvalidElementId)
-                                        materialIds.Add(materialId);
-                                }
+                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))
+                            {
+                                // This is used by the BeamSlopeCalculator.  This should probably be generated automatically by
+                                // CreateExtrusionWithClipping.
+                                IFCExtrusionBasis bestAxis = (Math.Abs(beamDirection[0]) > Math.Abs(beamDirection[1])) ?
+                                    IFCExtrusionBasis.BasisX : IFCExtrusionBasis.BasisY;
+                                extrusionCreationData.Slope = GeometryUtil.GetSimpleExtrusionSlope(beamDirection, bestAxis);
+                                ElementId materialId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(solids[0], exporterIFC, element);
+                                if (materialId != ElementId.InvalidElementId)
+                                    materialIds.Add(materialId);
                             }
                         }
 
@@ -174,19 +170,19 @@ namespace BIM.IFC.Exporter
                             BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                             if (solids.Count > 0 || meshes.Count > 0)
                             {
-                                bodyData = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId, ElementId.InvalidElementId,
+                                bodyData = BodyExporter.ExportBody(exporterIFC, element, catId, ElementId.InvalidElementId,
                                     solids, meshes, bodyExporterOptions, extrusionCreationData);
                             }
                             else
                             {
                                 IList<GeometryObject> geomlist = new List<GeometryObject>();
                                 geomlist.Add(geometryElement);
-                                bodyData = BodyExporter.ExportBody(element.Document.Application, exporterIFC, element, catId, ElementId.InvalidElementId, 
+                                bodyData = BodyExporter.ExportBody(exporterIFC, element, catId, ElementId.InvalidElementId, 
                                     geomlist, bodyExporterOptions, extrusionCreationData);
                             }
                             repHnd = bodyData.RepresentationHnd;
                             materialIds = bodyData.MaterialIds;
-                            brepOffsetTransform = bodyData.BrepOffsetTransform;
+                            offsetTransform = bodyData.OffsetTransform;
                         }
 
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))
@@ -200,9 +196,9 @@ namespace BIM.IFC.Exporter
                         if (canExportAxis)
                         {
                             XYZ curveOffset = new XYZ(0, 0, 0);
-                            if (brepOffsetTransform != null)
+                            if (offsetTransform != null)
                             {
-                                curveOffset = -brepOffsetTransform.Origin / scale;
+                                curveOffset = -offsetTransform.Origin / scale;
                             }
                             else
                             {
@@ -228,7 +224,7 @@ namespace BIM.IFC.Exporter
                         }
                         representations.Add(repHnd);
 
-                        Transform boundingBoxTrf = (brepOffsetTransform == null) ? Transform.Identity : brepOffsetTransform.Inverse;
+                        Transform boundingBoxTrf = (offsetTransform == null) ? Transform.Identity : offsetTransform.Inverse;
                         IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geometryElement, boundingBoxTrf);
                         if (boundingBoxRep != null)
                             representations.Add(boundingBoxRep);
@@ -246,7 +242,8 @@ namespace BIM.IFC.Exporter
 
                         productWrapper.AddElement(beam, setter, extrusionCreationData, LevelUtil.AssociateElementToLevel(element));
 
-                        OpeningUtil.CreateOpeningsIfNecessary(beam, element, extrusionCreationData, exporterIFC, extrusionCreationData.GetLocalPlacement(), setter, productWrapper);
+                        OpeningUtil.CreateOpeningsIfNecessary(beam, element, extrusionCreationData, offsetTransform, exporterIFC, 
+                            extrusionCreationData.GetLocalPlacement(), setter, productWrapper);
 
                         FamilyTypeInfo typeInfo = new FamilyTypeInfo();
                         typeInfo.ScaledDepth = extrusionCreationData.ScaledLength;

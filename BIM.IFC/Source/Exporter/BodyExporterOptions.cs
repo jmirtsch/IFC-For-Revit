@@ -49,6 +49,11 @@ namespace BIM.IFC.Exporter
         private bool m_TryToExportAsSweptSolid = false;
 
         /// <summary>
+        /// Allow an offset transform for the body.  Set this to false if BodyData is not processed on return.
+        /// </summary>
+        private bool m_AllowOffsetTransform = true;
+
+        /// <summary>
         /// If the body contains geometries that are identical except position and orientation, use mapped items to reuse the geometry.
         /// NOTE: This functionality is untested, and should be used with caution.
         /// </summary>
@@ -74,6 +79,20 @@ namespace BIM.IFC.Exporter
         /// Constructs a default BodyExporterOptions object.
         /// </summary>
         public BodyExporterOptions() { }
+
+        /// <summary>
+        /// Constructs a copy of a BodyExporterOptions object.
+        /// </summary>
+        public BodyExporterOptions(BodyExporterOptions options) 
+        {
+            TryToExportAsExtrusion = options.TryToExportAsExtrusion;
+            TryToExportAsSweptSolid = options.TryToExportAsSweptSolid;
+            AllowOffsetTransform = options.AllowOffsetTransform;
+            UseMappedGeometriesIfPossible = options.UseMappedGeometriesIfPossible;
+            UseGroupsIfPossible = options.UseGroupsIfPossible;
+            TessellationControls = options.TessellationControls;
+            TessellationLevel = options.TessellationLevel;
+        }
 
         /// <summary>
         /// Constructs a BodyExporterOptions object with the tryToExportAsExtrusion parameter overridden.
@@ -104,6 +123,15 @@ namespace BIM.IFC.Exporter
             set { m_TryToExportAsSweptSolid = value; }
         }
 
+        /// <summary>
+        /// Allow an offset transform for the body.  Set this to false if BodyData is not processed on return.
+        /// </summary>
+        public bool AllowOffsetTransform
+        {
+            get { return m_AllowOffsetTransform; }
+            set { m_AllowOffsetTransform = value; }
+        }
+        
         /// <summary>
         /// If the body contains geometries that are identical except position and orientation, use mapped items to reuse the geometry.
         /// NOTE: This functionality is untested, and should be used with caution.

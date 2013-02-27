@@ -388,6 +388,22 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Creates an entry of type length.
+        /// </summary>
+        /// <param name="revitParameterName">
+        /// Revit parameter name.
+        /// </param>
+        /// <returns>
+        /// The PropertySetEntry.
+        /// </returns>
+        public static PropertySetEntry CreateLength(string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = PropertyType.Length;
+            return pse;
+        }
+        
+        /// <summary>
         /// Creates an entry of type positive length.
         /// </summary>
         /// <param name="revitParameterName">
@@ -598,6 +614,12 @@ namespace BIM.IFC.Exporter.PropertySet
                         propHnd = PropertyUtil.CreateRealPropertyFromElementOrSymbol(file, scale, element, revitParamNameToUse, ifcPropertyName, valueType);
                         break;
                     }
+                case PropertyType.Length:
+                    {
+                        propHnd = PropertyUtil.CreateLengthMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                            builtInParameter, ifcPropertyName, valueType);
+                        break;
+                    }
                 case PropertyType.PositiveLength:
                     {
                         propHnd = PropertyUtil.CreatePositiveLengthMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
@@ -733,7 +755,10 @@ namespace BIM.IFC.Exporter.PropertySet
                             if (PropertyCalculator.CalculatesMutipleValues)
                                 propHnd = PropertyUtil.CreateLabelProperty(file, PropertyName, PropertyCalculator.GetStringValues(), valueType, propertyEnumerationType);
                             else
-                                propHnd = PropertyUtil.CreateLabelPropertyFromCache(file, PropertyName, PropertyCalculator.GetStringValue(), valueType, false, propertyEnumerationType);
+                            {
+                                bool cacheLabel = PropertyCalculator.CacheStringValues;
+                                propHnd = PropertyUtil.CreateLabelPropertyFromCache(file, PropertyName, PropertyCalculator.GetStringValue(), valueType, cacheLabel, propertyEnumerationType);
+                            }
                             break;
                         }
                     case PropertyType.Text:
@@ -768,6 +793,15 @@ namespace BIM.IFC.Exporter.PropertySet
                         {
                             double scale = exporterIFC.LinearScale;
                             propHnd = PropertyUtil.CreateRealPropertyFromCache(file, scale, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                            break;
+                        }
+                    case PropertyType.Length:
+                        {
+                            double lengthScale = exporterIFC.LinearScale;
+                            if (PropertyCalculator.CalculatesMultipleParameters)
+                                propHnd = PropertyUtil.CreateLengthMeasurePropertyFromCache(file, lengthScale, PropertyName, PropertyCalculator.GetDoubleValue(PropertyName), valueType);
+                            else
+                                propHnd = PropertyUtil.CreateLengthMeasurePropertyFromCache(file, lengthScale, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                             break;
                         }
                     case PropertyType.PositiveLength:

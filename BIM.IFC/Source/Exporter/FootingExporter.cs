@@ -101,7 +101,7 @@ namespace BIM.IFC.Exporter
 
                             matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element);
                             BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                            prodRep = RepresentationUtil.CreateBRepProductDefinitionShape(element.Document.Application, exporterIFC,
+                            prodRep = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
                                element, catId, geometryElement, bodyExporterOptions, null, ecData);
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodRep))
                             {
@@ -134,7 +134,8 @@ namespace BIM.IFC.Exporter
 
                         productWrapper.AddElement(footing, setter, ecData, LevelUtil.AssociateElementToLevel(element));
 
-                        OpeningUtil.CreateOpeningsIfNecessary(footing, element, ecData, exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);
+                        OpeningUtil.CreateOpeningsIfNecessary(footing, element, ecData, null, 
+                            exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);
 
                         PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }

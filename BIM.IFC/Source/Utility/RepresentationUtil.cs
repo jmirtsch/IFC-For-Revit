@@ -160,7 +160,6 @@ namespace BIM.IFC.Utility
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle brep = IFCInstanceExporter.CreateFacetedBrep(file, shell);
 
-            // Coordination View V2 does not support styled items by default; while others support. 
             // The option can be changed by alternate UI.
             if (ExporterCacheManager.ExportOptionsCache.ExportSurfaceStyles)
             {
@@ -428,12 +427,8 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
-        /// Creates a Brep product definition shape representation.
+        /// Creates a SweptSolid, Brep, or Surface product definition shape representation, depending on the geoemtry and export version.
         /// </summary>
-        /// <remarks>
-        /// It will try to export the geometry as an extrusion if it is not exported as IFC 2x2 version.
-        /// </remarks>
-        /// <param name="application">The Revit application object.</param>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="categoryId">The category id.</param>
         /// <param name="geometryElement">The geometry element.</param>
@@ -441,23 +436,21 @@ namespace BIM.IFC.Utility
         /// <param name="extraReps">Extra representations (e.g. Axis, Boundary).  May be null.</param>
         /// <param name="extrusionCreationData">The extrusion creation data.</param>
         /// <returns>The handle.</returns>
-        public static IFCAnyHandle CreateBRepProductDefinitionShape(Autodesk.Revit.ApplicationServices.Application application,
-            ExporterIFC exporterIFC, Element element, ElementId categoryId,
+        public static IFCAnyHandle CreateAppropriateProductDefinitionShape(ExporterIFC exporterIFC, Element element, ElementId categoryId,
             GeometryElement geometryElement, BodyExporterOptions bodyExporterOptions, IList<IFCAnyHandle> extraReps, 
             IFCExtrusionCreationData extrusionCreationData)
         {
             BodyData bodyData;
-            return CreateBRepProductDefinitionShape(application, exporterIFC, element, categoryId,
-                geometryElement, bodyExporterOptions, extraReps, extrusionCreationData, out bodyData);
+            BodyExporterOptions newBodyExporterOptions = new BodyExporterOptions(bodyExporterOptions);
+            newBodyExporterOptions.AllowOffsetTransform = false;
+
+            return CreateAppropriateProductDefinitionShape(exporterIFC, element, categoryId,
+                geometryElement, newBodyExporterOptions, extraReps, extrusionCreationData, out bodyData);
         }
 
         /// <summary>
-        /// Creates a Brep product definition shape representation.
+        /// Creates a SweptSolid, Brep, or SurfaceModel product definition shape representation, based on the geometry and IFC version.
         /// </summary>
-        /// <remarks>
-        /// It will try to export the geometry as an extrusion if it is not exported as IFC 2x2 version.
-        /// </remarks>
-        /// <param name="application">The Revit application object.</param>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="categoryId">The category id.</param>
         /// <param name="geometryElement">The geometry element.</param>
@@ -466,64 +459,33 @@ namespace BIM.IFC.Utility
         /// <param name="extrusionCreationData">The extrusion creation data.</param>
         /// <param name="bodyData">The body data.</param>
         /// <returns>The handle.</returns>
-        public static IFCAnyHandle CreateBRepProductDefinitionShape(Autodesk.Revit.ApplicationServices.Application application,
-            ExporterIFC exporterIFC, Element element, ElementId categoryId,
+        public static IFCAnyHandle CreateAppropriateProductDefinitionShape(ExporterIFC exporterIFC, Element element, ElementId categoryId,
             GeometryElement geometryElement, BodyExporterOptions bodyExporterOptions, IList<IFCAnyHandle> extraReps, 
             IFCExtrusionCreationData extrusionCreationData, out BodyData bodyData)
         {
             SolidMeshGeometryInfo info = null;
-            IList<GeometryObject> solids = new List<GeometryObject>();
+            IList<GeometryObject> geometryList = new List<GeometryObject>();
 
             if (!exporterIFC.ExportAs2x2)
             {
-                info = GeometryUtil.GetSolidMeshGeometry(geometryElement, Transform.Identity);
+                info = GeometryUtil.GetSplitSolidMeshGeometry(geometryElement, Transform.Identity);
                 IList<Mesh> meshes = info.GetMeshes();
                 if (meshes.Count == 0)
                 {
                     IList<Solid> solidList = info.GetSolids();
                     foreach (Solid solid in solidList)
                     {
-                        solids.Add(solid);
+                        geometryList.Add(solid);
                     }
                 }
             }
 
-            IFCAnyHandle ret = null;
-            if (solids.Count == 0)
-            {
-                IList<GeometryObject> geometryList = new List<GeometryObject>();
+            if (geometryList.Count == 0)
                 geometryList.Add(geometryElement);
-                ret = CreateBRepProductDefinitionShape(application, exporterIFC, element, categoryId,
-                    geometryList, extraReps, bodyExporterOptions, extrusionCreationData, out bodyData);
-            }
             else
-            {
                 bodyExporterOptions.TryToExportAsExtrusion = true;
-                ret = CreateBRepProductDefinitionShape(application, exporterIFC, element, categoryId,
-                    solids, extraReps, bodyExporterOptions, extrusionCreationData, out bodyData);
-            }
-            return ret;
-        }
-
-        /// <summary>
-        /// Creates a Brep product definition shape representation.
-        /// </summary>
-        /// <param name="application">The Revit application object.</param>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="categoryId">The category id.</param>
-        /// <param name="geometryObject">The geometry object.</param>
-        /// <param name="extraReps">Extra representations (e.g. Axis, Footprint).  May be null.</param>
-        /// <param name="options">The settings for how to export the body.</param>
-        /// <param name="extrusionCreationData">The extrusion creation data.</param>
-        /// <param name="bodyData">The body data.</param>
-        /// <returns>The handle.</returns>
-        public static IFCAnyHandle CreateBRepProductDefinitionShape(Autodesk.Revit.ApplicationServices.Application application,
-            ExporterIFC exporterIFC, Element element, ElementId categoryId,
-            IList<GeometryObject> geometryObjectIn, IList<IFCAnyHandle> extraReps,
-            BodyExporterOptions bodyExporterOptions, IFCExtrusionCreationData extrusionCreationData, out BodyData bodyData)
-        {
-
-            bodyData = BodyExporter.ExportBody(application, exporterIFC, element, categoryId, ElementId.InvalidElementId, geometryObjectIn,
+           
+            bodyData = BodyExporter.ExportBody(exporterIFC, element, categoryId, ElementId.InvalidElementId, geometryList,
                 bodyExporterOptions, extrusionCreationData);
             IFCAnyHandle bodyRep = bodyData.RepresentationHnd;
             List<IFCAnyHandle> bodyReps = new List<IFCAnyHandle>();
@@ -549,27 +511,6 @@ namespace BIM.IFC.Utility
             if (bodyReps.Count == 0)
                 return null;
             return IFCInstanceExporter.CreateProductDefinitionShape(exporterIFC.GetFile(), null, null, bodyReps);
-        }
-
-        /// <summary>
-        /// Creates a Brep product definition shape representation.
-        /// </summary>
-        /// <param name="application">The Revit application object.</param>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="categoryId">The category id.</param>
-        /// <param name="geometryObject">The geometry object.</param>
-        /// <param name="extraReps">Extra representations (e.g. Axis, Footprint).  May be null.</param>
-        /// <param name="options">The settings for how to export the body.</param>
-        /// <param name="extrusionCreationData">The extrusion creation data.</param>
-        /// <returns>The handle.</returns>
-        public static IFCAnyHandle CreateBRepProductDefinitionShape(Autodesk.Revit.ApplicationServices.Application application,
-            ExporterIFC exporterIFC, Element element, ElementId categoryId,
-            IList<GeometryObject> geometryObjectIn, IList<IFCAnyHandle> extraReps,
-            BodyExporterOptions bodyExporterOptions, IFCExtrusionCreationData extrusionCreationData)
-        {
-            BodyData bodyData;
-            return CreateBRepProductDefinitionShape(application, exporterIFC, element, categoryId, geometryObjectIn, extraReps, bodyExporterOptions,
-                extrusionCreationData, out bodyData);
         }
 
         /// <summary>

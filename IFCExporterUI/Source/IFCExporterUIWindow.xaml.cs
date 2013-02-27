@@ -174,6 +174,7 @@ namespace BIM.IFC.Export.UI
             checkboxExportSurfaceStyles.IsChecked = configuration.ExportSurfaceStyles;
             checkboxExportAdvancedSweptSolids.IsChecked = configuration.ExportAdvancedSweptSolids;
             checkboxExportBoundingBox.IsChecked = configuration.ExportBoundingBox;
+            checkboxIncludeIfcSiteElevation.IsChecked = configuration.IncludeSiteElevation;
 
             UIElement[] configurationElements = new UIElement[]{comboboxIfcType, 
                                                                 comboboxFileType, 
@@ -188,7 +189,8 @@ namespace BIM.IFC.Export.UI
                                                                 checkBoxFamilyAndTypeName,
                                                                 checkboxExportSurfaceStyles,
                                                                 checkboxExportAdvancedSweptSolids,
-                                                                checkboxExportBoundingBox
+                                                                checkboxExportBoundingBox,
+                                                                checkboxIncludeIfcSiteElevation
                                                                 };
             foreach (UIElement element in configurationElements)
             {
@@ -551,6 +553,7 @@ namespace BIM.IFC.Export.UI
             {
                 configuration.IFCVersion = attributes.Version;
             }
+            changeIncludeSiteElevationStatus(attributes.Version);
         }
 
         /// <summary>
@@ -652,6 +655,36 @@ namespace BIM.IFC.Export.UI
             {
                 configuration.ExportBoundingBox = GetCheckbuttonChecked(checkBox);
             }
+        }
+
+        /// <summary>
+        /// Updates the configuration IncludeSiteElevation when the Export Bounding Box changed in the check box.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments that contains the event data.</param>
+        private void checkboxIfcSiteElevation_Checked(object sender, RoutedEventArgs e)
+        {
+            CheckBox checkBox = (CheckBox)sender;
+            IFCExportConfiguration configuration = GetSelectedConfiguration();
+            if (configuration != null)
+            {
+                configuration.IncludeSiteElevation = GetCheckbuttonChecked(checkBox);
+            }
+        }
+
+        /// <summary>
+        /// Changes the IncludeIfcSiteElevation status. If current version is IFC2x3CV2, uncheck it and disable it.
+        /// </summary>
+        /// <param name="version">The ifc version.</param>
+        private void changeIncludeSiteElevationStatus(IFCVersion version)
+        {
+            bool isCV2 = version == IFCVersion.IFC2x3CV2;
+
+            if (isCV2)
+            {
+                checkboxIncludeIfcSiteElevation.IsChecked = false;
+            }
+            checkboxIncludeIfcSiteElevation.IsEnabled = !isCV2;
         }
     }
 }

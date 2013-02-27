@@ -45,15 +45,15 @@ namespace BIM.IFC.Exporter
         /// <param name="element">The element.</param>
         /// <param name="geometryElement">The geometry element.</param>
         /// <param name="productWrapper">The ProductWrapper.</param>
-        /// <returns>True if exported successfully, false otherwise.</returns>
-        public static bool ExportBuildingElementProxy(ExporterIFC exporterIFC, Element element,
+        /// <returns>The handle if created, null otherwise.</returns>
+        public static IFCAnyHandle ExportBuildingElementProxy(ExporterIFC exporterIFC, Element element,
             GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             if (element == null || geometryElement == null)
-                return false;
+                return null;
 
             IFCFile file = exporterIFC.GetFile();
-
+            IFCAnyHandle buildingElementProxy = null;
             using (IFCTransaction tr = new IFCTransaction(file))
             {
                 using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, element))
@@ -65,13 +65,13 @@ namespace BIM.IFC.Exporter
                         ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
 
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                        IFCAnyHandle representation = RepresentationUtil.CreateBRepProductDefinitionShape(element.Document.Application, exporterIFC, element,
+                        IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, element,
                             categoryId, geometryElement, bodyExporterOptions, null, ecData);
 
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(representation))
                         {
                             ecData.ClearOpenings();
-                            return false;
+                            return null;
                         }
 
                         string guid = GUIDUtil.CreateGUID(element);
@@ -84,15 +84,16 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
                         string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
-                        IFCAnyHandle buildingElementProxy = IFCInstanceExporter.CreateBuildingElementProxy(file, guid,
+                        buildingElementProxy = IFCInstanceExporter.CreateBuildingElementProxy(file, guid,
                             ownerHistory, name, description, objectType, localPlacement, representation, elementTag, Toolkit.IFCElementComposition.Element);
 
                         productWrapper.AddElement(buildingElementProxy, placementSetter.GetLevelInfo(), ecData, LevelUtil.AssociateElementToLevel(element));
                     }
                     tr.Commit();
-                    return true;
                 }
             }
+
+            return buildingElementProxy;
         }
 
         /// <summary>
@@ -114,7 +115,7 @@ namespace BIM.IFC.Exporter
 
             using (IFCTransaction tr = new IFCTransaction(file))
             {
-                exported = ExportBuildingElementProxy(exporterIFC, element, geometryElement, productWrapper);
+                exported = (ExportBuildingElementProxy(exporterIFC, element, geometryElement, productWrapper) != null);
                 if (exported)
                 {
                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);

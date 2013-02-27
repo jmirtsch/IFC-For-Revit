@@ -49,9 +49,6 @@ namespace BIM.IFC.Exporter
         /// <param name="localPlacement">
         /// The local placement handle.
         /// </param>
-        /// <param name="extraParams">
-        /// The extrusion creation data.
-        /// </param>
         /// <param name="setter">
         /// The IFCPlacementSetter.
         /// </param>
@@ -59,32 +56,35 @@ namespace BIM.IFC.Exporter
         /// The ProductWrapper.
         /// </param>
         public static void Export(ExporterIFC exporterIFC, Mullion mullion, GeometryElement geometryElement,
-           IFCAnyHandle localPlacement, IFCExtrusionCreationData extraParams, IFCPlacementSetter setter, ProductWrapper productWrapper)
+           IFCAnyHandle localPlacement, IFCPlacementSetter setter, ProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
 
             using (IFCPlacementSetter mullionSetter = IFCPlacementSetter.Create(exporterIFC, mullion))
             {
-                IFCAnyHandle mullionPlacement = mullionSetter.GetPlacement();
-
-                Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(localPlacement, mullionPlacement);
-                Transform inverseTrf = relTrf.Inverse;
-
-                IFCAnyHandle mullionRelativePlacement = ExporterUtil.CreateAxis2Placement3D(file, inverseTrf.Origin, inverseTrf.BasisZ, inverseTrf.BasisX);
-                IFCAnyHandle mullionLocalPlacement = IFCInstanceExporter.CreateLocalPlacement(file, localPlacement, mullionRelativePlacement);
-
-                extraParams.SetLocalPlacement(mullionLocalPlacement);
-
-                ElementId catId = CategoryUtil.GetSafeCategoryId(mullion);
-
-                BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                IFCAnyHandle repHnd = RepresentationUtil.CreateBRepProductDefinitionShape(mullion.Document.Application, exporterIFC, mullion, catId,
-                    geometryElement, bodyExporterOptions, null, extraParams);
-                if (IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))
+                using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
                 {
-                    extraParams.ClearOpenings();
-                    return;
-                }
+                    IFCAnyHandle mullionPlacement = mullionSetter.GetPlacement();
+
+                    Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(localPlacement, mullionPlacement);
+                    Transform inverseTrf = relTrf.Inverse;
+
+                    IFCAnyHandle mullionRelativePlacement = ExporterUtil.CreateAxis2Placement3D(file, inverseTrf.Origin, inverseTrf.BasisZ, inverseTrf.BasisX);
+                	IFCAnyHandle mullionLocalPlacement = IFCInstanceExporter.CreateLocalPlacement(file, localPlacement, mullionRelativePlacement);
+
+                    extraParams.SetLocalPlacement(mullionLocalPlacement);
+
+                    ElementId catId = CategoryUtil.GetSafeCategoryId(mullion);
+
+                    BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+                    BodyData bodyData = null;
+                    IFCAnyHandle repHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, mullion, catId,
+                        geometryElement, bodyExporterOptions, null, extraParams, out bodyData);
+                    if (IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))
+                    {
+                        extraParams.ClearOpenings();
+                        return;
+                    }
 
                 string elemGUID = GUIDUtil.CreateGUID(mullion);
                 IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
@@ -98,9 +98,10 @@ namespace BIM.IFC.Exporter
                    mullionLocalPlacement, repHnd, elemTag);
                 productWrapper.AddElement(mullionHnd, mullionSetter, extraParams, false);
 
-                ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, mullion);
-                CategoryUtil.CreateMaterialAssociation(mullion.Document, exporterIFC, mullionHnd, matId);
-                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, mullion, productWrapper);
+                    ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, mullion);
+                    CategoryUtil.CreateMaterialAssociation(mullion.Document, exporterIFC, mullionHnd, matId);
+                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, mullion, productWrapper);
+                }
             }
         }
     }

@@ -247,23 +247,29 @@ namespace BIM.IFC.Exporter
                     string representationTypeOpt = "GeometricCurveSet";
 
                     int numGridsToExport = gridRepresentationData.m_Grids.Count;
+                    if (numGridsToExport == 0)
+                        return;
+
                     bool useIFCCADLayer = !string.IsNullOrWhiteSpace(gridRepresentationData.m_IFCCADLayer);
+                    
+                    IFCAnyHandle shapeRepresentation = null;
+
+                    HashSet<IFCAnyHandle> allCurves = new HashSet<IFCAnyHandle>();
                     for (int ii = 0; ii < numGridsToExport; ii++)
+                        allCurves.UnionWith(gridRepresentationData.m_curveSets[ii]);
+
+                    if (useIFCCADLayer)
                     {
-                        IFCAnyHandle shapeRepresentation = null;
-                        if (useIFCCADLayer)
-                        {
-                            shapeRepresentation = RepresentationUtil.CreateShapeRepresentation(exporterIFC, contextOfItemsFootPrint,
-                                identifierOpt, representationTypeOpt, gridRepresentationData.m_curveSets[ii], gridRepresentationData.m_IFCCADLayer);
-                        }
-                        else
-                        {
-                            ElementId catId = CategoryUtil.GetSafeCategoryId(gridRepresentationData.m_Grids[ii]);
-                            shapeRepresentation = RepresentationUtil.CreateShapeRepresentation(exporterIFC, gridRepresentationData.m_Grids[ii], catId,
-                                contextOfItemsFootPrint, identifierOpt, representationTypeOpt, gridRepresentationData.m_curveSets[ii]);
-                        }
-                        representations.Add(shapeRepresentation);
+                        shapeRepresentation = RepresentationUtil.CreateShapeRepresentation(exporterIFC, contextOfItemsFootPrint,
+                            identifierOpt, representationTypeOpt, allCurves, gridRepresentationData.m_IFCCADLayer);
                     }
+                    else
+                    {
+                        ElementId catId = CategoryUtil.GetSafeCategoryId(gridRepresentationData.m_Grids[0]);
+                        shapeRepresentation = RepresentationUtil.CreateShapeRepresentation(exporterIFC, gridRepresentationData.m_Grids[0], catId,
+                                contextOfItemsFootPrint, identifierOpt, representationTypeOpt, allCurves);
+                    }
+                    representations.Add(shapeRepresentation);
 
                     IFCAnyHandle productRep = IFCInstanceExporter.CreateProductDefinitionShape(ifcFile, null, null, representations);
 

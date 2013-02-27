@@ -128,41 +128,94 @@ namespace BIM.IFC.Exporter
             {
                 using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element))
                 {
-                    IFCAnyHandle prodRep = exportParts ? null : RepresentationUtil.CreateSurfaceProductDefinitionShape(exporterIFC,
-                       element, geomElem, false, false);
-
-                    string instanceGUID = GUIDUtil.CreateGUID(element);
-                    string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-                    string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
-                    string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
-                    string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
-                    Toolkit.IFCCoveringType coveringType = GetIFCCoveringType(element, ifcEnumType);
-
-                    IFCAnyHandle covering = IFCInstanceExporter.CreateCovering(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
-                        instanceName, instanceDescription, instanceObjectType, setter.GetPlacement(), prodRep, instanceTag, coveringType);
-
-                    if (exportParts)
+                    using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                     {
-                        PartExporter.ExportHostPart(exporterIFC, element, covering, productWrapper, setter, setter.GetPlacement(), null);
-                    }
-                    productWrapper.AddElement(covering, setter, null, LevelUtil.AssociateElementToLevel(element));
-
-                    if (!exportParts)
-                    {
-                        Ceiling ceiling = element as Ceiling;
-                        if (ceiling != null)
+                        IFCAnyHandle prodRep = null;
+                        if (!exportParts)
                         {
-                            HostObjectExporter.ExportHostObjectMaterials(exporterIFC, ceiling, covering,
-                                geomElem, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3);
-                        }
-                        else
-                        {
-                            ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geomElem, exporterIFC, element);
-                            CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, covering, matId);
-                        }
-                    }
+                            ecData.SetLocalPlacement(setter.GetPlacement());
+                            ecData.PossibleExtrusionAxes = IFCExtrusionAxes.TryZ;
 
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
+                            ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
+
+                            BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+                            prodRep = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, element,
+                                categoryId, geomElem, bodyExporterOptions, null, ecData);
+                            if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodRep))
+                            {
+                                ecData.ClearOpenings();
+                                return;
+                            }
+                        }
+                        string instanceGUID = GUIDUtil.CreateGUID(element);
+                        string instanceName = NamingUtil.GetIFCName(element);
+                        string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
+                        string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
+                        string instanceElemId = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
+                        Toolkit.IFCCoveringType coveringType = GetIFCCoveringType(element, ifcEnumType);
+
+                        IFCAnyHandle covering = IFCInstanceExporter.CreateCovering(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
+                            instanceName, instanceDescription, instanceObjectType, setter.GetPlacement(), prodRep, instanceElemId, coveringType);
+
+                        if (exportParts)
+                        {
+                            PartExporter.ExportHostPart(exporterIFC, element, covering, productWrapper, setter, setter.GetPlacement(), null);
+                        }
+
+                        Boolean containInSpace = false;
+                        IFCAnyHandle localPlacementToUse = setter.GetPlacement();
+
+                        // Assign ceiling to room/IfcSpace if it is bounding a single Room for FMHandOver view only
+                        ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
+                        if (String.Compare(exportOptionsCache.SelectedConfigName, "FMHandOverView") == 0)
+                        {
+                            if (ExporterCacheManager.CeilingSpaceRelCache.ContainsKey(element.Id))
+                            {
+                                IList<ElementId> roomlist = ExporterCacheManager.CeilingSpaceRelCache[element.Id];
+
+                                // Process Ceiling to be contained in a Space only when it is exactly bounding one Space
+                                if (roomlist.Count == 1)
+                                {
+                                    productWrapper.AddElement(covering, setter, null, false);
+
+                                    // Modify the Ceiling placement to be relative to the Space that it bounds 
+                                    IFCAnyHandle roomPlacement = IFCAnyHandleUtil.GetObjectPlacement(ExporterCacheManager.SpatialElementHandleCache.Find(roomlist[0]));
+                                    Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(roomPlacement, localPlacementToUse);
+                                    Transform inverseTrf = relTrf.Inverse;
+                                    IFCAnyHandle relLocalPlacement = ExporterUtil.CreateAxis2Placement3D(file, inverseTrf.Origin, inverseTrf.BasisZ, inverseTrf.BasisX);
+                                    IFCAnyHandleUtil.SetAttribute(localPlacementToUse, "PlacementRelTo", roomPlacement);
+                                    GeometryUtil.SetRelativePlacement(localPlacementToUse, relLocalPlacement);
+
+                                    exporterIFC.RelateSpatialElement(roomlist[0], covering);
+                                    containInSpace = true;
+                                }
+                            }
+                        }
+
+                        // if not contained in Space, assign it to default containment in Level
+                        if (!containInSpace)
+                            productWrapper.AddElement(covering, setter, null, LevelUtil.AssociateElementToLevel(element));
+
+                        if (!exportParts)
+                        {
+                            Ceiling ceiling = element as Ceiling;
+                            if (ceiling != null)
+                            {
+                                HostObjectExporter.ExportHostObjectMaterials(exporterIFC, ceiling, covering,
+                                    geomElem, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3);
+                            }
+                            else
+                            {
+                                ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geomElem, exporterIFC, element);
+                                CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, covering, matId);
+                            }
+                        }
+
+                        OpeningUtil.CreateOpeningsIfNecessary(covering, element, ecData, null,
+                            exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);
+
+                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
+                    }
                 }
                 transaction.Commit();
             }

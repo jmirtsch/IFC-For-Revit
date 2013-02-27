@@ -74,6 +74,22 @@ namespace BIM.IFC.Toolkit
         DoorStyle = 21,
     }
 
+    enum IFCDistributionFlowElementSubElements
+    {
+        PSetDistributionFlowElementCommon = 1024,
+        PSetFlowTerminalAirTerminal = 1025,
+        PSetAirTerminalTypeCommon = 1026,
+    }
+
+    // Used for internal Revit property sets.
+    enum IFCGenericSubElements
+    {
+        PSetRevitInternalStart = 1536,
+        PSetRevitInternalEnd = PSetRevitInternalStart + 255,
+        PSetRevitInternalRelStart = PSetRevitInternalEnd+1,
+        PSetRevitInternalRelEnd = PSetRevitInternalRelStart + 255,
+    }
+
     enum IFCLightFixtureTypeSubElements
     {
         PSetLightFixtureTypeCommon = 1
@@ -86,9 +102,25 @@ namespace BIM.IFC.Toolkit
         InstanceAsType = 2048
     }
 
+    enum IFCLevelSubElements
+    {
+        PSetBuildingStoreyCommon = 1,
+    }
+
     enum IFCMemberSubElements
     {
         PSetMemberCommon = 1
+    }
+
+    enum IFCPlateSubElements
+    {
+        PSetPlateCommon = 1
+    }
+
+    enum IFCProjectSubElements
+    {
+        PSetBuildingCommon = 1,
+        PSetSiteCommon = 2
     }
 
     enum IFCRampSubElements
@@ -98,11 +130,21 @@ namespace BIM.IFC.Toolkit
         ContainmentRelation = 3 // same as IFCStairSubElements.ContainmentRelation
     }
 
+    enum IFCReinforcingBarSubElements
+    {
+        PSetBECCommon = 1,
+        PSetBS8666Common = 2,
+        PSetDIN135610Common = 3,
+        PSetISOCD3766Common = 4,
+        BarStart = 5,
+        BarEnd = BarStart + 255
+    }
+
     enum IFCRoofSubElements
     {
         PSetRoofCommon = 1,
         RoofSlabStart = 2,
-        RoofSlabEnd = RoofSlabStart + 15
+        RoofSlabEnd = RoofSlabStart + 255
     }
 
     enum IFCSlabSubElements

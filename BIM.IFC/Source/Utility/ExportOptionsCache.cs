@@ -63,6 +63,7 @@ namespace BIM.IFC.Utility
             cache.FilterViewForExport = filterView;
             cache.ExportSurfaceStylesOverride = null;
             cache.ExportBoundingBoxOverride = null;
+            cache.IncludeSiteElevation = false;
             
             cache.PropertySetOptions = PropertySetOptions.Create(exporterIFC, filterView, cache);
 
@@ -161,6 +162,10 @@ namespace BIM.IFC.Utility
 
             // Using the alternate UI or not.
             cache.AlternateUIVersionOverride = GetNamedStringOption(options, "AlternateUIVersion");
+
+            // Include IFCSITE elevation in the site local placement origin
+            bool? includeIfcSiteElevation = GetNamedBooleanOption(options, "IncludeSiteElevation");
+            cache.IncludeSiteElevation = includeIfcSiteElevation != null ? includeIfcSiteElevation.Value : false;
 
             // "FileType" - note - setting is not respected yet
             ParseFileType(options, cache);
@@ -414,9 +419,6 @@ namespace BIM.IFC.Utility
                 // if the option is set by alternate UI, return the setting in UI.
                 if (ExportSurfaceStylesOverride != null)
                     return (bool)ExportSurfaceStylesOverride;
-                // otherwise export the surface styles except it is 2x3 V2
-                else if (ExportAs2x3CoordinationView2)
-                    return false;
                 return true;
             }
         }
@@ -445,6 +447,15 @@ namespace BIM.IFC.Utility
                     return true;
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Whether or not include IFCSITE elevation in the site local placement origin.
+        /// </summary>
+        public bool IncludeSiteElevation
+        {
+            get;
+            set;
         }
 
         /// <summary>

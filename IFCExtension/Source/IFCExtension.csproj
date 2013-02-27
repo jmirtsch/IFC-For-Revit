@@ -25,6 +25,8 @@
   <ItemGroup>
     <Compile Include="IFCAddress.cs" />
     <Compile Include="IFCAddressItem.cs" />
+    <Compile Include="IFCClassification.cs" />
+    <Compile Include="IFCClassificationMgr.cs" />
     <Compile Include="IFCFileHeader.cs" />
     <Compile Include="IFCFileHeaderItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -65,7 +65,7 @@ namespace BIM.IFC.Exporter
 
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                         BodyData bodyData;
-                        IFCAnyHandle representation = RepresentationUtil.CreateBRepProductDefinitionShape(roof.Document.Application, exporterIFC, roof,
+                        IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, roof,
                             categoryId, geometryElement, bodyExporterOptions, null, ecData, out bodyData);
 
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(representation))
@@ -104,8 +104,10 @@ namespace BIM.IFC.Exporter
 
                             IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(file, slabGUID, ownerHistory, slabName,
                                roofDescription, roofObjectType, slabLocalPlacementHnd, representation, elementTag, IFCSlabType.Roof);
-                            OpeningUtil.CreateOpeningsIfNecessary(slabHnd, roof, ecData, exporterIFC, slabLocalPlacementHnd,
-                                placementSetter, productWrapper);
+
+                            Transform offsetTransform = (bodyData != null) ? bodyData.OffsetTransform : Transform.Identity;
+                            OpeningUtil.CreateOpeningsIfNecessary(slabHnd, roof, ecData, offsetTransform,
+                                exporterIFC, slabLocalPlacementHnd, placementSetter, productWrapper);
 
                             ExporterUtil.RelateObject(exporterIFC, roofHnd, slabHnd);
 
@@ -181,11 +183,6 @@ namespace BIM.IFC.Exporter
                     IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                     IFCAnyHandle localPlacement = setter.GetPlacement();
 
-                    using (IFCExtrusionCreationData extrusionCreationData = new IFCExtrusionCreationData())
-                    {
-                        extrusionCreationData.SetLocalPlacement(setter.GetPlacement());
-                        extrusionCreationData.PossibleExtrusionAxes = IFCExtrusionAxes.TryXY;
-
                         IFCAnyHandle prodRepHnd = null;
 
                         string elementGUID = GUIDUtil.CreateGUID(element);
@@ -201,12 +198,10 @@ namespace BIM.IFC.Exporter
                         // Export the parts
                         PartExporter.ExportHostPart(exporterIFC, element, roofHandle, productWrapper, setter, localPlacement, null);
 
-                        productWrapper.AddElement(roofHandle, setter, extrusionCreationData, LevelUtil.AssociateElementToLevel(element));
+                    productWrapper.AddElement(roofHandle, setter, null, LevelUtil.AssociateElementToLevel(element));
 
-                        OpeningUtil.CreateOpeningsIfNecessary(roofHandle, element, extrusionCreationData, exporterIFC, extrusionCreationData.GetLocalPlacement(), setter, productWrapper);
+                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
 
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
-                    }
                     transaction.Commit();
                 }
             }

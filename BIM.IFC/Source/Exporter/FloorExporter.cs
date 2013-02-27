@@ -126,50 +126,46 @@ namespace BIM.IFC.Exporter
                             if (floorElement is Floor)
                             {
                                 Floor floor = floorElement as Floor;
-                                SolidMeshGeometryInfo solidMeshInfo = GeometryUtil.GetSolidMeshGeometry(geometryElement, Transform.Identity);
+                                SolidMeshGeometryInfo solidMeshInfo = GeometryUtil.GetSplitSolidMeshGeometry(geometryElement);
                                 IList<Solid> solids = solidMeshInfo.GetSolids();
                                 IList<Mesh> meshes = solidMeshInfo.GetMeshes();
 
                                 if (solids.Count == 1 && meshes.Count == 0)
                                 {
-                                    IList<Solid> splitVolumes = SolidUtils.SplitVolumes(solids[0]);
-                                    if (splitVolumes.Count == 1)
+                                    bool completelyClipped;
+                                    XYZ floorExtrusionDirection = new XYZ(0, 0, -1);
+                                    XYZ modelOrigin = XYZ.Zero;
+
+                                    XYZ floorOrigin = floor.GetVerticalProjectionPoint(modelOrigin, FloorFace.Top);
+                                    if (floorOrigin == null)
                                     {
-                                        bool completelyClipped;
-                                        XYZ floorExtrusionDirection = new XYZ(0, 0, -1);
-                                        XYZ modelOrigin = XYZ.Zero;
+                                        // GetVerticalProjectionPoint may return null if FloorFace.Top is an edited face that doesn't 
+                                        // go thruough te Revit model orgigin.  We'll try the midpoint of the bounding box instead.
+                                        BoundingBoxXYZ boundingBox = floor.get_BoundingBox(null);
+                                        modelOrigin = (boundingBox.Min + boundingBox.Max) / 2.0;
+                                        floorOrigin = floor.GetVerticalProjectionPoint(modelOrigin, FloorFace.Top);
+                                    }
 
-                                        XYZ floorOrigin = floor.GetVerticalProjectionPoint(modelOrigin, FloorFace.Top);
-                                        if (floorOrigin == null)
+                                    if (floorOrigin != null)
+                                    {
+                                        XYZ floorDir = floor.GetNormalAtVerticalProjectionPoint(floorOrigin, FloorFace.Top);
+                                        Plane extrusionAnalyzerFloorPlane = new Plane(floorDir, floorOrigin);
+
+                                        HandleAndData floorAndProperties =
+                                            ExtrusionExporter.CreateExtrusionWithClippingAndProperties(exporterIFC, floor,
+                                            catId, solids[0], extrusionAnalyzerFloorPlane, floorExtrusionDirection, null, out completelyClipped);
+                                        if (completelyClipped)
+                                            return;
+                                        if (floorAndProperties.Handle != null)
                                         {
-                                            // GetVerticalProjectionPoint may return null if FloorFace.Top is an edited face that doesn't 
-                                            // go thruough te Revit model orgigin.  We'll try the midpoint of the bounding box instead.
-                                            BoundingBoxXYZ boundingBox = floor.get_BoundingBox(null);
-                                            modelOrigin = (boundingBox.Min + boundingBox.Max) / 2.0;
-                                            floorOrigin = floor.GetVerticalProjectionPoint(modelOrigin, FloorFace.Top);
-                                        }
+                                            IList<IFCAnyHandle> representations = new List<IFCAnyHandle>();
+                                            representations.Add(floorAndProperties.Handle);
+                                            IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
+                                            prodReps.Add(prodRep);
+                                            repTypes.Add(ShapeRepresentationType.SweptSolid);
 
-                                        if (floorOrigin != null)
-                                        {
-                                            XYZ floorDir = floor.GetNormalAtVerticalProjectionPoint(floorOrigin, FloorFace.Top);
-                                            Plane extrusionAnalyzerFloorPlane = new Plane(floorDir, floorOrigin);
-
-                                            HandleAndData floorAndProperties =
-                                                ExtrusionExporter.CreateExtrusionWithClippingAndProperties(exporterIFC, floor,
-                                                catId, solids[0], extrusionAnalyzerFloorPlane, floorExtrusionDirection, null, out completelyClipped);
-                                            if (completelyClipped)
-                                                return;
-                                            if (floorAndProperties.Handle != null)
-                                            {
-                                                IList<IFCAnyHandle> representations = new List<IFCAnyHandle>();
-                                                representations.Add(floorAndProperties.Handle);
-                                                IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
-                                                prodReps.Add(prodRep);
-                                                repTypes.Add(ShapeRepresentationType.SweptSolid);
-
-                                                if (floorAndProperties.Data != null)
-                                                    loopExtraParams.Add(floorAndProperties.Data);
-                                            }
+                                            if (floorAndProperties.Data != null)
+                                                loopExtraParams.Add(floorAndProperties.Data);
                                         }
                                     }
                                 }
@@ -196,7 +192,7 @@ namespace BIM.IFC.Exporter
                                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                                     bodyExporterOptions.TessellationLevel = BodyExporterOptions.BodyTessellationLevel.Coarse;
                                     BodyData bodyData;
-                                    IFCAnyHandle prodDefHnd = RepresentationUtil.CreateBRepProductDefinitionShape(floorElement.Document.Application, exporterIFC,
+                                    IFCAnyHandle prodDefHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
                                         floorElement, catId, geometryElement, bodyExporterOptions, null, ecData, out bodyData);
                                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodDefHnd))
                                     {

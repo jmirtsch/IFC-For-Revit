@@ -33,18 +33,18 @@ namespace BIM.IFC.Utility
     class ParameterUtil
     {
         // Cache the parameters for the current Element.
-        private static IDictionary<ElementId, ParameterElementCache> m_NonIFCParameters =
-            new Dictionary<ElementId, ParameterElementCache>();
+        private static IDictionary<ElementId, IDictionary<BuiltInParameterGroup, ParameterElementCache>> m_NonIFCParameters =
+            new Dictionary<ElementId, IDictionary<BuiltInParameterGroup, ParameterElementCache>>();
 
         private static IDictionary<ElementId, ParameterElementCache> m_IFCParameters =
             new Dictionary<ElementId, ParameterElementCache>();
 
-        public static ParameterElementCache GetNonIFCParametersForElement(Element element)
+        public static IDictionary<BuiltInParameterGroup, ParameterElementCache> GetNonIFCParametersForElement(Element element)
         {
             if (element == null)
                 return null;
 
-            ParameterElementCache nonIFCParametersForElement = null;
+            IDictionary<BuiltInParameterGroup, ParameterElementCache> nonIFCParametersForElement = null;
             if (!m_NonIFCParameters.TryGetValue(element.Id, out nonIFCParametersForElement))
             {
                 CacheParametersForElement(element);
@@ -66,24 +66,12 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Gets string value from parameter of an element.
         /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="propertyName">
-        /// The property name.
-        /// </param>
-        /// <param name="propertyValue">
-        /// The output property value.
-        /// </param>
-        /// <exception cref="System.ArgumentNullException">
-        /// Thrown when element is null.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// Thrown when propertyName is null or empty.
-        /// </exception>
-        /// <returns>
-        /// True if get the value successfully, false otherwise.
-        /// </returns>
+        /// <param name="element">The element.</param>
+        /// <param name="propertyName">The property name.</param>
+        /// <param name="propertyValue">The output property value.</param>
+        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
+        /// <returns>True if get the value successfully, false otherwise.</returns>
         public static bool GetStringValueFromElement(Element element, string propertyName, out string propertyValue)
         {
             if (element == null)
@@ -94,7 +82,7 @@ namespace BIM.IFC.Utility
 
             propertyValue = string.Empty;
 
-            Parameter parameter = GetParameterFromName(element, propertyName);
+            Parameter parameter = GetParameterFromName(element, null, propertyName);
 
             if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.String)
             {
@@ -111,24 +99,12 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Gets integer value from parameter of an element.
         /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="propertyName">
-        /// The property name.
-        /// </param>
-        /// <param name="propertyValue">
-        /// The output property value.
-        /// </param>
-        /// <exception cref="System.ArgumentNullException">
-        /// Thrown when element is null.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// Thrown when propertyName is null or empty.
-        /// </exception>
-        /// <returns>
-        /// True if get the value successfully, false otherwise.
-        /// </returns>
+        /// <param name="element">The element.</param>
+        /// <param name="propertyName">The property name.</param>
+        /// <param name="propertyValue">The output property value.</param>
+        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
+        /// <returns>True if get the value successfully, false otherwise.</returns>
         public static bool GetIntValueFromElement(Element element, string propertyName, out int propertyValue)
         {
             if (element == null)
@@ -139,7 +115,7 @@ namespace BIM.IFC.Utility
 
             propertyValue = 0;
 
-            Parameter parameter = GetParameterFromName(element, propertyName);
+            Parameter parameter = GetParameterFromName(element, null, propertyName);
 
             if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Integer)
             {
@@ -153,25 +129,14 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Gets double value from parameter of an element.
         /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="propertyName">
-        /// The property name.
-        /// </param>
-        /// <param name="propertyValue">
-        /// The output property value.
-        /// </param>
-        /// <exception cref="System.ArgumentNullException">
-        /// Thrown when element is null.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// Thrown when propertyName is null or empty.
-        /// </exception>
-        /// <returns>
-        /// True if get the value successfully, false otherwise.
-        /// </returns>
-        public static bool GetDoubleValueFromElement(Element element, string propertyName, out double propertyValue)
+        /// <param name="element">The element.</param>
+        /// <param name="group">Optional property group to limit search to.</param>
+        /// <param name="propertyName">The property name.</param>
+        /// <param name="propertyValue">The output property value.</param>
+        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
+        /// <returns>True if get the value successfully, false otherwise.</returns>
+        public static bool GetDoubleValueFromElement(Element element, BuiltInParameterGroup? group, string propertyName, out double propertyValue)
         {
             if (element == null)
                 throw new ArgumentNullException("element");
@@ -181,7 +146,7 @@ namespace BIM.IFC.Utility
 
             propertyValue = 0.0;
 
-            Parameter parameter = GetParameterFromName(element, propertyName);
+            Parameter parameter = GetParameterFromName(element, group, propertyName);
 
             if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Double)
             {
@@ -425,7 +390,7 @@ namespace BIM.IFC.Utility
         /// </returns>
         public static bool GetDoubleValueFromElementOrSymbol(Element element, string propertyName, out double propertyValue)
         {
-            if (GetDoubleValueFromElement(element, propertyName, out propertyValue))
+            if (GetDoubleValueFromElement(element, null, propertyName, out propertyValue))
                 return true;
             else
             {
@@ -435,7 +400,7 @@ namespace BIM.IFC.Utility
                 Element elemType = document.GetElement(typeId);
                 if (elemType != null)
                 {
-                    return GetDoubleValueFromElement(elemType, propertyName, out propertyValue);
+                    return GetDoubleValueFromElement(elemType, null, propertyName, out propertyValue);
                 }
                 else
                     return false;
@@ -521,33 +486,53 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Gets the parameter by name from an element from the parameter cache.
         /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="propertyName">
-        /// The property name.
-        /// </param>
-        /// <returns>
-        /// The Parameter.
-        /// </returns>
+        /// <param name="element">The element.</param>
+        /// <param name="propertyName">The property name.</param>
+        /// <returns>The Parameter.</returns>
         static private Parameter getParameterByNameFromCache(Element element, string propertyName)
         {
-            IDictionary<string, Parameter> ifcCache = m_IFCParameters[element.Id].ParameterCache;
-            IDictionary<string, Parameter> otherCache = m_NonIFCParameters[element.Id].ParameterCache;
-
-            if ((otherCache.Count == 0) && (ifcCache.Count == 0))
-                return null;
-
-            string cleanPropertyName = NamingUtil.RemoveSpaces(propertyName);
-            
             Parameter parameter = null;
-            if (ifcCache.TryGetValue(cleanPropertyName, out parameter))
+            string cleanPropertyName = NamingUtil.RemoveSpaces(propertyName);
+
+            if (m_IFCParameters[element.Id].ParameterCache.TryGetValue(cleanPropertyName, out parameter))
                 return parameter;
 
-            otherCache.TryGetValue(cleanPropertyName, out parameter);
+            foreach (ParameterElementCache otherCache in m_NonIFCParameters[element.Id].Values)
+            {
+                if (otherCache.ParameterCache.TryGetValue(cleanPropertyName, out parameter))
+                    return parameter;
+            }
+
             return parameter;
         }
 
+        /// <summary>
+        /// Gets the parameter by name from an element from the parameter cache.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <param name="group">The parameter group.</param>
+        /// <param name="propertyName">The property name.</param>
+        /// <returns>The Parameter.</returns>
+        static private Parameter getParameterByNameFromCache(Element element, BuiltInParameterGroup group,
+            string propertyName)
+        {
+            Parameter parameter = null;
+            string cleanPropertyName = NamingUtil.RemoveSpaces(propertyName);
+
+            if (group == BuiltInParameterGroup.PG_IFC)
+            {
+                m_IFCParameters[element.Id].ParameterCache.TryGetValue(cleanPropertyName, out parameter);
+                return null;
+            }
+
+            ParameterElementCache otherCache = null;
+            m_NonIFCParameters[element.Id].TryGetValue(group, out otherCache);
+            if (otherCache != null)
+                otherCache.ParameterCache.TryGetValue(cleanPropertyName, out parameter);
+
+            return parameter;
+        }
+        
         /// <summary>
         /// Cache the parameters for an element, allowing quick access later.
         /// </summary>
@@ -561,7 +546,7 @@ namespace BIM.IFC.Utility
             if (m_NonIFCParameters.ContainsKey(id))
                 return;
 
-            ParameterElementCache nonIFCParameters = new ParameterElementCache();
+            IDictionary<BuiltInParameterGroup, ParameterElementCache> nonIFCParameters = new SortedDictionary<BuiltInParameterGroup, ParameterElementCache>();
             ParameterElementCache ifcParameters = new ParameterElementCache();
 
             m_NonIFCParameters[id] = nonIFCParameters;
@@ -595,10 +580,21 @@ namespace BIM.IFC.Utility
 
                 string cleanPropertyName = NamingUtil.RemoveSpaces(paramDefinition.Name);
                 
-                if (paramDefinition.ParameterGroup != BuiltInParameterGroup.PG_IFC)
-                    nonIFCParameters.ParameterCache[cleanPropertyName] = parameter;
+                BuiltInParameterGroup groupId = paramDefinition.ParameterGroup;
+                if (groupId != BuiltInParameterGroup.PG_IFC)
+                {
+                    ParameterElementCache cacheForGroup = null;
+                    if (!nonIFCParameters.TryGetValue(groupId, out cacheForGroup))
+                    {
+                        cacheForGroup = new ParameterElementCache();
+                        nonIFCParameters[groupId] = cacheForGroup;
+                    }
+                    cacheForGroup.ParameterCache[cleanPropertyName] = parameter;
+                }
                 else
+                {
                     ifcParameters.ParameterCache[cleanPropertyName] = parameter;
+                }
             }
         }
 
@@ -620,25 +616,22 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
-        /// Gets the parameter by name from an element.
+        /// Gets the parameter by name from an element for a specific parameter group.
         /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="propertyName">
-        /// The property name.
-        /// </param>
-        /// <returns>
-        /// The Parameter.
-        /// </returns>
-        static Parameter GetParameterFromName(Element element, string propertyName)
+        /// <param name="element">The element.</param>
+        /// <param name="group">The optional parameter group.</param>
+        /// <param name="propertyName">The property name.</param>
+        /// <returns>The Parameter.</returns>
+        static Parameter GetParameterFromName(Element element, BuiltInParameterGroup? group, string propertyName)
         {
             if (!m_IFCParameters.ContainsKey(element.Id))
                 CacheParametersForElement(element);
-                
-            return getParameterByNameFromCache(element, propertyName);
-        }
 
+            return group.HasValue ? 
+                getParameterByNameFromCache(element, group.Value, propertyName) :
+                getParameterByNameFromCache(element, propertyName);
+        }
+        
         /// <summary>
         /// Gets string value from parameter of an element or its element type.
         /// </summary>

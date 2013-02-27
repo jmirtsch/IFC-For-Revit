@@ -73,7 +73,7 @@ namespace BIM.IFC.Exporter
         /// <summary>
         /// The offset transform.
         /// </summary>
-        private Transform m_BrepOffsetTransform = null;
+        private Transform m_OffsetTransform = null;
 
         /// <summary>
         /// The exported material Ids
@@ -91,17 +91,17 @@ namespace BIM.IFC.Exporter
         /// <param name="representationHnd">
         /// The representation handle.
         /// </param>
-        /// <param name="brepOffsetTransform">
+        /// <param name="offsetTransform">
         /// The offset transform.
         /// </param>
         /// <param name="materialIds">
         /// The material ids.
         /// </param>
-        public BodyData(IFCAnyHandle representationHnd, Transform brepOffsetTransform, HashSet<ElementId> materialIds)
+        public BodyData(IFCAnyHandle representationHnd, Transform offsetTransform, HashSet<ElementId> materialIds)
         {
             this.m_RepresentationHnd = representationHnd;
-            if (brepOffsetTransform != null)
-                this.m_BrepOffsetTransform = brepOffsetTransform;
+            if (offsetTransform != null)
+                this.m_OffsetTransform = offsetTransform;
             if (materialIds != null)
                 this.m_MaterialIds = materialIds;
         }
@@ -112,7 +112,7 @@ namespace BIM.IFC.Exporter
         /// <param name="representationHnd">
         /// The representation handle.
         /// </param>
-        /// <param name="brepOffsetTransform">
+        /// <param name="offsetTransform">
         /// The offset transform.
         /// </param>
         /// <param name="materialIds">
@@ -122,7 +122,7 @@ namespace BIM.IFC.Exporter
         {
             this.m_RepresentationHnd = bodyData.RepresentationHnd;
             this.m_ShapeRepresentationType = bodyData.m_ShapeRepresentationType;
-            this.m_BrepOffsetTransform = bodyData.BrepOffsetTransform;
+            this.m_OffsetTransform = bodyData.OffsetTransform;
             this.m_MaterialIds = bodyData.MaterialIds;
         }
         
@@ -147,10 +147,10 @@ namespace BIM.IFC.Exporter
         /// <summary>
         /// The offset transform.
         /// </summary>
-        public Transform BrepOffsetTransform
+        public Transform OffsetTransform
         {
-            get { return m_BrepOffsetTransform; }
-            set { m_BrepOffsetTransform = value; }
+            get { return m_OffsetTransform; }
+            set { m_OffsetTransform = value; }
         }
 
         /// <summary>

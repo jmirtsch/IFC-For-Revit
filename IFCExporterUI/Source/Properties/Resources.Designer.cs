@@ -214,6 +214,15 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Include IFCSITE elevation in the site local placement origin.
+        /// </summary>
+        internal static string IncludeIfcSiteElevation {
+            get {
+                return ResourceManager.GetString("IncludeIfcSiteElevation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Include space boundaries.
         /// </summary>
         internal static string IncludeSpaceBoundaries {

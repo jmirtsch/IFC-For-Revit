@@ -240,8 +240,8 @@ namespace BIM.IFC.Exporter
 
                         ElementId categoryId = CategoryUtil.GetSafeCategoryId(ramp);
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions();
-                        IFCAnyHandle representation = RepresentationUtil.CreateBRepProductDefinitionShape(ramp.Document.Application,
-                            exporterIFC, ramp, categoryId, geometryElement, bodyExporterOptions, null, ecData);
+                        IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, ramp, categoryId, geometryElement, 
+                            bodyExporterOptions, null, ecData);
 
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(representation))
                         {

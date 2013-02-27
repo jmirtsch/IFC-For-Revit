@@ -66,8 +66,8 @@ namespace BIM.IFC.Exporter
                         ElementId catId = CategoryUtil.GetSafeCategoryId(element);
 
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                        IFCAnyHandle productRepresentation = RepresentationUtil.CreateBRepProductDefinitionShape(element.Document.Application,
-                           exporterIFC, element, catId, geometryElement, bodyExporterOptions, null, extraParams);
+                        IFCAnyHandle productRepresentation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, 
+                            element, catId, geometryElement, bodyExporterOptions, null, extraParams);
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(productRepresentation))
                         {
                             extraParams.ClearOpenings();
@@ -85,10 +85,10 @@ namespace BIM.IFC.Exporter
                             string typeGUID = GUIDUtil.CreateGUID(type);
                             string typeName = NamingUtil.GetNameOverride(type, NamingUtil.GetIFCName(type));
                             string typeObjectType = NamingUtil.GetObjectTypeOverride(type, NamingUtil.CreateIFCObjectName(exporterIFC, type));
-                            string applicableOccurence = NamingUtil.GetOverrideStringValue(type, "ApplicableOccurrence", typeObjectType);
+                            string applicableOccurence = NamingUtil.GetOverrideStringValue(type, "IfcApplicableOccurrence", typeObjectType);
                             string typeDescription = NamingUtil.GetDescriptionOverride(type, null);
                             string typeTag = NamingUtil.GetTagOverride(type, NamingUtil.CreateIFCElementId(type));
-                            string typeElementType = NamingUtil.GetOverrideStringValue(type, "ElementType", typeName);
+                            string typeElementType = NamingUtil.GetOverrideStringValue(type, "IfcElementType", typeName);
 
                             HashSet<IFCAnyHandle> propertySetsOpt = new HashSet<IFCAnyHandle>();
                             IList<IFCAnyHandle> repMapListOpt = new List<IFCAnyHandle>();
@@ -180,7 +180,8 @@ namespace BIM.IFC.Exporter
                             productWrapper.AddElement(instanceHandle, setter, extraParams, LevelUtil.AssociateElementToLevel(element));
                         }
 
-                        OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, element, extraParams, exporterIFC, localPlacementToUse, setter, productWrapper);
+                        OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, element, extraParams, null,
+                            exporterIFC, localPlacementToUse, setter, productWrapper);
 
                         if (currentTypeInfo.IsValid())
                             ExporterCacheManager.TypeRelationsCache.Add(currentTypeInfo.Style, instanceHandle);

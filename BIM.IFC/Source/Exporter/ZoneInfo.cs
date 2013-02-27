@@ -51,9 +51,14 @@ namespace BIM.IFC.Exporter
         private Dictionary<string, IFCAnyHandle> m_ClassificationReferences = new Dictionary<string, IFCAnyHandle>();
 
         /// <summary>
-        /// The associated ePSet_SpatialZoneEnergyAnalysis handle, if any.
+        /// The associated ePset_SpatialZoneEnergyAnalysis handle, if any.
         /// </summary>
         private IFCAnyHandle m_EnergyAnalysisProperySetHandle = null;
+
+        /// <summary>
+        /// The associated Pset_ZoneCommon handle, if any.
+        /// </summary>
+        private IFCAnyHandle m_ZoneCommonProperySetHandle = null;
 
         /// <summary>
         /// Constructs a ZoneInfo object.
@@ -62,15 +67,17 @@ namespace BIM.IFC.Exporter
         /// <param name="description">The description.</param>
         /// <param name="roomHandle">The room handle for this zone.</param>
         /// <param name="classificationReferences">The room handle for this zone.</param>
-        /// <param name="energyAnalysisHnd">The ePSet_SpatialZoneEnergyAnalysis handle for this zone.</param>
+        /// <param name="energyAnalysisHnd">The ePset_SpatialZoneEnergyAnalysis handle for this zone.</param>
+        /// <param name="zoneCommonPSetHandle">The Pset_ZoneCommon handle for this zone.</param>
         public ZoneInfo(string objectType, string description, IFCAnyHandle roomHandle, 
-            Dictionary<string, IFCAnyHandle> classificationReferences, IFCAnyHandle energyAnalysisHnd)
+            Dictionary<string, IFCAnyHandle> classificationReferences, IFCAnyHandle energyAnalysisHnd, IFCAnyHandle zoneCommonPSetHandle)
         {
             ObjectType = objectType;
             Description = description;
             RoomHandles.Add(roomHandle);
             ClassificationReferences = classificationReferences;
             EnergyAnalysisProperySetHandle = energyAnalysisHnd;
+            ZoneCommonProperySetHandle = zoneCommonPSetHandle;
         }
 
         /// <summary>
@@ -117,12 +124,21 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
-        /// The associated ePSet_SpatialZoneEnergyAnalysis handle.
+        /// The associated ePset_SpatialZoneEnergyAnalysis handle.
         /// </summary>
         public IFCAnyHandle EnergyAnalysisProperySetHandle
         {
             get { return m_EnergyAnalysisProperySetHandle; }
             set { m_EnergyAnalysisProperySetHandle = value; }
+        }
+
+        /// <summary>
+        /// The associated Pset_ZoneCommon handle.
+        /// </summary>
+        public IFCAnyHandle ZoneCommonProperySetHandle
+        {
+            get { return m_ZoneCommonProperySetHandle; }
+            set { m_ZoneCommonProperySetHandle = value; }
         }
     }
 }
