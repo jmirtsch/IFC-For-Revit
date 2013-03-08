@@ -251,6 +251,10 @@ namespace BIM.IFC.Exporter
                     {
                         instanceHandle = IFCInstanceExporter.CreateMember(file, instanceGUID, ownerHistory,
                            instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
+
+                        // Register the members's IFC handle for later use by truss export.
+                        ExporterCacheManager.ElementToHandleCache.Register(familyInstance.Id, instanceHandle);
+
                         break;
                     }
                 case IFCExportType.ExportPlateType:

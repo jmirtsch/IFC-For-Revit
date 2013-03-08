@@ -115,11 +115,11 @@ namespace BIM.IFC.Exporter
                         string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                         string description = NamingUtil.GetDescriptionOverride(element, null);
                         string objectType = NamingUtil.GetObjectTypeOverride(element, elementTypeName);
-                        string Tag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
+                        string tag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
                         IFCAnyHandle elemHnd = IFCInstanceExporter.CreateFlowSegment(file, GUIDUtil.CreateGUID(element),
                             exporterIFC.GetOwnerHistoryHandle(), name, description, objectType, localPlacementToUse, prodRep,
-                            Tag);
+                            tag);
 
                         if (roomId == ElementId.InvalidElementId)
                         {

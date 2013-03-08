@@ -48,6 +48,12 @@ namespace BIM.IFC.Export.UI
                 {
                     // Read restore bounds value from file
                     Rect restoreBounds = Rect.Parse(reader.ReadLine());
+
+                    // if the saved version of rect is not current version, then use the default.
+                    string savedUIVersion = reader.ReadLine();
+                    string uiVersion = GetAssemblyVersion();
+                    if (!(string.Compare(uiVersion, savedUIVersion) == 0))
+                        return new Rect();
                     return restoreBounds;
                 }
             }
@@ -79,6 +85,7 @@ namespace BIM.IFC.Export.UI
             {
                 // Write restore bounds value to file
                 writer.WriteLine(restoreBounds.ToString());
+                writer.WriteLine(GetAssemblyVersion());
             }
         }
 

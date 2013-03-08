@@ -97,12 +97,16 @@ namespace BIM.IFC.Utility
                 return newShapeRepresentation;
 
             string ifcCADLayer = null;
+            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IFCCadLayer", out ifcCADLayer) || string.IsNullOrWhiteSpace(ifcCADLayer))
+                ifcCADLayer = ExporterStateManager.GetCurrentCADLayerOverride();
+
             // We are using the DWG export layer table to correctly map category to DWG layer for the 
             // IfcPresentationLayerAsssignment, if it is not overridden.
-            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IFCCadLayer", out ifcCADLayer) && !string.IsNullOrWhiteSpace(ifcCADLayer))
+            if (!string.IsNullOrWhiteSpace(ifcCADLayer))
                 ExporterCacheManager.PresentationLayerSetCache.AddRepresentationToLayer(ifcCADLayer, newShapeRepresentation);
             else
                 exporterIFC.RegisterShapeForPresentationLayer(element, categoryId, newShapeRepresentation);
+            
             return newShapeRepresentation;
         }
 
@@ -463,6 +467,7 @@ namespace BIM.IFC.Utility
             GeometryElement geometryElement, BodyExporterOptions bodyExporterOptions, IList<IFCAnyHandle> extraReps, 
             IFCExtrusionCreationData extrusionCreationData, out BodyData bodyData)
         {
+            bodyData = null;
             SolidMeshGeometryInfo info = null;
             IList<GeometryObject> geometryList = new List<GeometryObject>();
 
@@ -503,8 +508,7 @@ namespace BIM.IFC.Utility
                     bodyReps.Add(hnd);
             }
 
-            Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
-            IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, element.get_Geometry(geomOptions), Transform.Identity);
+            IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geometryElement, Transform.Identity);
             if (boundingBoxRep != null)
                 bodyReps.Add(boundingBoxRep);
 

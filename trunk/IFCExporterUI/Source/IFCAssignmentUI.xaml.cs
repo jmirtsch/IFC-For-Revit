@@ -197,7 +197,7 @@ namespace BIM.IFC.Export.UI
             }
 
             // Update Classification if it has changed or the mandatory fields are filled. If mandatory fields are not filled (we are not supposed to arrive here in this case!) we will ignore the classification
-            if (m_newClassification.isUnchanged(m_savedClassification) == false && m_newClassification.isMandatoryEmpty() == false)
+            if (m_newClassification.IsUnchanged(m_savedClassification) == false && m_newClassification.IsMandatoryEmpty() == false)
             {
                 m_newClassificationMgr.UpdateClassification(m_document, m_newClassification);
             }
@@ -263,9 +263,9 @@ namespace BIM.IFC.Export.UI
                     if (String.Compare(tItemRemoved.Header.ToString(), "Classification") == 0 && tItemAdded != tItemRemoved)  // avoid loop when we force the Tab back to the same one
                     {
                         // Current tab item is Classification Tab
-                        if (m_newClassification.isMandatoryEmpty() == false) // we will skip the mandatory field check when all are empty (i.e. user does not intend to create any Classification)
+                        if (m_newClassification.IsMandatoryEmpty() == false) // we will skip the mandatory field check when all are empty (i.e. user does not intend to create any Classification)
                         {
-                            if (m_newClassification.areMandatoryFieldsFilled() == false)
+                            if (m_newClassification.AreMandatoryFieldsFilled() == false)
                             {
                                 m_newClassification.ClassificationTabMsg = "Mandatory fields Name, Source or Publisher, and Edition cannot be NULL!";
                                 AssignmenttabControl.SelectedItem = tItemRemoved;  // Force the tab to return to Classification

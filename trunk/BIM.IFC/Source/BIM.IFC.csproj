@@ -32,6 +32,7 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Exporter\AreaSchemeExporter.cs" />
     <Compile Include="Exporter\AssemblyInstanceExporter.cs" />
     <Compile Include="Exporter\AssemblyInstanceInfo.cs" />
     <Compile Include="Exporter\BeamExporter.cs" />
@@ -126,6 +127,7 @@
     <Compile Include="Exporter\WallConnectionData.cs" />
     <Compile Include="Exporter\WallExporter.cs" />
     <Compile Include="Exporter\WallSweepExporter.cs" />
+    <Compile Include="Exporter\ZoneExporter.cs" />
     <Compile Include="Exporter\ZoneInfo.cs" />
     <Compile Include="Toolkit\IFCAnyHandleUtil.cs" />
     <Compile Include="Toolkit\IFCEnums.cs" />
@@ -156,6 +158,7 @@
     <Compile Include="Utility\ElementFilteringUtil.cs" />
     <Compile Include="Utility\ElementToHandleCache.cs" />
     <Compile Include="Utility\ExporterCacheManager.cs" />
+    <Compile Include="Utility\ExporterStateManager.cs" />
     <Compile Include="Utility\ExporterUtil.cs" />
     <Compile Include="Utility\ExportOptionsCache.cs" />
     <Compile Include="Utility\FamilyExporterUtil.cs" />

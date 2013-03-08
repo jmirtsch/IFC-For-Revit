@@ -1019,7 +1019,7 @@ namespace BIM.IFC.Exporter
                             IFCAnyHandle flightLocalPlacement = ExporterUtil.CreateLocalPlacement(file, placementSetter.GetPlacement(), null);
 
                             IFCAnyHandle flightHnd;
-                            string stairName = NamingUtil.GetOverrideStringValue(legacyStair, "Name", NamingUtil.GetIFCNamePlusIndex(legacyStair, ii + 1));
+                            string stairName = NamingUtil.GetNameOverride(legacyStair, NamingUtil.GetIFCNamePlusIndex(legacyStair, ii + 1)); 
                             
                             if (isRamp)
                             {

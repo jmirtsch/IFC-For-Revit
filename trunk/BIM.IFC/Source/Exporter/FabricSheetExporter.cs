@@ -84,8 +84,6 @@ namespace BIM.IFC.Exporter
                 string description = NamingUtil.GetDescriptionOverride(element, null);
                 string objectType = NamingUtil.GetObjectTypeOverride(element, revitObjectType);
 
-                string elementTag = NamingUtil.CreateIFCElementId(element);
-
                 IFCAnyHandle fabricArea = IFCInstanceExporter.CreateGroup(file, guid,
                     ownerHistory, name, description, objectType);
 

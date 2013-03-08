@@ -547,6 +547,16 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Sets the IfcAxis2Placement handle stored as the placement relative to for an IfcLocalPlacement.
+        /// </summary>
+        /// <param name="localPlacement">The IfcLocalPlacement handle.</param>
+        /// <param name="newPlacementRelTo">The IfcObjectPlacement handle to use as the placement relative to.</param>
+        public static void SetPlacementRelTo(IFCAnyHandle localPlacement, IFCAnyHandle newPlacementRelTo)
+        {
+            IFCAnyHandleUtil.SetAttribute(localPlacement, "PlacementRelTo", newPlacementRelTo);
+        }
+
+        /// <summary>
         /// Sets the IfcAxis2Placement handle stored as the relative placement for an IfcLocalPlacement.
         /// </summary>
         /// <param name="localPlacement">The IfcLocalPlacement handle.</param>

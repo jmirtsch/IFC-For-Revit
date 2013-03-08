@@ -83,7 +83,7 @@ namespace BIM.IFC.Utility
         {
             IFCAnyHandle buildingPlacement = IFCAnyHandleUtil.GetObjectPlacement(buildingHnd);
             IFCAnyHandle relPlacement = IFCAnyHandleUtil.GetObjectPlacement(siteHnd);
-            IFCAnyHandleUtil.SetAttribute(buildingPlacement, "PlacementRelTo", relPlacement);
+            GeometryUtil.SetPlacementRelTo(buildingPlacement, relPlacement);
         }
 
         /// <summary>

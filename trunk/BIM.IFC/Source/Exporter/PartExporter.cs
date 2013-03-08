@@ -360,8 +360,8 @@ namespace BIM.IFC.Exporter
                                         extrusionCreationData.GetLocalPlacement(), prodRep, partTag, slabType);
                                     break;
                                 case IFCExportType.ExportWall:
-                                    ifcPart = IFCInstanceExporter.CreateWallStandardCase(file, partGUID, ownerHistory, partName, partDescription, 
-                                        partObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, partTag);
+                                    ifcPart = IFCInstanceExporter.CreateWall(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
+                                    extrusionCreationData.GetLocalPlacement(), prodRep, partTag);
                                     break;
                                 default:
                                     ifcPart = IFCInstanceExporter.CreateBuildingElementProxy(file, partGUID, ownerHistory, partName, partDescription, 
