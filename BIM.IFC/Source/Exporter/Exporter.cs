@@ -107,8 +107,7 @@ namespace BIM.IFC.Exporter
             else
                 m_ElementExporter += ExportSpatialElements;
             m_ElementExporter += ExportNonSpatialElements;
-            m_ElementExporter += ExportCachedRailings;
-            m_ElementExporter += ExportCachedFabricAreas;
+            m_ElementExporter += ExportContainers;
             m_ElementExporter += ExportGrids;
             m_ElementExporter += ExportConnectors;
         }
@@ -121,6 +120,10 @@ namespace BIM.IFC.Exporter
         /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
         public void ExportIFC(Autodesk.Revit.DB.Document document, ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView)
         {
+            // Make sure our static caches are clear at the start, and end, of export.
+            ExporterCacheManager.Clear();
+            ExporterStateManager.Clear();
+
             try
             {
                 BeginExport(exporterIFC, document, filterView);
@@ -134,6 +137,8 @@ namespace BIM.IFC.Exporter
             finally
             {
                 ExporterCacheManager.Clear();
+                ExporterStateManager.Clear();
+
                 DelegateClear();
 
                 if (m_Writer != null)
@@ -166,15 +171,15 @@ namespace BIM.IFC.Exporter
                     new FilteredElementCollector(document) : new FilteredElementCollector(document, filterView.Id);
             }
 
-            bool spaceExported = true;
+            bool spaceExported = false;
             if (exportOptionsCache.SpaceBoundaryLevel == 2)
             {
-                SpatialElementExporter.ExportSpatialElement2ndLevel(this, exporterIFC, document, filterView, ref spaceExported);
+                spaceExported = SpatialElementExporter.ExportSpatialElement2ndLevel(this, exporterIFC, document, filterView);
             }
 
             //export spatial element - none or 1st level room boundaries
             //  or create IFC Space only if 2nd level room boundaries export failed
-            if (exportOptionsCache.SpaceBoundaryLevel == 0 || exportOptionsCache.SpaceBoundaryLevel == 1 || !spaceExported)
+            if (exportOptionsCache.SpaceBoundaryLevel < 2 || !spaceExported)
             {
                 SpatialElementExporter.InitializeSpatialElementGeometryCalculator(document, exporterIFC);
                 ElementFilter spatialElementFilter = ElementFilteringUtil.GetSpatialElementFilter(document, exporterIFC, filterView);
@@ -212,6 +217,23 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
+        /// Export various containers that depend on individual element export.
+        /// </summary>
+        /// <param name="document">The Revit document.</param>
+        /// <param name="exporterIFC">The exporterIFC class.</param>
+        /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
+        protected void ExportContainers(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document,
+            Autodesk.Revit.DB.View filterView)
+        {
+            ExportCachedRailings(exporterIFC, document, filterView);
+            ExportCachedFabricAreas(exporterIFC, document, filterView);
+            ExportTrusses(exporterIFC, document, filterView);
+            ExportBeamSystems(exporterIFC, document, filterView);
+            ExportAreaSchemes(exporterIFC, document, filterView);
+            ExportZones(exporterIFC, document, filterView);
+        }
+
+        /// <summary>
         /// Export railings cached during spatial element export.  
         /// Railings are exported last as their containment is not known until all stairs have been exported.
         /// This is a very simple sorting, and further containment issues could require a more robust solution in the future.
@@ -240,6 +262,70 @@ namespace BIM.IFC.Exporter
             Autodesk.Revit.DB.View filterView)
         {
             foreach (ElementId elementId in ExporterCacheManager.FabricAreaHandleCache.Keys)
+            {
+                Element element = document.GetElement(elementId);
+                ExportElement(exporterIFC, filterView, element);
+            }
+        }
+
+        /// <summary>
+        /// Export Trusses.  These could be in assemblies, so do before assembly export, but after beams and members are exported.
+        /// </summary>
+        /// <param name="document">The Revit document.</param>
+        /// <param name="exporterIFC">The exporterIFC class.</param>
+        /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
+        protected void ExportTrusses(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document,
+            Autodesk.Revit.DB.View filterView)
+        {
+            foreach (ElementId elementId in ExporterCacheManager.TrussCache)
+            {
+                Element element = document.GetElement(elementId);
+                ExportElement(exporterIFC, filterView, element);
+            }
+        }
+
+        /// <summary>
+        /// Export BeamSystems.  These could be in assemblies, so do before assembly export, but after beams are exported.
+        /// </summary>
+        /// <param name="document">The Revit document.</param>
+        /// <param name="exporterIFC">The exporterIFC class.</param>
+        /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
+        protected void ExportBeamSystems(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document,
+            Autodesk.Revit.DB.View filterView)
+        {
+            foreach (ElementId elementId in ExporterCacheManager.BeamSystemCache)
+            {
+                Element element = document.GetElement(elementId);
+                ExportElement(exporterIFC, filterView, element);
+            }
+        }
+
+        /// <summary>
+        /// Export Zones.
+        /// </summary>
+        /// <param name="document">The Revit document.</param>
+        /// <param name="exporterIFC">The exporterIFC class.</param>
+        /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
+        protected void ExportZones(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document,
+            Autodesk.Revit.DB.View filterView)
+        {
+            foreach (ElementId elementId in ExporterCacheManager.ZoneCache)
+            {
+                Element element = document.GetElement(elementId);
+                ExportElement(exporterIFC, filterView, element);
+            }
+        }
+
+        /// <summary>
+        /// Export Area Schemes.
+        /// </summary>
+        /// <param name="document">The Revit document.</param>
+        /// <param name="exporterIFC">The exporterIFC class.</param>
+        /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
+        protected void ExportAreaSchemes(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document,
+            Autodesk.Revit.DB.View filterView)
+        {
+            foreach (ElementId elementId in ExporterCacheManager.AreaSchemeCache.Keys)
             {
                 Element element = document.GetElement(elementId);
                 ExportElement(exporterIFC, filterView, element);
@@ -410,10 +496,26 @@ namespace BIM.IFC.Exporter
                 {
                     st.Start();
 
-                    if (element is AssemblyInstance)
+                    // A long list of supported elements.  Please keep in alphabetical order.
+                    if (element is AreaReinforcement || element is PathReinforcement || element is Rebar)
+                    {
+                        RebarExporter.Export(exporterIFC, element, filterView, productWrapper);
+                    }
+                    else if (element is AreaScheme)
+                    {
+                        AreaSchemeExporter.ExportAreaScheme(exporterIFC, element as AreaScheme, productWrapper);
+                    }
+                    else if (element is AssemblyInstance)
                     {
                         AssemblyInstance assemblyInstance = element as AssemblyInstance;
                         AssemblyInstanceExporter.ExportAssemblyInstanceElement(exporterIFC, assemblyInstance, productWrapper);
+                    }
+                    else if (element is BeamSystem)
+                    {
+                        if (ExporterCacheManager.BeamSystemCache.Contains(element.Id))
+                            AssemblyInstanceExporter.ExportBeamSystem(exporterIFC, element as BeamSystem, productWrapper);
+                        else
+                            ExporterCacheManager.BeamSystemCache.Add(element.Id);
                     }
                     else if (element is Ceiling)
                     {
@@ -436,6 +538,16 @@ namespace BIM.IFC.Exporter
                         CurveElement curveElem = element as CurveElement;
                         CurveElementExporter.ExportCurveElement(exporterIFC, curveElem, geomElem, productWrapper);
                     }
+                    else if (element is CurtainSystem)
+                    {
+                        CurtainSystem curtainSystem = element as CurtainSystem;
+                        CurtainSystemExporter.ExportCurtainSystem(exporterIFC, curtainSystem, productWrapper);
+                    }
+                    else if (CurtainSystemExporter.IsLegacyCurtainElement(element))
+                    {
+                        CurtainSystemExporter.ExportLegacyCurtainElement(exporterIFC, element, productWrapper);
+                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
+                    }
                     else if (element is DuctInsulation)
                     {
                         DuctInsulation ductInsulation = element as DuctInsulation;
@@ -455,6 +567,10 @@ namespace BIM.IFC.Exporter
                     {
                         FabricSheet fabricSheet = element as FabricSheet;
                         FabricSheetExporter.ExportFabricSheet(exporterIFC, fabricSheet, geomElem, productWrapper);
+                    }
+                    else if (element is FaceWall)
+                    {
+                        WallExporter.ExportWall(exporterIFC, element, geomElem, productWrapper);
                     }
                     else if (element is FamilyInstance)
                     {
@@ -497,9 +613,10 @@ namespace BIM.IFC.Exporter
                     {
                         RampExporter.Export(exporterIFC, element, geomElem, productWrapper);
                     }
-                    else if (element is Rebar || element is AreaReinforcement || element is PathReinforcement)
+                    else if (element is RoofBase)
                     {
-                        RebarExporter.Export(exporterIFC, element, filterView, productWrapper);
+                        RoofBase roofElement = element as RoofBase;
+                        RoofExporter.Export(exporterIFC, roofElement, geomElem, productWrapper);
                     }
                     else if (element is SpatialElement)
                     {
@@ -520,34 +637,29 @@ namespace BIM.IFC.Exporter
                         TopographySurface topSurface = element as TopographySurface;
                         SiteExporter.ExportTopographySurface(exporterIFC, topSurface, geomElem, productWrapper);
                     }
+                    else if (element is Truss)
+                    {
+                        if (ExporterCacheManager.TrussCache.Contains(element.Id))
+                            AssemblyInstanceExporter.ExportTrussElement(exporterIFC, element as Truss, productWrapper);
+                        else
+                            ExporterCacheManager.TrussCache.Add(element.Id);
+                    }
                     else if (element is Wall)
                     {
                         Wall wallElem = element as Wall;
                         WallExporter.Export(exporterIFC, wallElem, geomElem, productWrapper);
-                    }
-                    else if (element is FaceWall)
-                    {
-                        WallExporter.ExportWall(exporterIFC, element, geomElem, productWrapper);
                     }
                     else if (element is WallSweep)
                     {
                         WallSweep wallSweep = element as WallSweep;
                         WallSweepExporter.Export(exporterIFC, wallSweep, geomElem, productWrapper);
                     }
-                    else if (element is RoofBase)
+                    else if (element is Zone)
                     {
-                        RoofBase roofElement = element as RoofBase;
-                        RoofExporter.Export(exporterIFC, roofElement, geomElem, productWrapper);
-                    }
-                    else if (element is CurtainSystem)
-                    {
-                        CurtainSystem curtainSystem = element as CurtainSystem;
-                        CurtainSystemExporter.ExportCurtainSystem(exporterIFC, curtainSystem, productWrapper);
-                    }
-                    else if (CurtainSystemExporter.IsLegacyCurtainElement(element))
-                    {
-                        CurtainSystemExporter.ExportLegacyCurtainElement(exporterIFC, element, productWrapper);
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
+                        if (ExporterCacheManager.ZoneCache.Contains(element.Id))
+                            ZoneExporter.ExportZone(exporterIFC, element as Zone, productWrapper);
+                        else
+                            ExporterCacheManager.ZoneCache.Add(element.Id);
                     }
                     else
                     {
@@ -890,17 +1002,7 @@ namespace BIM.IFC.Exporter
 
                         // Set the PlacementRelTo of assembly elements to assembly instance.
                         IFCAnyHandle assemblyPlacement = IFCAnyHandleUtil.GetObjectPlacement(assemblyInfo.AssemblyInstanceHandle);
-                        foreach (IFCAnyHandle elementHandle in assemblyInfo.ElementHandles)
-                        {
-                            // NOTE: caution that old IFCAXIS2PLACEMENT3D will be unused as the new one replace it. 
-                            //       But we cannot delete it safely yet because we don't know if any handle is referencing it.
-                            IFCAnyHandle elementPlacement = IFCAnyHandleUtil.GetObjectPlacement(elementHandle);
-                            Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(assemblyPlacement, elementPlacement);
-                            Transform inverseTrf = relTrf.Inverse;
-                            IFCAnyHandle relLocalPlacement = ExporterUtil.CreateAxis2Placement3D(file, inverseTrf.Origin, inverseTrf.BasisZ, inverseTrf.BasisX);
-                            IFCAnyHandleUtil.SetAttribute(elementPlacement, "PlacementRelTo", assemblyPlacement);
-                            GeometryUtil.SetRelativePlacement(elementPlacement, relLocalPlacement);
-                        }
+                        AssemblyInstanceExporter.SetLocalPlacementsRelativeToAssembly(exporterIFC, assemblyPlacement, assemblyInfo.ElementHandles);
                     }                  
                 }
 
@@ -1801,15 +1903,16 @@ namespace BIM.IFC.Exporter
             HashSet<IFCAnyHandle> repContexts = CreateContextInformation(exporterIFC, doc);
 
             // As per IFC implementer's agreement, we get IfcProject.Name from ProjectInfo.Number and IfcProject.Longname from ProjectInfo.Name 
-            string projectName = projInfo.Number;
-            string projectLongName = projInfo.Name;
+            string projectName = (projInfo != null) ? projInfo.Number : null;
+            string projectLongName = (projInfo != null) ? projInfo.Name : null;
 
             // Get project description if it is set in the Project info
-            string projectDescription = NamingUtil.GetDescriptionOverride(projInfo, null);
-            string projectObjectType = NamingUtil.GetObjectTypeOverride(projInfo, null);
+            string projectObjectType = (projInfo != null) ? NamingUtil.GetObjectTypeOverride(projInfo, null) : null;
+            string projectDescription = (projInfo != null) ? NamingUtil.GetDescriptionOverride(projInfo, null) : null;
 
             string projectPhase = null;
-            ParameterUtil.GetStringValueFromElement(projInfo, "Project Phase", out projectPhase);
+            if (projInfo != null)
+                ParameterUtil.GetStringValueFromElement(projInfo, "Project Phase", out projectPhase);
 
             IFCAnyHandle projectHandle = IFCInstanceExporter.CreateProject(file,
                 GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Project), ownerHistory,

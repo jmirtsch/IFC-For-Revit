@@ -100,7 +100,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_615CFB50D7DC4F9FE9B4A6ED2E59095D"
+        "OwnerKey" = "8:_E951966DA98049D9A9174374693E5785"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -112,7 +112,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_E951966DA98049D9A9174374693E5785"
+        "OwnerKey" = "8:_615CFB50D7DC4F9FE9B4A6ED2E59095D"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -596,15 +596,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:IFC Export UI for Autodesk Revit 2013"
-        "ProductCode" = "8:{3277C454-B45F-404E-B129-0E2018FA4F99}"
-        "PackageCode" = "8:{F75626CF-00C3-4902-B984-60EFAB4EB82F}"
+        "ProductCode" = "8:{41791CB0-8DC9-4BCD-8A3F-5AC288D204B3}"
+        "PackageCode" = "8:{7901C19A-DED5-4F22-8F9E-B1E1D0D6C6B0}"
         "UpgradeCode" = "8:{9E50B117-7C8E-4831-9318-07CC58402FB0}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:1.8.0"
+        "ProductVersion" = "8:1.8.1"
         "Manufacturer" = "8:Revit IFC export alternate UI"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"

@@ -173,7 +173,7 @@ namespace BIM.IFC.Export.UI
             this.Name = "<<Default>>";
             this.IFCVersion = IFCVersion.IFC2x3;
             this.IFCFileType = IFCFileFormat.Ifc;
-            this.SpaceBoundaries = 1;
+            this.SpaceBoundaries = 0;
             this.ExportBaseQuantities = false;
             this.SplitWallsAndColumns = false;
             this.VisibleElementsOfCurrentView = false;

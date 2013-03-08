@@ -157,9 +157,6 @@ namespace BIM.IFC.Utility
             // "ExportBoundingBox" override
             cache.ExportBoundingBoxOverride = GetNamedBooleanOption(options, "ExportBoundingBox");
 
-            // Whether or not to export GSA Gross Design Area.
-            cache.ExportGSAGrossDesignArea = GetNamedBooleanOption(options, "ExportGSAGrossDesignArea");
-
             // Using the alternate UI or not.
             cache.AlternateUIVersionOverride = GetNamedStringOption(options, "AlternateUIVersion");
 
@@ -304,15 +301,6 @@ namespace BIM.IFC.Utility
         /// Cache variable for the export annotations override (if set independently via the UI or API inputs)
         /// </summary>
         private bool? ExportAnnotationsOverride
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Cache variable for exporting GSA Gross Design Area
-        /// </summary>
-        public bool? ExportGSAGrossDesignArea
         {
             get;
             set;

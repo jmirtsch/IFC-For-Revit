@@ -254,7 +254,7 @@ namespace BIM.IFC.Utility
             // Create material association if any.
             if (materialId != ElementId.InvalidElementId)
             {
-                IFCAnyHandle materialNameHandle = GetOrCreateMaterialHandle(document, exporterIFC, materialId, true);
+                IFCAnyHandle materialNameHandle = GetOrCreateMaterialHandle(document, exporterIFC, materialId);
 
                 if (!IFCAnyHandleUtil.IsNullOrHasNoValue(materialNameHandle))
                 {
@@ -295,7 +295,7 @@ namespace BIM.IFC.Utility
             {
                 if (materialId != ElementId.InvalidElementId)
                 {
-                    IFCAnyHandle matHnd = GetOrCreateMaterialHandle(document, exporterIFC, materialId, false);
+                    IFCAnyHandle matHnd = GetOrCreateMaterialHandle(document, exporterIFC, materialId);
                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(matHnd))
                     {
                         materials.Add(matHnd);
@@ -352,25 +352,13 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Gets material handle from material id or creates one if there is none.
         /// </summary>
-        /// <param name="document">
-        /// The Revit document.
-        /// </param>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="materialId">
-        /// The material id.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
-        public static IFCAnyHandle GetOrCreateMaterialHandle(Document document, ExporterIFC exporterIFC, ElementId materialId, bool associateStyle)
+        /// <param name="document">The Revit document.</param>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="materialId">The material id.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle GetOrCreateMaterialHandle(Document document, ExporterIFC exporterIFC, ElementId materialId)
         {
-            IFCAnyHandle materialNameHandle = null;
-            if (associateStyle)
-                materialNameHandle = ExporterCacheManager.MaterialHandleCache.Find(materialId);
-            else
-                materialNameHandle = ExporterCacheManager.MaterialHandleWithoutRepCache.Find(materialId);
+            IFCAnyHandle materialNameHandle = ExporterCacheManager.MaterialHandleCache.Find(materialId);
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(materialNameHandle))
             {
                 string materialName = " <Unnamed>";
@@ -384,14 +372,11 @@ namespace BIM.IFC.Utility
                 }
                 materialNameHandle = IFCInstanceExporter.CreateMaterial(exporterIFC.GetFile(), materialName);
 
-                if (associateStyle)
-                    ExporterCacheManager.MaterialHandleCache.Register(materialId, materialNameHandle);
-                else
-                    ExporterCacheManager.MaterialHandleWithoutRepCache.Register(materialId, materialNameHandle);
+                ExporterCacheManager.MaterialHandleCache.Register(materialId, materialNameHandle);
                 
                 // associate Material with SurfaceStyle if necessary.
                 IFCFile file = exporterIFC.GetFile();
-                if (associateStyle && materialId != ElementId.InvalidElementId && !ExporterCacheManager.ExportOptionsCache.ExportAs2x2 && materialNameHandle.HasValue)
+                if (materialId != ElementId.InvalidElementId && !ExporterCacheManager.ExportOptionsCache.ExportAs2x2 && materialNameHandle.HasValue)
                 {   
                     HashSet<IFCAnyHandle> matRepHandles = IFCAnyHandleUtil.GetHasRepresentation(materialNameHandle);
                     if (matRepHandles.Count == 0)

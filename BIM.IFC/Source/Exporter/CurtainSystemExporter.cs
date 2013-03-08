@@ -55,87 +55,93 @@ namespace BIM.IFC.Exporter
             if (wallElement == null)
                 return;
 
-            HashSet<ElementId> alreadyVisited = new HashSet<ElementId>();  // just in case.
-            Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
+            string overrideCADLayer = null;
+            ParameterUtil.GetStringValueFromElementOrSymbol(wallElement, "IFCCadLayer", out overrideCADLayer);
+
+            using (ExporterStateManager.CADLayerOverrideSetter layerSetter = new ExporterStateManager.CADLayerOverrideSetter(overrideCADLayer))
             {
-                foreach (ElementId subElemId in allSubElements)
+                HashSet<ElementId> alreadyVisited = new HashSet<ElementId>();  // just in case.
+                Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
                 {
-                    using (ProductWrapper productWrapper = ProductWrapper.Create(origWrapper))
+                    foreach (ElementId subElemId in allSubElements)
                     {
-                        Element subElem = wallElement.Document.GetElement(subElemId);
-                        if (subElem == null)
-                            continue;
-                        GeometryElement geomElem = subElem.get_Geometry(geomOptions);
-                        if (geomElem == null)
-                            continue;
-
-                        if (alreadyVisited.Contains(subElem.Id))
-                            continue;
-                        alreadyVisited.Add(subElem.Id);
-
-                        try
+                        using (ProductWrapper productWrapper = ProductWrapper.Create(origWrapper))
                         {
-                            if (subElem is FamilyInstance)
+                            Element subElem = wallElement.Document.GetElement(subElemId);
+                            if (subElem == null)
+                                continue;
+                            GeometryElement geomElem = subElem.get_Geometry(geomOptions);
+                            if (geomElem == null)
+                                continue;
+
+                            if (alreadyVisited.Contains(subElem.Id))
+                                continue;
+                            alreadyVisited.Add(subElem.Id);
+
+                            try
                             {
-                                if (subElem is Mullion)
+                                if (subElem is FamilyInstance)
                                 {
-                                    if (exporterIFC.ExportAs2x2)
-                                        ProxyElementExporter.Export(exporterIFC, subElem, geomElem, productWrapper);
-                                    else
+                                    if (subElem is Mullion)
                                     {
-                                        IFCAnyHandle currLocalPlacement = currSetter.GetPlacement();
-                                        MullionExporter.Export(exporterIFC, subElem as Mullion, geomElem, currLocalPlacement, currSetter,
-                                            productWrapper);
-                                    }
-                                }
-                                else
-                                {
-                                    FamilyInstance subFamInst = subElem as FamilyInstance;
-
-                                    string ifcEnumType;
-                                    IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, subElem, out ifcEnumType);
-                                    if (exportType == IFCExportType.ExportCurtainWall)
-                                    {
-                                        // By default, panels and mullions are set to the same category as their parent.  In this case,
-                                        // ask to get the exportType from the category id, since we don't want to inherit the parent class.
-                                        ElementId catId = CategoryUtil.GetSafeCategoryId(subElem);
-                                        exportType = ElementFilteringUtil.GetExportTypeFromCategoryId(catId, out ifcEnumType);
-                                    }
-
-
-                                    if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
-                                    {
-                                        if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.ExportPlateType) ||
-                                           (exportType == IFCExportType.ExportMemberType))
-                                            exportType = IFCExportType.ExportBuildingElementProxy;
-                                    }
-                                    else
-                                    {
-                                        if (exportType == IFCExportType.DontExport)
+                                        if (exporterIFC.ExportAs2x2)
+                                            ProxyElementExporter.Export(exporterIFC, subElem, geomElem, productWrapper);
+                                        else
                                         {
-                                            ifcEnumType = "CURTAIN_PANEL";
-                                            exportType = IFCExportType.ExportPlateType;
+                                            IFCAnyHandle currLocalPlacement = currSetter.GetPlacement();
+                                            MullionExporter.Export(exporterIFC, subElem as Mullion, geomElem, currLocalPlacement, currSetter,
+                                                productWrapper);
                                         }
                                     }
-
-                                    IFCAnyHandle currLocalPlacement = currSetter.GetPlacement();
-                                    using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
+                                    else
                                     {
-                                        FamilyInstanceExporter.ExportFamilyInstanceAsMappedItem(exporterIFC, subFamInst, exportType, ifcEnumType, productWrapper,
-                                            ElementId.InvalidElementId, null, currLocalPlacement);
+                                        FamilyInstance subFamInst = subElem as FamilyInstance;
+
+                                        string ifcEnumType;
+                                        IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, subElem, out ifcEnumType);
+                                        if (exportType == IFCExportType.ExportCurtainWall)
+                                        {
+                                            // By default, panels and mullions are set to the same category as their parent.  In this case,
+                                            // ask to get the exportType from the category id, since we don't want to inherit the parent class.
+                                            ElementId catId = CategoryUtil.GetSafeCategoryId(subElem);
+                                            exportType = ElementFilteringUtil.GetExportTypeFromCategoryId(catId, out ifcEnumType);
+                                        }
+
+
+                                        if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
+                                        {
+                                            if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.ExportPlateType) ||
+                                               (exportType == IFCExportType.ExportMemberType))
+                                                exportType = IFCExportType.ExportBuildingElementProxy;
+                                        }
+                                        else
+                                        {
+                                            if (exportType == IFCExportType.DontExport)
+                                            {
+                                                ifcEnumType = "CURTAIN_PANEL";
+                                                exportType = IFCExportType.ExportPlateType;
+                                            }
+                                        }
+
+                                        IFCAnyHandle currLocalPlacement = currSetter.GetPlacement();
+                                        using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
+                                        {
+                                            FamilyInstanceExporter.ExportFamilyInstanceAsMappedItem(exporterIFC, subFamInst, exportType, ifcEnumType, productWrapper,
+                                                ElementId.InvalidElementId, null, currLocalPlacement);
+                                        }
                                     }
                                 }
+                                else if (subElem is CurtainGridLine)
+                                {
+                                    ProxyElementExporter.Export(exporterIFC, subElem, geomElem, productWrapper);
+                                }
                             }
-                            else if (subElem is CurtainGridLine)
+                            catch (Exception ex)
                             {
-                                ProxyElementExporter.Export(exporterIFC, subElem, geomElem, productWrapper);
+                                if (ExporterUtil.IsFatalException(wallElement.Document, ex))
+                                    throw ex;
+                                continue;
                             }
-                        }
-                        catch (Exception ex)
-                        {
-                            if (ExporterUtil.IsFatalException(wallElement.Document, ex))
-                                throw ex;
-                            continue;
                         }
                     }
                 }

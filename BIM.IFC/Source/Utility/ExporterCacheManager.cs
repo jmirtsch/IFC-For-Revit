@@ -111,11 +111,6 @@ namespace BIM.IFC.Utility
         static MaterialHandleCache m_MaterialHandleCache;
 
         /// <summary>
-        /// The MaterialHandleCache object contains material handles without representations.
-        /// </summary>
-        static MaterialHandleCache m_MaterialHandleWithoutRepCache;
-
-        /// <summary>
         /// The MaterialLayerRelationsCache object.
         /// </summary>
         static MaterialLayerRelationsCache m_MaterialLayerRelationsCache;
@@ -162,7 +157,7 @@ namespace BIM.IFC.Utility
         static HashSet<ElementId> m_RailingCache;
 
         ///<summary>
-        /// The RailingCache cache.
+        /// The RailingSubElementCache cache.
         /// This keeps track of all of the sub-elements of railings in the document, to not export them twice.
         /// </summary>
         static HashSet<ElementId> m_RailingSubElementCache;
@@ -186,6 +181,30 @@ namespace BIM.IFC.Utility
         /// The SystemsCache object.
         /// </summary>
         static SystemsCache m_SystemsCache;
+
+        ///<summary>
+        /// The Truss cache.
+        /// This keeps track of all of the truss in the document, to export after all beams and members.
+        /// </summary>
+        static HashSet<ElementId> m_TrussCache;
+
+        ///<summary>
+        /// The AreaScheme cache.
+        /// This keeps track of all of the area schemes in the document, to export them after all areas.
+        /// </summary>
+        static Dictionary<ElementId, HashSet<IFCAnyHandle>> m_AreaSchemeCache;
+
+        ///<summary>
+        /// The BeamSystem cache.
+        /// This keeps track of all of the beam systems in the document, to export after all beams.
+        /// </summary>
+        static HashSet<ElementId> m_BeamSystemCache;
+
+        ///<summary>
+        /// The Zone cache.
+        /// This keeps track of all of the zone in the document, to export them after all spaces.
+        /// </summary>
+        static HashSet<ElementId> m_ZoneCache;
 
         /// <summary>
         /// The TypeRelationsCache object.
@@ -511,20 +530,6 @@ namespace BIM.IFC.Utility
             }
         }
 
-
-        /// <summary>
-        /// The MaterialHandleCache object contains material handles without representations.
-        /// </summary>
-        public static MaterialHandleCache MaterialHandleWithoutRepCache
-        {
-            get
-            {
-                if (m_MaterialHandleWithoutRepCache == null)
-                    m_MaterialHandleWithoutRepCache = new MaterialHandleCache();
-                return m_MaterialHandleWithoutRepCache;
-            }
-        }
-
         /// <summary>
         /// The MaterialRelationsCache object.
         /// </summary>
@@ -561,6 +566,58 @@ namespace BIM.IFC.Utility
                 if (m_RailingCache == null)
                     m_RailingCache = new HashSet<ElementId>();
                 return m_RailingCache;
+            }
+        }
+
+        /// <summary>
+        /// The TrussCache object.
+        /// </summary>
+        public static HashSet<ElementId> TrussCache
+        {
+            get
+            {
+                if (m_TrussCache == null)
+                    m_TrussCache = new HashSet<ElementId>();
+                return m_TrussCache;
+            }
+        }
+
+        /// <summary>
+        /// The BeamSystemCache object.
+        /// </summary>
+        public static HashSet<ElementId> BeamSystemCache
+        {
+            get
+            {
+                if (m_BeamSystemCache == null)
+                    m_BeamSystemCache = new HashSet<ElementId>();
+                return m_BeamSystemCache;
+            }
+        }
+
+        /// <summary>
+        /// The AreaSchemeCache object.
+        /// </summary>
+        public static Dictionary<ElementId, HashSet<IFCAnyHandle>> AreaSchemeCache
+        {
+            get
+            {
+                if (m_AreaSchemeCache == null)
+                    m_AreaSchemeCache = new Dictionary<ElementId, HashSet<IFCAnyHandle>>();
+                return m_AreaSchemeCache;
+            }
+        }
+
+        /// <summary>
+        /// The ZoneCache object.
+        /// </summary>
+        public static HashSet<ElementId> ZoneCache
+        {
+            get
+            {
+                if (m_ZoneCache == null)
+                    m_ZoneCache = new HashSet<ElementId>();
+                return m_ZoneCache;
             }
         }
 
@@ -935,7 +992,10 @@ namespace BIM.IFC.Utility
             ParameterUtil.ClearParameterCache();
 
             m_AllocatedGeometryObjectCache = null;
+            m_AreaSchemeCache = null;
             m_AssemblyInstanceCache = null;
+            m_BeamSystemCache = null;
+            m_CeilingSpaceRelCache = null;
             m_ClassificationCache = null;
             m_ClassificationLocationCache = null;
             m_ConditionalPropertySetsForTypeCache = null;
@@ -955,7 +1015,6 @@ namespace BIM.IFC.Utility
             m_MaterialLayerRelationsCache = null;
             m_MaterialLayerSetCache = null;
             m_MaterialHandleCache = null;
-            m_MaterialHandleWithoutRepCache = null;
             m_MaterialRelationsCache = null;
             m_MEPCache = null;
             m_ParameterCache = null;
@@ -971,14 +1030,15 @@ namespace BIM.IFC.Utility
             m_SpatialElementHandleCache = null;
             m_StairRampContainerInfoCache = null;
             m_SystemsCache = null;
+            m_TrussCache = null;
             m_TypeObjectsCache = null;
             m_TypePropertyInfoCache = null;
             m_TypeRelationsCache = null;
             m_WallConnectionDataCache = null;
             m_WallTypeCache = null;
             m_UnitsCache = null;
+            m_ZoneCache = null;
             m_ZoneInfoCache = null;
-            m_CeilingSpaceRelCache = null;
         }
     }
 }

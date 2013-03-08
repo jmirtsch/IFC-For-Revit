@@ -71,7 +71,7 @@ namespace BIM.IFC.Export.UI
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("Default 2x2", IFCVersion.IFC2x2, 1, false, false, true, false, true, false));
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("BCA", IFCVersion.IFCBCA, 1, false, true, true, false, true, false));
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("GSA", IFCVersion.IFCCOBIE, 2, true, true, true, true, true, true));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Coordination View 2.0", IFCVersion.IFC2x3CV2, 0, false, true, false, false, true, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("Coordination View 2.0", IFCVersion.IFC2x3CV2, 0, false, false, false, false, true, false));
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("FMHandOverView", IFCVersion.IFC2x3, 1, true, true, false, true, true, false));
 
         }

@@ -53,7 +53,7 @@ namespace BIM.IFC.Export.UI
         /// <summary>
         /// The file to store the previous window bounds.
         /// </summary>
-        string m_SettingFile = "IFCExportSettings_v2.txt";
+        string m_SettingFile = "IFCExportSettings_v3.txt";  // update the file when resize window bounds.
 
         /// <summary>
         /// Construction of the main export dialog.

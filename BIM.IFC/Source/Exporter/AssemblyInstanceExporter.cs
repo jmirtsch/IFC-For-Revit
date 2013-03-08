@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Autodesk.Revit.DB.Structure;
 using BIM.IFC.Utility;
 using BIM.IFC.Toolkit;
 using BIM.IFC.Exporter.PropertySet;
@@ -53,7 +54,6 @@ namespace BIM.IFC.Exporter
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The element.</param>
-        /// <param name="geometryElement">The geometry element.</param>
         /// <param name="productWrapper">The ProductWrapper.</param>
         /// <returns>True if exported successfully, false otherwise.</returns>
         public static bool ExportAssemblyInstanceElement(ExporterIFC exporterIFC, AssemblyInstance element,
@@ -129,6 +129,122 @@ namespace BIM.IFC.Exporter
                 }
                 tr.Commit();
                 return true;
+            }
+        }
+
+        /// <summary>
+        /// Update the local placements of the members of an assembly relative to the assembly.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporerIFC.</param>
+        /// <param name="assemblyPlacement">The assembly local placement handle.</param>
+        /// <param name="elementPlacements">The member local placement handles.</param>
+        public static void SetLocalPlacementsRelativeToAssembly(ExporterIFC exporterIFC, IFCAnyHandle assemblyPlacement, ICollection<IFCAnyHandle> elementPlacements)
+        {
+            foreach (IFCAnyHandle elementHandle in elementPlacements)
+            {
+                IFCAnyHandle elementPlacement = IFCAnyHandleUtil.GetObjectPlacement(elementHandle);
+
+                Transform origTrf = ExporterIFCUtils.GetUnscaledTransform(exporterIFC, assemblyPlacement);
+                if (!origTrf.IsIdentity)
+                {
+                    Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(assemblyPlacement, elementPlacement);
+                    Transform inverseTrf = relTrf.Inverse;
+
+                    IFCFile file = exporterIFC.GetFile();
+                    IFCAnyHandle relLocalPlacement = ExporterUtil.CreateAxis2Placement3D(file, inverseTrf.Origin, inverseTrf.BasisZ, inverseTrf.BasisX);
+                    
+                    // NOTE: caution that old IFCAXIS2PLACEMENT3D may be unused as the new one replace it. 
+                    // But we cannot delete it safely yet because we don't know if any handle is referencing it.
+                    GeometryUtil.SetRelativePlacement(elementPlacement, relLocalPlacement);
+                }
+                GeometryUtil.SetPlacementRelTo(elementPlacement, assemblyPlacement);
+            }
+        }
+
+        /// <summary>
+        /// Exports a truss as an IFC assembly.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="truss">The truss element.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        public static void ExportTrussElement(ExporterIFC exporterIFC, Truss truss,
+            ProductWrapper productWrapper)
+        {
+            if (truss == null)
+                return;
+
+            ICollection<ElementId> trussMemberIds = truss.Members;
+            ExportAssemblyInstanceWithMembers(exporterIFC, truss, trussMemberIds, IFCElementAssemblyType.Truss, productWrapper);
+        }
+
+        /// <summary>
+        /// Exports a beam system as an IFC assembly.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="beamSystem">The beam system.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        public static void ExportBeamSystem(ExporterIFC exporterIFC, BeamSystem beamSystem,
+            ProductWrapper productWrapper)
+        {
+            if (beamSystem == null)
+                return;
+
+            ICollection<ElementId> beamMemberIds = beamSystem.GetBeamIds();
+            ExportAssemblyInstanceWithMembers(exporterIFC, beamSystem, beamMemberIds, IFCElementAssemblyType.Beam_Grid, productWrapper);
+        }
+
+        /// <summary>
+        /// Exports an element as an IFC assembly with its members.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="assemblyElem">The element to be exported as IFC assembly.</param>
+        /// <param name="memberIds">The member element ids.</param>
+        /// <param name="assemblyType">The IFC assembly type.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        static void ExportAssemblyInstanceWithMembers(ExporterIFC exporterIFC, Element assemblyElem,
+            ICollection<ElementId> memberIds, IFCElementAssemblyType assemblyType, ProductWrapper productWrapper)
+        {
+            HashSet<IFCAnyHandle> memberHnds = new HashSet<IFCAnyHandle>();
+
+            foreach (ElementId memberId in memberIds)
+            {
+                IFCAnyHandle memberHnd = ExporterCacheManager.ElementToHandleCache.Find(memberId);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(memberHnd))
+                    memberHnds.Add(memberHnd);
+            }
+
+            if (memberHnds.Count == 0)
+                return;
+
+            IFCFile file = exporterIFC.GetFile();
+            using (IFCTransaction tr = new IFCTransaction(file))
+            {
+                using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, assemblyElem))
+                {
+                    IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                    IFCAnyHandle localPlacement = placementSetter.GetPlacement();
+
+                    string guid = GUIDUtil.CreateGUID(assemblyElem);
+                    string name = NamingUtil.GetIFCName(assemblyElem);
+                    string description = NamingUtil.GetDescriptionOverride(assemblyElem, null);
+                    string objectType = NamingUtil.GetObjectTypeOverride(assemblyElem, exporterIFC.GetFamilyName());
+                    string elementTag = NamingUtil.CreateIFCElementId(assemblyElem);
+
+                    IFCAnyHandle assemblyInstanceHnd = IFCInstanceExporter.CreateElementAssembly(file, guid,
+                        ownerHistory, name, description, objectType, localPlacement, null, elementTag,
+                        IFCAssemblyPlace.NotDefined, assemblyType);
+                    
+                    productWrapper.AddElement(assemblyInstanceHnd, placementSetter.GetLevelInfo(), null, true);
+
+
+                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, assemblyElem, productWrapper);
+
+                    IFCInstanceExporter.CreateRelAggregates(file, guid, ownerHistory, null, null, assemblyInstanceHnd, memberHnds);
+
+                    // Update member local placements to be relative to the assembly.
+                    SetLocalPlacementsRelativeToAssembly(exporterIFC, localPlacement, memberHnds);
+                }
+                tr.Commit();
             }
         }
     }

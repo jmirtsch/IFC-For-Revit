@@ -150,7 +150,9 @@ namespace BIM.IFC.Utility
                     double lengthScale = exporterIFC.LinearScale;
 
                     panelDepthList.Add(value1 * lengthScale);
-                    panelWidthList.Add(value2 * lengthScale);
+                    // Make sure value is in [0,1] range.
+                    if (value2 < 0.0) value2 = 0.0; else if (value2 > 1.0) value2 = 1.0;
+                    panelWidthList.Add(value2);
                 }
                 else
                 {
@@ -159,35 +161,19 @@ namespace BIM.IFC.Utility
                 }
             }
 
-            // calculate panelWidths
-            double totalPanelWidth = 0.0;
+            string baseDoorPanelName = NamingUtil.GetIFCName(familyInstance);
             for (int panelIndex = 0; (panelIndex < panelNumber - 1); panelIndex++)
             {
-                if (panelDepthList[panelIndex] == null || MathUtil.IsAlmostZero((double)panelDepthList[panelIndex]) ||
-                    panelWidthList[panelIndex] == null || MathUtil.IsAlmostZero((double)panelWidthList[panelIndex]))
-                {
-                    totalPanelWidth = 0.0;
-                    break;
-                }
-                totalPanelWidth += (double)panelWidthList[panelIndex];
-            }
+                double? currentPanelWidth = null;
+                if (panelWidthList[panelIndex].HasValue)
+                    currentPanelWidth = (double)panelWidthList[panelIndex];
 
-            if (!MathUtil.IsAlmostZero(totalPanelWidth))
-            {
-                string baseDoorPanelName = NamingUtil.GetIFCName(familyInstance);
-                for (int panelIndex = 0; (panelIndex < panelNumber - 1); panelIndex++)
-                {
-                    double? currentPanelWidth = null;
-                    if (panelWidthList[panelIndex].HasValue)
-                        currentPanelWidth = (double)panelWidthList[panelIndex] / totalPanelWidth;
-
-                    string doorPanelName = baseDoorPanelName;
-                    string doorPanelGUID = GUIDUtil.CreateGUID();
-                    IFCAnyHandle doorPanel = IFCInstanceExporter.CreateDoorPanelProperties(file, doorPanelGUID, ownerHistory,
-                       doorPanelName, null, panelDepthList[panelIndex], panelOperationList[panelIndex],
-                       currentPanelWidth, panelPositionList[panelIndex], null);
-                    doorPanels.Add(doorPanel);
-                }
+                string doorPanelName = baseDoorPanelName;
+                string doorPanelGUID = GUIDUtil.CreateGUID();
+                IFCAnyHandle doorPanel = IFCInstanceExporter.CreateDoorPanelProperties(file, doorPanelGUID, ownerHistory,
+                   doorPanelName, null, panelDepthList[panelIndex], panelOperationList[panelIndex],
+                   currentPanelWidth, panelPositionList[panelIndex], null);
+                doorPanels.Add(doorPanel);
             }
 
             return doorPanels;

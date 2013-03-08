@@ -121,7 +121,7 @@ namespace Revit.IFC.Common.Extensions
         /// <summary>
         /// Check whether the items are the same
         /// </summary>
-        public Boolean isUnchanged(IFCClassification classificationToCheck)
+        public bool IsUnchanged(IFCClassification classificationToCheck)
         {
             // Only check 4 properties that are stored into the schema.
             
@@ -139,7 +139,7 @@ namespace Revit.IFC.Common.Extensions
         /// Check mandatory fields are filled in
         /// </summary>
         /// <returns></returns>
-        public Boolean areMandatoryFieldsFilled()
+        public bool AreMandatoryFieldsFilled()
         {
             if (string.IsNullOrEmpty(this.ClassificationName)
                 || string.IsNullOrEmpty(this.ClassificationSource)
@@ -153,7 +153,7 @@ namespace Revit.IFC.Common.Extensions
         /// Determine that the 3 mandatory fields are empty
         /// </summary>
         /// <returns></returns>
-        public Boolean isMandatoryEmpty()
+        public bool IsMandatoryEmpty()
         {
             if (string.IsNullOrEmpty(this.ClassificationName)
                 && string.IsNullOrEmpty(this.ClassificationSource)

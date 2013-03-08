@@ -45,6 +45,8 @@ namespace BIM.IFC.Exporter
         public static void Export(ExporterIFC exporterIFC,
            Element element, Autodesk.Revit.DB.View filterView, ProductWrapper productWrapper)
         {
+            IList<IFCAnyHandle> createdRebars = null;
+
             if (element is Rebar)
             {
                 ExportRebar(exporterIFC, element, filterView, productWrapper);
@@ -53,12 +55,12 @@ namespace BIM.IFC.Exporter
             {
                 AreaReinforcement areaReinforcement = element as AreaReinforcement;
                 IList<ElementId> rebarIds = areaReinforcement.GetRebarInSystemIds();
-
+                
                 Document doc = areaReinforcement.Document;
                 foreach (ElementId id in rebarIds)
                 {
                     Element rebarInSystem = doc.GetElement(id);
-                    ExportRebar(exporterIFC, rebarInSystem, filterView, productWrapper);
+                    createdRebars = ExportRebar(exporterIFC, rebarInSystem, filterView, productWrapper);
                 }
             }
             else if (element is PathReinforcement)
@@ -70,7 +72,32 @@ namespace BIM.IFC.Exporter
                 foreach (ElementId id in rebarIds)
                 {
                     Element rebarInSystem = doc.GetElement(id);
-                    ExportRebar(exporterIFC, rebarInSystem, filterView, productWrapper);
+                    createdRebars = ExportRebar(exporterIFC, rebarInSystem, filterView, productWrapper);
+                }
+            }
+
+            if (createdRebars != null && createdRebars.Count > 1)
+            {
+                IFCFile file = exporterIFC.GetFile();
+                using (IFCTransaction tr = new IFCTransaction(file))
+                {
+                    string guid = GUIDUtil.CreateGUID(element);
+                    IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                    string revitObjectType = exporterIFC.GetFamilyName();
+                    string name = NamingUtil.GetNameOverride(element, revitObjectType);
+                    string description = NamingUtil.GetDescriptionOverride(element, null);
+                    string objectType = NamingUtil.GetObjectTypeOverride(element, revitObjectType);
+
+                    IFCAnyHandle rebarGroup = IFCInstanceExporter.CreateGroup(file, guid,
+                        ownerHistory, name, description, objectType);
+
+                    productWrapper.AddElement(rebarGroup);
+
+                    IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(), ownerHistory,
+                        null, null, createdRebars, null, rebarGroup);
+
+                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
+                    tr.Commit();
                 }
             }
         }
@@ -98,23 +125,20 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
-        /// Exports a Rebar to IFC ReinforcingMesh.
+        /// Exports a Rebar to IFC ReinforcingBar.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="element">
-        /// The element to be exported.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
-        public static void ExportRebar(ExporterIFC exporterIFC,
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="element">The element to be exported.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        /// <returns>The list of IfcReinforcingBar handles created.</returns>
+        public static IList<IFCAnyHandle> ExportRebar(ExporterIFC exporterIFC,
            Element element, Autodesk.Revit.DB.View filterView, ProductWrapper productWrapper)
         {
             try
             {
                 IFCFile file = exporterIFC.GetFile();
+                List<IFCAnyHandle> createdRebars = new List<IFCAnyHandle>();
+
                 using (IFCTransaction transaction = new IFCTransaction(file))
                 {
                     using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element))
@@ -135,7 +159,7 @@ namespace BIM.IFC.Exporter
                                     ProxyElementExporter.ExportBuildingElementProxy(exporterIFC, element, rebarGeometry, productWrapper);
                                     transaction.Commit();
                                 }
-                                return;
+                                return null;
                             }
                         }
 
@@ -148,7 +172,7 @@ namespace BIM.IFC.Exporter
                         double totalBarLength = totalBarLengthUnscale * scale;
 
                         if (MathUtil.IsAlmostZero(totalBarLength))
-                            return;
+                            return null;
 
                         ElementId materialId = ElementId.InvalidElementId;
                         ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.MATERIAL_ID_PARAM, out materialId);
@@ -175,6 +199,8 @@ namespace BIM.IFC.Exporter
 
                         const int maxBarGUIDS = IFCReinforcingBarSubElements.BarEnd - IFCReinforcingBarSubElements.BarStart + 1;
                         ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
+
+                        IFCAnyHandle originalPlacement = setter.GetPlacement();
 
                         for (int i = 0; i < numberOfBarPositions; i++)
                         {
@@ -211,13 +237,16 @@ namespace BIM.IFC.Exporter
                             shapeReps.Add(shapeRep);
                             prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
 
+                            IFCAnyHandle copyLevelPlacement = (i == 0) ? originalPlacement : ExporterUtil.CopyLocalPlacement(file, originalPlacement);
+
                             string rebarGUID = (i < maxBarGUIDS) ?
                                 GUIDUtil.CreateSubElementGUID(element, i + (int)IFCReinforcingBarSubElements.BarStart) :
                                 GUIDUtil.CreateGUID();
                             IFCAnyHandle elemHnd = IFCInstanceExporter.CreateReinforcingBar(file, rebarGUID, exporterIFC.GetOwnerHistoryHandle(),
-                                rebarName, rebarDescription, rebarObjectType, setter.GetPlacement(),
+                                rebarName, rebarDescription, rebarObjectType, copyLevelPlacement,
                                 prodRep, rebarElemId, steelGrade, longitudinalBarNominalDiameter, longitudinalBarCrossSectionArea,
                                 barLength, role, null);
+                            createdRebars.Add(elemHnd);
 
                             productWrapper.AddElement(elemHnd, setter.GetLevelInfo(), null, true);
                             ExporterCacheManager.HandleToElementCache.Register(elemHnd, element.Id);
@@ -229,13 +258,14 @@ namespace BIM.IFC.Exporter
                     }
                     transaction.Commit();
                 }
-
+                return createdRebars;
             }
             catch (Exception)
             {
                 // It will throw exception at GetBarPositionTransform when exporting rebars with Revit 2013 UR1 and before versions, so we skip the export.
                 // It should not come here and will export the rebars properly at Revit later versions.
             }
+            return null;
         }
 
         /// <summary>

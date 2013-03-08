@@ -579,7 +579,14 @@ namespace BIM.IFC.Utility
             IFCExportType exportType = IFCExportType.DontExport;
             String ifcClassName = ExporterIFCUtils.GetIFCClassName(element, exporterIFC);
             if (ifcClassName == "")
-                return false;
+            {
+                // Special case: if the element is an AreaScheme, always export as a group.  The reason is that we can't place
+                // AreaSchemes in the Export Layers table for internal (and uninteresting) reasons.
+                if (element is AreaScheme)
+                    ifcClassName = "IfcGroup";
+                else
+                    return false;
+            }
 
             bool foundName = String.Compare(ifcClassName, "Default", true) != 0;
             if (foundName)
@@ -981,6 +988,8 @@ namespace BIM.IFC.Utility
                 // Spatial element are exported in a separate pass.
                 excludedTypes.Add(typeof(SpatialElement));
 
+                // AreaScheme elements are exported as groups after all Areas have been exported.
+                excludedTypes.Add(typeof(AreaScheme));
                 // FabricArea elements are exported as groups after all FabricSheets have been exported.
                 excludedTypes.Add(typeof(FabricArea));
 
@@ -1000,7 +1009,6 @@ namespace BIM.IFC.Utility
                 excludedTypes.Add(typeof(SketchPlane));
                 excludedTypes.Add(typeof(View));
                 excludedTypes.Add(typeof(Autodesk.Revit.DB.Structure.LoadBase));
-                excludedTypes.Add(typeof(BeamSystem));
 
                 // curtain wall sub-types we are ignoring.
                 excludedTypes.Add(typeof(CurtainGridLine));

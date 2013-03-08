@@ -257,6 +257,9 @@ namespace BIM.IFC.Exporter
                             CategoryUtil.CreateMaterialAssociations(element.Document, exporterIFC, beam, materialIds);
                         }
 
+                        // Register the beam's IFC handle for later use by truss and beam system export.
+                        ExporterCacheManager.ElementToHandleCache.Register(element.Id, beam);
+                                
                         PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }
                 }

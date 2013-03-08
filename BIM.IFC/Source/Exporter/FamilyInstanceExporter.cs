@@ -125,6 +125,242 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
+        /// A R2013 hotfix to fix the IfcDoor opening height of specific cases where an IfcOpening in a wall contains arcs in its profile.
+        /// </summary>
+        /// <param name="openingHnd">The IfcOpeningHandle</param>
+        /// <param name="originalHeight">The original height calculated in .NET code</param>
+        /// <returns>The fixed height, or the original height if the opening is not one of the potentially bad types.</returns>
+        private static double PotentiallyCorrectDoorHeight(IFCAnyHandle openingHnd, double originalHeight)
+        {
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(openingHnd))
+                return originalHeight;
+
+            IFCAnyHandle prodRep = IFCAnyHandleUtil.GetInstanceAttribute(openingHnd, "Representation");
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodRep))
+                return originalHeight;
+
+            HashSet<IFCAnyHandle> reps = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(prodRep, "Representations");
+            if (reps == null || reps.Count != 1)
+                return originalHeight;
+
+            IFCAnyHandle localPlacement = IFCAnyHandleUtil.GetInstanceAttribute(openingHnd, "ObjectPlacement");
+
+            {
+                IFCAnyHandle relativePlacementHnd = IFCAnyHandleUtil.GetInstanceAttribute(localPlacement, "RelativePlacement");
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(relativePlacementHnd))
+                {
+                    IFCAnyHandle openingRefDirHnd = IFCAnyHandleUtil.GetInstanceAttribute(relativePlacementHnd, "RefDirection");
+                    IFCAnyHandle openingAxisHnd = IFCAnyHandleUtil.GetInstanceAttribute(relativePlacementHnd, "Axis");
+                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(openingRefDirHnd) || !IFCAnyHandleUtil.IsNullOrHasNoValue(openingAxisHnd))
+                        return originalHeight;
+                }
+            }
+
+            foreach (IFCAnyHandle rep in reps)
+            {
+                HashSet<IFCAnyHandle> repItems = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(rep, "Items");
+                if (repItems == null)
+                    return originalHeight;
+                foreach (IFCAnyHandle repItem in repItems)
+                {
+                    if (IFCAnyHandleUtil.IsSubTypeOf(repItem, IFCEntityType.IfcExtrudedAreaSolid))
+                    {
+                        // Now look at SweptArea, which should be the profile.
+                        IFCAnyHandle sweptArea = IFCAnyHandleUtil.GetInstanceAttribute(repItem, "SweptArea");
+                        if (IFCAnyHandleUtil.IsNullOrHasNoValue(sweptArea))
+                            return originalHeight;
+
+                        // We will only look at IfcArbitraryProfileDef; the rest work OK.
+                        if (!IFCAnyHandleUtil.IsSubTypeOf(sweptArea, IFCEntityType.IfcArbitraryClosedProfileDef))
+                            return originalHeight;
+
+                        // Limiting fix to cases where extrusion is orthogonal to wall axis.  This means:
+                        // ExtrudedDirection = (0,0,1)
+                        // Extrusion.Position.Axis = (0,1,0)
+                        IFCAnyHandle extrudedDirection = IFCAnyHandleUtil.GetInstanceAttribute(repItem, "ExtrudedDirection");
+                        if (IFCAnyHandleUtil.IsNullOrHasNoValue(extrudedDirection))
+                            return originalHeight;
+
+                        IList<double> coordList = IFCAnyHandleUtil.GetAggregateDoubleAttribute<List<double>>(extrudedDirection, "DirectionRatios");
+                        if (coordList.Count < 3)
+                            return originalHeight;
+
+                        XYZ localExtrusionDirection = (new XYZ(coordList[0], coordList[1], coordList[2])).Normalize();
+                        if (!MathUtil.IsAlmostEqual(localExtrusionDirection.Z, 1.0))
+                            return originalHeight;
+
+                        IFCAnyHandle extrusionPosition = IFCAnyHandleUtil.GetInstanceAttribute(repItem, "Position");
+                        if (IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionPosition))
+                            return originalHeight;
+
+                        IFCAnyHandle extrusionPositionAxisHnd = IFCAnyHandleUtil.GetInstanceAttribute(extrusionPosition, "Axis");
+                        if (IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionPositionAxisHnd))
+                            return originalHeight;
+
+                        coordList = IFCAnyHandleUtil.GetAggregateDoubleAttribute<List<double>>(extrusionPositionAxisHnd, "DirectionRatios");
+                        if (coordList.Count < 3)
+                            return originalHeight;
+
+                        XYZ extrusionPositionAxis = (new XYZ(coordList[0], coordList[1], coordList[2])).Normalize();
+                        if (!MathUtil.IsAlmostEqual(extrusionPositionAxis.Y, 1.0))
+                            return originalHeight;
+
+                        // Now look at IfcArbitraryClosedProfileDef.
+                        IFCAnyHandle outerCurve = IFCAnyHandleUtil.GetInstanceAttribute(sweptArea, "OuterCurve");
+                        if (IFCAnyHandleUtil.IsNullOrHasNoValue(outerCurve))
+                            return originalHeight;
+
+                        // IfcPolyLine is fine - we are worried about cases with arc.
+                        if (!IFCAnyHandleUtil.IsSubTypeOf(outerCurve, IFCEntityType.IfcCompositeCurve))
+                            return originalHeight;
+
+                        // Construct the BBox for the CurveLoop from the segments - only deal with lines and arcs.
+                        double minHeight = 1e+20;
+                        double maxHeight = -1e+20;
+
+                        IList<IFCAnyHandle> segments = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(outerCurve, "Segments");
+                        foreach (IFCAnyHandle segment in segments)
+                        {
+                            if (IFCAnyHandleUtil.IsNullOrHasNoValue(segment))
+                                return originalHeight;
+
+                            IFCAnyHandle subCurve = IFCAnyHandleUtil.GetInstanceAttribute(segment, "ParentCurve");
+                            if (IFCAnyHandleUtil.IsNullOrHasNoValue(subCurve))
+                                return originalHeight;
+
+                            if (IFCAnyHandleUtil.IsSubTypeOf(subCurve, IFCEntityType.IfcPolyline))
+                            {
+                                IList<IFCAnyHandle> points = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(subCurve, "Points");
+                                foreach (IFCAnyHandle point in points)
+                                {
+                                    if (IFCAnyHandleUtil.IsNullOrHasNoValue(point))
+                                        return originalHeight;
+
+                                    coordList = IFCAnyHandleUtil.GetAggregateDoubleAttribute<List<double>>(point, "Coordinates");
+                                    if (coordList.Count < 2)
+                                        return originalHeight;
+
+                                    minHeight = Math.Min(minHeight, coordList[0]);
+                                    maxHeight = Math.Max(maxHeight, coordList[0]);
+                                }
+                            }
+                            else if (IFCAnyHandleUtil.IsSubTypeOf(subCurve, IFCEntityType.IfcTrimmedCurve))
+                            {
+                                // Get start and end param, ensure local axis is (1,0), and that basis curve is IfcCircle.
+                                IFCAnyHandle basisCurve = IFCAnyHandleUtil.GetInstanceAttribute(subCurve, "BasisCurve");
+                                if (IFCAnyHandleUtil.IsNullOrHasNoValue(basisCurve))
+                                    return originalHeight;
+
+                                if (!IFCAnyHandleUtil.IsSubTypeOf(basisCurve, IFCEntityType.IfcCircle))
+                                    return originalHeight;
+
+                                IFCData param1 = subCurve.GetAttribute("Trim1");
+                                double param1Val = 0.0;
+                                if (param1.PrimitiveType == IFCDataPrimitiveType.Aggregate)
+                                {
+                                    IFCAggregate aggregate = param1.AsAggregate();
+                                    if (aggregate == null || aggregate.Count != 1)
+                                        return originalHeight;
+
+                                    foreach (IFCData val in aggregate)
+                                    {
+                                        if (val.PrimitiveType != IFCDataPrimitiveType.Double)
+                                            return originalHeight;
+                                        param1Val = val.AsDouble() / 180 * Math.PI;
+                                        break;
+                                    }
+                                }
+
+                                IFCData param2 = subCurve.GetAttribute("Trim2");
+                                double param2Val = 0.0;
+                                if (param2.PrimitiveType == IFCDataPrimitiveType.Aggregate)
+                                {
+                                    IFCAggregate aggregate = param2.AsAggregate();
+                                    if (aggregate == null || aggregate.Count != 1)
+                                        return originalHeight;
+
+                                    foreach (IFCData val in aggregate)
+                                    {
+                                        if (val.PrimitiveType != IFCDataPrimitiveType.Double)
+                                            return originalHeight;
+                                        param2Val = val.AsDouble() / 180 * Math.PI;
+                                        break;
+                                    }
+                                }
+
+                                IFCAnyHandle circleLocation = IFCAnyHandleUtil.GetInstanceAttribute(basisCurve, "Position");
+                                if (IFCAnyHandleUtil.IsNullOrHasNoValue(circleLocation))
+                                    return originalHeight;
+
+                                double? radius = IFCAnyHandleUtil.GetDoubleAttribute(basisCurve, "Radius");
+                                if (!radius.HasValue || radius.Value <= MathUtil.Eps())
+                                    return originalHeight;
+
+                                IFCAnyHandle circleRefDirection = IFCAnyHandleUtil.GetInstanceAttribute(circleLocation, "RefDirection");
+                                if (IFCAnyHandleUtil.IsNullOrHasNoValue(circleRefDirection))
+                                    return originalHeight;
+
+                                coordList = IFCAnyHandleUtil.GetAggregateDoubleAttribute<List<double>>(circleRefDirection, "DirectionRatios");
+                                if (coordList.Count != 2)
+                                    return originalHeight;
+
+                                double angleOffset = Math.Atan2(coordList[1], coordList[0]);
+                                param1Val = MathUtil.PutInRange(param1Val + angleOffset, Math.PI, 2.0 * Math.PI);
+                                param2Val = MathUtil.PutInRange(param2Val + angleOffset, Math.PI, 2.0 * Math.PI);
+                                if (param2Val < param1Val)
+                                    param2Val += (2.0 * Math.PI);
+
+                                IFCAnyHandle circleOrigin = IFCAnyHandleUtil.GetInstanceAttribute(circleLocation, "Location");
+                                if (IFCAnyHandleUtil.IsNullOrHasNoValue(circleOrigin))
+                                    return originalHeight;
+
+                                coordList = IFCAnyHandleUtil.GetAggregateDoubleAttribute<List<double>>(circleOrigin, "Coordinates");
+                                if (coordList.Count != 2)
+                                    return originalHeight;
+
+                                double circleOriginZ = coordList[0];
+
+                                bool? sameSense = IFCAnyHandleUtil.GetBooleanAttribute(subCurve, "SenseAgreement");
+                                if (sameSense.HasValue && !sameSense.Value)
+                                    return originalHeight;
+
+                                double startPtZ = circleOriginZ + radius.Value * Math.Cos(param1Val);
+                                double endPtZ = circleOriginZ + radius.Value * Math.Cos(param2Val);
+
+                                if (param1Val < 2.0 * Math.PI && param2Val > 2.0 * Math.PI)
+                                {
+                                    maxHeight = Math.Max(maxHeight, circleOriginZ + radius.Value);
+                                }
+                                else
+                                {
+                                    double maxEndZ = Math.Max(startPtZ, endPtZ);
+                                    maxHeight = Math.Max(maxHeight, maxEndZ);
+                                }
+
+                                if (param1Val < Math.PI && param2Val > Math.PI)
+                                {
+                                    minHeight = Math.Min(minHeight, circleOriginZ - radius.Value);
+                                }
+                                else
+                                {
+                                    double minEndZ = Math.Min(startPtZ, endPtZ);
+                                    minHeight = Math.Min(minHeight, minEndZ);
+                                }
+                            }
+                            else
+                                return originalHeight;
+                        }
+
+                        double height = maxHeight - minHeight;
+                        if (height > MathUtil.Eps())
+                            return height;
+                    }
+                }
+            }
+            return originalHeight;
+        }
+
+        /// <summary>
         /// Exports a family instance as a mapped item.
         /// </summary>
         /// <param name="exporterIFC">
@@ -199,7 +435,7 @@ namespace BIM.IFC.Exporter
                     doorWindowInfo = IFCDoorWindowInfo.CreateWindowInfo(exporterIFC, familyInstance, originalFamilySymbol, hostElementForDoorWindow, overrideLevelId, trf);
 
                 bool ignoreDoorWindowOpening = ((exportingDoor || exportingWindow) && exportingHostParts);
-                
+
                 FamilyTypeInfo typeInfo = new FamilyTypeInfo();
 
                 bool flipped = doorWindowInfo != null ? doorWindowInfo.IsSymbolFlipped : false;
@@ -240,42 +476,45 @@ namespace BIM.IFC.Exporter
                     if (!exportParts)
                     {
                         using (IFCTransformSetter trfSetter = IFCTransformSetter.Create())
-                    {
-                        if (doorWindowInfo != null)
                         {
-                            trfSetter.Initialize(exporterIFC, doorWindowTrf);
-                        }
+                            if (doorWindowInfo != null)
+                            {
+                                trfSetter.Initialize(exporterIFC, doorWindowTrf);
+                            }
 
-                        if (exportGeometry == null)
-                            return;
+                            if (exportGeometry == null)
+                                return;
 
-                        SolidMeshGeometryInfo solidMeshCapsule = null;
+                            SolidMeshGeometryInfo solidMeshCapsule = null;
 
-                        if (range == null)
-                        {
-                            solidMeshCapsule = GeometryUtil.GetSplitSolidMeshGeometry(exportGeometry);
-                        }
-                        else
-                        {
-                            solidMeshCapsule = GeometryUtil.GetSplitClippedSolidMeshGeometry(exportGeometry, range);
-                        }
+                            if (range == null)
+                            {
+                                solidMeshCapsule = GeometryUtil.GetSplitSolidMeshGeometry(exportGeometry);
+                            }
+                            else
+                            {
+                                solidMeshCapsule = GeometryUtil.GetSplitClippedSolidMeshGeometry(exportGeometry, range);
+                            }
 
-                        IList<Solid> solids = solidMeshCapsule.GetSolids();
-                        IList<Mesh> polyMeshes = solidMeshCapsule.GetMeshes();
+                            IList<Solid> solids = solidMeshCapsule.GetSolids();
+                            IList<Mesh> polyMeshes = solidMeshCapsule.GetMeshes();
 
-                        // If we are exporting parts, it is OK to have no geometry here - it will be added by the host Part.
-                        bool hasGeometryInSymbol = (solids.Count > 0 || polyMeshes.Count > 0);
-                        if (range != null && !hasGeometryInSymbol && !exportParts)
-                            return; // no proper split geometry to export.
+                            // If we are exporting parts, it is OK to have no geometry here - it will be added by the host Part.
+                            bool hasSolidsOrMeshesInSymbol = (solids.Count > 0 || polyMeshes.Count > 0);
 
-                        if (hasGeometryInSymbol)
-                            geomObjects = FamilyExporterUtil.RemoveSolidsAndMeshesSetToDontExport(doc, exporterIFC, solids, polyMeshes);
+                            if (range != null && !hasSolidsOrMeshesInSymbol)
+                                return; // no proper split geometry to export.
 
-                        if ((geomObjects.Count == 0) && hasGeometryInSymbol && !exportParts)
-                            return; // no proper visible split geometry to export.
+                            if (hasSolidsOrMeshesInSymbol)
+                            {
+                                geomObjects = FamilyExporterUtil.RemoveSolidsAndMeshesSetToDontExport(doc, exporterIFC, solids, polyMeshes);
+                                if ((geomObjects.Count == 0))
+                                    return; // no proper visible split geometry to export.
+                            }
+                            else
+                                geomObjects.Add(exportGeometry);
 
-                        if (geomObjects.Count > 0)
-                        {
+
                             bool tryToExportAsExtrusion = (!ExporterCacheManager.ExportOptionsCache.ExportAs2x2 || (exportType == IFCExportType.ExportColumnType));
 
                             if (exportType == IFCExportType.ExportColumnType)
@@ -307,31 +546,20 @@ namespace BIM.IFC.Exporter
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRepresentation))
                             {
                                 BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(tryToExportAsExtrusion);
-                                if (geomObjects.Count > 0)
-                                {
-                                    bodyData = BodyExporter.ExportBody(exporterIFC, familyInstance, categoryId, ElementId.InvalidElementId,
-                                        geomObjects, bodyExporterOptions, extraParams);
-                                    typeInfo.MaterialIds = bodyData.MaterialIds;
-                                }
-                                else
-                                {
-                                    IList<GeometryObject> exportedGeometries = new List<GeometryObject>();
-                                    exportedGeometries.Add(exportGeometry);
-                                    bodyData = BodyExporter.ExportBody(exporterIFC, familyInstance, categoryId, ElementId.InvalidElementId,
-                                        exportedGeometries, bodyExporterOptions, extraParams);
-                                }
+                                bodyData = BodyExporter.ExportBody(exporterIFC, familyInstance, categoryId, ElementId.InvalidElementId,
+                                    geomObjects, bodyExporterOptions, extraParams);
+                                typeInfo.MaterialIds = bodyData.MaterialIds;
                                 bodyRepresentation = bodyData.RepresentationHnd;
-                                    offsetTransform = bodyData.OffsetTransform;
+                                offsetTransform = bodyData.OffsetTransform;
                             }
-                        }
 
-                        // We will allow a door or window to be exported without any geometry, or an element with parts.
-                        // Anything else doesn't really make sense.
+                            // We will allow a door or window to be exported without any geometry, or an element with parts.
+                            // Anything else doesn't really make sense.
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRepresentation) && (doorWindowInfo == null))
-                        {
-                            extraParams.ClearOpenings();
-                            return;
-                        }
+                            {
+                                extraParams.ClearOpenings();
+                                return;
+                            }
                         }
 
                         // By default: if exporting IFC2x3 or later, export 2D plan rep of family, if it exists, unless we are exporting Coordination View V2.
@@ -607,7 +835,7 @@ namespace BIM.IFC.Exporter
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(familyInstance, revitObjectType);
                         string instanceTag = NamingUtil.GetTagOverride(familyInstance, NamingUtil.CreateIFCElementId(familyInstance));
 
-						bool isChildInContainer = familyInstance.AssemblyInstanceId != ElementId.InvalidElementId;
+                        bool isChildInContainer = familyInstance.AssemblyInstanceId != ElementId.InvalidElementId;
 
                         IFCAnyHandle localPlacement = setter.GetPlacement();
                         IFCAnyHandle overrideLocalPlacement = null;
@@ -650,7 +878,7 @@ namespace BIM.IFC.Exporter
                                             openingTrf = openingTrf.Multiply(extraRot);
                                             openingTrf = openingTrf.Multiply(typeInfo.StyleTransform);
 
-                                           	IFCAnyHandle openingRelativePlacement = ExporterUtil.CreateAxis2Placement3D(file, openingTrf.Origin * scale,
+                                            IFCAnyHandle openingRelativePlacement = ExporterUtil.CreateAxis2Placement3D(file, openingTrf.Origin * scale,
                                                openingTrf.get_Basis(2), openingTrf.get_Basis(0));
                                             IFCAnyHandle openingPlacement = ExporterUtil.CopyLocalPlacement(file, localPlacement);
                                             GeometryUtil.SetRelativePlacement(openingPlacement, openingRelativePlacement);
@@ -672,13 +900,19 @@ namespace BIM.IFC.Exporter
                                 {
                                     double doorHeight = doorWindowInfo.OpeningHeight;
                                     if (doorHeight < MathUtil.Eps())
-                                        doorHeight = GetMinSymbolHeight(originalFamilySymbol);
+                                        doorHeight = GetMinSymbolHeight(originalFamilySymbol) * scale;
+                                    else
+                                    {
+                                        // The native OpeningHeight code is not reliable if the opening has an arc in the boundary.  Potentially fix this case.
+                                        doorHeight = PotentiallyCorrectDoorHeight(doorWindowInfo.GetOpening(), doorHeight * scale);
+                                    }
+
                                     double doorWidth = doorWindowInfo.OpeningWidth;
                                     if (doorWidth < MathUtil.Eps())
                                         doorWidth = GetMinSymbolWidth(originalFamilySymbol);
 
-                                	double height = doorHeight * scale;
-                                	double width = doorWidth * scale;
+                                    double height = doorHeight; // Already scaled.
+                                    double width = doorWidth * scale;
 
                                     IFCAnyHandle doorWindowLocalPlacement = null;
                                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(overrideLocalPlacement))
@@ -718,16 +952,14 @@ namespace BIM.IFC.Exporter
                                             openingTrf = openingTrf.Multiply(doorWindowTrf);
                                             XYZ scaledOrigin = openingTrf.Origin * exporterIFC.LinearScale;
                                             IFCAnyHandle openingRelativePlacement = ExporterUtil.CreateAxis2Placement3D(file, scaledOrigin, openingTrf.BasisZ, openingTrf.BasisX);
-                                        	IFCAnyHandle openingLocalPlacement =
-                                           		IFCInstanceExporter.CreateLocalPlacement(file, doorWindowLocalPlacement, openingRelativePlacement);
+                                            IFCAnyHandle openingLocalPlacement =
+                                                IFCInstanceExporter.CreateLocalPlacement(file, doorWindowLocalPlacement, openingRelativePlacement);
                                             placementToUse = openingLocalPlacement;
                                         }
                                     }
-                                    
+
                                     OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, offsetTransform,
                                         exporterIFC, placementToUse, setter, wrapper);
-                                    //if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities)
-                                    //    ExporterIFCUtils.CreateDoorWindowBaseQuantities(exporterIFC, instanceHandle, height, width);
 
                                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
                                     break;
@@ -739,7 +971,7 @@ namespace BIM.IFC.Exporter
 
                                     //export Base Quantities.
                                     PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, instanceHandle, familyInstance, typeInfo);
-                                    
+
                                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, familyInstance, wrapper);
                                     break;
                                 }
@@ -1021,5 +1253,5 @@ namespace BIM.IFC.Exporter
 
             return IFCColumnType.Column;
         }
-    }   
+    }
 }

@@ -71,14 +71,6 @@ namespace BIM.IFC.Exporter
         /// </param>
         public static void ExportSpatialElement(ExporterIFC exporterIFC, SpatialElement spatialElement, ProductWrapper productWrapper)
         {
-            //quick reject
-            bool isArea = spatialElement is Area;
-            if (isArea)
-            {
-                if (!IsAreaGrossInterior(exporterIFC, spatialElement))
-                    return;
-            }
-
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction transaction = new IFCTransaction(file))
             {
@@ -330,22 +322,12 @@ namespace BIM.IFC.Exporter
         /// <summary>
         /// Exports spatial elements, including rooms, areas and spaces. 2nd level space boundaries.
         /// </summary>
-        /// <param name="ifcExporter">
-        /// The Exporter object.
-        /// </param>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="document">
-        /// The Revit document.
-        /// </param>
-        /// <param name="filterView">
-        /// The view not exported.
-        /// </param>
-        /// <param name="spaceExported">
-        /// The output boolean value indicates if exported successfully.
-        /// </param>
-        public static void ExportSpatialElement2ndLevel(BIM.IFC.Exporter.Exporter ifcExporter, ExporterIFC exporterIFC, Document document, View filterView, ref bool spaceExported)
+        /// <param name="ifcExporter">The Exporter object.</param>
+        /// <param name="exporterIFC"> The ExporterIFC object.</param>
+        /// <param name="document">The Revit document.</param>
+        /// <param name="filterView">The current view, or null.</param>
+        /// <returns>The output boolean value indicates if exported successfully.</returns>
+        public static bool ExportSpatialElement2ndLevel(Exporter ifcExporter, ExporterIFC exporterIFC, Document document, View filterView)
         {
             using (SubTransaction st = new SubTransaction(document))
             {
@@ -367,13 +349,10 @@ namespace BIM.IFC.Exporter
                         }
                         catch (System.Exception)
                         {
-                            spaceExported = false;
-                            return;
+                            return false;
                         }
 
                         IList<EnergyAnalysisSpace> spaces = model.GetAnalyticalSpaces();
-                        spaceExported = true;
-
                         foreach (EnergyAnalysisSpace space in spaces)
                         {
                             SpatialElement spatialElement = document.GetElement(space.SpatialElementId) as SpatialElement;
@@ -381,18 +360,9 @@ namespace BIM.IFC.Exporter
                             if (spatialElement == null)
                                 continue;
 
-                            //quick reject
-                            bool isArea = spatialElement is Area;
-                            if (isArea)
-                            {
-                                if (!IsAreaGrossInterior(exporterIFC, spatialElement))
-                                    continue;
-                            }
-
                             //current view only
                             if (filterView != null && !ElementFilteringUtil.IsElementVisible(filterView, spatialElement))
                                 continue;
-                            //
 
                             if (!ElementFilteringUtil.ShouldCategoryBeExported(exporterIFC, spatialElement))
                                 continue;
@@ -465,6 +435,7 @@ namespace BIM.IFC.Exporter
                 }
 
                 st.RollBack();
+                return true;
             }
         }
 
@@ -605,35 +576,6 @@ namespace BIM.IFC.Exporter
             IFCAnyHandle hnd = file.CreateCurveBoundedPlane(newOuterLoopPoints, innerLoopPoints);
 
             return IFCInstanceExporter.CreateConnectionSurfaceGeometry(file, hnd, null);
-        }
-
-        /// <summary>
-        /// Checks if the spatial element is gross interior.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="spatialElement">
-        /// The spatial element.
-        /// </param>
-        /// <returns>
-        /// True if the area is gross interior.
-        /// </returns>
-        static bool IsAreaGrossInterior(ExporterIFC exporterIFC, SpatialElement spatialElement)
-        {
-            Area area = spatialElement as Area;
-            if (area != null)
-            {
-                if (!area.IsGrossInterior)
-                    return false;
-
-                double dArea;
-                if (!ParameterUtil.GetDoubleValueFromElement(area, BuiltInParameter.ROOM_AREA, out dArea))
-                    return false;
-
-                return !MathUtil.IsAlmostZero(dArea);
-            }
-            return false;
         }
 
         /// <summary>
@@ -884,31 +826,14 @@ namespace BIM.IFC.Exporter
             string strSpaceName = null;
             string strSpaceDesc = null;
 
-            bool isArea = spatialElement is Area;
-            if (!isArea)
-            {
-                if (!ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NUMBER, out strSpaceNumber))
-                    strSpaceNumber = null;
+            if (!ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NUMBER, out strSpaceNumber))
+                strSpaceNumber = null;
 
-                if (!ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NAME, out strSpaceName))
-                    strSpaceName = null;
+            if (!ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NAME, out strSpaceName))
+                strSpaceName = null;
 
-                if (!ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS, out strSpaceDesc))
-                    strSpaceDesc = null;
-            }
-            else
-            {
-                // Default to true to preserve previous behavior.
-                bool? exportGSADesignGrossArea = ExporterCacheManager.ExportOptionsCache.ExportGSAGrossDesignArea;
-                if (!exportGSADesignGrossArea.HasValue || exportGSADesignGrossArea.Value)
-                {
-                    Element level = document.GetElement(levelId);
-                    if (level != null)
-                    {
-                        strSpaceNumber = level.Name + " GSA Design Gross Area";
-                    }
-                }
-            }
+            if (!ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS, out strSpaceDesc))
+                strSpaceDesc = null;
 
             string name = strSpaceNumber;
             string longName = strSpaceName;
@@ -935,6 +860,9 @@ namespace BIM.IFC.Exporter
             Plane plane = new Plane(zDir, orig); // room calculated as level offset.
 
             GeometryElement geomElem = null;
+            bool isArea = (spatialElement is Area);
+            Area spatialElementAsArea = isArea ? (spatialElement as Area) : null;
+
             if (spatialElement is Autodesk.Revit.DB.Architecture.Room)
             {
                 Autodesk.Revit.DB.Architecture.Room room = spatialElement as Autodesk.Revit.DB.Architecture.Room;
@@ -945,8 +873,14 @@ namespace BIM.IFC.Exporter
                 Autodesk.Revit.DB.Mechanical.Space space = spatialElement as Autodesk.Revit.DB.Mechanical.Space;
                 geomElem = space.ClosedShell;
             }
+            else if (isArea)
+            {
+                Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
+                geomElem = spatialElementAsArea.get_Geometry(geomOptions);
+            }
 
             IFCAnyHandle spaceHnd = null;
+            string spatialElementName = null;
             using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
             {
                 extraParams.SetLocalPlacement(localPlacement);
@@ -988,7 +922,7 @@ namespace BIM.IFC.Exporter
                     extraParams.ScaledHeight = roomHeight;
                     extraParams.ScaledArea = dArea;
 
-                    string spatialElementName = NamingUtil.GetNameOverride(spatialElement, name);
+                    spatialElementName = NamingUtil.GetNameOverride(spatialElement, name);
                     string spatialElementDescription = NamingUtil.GetDescriptionOverride(spatialElement, desc);
                     string spatialElementObjectType = NamingUtil.GetObjectTypeOverride(spatialElement, null);
 
@@ -998,14 +932,32 @@ namespace BIM.IFC.Exporter
                         spaceElevationWithFlooring = elevationWithFlooring;
                     spaceHnd = IFCInstanceExporter.CreateSpace(file, GUIDUtil.CreateGUID(spatialElement),
                                                   exporterIFC.GetOwnerHistoryHandle(),
-                                                  spatialElementName,spatialElementDescription, spatialElementObjectType,
+                                                  spatialElementName, spatialElementDescription, spatialElementObjectType,
                                                   extraParams.GetLocalPlacement(), repHnd, longName, Toolkit.IFCElementComposition.Element,
                                                   internalOrExternal, spaceElevationWithFlooring);
 
                     transaction2.Commit();
                 }
 
-                productWrapper.AddSpace(spaceHnd, levelInfo, extraParams, true);
+                if (spaceHnd != null)
+                {
+                    productWrapper.AddSpace(spaceHnd, levelInfo, extraParams, true);
+                    if (isArea)
+                    {
+                        Element areaScheme = spatialElementAsArea.AreaScheme;
+                        if (areaScheme != null)
+                        {
+                            ElementId areaSchemeId = areaScheme.Id;
+                            HashSet<IFCAnyHandle> areas = null;
+                            if (!ExporterCacheManager.AreaSchemeCache.TryGetValue(areaSchemeId, out areas))
+                            {
+                                areas = new HashSet<IFCAnyHandle>();
+                                ExporterCacheManager.AreaSchemeCache[areaSchemeId] = areas;
+                            }
+                            areas.Add(spaceHnd);
+                        }
+                    }
+                }
             }
 
             // Save room handle for later use/relationships
@@ -1013,23 +965,14 @@ namespace BIM.IFC.Exporter
             exporterIFC.RegisterSpatialElementHandle(spatialElement.Id, spaceHnd);
 
             // Find Ceiling as a Space boundary and keep the relationship in a cache for use later
-            Boolean ret = getCeilingSpaceBoundary(spatialElement);
+            bool ret = GetCeilingSpaceBoundary(spatialElement);
 
             if (!MathUtil.IsAlmostZero(dArea) && !(ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE) &&
                 !ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2 && !ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities)
             {
-                ExporterIFCUtils.CreatePreCOBIEGSAQuantities(exporterIFC, spaceHnd, "GSA Space Areas", (isArea ? "GSA Design Gross Area" : "GSA BIM Area"), dArea);
+                bool isDesignGrossArea = (string.Compare(spatialElementName, "GSA Design Gross Area") > 0);
+                ExporterIFCUtils.CreatePreCOBIEGSAQuantities(exporterIFC, spaceHnd, "GSA Space Areas", (isDesignGrossArea ? "GSA Design Gross Area" : "GSA BIM Area"), dArea);
             }
-
-            // Export BaseQuantities for SpatialElement
-            if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities && !(ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE))
-            {
-                // Skip this step. The "standard" quantities will be exported at the end of export element process in exportElement (Exporter.cs)
-                // ExporterIFCUtils.CreateNonCOBIERoomQuantities(exporterIFC, spaceHnd, spatialElement, dArea, roomHeight);
-            }
-
-            // Create general classification for Spatial element from ClassificationCode(s). This is not done here but rather at the end of exportElement process
-            // ClassificationUtil.CreateClassification(exporterIFC, file, spatialElement, spaceHnd, "");
 
             // Export Classifications for SpatialElement for GSA/COBIE.
             if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
@@ -1045,14 +988,22 @@ namespace BIM.IFC.Exporter
         /// </summary>
         /// <param name="spatialElement">The revit spatial object to process</param>
         /// <returns></returns>
-        static private bool getCeilingSpaceBoundary(SpatialElement spatialElement)
+        static private bool GetCeilingSpaceBoundary(SpatialElement spatialElement)
         {
             // Represents the criteria for boundary elements to be considered bounding Ceiling
             LogicalOrFilter categoryFilter = new LogicalOrFilter(new ElementCategoryFilter(BuiltInCategory.OST_Ceilings),
                                                         new ElementCategoryFilter(BuiltInCategory.OST_Ceilings));
 
             SpatialElementGeometryCalculator calculator = new SpatialElementGeometryCalculator(spatialElement.Document);
-            SpatialElementGeometryResults results = calculator.CalculateSpatialElementGeometry((SpatialElement)spatialElement);
+            SpatialElementGeometryResults results = null;
+            try
+            {
+                results = calculator.CalculateSpatialElementGeometry(spatialElement);
+            }
+            catch
+            {
+                return false;
+            }
             Solid geometry = results.GetGeometry();
 
             // Go through the boundary faces to identify whether it is bounded by a Ceiling. If it is Ceiling, add into the Cache
