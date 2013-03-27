@@ -79,7 +79,8 @@ namespace BIM.IFC.Exporter
 
                 PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
 
-                IFCInstanceExporter.CreateRelAggregates(file, guid, ownerHistory, null, null, zoneHnd, spaceHnds);
+                string relAssignsGuid = GUIDUtil.CreateSubElementGUID(element, (int) IFCZoneSubElements.RelAssignsToGroup);
+                IFCInstanceExporter.CreateRelAssignsToGroup(file, relAssignsGuid, ownerHistory, null, null, spaceHnds, null, zoneHnd);
 
                 tr.Commit();
                 return;

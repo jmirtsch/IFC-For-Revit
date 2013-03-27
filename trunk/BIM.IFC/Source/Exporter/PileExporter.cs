@@ -100,7 +100,7 @@ namespace BIM.IFC.Exporter
                             }
                         }
 
-                        productWrapper.AddElement(pile, setter, ecData, LevelUtil.AssociateElementToLevel(element));
+                        productWrapper.AddElement(pile, setter, ecData, true);
 
                         OpeningUtil.CreateOpeningsIfNecessary(pile, element, ecData, null,
                             exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);

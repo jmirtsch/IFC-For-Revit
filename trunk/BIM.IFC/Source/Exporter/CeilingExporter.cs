@@ -194,7 +194,7 @@ namespace BIM.IFC.Exporter
 
                         // if not contained in Space, assign it to default containment in Level
                         if (!containInSpace)
-                            productWrapper.AddElement(covering, setter, null, LevelUtil.AssociateElementToLevel(element));
+                            productWrapper.AddElement(covering, setter, null, true);
 
                         if (!exportParts)
                         {

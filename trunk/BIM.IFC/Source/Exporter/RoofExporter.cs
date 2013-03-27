@@ -88,7 +88,7 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle roofHnd = IFCInstanceExporter.CreateRoof(file, guid, ownerHistory, roofName, roofDescription,
                             roofObjectType, localPlacement, exportSlab ? null : representation, elementTag, roofType);
 
-                        productWrapper.AddElement(roofHnd, placementSetter.GetLevelInfo(), ecData, LevelUtil.AssociateElementToLevel(roof));
+                        productWrapper.AddElement(roofHnd, placementSetter.GetLevelInfo(), ecData, true);
 
                         // will export its host object materials later if it is a roof
                         if (!(roof is RoofBase))
@@ -198,7 +198,7 @@ namespace BIM.IFC.Exporter
                         // Export the parts
                         PartExporter.ExportHostPart(exporterIFC, element, roofHandle, productWrapper, setter, localPlacement, null);
 
-                    productWrapper.AddElement(roofHandle, setter, null, LevelUtil.AssociateElementToLevel(element));
+                    productWrapper.AddElement(roofHandle, setter, null, true);
 
                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
 

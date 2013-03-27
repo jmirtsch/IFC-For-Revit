@@ -1864,15 +1864,27 @@ namespace BIM.IFC.Utility
         /// <summary>
 
         /// <summary>
-        /// Determines if the Normal of the PlanarFace is flipped.
+        /// Computes the area defined by a polygonal loop.
         /// </summary>
-        /// <param name="planarFace">The planar face.</param>
-        /// <returns>True if the normal is flipped.</returns>
-        public static bool IsPlanarFaceNormalFlipped(PlanarFace planarFace)
+        /// <param name="loop">The polygonal loop.</param>
+        /// <param name="normal">The normal of the face.</param>
+        /// <param name="refPoint">Reference point for area computation.</param>
+        /// <returns>The area.</returns>
+        public static double ComputePolygonalLoopArea(IList<XYZ> loop, XYZ normal, XYZ refPoint)
         {
-            XYZ planarFaceNormal = planarFace.Normal;
-            XYZ faceNormal = planarFace.ComputeNormal(new UV(0, 0));
-            return MathUtil.VectorsAreParallel2(planarFaceNormal, faceNormal) == -1;
+            double area = 0.0;
+            int numVertices = loop.Count;
+            for (int ii = 0; ii < numVertices; ii++)
+            {
+                XYZ currEdge = loop[(ii + 1) % numVertices] - loop[ii];
+                double length = currEdge.GetLength();
+
+                XYZ heightVec = normal.CrossProduct(currEdge).Normalize();
+                XYZ otherEdge = refPoint - loop[ii];
+                double height = heightVec.DotProduct(otherEdge);
+                area += (length * height);
+            }
+            return area / 2.0;
         }
 
         /// <summary>

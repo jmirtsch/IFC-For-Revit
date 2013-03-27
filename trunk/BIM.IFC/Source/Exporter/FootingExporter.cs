@@ -132,7 +132,7 @@ namespace BIM.IFC.Exporter
                             }
                         }
 
-                        productWrapper.AddElement(footing, setter, ecData, LevelUtil.AssociateElementToLevel(element));
+                        productWrapper.AddElement(footing, setter, ecData, true);
 
                         OpeningUtil.CreateOpeningsIfNecessary(footing, element, ecData, null, 
                             exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);
@@ -146,21 +146,12 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
-        /// Gets IFC footing type for an element.
+        /// Gets IFC footing type from a string.
         /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="typeName">
-        /// The type name.
-        /// </param>
-        public static Toolkit.IFCFootingType GetIFCFootingType(Element element, string typeName)
+        /// <param name="value">The type name.</param>
+        /// <returns>The IFCFootingType.</returns>
+        public static Toolkit.IFCFootingType GetIFCFootingType(string value)
         {
-            string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
-                value = typeName;
-            }
             if (String.IsNullOrEmpty(value))
                 return Toolkit.IFCFootingType.NotDefined;
 
@@ -178,6 +169,23 @@ namespace BIM.IFC.Exporter
                 return Toolkit.IFCFootingType.Strip_Footing;
 
             return Toolkit.IFCFootingType.UserDefined;
+        }
+
+        /// <summary>
+        /// Gets IFC footing type for an element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <param name="typeName">The type name.</param>
+        /// <returns>The IFCFootingType.</returns>
+        public static Toolkit.IFCFootingType GetIFCFootingType(Element element, string typeName)
+        {
+            string value = null;
+            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
+            {
+                value = typeName;
+            }
+
+            return GetIFCFootingType(value);
         }
     }
 }

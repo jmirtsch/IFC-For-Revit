@@ -612,21 +612,17 @@ namespace BIM.IFC.Exporter
                 EdgeArrayArray edgeArrayArray = face.EdgeLoops;
 
                 int edgeArraySize = edgeArrayArray.Size;
-                int outerEdgeArrayIndex = 0;
-                if (edgeArraySize > 1)
-                {
-                    if (GeometryUtil.IsPlanarFaceNormalFlipped(face as PlanarFace))
-                    {
-                        outerEdgeArrayIndex = edgeArraySize - 1;
-                    }
-                    else
-                        outerEdgeArrayIndex = 0;
-                }
+                IList<IList<IFCAnyHandle>> edgeArrayVertices = new List<IList<IFCAnyHandle>>();
 
-                int edgeArrayIndex = 0;
+                int outerEdgeArrayIndex = 0;
+                double maxArea = 0.0;                
+                XYZ faceNormal = (face as PlanarFace).Normal;
+
                 foreach (EdgeArray edgeArray in edgeArrayArray)
                 {
                     IList<IFCAnyHandle> vertices = new List<IFCAnyHandle>();
+                    IList<XYZ> vertexXYZs = new List<XYZ>();
+                    
                     foreach (Edge edge in edgeArray)
                     {
                         IList<IFCAnyHandle> edgeVertices = null;
@@ -636,6 +632,9 @@ namespace BIM.IFC.Exporter
                             Curve curve = edge.AsCurveFollowingFace(face);
 
                             IList<XYZ> curvePoints = curve.Tessellate();
+                            foreach (XYZ curvePoint in curvePoints)
+                                vertexXYZs.Add(curvePoint);
+
                             int numPoints = curvePoints.Count;
 
                             // Don't add last point to vertives, as this will be added in the next edge, but we do want it
@@ -666,14 +665,26 @@ namespace BIM.IFC.Exporter
                         }
                     }
 
-                    IFCAnyHandle faceLoop = IFCInstanceExporter.CreatePolyLoop(file, vertices);
-                    IFCAnyHandle faceBound = edgeArrayIndex == outerEdgeArrayIndex ?
+                    double currArea = Math.Abs(GeometryUtil.ComputePolygonalLoopArea(vertexXYZs, faceNormal, vertexXYZs[0]));
+                    if (currArea > maxArea)
+                    {
+                        outerEdgeArrayIndex = edgeArrayVertices.Count;
+                        maxArea = currArea;
+                    }
+
+                    edgeArrayVertices.Add(vertices);
+                }
+
+                for (int ii = 0; ii < edgeArraySize; ii++)
+                {
+                    IFCAnyHandle faceLoop = IFCInstanceExporter.CreatePolyLoop(file, edgeArrayVertices[ii]);
+                    IFCAnyHandle faceBound = (ii == outerEdgeArrayIndex) ?
                         IFCInstanceExporter.CreateFaceOuterBound(file, faceLoop, true) :
                         IFCInstanceExporter.CreateFaceBound(file, faceLoop, true);
 
-                    edgeArrayIndex++;
                     faceBounds.Add(faceBound);
                 }
+
                 IFCAnyHandle currFace = IFCInstanceExporter.CreateFace(file, faceBounds);
                 currentFaceSet.Add(currFace);
             }
@@ -1810,7 +1821,7 @@ namespace BIM.IFC.Exporter
                         bodyData.OffsetTransform = transformSetter.InitializeFromBoundingBox(exporterIFC, geometryList, exportBodyParams);
 
                     BodyData retBodyData = ExportBodyAsBRep(exporterIFC, geometryList, exportAsBRep, bodyItems, element, categoryId, overrideMaterialId, contextOfItems, eps, options, bodyData);
-                    if (retBodyData != null && retBodyData.RepresentationHnd != null)
+                    if (retBodyData != null)
                         tr.Commit();
                     else
                         tr.RollBack();

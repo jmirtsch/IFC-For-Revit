@@ -83,7 +83,7 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle ductLining = IFCInstanceExporter.CreateCovering(file, guid,
                             ownerHistory, name, description, objectType, localPlacement, representation, elementTag, IFCCoveringType.Wrapping);
 
-                        productWrapper.AddElement(ductLining, placementSetter.GetLevelInfo(), ecData, LevelUtil.AssociateElementToLevel(element));
+                        productWrapper.AddElement(ductLining, placementSetter.GetLevelInfo(), ecData, true);
 
                         PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }

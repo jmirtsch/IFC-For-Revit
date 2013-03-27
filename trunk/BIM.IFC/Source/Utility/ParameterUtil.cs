@@ -119,8 +119,36 @@ namespace BIM.IFC.Utility
 
             if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Integer)
             {
-                propertyValue = parameter.AsInteger();
-                return true;
+                switch (parameter.StorageType)
+                {
+                    case StorageType.Double:
+                        {
+                            try
+                            {
+                                propertyValue = (int)parameter.AsDouble();
+                                return true;
+                            }
+                            catch
+                            {
+                                return false;
+                            }
+                        }
+                    case StorageType.Integer:
+                        propertyValue = parameter.AsInteger();
+                        return true;
+                    case StorageType.String:
+                        {
+                            try
+                            {
+                                propertyValue = Convert.ToInt32(parameter.AsString());
+                                return true;
+                            }
+                            catch
+                            {
+                                return false;
+                            }
+                        }
+                }
             }
 
             return false;
@@ -148,10 +176,29 @@ namespace BIM.IFC.Utility
 
             Parameter parameter = GetParameterFromName(element, group, propertyName);
 
-            if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Double)
+            if (parameter != null && parameter.HasValue)
             {
-                propertyValue = parameter.AsDouble();
-                return true;
+                switch (parameter.StorageType)
+                {
+                    case StorageType.Double:
+                        propertyValue = parameter.AsDouble();
+                        return true;
+                    case StorageType.Integer:
+                        propertyValue = parameter.AsInteger();
+                        return true;
+                    case StorageType.String:
+                        {
+                            try
+                            {
+                                propertyValue = Convert.ToDouble(parameter.AsString());
+                                return true;
+                            }
+                            catch
+                            {
+                                return false;
+                            }
+                        }
+                }
             }
 
             return false;
@@ -189,10 +236,20 @@ namespace BIM.IFC.Utility
             propertyValue = String.Empty;
 
             Parameter parameter = element.get_Parameter(builtInParameter);
-            if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.String)
+            if (parameter != null && parameter.HasValue)
             {
-                propertyValue = parameter.AsString();
-                return true;
+                switch (parameter.StorageType)
+                {
+                    case StorageType.Double:
+                        propertyValue = parameter.AsDouble().ToString();
+                        return true;
+                    case StorageType.Integer:
+                        propertyValue = parameter.AsInteger().ToString();
+                        return true;
+                    case StorageType.String:
+                        propertyValue = parameter.AsString();
+                        return true;
+                }
             }
 
             return false;

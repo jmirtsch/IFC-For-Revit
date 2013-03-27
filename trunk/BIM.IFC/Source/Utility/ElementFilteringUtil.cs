@@ -459,6 +459,10 @@ namespace BIM.IFC.Utility
         /// DiscreteAccessory type.
         /// </summary>
         ExportDiscreteAccessoryType,
+        /// <summary>
+        /// System
+        /// </summary>
+        ExportSystem,
     }
 
 
@@ -678,6 +682,8 @@ namespace BIM.IFC.Utility
             }
             else if (String.Compare(ifcClassName, "IfcStair", true) == 0)
                 return IFCExportType.ExportStair;
+            else if (String.Compare(ifcClassName, "IfcSystem", true) == 0)
+                return IFCExportType.ExportSystem;
             else if (IsEqualToTypeName(ifcClassName, ("IfcTransportElement")))
                 return IFCExportType.ExportTransportElementType;
             else if ((String.Compare(ifcClassName, "IfcWall", true) == 0) ||

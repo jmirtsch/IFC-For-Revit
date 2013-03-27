@@ -240,7 +240,7 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle beam = IFCInstanceExporter.CreateBeam(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
                             instanceName, instanceDescription, instanceObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, instanceTag);
 
-                        productWrapper.AddElement(beam, setter, extrusionCreationData, LevelUtil.AssociateElementToLevel(element));
+                        productWrapper.AddElement(beam, setter, extrusionCreationData, true);
 
                         OpeningUtil.CreateOpeningsIfNecessary(beam, element, extrusionCreationData, offsetTransform, exporterIFC, 
                             extrusionCreationData.GetLocalPlacement(), setter, productWrapper);

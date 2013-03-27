@@ -80,14 +80,10 @@ namespace BIM.IFC.Exporter
                     if (!CreateIFCSpace(exporterIFC, spatialElement, productWrapper, setter))
                         return;
 
-                    // Do not create boundary information, or extra property sets.
-                    if (spatialElement is Area)
-                    {
-                        transaction.Commit();
-                        return;
-                    }
+                    bool isArea = (spatialElement is Area);
 
-                    if (ExporterCacheManager.ExportOptionsCache.SpaceBoundaryLevel == 1)
+                    // Do not create boundary information for areas.
+                    if (!isArea && (ExporterCacheManager.ExportOptionsCache.SpaceBoundaryLevel == 1))
                     {
                         Document document = spatialElement.Document;
                         IFCLevelInfo levelInfo = exporterIFC.GetLevelInfo(levelId);
@@ -311,6 +307,7 @@ namespace BIM.IFC.Exporter
                             }
                         }
                     }
+
                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, spatialElement, productWrapper);
                     CreateZoneInfos(exporterIFC, file, spatialElement, productWrapper);
                     CreateSpaceOccupantInfo(exporterIFC, file, spatialElement, productWrapper);
@@ -326,9 +323,11 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC"> The ExporterIFC object.</param>
         /// <param name="document">The Revit document.</param>
         /// <param name="filterView">The current view, or null.</param>
-        /// <returns>The output boolean value indicates if exported successfully.</returns>
-        public static bool ExportSpatialElement2ndLevel(Exporter ifcExporter, ExporterIFC exporterIFC, Document document, View filterView)
+        /// <returns>The set of exported spaces.  This is used to try to export using the standard routine for spaces that failed.</returns>
+        public static ISet<ElementId> ExportSpatialElement2ndLevel(Exporter ifcExporter, ExporterIFC exporterIFC, Document document, View filterView)
         {
+            ISet<ElementId> exportedSpaceIds = new HashSet<ElementId>();
+
             using (SubTransaction st = new SubTransaction(document))
             {
                 st.Start();
@@ -349,7 +348,7 @@ namespace BIM.IFC.Exporter
                         }
                         catch (System.Exception)
                         {
-                            return false;
+                            return exportedSpaceIds;
                         }
 
                         IList<EnergyAnalysisSpace> spaces = model.GetAnalyticalSpaces();
@@ -384,6 +383,8 @@ namespace BIM.IFC.Exporter
                                     {
                                         if (!CreateIFCSpace(exporterIFC, spatialElement, productWrapper, setter))
                                             continue;
+
+                                        exportedSpaceIds.Add(spatialElement.Id);
 
                                         XYZ offset = GetSapceBoundaryOffset(setter);
 
@@ -435,7 +436,7 @@ namespace BIM.IFC.Exporter
                 }
 
                 st.RollBack();
-                return true;
+                return exportedSpaceIds;
             }
         }
 

@@ -66,67 +66,89 @@ namespace BIM.IFC.Exporter
 
             using (IFCTransaction tr = new IFCTransaction(file))
             {
-                using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, element))
+                IFCAnyHandle assemblyInstanceHnd = null;
+
+                string guid = GUIDUtil.CreateGUID(element);
+                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
+                string description = NamingUtil.GetDescriptionOverride(element, null);
+                string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
+                IFCAnyHandle localPlacement = null;
+                IFCPlacementSetter placementSetter = null;
+                IFCLevelInfo levelInfo = null;
+
+                string ifcEnumType;
+                IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
+                if (exportAs == IFCExportType.ExportSystem)
                 {
-                    string ifcEnumType;
-                    IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
-                    IFCAnyHandle assemblyInstanceHnd = null;
-        
-                    string guid = GUIDUtil.CreateGUID(element);
-                    IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                    string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-                    string description = NamingUtil.GetDescriptionOverride(element, null);
-                    string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
-                    IFCAnyHandle localPlacement = placementSetter.GetPlacement();
-                    IFCAnyHandle representation = null;
-                    string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
+                    assemblyInstanceHnd = IFCInstanceExporter.CreateSystem(file, guid,
+                        ownerHistory, name, description, objectType);
 
-                    // We have limited support for exporting assemblies as other container types.
-                    switch (exportAs)
-                    {
-                        case IFCExportType.ExportCurtainWall:
-                            assemblyInstanceHnd = IFCInstanceExporter.CreateCurtainWall(file, guid,
-                                ownerHistory, name, description, objectType, localPlacement, representation, elementTag);
-                            break;
-                        case IFCExportType.ExportRamp:
-                            IFCRampType rampPredefinedType = RampExporter.GetIFCRampType(ifcEnumType);
-                            assemblyInstanceHnd = IFCInstanceExporter.CreateRamp(file, guid,
-                                ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
-                                rampPredefinedType);
-                            break;
-                        case IFCExportType.ExportRoof:
-                            IFCRoofType roofPredefinedType = RoofExporter.GetIFCRoofType(ifcEnumType);
-                            assemblyInstanceHnd = IFCInstanceExporter.CreateRoof(file, guid,
-                                ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
-                                roofPredefinedType);
-                            break;
-                        case IFCExportType.ExportStair:
-                            IFCStairType stairPredefinedType = StairsExporter.GetIFCStairType(ifcEnumType);
-                            assemblyInstanceHnd = IFCInstanceExporter.CreateStair(file, guid,
-                                ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
-                                stairPredefinedType);
-                            break;
-                        case IFCExportType.ExportWall:
-                            assemblyInstanceHnd = IFCInstanceExporter.CreateWall(file, guid,
-                                ownerHistory, name, description, objectType, localPlacement, representation, elementTag);
-                            break;
-                        default:
-                            IFCElementAssemblyType assemblyPredefinedType = GetPredefinedTypeFromObjectType(objectType);
-                            assemblyInstanceHnd = IFCInstanceExporter.CreateElementAssembly(file, guid,
-                                ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
-                                IFCAssemblyPlace.NotDefined, assemblyPredefinedType);
-                            break;
-                    }
+                    HashSet<IFCAnyHandle> relatedBuildings = new HashSet<IFCAnyHandle>();
+                    relatedBuildings.Add(exporterIFC.GetBuilding());
 
-                    if (assemblyInstanceHnd == null)
-                        return false;
-
-                    productWrapper.AddElement(assemblyInstanceHnd, placementSetter.GetLevelInfo(), null, true);
-
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
-
-                    ExporterCacheManager.AssemblyInstanceCache.RegisterAssemblyInstance(element.Id, assemblyInstanceHnd);
+                    IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
+                        exporterIFC.GetOwnerHistoryHandle(), null, null, assemblyInstanceHnd, relatedBuildings);
                 }
+                else
+                {
+                    using (placementSetter = IFCPlacementSetter.Create(exporterIFC, element))
+                    {
+                        string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
+                        IFCAnyHandle representation = null;
+
+                        // We have limited support for exporting assemblies as other container types.
+                        localPlacement = placementSetter.GetPlacement();
+                        levelInfo = placementSetter.GetLevelInfo();
+                
+                        switch (exportAs)
+                        {
+                            case IFCExportType.ExportCurtainWall:
+                                assemblyInstanceHnd = IFCInstanceExporter.CreateCurtainWall(file, guid,
+                                    ownerHistory, name, description, objectType, localPlacement, representation, elementTag);
+                                break;
+                            case IFCExportType.ExportRamp:
+                                IFCRampType rampPredefinedType = RampExporter.GetIFCRampType(ifcEnumType);
+                                assemblyInstanceHnd = IFCInstanceExporter.CreateRamp(file, guid,
+                                    ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
+                                    rampPredefinedType);
+                                break;
+                            case IFCExportType.ExportRoof:
+                                IFCRoofType roofPredefinedType = RoofExporter.GetIFCRoofType(ifcEnumType);
+                                assemblyInstanceHnd = IFCInstanceExporter.CreateRoof(file, guid,
+                                    ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
+                                    roofPredefinedType);
+                                break;
+                            case IFCExportType.ExportStair:
+                                IFCStairType stairPredefinedType = StairsExporter.GetIFCStairType(ifcEnumType);
+                                assemblyInstanceHnd = IFCInstanceExporter.CreateStair(file, guid,
+                                    ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
+                                    stairPredefinedType);
+                                break;
+                            case IFCExportType.ExportWall:
+                                assemblyInstanceHnd = IFCInstanceExporter.CreateWall(file, guid,
+                                    ownerHistory, name, description, objectType, localPlacement, representation, elementTag);
+                                break;
+                            default:
+                                IFCElementAssemblyType assemblyPredefinedType = GetPredefinedTypeFromObjectType(objectType);
+                                assemblyInstanceHnd = IFCInstanceExporter.CreateElementAssembly(file, guid,
+                                    ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
+                                    IFCAssemblyPlace.NotDefined, assemblyPredefinedType);
+                                break;
+                        }
+                    }
+                }
+
+                if (assemblyInstanceHnd == null)
+                    return false;
+
+                bool relateToLevel = (levelInfo != null);
+                productWrapper.AddElement(assemblyInstanceHnd, levelInfo, null, relateToLevel);
+
+                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
+
+                ExporterCacheManager.AssemblyInstanceCache.RegisterAssemblyInstance(element.Id, assemblyInstanceHnd);
+
                 tr.Commit();
                 return true;
             }
@@ -233,13 +255,16 @@ namespace BIM.IFC.Exporter
                     IFCAnyHandle assemblyInstanceHnd = IFCInstanceExporter.CreateElementAssembly(file, guid,
                         ownerHistory, name, description, objectType, localPlacement, null, elementTag,
                         IFCAssemblyPlace.NotDefined, assemblyType);
-                    
+
                     productWrapper.AddElement(assemblyInstanceHnd, placementSetter.GetLevelInfo(), null, true);
 
 
                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, assemblyElem, productWrapper);
 
-                    IFCInstanceExporter.CreateRelAggregates(file, guid, ownerHistory, null, null, assemblyInstanceHnd, memberHnds);
+                    string aggregateGuid = GUIDUtil.CreateSubElementGUID(assemblyElem, (int)IFCAssemblyInstanceSubElements.RelAggregates);
+                    IFCInstanceExporter.CreateRelAggregates(file, aggregateGuid, ownerHistory, null, null, assemblyInstanceHnd, memberHnds);
+
+                    ExporterCacheManager.ElementsInAssembliesCache.UnionWith(memberHnds);
 
                     // Update member local placements to be relative to the assembly.
                     SetLocalPlacementsRelativeToAssembly(exporterIFC, localPlacement, memberHnds);

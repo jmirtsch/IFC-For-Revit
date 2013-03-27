@@ -87,7 +87,7 @@ namespace BIM.IFC.Exporter
                         buildingElementProxy = IFCInstanceExporter.CreateBuildingElementProxy(file, guid,
                             ownerHistory, name, description, objectType, localPlacement, representation, elementTag, Toolkit.IFCElementComposition.Element);
 
-                        productWrapper.AddElement(buildingElementProxy, placementSetter.GetLevelInfo(), ecData, LevelUtil.AssociateElementToLevel(element));
+                        productWrapper.AddElement(buildingElementProxy, placementSetter.GetLevelInfo(), ecData, true);
                     }
                     tr.Commit();
                 }

@@ -269,6 +269,11 @@ namespace BIM.IFC.Utility
         static ElementToHandleCache m_MaterialIdToStyleHandleCache;
 
         /// <summary>
+        /// A list of elements contained in assemblies, to be removed from the level spatial structure.
+        /// </summary>
+        static ISet<IFCAnyHandle> m_ElementsInAssembliesCache;
+        
+        /// <summary>
         /// The default IfcCartesianTransformationOperator3D, scale 1.0 and origin =  { 0., 0., 0. };
         /// </summary>
         static IFCAnyHandle m_DefaultCartesianTransformationOperator3D;
@@ -905,6 +910,19 @@ namespace BIM.IFC.Utility
             }
         }
 
+        /// <summary>
+        /// The elements in assemblies cache.
+        /// </summary>
+        public static ISet<IFCAnyHandle> ElementsInAssembliesCache
+        {
+            get
+            {
+                if (m_ElementsInAssembliesCache == null)
+                    m_ElementsInAssembliesCache = new HashSet<IFCAnyHandle>();
+                return m_ElementsInAssembliesCache;
+            }
+        }
+
         public static IFCAnyHandle GetDefaultCartesianTransformationOperator3D(IFCFile file)
         {
             if (m_DefaultCartesianTransformationOperator3D == null)
@@ -1004,6 +1022,7 @@ namespace BIM.IFC.Utility
             m_DefaultCartesianTransformationOperator3D = null;
             m_DummyHostCache = null;
             m_ElementToHandleCache = null;
+            m_ElementsInAssembliesCache = null;
             m_ExportOptionsCache = null;
             m_FabricAreaHandleCache = null;
             m_GridCache = null;
