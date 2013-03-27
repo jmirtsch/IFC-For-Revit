@@ -125,6 +125,8 @@ namespace BIM.IFC.Exporter
 
                         ElementId categoryId = CategoryUtil.GetSafeCategoryId(sheet);
 
+                        ElementId materialId = ElementId.InvalidElementId;
+                        ParameterUtil.GetElementIdValueFromElementOrSymbol(sheet, BuiltInParameter.MATERIAL_ID_PARAM, out materialId);
                         double scale = exporterIFC.LinearScale;
 
                         string guid = GUIDUtil.CreateGUID(sheet);
@@ -221,7 +223,9 @@ namespace BIM.IFC.Exporter
                             fabricSheets.Add(fabricSheet);
                         }
 
-                        productWrapper.AddElement(fabricSheet, placementSetter.GetLevelInfo(), ecData, LevelUtil.AssociateElementToLevel(sheet));
+                        productWrapper.AddElement(fabricSheet, placementSetter.GetLevelInfo(), ecData, true);
+
+                        CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, fabricSheet, materialId);
 
                         PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, sheet, productWrapper);
                     }

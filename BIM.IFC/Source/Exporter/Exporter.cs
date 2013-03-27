@@ -171,23 +171,19 @@ namespace BIM.IFC.Exporter
                     new FilteredElementCollector(document) : new FilteredElementCollector(document, filterView.Id);
             }
 
-            bool spaceExported = false;
+            ISet<ElementId> exportedSpaces = null;
             if (exportOptionsCache.SpaceBoundaryLevel == 2)
-            {
-                spaceExported = SpatialElementExporter.ExportSpatialElement2ndLevel(this, exporterIFC, document, filterView);
-            }
+                exportedSpaces = SpatialElementExporter.ExportSpatialElement2ndLevel(this, exporterIFC, document, filterView);
 
-            //export spatial element - none or 1st level room boundaries
-            //  or create IFC Space only if 2nd level room boundaries export failed
-            if (exportOptionsCache.SpaceBoundaryLevel < 2 || !spaceExported)
+            //export all spatial elements for no or 1st level room boundaries; for 2nd level, export spaces that couldn't be exported above.
+            SpatialElementExporter.InitializeSpatialElementGeometryCalculator(document, exporterIFC);
+            ElementFilter spatialElementFilter = ElementFilteringUtil.GetSpatialElementFilter(document, exporterIFC, filterView);
+            spatialElementCollector.WherePasses(spatialElementFilter);
+            foreach (Element element in spatialElementCollector)
             {
-                SpatialElementExporter.InitializeSpatialElementGeometryCalculator(document, exporterIFC);
-                ElementFilter spatialElementFilter = ElementFilteringUtil.GetSpatialElementFilter(document, exporterIFC, filterView);
-                spatialElementCollector.WherePasses(spatialElementFilter);
-                foreach (Element element in spatialElementCollector)
-                {
-                    ExportElement(exporterIFC, filterView, element);
-                }
+                if ((element == null) || (exportedSpaces != null && exportedSpaces.Contains(element.Id)))
+                    continue;
+                ExportElement(exporterIFC, filterView, element);
             }
         }
 
@@ -792,6 +788,8 @@ namespace BIM.IFC.Exporter
                 ProjectInfo projInfo = document.ProjectInformation;
               
                 string buildingName = String.Empty;
+                string buildingDescription = null;
+                string buildingLongName = null;
                 if (projInfo != null)
                 {
                     try
@@ -801,13 +799,15 @@ namespace BIM.IFC.Exporter
                     catch (Autodesk.Revit.Exceptions.InvalidOperationException)
                     {
                     }
+                    buildingDescription = NamingUtil.GetOverrideStringValue(projInfo, "BuildingDescription", null);
+                    buildingLongName = NamingUtil.GetOverrideStringValue(projInfo, "BuildingLongName", buildingName);
                 }
                 
                 IFCAnyHandle buildingAddress = CreateIFCAddress(file, document, projInfo);
 
                 IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(file,
                     GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building),
-                    ownerHistory, buildingName, null, null, buildingPlacement, null, buildingName,
+                    ownerHistory, buildingName, buildingDescription, null, buildingPlacement, null, buildingLongName,
                     Toolkit.IFCElementComposition.Element, null, null, buildingAddress);
                 exporterIFC.SetBuilding(buildingHandle);
 
@@ -892,12 +892,15 @@ namespace BIM.IFC.Exporter
 
                     IFCAnyHandle axis2Placement3D = ExporterUtil.CreateAxis2Placement3D(file, orig);
                     IFCAnyHandle placement = IFCInstanceExporter.CreateLocalPlacement(file, buildingPlacement, axis2Placement3D);
-                    string levelName = level.Name;
+                    string levelName = NamingUtil.GetNameOverride(level, level.Name);
+                    string objectType = NamingUtil.GetObjectTypeOverride(level, null);
+                    string description = NamingUtil.GetDescriptionOverride(level, null);
+                    string longName = level.Name;
                     string levelGUID = GUIDUtil.GetLevelGUID(level);
                     IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(file,
                         levelGUID, exporterIFC.GetOwnerHistoryHandle(),
-                        levelName, null, null, placement,
-                        null, levelName, Toolkit.IFCElementComposition.Element, elevation);
+                        levelName, objectType, description, placement,
+                        null, longName, Toolkit.IFCElementComposition.Element, elevation);
 
                     // If we are using the R2009 Level GUIDs, write it to a shared paramter in the file to ensure that it is preserved.
                     if (ExporterCacheManager.ExportOptionsCache.GUIDOptions.Use2009BuildingStoreyGUIDs)
@@ -998,11 +1001,23 @@ namespace BIM.IFC.Exporter
                     {
                         Element assemblyInstance = document.GetElement(assemblyInfoEntry.Key);
                         string guid = ExporterIFCUtils.CreateSubElementGUID(assemblyInstance, (int)IFCAssemblyInstanceSubElements.RelContainedInSpatialStructure);
-                        ExporterUtil.RelateObjects(exporterIFC, guid, assemblyInfo.AssemblyInstanceHandle, assemblyInfo.ElementHandles);
+                        
+                        IFCAnyHandle assemblyInstanceHandle = assemblyInfo.AssemblyInstanceHandle;
+                        if (IFCAnyHandleUtil.IsSubTypeOf(assemblyInstanceHandle, IFCEntityType.IfcSystem))
+                        {
+                            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                            IFCInstanceExporter.CreateRelAssignsToGroup(file, guid, ownerHistory, null, null, assemblyInfo.ElementHandles, null, assemblyInstanceHandle);
+                        }
+                        else
+                        {
+                            ExporterUtil.RelateObjects(exporterIFC, guid, assemblyInstanceHandle, assemblyInfo.ElementHandles);
+                            // Set the PlacementRelTo of assembly elements to assembly instance.
+                            IFCAnyHandle assemblyPlacement = IFCAnyHandleUtil.GetObjectPlacement(assemblyInfo.AssemblyInstanceHandle);
+                            AssemblyInstanceExporter.SetLocalPlacementsRelativeToAssembly(exporterIFC, assemblyPlacement, assemblyInfo.ElementHandles);
+                        }
 
-                        // Set the PlacementRelTo of assembly elements to assembly instance.
-                        IFCAnyHandle assemblyPlacement = IFCAnyHandleUtil.GetObjectPlacement(assemblyInfo.AssemblyInstanceHandle);
-                        AssemblyInstanceExporter.SetLocalPlacementsRelativeToAssembly(exporterIFC, assemblyPlacement, assemblyInfo.ElementHandles);
+                        // We don't do this in RegisterAssemblyElement because we want to make sure that the IfcElementAssembly has been created.
+                        ExporterCacheManager.ElementsInAssembliesCache.UnionWith(assemblyInfo.ElementHandles);
                     }                  
                 }
 
@@ -1762,13 +1777,10 @@ namespace BIM.IFC.Exporter
         private HashSet<IFCAnyHandle> CreateContextInformation(ExporterIFC exporterIFC, Document doc)
         {
             HashSet<IFCAnyHandle> repContexts = new HashSet<IFCAnyHandle>();
-            double scale = exporterIFC.LinearScale;
-            double precision = MathUtil.Eps();
-            if (scale > 1.0 + precision)
-            {
-                int exponent = ((int)(Math.Log10(scale) - 0.01)) + 1;
-                precision *= Math.Pow(10.0, exponent);
-            }
+            double scaledPrecision = doc.Application.VertexTolerance / 10.0 * exporterIFC.LinearScale;
+            int exponent = Convert.ToInt32(Math.Log10(scaledPrecision));
+            double precision = Math.Pow(10.0, exponent);
+            
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle origin = ExporterIFCUtils.GetGlobal3DOriginHandle();
             IFCAnyHandle wcs = IFCInstanceExporter.CreateAxis2Placement3D(file, origin, null, null);
@@ -2439,6 +2451,27 @@ namespace BIM.IFC.Exporter
             ExporterIFCUtils.SetGlobal2DOriginHandle(origin2d);
         }
 
+        private HashSet<IFCAnyHandle> RemoveContainedHandlesFromSet(ICollection<IFCAnyHandle> initialSet)
+        {
+            HashSet<IFCAnyHandle> filteredSet = new HashSet<IFCAnyHandle>();
+            foreach (IFCAnyHandle initialHandle in initialSet)
+            {
+                if (ExporterCacheManager.ElementsInAssembliesCache.Contains(initialHandle))
+                    continue;
+
+                try
+                {
+                    if (!IFCAnyHandleUtil.HasRelDecomposes(initialHandle))
+                        filteredSet.Add(initialHandle);
+                }
+                catch
+                {
+                }
+                filteredSet.Add(initialHandle);
+            }
+            return filteredSet;
+        }
+
         /// <summary>
         /// Relate levels and products.
         /// </summary>
@@ -2487,31 +2520,8 @@ namespace BIM.IFC.Exporter
                 }
 
                 // We may get stale handles in here; protect against this.
-                HashSet<IFCAnyHandle> relatedProducts = new HashSet<IFCAnyHandle>();
-                foreach (IFCAnyHandle relatedProduct in relatedProductsToCheck)
-                {
-                    try
-                    {
-                        if (!IFCAnyHandleUtil.HasRelDecomposes(relatedProduct))
-                            relatedProducts.Add(relatedProduct);
-                    }
-                    catch
-                    {
-                    }
-                }
-
-                HashSet<IFCAnyHandle> relatedElements = new HashSet<IFCAnyHandle>();
-                foreach (IFCAnyHandle relatedElement in relatedElementsToCheck)
-                {
-                    try
-                    {
-                        if (!IFCAnyHandleUtil.HasRelDecomposes(relatedElement))
-                            relatedElements.Add(relatedElement);
-                    }
-                    catch
-                    {
-                    }
-                }
+                HashSet<IFCAnyHandle> relatedProducts = RemoveContainedHandlesFromSet(relatedProductsToCheck);
+                HashSet<IFCAnyHandle> relatedElements = RemoveContainedHandlesFromSet(relatedElementsToCheck);
 
                 // skip coincident levels, if any.
                 for (int jj = ii + 1; jj < nextLevelIdx; jj++)
@@ -2547,15 +2557,17 @@ namespace BIM.IFC.Exporter
 
                 if (relatedProducts.Count > 0)
                 {
+                    HashSet<IFCAnyHandle> buildingProducts = RemoveContainedHandlesFromSet(relatedProducts);
                     IFCAnyHandle buildingStorey = levelInfo.GetBuildingStorey();
                     string guid = ExporterIFCUtils.CreateSubElementGUID(level, (int)IFCBuildingStoreySubElements.RelAggregates);
                     ExporterCacheManager.ContainmentCache.SetGUIDForRelation(buildingStorey, guid);
-                    ExporterCacheManager.ContainmentCache.AddRelations(buildingStorey, relatedProducts);
+                    ExporterCacheManager.ContainmentCache.AddRelations(buildingStorey, buildingProducts);
                 }
                 if (relatedElements.Count > 0)
                 {
-                    string guid = ExporterIFCUtils.CreateSubElementGUID(level, (int)IFCBuildingStoreySubElements.RelContainedInSpatialStructure);
-                    IFCInstanceExporter.CreateRelContainedInSpatialStructure(exporterIFC.GetFile(), guid, exporterIFC.GetOwnerHistoryHandle(), null, null, relatedElements, levelInfo.GetBuildingStorey());
+                    HashSet<IFCAnyHandle> buildingElements = RemoveContainedHandlesFromSet(relatedElements);
+                    string guid = GUIDUtil.CreateSubElementGUID(level, (int)IFCBuildingStoreySubElements.RelContainedInSpatialStructure);
+                    IFCInstanceExporter.CreateRelContainedInSpatialStructure(exporterIFC.GetFile(), guid, exporterIFC.GetOwnerHistoryHandle(), null, null, buildingElements, levelInfo.GetBuildingStorey());
                 }
             }
 

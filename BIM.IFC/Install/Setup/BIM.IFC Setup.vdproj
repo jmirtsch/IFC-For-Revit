@@ -39,6 +39,18 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_34C90AB74F2C0DF368D62ED5B7DF3279"
+        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_34C90AB74F2C0DF368D62ED5B7DF3279"
+        "OwnerKey" = "8:_8D97CC719ECB07F281BDDDBC2AA69BBB"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_6851EFA5394545F58CC15877F7A4B056"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -57,38 +69,26 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_8D97CC719ECB07F281BDDDBC2AA69BBB"
+        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_8D97CC719ECB07F281BDDDBC2AA69BBB"
+        "OwnerKey" = "8:_C0CBDEB82BAB73E544E3E60D8BEE9405"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_9F7AA246F36844BFA6C80B53A51AFF99"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_AD033C961FD607B416C0D635713CADF8"
+        "MsmKey" = "8:_C0CBDEB82BAB73E544E3E60D8BEE9405"
         "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_AD033C961FD607B416C0D635713CADF8"
-        "OwnerKey" = "8:_D58E8C2962DCFB4B97A6389C8C040BC5"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_D58E8C2962DCFB4B97A6389C8C040BC5"
-        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_DDAF69606A5C015535A772921314F57F"
-        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_DDAF69606A5C015535A772921314F57F"
-        "OwnerKey" = "8:_AD033C961FD607B416C0D635713CADF8"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -100,19 +100,19 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_D58E8C2962DCFB4B97A6389C8C040BC5"
+        "OwnerKey" = "8:_34C90AB74F2C0DF368D62ED5B7DF3279"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_AD033C961FD607B416C0D635713CADF8"
+        "OwnerKey" = "8:_8D97CC719ECB07F281BDDDBC2AA69BBB"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_DDAF69606A5C015535A772921314F57F"
+        "OwnerKey" = "8:_C0CBDEB82BAB73E544E3E60D8BEE9405"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -280,6 +280,32 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_34C90AB74F2C0DF368D62ED5B7DF3279"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:DBManagedServices, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
+                "ScatterAssemblies"
+                {
+                }
+            "SourcePath" = "8:DBManagedServices.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_6D6AA5CC6CBC4DD6BFBAF3367D0A6D23"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:TRUE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6851EFA5394545F58CC15877F7A4B056"
             {
             "SourcePath" = "8:..\\Program Files to Install\\LICENSE.rtf"
@@ -340,6 +366,32 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_8D97CC719ECB07F281BDDDBC2AA69BBB"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:RevitAPI, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
+                "ScatterAssemblies"
+                {
+                }
+            "SourcePath" = "8:RevitAPI.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_6D6AA5CC6CBC4DD6BFBAF3367D0A6D23"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:TRUE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_9F7AA246F36844BFA6C80B53A51AFF99"
             {
             "SourcePath" = "8:..\\Program Files to Install\\bundle\\Contents\\Resources\\IFCExporter2013.png"
@@ -360,49 +412,13 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_AD033C961FD607B416C0D635713CADF8"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:RevitAPI, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
-                "ScatterAssemblies"
-                {
-                    "_AD033C961FD607B416C0D635713CADF8"
-                    {
-                    "Name" = "8:RevitAPI.dll"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:RevitAPI.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_6D6AA5CC6CBC4DD6BFBAF3367D0A6D23"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_D58E8C2962DCFB4B97A6389C8C040BC5"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_C0CBDEB82BAB73E544E3E60D8BEE9405"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
             "AssemblyAsmDisplayName" = "8:IFCExtension, Version=1.8.1.0, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_D58E8C2962DCFB4B97A6389C8C040BC5"
-                    {
-                    "Name" = "8:IFCExtension.dll"
-                    "Attributes" = "3:512"
-                    }
                 }
             "SourcePath" = "8:IFCExtension.dll"
             "TargetName" = "8:"
@@ -419,37 +435,6 @@
             "PackageAs" = "3:1"
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_DDAF69606A5C015535A772921314F57F"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:DBManagedServices, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
-                "ScatterAssemblies"
-                {
-                    "_DDAF69606A5C015535A772921314F57F"
-                    {
-                    "Name" = "8:DBManagedServices.dll"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:DBManagedServices.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_6D6AA5CC6CBC4DD6BFBAF3367D0A6D23"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:TRUE"
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
@@ -597,15 +582,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:IFC Exporter for Revit 2013"
-        "ProductCode" = "8:{6E6F3D20-5312-44CB-8D30-DB86196A0078}"
-        "PackageCode" = "8:{DDAD7408-F6EE-442F-BAD0-3C1C36EBB0C2}"
+        "ProductCode" = "8:{4B5AB278-48B4-4FD2-893F-A8F8EA5E643E}"
+        "PackageCode" = "8:{34B3DBEE-C547-4DCB-84E8-AF3BF4F7E614}"
         "UpgradeCode" = "8:{CF885686-3666-4AE4-AD04-888286C204E6}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:2.8.1"
+        "ProductVersion" = "8:2.9.0"
         "Manufacturer" = "8:IFC Exporter for Revit"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:http://sourceforge.net/projects/ifcexporter/"

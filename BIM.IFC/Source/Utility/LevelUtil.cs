@@ -206,14 +206,6 @@ namespace BIM.IFC.Utility
             return 10.0 / (12.0 * 2.54);
         }
 
-        /// <summary>Checks if the element should be associated to its level or not in the IFC file.</summary>
-        /// <param name="element">The element to check.</param>
-        /// <returns>True if the element should be associated to its level, false if not.</returns>
-        public static bool AssociateElementToLevel(Element element)
-        {
-            return (element.AssemblyInstanceId == ElementId.InvalidElementId);
-        }
-
         /// <summary>
         /// Calculates the distance to the next level if the UpToLevel parameter is set.
         /// If the parameter is not set, or the distance is negative, 0 is returned.

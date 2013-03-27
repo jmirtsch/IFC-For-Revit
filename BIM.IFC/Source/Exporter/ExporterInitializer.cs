@@ -129,6 +129,7 @@ namespace BIM.IFC.Exporter
             InitPropertySetSpaceCommon(commonPropertySets, fileVersion);
             InitPropertySetSpaceFireSafetyRequirements(commonPropertySets);
             InitPropertySetSpaceLightingRequirements(commonPropertySets);
+            InitPropertySetSpaceThermalDesign(commonPropertySets);
             InitPropertySetSpaceThermalRequirements(commonPropertySets, fileVersion);
             InitPropertySetGSASpaceCategories(commonPropertySets);
             InitPropertySetSpaceOccupant(commonPropertySets);
@@ -151,6 +152,7 @@ namespace BIM.IFC.Exporter
             InitPropertySetFlowTerminalAirTerminal(commonPropertySets);
             InitPropertySetLightFixtureTypeCommon(commonPropertySets);
             InitPropertySetProvisionForVoid(commonPropertySets);
+            InitPropertySetSanitaryTerminalTypeToiletPan(commonPropertySets);
 
             // Energy Analysis property sets.
             InitPropertySetElementShading(commonPropertySets);
@@ -1455,6 +1457,33 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
+        /// Initializes Pset_SanitaryTerminalTypeToiletPan
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetSanitaryTerminalTypeToiletPan(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetToiletPan = new PropertySetDescription();
+            propertySetToiletPan.Name = "Pset_SanitaryTerminalTypeToiletPan";
+            propertySetToiletPan.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
+            // TODO: Restrict to Toilet Pans only.
+
+            propertySetToiletPan.AddEntry(PropertySetEntry.CreateEnumeratedValue("ToiletType", PropertyType.Label,
+                typeof(PsetSanitaryTerminalTypeToiletPan_ToiletType)));
+            propertySetToiletPan.AddEntry(PropertySetEntry.CreateEnumeratedValue("ToiletPanType", PropertyType.Label,
+                typeof(PsetSanitaryTerminalTypeToiletPan_ToiletPanType)));
+            propertySetToiletPan.AddEntry(PropertySetEntry.CreateEnumeratedValue("PanMounting", PropertyType.Label,
+                typeof(PsetSanitaryTerminalTypeToiletPan_SanitaryMounting)));
+            //propertySetToiletPan.AddEntry(PropertySetEntry.CreateMaterial("PanMaterial"));
+            propertySetToiletPan.AddEntry(PropertySetEntry.CreateText("PanColor"));
+            propertySetToiletPan.AddEntry(PropertySetEntry.CreatePositiveLength("SpilloverLevel"));
+            propertySetToiletPan.AddEntry(PropertySetEntry.CreatePositiveLength("NominalLength"));
+            propertySetToiletPan.AddEntry(PropertySetEntry.CreatePositiveLength("NominalWidth"));
+            propertySetToiletPan.AddEntry(PropertySetEntry.CreatePositiveLength("NominalDepth"));
+
+            commonPropertySets.Add(propertySetToiletPan);
+        }
+
+        /// <summary>
         /// Initializes COBIE property sets.
         /// </summary>
         /// <param name="propertySets">List to store property sets.</param>
@@ -1462,7 +1491,6 @@ namespace BIM.IFC.Exporter
         {
             IList<PropertySetDescription> cobiePSets = new List<PropertySetDescription>();
             InitCOBIEPSetSpaceThermalSimulationProperties(cobiePSets);
-            InitCOBIEPSetSpaceThermalDesign(cobiePSets);
             InitCOBIEPSetSpaceVentilationCriteria(cobiePSets);
             InitCOBIEPSetBuildingEnergyTarget(cobiePSets);
             InitCOBIEPSetGlazingPropertiesEnergyAnalysis(cobiePSets);
@@ -1512,36 +1540,59 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
-        /// Initializes COBIE space thermal design property sets.
+        /// Initializes space thermal design property sets.
         /// </summary>
-        /// <param name="cobiePropertySets">List to store property sets.</param>
-        private static void InitCOBIEPSetSpaceThermalDesign(IList<PropertySetDescription> cobiePropertySets)
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetSpaceThermalDesign(IList<PropertySetDescription> commonPropertySets)
         {
             PropertySetDescription propertySetSpaceThermalDesign = new PropertySetDescription();
             propertySetSpaceThermalDesign.Name = "Pset_SpaceThermalDesign";
             propertySetSpaceThermalDesign.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateThermodynamicTemperature("Inside Dry Bulb Temperature - Heating");
-            ifcPSE.PropertyName = "HeatingDryBulb";
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateVolumetricFlowRate("CoolingDesignAirflow");
             propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateReal("Inside Relative Humidity - Heating");
-            ifcPSE.PropertyName = "HeatingRelativeHumidity";
+            ifcPSE = PropertySetEntry.CreateVolumetricFlowRate("HeatingDesignAirflow");
+            propertySetSpaceThermalDesign.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePower("TotalSensibleHeatGain");
+            propertySetSpaceThermalDesign.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePower("TotalHeatGain");
+            propertySetSpaceThermalDesign.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreatePower("TotalHeatLoss");
             propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateThermodynamicTemperature("Inside Dry Bulb Temperature - Cooling");
             ifcPSE.PropertyName = "CoolingDryBulb";
             propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateReal("Inside Relative Humidity - Cooling");
+            ifcPSE = PropertySetEntry.CreatePositiveRatio("Inside Relative Humidity - Cooling");
             ifcPSE.PropertyName = "CoolingRelativeHumidity";
             propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateReal("Inside Return Air Plenum");
-            ifcPSE.PropertyName = "InsideReturnAirPlenum";
+            ifcPSE = PropertySetEntry.CreateThermodynamicTemperature("Inside Dry Bulb Temperature - Heating");
+            ifcPSE.PropertyName = "HeatingDryBulb";
             propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
-            cobiePropertySets.Add(propertySetSpaceThermalDesign);
+            ifcPSE = PropertySetEntry.CreatePositiveRatio("Inside Relative Humidity - Heating");
+            ifcPSE.PropertyName = "HeatingRelativeHumidity";
+            propertySetSpaceThermalDesign.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateVolumetricFlowRate("VentilationAirFlowrate");
+            propertySetSpaceThermalDesign.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateVolumetricFlowRate("ExhaustAirFlowrate");
+            propertySetSpaceThermalDesign.AddEntry(ifcPSE);
+
+            ifcPSE = PropertySetEntry.CreateBoolean("Inside Return Air Plenum");
+            ifcPSE.PropertyName = "CeilingRAPlenum";
+            propertySetSpaceThermalDesign.AddEntry(ifcPSE);
+
+            // BoundaryAreaHeatLoss not yet supported.
+
+            commonPropertySets.Add(propertySetSpaceThermalDesign);
         }
 
         /// <summary>

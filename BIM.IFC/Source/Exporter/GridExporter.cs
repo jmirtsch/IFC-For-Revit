@@ -87,19 +87,19 @@ namespace BIM.IFC.Exporter
                 // Export radial grids first.
                 if (radialGrids.Count > 0)
                 {
-                    ExportRadialGrids(exporterIFC, levelId, radialGrids, ref linearGrids);
+                    ExportRadialGrids(exporterIFC, levelId, radialGrids, linearGrids);
                 }
 
                 // Export the rectangular and duplex rectangular grids.
                 if (linearGrids.Count > 1)
                 {
-                    ExportRectangularGrids(exporterIFC, levelId, ref linearGrids);
+                    ExportRectangularGrids(exporterIFC, levelId, linearGrids);
                 }             
 
                 // Export the triangular grids
                 if (linearGrids.Count > 1)
                 {
-                    ExportTriangularGrids(exporterIFC, levelId, ref linearGrids);
+                    ExportTriangularGrids(exporterIFC, levelId, linearGrids);
                 }
 
                 // TODO: warn user about orphaned grid lines.
@@ -115,7 +115,7 @@ namespace BIM.IFC.Exporter
         /// <param name="levelId">The level id.</param>
         /// <param name="radialGrids">The set of radial grids.</param>
         /// <param name="linearGrids">The set of linear grids.</param>
-        public static void ExportRadialGrids(ExporterIFC exporterIFC, ElementId levelId, IDictionary<XYZ, List<Grid>> radialGrids, ref IDictionary<XYZ, List<Grid>> linearGrids)
+        public static void ExportRadialGrids(ExporterIFC exporterIFC, ElementId levelId, IDictionary<XYZ, List<Grid>> radialGrids, IDictionary<XYZ, List<Grid>> linearGrids)
         {
             foreach (XYZ centerPoint in radialGrids.Keys)
             {
@@ -155,13 +155,21 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="levelId">The level id.</param>
         /// <param name="linearGrids">The set of linear grids.</param>
-        public static void ExportRectangularGrids(ExporterIFC exporterIFC, ElementId levelId, ref IDictionary<XYZ, List<Grid>> linearGrids)
+        public static void ExportRectangularGrids(ExporterIFC exporterIFC, ElementId levelId, IDictionary<XYZ, List<Grid>> linearGrids)
         {
             XYZ uDirection = null;
             XYZ vDirection = null;
             List<XYZ> directionList = linearGrids.Keys.ToList();
-            while (FindOrthogonalDirectionPair(directionList, out uDirection, out vDirection))
+
+            do
             {
+                // Special case: we don't want to orphan one set of directions.
+                if (directionList.Count == 3)
+                    return;
+
+                if (!FindOrthogonalDirectionPair(directionList, out uDirection, out vDirection))
+                    return;
+
                 List<Grid> exportedLinearGrids = new List<Grid>();
                 List<Grid> duplexAxesU = FindParallelGrids(linearGrids, uDirection);
                 List<Grid> duplexAxesV = FindParallelGrids(linearGrids, vDirection);
@@ -178,7 +186,7 @@ namespace BIM.IFC.Exporter
                 }
 
                 directionList = linearGrids.Keys.ToList();
-            }
+            } while (true);
         }
 
         /// <summary>
@@ -187,7 +195,7 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="levelId">The level id.</param>
         /// <param name="linearGrids">The set of linear grids.</param>
-        public static void ExportTriangularGrids(ExporterIFC exporterIFC, ElementId levelId, ref IDictionary<XYZ, List<Grid>> linearGrids)
+        public static void ExportTriangularGrids(ExporterIFC exporterIFC, ElementId levelId, IDictionary<XYZ, List<Grid>> linearGrids)
         {
             List<XYZ> directionList = linearGrids.Keys.ToList();
             for (int ii = 0; ii < directionList.Count; ii += 3)

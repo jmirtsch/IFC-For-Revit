@@ -29,7 +29,8 @@ namespace BIM.IFC.Toolkit
 {
     enum IFCAssemblyInstanceSubElements
     {
-        RelContainedInSpatialStructure = 1
+        RelContainedInSpatialStructure = 1,
+        RelAggregates = 2
     }
     
     enum IFCBeamSubElements
@@ -171,5 +172,10 @@ namespace BIM.IFC.Toolkit
         WindowOpening = IFCDoorSubElements.DoorOpening,
         WindowOpeningRelVoid = IFCDoorSubElements.DoorOpeningRelVoid,
         WindowStyle = IFCDoorSubElements.DoorStyle,
+    }
+
+    enum IFCZoneSubElements
+    {
+        RelAssignsToGroup = 1,
     }
 }

@@ -2526,4 +2526,47 @@ namespace BIM.IFC.Toolkit
         NotKnown,
         Unset
     }
+
+    /// <summary>
+    /// Defines the PsetSanitaryTerminalTypeToiletPan::ToiletType possible values.
+    /// </summary>
+    public enum PsetSanitaryTerminalTypeToiletPan_ToiletType
+    {
+        BedPanWasher,
+        Chemical,
+        CloseCoupled,
+        LooseCoupled,
+        SlopHopper,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    /// <summary>
+    /// Defines the PsetSanitaryTerminalTypeToiletPan::ToiletPanType possible values.
+    /// </summary>
+    public enum PsetSanitaryTerminalTypeToiletPan_ToiletPanType
+    {
+        Siphonic,
+        Squat,
+        WashDown,
+        WashOut,
+        Other,
+        NotKnown,
+        Unset
+    }
+    
+    /// <summary>
+    /// Defines the PsetSanitaryTerminalTypeToiletPan::SanitaryMounting possible values.
+    /// </summary>
+    public enum PsetSanitaryTerminalTypeToiletPan_SanitaryMounting
+    {
+        BackToWall,
+        Pedestal,
+        CounterTop,
+        WallHung,
+        Other,
+        NotKnown,
+        Unset
+    }
 }

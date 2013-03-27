@@ -210,6 +210,19 @@ namespace BIM.IFC.Exporter
                         string ifcGUID = GUIDUtil.CreateGUID(floorElement);
 
                         int numReps = exportParts ? 1 : prodReps.Count;
+
+                        // Allow export as IfcSlab or IfcFooting.  Ignore altIfcEnumType value; use value passed in.
+                        string altIfcEnumType;
+                        IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, floorElement, out altIfcEnumType);
+                        bool exportAsFooting = (exportAs == IFCExportType.ExportFooting);
+
+                        IFCFootingType? footingType = null;
+                        IFCSlabType? slabType = null;
+                        if (exportAsFooting)
+                            footingType = FootingExporter.GetIFCFootingType(ifcEnumType);
+                        else
+                            slabType = GetIFCSlabType(ifcEnumType);
+                        
                         for (int ii = 0; ii < numReps; ii++)
                         {
                             string ifcName = NamingUtil.GetNameOverride(floorElement, NamingUtil.GetIFCNamePlusIndex(floorElement, ii == 0 ? -1 : ii + 1));
@@ -219,10 +232,20 @@ namespace BIM.IFC.Exporter
 
                             string currentGUID = (ii == 0) ? ifcGUID : GUIDUtil.CreateGUID();
                             IFCAnyHandle localPlacementHnd = exportedAsInternalExtrusion ? localPlacements[ii] : localPlacement;
-                            IFCSlabType slabType = GetIFCSlabType(ifcEnumType);
-
-                            IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(file, currentGUID, ownerHistory, ifcName,
-                               ifcDescription, ifcObjectType, localPlacementHnd, exportParts ? null : prodReps[ii], ifcTag, slabType);
+                            
+                            IFCAnyHandle slabHnd = null;
+                            if (exportAsFooting)
+                            {
+                                slabHnd = IFCInstanceExporter.CreateFooting(file, currentGUID, ownerHistory, ifcName,
+                                    ifcDescription, ifcObjectType, localPlacementHnd, exportParts ? null : prodReps[ii], 
+                                    ifcTag, footingType.Value);
+                            }
+                            else
+                            {
+                                slabHnd = IFCInstanceExporter.CreateSlab(file, currentGUID, ownerHistory, ifcName, 
+                                    ifcDescription, ifcObjectType, localPlacementHnd, exportParts ? null : prodReps[ii], 
+                                    ifcTag, slabType.Value);
+                            }
 
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(slabHnd))
                                 return;
@@ -243,11 +266,10 @@ namespace BIM.IFC.Exporter
                             }
                         }
 
-                        bool associateElementToLevel = LevelUtil.AssociateElementToLevel(floorElement);
                         for (int ii = 0; ii < numReps; ii++)
                         {
                             IFCExtrusionCreationData loopExtraParam = ii < loopExtraParams.Count ? loopExtraParams[ii] : null;
-                            productWrapper.AddElement(slabHnds[ii], placementSetter, loopExtraParam, associateElementToLevel);
+                            productWrapper.AddElement(slabHnds[ii], placementSetter, loopExtraParam, true);
                         }
 
                         if (exportedAsInternalExtrusion)

@@ -520,7 +520,7 @@ namespace BIM.IFC.Exporter
                 stairCopyHnds.Add(IFCInstanceExporter.CreateStair(file, GUIDUtil.CreateGUID(), ownerHistory,
                     containerStairName, stairDescription, stairObjectType, stairLocalPlacementHnds[ii], null, stairElementTag, stairType));
 
-                productWrapper.AddElement(stairCopyHnds[ii], levelInfos[ii], null, LevelUtil.AssociateElementToLevel(stair));
+                productWrapper.AddElement(stairCopyHnds[ii], levelInfos[ii], null, true);
             }
 
             for (int ii = 0; ii < numFlights - 1; ii++)
@@ -596,7 +596,7 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle stairHnd = IFCInstanceExporter.CreateStair(file, guid, ownerHistory, stairName,
                             stairDescription, stairObjectType, localPlacement, null, elementTag, stairType);
 
-                        productWrapper.AddElement(stairHnd, placementSetter.GetLevelInfo(), ecData, LevelUtil.AssociateElementToLevel(stair));
+                        productWrapper.AddElement(stairHnd, placementSetter.GetLevelInfo(), ecData, true);
 
                         StairRampContainerInfo stairRampInfo = new StairRampContainerInfo(stairHnd, components, localPlacement);
                         ExporterCacheManager.StairRampContainerInfoCache.AddStairRampContainerInfo(stair.Id, stairRampInfo);
@@ -654,7 +654,7 @@ namespace BIM.IFC.Exporter
 
                     IFCAnyHandle stairContainerHnd = IFCInstanceExporter.CreateStair(file, stairGUID, ownerHistory, stairName,
                         stairDescription, stairObjectType, stairLocalPlacement, null, stairElementTag, stairType);
-                    productWrapper.AddElement(stairContainerHnd, placementSetter.GetLevelInfo(), null, LevelUtil.AssociateElementToLevel(stair));
+                    productWrapper.AddElement(stairContainerHnd, placementSetter.GetLevelInfo(), null, true);
 
                     // Get List of runs to export their geometry.
                     ICollection<ElementId> runIds = stair.GetStairsRuns();

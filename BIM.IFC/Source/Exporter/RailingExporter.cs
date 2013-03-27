@@ -353,7 +353,7 @@ namespace BIM.IFC.Exporter
                             instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(),
                             prodRep, instanceTag, railingType);
 
-                        bool associateToLevel = (hostId == ElementId.InvalidElementId) && LevelUtil.AssociateElementToLevel(element);
+                        bool associateToLevel = (hostId == ElementId.InvalidElementId);
 
                         productWrapper.AddElement(railing, setter, ecData, associateToLevel);
                         OpeningUtil.CreateOpeningsIfNecessary(railing, element, ecData, bodyData.OffsetTransform,
