@@ -1,0 +1,176 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/TR/REC-html40" xml:lang="en" dir="ltr" class="js">
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=utf-8">
+<title>Revit Exchange - Revit IFC export alternate UI Help</title>
+</head>
+
+<style> 
+html, body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, hr, pre, code, form, fieldset, legend, input, textarea, blockquote, table, th, td {
+  padding: 0;
+  margin: 0;
+}
+a{color:#1F5397;text-decoration:none}
+body {font-family:"Arial", "Helvetica", "sans-serif";font-size:12.0px;margin:15px}
+p {font-size:12.0px;line-height:16px;padding:0px;margin:5px 0px 5px 0px}
+ol {font-size:12.0px;line-height:16px;padding:0px;margin:5px 0px 5px 20px}
+h1 {font-size:22.0px;height="26px"}
+.separator-line {border-bottom;border-bottom-width:1px;border-bottom-style:solid;border-bottom-color:#C3C3C3}
+h2 {font-size:16.0px;line-height:18px;height:16px;margin-bottom:3px;margin-top:15px}
+h3 {font-size:14.0px;line-height:16px;height:14px;margin-bottom:3px;margin-top:15px}
+#plugin-icon{float:left;width:94px;height:94px}
+#plugin-name{margin-left:94px}
+#plugin-description{margin-left:94px;margin-top:3px;margin-bottom:40px}
+#navigation{margin-bottom:10px;clear:both}
+.nav-link-spacer {margin:0px 5px 0px 5px}
+.command {margin-top:5px;margin-bottom:3px}
+.command.icon {float:left;width:34px;height:34px}
+.command.name {font-weight:bold;padding-top:4px;margin:0px 0px 0px 34px}
+.command.description {margin:0px 0px 0px 34px}
+.versionset {margin-bottom:5px}
+.version {float:left;width:50px}
+.versioninfo-bullet {margin-left:50px}
+.screenshots {}
+.clearboth {clear:both}
+.thumbnail {float:left; width:207px;margin: 0px 20px 0px 0px}
+.caption { font-weight:bold}
+ table.MsoNormalTable
+	{font-size:10.0pt;
+	font-family:"Calibri","sans-serif";
+	}
+ li.MsoNormal
+	{margin-top:0in;
+	margin-right:0in;
+	margin-bottom:10.0pt;
+	margin-left:0in;
+	line-height:115%;
+	font-size:11.0pt;
+	font-family:"Calibri","sans-serif";
+	}
+</style>
+<body>
+<div id="heading">
+	<div id="plugin-icon"><img width=85 height=85 id="Rectangle 3" src="IFCExportUI_80.png"></div>
+	<div id="plugin-name"><h1 class="separator-line">Revit IFC export alternate UI</h1></div>
+	<p id="plugin-description">
+	This application provides an alternate user interface for the export of IFC files from Revit.  This new user interface offers additional options not provided in the standard Revit user interface, and provides the ability to store setup configurations into the Revit model for reuse.</p>
+</div>
+
+<div id="navigation">Getting Started<span class="nav-link-spacer">|</span><a href="#Install">Install/Uninstall</a><span class="nav-link-spacer">|</span><a href="#AdditionalInfo">Additional Information</a><span class="nav-link-spacer">|</span><a href="#Contact">Contact</a><span class="nav-link-spacer">|</span><a class="navigation-link" href="#VersionHistory">Version History</a></p>
+
+<h2 id="GettingStarted" name="GettingStarted">Getting Started</h2>
+<div class="command">
+	<div class="command icon"><img width=32 height=32 src="IFCExportUI_32.png" alt=Icon></div>
+	<div class="command name">Revit IFC export alternate UI</div>
+	<div class="command description">
+    <p> 
+    This application provides an alternate user interface for the export of IFC files from Revit.  This new user interface offers additional options not provided in the standard Revit user interface, and provides the ability to store setup configurations into the Revit model for reuse.    
+    </p>
+	</div>
+</div>
+<div class="command">
+</div>
+<h3>Usage</h3>
+<p>
+The Revit IFC export alternate UI button on the Revit UI provides access to the htm help document and brings up a dialog specifying the version of the app installed. 
+The alternate interface is loaded when users access the Export functionality using Revit UI. This alternate interface offers a flexible set of options to configure the export. The options include:</p>
+<p>
+<p><strong>File version</strong>:</p>
+<menu>
+<li>2x2 – Export to IFC 2x2 Coordination View</li>
+<li>2x3  - Export to IFC 2x3 Coordination View</li>
+<li>2x3 v2.0 - IFC Coordination View 2.0. </li>
+<li>2x3 GSA – This is a variant of the standard IFC 2x3 used for submitting files to the US Government Services Administration.  Additional property sets will be included.</li> 
+<li>2x2 BCA - This is a certified variant of IFC 2x2 used for submitting files to the Singapore BCA ePlan Check Server. When exporting to this file type, you should make sure that all room-bounding elements are selected.
+</li></menu>
+<p><strong>File Type</strong>: The file format</p>
+<menu><li>IFC</li>
+<li>IFC XML</li>
+<li>Zipped IFC</li>
+<li>Zipped IFC XML</li></menu>
+<p><strong>Split walls and columns by Level</strong>: Whether or not to split walls and columns by building stories</p>
+<p><strong>Export base quantities</strong>: Whether or not to include base quantities for model elements in the export data. Base quantities are generated from model geometry to reflect actual physical quantity values, independent of measurement rules or methods.</p>
+<p><strong>Space boundaries</strong>: The level of room/space boundaries exported:</p>
+<menu>
+<li>None – room/space boundaries are not exported</li>
+<li>1st level – the room/space boundaries are included but are not optimized to split elements with respect to spaces on the opposite side of the boundary</li>
+<li>2nd level – the room/space boundaries are included and are split with respect to spaces on the opposite side of the boundary</li>
+</menu>
+<p><strong>IFC common property sets</strong>: True to include IFC common property sets, false to exclude them.</p>
+<p><strong>Visible elements in current view</strong>: True to export only the visible elements of the current view (based on filtering and/or element and category hiding).  False to export the entire model.  </p>
+<menu>
+<li><strong>Export parts as building elements</strong>: True to export parts as standard IFC elements, false to export them as IfcBuildingElementPart.</li>
+</menu>
+<p><strong>2D plan view elements</strong>: True to include 2D elements supported by IFC export (notes and filled regions). False to exclude them. </p>
+<p><strong>Internal Revit property sets</strong>: True to include the Revit-specific property sets based on parameter groups. False to exclude them.</p>
+<p><strong>Use 2D room boundaries for room volume</strong>: True to use a simplified approach to calculation of room volumes (based on extrusion of 2D room boundaries) which is also the default when exporting to IFC 2x2.   False to use the Revit calculated room geometry to represent the room volumes (which is the default when exporting to IFC 2x3).</p>
+<p><strong>Use family and type name for references</strong>: True to use the family and type name for references, false to use the type name only.</p>
+<p><strong>Export surface styles</strong>: True to assign surface style elements to a surface, false to exclude them.</p>
+<p><strong>Export Advanced Swept Solids</strong>: True to export a swept solid geometry as IFC AdvancedSweptSolid representation, false to export it as Brep.</p>
+<p><strong>Export Bounding Box</strong>: True or GSA file version to export bounding box representations, false without GSA version to exclude them.</p>
+<p><strong>Include IFCSITE elevation in the site local placement origin</strong>: True to include the elevation from the Z offset of the IFCSITE local placement, false to exclude it. It’s not available for IFC Coordination View 2.0 file version.</p>
+</p>
+
+<p>There are 5 built-in setups in the user interface:</p>    
+<menu>
+<li>Default 2x2</li>
+<li>Default 2x3</li>
+<li>BCA</li>
+<li>GSA</li>
+<li>Certification</li>
+</menu>
+    <p>These correspond to the file type options in the standard Revit UI. When selected, the individual options will adjust accordingly. 
+    These setups cannot be modified or deleted, but they can be duplicated in order to create a modified version.</p>
+    <p>The “In-Session Setup” is a modifiable setup which will not be saved between sessions. You can configure the options as desired.</p>
+    <p>You can add additional named setups using the Setup Configuration dialog box using the New or Duplicate options. 
+    These configurations will be added to the active document and saved with the document. 
+    The add-in will be able to retrieve and reuse these setups if the same model is being exported. 
+    You can also rename and delete named setups from this dialog.</p>
+    
+<h2 id="Install" name="Install">Installation and Uninstallation</h2>
+<p>
+The installer that ran when you downloaded this plug-in from Revit Exchange 
+  has already installed the plug-in. You will need to restart Revit to activate 
+  the plug-in.
+</p>
+<p>
+To uninstall this plug-in, exit Revit if you are currenting running it, 
+  simply rerun the installer by downloading it again 
+  from Exchange, and select the 'Uninstall' button, or you can uninstall it from 
+  'Control Panel\Programs\Programs and Features' (Windows 7) or Add/Remove 
+  Programs (Windows XP), just as you would uninstall any other application from 
+  your system.
+  </p>
+  
+<h2 id="AdditionalInfo" name="AdditionalInfo">Additional Information</h2>
+<p>
+The source code for this application is available on open source, at the SourceForge project :
+<a href="http://sourceforge.net/p/ifcexporter/home/Home/" target=_blank>http://sourceforge.net/p/ifcexporter/home/Home/</a>
+</p>
+<h3>Known Issues</h3>
+<p>This add-in is currently provided only in English.</p>
+<p>There is no mechanism to transfer saved setups from one project to another (other than by recreating them manually).  If setups are saved in templates, they should be available in any project created by the template.</p>
+<h2 id="Contact" name="Contact">Contact</h2>
+ <p>Autodesk. Please visit us at: <a href="http://www.autodesk.com/" target=_blank>http://www.autodesk.com/</a></p>
+  <p>Autodesk, Inc., is a leader in 3D design, engineering and entertainment software. Customers across the manufacturing, architecture, 
+  building, construction, and media and entertainment industries—including the last 16 Academy Award winners for Best Visual Effects—use 
+  Autodesk software to design, visualize, and simulate their ideas before they’re ever built or created. From blockbuster visual effects 
+  and buildings that create their own energy to electric cars and the batteries that power them, the work of our 3D software customers is everywhere you look.</p>
+  <p>Through our apps for iPhone, iPad, iPod, and Android, we’re also making design technology accessible to professional designers as well as 
+  amateur designers, homeowners, students, and casual creators. Whether it’s a kid looking to build a new contraption, a seasoned pro sketching out 
+  a great new idea, or someone who just wants to amp up their creative output, we’re taking technology originally built for movie studios, automakers, 
+  and architectural firms, and making it available to anyone who wants to create and share their ideas with the world. </p>
+  <p>Since its introduction of AutoCAD software in 1982, Autodesk continues to develop the broadest portfolio of state-of-the-art 3D software for global markets.</p>
+<h3>Support Information</h3>
+<p>Autodesk Services & Support Center: <a href="http://usa.autodesk.com/support/" target=_blank>http://usa.autodesk.com/support/</a></p>
+<p>Login to subscription customer: <a href="http://www.autodesk.com/subscriptionlogin" target= _blank>http://www.autodesk.com/subscriptionlogin</a></p>
+<p>To learn more about subscription: <a href="http://www.autodesk.com/subscription" target=_blank>http://www.autodesk.com/subscription</a></p>
+<p>or if you have an inquiry specific to this add-in, send us an e-mail to: <a href="mailto:Revit.apps@autodesk.com">Revit.apps@autodesk.com</a></p>
+
+<h2 id="VersionHistory" name="VersionHistory">Version History</h2>
+
+<div class="versionset">
+<div class="version">2.1.0</div><div class="versioninfo-bullet">First Release</div>
+</div>
+</body>
+</html>

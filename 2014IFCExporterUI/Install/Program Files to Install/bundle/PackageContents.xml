@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage SchemaVersion="1.0" AutodeskProduct="Revit" ProductType="Application" Name="Revit IFC Export Alternate UI" AppVersion="2.0.0" Description="IFC Exporter for Revit provides an alternate user interface for the export of IFC files from Revit" Author="Autodesk" Icon=".\Contents\Resources\IFCExportUI_80.png" AppNameSpace="appstore.exchange.autodesk.com" OnlineDocumentation="http://www.autodesk.com" HelpFile=".\Contents\Resources\ADSKIFCExportUIHelp.htm" ProductCode="{07ED2E68-7103-4025-89DF-891FBB6693A5}" UpgradeCode="{5DE97805-1D15-43B6-BBFD-A9238E20EE86}" SupportedLocales="Enu">
+  <CompanyDetails Name="Autodesk" Phone=" " Url="http://www.autodesk.com" Email=" revit.apps@autodesk.com" />
+  <RuntimeRequirements OS="Win32|Win64" Platform="Revit*" SeriesMin="2014" SeriesMax="2014" />
+</ApplicationPackage>
