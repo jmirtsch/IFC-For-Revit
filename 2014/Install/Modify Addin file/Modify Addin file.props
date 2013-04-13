@@ -1,0 +1,13 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <DefineConstants>OVERRIDE_VERSION</DefineConstants>
+  </PropertyGroup>
+  <!--
+     Always Import the appropriate RevitAdditions.CSharp.targets file here to make it can be integrated into RevitAdditions.sln.
+    -->
+  <Import Project="$(SolutionDir)VSProps\RevitAdditions.CSharp.targets" />
+</Project>
