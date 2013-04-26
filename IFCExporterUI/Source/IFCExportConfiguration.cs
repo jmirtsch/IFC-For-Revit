@@ -171,7 +171,7 @@ namespace BIM.IFC.Export.UI
         private IFCExportConfiguration()
         {
             this.Name = "<<Default>>";
-            this.IFCVersion = IFCVersion.IFC2x3;
+            this.IFCVersion = IFCVersion.IFC2x3CV2;
             this.IFCFileType = IFCFileFormat.Ifc;
             this.SpaceBoundaries = 0;
             this.ExportBaseQuantities = false;
@@ -183,7 +183,7 @@ namespace BIM.IFC.Export.UI
             this.ExportIFCCommonPropertySets = true;
             this.Export2DElements = false;
             this.ExportPartsAsBuildingElements = false;
-            this.ExportSurfaceStyles = false;
+            this.ExportSurfaceStyles = true;
             this.ExportAdvancedSweptSolids = false;
             this.ExportBoundingBox = false;
             this.IncludeSiteElevation = false;
@@ -370,6 +370,19 @@ namespace BIM.IFC.Export.UI
         }
 
         /// <summary>
+        /// Adds a description line to the StringBuilder if the value of the option matches "valueToMatch".
+        /// </summary>
+        /// <param name="builder">The StringBuilder.</param>
+        /// <param name="resourceString">The resource as a stting.</param>
+        /// <param name="value">The value of the option associated with the resource.</param>
+        /// <param name="valueToMatch">The boolean value to match - value must equal this to add the description line to the StringBuilder.</param>
+        private void ConditionalAddLine(StringBuilder builder, string resourceString, bool value, bool valueToMatch)
+        {
+            if (value == valueToMatch)
+                builder.AppendLine(GetDescriptionLine(resourceString, value));
+        }
+
+        /// <summary>
         /// The description of the configuration.
         /// </summary>
         public String Description
@@ -383,23 +396,31 @@ namespace BIM.IFC.Export.UI
 
                 IFCFileFormatAttributes fileFormatAttributes = new IFCFileFormatAttributes(IFCFileType);
                 builder.AppendLine(GetDescriptionLine(Resources.FileType, fileFormatAttributes.ToString()));
-                builder.AppendLine(GetDescriptionLine(Resources.SplitWallsAndColumns, SplitWallsAndColumns));
-                builder.AppendLine(GetDescriptionLine(Resources.ExportBaseQuantities, ExportBaseQuantities));
 
                 IFCSpaceBoundariesAttributes spaceBoundaryAttributes = new IFCSpaceBoundariesAttributes(SpaceBoundaries);
                 builder.AppendLine(GetDescriptionLine(Resources.SpaceBoundaries, spaceBoundaryAttributes.ToString()));
 
-                builder.AppendLine(GetDescriptionLine(Resources.VisibleElementsOfCurrentView, VisibleElementsOfCurrentView));
-                builder.AppendLine(GetDescriptionLine(Resources.ExportPlanViewElements, Export2DElements));
-                builder.AppendLine(GetDescriptionLine(Resources.ExportRevitPropertySets, ExportInternalRevitPropertySets));
-                builder.AppendLine(GetDescriptionLine(Resources.ExportIFCCommonPropertySets, ExportIFCCommonPropertySets));
-                builder.AppendLine(GetDescriptionLine(Resources.Use2DRoomBoundariesForRoomVolume, Use2DRoomBoundaryForVolume));
-                builder.AppendLine(GetDescriptionLine(Resources.UseFamilyAndTypeNameForReferences, UseFamilyAndTypeNameForReference));
-                builder.AppendLine(GetDescriptionLine(Resources.ExportPartsAsBuildingElements, ExportPartsAsBuildingElements));
-                builder.AppendLine(GetDescriptionLine(Resources.ExportSurfaceStyles, ExportSurfaceStyles));
-                builder.AppendLine(GetDescriptionLine(Resources.ExportAdvancedSweptSolids, ExportAdvancedSweptSolids));
-                builder.AppendLine(GetDescriptionLine(Resources.ExportBoundingBox, ExportBoundingBox));
-                builder.AppendLine(GetDescriptionLine(Resources.IncludeIfcSiteElevation, IncludeSiteElevation));
+                // Sort by "do" and "don't"
+                for (int pass = 0; pass < 2; pass++)
+                {
+                    bool valueToMatch = (pass == 0);
+
+                    ConditionalAddLine(builder, Resources.ExportBaseQuantities, ExportBaseQuantities, valueToMatch);
+                    ConditionalAddLine(builder, Resources.SplitWallsAndColumns, SplitWallsAndColumns, valueToMatch);
+                    ConditionalAddLine(builder, Resources.ExportRevitPropertySets, ExportInternalRevitPropertySets, valueToMatch);
+                    ConditionalAddLine(builder, Resources.ExportIFCCommonPropertySets, ExportIFCCommonPropertySets, valueToMatch);
+                    ConditionalAddLine(builder, Resources.ExportPlanViewElements, Export2DElements, valueToMatch);
+
+                    ConditionalAddLine(builder, Resources.ExportVisibleElementsInView, VisibleElementsOfCurrentView, valueToMatch);
+                    ConditionalAddLine(builder, Resources.ExportPartsAsBuildingElements, ExportPartsAsBuildingElements, valueToMatch);
+                    ConditionalAddLine(builder, Resources.ExportSurfaceStyles, ExportSurfaceStyles, valueToMatch);
+                    ConditionalAddLine(builder, Resources.ExportAdvancedSweptSolids, ExportAdvancedSweptSolids, valueToMatch);
+                    ConditionalAddLine(builder, Resources.ExportBoundingBox, ExportBoundingBox, valueToMatch);
+
+                    ConditionalAddLine(builder, Resources.UseFamilyAndTypeNameForReferences, UseFamilyAndTypeNameForReference, valueToMatch);
+                    ConditionalAddLine(builder, Resources.Use2DRoomBoundariesForRoomVolume, Use2DRoomBoundaryForVolume, valueToMatch);
+                    ConditionalAddLine(builder, Resources.IncludeIfcSiteElevation, IncludeSiteElevation, valueToMatch);
+                }
 
                 return builder.ToString();
             }
@@ -413,7 +434,15 @@ namespace BIM.IFC.Export.UI
         /// <returns>The description line.</returns>
         private static String GetDescriptionLine(String label, object value)
         {
-            return String.Format("{0}: {1}", label, value.ToString());
+            if (value is bool)
+            {
+                if ((bool) value)
+                    return String.Format("{0}", label);
+                else
+                    return String.Format("Don't {0}", label);
+            }
+            else
+                return String.Format("{0}: {1}", label, value.ToString());
         }
 
         /// <summary>

@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ExportBaseQuantities" xml:space="preserve">
-    <value>Include base quantities</value>
+    <value>Export base quantities</value>
   </data>
   <data name="ExportPlanViewElements" xml:space="preserve">
     <value>Export plan view elements</value>
@@ -133,19 +133,21 @@
     <value>File version</value>
   </data>
   <data name="IFCMVD2x3CV2" xml:space="preserve">
-    <value>2x3 CV2.0</value>
+    <value>IFC 2x3 Coordination View 2.0</value>
   </data>
   <data name="IFCMVDBCA" xml:space="preserve">
-    <value>2x2 BCA</value>
+    <value>IFC 2x2 Singapore BCA e-Plan Check</value>
+    <comment>Used in Singapore for model checking by the Building Code Authority</comment>
   </data>
   <data name="IFCMVDGSA" xml:space="preserve">
-    <value>2x3 GSA</value>
+    <value>IFC 2x3 GSA Concept Design BIM 2010</value>
+    <comment>Used by the United States General Services Administration</comment>
   </data>
   <data name="IFCVersion2x2" xml:space="preserve">
-    <value>2x2</value>
+    <value>IFC 2x2 Coordination View</value>
   </data>
   <data name="IFCVersion2x3" xml:space="preserve">
-    <value>2x3</value>
+    <value>IFC 2x3 Coordination View</value>
   </data>
   <data name="IFCVersionUnrecognized" xml:space="preserve">
     <value>Unrecognized IFCVersion</value>
@@ -180,8 +182,8 @@
   <data name="UseFamilyAndTypeNameForReferences" xml:space="preserve">
     <value>Use family and type name for references</value>
   </data>
-  <data name="VisibleElementsOfCurrentView" xml:space="preserve">
-    <value>Visible elements of current view</value>
+  <data name="ExportVisibleElementsInView" xml:space="preserve">
+    <value>Export visible elements in view</value>
   </data>
   <data name="ExportPartsAsBuildingElements" xml:space="preserve">
     <value>Export parts as building elements</value>
@@ -193,7 +195,7 @@
     <value>Export surface styles</value>
   </data>
   <data name="IFCMVDFMHandOver" xml:space="preserve">
-    <value>2x3 FMHandOver</value>
+    <value>IFC 2x3 Basic FM Handover View</value>
   </data>
   <data name="ExportAdvancedSweptSolids" xml:space="preserve">
     <value>Export advanced swept solids</value>
