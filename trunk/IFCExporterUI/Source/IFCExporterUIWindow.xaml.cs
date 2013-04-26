@@ -49,7 +49,7 @@ namespace BIM.IFC.Export.UI
         /// <summary>
         /// The file to store the previous window bounds.
         /// </summary>
-        string m_SettingFile = "IFCExporterUIWindowSettings_v3.txt";    // update the file when resize window bounds.
+        string m_SettingFile = "IFCExporterUIWindowSettings_v5.txt";    // update the file when resize window bounds.
 
         /// <summary>
         /// Constructs a new IFC export options window.
@@ -185,6 +185,7 @@ namespace BIM.IFC.Export.UI
                                                                 checkboxInternalPropertySets,
                                                                 checkboxIFCCommonPropertySets,
                                                                 checkboxVisibleElementsCurrView,
+                                                                checkBoxExportPartsAsBuildingElements,
                                                                 checkBoxUse2DRoomVolumes,
                                                                 checkBoxFamilyAndTypeName,
                                                                 checkboxExportSurfaceStyles,
@@ -506,7 +507,11 @@ namespace BIM.IFC.Export.UI
             if (configuration != null)
             {
                 configuration.VisibleElementsOfCurrentView = GetCheckbuttonChecked(checkBox);
-                checkBoxExportPartsAsBuildingElements.IsEnabled = configuration.VisibleElementsOfCurrentView;
+                if (!configuration.VisibleElementsOfCurrentView)
+                {
+                    configuration.ExportPartsAsBuildingElements = false;
+                    checkBoxExportPartsAsBuildingElements.IsChecked = false;
+                }
             }
         }
 
@@ -553,7 +558,6 @@ namespace BIM.IFC.Export.UI
             {
                 configuration.IFCVersion = attributes.Version;
             }
-            changeIncludeSiteElevationStatus(attributes.Version);
         }
 
         /// <summary>
@@ -609,6 +613,11 @@ namespace BIM.IFC.Export.UI
             if (configuration != null)
             {
                 configuration.ExportPartsAsBuildingElements = GetCheckbuttonChecked(checkBox);
+                if (configuration.ExportPartsAsBuildingElements)
+                {
+                    configuration.VisibleElementsOfCurrentView = true;
+                    checkboxVisibleElementsCurrView.IsChecked = true;
+                }
             }
         }
 
@@ -670,21 +679,6 @@ namespace BIM.IFC.Export.UI
             {
                 configuration.IncludeSiteElevation = GetCheckbuttonChecked(checkBox);
             }
-        }
-
-        /// <summary>
-        /// Changes the IncludeIfcSiteElevation status. If current version is IFC2x3CV2, uncheck it and disable it.
-        /// </summary>
-        /// <param name="version">The ifc version.</param>
-        private void changeIncludeSiteElevationStatus(IFCVersion version)
-        {
-            bool isCV2 = version == IFCVersion.IFC2x3CV2;
-
-            if (isCV2)
-            {
-                checkboxIncludeIfcSiteElevation.IsChecked = false;
-            }
-            checkboxIncludeIfcSiteElevation.IsEnabled = !isCV2;
         }
     }
 }

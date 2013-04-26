@@ -53,7 +53,7 @@ namespace BIM.IFC.Export.UI
         /// <summary>
         /// The file to store the previous window bounds.
         /// </summary>
-        string m_SettingFile = "IFCExportSettings_v3.txt";  // update the file when resize window bounds.
+        string m_SettingFile = "IFCExportSettings_v5.txt";  // update the file when resize window bounds.
 
         /// <summary>
         /// Construction of the main export dialog.
@@ -192,6 +192,7 @@ namespace BIM.IFC.Export.UI
             editorWindow.ShowDialog();
             if (editorWindow.DialogResult.HasValue && editorWindow.DialogResult.Value)
             {
+                IFCCommandOverrideApplication.PotentiallyUpdatedConfigurations = true;
                 currentSelectedSetup.Items.Clear();
                 m_configMap = configurationsMap;
                 String selectedConfigName = editorWindow.GetSelectedConfigurationName();
@@ -218,17 +219,6 @@ namespace BIM.IFC.Export.UI
         private void buttonCancel_Click(object sender, RoutedEventArgs args)
         {
             m_result = IFCExportResult.Cancel;
-            Close();
-        }
-
-        /// <summary>
-        /// Sets the dialog result when clicking the Save Setup & Close button.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="args">Event arguments that contains the event data.</param>
-        private void buttonSaveSetAndClose_Click(object sender, RoutedEventArgs args)
-        {
-            m_result = IFCExportResult.SaveSettings;
             Close();
         }
 

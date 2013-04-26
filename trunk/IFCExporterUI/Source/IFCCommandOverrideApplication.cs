@@ -71,6 +71,8 @@ namespace BIM.IFC.Export.UI
         }
         #endregion
 
+        public static bool PotentiallyUpdatedConfigurations { get; set; }
+
         /// <summary>
         /// The last successful export location
         /// </summary>
@@ -103,6 +105,8 @@ namespace BIM.IFC.Export.UI
                 String mruSelection = null;
                 if (m_mruConfiguration != null && configurationsMap.HasName(m_mruConfiguration))
                     mruSelection =  m_mruConfiguration;
+
+                PotentiallyUpdatedConfigurations = false;
 
                 IFCExport mainWindow = new IFCExport(doc, configurationsMap, mruSelection);
                 mainWindow.ShowDialog();
@@ -163,7 +167,7 @@ namespace BIM.IFC.Export.UI
                         String fileName = Path.GetFileName(fullName);
 
                         // IFC export requires an open transaction, although no changes should be made
-                        Transaction transaction = new Transaction(doc, "Export IFC");   
+                        Transaction transaction = new Transaction(doc, "Export IFC");
                         transaction.Start();
                         FailureHandlingOptions failureOptions = transaction.GetFailureHandlingOptions();
                         failureOptions.SetClearAfterRollback(false);
@@ -176,7 +180,7 @@ namespace BIM.IFC.Export.UI
                         //exportOptions.AddOption("ElementsForExport", "174245;205427");
 
                         bool result = doc.Export(path, fileName, exportOptions); // pass in the options here
-                   
+
                         if (!result)
                         {
                             //TODO localization
@@ -188,15 +192,19 @@ namespace BIM.IFC.Export.UI
 
                         // Always roll back the transaction started earlier
                         transaction.RollBack();
-
                         // Remember last successful export location
-                        m_mruExportPath = path;    
-                    }      
+                        m_mruExportPath = path;
+                    }   
                 }
-                if (mainWindow.Result == IFCExportResult.SaveSettings || mainWindow.Result == IFCExportResult.ExportAndSaveSettings)
+
+                // The cancel button should cancel the export, not any "OK"ed setup changes.
+                if (mainWindow.Result == IFCExportResult.ExportAndSaveSettings || mainWindow.Result == IFCExportResult.Cancel)
                 {
-                    configurationsMap = mainWindow.GetModifiedConfigurations();
-                    configurationsMap.UpdateSavedConfigurations(doc);
+                    if (PotentiallyUpdatedConfigurations)
+                    {
+                        configurationsMap = mainWindow.GetModifiedConfigurations();
+                        configurationsMap.UpdateSavedConfigurations(doc);
+                    }
 
                     // Remember last selected configuration
                     m_mruConfiguration = mainWindow.GetSelectedConfiguration().Name;

@@ -70,7 +70,7 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Include base quantities.
+        ///   Looks up a localized string similar to Export base quantities.
         /// </summary>
         internal static string ExportBaseQuantities {
             get {
@@ -133,6 +133,15 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Export visible elements in view.
+        /// </summary>
+        internal static string ExportVisibleElementsInView {
+            get {
+                return ResourceManager.GetString("ExportVisibleElementsInView", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to File type.
         /// </summary>
         internal static string FileType {
@@ -151,7 +160,7 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 2x3 CV2.0.
+        ///   Looks up a localized string similar to IFC 2x3 Coordination View 2.0.
         /// </summary>
         internal static string IFCMVD2x3CV2 {
             get {
@@ -160,7 +169,7 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 2x2 BCA.
+        ///   Looks up a localized string similar to IFC 2x2 Singapore BCA e-Plan Check.
         /// </summary>
         internal static string IFCMVDBCA {
             get {
@@ -169,7 +178,7 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 2x3 FMHandOver.
+        ///   Looks up a localized string similar to IFC 2x3 Basic FM Handover View.
         /// </summary>
         internal static string IFCMVDFMHandOver {
             get {
@@ -178,7 +187,7 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 2x3 GSA.
+        ///   Looks up a localized string similar to IFC 2x3 GSA Concept Design BIM 2010.
         /// </summary>
         internal static string IFCMVDGSA {
             get {
@@ -187,7 +196,7 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 2x2.
+        ///   Looks up a localized string similar to IFC 2x2 Coordination View.
         /// </summary>
         internal static string IFCVersion2x2 {
             get {
@@ -196,7 +205,7 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 2x3.
+        ///   Looks up a localized string similar to IFC 2x3 Coordination View.
         /// </summary>
         internal static string IFCVersion2x3 {
             get {
@@ -309,15 +318,6 @@ namespace BIM.IFC.Export.UI.Properties {
         internal static string UseFamilyAndTypeNameForReferences {
             get {
                 return ResourceManager.GetString("UseFamilyAndTypeNameForReferences", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Visible elements of current view.
-        /// </summary>
-        internal static string VisibleElementsOfCurrentView {
-            get {
-                return ResourceManager.GetString("VisibleElementsOfCurrentView", resourceCulture);
             }
         }
     }
