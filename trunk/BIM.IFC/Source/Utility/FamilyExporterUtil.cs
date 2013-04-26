@@ -301,10 +301,13 @@ namespace BIM.IFC.Exporter
                         double? nominalLength = null;
 
                         double nominalDiameterVal, nominalLengthVal;
+
+                        double scale = exporterIFC.LinearScale;
+
                         if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalDiameter", out nominalDiameterVal))
-                            nominalDiameter = nominalDiameterVal;
+                            nominalDiameter = nominalDiameterVal * scale;
                         if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalLength", out nominalLengthVal))
-                            nominalLength = nominalLengthVal;
+                            nominalLength = nominalLengthVal * scale;
 
                         instanceHandle = IFCInstanceExporter.CreateMechanicalFastener(file, instanceGUID, ownerHistory,
                            instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag,
@@ -437,8 +440,6 @@ namespace BIM.IFC.Exporter
             
             IFCAnyHandle typeHandle = ExportGenericTypeBase(file, type, ifcEnumType, guid, ownerHistory, name, description, applicableOccurrence,
                null, representationMapList, elemIdToUse, instanceElementType, instance, symbol);
-            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(typeHandle))
-                Exporter.CreateElementTypeProperties(exporterIFC, symbol, propertySets, typeHandle);
             
             return typeHandle;
 

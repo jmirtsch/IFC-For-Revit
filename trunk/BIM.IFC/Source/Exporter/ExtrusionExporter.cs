@@ -1050,6 +1050,10 @@ namespace BIM.IFC.Exporter
                     else
                     {
                         tr.RollBack();
+
+                        // TODO: include this cleanup in RollBack(), to avoid issues.
+                        ExporterCacheManager.MaterialIdToStyleHandleCache.RemoveHandles(materialIds);
+                        ExporterCacheManager.PresentationStyleAssignmentCache.RemoveHandles(materialIds);
                         return retVal;
                     }
                 }

@@ -721,6 +721,8 @@ namespace BIM.IFC.Exporter
 
                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(typeStyle))
                     {
+                        Exporter.CreateElementTypeProperties(exporterIFC, familySymbol, propertySets, typeStyle);
+
                         CategoryUtil.CreateMaterialAssociations(doc, exporterIFC, typeStyle, typeInfo.MaterialIds);
 
                         typeInfo.Style = typeStyle;
@@ -824,7 +826,7 @@ namespace BIM.IFC.Exporter
 
                 IFCAnyHandle repHnd = (shapeReps.Count > 0) ? IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps) : null;
 
-                if (!(repHnd == null && ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2))
+                if (!(repHnd == null && ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2 && !exportParts))
                 {
                     IFCAnyHandle instanceHandle = null;
                     using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, familyInstance, trf, null, overrideLevelId))

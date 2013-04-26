@@ -209,39 +209,41 @@ namespace BIM.IFC.Utility
 
             double value1, value2;
 
+            double scale = exporterIFC.LinearScale;
+
             // both of these must be defined, or not defined - if only one is defined, we ignore the values.
             if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "LiningDepth", out value1))
             {
                 if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "LiningThickness", out value2))
                 {
-                    liningDepthOpt = value1;
-                    liningThicknessOpt = value2;
+                    liningDepthOpt = value1 * scale;
+                    liningThicknessOpt = value2 * scale;
                 }
             }
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "LiningOffset", out value1))
-                liningOffsetOpt = value1;
+                liningOffsetOpt = value1 * scale;
 
             // both of these must be defined, or not defined - if only one is defined, we ignore the values.
             if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "ThresholdDepth", out value1))
             {
                 if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "ThresholdThickness", out value2))
                 {
-                    thresholdDepthOpt = value1;
-                    thresholdThicknessOpt = value2;
+                    thresholdDepthOpt = value1 * scale;
+                    thresholdThicknessOpt = value2 * scale;
                 }
             }
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "ThreshholdOffset", out value1))
-                liningOffsetOpt = value1;
+                liningOffsetOpt = value1 * scale;
 
             // both of these must be defined, or not defined - if only one is defined, we ignore the values.
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "TransomOffset", out value1))
             {
                 if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "TransomThickness", out value2))
                 {
-                    transomOffsetOpt = value1;
-                    transomThicknessOpt = value2;
+                    transomOffsetOpt = value1 * scale;
+                    transomThicknessOpt = value2 * scale;
                 }
             }
 
@@ -250,8 +252,8 @@ namespace BIM.IFC.Utility
             {
                 if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "CasingThickness", out value2))
                 {
-                    casingDepthOpt = value1;
-                    casingThicknessOpt = value2;
+                    casingDepthOpt = value1 * scale;
+                    casingThicknessOpt = value2 * scale;
                 }
             }
 
@@ -555,31 +557,33 @@ namespace BIM.IFC.Utility
             double value1 = 0.0;
             double value2 = 0.0;
 
+            double scale = exporterIFC.LinearScale;
+
             // both of these must be defined (or not defined)
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "LiningDepth", out value1) &&
                ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "LiningThickness", out value2))
             {
-                liningDepthOpt = value1;
-                liningThicknessOpt = value2;
+                liningDepthOpt = value1 * scale;
+                liningThicknessOpt = value2 * scale;
             }
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "TransomThickness", out value1))
-                transomThicknessOpt = value1;
+                transomThicknessOpt = value1 * scale;
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FirstTransomOffset", out value1))
-                firstTransomOffsetOpt = value1;
+                firstTransomOffsetOpt = value1 * scale;
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "SecondTransomOffset", out value1))
-                secondTransomOffsetOpt = value1;
+                secondTransomOffsetOpt = value1 * scale;
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "MullionThickness", out value1))
-                mullionThicknessOpt = value1;
+                mullionThicknessOpt = value1 * scale;
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FirstMullionOffset", out value1))
-                firstMullionOffsetOpt = value1;
+                firstMullionOffsetOpt = value1 * scale;
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "SecondMullionOffset", out value1))
-                secondMullionOffsetOpt = value1;
+                secondMullionOffsetOpt = value1 * scale;
 
             string windowLiningGUID = GUIDUtil.CreateGUID();
             string windowLiningName = NamingUtil.GetIFCName(familyInstance);

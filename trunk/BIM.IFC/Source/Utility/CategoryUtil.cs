@@ -312,7 +312,7 @@ namespace BIM.IFC.Utility
         public static IFCAnyHandle GetOrCreateMaterialStyle(Document document, ExporterIFC exporterIFC, ElementId materialId)
         {
             IFCAnyHandle styleHnd = ExporterCacheManager.MaterialIdToStyleHandleCache.Find(materialId);
-            if (styleHnd == null)
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(styleHnd))
 	        {
                 Material material = document.GetElement(materialId) as Material;
                 if (material == null)

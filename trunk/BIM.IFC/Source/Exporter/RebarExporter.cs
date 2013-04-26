@@ -253,8 +253,8 @@ namespace BIM.IFC.Exporter
 
                             CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, elemHnd, materialId);
 
-                            PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
-                        }
+					    }                            
+						PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }
                     transaction.Commit();
                 }

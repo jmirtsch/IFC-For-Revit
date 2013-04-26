@@ -225,6 +225,57 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// The DoublePropertyInfoCache object for ElectricalCurrent parameter types.
+        /// </summary>
+        public DoublePropertyInfoCache ElectricalCurrentCache
+        {
+            get
+            {
+                DoublePropertyInfoCache electricalCurrentCache;
+                if (!DoubleCacheMap.TryGetValue(PropertyType.ElectricalCurrent, out electricalCurrentCache))
+                {
+                    electricalCurrentCache = new DoublePropertyInfoCache();
+                    DoubleCacheMap[PropertyType.ElectricalCurrent] = electricalCurrentCache;
+                }
+                return electricalCurrentCache;
+            }
+        }
+
+        /// <summary>
+        /// The DoublePropertyInfoCache object for ElectricalVoltage parameter types.
+        /// </summary>
+        public DoublePropertyInfoCache ElectricalVoltageCache
+        {
+            get
+            {
+                DoublePropertyInfoCache electricalVoltageCache;
+                if (!DoubleCacheMap.TryGetValue(PropertyType.ElectricalVoltage, out electricalVoltageCache))
+                {
+                    electricalVoltageCache = new DoublePropertyInfoCache();
+                    DoubleCacheMap[PropertyType.ElectricalVoltage] = electricalVoltageCache;
+                }
+                return electricalVoltageCache;
+            }
+        }
+        
+        /// <summary>
+        /// The DoublePropertyInfoCache object for PositivePlaneAngle parameter types.
+        /// </summary>
+        public DoublePropertyInfoCache PositivePlaneAngleCache
+        {
+            get
+            {
+                DoublePropertyInfoCache planeAngleCache;
+                if (!DoubleCacheMap.TryGetValue(PropertyType.PlaneAngle, out planeAngleCache))
+                {
+                    planeAngleCache = new DoublePropertyInfoCache();
+                    DoubleCacheMap[PropertyType.PositivePlaneAngle] = planeAngleCache;
+                }
+                return planeAngleCache;
+            }
+        }
+
+        /// <summary>
         /// The DoublePropertyInfoCache object for ThermodynamicTemperature parameter types.
         /// </summary>
         public DoublePropertyInfoCache ThermodynamicTemperatureCache

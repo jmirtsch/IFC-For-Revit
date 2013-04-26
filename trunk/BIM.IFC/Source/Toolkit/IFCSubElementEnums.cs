@@ -82,13 +82,18 @@ namespace BIM.IFC.Toolkit
         PSetAirTerminalTypeCommon = 1026,
     }
 
-    // Used for internal Revit property sets.
+    enum IFCGroupSubElements
+    {
+        RelAssignsToGroup = 1,
+    }
+
+    // Used for internal Revit property sets and connectors.
     enum IFCGenericSubElements
     {
         PSetRevitInternalStart = 1536,
         PSetRevitInternalEnd = PSetRevitInternalStart + 255,
         PSetRevitInternalRelStart = PSetRevitInternalEnd+1,
-        PSetRevitInternalRelEnd = PSetRevitInternalRelStart + 255,
+        PSetRevitInternalRelEnd = PSetRevitInternalRelStart + 255, // 2047
     }
 
     enum IFCLightFixtureTypeSubElements

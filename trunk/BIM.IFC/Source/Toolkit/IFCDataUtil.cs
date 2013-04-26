@@ -176,6 +176,16 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Creates an IFCData object as IfcPositivePlaneAngleMeasure.
+        /// </summary>
+        /// <param name="value">The double value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsPositivePlaneAngleMeasure(double value)
+        {
+            return IFCData.CreateDoubleOfType(value, "IfcPositivePlaneAngleMeasure");
+        }
+        
+        /// <summary>
         /// Creates an IFCData object as IfcPlaneAngleMeasure.
         /// </summary>
         /// <param name="value">The double value.</param>
@@ -227,6 +237,36 @@ namespace BIM.IFC.Toolkit
         public static IFCData CreateAsPowerMeasure(double value)
         {
             return IFCData.CreateDoubleOfType(value, "IfcPowerMeasure");
+        }
+
+        /// <summary>
+        /// Creates an IFCData object as IfcFrequencyMeasure.
+        /// </summary>
+        /// <param name="value">The double value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsFrequencyMeasure(double value)
+        {
+            return IFCData.CreateDoubleOfType(value, "IfcFrequencyMeasure");
+        }
+
+        /// <summary>
+        /// Creates an IFCData object as IfcElectricalCurrentMeasure.
+        /// </summary>
+        /// <param name="value">The double value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsElectricalCurrentMeasure(double value)
+        {
+            return IFCData.CreateDoubleOfType(value, "IfcElectricCurrentMeasure");
+        }
+
+        /// <summary>
+        /// Creates an IFCData object as IfcElectricalVoltageMeasure.
+        /// </summary>
+        /// <param name="value">The double value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsElectricalVoltageMeasure(double value)
+        {
+            return IFCData.CreateDoubleOfType(value, "IfcElectricVoltageMeasure");
         }
         
         /// <summary>

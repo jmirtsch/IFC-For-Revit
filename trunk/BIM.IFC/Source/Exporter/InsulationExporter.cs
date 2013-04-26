@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2012  Autodesk, Inc.
+// Copyright (C) 2013  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -30,9 +30,9 @@ using BIM.IFC.Exporter.PropertySet;
 namespace BIM.IFC.Exporter
 {
     /// <summary>
-    /// Provides methods to export a Revit element as IfcCovering of type WRAPPING.
+    /// Provides methods to export a Revit element as IfcCovering of type INSULATION.
     /// </summary>
-    class DuctLiningExporter
+    class InsulationExporter
     {
         /// <summary>
         /// Exports an element as a covering of type insulation.
@@ -42,7 +42,7 @@ namespace BIM.IFC.Exporter
         /// <param name="geometryElement">The geometry element.</param>
         /// <param name="productWrapper">The ProductWrapper.</param>
         /// <returns>True if exported successfully, false otherwise.</returns>
-        public static bool ExportDuctLining(ExporterIFC exporterIFC, Element element,
+        protected static bool ExportInsulation(ExporterIFC exporterIFC, Element element,
             GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             if (element == null || geometryElement == null)
@@ -80,14 +80,14 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
                         string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
-                        IFCAnyHandle ductLining = IFCInstanceExporter.CreateCovering(file, guid,
-                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag, IFCCoveringType.Wrapping);
+                        IFCAnyHandle insulation = IFCInstanceExporter.CreateCovering(file, guid,
+                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag, IFCCoveringType.Insulation);
 
-                        productWrapper.AddElement(ductLining, placementSetter.GetLevelInfo(), ecData, true);
+                        productWrapper.AddElement(insulation, placementSetter.GetLevelInfo(), ecData, true);
 
                         ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element);
-                        CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, ductLining, matId);
-                        
+                        CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, insulation, matId);
+
                         PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }
                 }

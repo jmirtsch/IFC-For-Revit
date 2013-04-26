@@ -100,7 +100,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_34C90AB74F2C0DF368D62ED5B7DF3279"
+        "OwnerKey" = "8:_C0CBDEB82BAB73E544E3E60D8BEE9405"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -112,7 +112,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_C0CBDEB82BAB73E544E3E60D8BEE9405"
+        "OwnerKey" = "8:_34C90AB74F2C0DF368D62ED5B7DF3279"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -287,6 +287,11 @@
             "AssemblyAsmDisplayName" = "8:DBManagedServices, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
                 "ScatterAssemblies"
                 {
+                    "_34C90AB74F2C0DF368D62ED5B7DF3279"
+                    {
+                    "Name" = "8:DBManagedServices.dll"
+                    "Attributes" = "3:512"
+                    }
                 }
             "SourcePath" = "8:DBManagedServices.dll"
             "TargetName" = "8:"
@@ -373,6 +378,11 @@
             "AssemblyAsmDisplayName" = "8:RevitAPI, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
                 "ScatterAssemblies"
                 {
+                    "_8D97CC719ECB07F281BDDDBC2AA69BBB"
+                    {
+                    "Name" = "8:RevitAPI.dll"
+                    "Attributes" = "3:512"
+                    }
                 }
             "SourcePath" = "8:RevitAPI.dll"
             "TargetName" = "8:"
@@ -419,6 +429,11 @@
             "AssemblyAsmDisplayName" = "8:IFCExtension, Version=1.8.1.0, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
+                    "_C0CBDEB82BAB73E544E3E60D8BEE9405"
+                    {
+                    "Name" = "8:IFCExtension.dll"
+                    "Attributes" = "3:512"
+                    }
                 }
             "SourcePath" = "8:IFCExtension.dll"
             "TargetName" = "8:"
@@ -582,15 +597,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:IFC Exporter for Revit 2013"
-        "ProductCode" = "8:{4B5AB278-48B4-4FD2-893F-A8F8EA5E643E}"
-        "PackageCode" = "8:{34B3DBEE-C547-4DCB-84E8-AF3BF4F7E614}"
+        "ProductCode" = "8:{BE86DCB3-3E24-41C5-898F-8B0772EBEB85}"
+        "PackageCode" = "8:{D50B75E0-BE84-4EFD-ACDE-FB71944AC8A9}"
         "UpgradeCode" = "8:{CF885686-3666-4AE4-AD04-888286C204E6}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:2.9.0"
+        "ProductVersion" = "8:2.10.0"
         "Manufacturer" = "8:IFC Exporter for Revit"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:http://sourceforge.net/projects/ifcexporter/"

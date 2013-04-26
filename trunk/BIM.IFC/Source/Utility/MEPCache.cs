@@ -88,6 +88,18 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Provides public access specifically for getting the connectors associated to a wire.
+        /// </summary>
+        /// <param name="wireElement">The Wire element.</param>
+        /// <returns>A set of connectors.</returns>
+        /// <remarks>Wires in Revit are annotation elements that aren't currently exported.  As such, we want to get their
+        /// connection information to connect the elements at each of the wire together via a bi-directional port.</remarks>
+        public static ConnectorSet GetConnectorsForWire(Wire wireElement)
+        {
+            return GetConnectors(wireElement);
+        }
+
+        /// <summary>
         /// Gets a set of all connectors hosted by a single element.
         /// From http://thebuildingcoder.typepad.com/blog/2010/06/retrieve-mep-elements-and-connectors.html.
         /// </summary>
