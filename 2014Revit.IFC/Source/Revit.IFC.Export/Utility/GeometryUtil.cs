@@ -561,7 +561,7 @@ namespace Revit.IFC.Export.Utility
         /// </summary>
         /// <param name="shape">The shape handle.</param>
         /// <param name="items">The items.</param>
-        public static void AddItemsToShape(IFCAnyHandle shape, ICollection<IFCAnyHandle> items)
+        public static void AddItemsToShape(IFCAnyHandle shape, ISet<IFCAnyHandle> items)
         {
             HashSet<IFCAnyHandle> repItemSet = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(shape, "Items");
             foreach (IFCAnyHandle repItem in items)

@@ -1158,7 +1158,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         {
             double propertyValue;
             if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue))
+            {
+                propertyValue = UnitUtil.ScaleVolumetricFlowRate(propertyValue);
                 return CreateVolumetricFlowRateMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
+            }
             return null;
         }
 
@@ -2130,11 +2133,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                 ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.HOST_VOLUME_COMPUTED, out volume);
                 volume = UnitUtil.ScaleArea(volume);
             }
-            if (MathUtil.VolumnIsAlmostZero(volume))
+            if (MathUtil.VolumeIsAlmostZero(volume))
             {
                 volume = scaledLength * scaledArea;
             }
-            if (!MathUtil.VolumnIsAlmostZero(volume))
+            if (!MathUtil.VolumeIsAlmostZero(volume))
             {
                 IFCAnyHandle quantityHnd = IFCInstanceExporter.CreateQuantityVolume(file, "GrossVolume", null, null, volume);
                 quantityHnds.Add(quantityHnd);
@@ -2300,10 +2303,14 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="elementSets">
         /// The collection of IFCAnyHandles to relate properties to.
         /// </param>
-        public static void CreateInternalRevitPropertySets(ExporterIFC exporterIFC, Element element, ICollection<IFCAnyHandle> elementSets)
+        public static void CreateInternalRevitPropertySets(ExporterIFC exporterIFC, Element element, ISet<IFCAnyHandle> elementSets)
         {
-            if (exporterIFC == null || element == null || elementSets == null || elementSets.Count == 0 ||
+            if (exporterIFC == null || element == null ||
                 !ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportInternalRevit)
+                return;
+
+            // We will allow creating internal Revit property sets for element types with no associated element handles.
+            if ((elementSets == null || elementSets.Count == 0) && !(element is ElementType))
                 return;
 
             IFCFile file = exporterIFC.GetFile();
@@ -2335,10 +2342,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                 if (createType)
                 {
                     if (ExporterCacheManager.TypePropertyInfoCache.HasTypeProperties(typeId))
-                    {
-                        ExporterCacheManager.TypePropertyInfoCache.AddTypeProperties(typeId, elementSets);
                         continue;
-                    }
                 }
 
                 IDictionary<BuiltInParameterGroup, ParameterElementCache> parameterElementCache =
@@ -2401,63 +2405,82 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                             case StorageType.Double:
                                 {
                                     double value = parameter.AsDouble();
-                                    bool assigned = false;
+                                    IFCAnyHandle propertyHandle = null;
+                                    bool assigned = true;
 
                                     switch (parameterDefinition.ParameterType)
                                     {
                                         case ParameterType.Length:
                                             {
-                                                currPropertiesForGroup.Add(CreateLengthMeasurePropertyFromCache(file, parameterCaption,
-                                                    UnitUtil.ScaleLength(value), PropertyValueType.SingleValue));
-                                                assigned = true;
+                                                propertyHandle = CreateLengthMeasurePropertyFromCache(file, parameterCaption,
+                                                    UnitUtil.ScaleLength(value), PropertyValueType.SingleValue);
                                                 break;
                                             }
                                         case ParameterType.Angle:
                                             {
-                                                currPropertiesForGroup.Add(CreatePlaneAngleMeasurePropertyFromCache(file, parameterCaption,
-                                                    UnitUtil.ScaleAngle(value), PropertyValueType.SingleValue));
-                                                assigned = true;
+                                                propertyHandle = CreatePlaneAngleMeasurePropertyFromCache(file, parameterCaption,
+                                                    UnitUtil.ScaleAngle(value), PropertyValueType.SingleValue);
                                                 break;
                                             }
                                         case ParameterType.Area:
                                             {
                                                 double scaledValue = UnitUtil.ScaleArea(value);
-                                                currPropertiesForGroup.Add(CreateAreaMeasureProperty(file, parameterCaption,
-                                                    scaledValue, PropertyValueType.SingleValue));
-                                                assigned = true;
+                                                propertyHandle = CreateAreaMeasureProperty(file, parameterCaption,
+                                                    scaledValue, PropertyValueType.SingleValue);
                                                 break;
                                             }
                                         case ParameterType.Volume:
                                             {
                                                 double scaledValue = UnitUtil.ScaleVolume(value);
-                                                currPropertiesForGroup.Add(CreateVolumeMeasureProperty(file, parameterCaption,
-                                                    scaledValue, PropertyValueType.SingleValue));
-                                                assigned = true;
+                                                propertyHandle = CreateVolumeMeasureProperty(file, parameterCaption,
+                                                    scaledValue, PropertyValueType.SingleValue);
                                                 break;
                                             }
                                         case ParameterType.HVACAirflow:
                                         case ParameterType.PipingFlow:
                                             {
-                                                // We do not have a separate VolumetricFlow scaling; we use the volume scaling.
-                                                double scaledValue = UnitUtil.ScaleVolume(value);
-                                                currPropertiesForGroup.Add(CreateVolumetricFlowRateMeasureProperty(file, parameterCaption,
-                                                    scaledValue, PropertyValueType.SingleValue));
-                                                assigned = true;
+                                                double scaledValue = UnitUtil.ScaleVolumetricFlowRate(value);
+                                                propertyHandle = CreateVolumetricFlowRateMeasureProperty(file, parameterCaption,
+                                                    scaledValue, PropertyValueType.SingleValue);
                                                 break;
                                             }
                                         case ParameterType.HVACPower:
                                             {
                                                 double scaledValue = UnitUtil.ScalePower(value);
-                                                currPropertiesForGroup.Add(CreatePowerProperty(file, parameterCaption,
-                                                    scaledValue, PropertyValueType.SingleValue));
-                                                assigned = true;
+                                                propertyHandle = CreatePowerProperty(file, parameterCaption,
+                                                    scaledValue, PropertyValueType.SingleValue);
                                                 break;
                                             }
+                                        case ParameterType.ElectricalCurrent:
+                                            {
+                                                double scaledValue = UnitUtil.ScaleElectricalCurrent(value);
+                                                propertyHandle = ElectricalCurrentPropertyUtil.CreateElectricalCurrentMeasureProperty(file, parameterCaption,
+                                                    scaledValue, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.ElectricalPotential:
+                                            {
+                                                double scaledValue = UnitUtil.ScaleElectricalVoltage(value);
+                                                propertyHandle = ElectricalVoltagePropertyUtil.CreateElectricalVoltageMeasureProperty(file, parameterCaption,
+                                                    scaledValue, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.ElectricalFrequency:
+                                            {
+                                                propertyHandle = FrequencyPropertyUtil.CreateFrequencyProperty(file, parameterCaption,
+                                                    value, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        default:
+                                            assigned = false;
+                                            break;
                                     }
 
                                     if (!assigned)
-                                        currPropertiesForGroup.Add(CreateRealPropertyFromCache(file, parameterCaption, value,
-                                            PropertyValueType.SingleValue));
+                                        propertyHandle = CreateRealPropertyFromCache(file, parameterCaption, value, PropertyValueType.SingleValue);
+
+                                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propertyHandle))
+                                        currPropertiesForGroup.Add(propertyHandle);
                                     break;
                                 }
                             case StorageType.String:
@@ -2564,7 +2587,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
 
             IFCFile file = exporterIFC.GetFile();
 
-            ICollection<IFCAnyHandle> elements = productWrapper.GetAllObjects();
+            ISet<IFCAnyHandle> elements = productWrapper.GetAllObjects();
             if (elements.Count == 0)
                 return;
 

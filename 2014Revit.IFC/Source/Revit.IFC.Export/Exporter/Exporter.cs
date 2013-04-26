@@ -29,7 +29,9 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Analysis;
 using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.DB.IFC;
+using Autodesk.Revit.DB.Electrical;
 using Autodesk.Revit.DB.Mechanical;
+using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.Exceptions;
 using Revit.IFC.Export.Exporter.PropertySet;
@@ -402,7 +404,7 @@ namespace Revit.IFC.Export.Exporter
         /// <returns>True if the element should be exported.</returns>
         protected virtual bool CanExportElement(ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView, Autodesk.Revit.DB.Element element)
         {
-            if (!ElementFilteringUtil.ShouldCategoryBeExported(exporterIFC, element))
+            if (!ElementFilteringUtil.ShouldElementBeExported(exporterIFC, element))
                 return false;
 
             // if we allow exporting parts as independent building elements, then prevent also exporting the host elements containing the parts.
@@ -606,6 +608,10 @@ namespace Revit.IFC.Export.Exporter
                         DuctLining ductLining = element as DuctLining;
                         DuctLiningExporter.ExportDuctLining(exporterIFC, ductLining, geomElem, productWrapper);
                     }
+                    else if (element is ElectricalSystem)
+                    {
+                        ExporterCacheManager.SystemsCache.AddElectricalSystem(element.Id);
+                    }
                     else if (element is FabricArea)
                     {
                         // We are exporting the fabric area as a group only.
@@ -634,6 +640,11 @@ namespace Revit.IFC.Export.Exporter
                     {
                         ExporterCacheManager.GridCache.Add(element);
                     }
+                    else if (element is Group)
+                    {
+                        Group group = element as Group;
+                        GroupExporter.ExportGroupElement(exporterIFC, group, productWrapper);
+                    }
                     else if (element is HostedSweep)
                     {
                         HostedSweep hostedSweep = element as HostedSweep;
@@ -646,6 +657,11 @@ namespace Revit.IFC.Export.Exporter
                             PartExporter.ExportPartAsBuildingElement(exporterIFC, part, geomElem, productWrapper);
                         else
                             PartExporter.ExportStandalonePart(exporterIFC, part, geomElem, productWrapper);
+                    }
+                    else if (element is PipeInsulation)
+                    {
+                        PipeInsulation pipeInsulation = element as PipeInsulation;
+                        PipeInsulationExporter.ExportPipeInsulation(exporterIFC, pipeInsulation, geomElem, productWrapper);
                     }
                     else if (element is Railing)
                     {
@@ -726,6 +742,8 @@ namespace Revit.IFC.Export.Exporter
 
                     if (element.AssemblyInstanceId != ElementId.InvalidElementId)
                         ExporterCacheManager.AssemblyInstanceCache.RegisterElements(element.AssemblyInstanceId, productWrapper);
+                    if (element.GroupId != ElementId.InvalidElementId)
+                        ExporterCacheManager.GroupCache.RegisterElements(element.GroupId, productWrapper);
 
                     st.RollBack();
                 }
@@ -1054,29 +1072,58 @@ namespace Revit.IFC.Export.Exporter
                     if (assemblyInfo == null)
                         continue;
 
-                    if (assemblyInfo.AssemblyInstanceHandle != null && assemblyInfo.ElementHandles != null &&
-                        assemblyInfo.ElementHandles.Count != 0)
+                    IFCAnyHandle assemblyInstanceHandle = assemblyInfo.AssemblyInstanceHandle;
+                    HashSet<IFCAnyHandle> elementHandles = assemblyInfo.ElementHandles;
+                    if (elementHandles != null && assemblyInstanceHandle != null && elementHandles.Contains(assemblyInstanceHandle))
+                        elementHandles.Remove(assemblyInstanceHandle);
+
+                    if (assemblyInstanceHandle != null && elementHandles != null && elementHandles.Count != 0)
                     {
                         Element assemblyInstance = document.GetElement(assemblyInfoEntry.Key);
                         string guid = GUIDUtil.CreateSubElementGUID(assemblyInstance, (int)IFCAssemblyInstanceSubElements.RelContainedInSpatialStructure);
 
-                        IFCAnyHandle assemblyInstanceHandle = assemblyInfo.AssemblyInstanceHandle;
                         if (IFCAnyHandleUtil.IsSubTypeOf(assemblyInstanceHandle, IFCEntityType.IfcSystem))
                         {
                             IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                            IFCInstanceExporter.CreateRelAssignsToGroup(file, guid, ownerHistory, null, null, assemblyInfo.ElementHandles, null, assemblyInstanceHandle);
+                            IFCInstanceExporter.CreateRelAssignsToGroup(file, guid, ownerHistory, null, null, elementHandles, null, assemblyInstanceHandle);
                         }
                         else
                         {
-                            ExporterUtil.RelateObjects(exporterIFC, guid, assemblyInstanceHandle, assemblyInfo.ElementHandles);
+                            ExporterUtil.RelateObjects(exporterIFC, guid, assemblyInstanceHandle, elementHandles);
                             // Set the PlacementRelTo of assembly elements to assembly instance.
-                            IFCAnyHandle assemblyPlacement = IFCAnyHandleUtil.GetObjectPlacement(assemblyInfo.AssemblyInstanceHandle);
-                            AssemblyInstanceExporter.SetLocalPlacementsRelativeToAssembly(exporterIFC, assemblyPlacement, assemblyInfo.ElementHandles);
+                            IFCAnyHandle assemblyPlacement = IFCAnyHandleUtil.GetObjectPlacement(assemblyInstanceHandle);
+                            AssemblyInstanceExporter.SetLocalPlacementsRelativeToAssembly(exporterIFC, assemblyPlacement, elementHandles);
                         }
 
                         // We don't do this in RegisterAssemblyElement because we want to make sure that the IfcElementAssembly has been created.
-                        ExporterCacheManager.ElementsInAssembliesCache.UnionWith(assemblyInfo.ElementHandles);
+                        ExporterCacheManager.ElementsInAssembliesCache.UnionWith(elementHandles);
                     }                  
+                }
+
+                // relate group elements to groups
+                foreach (KeyValuePair<ElementId, GroupInfo> groupEntry in ExporterCacheManager.GroupCache)
+                {
+                    GroupInfo groupInfo = groupEntry.Value;
+                    if (groupInfo == null)
+                        continue;
+
+                    if (groupInfo.GroupHandle != null && groupInfo.ElementHandles != null &&
+                        groupInfo.ElementHandles.Count != 0)
+                    {
+                        Element group = document.GetElement(groupEntry.Key);
+                        string guid = GUIDUtil.CreateSubElementGUID(group, (int)IFCGroupSubElements.RelAssignsToGroup);
+
+                        IFCAnyHandle groupHandle = groupInfo.GroupHandle;
+                        HashSet<IFCAnyHandle> elementHandles = groupInfo.ElementHandles;
+                        if (elementHandles != null && groupHandle != null && elementHandles.Contains(groupHandle))
+                            elementHandles.Remove(groupHandle);
+
+                        if (elementHandles != null && groupHandle != null && elementHandles.Count > 0)
+                        {
+                            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                            IFCInstanceExporter.CreateRelAssignsToGroup(file, guid, ownerHistory, null, null, elementHandles, null, groupHandle);
+                        }
+                    }
                 }
 
                 // create spatial structure holder
@@ -1172,7 +1219,7 @@ namespace Revit.IFC.Export.Exporter
                 foreach (TypePropertyInfo typePropertyInfo in ExporterCacheManager.TypePropertyInfoCache.Values)
                 {
                     ICollection<IFCAnyHandle> propertySets = typePropertyInfo.PropertySets;
-                    ICollection<IFCAnyHandle> elements = typePropertyInfo.Elements;
+                    ISet<IFCAnyHandle> elements = typePropertyInfo.Elements;
 
                     if (elements.Count == 0)
                         continue;
@@ -1288,20 +1335,21 @@ namespace Revit.IFC.Export.Exporter
                 HashSet<IFCAnyHandle> relatedBuildings = new HashSet<IFCAnyHandle>();
                 relatedBuildings.Add(buildingHnd);
 
-                foreach (KeyValuePair<ElementId, ICollection<IFCAnyHandle>> system in ExporterCacheManager.SystemsCache.BuiltInSystemsCache)
+                foreach (KeyValuePair<ElementId, ISet<IFCAnyHandle>> system in ExporterCacheManager.SystemsCache.BuiltInSystemsCache)
                 {
                     MEPSystem systemElem = document.GetElement(system.Key) as MEPSystem;
                     if (systemElem == null)
                         continue;
 
-                    string desc = "";
-
                     ElementType systemElemType = document.GetElement(systemElem.GetTypeId()) as ElementType;
-                    string objectType = (systemElemType != null) ? systemElemType.Name : "";
+                    string name = NamingUtil.GetNameOverride(systemElem, systemElem.Name);
+                    string desc = NamingUtil.GetDescriptionOverride(systemElem, null);
+                    string objectType = NamingUtil.GetObjectTypeOverride(systemElem,
+                        (systemElemType != null) ? systemElemType.Name : "");
 
                     IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file, GUIDUtil.CreateGUID(systemElem),
-                        exporterIFC.GetOwnerHistoryHandle(), systemElem.Name, desc, objectType);
-                    ICollection<IFCAnyHandle> systemHandles = new List<IFCAnyHandle>();
+                        exporterIFC.GetOwnerHistoryHandle(), name, desc, objectType);
+                    ISet<IFCAnyHandle> systemHandles = new HashSet<IFCAnyHandle>();
                     systemHandles.Add(systemHandle);
                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, systemElem, systemHandles);
 
@@ -1315,11 +1363,52 @@ namespace Revit.IFC.Export.Exporter
                         exporterIFC.GetOwnerHistoryHandle(), null, null, system.Value, objType, systemHandle);
                 }
 
+                foreach (KeyValuePair<ElementId, ISet<IFCAnyHandle>> entries in ExporterCacheManager.SystemsCache.ElectricalSystemsCache)
+                {
+                    ElementId systemId = entries.Key;
+                    MEPSystem systemElem = document.GetElement(systemId) as MEPSystem;
+                    if (systemElem == null)
+                        continue;
+
+                    ElementSet members = systemElem.Elements;
+                    foreach (Element member in members)
+                    {
+                        IFCAnyHandle memberHandle = ExporterCacheManager.MEPCache.Find(member.Id);
+                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(memberHandle))
+                            entries.Value.Add(memberHandle);
+                    }
+
+                    if (entries.Value.Count == 0)
+                        continue;
+
+                    ElementType systemElemType = document.GetElement(systemElem.GetTypeId()) as ElementType;
+                    string name = NamingUtil.GetNameOverride(systemElem, systemElem.Name);
+                    string desc = NamingUtil.GetDescriptionOverride(systemElem, null);
+                    string objectType = NamingUtil.GetObjectTypeOverride(systemElem,
+                        (systemElemType != null) ? systemElemType.Name : "");
+
+                    IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file, 
+                        GUIDUtil.CreateGUID(systemElem), exporterIFC.GetOwnerHistoryHandle(), name, 
+                        desc, objectType);
+                    ISet<IFCAnyHandle> systemHandles = new HashSet<IFCAnyHandle>();
+                    systemHandles.Add(systemHandle);
+                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, systemElem, systemHandles);
+
+                    IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
+                        exporterIFC.GetOwnerHistoryHandle(), null, null, systemHandle, relatedBuildings);
+
+                    IFCObjectType? objType = null;
+                    if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
+                        objType = IFCObjectType.Product;
+                    IFCAnyHandle relAssignsToGroup = IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(),
+                        exporterIFC.GetOwnerHistoryHandle(), null, null, entries.Value, objType, systemHandle);
+                }
+
                 // Add presentation layer assignments - this is in addition to those added in EndExportInternal, and will
                 // eventually replace the internal routine.
                 foreach (KeyValuePair<string, ICollection<IFCAnyHandle>> presentationLayerSet in ExporterCacheManager.PresentationLayerSetCache)
                 {
-                    ICollection<IFCAnyHandle> validHandles = new List<IFCAnyHandle>();
+                    ISet<IFCAnyHandle> validHandles = new HashSet<IFCAnyHandle>();
                     foreach (IFCAnyHandle handle in presentationLayerSet.Value)
                     {
                         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(handle))
@@ -1582,7 +1671,17 @@ namespace Revit.IFC.Export.Exporter
             HashSet<IFCAnyHandle> existingPropertySets, IFCAnyHandle prodTypeHnd)
         {
             HashSet<IFCAnyHandle> propertySets = new HashSet<IFCAnyHandle>();
-            propertySets.UnionWith(existingPropertySets);
+            
+            // Pass in an empty set of handles - we don't want IfcRelDefinesByProperties for type properties.
+            ISet<IFCAnyHandle> associatedObjectIds = new HashSet<IFCAnyHandle>();
+            PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, elementType, associatedObjectIds);
+
+            TypePropertyInfo additionalPropertySets = null;
+            if (ExporterCacheManager.TypePropertyInfoCache.TryGetValue(elementType.Id, out additionalPropertySets))
+                propertySets.UnionWith(additionalPropertySets.PropertySets);
+            
+            if (existingPropertySets != null && existingPropertySets.Count > 0)
+                propertySets.UnionWith(existingPropertySets);
 
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction transaction = new IFCTransaction(file))
@@ -2440,6 +2539,15 @@ namespace Revit.IFC.Export.Exporter
                 unitSet.Add(timeSIUnit);      // created above, so unique.
             }
 
+            // Frequency = support Hertz only.
+            {
+                IFCUnit unitType = IFCUnit.FrequencyUnit;
+                IFCSIUnitName unitName = IFCSIUnitName.Hertz;
+
+                IFCAnyHandle frequencySIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+                unitSet.Add(frequencySIUnit);      // created above, so unique.
+            }
+
             // Temperature -- support Kelvin only.
             IFCAnyHandle temperatureSIUnit = null;
             {
@@ -2452,7 +2560,7 @@ namespace Revit.IFC.Export.Exporter
 
             // Thermal transmittance - support metric W/(m^2 * K) = kg/(K * s^3) only.
             {
-                ICollection<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
+                ISet<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
                 elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, massSIUnit, 1));
                 elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, temperatureSIUnit, -1));
                 elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, timeSIUnit, -3));
@@ -2464,7 +2572,7 @@ namespace Revit.IFC.Export.Exporter
 
             // Volumetric Flow Rate - support metric m^3/s only.
             {
-                ICollection<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
+                ISet<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
                 elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, lenSIBaseUnit, 3));
                 elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, timeSIUnit, -1));
 
@@ -2472,10 +2580,34 @@ namespace Revit.IFC.Export.Exporter
                     IFCDerivedUnitEnum.VolumetricFlowRateUnit, null);
                 unitSet.Add(volumetricFlowRateUnit);
 
-                double volumetricFlowRateFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_WATTS_PER_SQUARE_METER_KELVIN);
+                double volumetricFlowRateFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_CUBIC_METERS_PER_SECOND);
                 ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_HVAC_Airflow, volumetricFlowRateUnit, volumetricFlowRateFactor);
             }
 
+            // Electrical current - support metric ampere only.
+            {
+                IFCUnit unitType = IFCUnit.ElectricCurrentUnit;
+                IFCSIUnitName unitName = IFCSIUnitName.Ampere;
+
+                IFCAnyHandle currentSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+                unitSet.Add(currentSIUnit);      // created above, so unique.
+
+                double currentFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_AMPERES);
+                ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_Electrical_Current, currentSIUnit, currentFactor);
+            }
+
+            // Electrical voltage - support metric volt only.
+            {
+                IFCUnit unitType = IFCUnit.ElectricVoltageUnit;
+                IFCSIUnitName unitName = IFCSIUnitName.Volt;
+
+                IFCAnyHandle voltageSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+                unitSet.Add(voltageSIUnit);      // created above, so unique.
+
+                double voltageFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_VOLTS);
+                ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_Electrical_Potential, voltageSIUnit, voltageFactor);
+            }
+            
             // Power - support metric watt only.
             {
                 IFCUnit unitType = IFCUnit.PowerUnit;

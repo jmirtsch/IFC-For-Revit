@@ -23,6 +23,8 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Revit.IFC.Common.Enums;
+using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Utility
 {
@@ -65,20 +67,44 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
+        /// Removes invalid handles from the cache.
+        /// </summary>
+        /// <param name="materialIds">The material ids.</param>
+        public void RemoveInvalidHandles(ISet<ElementId> materialIds)
+        {
+            foreach (ElementId materialId in materialIds)
+            {
+                IFCAnyHandle presentationStyleAssignment;
+                if (m_Styles.TryGetValue(materialId.IntegerValue, out presentationStyleAssignment))
+                {
+                    try
+                    {
+                        bool isPSA = IFCAnyHandleUtil.IsSubTypeOf(presentationStyleAssignment, IFCEntityType.IfcPresentationStyleAssignment);
+                        if (!isPSA)
+                            m_Styles.Remove(materialId.IntegerValue);
+                    }
+                    catch
+                    {
+                        m_Styles.Remove(materialId.IntegerValue);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Adds the IfcPresentationStyleAssignment handle to the dictionary.
         /// </summary>
-        /// <param name="elementId">
-        /// The element elementId.
-        /// </param>
-        /// <param name="handle">
-        /// The IfcPresentationStyleAssignment handle.
-        /// </param>
+        /// <param name="elementId">The element elementId.</param>
+        /// <param name="handle">The IfcPresentationStyleAssignment handle.</param>
         public void Register(ElementId elementId, IFCAnyHandle handle)
         {
             if (m_Styles.ContainsKey(elementId.IntegerValue))
                 throw new Exception("TextStyleCache already contains handle for elementId " + elementId.IntegerValue);
 
-            m_Styles[elementId.IntegerValue] = handle;
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(handle))
+                m_Styles[elementId.IntegerValue] = handle;
+            else
+                throw new Exception("Invalid Handle.");
         }
     }
 }

@@ -63,6 +63,7 @@ namespace Revit.IFC.Export.Exporter
                     IFCAnyHandle localPlacementToUse = setter.LocalPlacement;
                     using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
                     {
+                        extraParams.SetLocalPlacement(localPlacementToUse);
 
                         ElementId catId = CategoryUtil.GetSafeCategoryId(element);
 
@@ -92,13 +93,14 @@ namespace Revit.IFC.Export.Exporter
                             string typeTag = NamingUtil.GetTagOverride(type, NamingUtil.CreateIFCElementId(type));
                             string typeElementType = NamingUtil.GetOverrideStringValue(type, "IfcElementType", typeName);
 
-                            HashSet<IFCAnyHandle> propertySetsOpt = new HashSet<IFCAnyHandle>();
                             IList<IFCAnyHandle> repMapListOpt = new List<IFCAnyHandle>();
 
                             IFCAnyHandle styleHandle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, typeGUID, typeName,
-                               typeDescription, applicableOccurence, propertySetsOpt, repMapListOpt, typeTag, typeElementType, element, type);
+                               typeDescription, applicableOccurence, null, repMapListOpt, typeTag, typeElementType, element, type);
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(styleHandle))
                             {
+                                Exporter.CreateElementTypeProperties(exporterIFC, type, null, styleHandle);
+
                                 currentTypeInfo.Style = styleHandle;
                                 ExporterCacheManager.TypeObjectsCache.Register(typeId, false, currentTypeInfo);
                             }
@@ -188,6 +190,9 @@ namespace Revit.IFC.Export.Exporter
                         if (currentTypeInfo.IsValid())
                             ExporterCacheManager.TypeRelationsCache.Add(currentTypeInfo.Style, instanceHandle);
 
+                        if (bodyData != null && bodyData.MaterialIds.Count != 0)
+                            CategoryUtil.CreateMaterialAssociations(element.Document, exporterIFC, instanceHandle, bodyData.MaterialIds);
+                        
                         PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
 
                         ExporterCacheManager.MEPCache.Register(element, instanceHandle);

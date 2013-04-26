@@ -79,7 +79,7 @@ namespace Revit.IFC.Export.Exporter
             IFCAnyHandle surface = IFCInstanceExporter.CreateFaceBasedSurfaceModel(file, faceSets);
             BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, doc, surface, BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element));
 
-            IList<IFCAnyHandle> surfaceItems = new List<IFCAnyHandle>();
+            ISet<IFCAnyHandle> surfaceItems = new HashSet<IFCAnyHandle>();
             surfaceItems.Add(surface);
 
             ElementId catId = CategoryUtil.GetSafeCategoryId(element);
@@ -92,7 +92,9 @@ namespace Revit.IFC.Export.Exporter
             ICollection<IFCAnyHandle> boundaryRepresentations = ifcGeomInfo.GetRepresentations();
             if (exportBoundaryRep && boundaryRepresentations.Count > 0)
             {
-                boundaryRep = RepresentationUtil.CreateBoundaryRep(exporterIFC, element, catId, exporterIFC.Get3DContextHandle("FootPrint"), boundaryRepresentations, 
+                HashSet<IFCAnyHandle> boundaryRepresentationSet = new HashSet<IFCAnyHandle>();
+                boundaryRepresentationSet.UnionWith(boundaryRepresentations);
+                boundaryRep = RepresentationUtil.CreateBoundaryRep(exporterIFC, element, catId, exporterIFC.Get3DContextHandle("FootPrint"), boundaryRepresentationSet, 
                     boundaryRep);
             }
 

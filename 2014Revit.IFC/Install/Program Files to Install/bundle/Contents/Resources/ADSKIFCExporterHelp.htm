@@ -104,7 +104,7 @@ also available on the Exchange store.  However, it is not required to get the la
 installing this application.  Nor is it required to use this alternate UI when getting the latest IFC Exporter UI.</p>
 <h3>Known Issues</h3>
 <p>The third party toolkit we use to write out IFC files has a limit on the maximum size of IFC file it can create.  
-While there is no absolute metric for this, in practice it is about 250MB.  The toolkit provider is aware of these issues and is 
+While there is no absolute metric for this, in practice it is about 750MB.  The toolkit provider is aware of these issues and is 
 working on expanding and eventually removing this limit, and we will be tracking their progress on this issue.</p>
 <h2 id="Contact" name="Contact">Contact</h2>
   <p>Autodesk. Please visit us at: <a href="http://www.autodesk.com/" target=_blank>http://www.autodesk.com/</a></p>
@@ -122,10 +122,32 @@ working on expanding and eventually removing this limit, and we will be tracking
 <p>Login to subscription customer: <a href="http://www.autodesk.com/subscriptionlogin" target= _blank>http://www.autodesk.com/subscriptionlogin</a></p>
 <p>To learn more about subscription: <a href="http://www.autodesk.com/subscription" target=_blank>http://www.autodesk.com/subscription</a></p>
 <p>or if you have an inquiry specific to this add-in, send us an e-mail to: <a href="mailto:Revit.apps@autodesk.com">Revit.apps@autodesk.com</a></p>
-<h2 id="VersionHistory" name="VersionHistory">Version History</h2>
+<h2 id="VersionHistory" name="VersionHistory">Version History</h2><br>
 
 <div class="versionset">
-<div class="version">3.1.0.0</div><div class="versioninfo-bullet">First Release</div>
+<div class="version"><b>3.2.0.0</b></div><div class="versioninfo-bullet"></div>
+<br><br>New Functionality:
+
+<tab><div class="versioninfo-bullet">Add property sets: Pset_ElectricalDeviceCommon, Pset_SwitchingDeviceTypeCommon, Pset_SwitchingDeviceTypeToggleSwitch</div>
+<tab><div class="versioninfo-bullet">Allow Name/ObjectType/Description override fo IfcSystem.</div>
+<tab><div class="versioninfo-bullet">Export DuctLining.</div>
+<tab><div class="versioninfo-bullet">Export Groups, including nested groups, as IfcGroup.</div>
+<tab><div class="versioninfo-bullet">Export electrical systems and connectors.</div>
+<tab><div class="versioninfo-bullet">Export local coordinate system for IfcDistributionPorts.</div>
+<tab><div class="versioninfo-bullet">Export PipeInsulation.</div>
+
+<br>Bug Fixes:<br>
+
+<tab><div class="versioninfo-bullet">Allow MEP zones to export Pset_ZoneCommon, fix 2 property names.</div>
+<tab><div class="versioninfo-bullet">Correct material assignment for generic MEP exporter.</div>
+<tab><div class="versioninfo-bullet">Correct units and unit scaling for volumetric flow rate.</div>
+<tab><div class="versioninfo-bullet">Fix export of multi-storey stairs.</div>
+<tab><div class="versioninfo-bullet">Get material for ducts and pipes from system.</div>
+<tab><div class="versioninfo-bullet">Properly scale door and window lining properties.</div>
+<tab><div class="versioninfo-bullet">Remove extraneous property sets when exporting Rebars.</div>
+<tab><div class="versioninfo-bullet">Return correct boolean value for GetBooleanAtribute function.</div>
+<br>
+<div class="version"><b>3.1.0.0</b></div><div class="versioninfo-bullet">First Release</div>
 </div>
 </body>
 </html>

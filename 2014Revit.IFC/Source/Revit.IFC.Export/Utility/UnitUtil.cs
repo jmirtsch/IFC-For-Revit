@@ -77,7 +77,7 @@ namespace Revit.IFC.Export.Utility
         /// <summary>
         /// Converts a power value in Revit internal units to IFC units.
         /// </summary>
-        /// <param name="unscaledArea">The power value in Revit internal units.</param>
+        /// <param name="unscaledPower">The power value in Revit internal units.</param>
         /// <returns>The volume in IFC units.</returns>
         static public double ScalePower(double unscaledPower)
         {
@@ -97,7 +97,7 @@ namespace Revit.IFC.Export.Utility
         /// <summary>
         /// Converts a volume in Revit internal units to IFC units.
         /// </summary>
-        /// <param name="unscaledArea">The volume in Revit internal units.</param>
+        /// <param name="unscaledVolume">The volume in Revit internal units.</param>
         /// <returns>The volume in IFC units.</returns>
         static public double ScaleVolume(double unscaledVolume)
         {
@@ -107,8 +107,8 @@ namespace Revit.IFC.Export.Utility
         /// <summary>
         /// Converts a VolumetricFlowRate in Revit internal units to IFC units.
         /// </summary>
-        /// <param name="unscaledArea">The volume in Revit internal units.</param>
-        /// <returns>The volume in IFC units.</returns>
+        /// <param name="unscaledVolumetricFlowRate">The volumetric flow rate in Revit internal units.</param>
+        /// <returns>The volumetric flow rate in IFC units.</returns>
         static public double ScaleVolumetricFlowRate(double unscaledVolumetricFlowRate)
         {
             return ExporterCacheManager.UnitsCache.Scale(UnitType.UT_HVAC_Airflow, unscaledVolumetricFlowRate);
@@ -124,6 +124,26 @@ namespace Revit.IFC.Export.Utility
             return ExporterCacheManager.UnitsCache.Scale(UnitType.UT_Angle, unscaledAngle);
         }
 
+        // <summary>
+        /// Converts an electrical current in Revit internal units to Revit display units.
+        /// </summary>
+        /// <param name="unscaledCurrent">The electrical current in Revit internal units.</param>
+        /// <returns>The electrical current in Revit display units.</returns>
+        static public double ScaleElectricalCurrent(double unscaledCurrent)
+        {
+            return ExporterCacheManager.UnitsCache.Scale(UnitType.UT_Electrical_Current, unscaledCurrent);
+        }
+
+        // <summary>
+        /// Converts an electrical voltage in Revit internal units to Revit display units.
+        /// </summary>
+        /// <param name="unscaledVoltage">The elecrical voltage in Revit internal units.</param>
+        /// <returns>The electrical current in Revit display units.</returns>
+        static public double ScaleElectricalVoltage(double unscaledVoltage)
+        {
+            return ExporterCacheManager.UnitsCache.Scale(UnitType.UT_Electrical_Potential, unscaledVoltage);
+        }
+        
         /// <summary>
         /// Converts a position in IFC units to Revit internal units.
         /// </summary>

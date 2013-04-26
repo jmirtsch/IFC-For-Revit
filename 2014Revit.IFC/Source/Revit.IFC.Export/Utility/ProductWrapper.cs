@@ -146,12 +146,9 @@ namespace Revit.IFC.Export.Utility
         /// Get all handles in the wrapper.
         /// </summary>
         /// <returns>The collection of handles.</returns>
-        public ICollection<IFCAnyHandle> GetAllObjects()
+        public ISet<IFCAnyHandle> GetAllObjects()
         {
             ICollection<IFCAnyHandle> internalObjects = m_InternalWrapper.GetAllObjects();
-            if (m_createdHandles.Count == 0)
-                return internalObjects;
-
             if (internalObjects.Count == 0)
                 return m_createdHandles;
 

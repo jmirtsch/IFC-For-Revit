@@ -340,7 +340,7 @@ namespace Revit.IFC.Common.Utility
         /// <param name="values">The values.</param>
         /// <exception cref="ArgumentException">If the name is null or empty.</exception>
         /// <exception cref="ArgumentException">If the collection contains null object.</exception>
-        public static void SetAttribute(IFCAnyHandle handle, string name, ICollection<IFCAnyHandle> values)
+        public static void SetAttribute(IFCAnyHandle handle, string name, IList<IFCAnyHandle> values)
         {
             if (String.IsNullOrEmpty(name))
                 throw new ArgumentException("The name is empty.", "name");
@@ -364,7 +364,7 @@ namespace Revit.IFC.Common.Utility
         /// <param name="name">The attribute name.</param>
         /// <param name="values">The values.</param>
         /// <exception cref="ArgumentException">If the name is null or empty.</exception>
-        public static void SetAttribute(IFCAnyHandle handle, string name, ICollection<int> values)
+        public static void SetAttribute(IFCAnyHandle handle, string name, IList<int> values)
         {
             if (String.IsNullOrEmpty(name))
                 throw new ArgumentException("The name is empty.", "name");
@@ -385,7 +385,7 @@ namespace Revit.IFC.Common.Utility
         /// <param name="name">The attribute name.</param>
         /// <param name="values">The values.</param>
         /// <exception cref="ArgumentException">If the name is null or empty.</exception>
-        public static void SetAttribute(IFCAnyHandle handle, string name, ICollection<double> values)
+        public static void SetAttribute(IFCAnyHandle handle, string name, IList<double> values)
         {
             if (String.IsNullOrEmpty(name))
                 throw new ArgumentException("The name is empty.", "name");
@@ -406,7 +406,7 @@ namespace Revit.IFC.Common.Utility
         /// <param name="name">The attribute name.</param>
         /// <param name="values">The values.</param>
         /// <exception cref="ArgumentException">If the name is null or empty.</exception>
-        public static void SetAttribute(IFCAnyHandle handle, string name, ICollection<string> values)
+        public static void SetAttribute(IFCAnyHandle handle, string name, IList<string> values)
         {
             if (String.IsNullOrEmpty(name))
                 throw new ArgumentException("The name is empty.", "name");
@@ -427,7 +427,126 @@ namespace Revit.IFC.Common.Utility
         /// <param name="name">The attribute name.</param>
         /// <param name="values">The values.</param>
         /// <exception cref="ArgumentException">If the name is null or empty.</exception>
-        public static void SetAttribute(IFCAnyHandle handle, string name, ICollection<IFCData> values)
+        public static void SetAttribute(IFCAnyHandle handle, string name, IList<IFCData> values)
+        {
+            if (String.IsNullOrEmpty(name))
+                throw new ArgumentException("The name is empty.", "name");
+
+            if (values != null)
+            {
+                if (values.Contains(null))
+                    throw new ArgumentException("The collection contains null values.", "values");
+
+                IFCAggregate aggregateAttribute = handle.CreateAggregateAttribute(name);
+                if (aggregateAttribute != null)
+                {
+                    foreach (IFCData value in values)
+                    {
+                        aggregateAttribute.Add(value);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sets instance aggregate attribute for the handle.
+        /// </summary>
+        /// <remarks>
+        /// If values collection is null, the attribute will be unset.
+        /// </remarks>
+        /// <param name="handle">The handle.</param>
+        /// <param name="name">The attribute name.</param>
+        /// <param name="values">The values.</param>
+        /// <exception cref="ArgumentException">If the name is null or empty.</exception>
+        /// <exception cref="ArgumentException">If the collection contains null object.</exception>
+        public static void SetAttribute(IFCAnyHandle handle, string name, ISet<IFCAnyHandle> values)
+        {
+            if (String.IsNullOrEmpty(name))
+                throw new ArgumentException("The name is empty.", "name");
+
+            if (values != null)
+            {
+                if (values.Contains(null))
+                    throw new ArgumentException("The collection contains null values.", "values");
+
+                handle.SetAttribute(name, values);
+            }
+        }
+
+        /// <summary>
+        /// Sets integer aggregate attribute for the handle.
+        /// </summary>
+        /// <remarks>
+        /// If values collection is null, the attribute will be unset.
+        /// </remarks>
+        /// <param name="handle">The handle.</param>
+        /// <param name="name">The attribute name.</param>
+        /// <param name="values">The values.</param>
+        /// <exception cref="ArgumentException">If the name is null or empty.</exception>
+        public static void SetAttribute(IFCAnyHandle handle, string name, ISet<int> values)
+        {
+            if (String.IsNullOrEmpty(name))
+                throw new ArgumentException("The name is empty.", "name");
+
+            if (values != null)
+            {
+                handle.SetAttribute(name, values);
+            }
+        }
+
+        /// <summary>
+        /// Sets double aggregate attribute for the handle.
+        /// </summary>
+        /// <remarks>
+        /// If values collection is null, the attribute will be unset.
+        /// </remarks>
+        /// <param name="handle">The handle.</param>
+        /// <param name="name">The attribute name.</param>
+        /// <param name="values">The values.</param>
+        /// <exception cref="ArgumentException">If the name is null or empty.</exception>
+        public static void SetAttribute(IFCAnyHandle handle, string name, ISet<double> values)
+        {
+            if (String.IsNullOrEmpty(name))
+                throw new ArgumentException("The name is empty.", "name");
+
+            if (values != null)
+            {
+                handle.SetAttribute(name, values);
+            }
+        }
+
+        /// <summary>
+        /// Sets string aggregate attribute for the handle.
+        /// </summary>
+        /// <remarks>
+        /// If values collection is null, the attribute will be unset.
+        /// </remarks>
+        /// <param name="handle">The handle.</param>
+        /// <param name="name">The attribute name.</param>
+        /// <param name="values">The values.</param>
+        /// <exception cref="ArgumentException">If the name is null or empty.</exception>
+        public static void SetAttribute(IFCAnyHandle handle, string name, ISet<string> values)
+        {
+            if (String.IsNullOrEmpty(name))
+                throw new ArgumentException("The name is empty.", "name");
+
+            if (values != null)
+            {
+                handle.SetAttribute(name, values);
+            }
+        }
+
+        /// <summary>
+        /// Sets IFCValue aggregate attribute for the handle.
+        /// </summary>
+        /// <remarks>
+        /// If values collection is null, the attribute will be unset.
+        /// </remarks>
+        /// <param name="handle">The handle.</param>
+        /// <param name="name">The attribute name.</param>
+        /// <param name="values">The values.</param>
+        /// <exception cref="ArgumentException">If the name is null or empty.</exception>
+        public static void SetAttribute(IFCAnyHandle handle, string name, ISet<IFCData> values)
         {
             if (String.IsNullOrEmpty(name))
                 throw new ArgumentException("The name is empty.", "name");
@@ -792,7 +911,7 @@ namespace Revit.IFC.Common.Utility
                 throw new ArgumentException("Invalid handle.");
 
             IFCData ifcData = hnd.GetAttribute(name);
-            if (ifcData.PrimitiveType == IFCDataPrimitiveType.Double)
+            if (ifcData.PrimitiveType == IFCDataPrimitiveType.Boolean)
                 return ifcData.AsBoolean();
 
             return null;
@@ -1128,7 +1247,7 @@ namespace Revit.IFC.Common.Utility
         /// </summary>
         /// <param name="productRepresentation">The product representation handle.</param>
         /// <param name="representations">The representations handle.</param>
-        public static void AddRepresentations(IFCAnyHandle productRepresentation, ICollection<IFCAnyHandle> representations)
+        public static void AddRepresentations(IFCAnyHandle productRepresentation, IList<IFCAnyHandle> representations)
         {
             if (productRepresentation == null)
                 throw new ArgumentNullException("productRepresentation");
@@ -1236,7 +1355,7 @@ namespace Revit.IFC.Common.Utility
         /// </summary>
         /// <param name="productHandle">The product handle.</param>
         /// <param name="productHandle">The collection of representation handles.</param>
-        public static void AddProductRepresentations(IFCAnyHandle productHandle, ICollection<IFCAnyHandle> representations)
+        public static void AddProductRepresentations(IFCAnyHandle productHandle, IList<IFCAnyHandle> representations)
         {
             if (productHandle == null)
                 throw new ArgumentNullException("productHandle");

@@ -182,7 +182,7 @@ namespace Revit.IFC.Export.Exporter
 
             IFCGeometryInfo info = IFCGeometryInfo.CreateFaceGeometryInfo(eps);
 
-            IList<IFCAnyHandle> bodyItems = new List<IFCAnyHandle>();
+            ISet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
 
             // Want to make sure we don't accidentally add a mullion or curtain line more than once.
             HashSet<ElementId> alreadyVisited = new HashSet<ElementId>();

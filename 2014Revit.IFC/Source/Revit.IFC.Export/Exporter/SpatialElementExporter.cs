@@ -363,7 +363,7 @@ namespace Revit.IFC.Export.Exporter
                             if (filterView != null && !ElementFilteringUtil.IsElementVisible(filterView, spatialElement))
                                 continue;
 
-                            if (!ElementFilteringUtil.ShouldCategoryBeExported(exporterIFC, spatialElement))
+                            if (!ElementFilteringUtil.ShouldElementBeExported(exporterIFC, spatialElement))
                                 continue;
 
                             Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
@@ -627,12 +627,17 @@ namespace Revit.IFC.Export.Exporter
         static double GetHeight(SpatialElement spatialElement, ElementId levelId, IFCLevelInfo levelInfo)
         {
             Document document = spatialElement.Document;
+            bool isArea = spatialElement is Area;
 
-            ElementId topLevelId;
-            ParameterUtil.GetElementIdValueFromElement(spatialElement, BuiltInParameter.ROOM_UPPER_LEVEL, out topLevelId);
+            ElementId topLevelId = ElementId.InvalidElementId;
+            double topOffset = 0.0;
 
-            double topOffset;
-            ParameterUtil.GetDoubleValueFromElement(spatialElement, BuiltInParameter.ROOM_UPPER_OFFSET, out topOffset);
+            // These values are internally set for areas, but are invalid.  Ignore them and just use the level height.
+            if (!isArea)
+            {
+                ParameterUtil.GetElementIdValueFromElement(spatialElement, BuiltInParameter.ROOM_UPPER_LEVEL, out topLevelId);
+                ParameterUtil.GetDoubleValueFromElement(spatialElement, BuiltInParameter.ROOM_UPPER_OFFSET, out topOffset);
+            }
 
             double bottomOffset;
             ParameterUtil.GetDoubleValueFromElement(spatialElement, BuiltInParameter.ROOM_LOWER_OFFSET, out bottomOffset);

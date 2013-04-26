@@ -113,7 +113,7 @@ namespace Revit.IFC.Common.Utility
         /// </summary>
         /// <param name="volume">The volume.</param>
         /// <returns>True if the value is almost zero, false otherwise.</returns>
-        public static bool VolumnIsAlmostZero(double volume)
+        public static bool VolumeIsAlmostZero(double volume)
         {
             return Math.Abs(volume) < Eps() * Eps() * Eps();
         }
@@ -209,6 +209,20 @@ namespace Revit.IFC.Common.Utility
             double bb = b.DotProduct(b);
 
             return (ab * ab < aa * AngleEps() * bb * AngleEps()) ? true : false;
+        }
+
+        /// <summary>
+        /// Swaps the values of two variables.
+        /// </summary>
+        /// <typeparam name="T">The type.</typeparam>
+        /// <param name="left">The first variable.</param>
+        /// <param name="right">The second variable.</param>
+        public static void Swap<T>(ref T left, ref T right)
+        {
+            T temp;
+            temp = left;
+            left = right;
+            right = temp;
         }
     }
 }

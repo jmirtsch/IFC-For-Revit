@@ -24,6 +24,8 @@ using System.Text;
 using Autodesk.Revit;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Autodesk.Revit.DB.Mechanical;
+using Autodesk.Revit.DB.Plumbing;
 using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Enums;
@@ -210,6 +212,28 @@ namespace Revit.IFC.Export.Exporter
             return mostPopularId;
         }
 
+        private static ElementId GetBestMaterialIdFromParameter(Element element)
+        {
+            ElementId systemTypeId = ElementId.InvalidElementId;
+            if (element is Duct)
+                ParameterUtil.GetElementIdValueFromElement(element, BuiltInParameter.RBS_DUCT_SYSTEM_TYPE_PARAM, out systemTypeId);
+            else if (element is Pipe)
+                ParameterUtil.GetElementIdValueFromElement(element, BuiltInParameter.RBS_PIPING_SYSTEM_TYPE_PARAM, out systemTypeId);
+
+            ElementId matId = ElementId.InvalidElementId;
+            if (systemTypeId != ElementId.InvalidElementId)
+            {
+                Element systemType = element.Document.GetElement(systemTypeId);
+                if (systemType != null)
+                    return GetBestMaterialIdFromParameter(systemType);
+            }
+            else if (element is DuctLining || element is MEPSystemType)
+                ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.MATERIAL_ID_PARAM, out matId);
+            else
+                ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.STRUCTURAL_MATERIAL_PARAM, out matId);
+            return matId;
+        }
+        
         /// <summary>
         /// Gets the best material id from the geometry or its structural material parameter.
         /// </summary>
@@ -221,9 +245,7 @@ namespace Revit.IFC.Export.Exporter
         {
             ElementId matId = GetBestMaterialIdForGeometry(solids, meshes);
             if (matId == ElementId.InvalidElementId && element != null)
-            {
-                ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.STRUCTURAL_MATERIAL_PARAM, out matId);
-            }
+                matId = GetBestMaterialIdFromParameter(element);
             return matId;
         }
 
@@ -240,9 +262,7 @@ namespace Revit.IFC.Export.Exporter
         {
             ElementId matId = GetBestMaterialIdForGeometry(geometryElement, exporterIFC, range);
             if (matId == ElementId.InvalidElementId && element != null)
-            {
-                ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.STRUCTURAL_MATERIAL_PARAM, out matId);
-            }
+                matId = GetBestMaterialIdFromParameter(element);
             return matId;
         }
 
@@ -257,9 +277,7 @@ namespace Revit.IFC.Export.Exporter
         {
             ElementId matId = GetBestMaterialIdForGeometry(geometryObject, exporterIFC);
             if (matId == ElementId.InvalidElementId && element != null)
-            {
-                ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.STRUCTURAL_MATERIAL_PARAM, out matId);
-            }
+                matId = GetBestMaterialIdFromParameter(element);
             return matId;
         }
 
@@ -293,13 +311,13 @@ namespace Revit.IFC.Export.Exporter
                 return null;
 
             IFCAnyHandle presStyleHnd = ExporterCacheManager.PresentationStyleAssignmentCache.Find(materialId);
-            if (presStyleHnd == null)
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(presStyleHnd))
             {
                 IFCAnyHandle surfStyleHnd = CategoryUtil.GetOrCreateMaterialStyle(document, exporterIFC, materialId);
-                if (surfStyleHnd == null)
+                if (IFCAnyHandleUtil.IsNullOrHasNoValue(surfStyleHnd))
                     return null;
 
-                ICollection<IFCAnyHandle> styles = new HashSet<IFCAnyHandle>();
+                ISet<IFCAnyHandle> styles = new HashSet<IFCAnyHandle>();
                 styles.Add(surfStyleHnd);
 
                 presStyleHnd = IFCInstanceExporter.CreatePresentationStyleAssignment(file, styles);
@@ -329,7 +347,7 @@ namespace Revit.IFC.Export.Exporter
             IFCFile file = exporterIFC.GetFile();
 
             IFCAnyHandle curveStyleHnd = IFCInstanceExporter.CreateCurveStyle(file, null, null, curveWidth, colorHnd);
-            ICollection<IFCAnyHandle> styles = new HashSet<IFCAnyHandle>();
+            ISet<IFCAnyHandle> styles = new HashSet<IFCAnyHandle>();
             styles.Add(curveStyleHnd);
 
             presStyleHnd = IFCInstanceExporter.CreatePresentationStyleAssignment(file, styles);
@@ -544,7 +562,7 @@ namespace Revit.IFC.Export.Exporter
                         }
                         else
                         {
-                            IList<IFCAnyHandle> groupBodyItems = new List<IFCAnyHandle>();
+                            ISet<IFCAnyHandle> groupBodyItems = new HashSet<IFCAnyHandle>();
                             foreach (IFCAnyHandle mappedRepHnd in groupData.Handles)
                             {
                                 IFCAnyHandle mappedItemHnd = ExporterUtil.CreateDefaultMappedItem(file, mappedRepHnd);
@@ -564,7 +582,7 @@ namespace Revit.IFC.Export.Exporter
         private static IFCAnyHandle CreateBRepRepresentationMap(ExporterIFC exporterIFC, IFCFile file, Element element, ElementId categoryId, 
             IFCAnyHandle contextOfItems, IFCAnyHandle brepHnd)
         {
-            IList<IFCAnyHandle> currBodyItems = new List<IFCAnyHandle>();
+            ISet<IFCAnyHandle> currBodyItems = new HashSet<IFCAnyHandle>();
             currBodyItems.Add(brepHnd);
             IFCAnyHandle currRepHnd = RepresentationUtil.CreateBRepRep(exporterIFC, element, categoryId,
                 contextOfItems, currBodyItems);
@@ -580,7 +598,7 @@ namespace Revit.IFC.Export.Exporter
             HashSet<IFCAnyHandle> currFaceSet = new HashSet<IFCAnyHandle>();
             currFaceSet.Add(faceSetHnd);
 
-            IList<IFCAnyHandle> currFaceSetItems = new List<IFCAnyHandle>();
+            ISet<IFCAnyHandle> currFaceSetItems = new HashSet<IFCAnyHandle>();
             IFCAnyHandle currSurfaceModelHnd = IFCInstanceExporter.CreateFaceBasedSurfaceModel(file, currFaceSet);
             currFaceSetItems.Add(currSurfaceModelHnd);
             IFCAnyHandle currRepHnd = RepresentationUtil.CreateSurfaceRep(exporterIFC, element, categoryId, contextOfItems,
@@ -1340,19 +1358,21 @@ namespace Revit.IFC.Export.Exporter
                 }
             }
 
+            HashSet<IFCAnyHandle> bodyItemSet = new HashSet<IFCAnyHandle>();
+            bodyItemSet.UnionWith(bodyItems);
             if (useMappedGeometriesIfPossible)
             {
-                bodyData.RepresentationHnd = RepresentationUtil.CreateBodyMappedItemRep(exporterIFC, element, categoryId, contextOfItems, bodyItems);
+                bodyData.RepresentationHnd = RepresentationUtil.CreateBodyMappedItemRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet);
             }
             else if (exportAsBReps)
             {
                 if (numExtrusions > 0)
-                    bodyData.RepresentationHnd = RepresentationUtil.CreateSolidModelRep(exporterIFC, element, categoryId, contextOfItems, bodyItems);
+                    bodyData.RepresentationHnd = RepresentationUtil.CreateSolidModelRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet);
                 else
-                    bodyData.RepresentationHnd = RepresentationUtil.CreateBRepRep(exporterIFC, element, categoryId, contextOfItems, bodyItems);
+                    bodyData.RepresentationHnd = RepresentationUtil.CreateBRepRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet);
             }
             else
-                bodyData.RepresentationHnd = RepresentationUtil.CreateSurfaceRep(exporterIFC, element, categoryId, contextOfItems, bodyItems, false, null);
+                bodyData.RepresentationHnd = RepresentationUtil.CreateSurfaceRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, false, null);
 
             if (useGroupsIfPossible && (groupKey != null) && (groupData != null))
             {
@@ -1576,7 +1596,10 @@ namespace Revit.IFC.Export.Exporter
                         for (int ii = 0; ii < numCreatedExtrusions && tryToExportAsExtrusion; ii++)
                         {
                             int geomIndex = exportAsExtrusion[ii];
-                            bodyData.AddMaterial(SetBestMaterialIdInExporter(geometryList[geomIndex], element, overrideMaterialId, exporterIFC));
+
+                            ElementId matId = SetBestMaterialIdInExporter(geometryList[geomIndex], element, overrideMaterialId, exporterIFC);
+                            if (matId != ElementId.InvalidElementId)
+                                bodyData.AddMaterial(matId);
 
                             if (exportBodyParams != null && exportBodyParams.AreInnerRegionsOpenings)
                             {
@@ -1699,22 +1722,24 @@ namespace Revit.IFC.Export.Exporter
                         for (int ii = 0; ii < sz; ii++)
                             BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document, bodyItems[ii], materialIdsForExtrusions[ii]);
 
+                        HashSet<IFCAnyHandle> bodyItemSet = new HashSet<IFCAnyHandle>();
+                        bodyItemSet.UnionWith(bodyItems);
                         if (hasExtrusions && !hasSweptSolids)
                         {
                             bodyData.RepresentationHnd =
-                                RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItems, bodyData.RepresentationHnd);
+                                RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
                             bodyData.ShapeRepresentationType = ShapeRepresentationType.SweptSolid;
                         }
                         else if (hasSweptSolids && !hasExtrusions)
                         {
                             bodyData.RepresentationHnd =
-                                RepresentationUtil.CreateAdvancedSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItems, bodyData.RepresentationHnd);
+                                RepresentationUtil.CreateAdvancedSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
                             bodyData.ShapeRepresentationType = ShapeRepresentationType.AdvancedSweptSolid;
                         }
                         else
                         {
                             bodyData.RepresentationHnd =
-                                RepresentationUtil.CreateSolidModelRep(exporterIFC, element, categoryId, contextOfItems, bodyItems);
+                                RepresentationUtil.CreateSolidModelRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet);
                             bodyData.ShapeRepresentationType = ShapeRepresentationType.SolidModel;
                         }
                         

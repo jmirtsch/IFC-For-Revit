@@ -82,7 +82,12 @@ namespace Revit.IFC.Export.Toolkit
         PSetAirTerminalTypeCommon = 1026,
     }
 
-    // Used for internal Revit property sets.
+    enum IFCGroupSubElements
+    {
+        RelAssignsToGroup = 1,
+    }
+
+    // Used for internal Revit property sets, split instances, and connectors.
     enum IFCGenericSubElements
     {
         PSetRevitInternalStart = 1536,
@@ -93,7 +98,7 @@ namespace Revit.IFC.Export.Toolkit
         SplitInstanceStart = 2049,
         SplitInstanceEnd = SplitInstanceStart + 255,
         SplitTypeStart = SplitInstanceEnd + 1,
-        SplitTypeEnd = SplitTypeStart + 255 // 2560
+        SplitTypeEnd = SplitTypeStart + 255, // 2560
     }
 
     enum IFCLightFixtureTypeSubElements

@@ -208,34 +208,34 @@ namespace Revit.IFC.Export.Utility
             {
                 if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "LiningThickness", out value2))
                 {
-                    liningDepthOpt = value1;
-                    liningThicknessOpt = value2;
+                    liningDepthOpt = UnitUtil.ScaleLength(value1);
+                    liningThicknessOpt = UnitUtil.ScaleLength(value2);
                 }
             }
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "LiningOffset", out value1))
-                liningOffsetOpt = value1;
+                liningOffsetOpt = UnitUtil.ScaleLength(value1);
 
             // both of these must be defined, or not defined - if only one is defined, we ignore the values.
             if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "ThresholdDepth", out value1))
             {
                 if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "ThresholdThickness", out value2))
                 {
-                    thresholdDepthOpt = value1;
-                    thresholdThicknessOpt = value2;
+                    thresholdDepthOpt = UnitUtil.ScaleLength(value1);
+                    thresholdThicknessOpt = UnitUtil.ScaleLength(value2);
                 }
             }
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "ThreshholdOffset", out value1))
-                liningOffsetOpt = value1;
+                liningOffsetOpt = UnitUtil.ScaleLength(value1);
 
             // both of these must be defined, or not defined - if only one is defined, we ignore the values.
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "TransomOffset", out value1))
             {
                 if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "TransomThickness", out value2))
                 {
-                    transomOffsetOpt = value1;
-                    transomThicknessOpt = value2;
+                    transomOffsetOpt = UnitUtil.ScaleLength(value1);
+                    transomThicknessOpt = UnitUtil.ScaleLength(value2);
                 }
             }
 
@@ -244,8 +244,8 @@ namespace Revit.IFC.Export.Utility
             {
                 if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "CasingThickness", out value2))
                 {
-                    casingDepthOpt = value1;
-                    casingThicknessOpt = value2;
+                    casingDepthOpt = UnitUtil.ScaleLength(value1);
+                    casingThicknessOpt = UnitUtil.ScaleLength(value2);
                 }
             }
 
@@ -553,27 +553,27 @@ namespace Revit.IFC.Export.Utility
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "LiningDepth", out value1) &&
                ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "LiningThickness", out value2))
             {
-                liningDepthOpt = value1;
-                liningThicknessOpt = value2;
+                liningDepthOpt = UnitUtil.ScaleLength(value1);
+                liningThicknessOpt = UnitUtil.ScaleLength(value2);
             }
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "TransomThickness", out value1))
-                transomThicknessOpt = value1;
+                transomThicknessOpt = UnitUtil.ScaleLength(value1);
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FirstTransomOffset", out value1))
-                firstTransomOffsetOpt = value1;
+                firstTransomOffsetOpt = UnitUtil.ScaleLength(value1);
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "SecondTransomOffset", out value1))
-                secondTransomOffsetOpt = value1;
+                secondTransomOffsetOpt = UnitUtil.ScaleLength(value1);
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "MullionThickness", out value1))
-                mullionThicknessOpt = value1;
+                mullionThicknessOpt = UnitUtil.ScaleLength(value1);
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FirstMullionOffset", out value1))
-                firstMullionOffsetOpt = value1;
+                firstMullionOffsetOpt = UnitUtil.ScaleLength(value1);
 
             if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "SecondMullionOffset", out value1))
-                secondMullionOffsetOpt = value1;
+                secondMullionOffsetOpt = UnitUtil.ScaleLength(value1);
 
             string windowLiningGUID = GUIDUtil.CreateGUID();
             string windowLiningName = NamingUtil.GetIFCName(familyInstance);

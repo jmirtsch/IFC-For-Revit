@@ -85,7 +85,7 @@ namespace Revit.IFC.Export.Exporter
         static private double GetDefaultHeightForLegacyStair(Document doc)
         {
             // The default height for legacy stairs are either 12' or 3.5m.  Figure it out based on the scale of the export, and convert to feet.
-            return (doc.DisplayUnitSystem == DisplayUnit.IMPERIAL) ? UnitUtil.ScaleLength(12.0) : UnitUtil.ScaleLength(3.5 * (100 / (12 * 2.54)));
+            return (doc.DisplayUnitSystem == DisplayUnit.IMPERIAL) ? 12.0 : 3.5 * (100 / (12 * 2.54));
         }
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace Revit.IFC.Export.Exporter
         /// The element.
         /// </param>
         /// <param name="defaultHeight">
-        /// The default height of the stair.
+        /// The default height of the stair, in feet.
         /// </param>
         /// <returns>
         /// The unscaled height.
@@ -169,8 +169,8 @@ namespace Revit.IFC.Export.Exporter
 
             Level topLevel = null;
             ElementId topLevelId;
-            if (!ParameterUtil.GetElementIdValueFromElement(element, BuiltInParameter.STAIRS_TOP_LEVEL_PARAM, out topLevelId) || 
-                (topLevelId == ElementId.InvalidElementId))
+            if (ParameterUtil.GetElementIdValueFromElement(element, BuiltInParameter.STAIRS_TOP_LEVEL_PARAM, out topLevelId) &&
+                (topLevelId != ElementId.InvalidElementId))
                 topLevel = element.Document.GetElement(topLevelId) as Level;
 
             double bottomLevelOffset;
@@ -342,7 +342,7 @@ namespace Revit.IFC.Export.Exporter
                 // We are going to avoid internal scaling routines, and instead scale in .NET.
                 double newOffsetUnscaled = 0.0;
                 IFCLevelInfo currLevelInfo =
-                    placementSetter.GetOffsetLevelInfoAndHandle(heightNonScaled * ii, 1.0, out newLevelHnd, out newOffsetUnscaled);
+                    placementSetter.GetOffsetLevelInfoAndHandle(heightNonScaled * (ii+1), 1.0, out newLevelHnd, out newOffsetUnscaled);
                 double newOffsetScaled = UnitUtil.ScaleLength(newOffsetUnscaled); 
                 
                 levelInfos.Add(currLevelInfo);

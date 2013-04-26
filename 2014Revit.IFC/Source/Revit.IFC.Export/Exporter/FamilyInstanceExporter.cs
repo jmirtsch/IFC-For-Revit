@@ -497,6 +497,8 @@ namespace Revit.IFC.Export.Exporter
 
                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(typeStyle))
                     {
+                        Exporter.CreateElementTypeProperties(exporterIFC, familySymbol, propertySets, typeStyle);
+
                         CategoryUtil.CreateMaterialAssociations(doc, exporterIFC, typeStyle, typeInfo.MaterialIds);
 
                         typeInfo.Style = typeStyle;
@@ -564,7 +566,7 @@ namespace Revit.IFC.Export.Exporter
 
                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap3dHnd))
                     {
-                        IList<IFCAnyHandle> representations = new List<IFCAnyHandle>();
+                        ISet<IFCAnyHandle> representations = new HashSet<IFCAnyHandle>();
                         representations.Add(ExporterUtil.CreateDefaultMappedItem(file, repMap3dHnd, scaledMapOrigin));
                         IFCAnyHandle shapeRep = RepresentationUtil.CreateBodyMappedItemRep(exporterIFC, familyInstance, categoryId, contextOfItems3d,
                             representations);
@@ -604,7 +606,8 @@ namespace Revit.IFC.Export.Exporter
                 {
                     IFCAnyHandle instanceHandle = null;
                     IFCAnyHandle localPlacement = setter.LocalPlacement;
-                    if (!(repHnd == null && ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2))
+                    // We won't allow creating a type with no representation for CV2.0, unless we are exporting parts.  We may add that back as an option later.
+                    if (!(repHnd == null && ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2 && !exportParts))
                     {
                         string instanceGUID = null;
                         

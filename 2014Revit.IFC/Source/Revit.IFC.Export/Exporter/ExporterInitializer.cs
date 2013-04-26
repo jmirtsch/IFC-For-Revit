@@ -150,10 +150,15 @@ namespace Revit.IFC.Export.Exporter
             // MEP property sets.
             InitPropertySetAirTerminalTypeCommon(commonPropertySets);
             InitPropertySetDistributionFlowElementCommon(commonPropertySets);
+            InitPropertySetElectricalCircuit(commonPropertySets);
+            InitPropertySetElectricalDeviceCommon(commonPropertySets);
             InitPropertySetFlowTerminalAirTerminal(commonPropertySets);
             InitPropertySetLightFixtureTypeCommon(commonPropertySets);
             InitPropertySetProvisionForVoid(commonPropertySets);
             InitPropertySetSanitaryTerminalTypeToiletPan(commonPropertySets);
+            InitPropertySetSwitchingDeviceTypeCommon(commonPropertySets);
+            InitPropertySetSwitchingDeviceTypeToggleSwitch(commonPropertySets);
+            InitPropertySetZoneCommon(commonPropertySets, fileVersion);
 
             // Energy Analysis property sets.
             InitPropertySetElementShading(commonPropertySets);
@@ -438,7 +443,55 @@ namespace Revit.IFC.Export.Exporter
         }
 
         /// <summary>
-        /// Initializes the Pset_DistributionFlowElementCommon property set.
+        /// Initializes the Pset_ElectricalCircuit property set.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetElectricalCircuit(IList<PropertySetDescription> commonPropertySets)
+        {
+            //property beam common
+            PropertySetDescription propertySetElectricalCircuit = new PropertySetDescription();
+            propertySetElectricalCircuit.Name = "Pset_ElectricalCircuit";
+            
+            propertySetElectricalCircuit.EntityTypes.Add(IFCEntityType.IfcElectricalCircuit);
+
+            propertySetElectricalCircuit.AddEntry(PropertySetEntry.CreatePositiveRatio("Diversity"));
+            propertySetElectricalCircuit.AddEntry(PropertySetEntry.CreateInteger("NumberOfPhases"));
+            //propertySetElectricalCircuit.AddEntry(PropertySetEntry.CreateElectricVoltage("MaximumAllowedVoltageDrop"));
+            //propertySetElectricalCircuit.AddEntry(PropertySetEntry.CreateElectricResistance("NetImpedance"));
+
+            commonPropertySets.Add(propertySetElectricalCircuit);
+        }
+
+        /// <summary>
+        /// Initializes the Pset_ElectricalDeviceCommon property set.
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetElectricalDeviceCommon(IList<PropertySetDescription> commonPropertySets)
+        {
+            //property ElectricalDeviceCommon common
+            PropertySetDescription propertySetElectricalDeviceCommon = new PropertySetDescription();
+            propertySetElectricalDeviceCommon.Name = "Pset_ElectricalDeviceCommon";
+
+            propertySetElectricalDeviceCommon.EntityTypes.Add(IFCEntityType.IfcDistributionElement);
+
+            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateElectricalCurrent("NominalCurrent"));
+            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateElectricalCurrent("UsageCurrent"));
+            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateElectricalVoltage("NominalVoltage"));
+            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreatePower("ElectricalDeviceNominalPower"));
+            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateInteger("NumberOfPoles"));
+            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateBoolean("HasProtectiveEarth"));
+            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateFrequency("NominalFrequencyRange"));
+            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreatePositivePlaneAngle("PhaseAngle"));
+            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateLabel("IP_Code"));
+            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("InsulationStandardClass",
+                PropertyType.Label, typeof(PSetElectricalDeviceCommon_InsulationStandardClass)));
+            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateIdentifier("PhaseReference"));
+
+            commonPropertySets.Add(propertySetElectricalDeviceCommon);
+        }
+        
+        /// <summary>
+        /// Initializes the Pset_FlowTerminalAirTerminal property set.
         /// </summary>
         /// <param name="commonPropertySets">List to store property sets.</param>
         private static void InitPropertySetFlowTerminalAirTerminal(IList<PropertySetDescription> commonPropertySets)
@@ -1222,8 +1275,8 @@ namespace Revit.IFC.Export.Exporter
             propertySetZoneCommon.AddEntry(ifcPSE);
 
             propertySetZoneCommon.AddEntry(PropertySetEntry.CreateLabel("Category"));
-            propertySetZoneCommon.AddEntry(PropertySetEntry.CreateArea("GrossPlannedArea"));
-            propertySetZoneCommon.AddEntry(PropertySetEntry.CreateArea("NetPlannedArea"));
+            propertySetZoneCommon.AddEntry(PropertySetEntry.CreateArea("GrossAreaPlanned"));
+            propertySetZoneCommon.AddEntry(PropertySetEntry.CreateArea("NetAreaPlanned"));
             propertySetZoneCommon.AddEntry(PropertySetEntry.CreateBoolean("PubliclyAccessible"));
             propertySetZoneCommon.AddEntry(PropertySetEntry.CreateBoolean("HandicapAccessible"));
 
@@ -1488,6 +1541,47 @@ namespace Revit.IFC.Export.Exporter
             commonPropertySets.Add(propertySetToiletPan);
         }
 
+        /// <summary>
+        /// Initializes Pset_SwitchingDeviceTypeCommon
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetSwitchingDeviceTypeCommon(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetSwitchingDeviceTypeCommon = new PropertySetDescription();
+            propertySetSwitchingDeviceTypeCommon.Name = "Pset_SwitchingDeviceTypeCommon";
+            propertySetSwitchingDeviceTypeCommon.EntityTypes.Add(IFCEntityType.IfcSwitchingDeviceType);
+
+            propertySetSwitchingDeviceTypeCommon.AddEntry(PropertySetEntry.CreateInteger("NumberOfGangs"));
+            propertySetSwitchingDeviceTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("SwitchFunction",
+                PropertyType.Label, typeof(PsetSwitchingDeviceTypeCommon_SwitchFunction)));
+            propertySetSwitchingDeviceTypeCommon.AddEntry(PropertySetEntry.CreateBoolean("HasLock"));
+
+            commonPropertySets.Add(propertySetSwitchingDeviceTypeCommon);
+        }
+
+        /// <summary>
+        /// Initializes Pset_SwitchingDeviceTypeToggleSwitch
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetSwitchingDeviceTypeToggleSwitch(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetSwitchingDeviceTypeToggleSwitch = new PropertySetDescription();
+            propertySetSwitchingDeviceTypeToggleSwitch.Name = "Pset_SwitchingDeviceTypeToggleSwitch";
+            propertySetSwitchingDeviceTypeToggleSwitch.EntityTypes.Add(IFCEntityType.IfcSwitchingDeviceType);
+            // TODO: Restrict to TOGGLESWITCH.
+
+            propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateEnumeratedValue("ToggleSwitchType",
+                PropertyType.Label, typeof(PsetSwitchingDeviceTypeToggleSwitch_ToggleSwitchType)));
+            propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateEnumeratedValue("SwitchUsage",
+                PropertyType.Label, typeof(PsetSwitchingDeviceTypeToggleSwitch_SwitchUsage)));
+            propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateEnumeratedValue("SwitchActivation",
+                PropertyType.Label, typeof(PsetSwitchingDeviceTypeToggleSwitch_SwitchActivation)));
+            propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateBoolean("IsIlluminated"));
+            propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateLabel("Legend"));
+
+            commonPropertySets.Add(propertySetSwitchingDeviceTypeToggleSwitch);
+        }
+        
         /// <summary>
         /// Initializes COBIE property sets.
         /// </summary>
