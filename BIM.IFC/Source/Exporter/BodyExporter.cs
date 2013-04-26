@@ -24,6 +24,8 @@ using System.Text;
 using Autodesk.Revit;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Autodesk.Revit.DB.Mechanical;
+using Autodesk.Revit.DB.Plumbing;
 using BIM.IFC.Utility;
 using BIM.IFC.Toolkit;
 
@@ -208,6 +210,28 @@ namespace BIM.IFC.Exporter
             return mostPopularId;
         }
 
+        private static ElementId GetBestMaterialIdFromParameter(Element element)
+        {
+            ElementId systemTypeId = ElementId.InvalidElementId;
+            if (element is Duct)
+                ParameterUtil.GetElementIdValueFromElement(element, BuiltInParameter.RBS_DUCT_SYSTEM_TYPE_PARAM, out systemTypeId);
+            else if (element is Pipe)
+                ParameterUtil.GetElementIdValueFromElement(element, BuiltInParameter.RBS_PIPING_SYSTEM_TYPE_PARAM, out systemTypeId);
+
+            ElementId matId = ElementId.InvalidElementId;
+            if (systemTypeId != ElementId.InvalidElementId)
+            {
+                Element systemType = element.Document.GetElement(systemTypeId);
+                if (systemType != null)
+                    return GetBestMaterialIdFromParameter(systemType);
+            }
+            else if (element is DuctLining || element is MEPSystemType)
+                ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.MATERIAL_ID_PARAM, out matId);
+            else
+                ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.STRUCTURAL_MATERIAL_PARAM, out matId);
+            return matId;
+        }
+        
         /// <summary>
         /// Gets the best material id from the geometry or its structural material parameter.
         /// </summary>
@@ -219,9 +243,7 @@ namespace BIM.IFC.Exporter
         {
             ElementId matId = GetBestMaterialIdForGeometry(solids, meshes);
             if (matId == ElementId.InvalidElementId && element != null)
-            {
-                ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.STRUCTURAL_MATERIAL_PARAM, out matId);
-            }
+                matId = GetBestMaterialIdFromParameter(element);
             return matId;
         }
 
@@ -238,9 +260,7 @@ namespace BIM.IFC.Exporter
         {
             ElementId matId = GetBestMaterialIdForGeometry(geometryElement, exporterIFC, range);
             if (matId == ElementId.InvalidElementId && element != null)
-            {
-                ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.STRUCTURAL_MATERIAL_PARAM, out matId);
-            }
+                matId = GetBestMaterialIdFromParameter(element);
             return matId;
         }
 
@@ -255,9 +275,7 @@ namespace BIM.IFC.Exporter
         {
             ElementId matId = GetBestMaterialIdForGeometry(geometryObject, exporterIFC);
             if (matId == ElementId.InvalidElementId && element != null)
-            {
-                ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.STRUCTURAL_MATERIAL_PARAM, out matId);
-            }
+                matId = GetBestMaterialIdFromParameter(element);
             return matId;
         }
 
@@ -291,10 +309,10 @@ namespace BIM.IFC.Exporter
                 return null;
 
             IFCAnyHandle presStyleHnd = ExporterCacheManager.PresentationStyleAssignmentCache.Find(materialId);
-            if (presStyleHnd == null)
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(presStyleHnd))
             {
                 IFCAnyHandle surfStyleHnd = CategoryUtil.GetOrCreateMaterialStyle(document, exporterIFC, materialId);
-                if (surfStyleHnd == null)
+                if (IFCAnyHandleUtil.IsNullOrHasNoValue(surfStyleHnd))
                     return null;
 
                 ICollection<IFCAnyHandle> styles = new HashSet<IFCAnyHandle>();
@@ -1642,7 +1660,10 @@ namespace BIM.IFC.Exporter
                         for (int ii = 0; ii < numCreatedExtrusions && tryToExportAsExtrusion; ii++)
                         {
                             int geomIndex = exportAsExtrusion[ii];
-                            bodyData.AddMaterial(SetBestMaterialIdInExporter(geometryList[geomIndex], element, overrideMaterialId, exporterIFC));
+
+                            ElementId matId = SetBestMaterialIdInExporter(geometryList[geomIndex], element, overrideMaterialId, exporterIFC);
+                            if (matId != ElementId.InvalidElementId)
+                                bodyData.AddMaterial(matId);
 
                             if (exportBodyParams != null && exportBodyParams.AreInnerRegionsOpenings)
                             {

@@ -84,7 +84,7 @@ namespace BIM.IFC.Exporter
         {
             // The default height for legacy stairs are either 12' or 3.5m.  Figure it out based on the scale of the export, and convert to feet.
             return
-                (MathUtil.IsAlmostEqual(scale, 1.0) || MathUtil.IsAlmostEqual(scale, 1.0 / 12.0)) ? (12.0 * scale) : (3.5 * (100 / (12 * 2.54)) * scale);
+                (MathUtil.IsAlmostEqual(scale, 1.0) || MathUtil.IsAlmostEqual(scale, 1.0 / 12.0)) ? 12.0 : (3.5 * (100 / (12 * 2.54)));
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace BIM.IFC.Exporter
         /// The element.
         /// </param>
         /// <param name="defaultHeight">
-        /// The default height of the stair.
+        /// The default height of the stair, in feet.
         /// </param>
         /// <returns>
         /// The unscaled height.
@@ -168,8 +168,8 @@ namespace BIM.IFC.Exporter
 
             Level topLevel = null;
             ElementId topLevelId;
-            if (!ParameterUtil.GetElementIdValueFromElement(element, BuiltInParameter.STAIRS_TOP_LEVEL_PARAM, out topLevelId) || 
-                (topLevelId == ElementId.InvalidElementId))
+            if (ParameterUtil.GetElementIdValueFromElement(element, BuiltInParameter.STAIRS_TOP_LEVEL_PARAM, out topLevelId) &&
+                (topLevelId != ElementId.InvalidElementId))
                 topLevel = element.Document.GetElement(topLevelId) as Level;
 
             double bottomLevelOffset;

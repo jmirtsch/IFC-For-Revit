@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using BIM.IFC.Toolkit;
 
 namespace BIM.IFC.Utility
 {
@@ -65,20 +66,35 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Removes handles from the cache.
+        /// </summary>
+        /// <param name="materialIds">The material ids.</param>
+        public void RemoveHandles(ISet<ElementId> materialIds)
+        {
+            foreach (ElementId materialId in materialIds)
+            {
+                IFCAnyHandle presentationStyleAssignment;
+                if (m_Styles.TryGetValue(materialId.IntegerValue, out presentationStyleAssignment))
+                {
+                    m_Styles.Remove(materialId.IntegerValue);
+                }
+            }
+        }
+
+        /// <summary>
         /// Adds the IfcPresentationStyleAssignment handle to the dictionary.
         /// </summary>
-        /// <param name="elementId">
-        /// The element elementId.
-        /// </param>
-        /// <param name="handle">
-        /// The IfcPresentationStyleAssignment handle.
-        /// </param>
+        /// <param name="elementId">The element elementId.</param>
+        /// <param name="handle">The IfcPresentationStyleAssignment handle.</param>
         public void Register(ElementId elementId, IFCAnyHandle handle)
         {
             if (m_Styles.ContainsKey(elementId.IntegerValue))
                 throw new Exception("TextStyleCache already contains handle for elementId " + elementId.IntegerValue);
 
-            m_Styles[elementId.IntegerValue] = handle;
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(handle))
+                m_Styles[elementId.IntegerValue] = handle;
+            else
+                throw new Exception("Invalid Handle.");
         }
     }
 }

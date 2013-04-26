@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Electrical;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.DB.Structure;
 
@@ -463,6 +464,14 @@ namespace BIM.IFC.Utility
         /// System
         /// </summary>
         ExportSystem,
+        /// <summary>
+        /// Group
+        /// </summary>
+        ExportGroup,
+        /// <summary>
+        /// Assembly
+        /// </summary>
+        ExportAssembly,
     }
 
 
@@ -584,10 +593,12 @@ namespace BIM.IFC.Utility
             String ifcClassName = ExporterIFCUtils.GetIFCClassName(element, exporterIFC);
             if (ifcClassName == "")
             {
-                // Special case: if the element is an AreaScheme, always export as a group.  The reason is that we can't place
-                // AreaSchemes in the Export Layers table for internal (and uninteresting) reasons.
-                if (element is AreaScheme)
+                // Special case: these elements aren't contained in the default export layers mapping table.
+                // This allows these elements to be exported by default.
+                if (element is AreaScheme || element is Group)
                     ifcClassName = "IfcGroup";
+                else if (element is ElectricalSystem)
+                    ifcClassName = "IfcSystem";
                 else
                     return false;
             }
@@ -629,6 +640,8 @@ namespace BIM.IFC.Utility
                 // Used to mark curves, text, and filled regions for export.
                 return IFCExportType.ExportAnnotation;
             }
+            else if (String.Compare(ifcClassName, "IfcAssembly", true) == 0)
+                return IFCExportType.ExportAssembly;
             else if (String.Compare(ifcClassName, "IfcBeam", true) == 0)
                 return IFCExportType.ExportBeam;
             else if (String.Compare(ifcClassName, "IfcBuildingElementPart", true) == 0)
@@ -656,6 +669,8 @@ namespace BIM.IFC.Utility
                 return IFCExportType.ExportFooting;
             else if (String.Compare(ifcClassName, "IfcGrid", true) == 0)
                 return IFCExportType.ExportGrid;
+            else if (String.Compare(ifcClassName, "IfcGroup", true) == 0)
+                return IFCExportType.ExportGroup;
             else if (String.Compare(ifcClassName, "IfcMember", true) == 0)
                 return IFCExportType.ExportMemberType;
             else if (String.Compare(ifcClassName, "IfcOpeningElement", true) == 0)
@@ -909,6 +924,8 @@ namespace BIM.IFC.Utility
                 ifcEnumType = "FLOOR";
                 return IFCExportType.ExportSlab;
             }
+            else if (categoryId == new ElementId(BuiltInCategory.OST_IOSModelGroups))
+                return IFCExportType.ExportGroup;
             else if (categoryId == new ElementId(BuiltInCategory.OST_Mass))
                 return IFCExportType.ExportBuildingElementProxy;
             else if (categoryId == new ElementId(BuiltInCategory.OST_CurtainWallMullions))
@@ -1003,8 +1020,7 @@ namespace BIM.IFC.Utility
                     excludedTypes.Add(typeof(CurveElement));
 
                 excludedTypes.Add(typeof(ElementType));
-                excludedTypes.Add(typeof(Group));
-
+                
                 excludedTypes.Add(typeof(BaseArray));
 
                 excludedTypes.Add(typeof(FillPatternElement));

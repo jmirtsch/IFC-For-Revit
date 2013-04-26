@@ -1146,7 +1146,11 @@ namespace BIM.IFC.Exporter.PropertySet
         {
             double propertyValue;
             if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue))
+            {
+                double scale = 0.3048;
+                propertyValue = propertyValue * scale * scale * scale;
                 return CreateVolumetricFlowRateMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
+            }
             return null;
         }
 
@@ -1279,7 +1283,8 @@ namespace BIM.IFC.Exporter.PropertySet
             double propertyValue;
             if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue))
             {
-                double scaledpropertyValue = propertyValue * (1 / 0.3048) * (1 / 0.3048);
+                double scale = 0.3048;
+                double scaledpropertyValue = propertyValue * scale * scale;
                 return CreatePowerPropertyFromCache(file, ifcPropertyName, scaledpropertyValue, valueType);
             }
             return null;
@@ -1738,7 +1743,7 @@ namespace BIM.IFC.Exporter.PropertySet
            string revitParameterName, string builtInParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             double propertyValue;
-            
+
             if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue))
             {
                 propertyValue = propertyValue * exporterIFC.LinearScale;
@@ -1861,9 +1866,9 @@ namespace BIM.IFC.Exporter.PropertySet
             double propertyValue;
             if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue))
                 return CreatePositiveRatioMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
-			if (ParameterUtil.GetDoubleValueFromElement(elem, null, ifcPropertyName, out propertyValue))
+            if (ParameterUtil.GetDoubleValueFromElement(elem, null, ifcPropertyName, out propertyValue))
                 return CreatePositiveRatioMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
-           
+            
             // For Symbol
             Document document = elem.Document;
             ElementId typeId = elem.GetTypeId();
@@ -2081,7 +2086,7 @@ namespace BIM.IFC.Exporter.PropertySet
             ifcTypeInfo.ScaledInnerPerimeter = typeInfo.ScaledInnerPerimeter;
             ifcTypeInfo.ScaledOuterPerimeter = typeInfo.ScaledOuterPerimeter;
             ExporterIFCUtils.CreateBeamColumnBaseQuantities(exporterIFC, elemHandle, element, ifcTypeInfo);
-        }
+            }
 
         /// <summary>
         ///  Creates the shared beam, column and member QTO values.  
@@ -2118,8 +2123,12 @@ namespace BIM.IFC.Exporter.PropertySet
         /// </param>
         public static void CreateInternalRevitPropertySets(ExporterIFC exporterIFC, Element element, ICollection<IFCAnyHandle> elementSets)
         {
-            if (exporterIFC == null || element == null || elementSets == null || elementSets.Count == 0 ||
+            if (exporterIFC == null || element == null ||
                 !ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportInternalRevit)
+                return;
+
+            // We will allow creating internal Revit property sets for element types with no associated element handles.
+            if ((elementSets == null || elementSets.Count == 0) && !(element is ElementType))
                 return;
 
             IFCFile file = exporterIFC.GetFile();
@@ -2154,10 +2163,7 @@ namespace BIM.IFC.Exporter.PropertySet
                 if (createType)
                 {
                     if (ExporterCacheManager.TypePropertyInfoCache.HasTypeProperties(typeId))
-                    {
-                        ExporterCacheManager.TypePropertyInfoCache.AddTypeProperties(typeId, elementSets);
                         continue;
-                    }
                 }
 
                 IDictionary<BuiltInParameterGroup, ParameterElementCache> parameterElementCache =
@@ -2169,10 +2175,10 @@ namespace BIM.IFC.Exporter.PropertySet
                 {
                     BuiltInParameterGroup parameterGroup = parameterElementGroup.Key;
                     string groupName = LabelUtils.GetLabelFor(parameterGroup);
-
+                    
                     HashSet<IFCAnyHandle> currPropertiesForGroup = new HashSet<IFCAnyHandle>();
                     propertySets[which][groupName] = currPropertiesForGroup;
-                    
+
                     int unadjustedSubElementIndex = -(5000000 + (int)parameterGroup + 99);
                     if (unadjustedSubElementIndex > 0)
                     {
@@ -2183,8 +2189,8 @@ namespace BIM.IFC.Exporter.PropertySet
 
                     foreach (Parameter parameter in parameterElementGroup.Value.ParameterCache.Values)
                     {
-                    if (!parameter.HasValue)
-                        continue;
+                        if (!parameter.HasValue)
+                            continue;
 
                         Definition parameterDefinition = parameter.Definition;
                         if (parameterDefinition == null)
@@ -2192,122 +2198,143 @@ namespace BIM.IFC.Exporter.PropertySet
 
                         string parameterCaption = parameterDefinition.Name;
                         
-                    switch (parameter.StorageType)
-                    {
-                        case StorageType.None:
-                            break;
-                        case StorageType.Integer:
-                            {
-                                int value = parameter.AsInteger();
-                                string valueAsString = parameter.AsValueString();
-
-                                // YesNo or actual integer?
-                                if (parameterDefinition.ParameterType == ParameterType.YesNo)
-                                {
-                                        currPropertiesForGroup.Add(CreateBooleanPropertyFromCache(file, parameterCaption, value != 0, PropertyValueType.SingleValue));
-                                }
-                                else if (parameterDefinition.ParameterType == ParameterType.Invalid && (valueAsString != null))
-                                {
-                                    // This is probably an internal enumerated type that should be exported as a string.
-                                        currPropertiesForGroup.Add(CreateIdentifierPropertyFromCache(file, parameterCaption, valueAsString, PropertyValueType.SingleValue));
-                                }
-                                else
-                                {
-                                        currPropertiesForGroup.Add(CreateIntegerPropertyFromCache(file, parameterCaption, value, PropertyValueType.SingleValue));
-                                }
+                        switch (parameter.StorageType)
+                        {
+                            case StorageType.None:
                                 break;
-                            }
-                        case StorageType.Double:
-                            {
-                                double value = parameter.AsDouble();
-                                bool assigned = false;
-                                switch (parameterDefinition.ParameterType)
+                            case StorageType.Integer:
                                 {
-                                    case ParameterType.Length:
-                                        {
-                                            currPropertiesForGroup.Add(CreateLengthMeasurePropertyFromCache(file, lengthScale, parameterCaption,
-                                                value * lengthScale, PropertyValueType.SingleValue));
-                                            assigned = true;
-                                            break;
-                                        }
-                                    case ParameterType.Angle:
-                                        {
-                                                currPropertiesForGroup.Add(CreatePlaneAngleMeasurePropertyFromCache(file, parameterCaption,
-                                                value * angleScale, PropertyValueType.SingleValue));
-                                            assigned = true;
-                                            break;
-                                        }
-                                    case ParameterType.Area:
-                                        {
-                                                currPropertiesForGroup.Add(CreateAreaMeasureProperty(file, parameterCaption,
-                                                value * lengthScale * lengthScale, PropertyValueType.SingleValue));
-                                            assigned = true;
-                                            break;
-                                        }
-                                    case ParameterType.Volume:
-                                        {
-                                                currPropertiesForGroup.Add(CreateVolumeMeasureProperty(file, parameterCaption,
-                                                value * lengthScale * lengthScale * lengthScale, PropertyValueType.SingleValue));
-                                            assigned = true;
-                                            break;
-                                        }
-                                    case ParameterType.HVACAirflow:
-                                    case ParameterType.PipingFlow:
-                                        {
+                                    int value = parameter.AsInteger();
+                                    string valueAsString = parameter.AsValueString();
+
+                                    // YesNo or actual integer?
+                                    if (parameterDefinition.ParameterType == ParameterType.YesNo)
+                                    {
+                                        currPropertiesForGroup.Add(CreateBooleanPropertyFromCache(file, parameterCaption, value != 0, PropertyValueType.SingleValue));
+                                    }
+                                    else if (parameterDefinition.ParameterType == ParameterType.Invalid && (valueAsString != null))
+                                    {
+                                        // This is probably an internal enumerated type that should be exported as a string.
+                                        currPropertiesForGroup.Add(CreateIdentifierPropertyFromCache(file, parameterCaption, valueAsString, PropertyValueType.SingleValue));
+                                    }
+                                    else
+                                    {
+                                        currPropertiesForGroup.Add(CreateIntegerPropertyFromCache(file, parameterCaption, value, PropertyValueType.SingleValue));
+                                    }
+                                    break;
+                                }
+                            case StorageType.Double:
+                                {
+                                    double value = parameter.AsDouble();
+                                    IFCAnyHandle propertyHandle = null;
+                                    bool assigned = true;
+                                    switch (parameterDefinition.ParameterType)
+                                    {
+                                        case ParameterType.Length:
+                                            {
+                                            	propertyHandle = CreateLengthMeasurePropertyFromCache(file, lengthScale, parameterCaption,
+                                                	value * lengthScale, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.Angle:
+                                            {
+                                                propertyHandle = CreatePlaneAngleMeasurePropertyFromCache(file, parameterCaption,
+	                                                value * angleScale, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.Area:
+                                            {
+                                                propertyHandle = CreateAreaMeasureProperty(file, parameterCaption,
+	                                                value * lengthScale * lengthScale, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.Volume:
+                                            {
+                                                propertyHandle = CreateVolumeMeasureProperty(file, parameterCaption,
+	                                                value * lengthScale * lengthScale * lengthScale, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.HVACAirflow:
+                                        case ParameterType.PipingFlow:
+                                            {
                                             // We do not have a separate VolumetricFlow scaling; we use the volume scaling.
                                             double scaledValue = value * lengthScale * lengthScale * lengthScale;
-                                                currPropertiesForGroup.Add(CreateVolumetricFlowRateMeasureProperty(file, parameterCaption,
-                                                scaledValue, PropertyValueType.SingleValue));
-                                            assigned = true;
-                                            break;
-                                        }
-                                    case ParameterType.HVACPower:
-                                        {
+                                                propertyHandle = CreateVolumetricFlowRateMeasureProperty(file, parameterCaption,
+                                                    scaledValue, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.HVACPower:
+                                            {
                                             double scaledValue = value * (1 / 0.3048) * (1 / 0.3048);
-                                                currPropertiesForGroup.Add(CreatePowerProperty(file, parameterCaption,
-                                                scaledValue, PropertyValueType.SingleValue));
-                                            assigned = true;
+                                                propertyHandle = CreatePowerProperty(file, parameterCaption,
+                                                    scaledValue, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.ElectricalCurrent:
+                                            {
+                                                double scaledValue = value;
+                                                propertyHandle = ElectricalCurrentPropertyUtil.CreateElectricalCurrentMeasureProperty(file, parameterCaption,
+                                                    scaledValue, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.ElectricalPotential:
+                                            {
+                                                double scaledValue = value * (1 / 0.3048) * (1 / 0.3048);
+                                                propertyHandle = ElectricalVoltagePropertyUtil.CreateElectricalVoltageMeasureProperty(file, parameterCaption,
+                                                    scaledValue, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.ElectricalFrequency:
+                                            {
+                                                propertyHandle = FrequencyPropertyUtil.CreateFrequencyProperty(file, parameterCaption,
+                                                    value, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        default:
+                                            assigned = false;
                                             break;
-                                        }
-                                }
+                                    }
 
-                                if (!assigned)
-                                        currPropertiesForGroup.Add(CreateRealPropertyFromCache(file, lengthScale, parameterCaption, value,
-                                            PropertyValueType.SingleValue));
-                                break;
-                            }
-                        case StorageType.String:
-                            {
-                                string value = parameter.AsString();
+                                    if (!assigned)
+                                        propertyHandle = CreateRealPropertyFromCache(file, lengthScale, parameterCaption, value,
+                                            PropertyValueType.SingleValue);
+
+                                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propertyHandle))
+                                        currPropertiesForGroup.Add(propertyHandle);
+                                    break;
+                                }
+                            case StorageType.String:
+                                {
+                                    string value = parameter.AsString();
 
                                     currPropertiesForGroup.Add(CreateTextPropertyFromCache(file, parameterCaption, value, PropertyValueType.SingleValue));
-                                break;
-                            }
-                        case StorageType.ElementId:
-                            {
-                                ElementId value = parameter.AsElementId();
-                                if (value == ElementId.InvalidElementId)
-                                    continue;
-
-                                Element paramElement = element.Document.GetElement(value);
-                                string valueString = (paramElement != null) ? paramElement.Name : null;
-                                if (!string.IsNullOrEmpty(valueString))
-                                {
-                                    ElementType paramElementType = paramElement is ElementType ? paramElement as ElementType :
-                                        element.Document.GetElement(paramElement.GetTypeId()) as ElementType;
-                                    string paramElementTypeName = (paramElementType != null) ? ExporterIFCUtils.GetFamilyName(paramElementType) : null;
-                                    if (!string.IsNullOrEmpty(paramElementTypeName))
-                                        valueString = paramElementTypeName + ": " + valueString;
+                                    break;
                                 }
-                                else
-                                    valueString = value.ToString();
+                            case StorageType.ElementId:
+                                {
+                                    ElementId value = parameter.AsElementId();
+                                    if (value == ElementId.InvalidElementId)
+                                        continue;
+
+                                    Element paramElement = element.Document.GetElement(value);
+                                    string valueString = (paramElement != null) ? paramElement.Name : null;
+                                    if (!string.IsNullOrEmpty(valueString))
+                                    {
+                                        ElementType paramElementType = paramElement is ElementType ? paramElement as ElementType :
+                                            element.Document.GetElement(paramElement.GetTypeId()) as ElementType;
+                                        string paramElementTypeName = (paramElementType != null) ? ExporterIFCUtils.GetFamilyName(paramElementType) : null;
+                                        if (!string.IsNullOrEmpty(paramElementTypeName))
+                                            valueString = paramElementTypeName + ": " + valueString;
+                                    }
+                                    else
+                                        valueString = value.ToString();
 
                                     currPropertiesForGroup.Add(CreateLabelPropertyFromCache(file, parameterCaption, valueString, PropertyValueType.SingleValue, true, null));
-                                break;
-                            }
+                                    break;
+                                }
+                        }
                     }
                 }
-            }
             }
 
             for (int which = whichStart; which < 2; which++)

@@ -567,6 +567,34 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Validates the values to be set to IfcSystem.
+        /// </summary>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="objectType">The object type.</param>
+        private static void ValidateSystem(string guid, IFCAnyHandle ownerHistory, string name, string description, string objectType)
+        {
+            ValidateGroup(guid, ownerHistory, name, description, objectType);
+        }
+
+        /// <summary>
+        /// Sets attributes to IfcSystem.
+        /// </summary>
+        /// <param name="system">The IfcSystem.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="objectType">The object type.</param>
+        private static void SetSystem(IFCAnyHandle system,
+            string guid, IFCAnyHandle ownerHistory, string name, string description, string objectType)
+        {
+            SetGroup(system, guid, ownerHistory, name, description, objectType);
+        }
+        
+        /// <summary>
         /// Validates the values to be set to IfcElement.
         /// </summary>
         /// <param name="guid">The GUID to use to label the wall.</param>
@@ -5503,6 +5531,27 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandle group = CreateInstance(file, IFCEntityType.IfcGroup);
             SetGroup(group, guid, ownerHistory, name, description, objectType);
             return group;
+        }
+
+        /// <summary>
+        /// Creates an IfcElectricalCircuit, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="objectType">The object type.</param>
+        /// <returns>The handle.</returns>
+        /// <remarks>NOTE: this is deprecated in Coordination View 2.0, and missing from IFC4, so use sparingly.</remarks>
+        public static IFCAnyHandle CreateElectricalCircuit(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
+            string description, string objectType)
+        {
+            ValidateSystem(guid, ownerHistory, name, description, objectType);
+
+            IFCAnyHandle electricalCircuit = CreateInstance(file, IFCEntityType.IfcElectricalCircuit);
+            SetSystem(electricalCircuit, guid, ownerHistory, name, description, objectType);
+            return electricalCircuit;
         }
         
         /// <summary>

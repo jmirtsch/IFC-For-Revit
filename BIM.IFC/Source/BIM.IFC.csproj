@@ -52,12 +52,16 @@
     <Compile Include="Exporter\FootingExporter.cs" />
     <Compile Include="Exporter\GenericMEPExporter.cs" />
     <Compile Include="Exporter\GridExporter.cs" />
+    <Compile Include="Exporter\GroupExporter.cs" />
+    <Compile Include="Exporter\GroupInfo.cs" />
     <Compile Include="Exporter\HandleAndData.cs" />
     <Compile Include="Exporter\HostedSweepExporter.cs" />
     <Compile Include="Exporter\HostObjectExporter.cs" />
+    <Compile Include="Exporter\InsulationExporter.cs" />
     <Compile Include="Exporter\MullionExporter.cs" />
     <Compile Include="Exporter\PartExporter.cs" />
     <Compile Include="Exporter\PileExporter.cs" />
+    <Compile Include="Exporter\PipeInsulationExporter.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamLoadBearingCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\DoorAreaCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\WindowAreaCalculator.cs" />
@@ -92,6 +96,10 @@
     <Compile Include="Exporter\PropertySet\Calculators\SpecificZoneCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\StairRiserTreadsCalculator.cs" />
     <Compile Include="Exporter\PropertySet\ClassificationUtil.cs" />
+    <Compile Include="Exporter\PropertySet\ElectricalCurrentPropertyUtil.cs" />
+    <Compile Include="Exporter\PropertySet\ElectricalVoltagePropertyUtil.cs" />
+    <Compile Include="Exporter\PropertySet\FrequencyPropertyUtil.cs" />
+    <Compile Include="Exporter\PropertySet\PositivePlaneAnglePropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDescription.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetEntry.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetEntryUtil.cs" />
@@ -164,6 +172,7 @@
     <Compile Include="Utility\FamilyExporterUtil.cs" />
     <Compile Include="Utility\FamilyTypeInfo.cs" />
     <Compile Include="Utility\GeometryUtil.cs" />
+    <Compile Include="Utility\GroupCache.cs" />
     <Compile Include="Utility\GroupElementGeometryCache.cs" />
     <Compile Include="Utility\GUIDOptions.cs" />
     <Compile Include="Utility\GUIDUtil.cs" />

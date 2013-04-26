@@ -597,12 +597,17 @@ namespace BIM.IFC.Exporter
         static double GetHeight(SpatialElement spatialElement, double scale, ElementId levelId, IFCLevelInfo levelInfo)
         {
             Document document = spatialElement.Document;
+            bool isArea = spatialElement is Area;
 
-            ElementId topLevelId;
-            ParameterUtil.GetElementIdValueFromElement(spatialElement, BuiltInParameter.ROOM_UPPER_LEVEL, out topLevelId);
+            ElementId topLevelId = ElementId.InvalidElementId;
+            double topOffset = 0.0;
 
-            double topOffset;
-            ParameterUtil.GetDoubleValueFromElement(spatialElement, BuiltInParameter.ROOM_UPPER_OFFSET, out topOffset);
+            // These values are internally set for areas, but are invalid.  Ignore them and just use the level height.
+            if (!isArea)
+            {
+                ParameterUtil.GetElementIdValueFromElement(spatialElement, BuiltInParameter.ROOM_UPPER_LEVEL, out topLevelId);
+                ParameterUtil.GetDoubleValueFromElement(spatialElement, BuiltInParameter.ROOM_UPPER_OFFSET, out topOffset);
+            }
 
             double bottomOffset;
             ParameterUtil.GetDoubleValueFromElement(spatialElement, BuiltInParameter.ROOM_LOWER_OFFSET, out bottomOffset);

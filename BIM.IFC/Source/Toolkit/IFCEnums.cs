@@ -2528,6 +2528,20 @@ namespace BIM.IFC.Toolkit
     }
 
     /// <summary>
+    /// Defines the PSetElectricalDeviceCommon::InsulationStandardClass possible values.
+    /// </summary>
+    public enum PSetElectricalDeviceCommon_InsulationStandardClass
+    {
+        Class0Appliance,
+        Class0IAppliance,
+        ClassIAppliance,
+        ClassIIAppliance,
+        ClassIIIAppliance,
+        NotKnown,
+        Unset
+    }
+
+    /// <summary>
     /// Defines the PsetSanitaryTerminalTypeToiletPan::ToiletType possible values.
     /// </summary>
     public enum PsetSanitaryTerminalTypeToiletPan_ToiletType
@@ -2566,6 +2580,70 @@ namespace BIM.IFC.Toolkit
         CounterTop,
         WallHung,
         Other,
+        NotKnown,
+        Unset
+    }
+
+    // <summary>
+    /// Defines the PSetElectricalDeviceCommon::InsulationStandardClass possible values.
+    /// </summary>
+    public enum PsetSwitchingDeviceTypeCommon_SwitchFunction
+    {
+        OnOffSwitch,
+        IntermediateSwitch,
+        DoubleThrowSwitch,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    // <summary>
+    /// Defines the PsetSwitchingDeviceTypeToggleSwitch::ToggleSwitchType possible values.
+    /// </summary>
+    public enum PsetSwitchingDeviceTypeToggleSwitch_ToggleSwitchType
+    {
+        BreakGlass,
+        Changeover,
+        Dimmer,
+        KeyOperated,
+        ManualPull,
+        PushButton,
+        Pullcord,
+        Rocker,
+        Selector,
+        Twist,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    // <summary>
+    /// Defines the PsetSwitchingDeviceTypeToggleSwitch::SwitchUsage possible values.
+    /// </summary>
+    public enum PsetSwitchingDeviceTypeToggleSwitch_SwitchUsage
+    {
+        Emergency,
+        Guard,
+        Limit,
+        Start,
+        Stop,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    // <summary>
+    /// Defines the PsetSwitchingDeviceTypeToggleSwitch::SwitchActivation possible values.
+    /// </summary>
+    public enum PsetSwitchingDeviceTypeToggleSwitch_SwitchActivation
+    {
+        Actuator,
+        Foot,
+        Hand,
+        Proximity,
+        Sound,
+        TwoHand,
+        Wire,
         NotKnown,
         Unset
     }

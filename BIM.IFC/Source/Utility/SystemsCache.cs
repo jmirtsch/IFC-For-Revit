@@ -35,7 +35,8 @@ namespace BIM.IFC.Utility
     {
         private IDictionary<ElementId, ICollection<IFCAnyHandle>> m_BuiltInSystemsCache;
         private IDictionary<string, ICollection<IFCAnyHandle>> m_CustomSystemsCache;
-
+        private IDictionary<ElementId, ISet<IFCAnyHandle>> m_ElectricalSystemsCache;
+        
         /// <summary>
         /// Creates a new SystemsCache.
         /// </summary>
@@ -43,6 +44,7 @@ namespace BIM.IFC.Utility
         {
             m_BuiltInSystemsCache = new Dictionary<ElementId, ICollection<IFCAnyHandle>>();
             m_CustomSystemsCache = new Dictionary<string, ICollection<IFCAnyHandle>>();
+            m_ElectricalSystemsCache = new Dictionary<ElementId, ISet<IFCAnyHandle>>();
         }
 
         /// <summary>
@@ -53,6 +55,14 @@ namespace BIM.IFC.Utility
             get { return m_BuiltInSystemsCache; }
         }
 
+        /// <summary>
+        /// Get the list of Electrical systems.  The members will be determined at the end of export.
+        /// </summary>
+        public IDictionary<ElementId, ISet<IFCAnyHandle>> ElectricalSystemsCache
+        {
+            get { return m_ElectricalSystemsCache; }
+        }
+        
         /// <summary>
         /// Get the list of custom systems.
         /// </summary>
@@ -127,6 +137,32 @@ namespace BIM.IFC.Utility
             if (system == null)
                 throw new InvalidOperationException("Error getting system.");
             system.Add(handle);
+        }
+
+        /// <summary>
+        /// Adds an electrical system by Element id, if it doesn't already exist.
+        /// </summary>
+        /// <param name="systemId">The system element Id.</param>
+        public void AddElectricalSystem(ElementId systemId)
+        {
+            if (!ElectricalSystemsCache.ContainsKey(systemId))
+            {
+                KeyValuePair<ElementId, ISet<IFCAnyHandle>> entry = new KeyValuePair<ElementId, ISet<IFCAnyHandle>>(systemId, new HashSet<IFCAnyHandle>());
+                ElectricalSystemsCache.Add(entry);
+            }
+        }
+
+        /// <summary>
+        /// Adds a handle to an existing electrical system.
+        /// </summary>
+        /// <param name="systemId">The system element Id.</param>
+        /// <param name="handle">The entity handle.</param>
+        public void AddHandleToElectricalSystem(ElementId systemId, IFCAnyHandle handle)
+        {
+            if (!ElectricalSystemsCache.ContainsKey(systemId))
+                throw new InvalidOperationException("Error getting system.");
+
+            ElectricalSystemsCache[systemId].Add(handle);
         }
     }
 }
