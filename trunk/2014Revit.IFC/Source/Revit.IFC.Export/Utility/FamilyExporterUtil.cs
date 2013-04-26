@@ -303,9 +303,9 @@ namespace Revit.IFC.Export.Exporter
 
                         double nominalDiameterVal, nominalLengthVal;
                         if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalDiameter", out nominalDiameterVal))
-                            nominalDiameter = nominalDiameterVal;
+                            nominalDiameter = UnitUtil.ScaleLength(nominalDiameterVal);
                         if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalLength", out nominalLengthVal))
-                            nominalLength = nominalLengthVal;
+                            nominalLength = UnitUtil.ScaleLength(nominalLengthVal);
 
                         instanceHandle = IFCInstanceExporter.CreateMechanicalFastener(file, instanceGUID, ownerHistory,
                            instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag,
@@ -438,8 +438,6 @@ namespace Revit.IFC.Export.Exporter
             
             IFCAnyHandle typeHandle = ExportGenericTypeBase(file, type, ifcEnumType, guid, ownerHistory, name, description, applicableOccurrence,
                null, representationMapList, elemIdToUse, instanceElementType, instance, symbol);
-            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(typeHandle))
-                Exporter.CreateElementTypeProperties(exporterIFC, symbol, propertySets, typeHandle);
             
             return typeHandle;
 

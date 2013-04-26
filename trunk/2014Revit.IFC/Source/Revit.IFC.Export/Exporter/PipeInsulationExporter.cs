@@ -21,51 +21,32 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Revit.IFC.Export.Utility;
+using Revit.IFC.Export.Toolkit;
+using Revit.IFC.Export.Exporter.PropertySet;
+using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter
 {
     /// <summary>
-    /// Contains information about IFC property sets and IFC type elements.
+    /// Provides methods to export a Revit element as IfcCovering of type INSULATION.
     /// </summary>
-    public class TypePropertyInfo
+    class PipeInsulationExporter : InsulationExporter
     {
-        HashSet<IFCAnyHandle> m_PropertySets;
-        HashSet<IFCAnyHandle> m_Elements;
-
         /// <summary>
-        /// Default constructor.
+        /// Exports an element as a covering of type insulation.
         /// </summary>
-        public TypePropertyInfo()
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        /// <returns>True if exported successfully, false otherwise.</returns>
+        public static bool ExportPipeInsulation(ExporterIFC exporterIFC, Element element,
+            GeometryElement geometryElement, ProductWrapper productWrapper)
         {
-
-        }
-
-        /// <summary>
-        /// Constructs a TypePropertyInfo objects.
-        /// </summary>
-        /// <param name="propertySets">The property sets.</param>
-        /// <param name="elements">The elements.</param>
-        public TypePropertyInfo(ICollection<IFCAnyHandle> propertySets, ICollection<IFCAnyHandle> elements)
-        {
-            m_PropertySets = new HashSet<IFCAnyHandle>(propertySets);
-            m_Elements = new HashSet<IFCAnyHandle>(elements);
-        }
-
-        /// <summary>
-        /// The property sets.
-        /// </summary>
-        public HashSet<IFCAnyHandle> PropertySets
-        {
-            get { return m_PropertySets; }
-        }
-
-        /// <summary>
-        /// The IFC elements.
-        /// </summary>
-        public HashSet<IFCAnyHandle> Elements
-        {
-            get { return m_Elements; }
+            return ExportInsulation(exporterIFC, element, geometryElement, productWrapper);
         }
     }
 }

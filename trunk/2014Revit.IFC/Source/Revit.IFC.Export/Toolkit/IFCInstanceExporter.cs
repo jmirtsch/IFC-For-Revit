@@ -391,7 +391,7 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="description">The description.</param>
         /// <param name="relatedObjects">The objects to be related to a type.</param>
         private static void SetRelDefines(IFCAnyHandle relDefines,
-            string guid, IFCAnyHandle ownerHistory, string name, string description, ICollection<IFCAnyHandle> relatedObjects)
+            string guid, IFCAnyHandle ownerHistory, string name, string description, ISet<IFCAnyHandle> relatedObjects)
         {
             IFCAnyHandleUtil.SetAttribute(relDefines, "RelatedObjects", relatedObjects);
             SetRelationship(relDefines, guid, ownerHistory, name, description);
@@ -576,6 +576,34 @@ namespace Revit.IFC.Export.Toolkit
         }
 
         /// <summary>
+        /// Validates the values to be set to IfcSystem.
+        /// </summary>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="objectType">The object type.</param>
+        private static void ValidateSystem(string guid, IFCAnyHandle ownerHistory, string name, string description, string objectType)
+        {
+            ValidateGroup(guid, ownerHistory, name, description, objectType);
+        }
+
+        /// <summary>
+        /// Sets attributes to IfcSystem.
+        /// </summary>
+        /// <param name="system">The IfcSystem.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="objectType">The object type.</param>
+        private static void SetSystem(IFCAnyHandle system,
+            string guid, IFCAnyHandle ownerHistory, string name, string description, string objectType)
+        {
+            SetGroup(system, guid, ownerHistory, name, description, objectType);
+        }
+        
+        /// <summary>
         /// Validates the values to be set to IfcElement.
         /// </summary>
         /// <param name="guid">The GUID to use to label the wall.</param>
@@ -730,7 +758,7 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="relatedObjects">Related objects, which are assigned to a single object.</param>
         /// <param name="relatedObjectsType">Particular type of the assignment relationship.</param>
         private static void SetRelAssigns(IFCAnyHandle relAssigns, string guid, IFCAnyHandle ownerHistory,
-            string name, string description, ICollection<IFCAnyHandle> relatedObjects, IFCObjectType? relatedObjectsType)
+            string name, string description, ISet<IFCAnyHandle> relatedObjects, IFCObjectType? relatedObjectsType)
         {
             IFCAnyHandleUtil.SetAttribute(relAssigns, "RelatedObjects", relatedObjects);
             IFCAnyHandleUtil.SetAttribute(relAssigns, "RelatedObjectsType", relatedObjectsType);
@@ -1078,7 +1106,7 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="identifier">The identifier.</param>
         /// <param name="type">The representation type.</param>
         /// <param name="items">The items that belong to the shape representation.</param>
-        private static void SetRepresentation(IFCAnyHandle representation, IFCAnyHandle contextOfItems, string identifier, string type, ICollection<IFCAnyHandle> items)
+        private static void SetRepresentation(IFCAnyHandle representation, IFCAnyHandle contextOfItems, string identifier, string type, ISet<IFCAnyHandle> items)
         {
             IFCAnyHandleUtil.SetAttribute(representation, "ContextOfItems", contextOfItems);
             IFCAnyHandleUtil.SetAttribute(representation, "RepresentationIdentifier", identifier);
@@ -1119,7 +1147,7 @@ namespace Revit.IFC.Export.Toolkit
                 throw new ArgumentNullException("assignedItems");
         }
 
-        private static void SetPresentationLayerAssigment(IFCAnyHandle presentationLayerAssigment, string name, string description, ICollection<IFCAnyHandle> assignedItems, string identifier)
+        private static void SetPresentationLayerAssigment(IFCAnyHandle presentationLayerAssigment, string name, string description, ISet<IFCAnyHandle> assignedItems, string identifier)
         {
             IFCAnyHandleUtil.SetAttribute(presentationLayerAssigment, "Name", name);
             IFCAnyHandleUtil.SetAttribute(presentationLayerAssigment, "Description", description);
@@ -2293,7 +2321,7 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="relatingGroup">Reference to group that finally contains all assigned group members.</param>
         /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateRelAssignsToGroup(IFCFile file, string guid, IFCAnyHandle ownerHistory,
-            string name, string description, ICollection<IFCAnyHandle> relatedObjects, IFCObjectType? relatedObjectsType, IFCAnyHandle relatingGroup)
+            string name, string description, ISet<IFCAnyHandle> relatedObjects, IFCObjectType? relatedObjectsType, IFCAnyHandle relatingGroup)
         {
             IFCAnyHandleUtil.ValidateSubTypeOf(relatingGroup, false, IFCEntityType.IfcGroup);
 
@@ -2319,7 +2347,7 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="actingRole">Role of the actor played within the context of the assignment to the object(s).</param>
         /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateRelAssignsToActor(IFCFile file, string guid, IFCAnyHandle ownerHistory,
-            string name, string description, ICollection<IFCAnyHandle> relatedObjects, IFCObjectType? relatedObjectsType, IFCAnyHandle relatingActor, IFCAnyHandle actingRole)
+            string name, string description, ISet<IFCAnyHandle> relatedObjects, IFCObjectType? relatedObjectsType, IFCAnyHandle relatingActor, IFCAnyHandle actingRole)
         {
             IFCAnyHandleUtil.ValidateSubTypeOf(relatingActor, false, IFCEntityType.IfcActor);
             IFCAnyHandleUtil.ValidateSubTypeOf(actingRole, true, IFCEntityType.IfcActorRole);
@@ -2393,7 +2421,7 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="relatingPropertyDefinition">The relating proprety definition.</param>
         /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateRelDefinesByProperties(IFCFile file, string guid, IFCAnyHandle ownerHistory,
-            string name, string description, ICollection<IFCAnyHandle> relatedObjects, IFCAnyHandle relatingPropertyDefinition)
+            string name, string description, ISet<IFCAnyHandle> relatedObjects, IFCAnyHandle relatingPropertyDefinition)
         {
             IFCAnyHandleUtil.ValidateSubTypeOf(relatingPropertyDefinition, false, IFCEntityType.IfcPropertySetDefinition);
             ValidateRelDefines(guid, ownerHistory, name, description, relatedObjects);
@@ -2764,7 +2792,7 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="unitType">The derived unit type.</param>
         /// <param name="userDefinedType">The word, or group of words, by which the derived unit is referred to.</param>
         /// <returns>The handle.</returns>
-        public static IFCAnyHandle CreateDerivedUnit(IFCFile file, ICollection<IFCAnyHandle> elements, IFCDerivedUnitEnum unitType, 
+        public static IFCAnyHandle CreateDerivedUnit(IFCFile file, ISet<IFCAnyHandle> elements, IFCDerivedUnitEnum unitType, 
             string userDefinedType)
         {
             IFCAnyHandleUtil.ValidateSubTypeOf(elements, false, IFCEntityType.IfcDerivedUnitElement);
@@ -5513,6 +5541,27 @@ namespace Revit.IFC.Export.Toolkit
             SetGroup(group, guid, ownerHistory, name, description, objectType);
             return group;
         }
+
+        /// <summary>
+        /// Creates an IfcElectricalCircuit, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="objectType">The object type.</param>
+        /// <returns>The handle.</returns>
+        /// <remarks>NOTE: this is deprecated in Coordination View 2.0, and missing from IFC4, so use sparingly.</remarks>
+        public static IFCAnyHandle CreateElectricalCircuit(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
+            string description, string objectType)
+        {
+            ValidateSystem(guid, ownerHistory, name, description, objectType);
+
+            IFCAnyHandle electricalCircuit = CreateInstance(file, IFCEntityType.IfcElectricalCircuit);
+            SetSystem(electricalCircuit, guid, ownerHistory, name, description, objectType);
+            return electricalCircuit;
+        }
         
         /// <summary>
         /// Creates an IfcSystem, and assigns it to the file.
@@ -6204,7 +6253,7 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="styles">A set of presentation styles that are assigned to styled items.</param>
         /// <returns>The handle.</returns>
         public static IFCAnyHandle CreatePresentationLayerAssignment(IFCFile file, string name, string description,
-            ICollection<IFCAnyHandle> assignedItems, string identifier)
+            ISet<IFCAnyHandle> assignedItems, string identifier)
         {
             ValidatePresentationLayerAssignment(name, assignedItems);
 
@@ -6219,7 +6268,7 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="file">The file.</param>
         /// <param name="styles">A set of presentation styles that are assigned to styled items.</param>
         /// <returns>The handle.</returns>
-        public static IFCAnyHandle CreatePresentationStyleAssignment(IFCFile file, ICollection<IFCAnyHandle> styles)
+        public static IFCAnyHandle CreatePresentationStyleAssignment(IFCFile file, ISet<IFCAnyHandle> styles)
         {
             IFCAnyHandleUtil.ValidateSubTypeOf(styles, false, IFCEntityType.IfcCurveStyle, IFCEntityType.IfcSymbolStyle,
                 IFCEntityType.IfcFillAreaStyle, IFCEntityType.IfcTextStyle, IFCEntityType.IfcSurfaceStyle);
@@ -6326,7 +6375,7 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="relatedBuildings">The related spatial structure handles.</param>
         /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateRelServicesBuildings(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name, string description,
-            IFCAnyHandle relatingSystem, ICollection<IFCAnyHandle> relatedBuildings)
+            IFCAnyHandle relatingSystem, ISet<IFCAnyHandle> relatedBuildings)
         {
             ValidateRelConnects(guid, ownerHistory, name, description);
             IFCAnyHandleUtil.ValidateSubTypeOf(relatingSystem, false, IFCEntityType.IfcSystem);
@@ -6457,7 +6506,7 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="items">The items that belong to the shape representation.</param>
         /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateShapeRepresentation(IFCFile file,
-            IFCAnyHandle contextOfItems, string identifier, string type, ICollection<IFCAnyHandle> items)
+            IFCAnyHandle contextOfItems, string identifier, string type, ISet<IFCAnyHandle> items)
         {
             ValidateRepresentation(contextOfItems, identifier, type, items);
 
@@ -7234,7 +7283,7 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="side">The side of the surface being used.</param>
         /// <param name="styles">The styles associated with the surface.</param>
         /// <returns>The handle.</returns>
-        public static IFCAnyHandle CreateSurfaceStyle(IFCFile file, string name, IFCSurfaceSide side, ICollection<IFCAnyHandle> styles)
+        public static IFCAnyHandle CreateSurfaceStyle(IFCFile file, string name, IFCSurfaceSide side, ISet<IFCAnyHandle> styles)
         {
             IFCAnyHandleUtil.ValidateSubTypeOf(styles, false, IFCEntityType.IfcSurfaceStyleShading, IFCEntityType.IfcSurfaceStyleLighting,
                 IFCEntityType.IfcSurfaceStyleRefraction, IFCEntityType.IfcSurfaceStyleWithTextures, IFCEntityType.IfcExternallyDefinedSurfaceStyle);

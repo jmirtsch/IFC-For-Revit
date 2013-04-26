@@ -46,7 +46,7 @@ namespace Revit.IFC.Export.Exporter
         public static void Export(ExporterIFC exporterIFC,
           Element element, Autodesk.Revit.DB.View filterView, ProductWrapper productWrapper)
         {
-            IList<IFCAnyHandle> createdRebars = null;
+            ISet<IFCAnyHandle> createdRebars = null;
 
             if (element is Rebar)
             {
@@ -132,11 +132,11 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="element">The element to be exported.</param>
         /// <param name="productWrapper">The ProductWrapper.</param>
         /// <returns>The list of IfcReinforcingBar handles created.</returns>
-        public static IList<IFCAnyHandle> ExportRebar(ExporterIFC exporterIFC,
+        public static ISet<IFCAnyHandle> ExportRebar(ExporterIFC exporterIFC,
            Element element, Autodesk.Revit.DB.View filterView, ProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
-            List<IFCAnyHandle> createdRebars = new List<IFCAnyHandle>();
+            HashSet<IFCAnyHandle> createdRebars = new HashSet<IFCAnyHandle>();
 
             using (IFCTransaction transaction = new IFCTransaction(file))
             {
@@ -249,9 +249,9 @@ namespace Revit.IFC.Export.Exporter
                         ExporterCacheManager.HandleToElementCache.Register(elemHnd, element.Id);
 
                         CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, elemHnd, materialId);
-
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }
+
+                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                 }
                 transaction.Commit();
             }

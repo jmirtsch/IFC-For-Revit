@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2013  Autodesk, Inc.
+// Copyright (C) 2012  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -32,52 +32,53 @@ using Revit.IFC.Export.Exporter.PropertySet;
 namespace Revit.IFC.Export.Exporter
 {
     /// <summary>
-    /// Provides methods to export an AreaScheme element as IfcGroup.
+    /// Provides methods to export a Group element as IfcGroup.
     /// </summary>
-    class AreaSchemeExporter
+    class GroupExporter
     {
         /// <summary>
-        /// Exports an element as a group.
+        /// Exports a Group as an IfcGroup.
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The element.</param>
         /// <param name="productWrapper">The ProductWrapper.</param>
-        public static void ExportAreaScheme(ExporterIFC exporterIFC, AreaScheme element,
+        /// <returns>True if exported successfully, false otherwise.</returns>
+        public static bool ExportGroupElement(ExporterIFC exporterIFC, Group element,
             ProductWrapper productWrapper)
         {
             if (element == null)
-                return;
-
-            HashSet<IFCAnyHandle> areaHandles = null;
-            if (!ExporterCacheManager.AreaSchemeCache.TryGetValue(element.Id, out areaHandles))
-                return;
-
-            if (areaHandles == null || areaHandles.Count == 0)
-                return;
+                return false;
 
             IFCFile file = exporterIFC.GetFile();
 
             using (IFCTransaction tr = new IFCTransaction(file))
             {
+                IFCAnyHandle groupHnd = null;
+
                 string guid = GUIDUtil.CreateGUID(element);
                 IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                string name = NamingUtil.GetNameOverride(element, element.Name);
+                string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                 string description = NamingUtil.GetDescriptionOverride(element, null);
                 string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
 
-                string elementTag = NamingUtil.CreateIFCElementId(element);
+                string ifcEnumType;
+                IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
+                if (exportAs == IFCExportType.ExportGroup)
+                {
+                    groupHnd = IFCInstanceExporter.CreateGroup(file, guid, ownerHistory, name, description, objectType);
+                }
 
-                IFCAnyHandle areaScheme = IFCInstanceExporter.CreateGroup(file, guid,
-                    ownerHistory, name, description, objectType);
+                if (groupHnd == null)
+                    return false;
 
-                productWrapper.AddElement(areaScheme);
-
-                IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(), ownerHistory,
-                    null, null, areaHandles, null, areaScheme);
+                productWrapper.AddElement(groupHnd);
 
                 PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
+
+                ExporterCacheManager.GroupCache.RegisterGroup(element.Id, groupHnd);
+
                 tr.Commit();
-                return;
+                return true;
             }
         }
     }

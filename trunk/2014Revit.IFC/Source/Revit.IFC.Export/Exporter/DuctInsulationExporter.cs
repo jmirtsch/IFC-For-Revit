@@ -33,7 +33,7 @@ namespace Revit.IFC.Export.Exporter
     /// <summary>
     /// Provides methods to export a Revit element as IfcCovering of type INSULATION.
     /// </summary>
-    class DuctInsulationExporter
+    class DuctInsulationExporter : InsulationExporter
     {
         /// <summary>
         /// Exports an element as a covering of type insulation.
@@ -46,52 +46,7 @@ namespace Revit.IFC.Export.Exporter
         public static bool ExportDuctInsulation(ExporterIFC exporterIFC, Element element,
             GeometryElement geometryElement, ProductWrapper productWrapper)
         {
-            if (element == null || geometryElement == null)
-                return false;
-
-            IFCFile file = exporterIFC.GetFile();
-
-            using (IFCTransaction tr = new IFCTransaction(file))
-            {
-                using (PlacementSetter placementSetter = PlacementSetter.Create(exporterIFC, element))
-                {
-                    using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
-                    {
-                        ecData.SetLocalPlacement(placementSetter.LocalPlacement);
-
-                        ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
-
-                        BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                        IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, element,
-                            categoryId, geometryElement, bodyExporterOptions, null, ecData);
-
-                        if (IFCAnyHandleUtil.IsNullOrHasNoValue(representation))
-                        {
-                            ecData.ClearOpenings();
-                            return false;
-                        }
-
-                        string guid = GUIDUtil.CreateGUID(element);
-                        IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                        string revitObjectType = exporterIFC.GetFamilyName();
-                        string name = NamingUtil.GetNameOverride(element, revitObjectType);
-                        string description = NamingUtil.GetDescriptionOverride(element, null);
-                        string objectType = NamingUtil.GetObjectTypeOverride(element, revitObjectType);
-
-                        IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
-                        string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
-
-                        IFCAnyHandle ductInsulation = IFCInstanceExporter.CreateCovering(file, guid,
-                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag, IFCCoveringType.Insulation);
-
-                        productWrapper.AddElement(ductInsulation, placementSetter.LevelInfo, ecData, true);
-
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
-                    }
-                }
-                tr.Commit();
-                return true;
-            }
+            return ExportInsulation(exporterIFC, element, geometryElement, productWrapper);
         }
     }
 }

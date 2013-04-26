@@ -87,17 +87,17 @@ namespace Revit.IFC.Export.Exporter
                         return;
                     }
 
-                string elemGUID = GUIDUtil.CreateGUID(mullion);
-                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                string elemObjectType = NamingUtil.CreateIFCObjectName(exporterIFC, mullion);
-                string name = NamingUtil.GetNameOverride(mullion, elemObjectType);
-                string description = NamingUtil.GetDescriptionOverride(mullion, null);
-                string objectType = NamingUtil.GetObjectTypeOverride(mullion, elemObjectType);
-                string elemTag = NamingUtil.GetTagOverride(mullion, NamingUtil.CreateIFCElementId(mullion));
+                    string elemGUID = GUIDUtil.CreateGUID(mullion);
+                    IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                    string elemObjectType = NamingUtil.CreateIFCObjectName(exporterIFC, mullion);
+                    string name = NamingUtil.GetNameOverride(mullion, elemObjectType);
+                    string description = NamingUtil.GetDescriptionOverride(mullion, null);
+                    string objectType = NamingUtil.GetObjectTypeOverride(mullion, elemObjectType);
+                    string elemTag = NamingUtil.GetTagOverride(mullion, NamingUtil.CreateIFCElementId(mullion));
 
-                IFCAnyHandle mullionHnd = IFCInstanceExporter.CreateMember(file, elemGUID, ownerHistory, name, description, objectType,
-                   mullionLocalPlacement, repHnd, elemTag);
-                productWrapper.AddElement(mullionHnd, mullionSetter, extraParams, false);
+                    IFCAnyHandle mullionHnd = IFCInstanceExporter.CreateMember(file, elemGUID, ownerHistory, name, description, objectType,
+                       mullionLocalPlacement, repHnd, elemTag);
+                    productWrapper.AddElement(mullionHnd, mullionSetter, extraParams, false);
 
                     ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, mullion);
                     CategoryUtil.CreateMaterialAssociation(mullion.Document, exporterIFC, mullionHnd, matId);

@@ -50,12 +50,58 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         public static void Export(ExporterIFC exporterIFC)
         {
-            foreach (ConnectorSet c in ExporterCacheManager.MEPCache.MEPConnectors)
+            foreach (ConnectorSet connectorSet in ExporterCacheManager.MEPCache.MEPConnectors)
             {
-                Export(exporterIFC, c);
+                Export(exporterIFC, connectorSet);
             }
             // clear local cache 
-            ConnectorExporter.clearConnections();
+            ConnectorExporter.ClearConnections();
+        }
+
+        // If originalConnector != null, use that connector for AddConnection routine, instead of connector.
+        private static void ProcessConnections(ExporterIFC exporterIFC, Connector connector, Connector originalConnector)
+        {
+            bool isElectricalDomain = (connector.Domain == Domain.DomainElectrical);
+
+            if (connector.ConnectorType == ConnectorType.End ||
+                connector.ConnectorType == ConnectorType.Curve ||
+                connector.ConnectorType == ConnectorType.Physical)
+            {
+
+                if (connector.IsConnected)
+                {
+                    ConnectorSet connectorSet = connector.AllRefs;
+                    ConnectorSetIterator csi = connectorSet.ForwardIterator();
+
+                    while (csi.MoveNext())
+                    {
+                        Connector connected = csi.Current as Connector;
+                        if (connected != null && connected.Owner != null && connector.Owner != null)
+                        {
+                            if (connected.Owner.Id != connector.Owner.Id)
+                            {
+                                // look for physical connections
+                                if (connected.ConnectorType == ConnectorType.End ||
+                                    connected.ConnectorType == ConnectorType.Curve ||
+                                    connected.ConnectorType == ConnectorType.Physical)
+                                {
+                                    Connector originalConnectorToUse = (originalConnector != null) ? originalConnector : connector;
+                                    FlowDirectionType flowDirection = isElectricalDomain ? FlowDirectionType.Bidirectional : connector.Direction;
+                                    if (flowDirection == FlowDirectionType.Out)
+                                    {
+                                        AddConnection(exporterIFC, connected, originalConnectorToUse, false, isElectricalDomain);
+                                    }
+                                    else
+                                    {
+                                        bool isBiDirectional = (flowDirection == FlowDirectionType.Bidirectional);
+                                        AddConnection(exporterIFC, originalConnectorToUse, connected, isBiDirectional, isElectricalDomain);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -74,49 +120,7 @@ namespace Revit.IFC.Export.Exporter
                     try
                     {
                         if (connector != null)
-                        {
-                            if (connector.Domain == Domain.DomainHvac || connector.Domain == Domain.DomainPiping)
-                            {
-                                if (connector.ConnectorType == ConnectorType.End ||
-                                    connector.ConnectorType == ConnectorType.Curve ||
-                                    connector.ConnectorType == ConnectorType.Physical)
-                                {
-
-                                    if (connector.IsConnected)
-                                    {
-                                        ConnectorSet connectorSet = connector.AllRefs;
-                                        ConnectorSetIterator csi = connectorSet.ForwardIterator();
-
-                                        while (csi.MoveNext())
-                                        {
-                                            Connector connected = csi.Current as Connector;
-                                            if (connected != null && connected.Owner != null && connector.Owner != null)
-                                            {
-                                                if (connected.Owner.Id != connector.Owner.Id)
-                                                {
-                                                    // look for physical connections
-                                                    if (connected.ConnectorType == ConnectorType.End ||
-                                                        connected.ConnectorType == ConnectorType.Curve ||
-                                                        connected.ConnectorType == ConnectorType.Physical)
-                                                    {
-                                                        if (connector.Direction == FlowDirectionType.Out)
-                                                        {
-                                                            AddConnection(exporterIFC, connected, connector, false);
-                                                        }
-                                                        else
-                                                        {
-                                                            bool isBiDirectional = (connector.Direction == FlowDirectionType.Bidirectional);
-                                                            AddConnection(exporterIFC, connector, connected, isBiDirectional);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                            }
-                        }
+                            ProcessConnections(exporterIFC, connector, null);
                     }
                     catch (System.Exception)
                     {
@@ -127,18 +131,79 @@ namespace Revit.IFC.Export.Exporter
             }
         }
 
-        static void AddConnection(ExporterIFC exporterIFC, Connector connector, Connector connected, bool isBiDirectional)
+        static IFCAnyHandle CreateLocalPlacementForConnector(ExporterIFC exporterIFC, Connector connector, IFCAnyHandle elementHandle,
+            IFCFlowDirection flowDir)
+        {
+            try
+            {
+                IFCFile file = exporterIFC.GetFile();
+
+                IFCAnyHandle elementPlacement = IFCAnyHandleUtil.GetObjectPlacement(elementHandle);
+                Transform origTrf = ExporterIFCUtils.GetUnscaledTransform(exporterIFC, elementPlacement);
+
+                Transform connectorCoordinateSystem = connector.CoordinateSystem;
+                if (flowDir == IFCFlowDirection.Sink)
+                {
+                    // Reverse the direction of the connector.
+                    Transform mirrorTrf = Transform.CreateRotation(connectorCoordinateSystem.BasisX, Math.PI);
+                    connectorCoordinateSystem = connectorCoordinateSystem.Multiply(mirrorTrf);
+                }
+
+                Transform relTransform = origTrf.Inverse.Multiply(connectorCoordinateSystem);
+                XYZ scaledOrigin = UnitUtil.ScaleLength(relTransform.Origin);
+                 
+                IFCAnyHandle relLocalPlacement = ExporterUtil.CreateAxis2Placement3D(file,
+                    scaledOrigin, relTransform.BasisZ, relTransform.BasisX);
+
+                return IFCInstanceExporter.CreateLocalPlacement(file, elementPlacement, relLocalPlacement);
+            }
+            catch
+            {
+            }
+            return null;
+        }
+
+        static void AddConnection(ExporterIFC exporterIFC, Connector connector, Connector connected, bool isBiDirectional, bool isElectricalDomain)
         {
             Element inElement = connector.Owner;
             Element outElement = connected.Owner;
 
+            if (isElectricalDomain)
+            {
+                // We may get a connection back to the original element.  Ignore it.
+                if (inElement.Id == outElement.Id)
+                    return;
+
+                // Check the outElement to see if it is a Wire; if so, get its connections and "skip" the wire.
+                if (outElement is Wire)
+                {
+                    if (m_ProcessedWires.Contains(outElement.Id))
+                        return;
+                    m_ProcessedWires.Add(outElement.Id);
+                    
+                    try
+                    {
+                        ConnectorSet wireConnectorSet = MEPCache.GetConnectorsForWire(outElement as Wire);
+                        if (wireConnectorSet != null)
+                        {
+                            foreach (Connector connectedToWire in wireConnectorSet)
+                                ProcessConnections(exporterIFC, connectedToWire, connector);
+                        }
+                    }
+                    catch
+                    {
+                    }
+                    return;
+                }
+            }
+
             // Check if the connection already exist
-            if (connectionExists(inElement.Id, outElement.Id))
+            if (ConnectionExists(inElement.Id, outElement.Id))
                 return;
 
             if (isBiDirectional)
             {
-                if (connectionExists(outElement.Id, inElement.Id))
+                if (ConnectionExists(outElement.Id, inElement.Id))
                     return;
             }
 
@@ -156,12 +221,11 @@ namespace Revit.IFC.Export.Exporter
             IFCAnyHandle portIn = null;
             // ----------------------- In Port ----------------------
             {
-                // Make Source port
-                IFCAnyHandle productRepresentation = null;
                 string guid = GUIDUtil.CreateGUID();
-                string objType = IFCEntityType.IfcDistributionPort.ToString();
                 IFCFlowDirection flowDir = (isBiDirectional) ? IFCFlowDirection.SourceAndSink : IFCFlowDirection.Sink;
-                portIn = IFCInstanceExporter.CreateDistributionPort(ifcFile, guid, ownerHistory, null, null, objType, null, productRepresentation, flowDir);
+
+                IFCAnyHandle localPlacement = CreateLocalPlacementForConnector(exporterIFC, connector, inElementIFCHandle, flowDir);
+                portIn = IFCInstanceExporter.CreateDistributionPort(ifcFile, guid, ownerHistory, null, null, null, localPlacement, null, flowDir);
 
                 // Attach the port to the element
                 guid = GUIDUtil.CreateGUID();
@@ -170,11 +234,11 @@ namespace Revit.IFC.Export.Exporter
 
             // ----------------------- Out Port----------------------
             {
-                IFCAnyHandle productRepresentation = null;
                 string guid = GUIDUtil.CreateGUID();
-                string objType = IFCEntityType.IfcDistributionPort.ToString();
                 IFCFlowDirection flowDir = (isBiDirectional) ? IFCFlowDirection.SourceAndSink : IFCFlowDirection.Source;
-                portOut = IFCInstanceExporter.CreateDistributionPort(ifcFile, guid, ownerHistory, null, null, objType, null, productRepresentation, flowDir);
+
+                IFCAnyHandle localPlacement = CreateLocalPlacementForConnector(exporterIFC, connected, outElementIFCHandle, flowDir);
+                portOut = IFCInstanceExporter.CreateDistributionPort(ifcFile, guid, ownerHistory, null, null, null, localPlacement, null, flowDir);
 
                 // Attach the port to the element
                 guid = GUIDUtil.CreateGUID();
@@ -184,10 +248,11 @@ namespace Revit.IFC.Export.Exporter
             //  ----------------------- Out Port -> In Port ----------------------
             if (portOut != null && portIn != null)
             {
+                Element elemToUse = (inElement.Id.IntegerValue < outElement.Id.IntegerValue) ? inElement : outElement;
                 string guid = GUIDUtil.CreateGUID();
                 IFCAnyHandle realizingElement = null;
                 IFCInstanceExporter.CreateRelConnectsPorts(ifcFile, guid, ownerHistory, null, null, portIn, portOut, realizingElement);
-                addConnection(inElement.Id, outElement.Id);
+                AddConnectionInternal(inElement.Id, outElement.Id);
             }
 
             // Add the handles to the connector system.
@@ -208,12 +273,26 @@ namespace Revit.IFC.Export.Exporter
             {
             }
 
-            foreach (MEPSystem system in systemList)
+            if (isElectricalDomain)
             {
-                ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, inElementIFCHandle);
-                ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, outElementIFCHandle);
-                ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, portIn);
-                ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, portOut);
+                foreach (MEPSystem system in systemList)
+                {
+                    ExporterCacheManager.SystemsCache.AddElectricalSystem(system.Id);
+                    ExporterCacheManager.SystemsCache.AddHandleToElectricalSystem(system.Id, inElementIFCHandle);
+                    ExporterCacheManager.SystemsCache.AddHandleToElectricalSystem(system.Id, outElementIFCHandle);
+                    ExporterCacheManager.SystemsCache.AddHandleToElectricalSystem(system.Id, portIn);
+                    ExporterCacheManager.SystemsCache.AddHandleToElectricalSystem(system.Id, portOut);
+                }
+            }
+            else
+            {
+                foreach (MEPSystem system in systemList)
+                {
+                    ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, inElementIFCHandle);
+                    ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, outElementIFCHandle);
+                    ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, portIn);
+                    ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, portOut);
+                }
             }
         }
 
@@ -221,7 +300,13 @@ namespace Revit.IFC.Export.Exporter
         /// Keeps track of created connection to prevent duplicate connections, 
         /// might not be necessary
         /// </summary>
-        private static HashSet<string> m_connectionExists = new HashSet<string>();
+        private static HashSet<string> m_ConnectionExists = new HashSet<string>();
+
+        /// <summary>
+        /// Keeps track of created connection to prevent duplicate connections, 
+        /// might not be necessary
+        /// </summary>
+        private static HashSet<ElementId> m_ProcessedWires = new HashSet<ElementId>();
 
         /// <summary>
         /// Checks existance of the connects
@@ -229,10 +314,10 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="inID">ElementId of the incoming Element</param>
         /// <param name="outID">ElementId of the outgoing Element</param>
         /// <returns>True if the connection exists already</returns>
-        private static bool connectionExists(ElementId inID, ElementId outID)
+        private static bool ConnectionExists(ElementId inID, ElementId outID)
         {
             string elementIdKey = inID.ToString() + "_" + outID.ToString();
-            return m_connectionExists.Contains(elementIdKey);
+            return m_ConnectionExists.Contains(elementIdKey);
         }
 
         /// <summary>
@@ -240,18 +325,19 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="inID"></param>
         /// <param name="outID"></param>
-        private static void addConnection(ElementId inID, ElementId outID)
+        private static void AddConnectionInternal(ElementId inID, ElementId outID)
         {
             string elementIdKey = inID.ToString() + "_" + outID.ToString();
-            m_connectionExists.Add(elementIdKey);
+            m_ConnectionExists.Add(elementIdKey);
         }
 
         /// <summary>
         /// Clear the connection cache
         /// </summary>
-        public static void clearConnections()
+        public static void ClearConnections()
         {
-            m_connectionExists.Clear();
+            m_ConnectionExists.Clear();
+            m_ProcessedWires.Clear();
         }
     }
 }

@@ -313,7 +313,7 @@ namespace Revit.IFC.Export.Utility
         public static IFCAnyHandle GetOrCreateMaterialStyle(Document document, ExporterIFC exporterIFC, ElementId materialId)
         {
             IFCAnyHandle styleHnd = ExporterCacheManager.MaterialIdToStyleHandleCache.Find(materialId);
-            if (styleHnd == null)
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(styleHnd))
 	        {
                 Material material = document.GetElement(materialId) as Material;
                 if (material == null)
@@ -339,7 +339,7 @@ namespace Revit.IFC.Export.Utility
                 IFCAnyHandle renderingHnd = IFCInstanceExporter.CreateSurfaceStyleRendering(file, colorHnd, transparency, 
                     null, null, null, null, smoothness, specularExp, method);
 
-                ICollection<IFCAnyHandle> surfStyles = new HashSet<IFCAnyHandle>();
+                ISet<IFCAnyHandle> surfStyles = new HashSet<IFCAnyHandle>();
                 surfStyles.Add(renderingHnd);
 
                 IFCSurfaceSide surfSide = IFCSurfaceSide.Both;

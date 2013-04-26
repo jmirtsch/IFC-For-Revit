@@ -1048,6 +1048,10 @@ namespace Revit.IFC.Export.Exporter
                     else
                     {
                         tr.RollBack();
+
+                        // TODO: include this cleanup in RollBack(), to avoid issues.
+                        ExporterCacheManager.MaterialIdToStyleHandleCache.RemoveInvalidHandles(materialIds, IFCEntityType.IfcSurfaceStyle);
+                        ExporterCacheManager.PresentationStyleAssignmentCache.RemoveInvalidHandles(materialIds);
                         return retVal;
                     }
                 }

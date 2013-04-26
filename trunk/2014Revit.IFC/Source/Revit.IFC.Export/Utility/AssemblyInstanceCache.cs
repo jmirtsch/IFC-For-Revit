@@ -101,7 +101,8 @@ namespace Revit.IFC.Export.Utility
             HashSet<IFCAnyHandle> elementsToAdd = new HashSet<IFCAnyHandle>();
             foreach (IFCAnyHandle hnd in objects)
             {
-                if (IFCAnyHandleUtil.IsSubTypeOf(hnd, IFCEntityType.IfcProduct))
+                if (IFCAnyHandleUtil.IsSubTypeOf(hnd, IFCEntityType.IfcProduct) ||
+                    IFCAnyHandleUtil.IsSubTypeOf(hnd, IFCEntityType.IfcGroup))
                     elementsToAdd.Add(hnd);
             }
             if (elementsToAdd.Count > 0)

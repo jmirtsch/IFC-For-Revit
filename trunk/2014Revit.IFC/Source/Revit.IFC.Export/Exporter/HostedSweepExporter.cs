@@ -93,7 +93,7 @@ namespace Revit.IFC.Export.Exporter
                         List<IFCAnyHandle> representationMaps = GeometryUtil.GetRepresentationMaps(style);
                         IFCAnyHandle mappedItem = ExporterUtil.CreateDefaultMappedItem(file, representationMaps[0]);
 
-                        IList<IFCAnyHandle> representations = new List<IFCAnyHandle>();
+                        ISet<IFCAnyHandle> representations = new HashSet<IFCAnyHandle>();
                         representations.Add(mappedItem);
 
                         IFCAnyHandle bodyMappedItemRep = RepresentationUtil.CreateBodyMappedItemRep(exporterIFC,

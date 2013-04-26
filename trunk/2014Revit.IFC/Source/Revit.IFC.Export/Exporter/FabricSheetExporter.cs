@@ -176,7 +176,7 @@ namespace Revit.IFC.Export.Exporter
                             transverseBarSpacing = UnitUtil.ScaleLength(fabricSheetType.MinorSpacing);
                         }
 
-                        IList<IFCAnyHandle> bodyItems = new List<IFCAnyHandle>();
+                        ISet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
                         
                         IList<Curve> wireCenterlines = sheet.GetWireCenterlines(WireDistributionDirection.Major);
                         foreach (Curve wireCenterline in wireCenterlines)

@@ -212,6 +212,12 @@ namespace Revit.IFC.Export.Utility
         static HashSet<ElementId> m_BeamSystemCache;
 
         ///<summary>
+        /// The Group cache.
+        /// This keeps track of all of the groups in the document, to export them after all regular elements.
+        /// </summary>
+        static GroupCache m_GroupCache;
+
+        ///<summary>
         /// The Zone cache.
         /// This keeps track of all of the zone in the document, to export them after all spaces.
         /// </summary>
@@ -665,6 +671,19 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
+        /// The GroupCache object.
+        /// </summary>
+        public static GroupCache GroupCache
+        {
+            get
+            {
+                if (m_GroupCache == null)
+                    m_GroupCache = new GroupCache();
+                return m_GroupCache;
+            }
+        }
+
+        /// <summary>
         /// The ZoneCache object.
         /// </summary>
         public static HashSet<ElementId> ZoneCache
@@ -1067,6 +1086,7 @@ namespace Revit.IFC.Export.Utility
             m_ExportOptionsCache = null;
             m_FabricAreaHandleCache = null;
             m_GridCache = null;
+            m_GroupCache = null;
             m_GroupElementGeometryCache = null;
             m_GUIDCache = null;
             m_HandleToElementCache = null;

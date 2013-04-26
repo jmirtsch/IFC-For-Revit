@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Electrical;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.DB.Structure;
 
@@ -34,7 +35,7 @@ namespace Revit.IFC.Export.Utility
     public enum IFCExportType
     {
         /// <summary>
-        /// Don't export.
+        /// This is the default "Don't Export" that could be overwritten by other methods.
         /// </summary>
         DontExport,
         /// <summary>
@@ -463,6 +464,14 @@ namespace Revit.IFC.Export.Utility
         /// System
         /// </summary>
         ExportSystem,
+        /// <summary>
+        /// Group
+        /// </summary>
+        ExportGroup,
+        /// <summary>
+        /// Assembly
+        /// </summary>
+        ExportAssembly,
     }
 
 
@@ -578,16 +587,18 @@ namespace Revit.IFC.Export.Utility
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The element.</param>
         /// <returns>True if the element should be exported, false otherwise.</returns>
-        public static bool ShouldCategoryBeExported(ExporterIFC exporterIFC, Element element)
+        private static bool ShouldCategoryBeExported(ExporterIFC exporterIFC, Element element)
         {
             IFCExportType exportType = IFCExportType.DontExport;
             String ifcClassName = ExporterIFCUtils.GetIFCClassName(element, exporterIFC);
             if (ifcClassName == "")
             {
-                // Special case: if the element is an AreaScheme, always export as a group.  The reason is that we can't place
-                // AreaSchemes in the Export Layers table for internal (and uninteresting) reasons.
-                if (element is AreaScheme)
+                // Special case: these elements aren't contained in the default export layers mapping table.
+                // This allows these elements to be exported by default.
+                if (element is AreaScheme || element is Group)
                     ifcClassName = "IfcGroup";
+                else if (element is ElectricalSystem)
+                    ifcClassName = "IfcSystem";
                 else
                     return false;
             }
@@ -602,6 +613,27 @@ namespace Revit.IFC.Export.Utility
             return false;
         }
 
+        /// <summary>
+        /// Checks if element should be exported by checking IfcExportAs.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="element">The element.</param>
+        /// <returns>True if the element should be exported, false otherwise.</returns>
+        public static bool ShouldElementBeExported(ExporterIFC exporterIFC, Element element)
+        {
+            if (!ShouldCategoryBeExported(exporterIFC, element))
+                return false;
+
+            string exportAsEntity = "IFCExportAs";
+            string elementClassName;
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, exportAsEntity, out elementClassName))
+            {
+                if (CompareAlphaOnly(elementClassName, "DONTEXPORT"))
+                    return false;
+            }
+            return true;
+        }
+        
         /// <summary>
         /// Checks if name is equal to base or its type name.
         /// </summary>
@@ -618,6 +650,31 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
+        /// Compares two strings, ignoring spaces, punctuation and case.
+        /// </summary>
+        /// <param name="name">The string to compare.</param>
+        /// <param name="baseNameAllCapsNoSpaces">String to compare to, all caps, no punctuation or cases.</param>
+        /// <returns></returns>
+        private static bool CompareAlphaOnly(String name, String baseNameAllCapsNoSpaces)
+        {
+            string nameToUpper = name.ToUpper();
+            int loc = 0;
+            int maxLen = baseNameAllCapsNoSpaces.Length;
+            foreach (char c in nameToUpper)
+            {
+                if (c >= 'A' && c <= 'Z')
+                {
+                    if (baseNameAllCapsNoSpaces[loc] != c)
+                        return false;
+                    loc++;
+                    if (loc == maxLen)
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Gets export type from IFC class name.
         /// </summary>
         /// <param name="ifcClassName">The IFC class name.</param>
@@ -629,6 +686,8 @@ namespace Revit.IFC.Export.Utility
                 // Used to mark curves, text, and filled regions for export.
                 return IFCExportType.ExportAnnotation;
             }
+            else if (String.Compare(ifcClassName, "IfcAssembly", true) == 0)
+                return IFCExportType.ExportAssembly;
             else if (String.Compare(ifcClassName, "IfcBeam", true) == 0)
                 return IFCExportType.ExportBeam;
             else if (String.Compare(ifcClassName, "IfcBuildingElementPart", true) == 0)
@@ -656,6 +715,8 @@ namespace Revit.IFC.Export.Utility
                 return IFCExportType.ExportFooting;
             else if (String.Compare(ifcClassName, "IfcGrid", true) == 0)
                 return IFCExportType.ExportGrid;
+            else if (String.Compare(ifcClassName, "IfcGroup", true) == 0)
+                return IFCExportType.ExportGroup;
             else if (String.Compare(ifcClassName, "IfcMember", true) == 0)
                 return IFCExportType.ExportMemberType;
             else if (String.Compare(ifcClassName, "IfcOpeningElement", true) == 0)
@@ -909,6 +970,8 @@ namespace Revit.IFC.Export.Utility
                 ifcEnumType = "FLOOR";
                 return IFCExportType.ExportSlab;
             }
+            else if (categoryId == new ElementId(BuiltInCategory.OST_IOSModelGroups))
+                return IFCExportType.ExportGroup;
             else if (categoryId == new ElementId(BuiltInCategory.OST_Mass))
                 return IFCExportType.ExportBuildingElementProxy;
             else if (categoryId == new ElementId(BuiltInCategory.OST_CurtainWallMullions))
@@ -1003,8 +1066,7 @@ namespace Revit.IFC.Export.Utility
                     excludedTypes.Add(typeof(CurveElement));
 
                 excludedTypes.Add(typeof(ElementType));
-                excludedTypes.Add(typeof(Group));
-
+                
                 excludedTypes.Add(typeof(BaseArray));
 
                 excludedTypes.Add(typeof(FillPatternElement));

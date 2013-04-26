@@ -133,7 +133,23 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <summary>
         /// An IfcClassificationReference value.
         /// </summary>
-        ClassificationReference
+        ClassificationReference,
+        /// <summary>
+        /// A Frequency value.
+        /// </summary>
+        Frequency,
+        /// <summary>
+        /// A positive angular value.
+        /// </summary>
+        PositivePlaneAngle,
+        /// <summary>
+        /// An electrical current value
+        /// </summary>
+        ElectricalCurrent,
+        /// <summary>
+        /// An electrical voltage value
+        /// </summary>
+        ElectricalVoltage
     }
 
     /// <summary>
@@ -241,6 +257,42 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             return pse;
         }
 
+        /// <summary>
+        /// Creates an entry of type Frequency.
+        /// </summary>
+        /// <param name="revitParameterName">Revit parameter name.</param>
+        /// <returns>The PropertySetEntry.</returns>
+        public static PropertySetEntry CreateFrequency(string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = PropertyType.Frequency;
+            return pse;
+        }
+
+        /// <summary>
+        /// Creates an entry of type ElectricalCurrent.
+        /// </summary>
+        /// <param name="revitParameterName">Revit parameter name.</param>
+        /// <returns>The PropertySetEntry.</returns>
+        public static PropertySetEntry CreateElectricalCurrent(string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = PropertyType.ElectricalCurrent;
+            return pse;
+        }
+
+        /// <summary>
+        /// Creates an entry of type ElectricalVoltage.
+        /// </summary>
+        /// <param name="revitParameterName">Revit parameter name.</param>
+        /// <returns>The PropertySetEntry.</returns>
+        public static PropertySetEntry CreateElectricalVoltage(string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = PropertyType.ElectricalVoltage;
+            return pse;
+        }
+        
         /// <summary>
         /// Creates an entry of type VolumetricFlowRate.
         /// </summary>
@@ -521,6 +573,22 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Creates an entry of type positive plane angle.
+        /// </summary>
+        /// <param name="revitParameterName">
+        /// Revit parameter name.
+        /// </param>
+        /// <returns>
+        /// The PropertySetEntry.
+        /// </returns>
+        public static PropertySetEntry CreatePositivePlaneAngle(string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = PropertyType.PositivePlaneAngle;
+            return pse;
+        }
+        
+        /// <summary>
         /// Creates an entry of type count.
         /// </summary>
         /// <param name="revitParameterName">Revit parameter name.</param>
@@ -645,6 +713,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                             valueType);
                         break;
                     }
+                case PropertyType.PositivePlaneAngle:
+                    {
+                        propHnd = PositivePlaneAnglePropertyUtil.CreatePositivePlaneAngleMeasurePropertyFromElementOrSymbol(file, element, revitParamNameToUse, ifcPropertyName,
+                            valueType);
+                        break;
+                    }
                 case PropertyType.Area:
                     {
                         propHnd = PropertyUtil.CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
@@ -655,6 +729,22 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                     {
                         propHnd = PropertyUtil.CreateCountMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
                             builtInParameter, ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.Frequency:
+                    {
+                        propHnd = FrequencyPropertyUtil.CreateFrequencyPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                            ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.ElectricalCurrent:
+                    {
+                        propHnd = ElectricalCurrentPropertyUtil.CreateElectricalCurrentMeasurePropertyFromElementOrSymbol(file, element, revitParamNameToUse, ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.ElectricalVoltage:
+                    {
+                        propHnd = ElectricalVoltagePropertyUtil.CreateElectricalVoltageMeasurePropertyFromElementOrSymbol(file, element, revitParamNameToUse, ifcPropertyName, valueType);
                         break;
                     }
                 case PropertyType.Power:
@@ -826,6 +916,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                             propHnd = PropertyUtil.CreatePlaneAngleMeasurePropertyFromCache(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                             break;
                         }
+                    case PropertyType.PositivePlaneAngle:
+                        {
+                            propHnd = PositivePlaneAnglePropertyUtil.CreatePositivePlaneAngleMeasurePropertyFromCache(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                            break;
+                        }
                     case PropertyType.Area:
                         {
                             propHnd = PropertyUtil.CreateAreaMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
@@ -837,6 +932,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                                 propHnd = PropertyUtil.CreateCountMeasureProperty(file, PropertyName, PropertyCalculator.GetIntValue(PropertyName), valueType);
                             else
                                 propHnd = PropertyUtil.CreateCountMeasureProperty(file, PropertyName, PropertyCalculator.GetIntValue(), valueType);
+                            break;
+                        }
+                    case PropertyType.Frequency:
+                        {
+                            propHnd = FrequencyPropertyUtil.CreateFrequencyProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                             break;
                         }
                     case PropertyType.Power:

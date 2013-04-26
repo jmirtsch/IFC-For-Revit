@@ -23,6 +23,8 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Revit.IFC.Common.Enums;
+using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Utility
 {
@@ -34,7 +36,7 @@ namespace Revit.IFC.Export.Utility
         /// <summary>
         /// The dictionary mapping from an ElementId to an  handle. 
         /// </summary>
-        private Dictionary<ElementId, IFCAnyHandle> elementIdToHandleDictionary = new Dictionary<ElementId, IFCAnyHandle>();
+        private Dictionary<ElementId, IFCAnyHandle> m_ElementIdToHandleDictionary = new Dictionary<ElementId, IFCAnyHandle>();
 
         /// <summary>
         /// Finds the handle from the dictionary.
@@ -48,11 +50,37 @@ namespace Revit.IFC.Export.Utility
         public IFCAnyHandle Find(ElementId elementId)
         {
             IFCAnyHandle handle;
-            if (elementIdToHandleDictionary.TryGetValue(elementId, out handle))
+            if (m_ElementIdToHandleDictionary.TryGetValue(elementId, out handle))
             {
                 return handle;
             }
             return null;
+        }
+
+        /// <summary>
+        /// Removes invalid handles from the cache.
+        /// </summary>
+        /// <param name="elementIds">The element ids.</param>
+        /// <param name="expectedType">The expected type of the handles.</param>
+        public void RemoveInvalidHandles(ISet<ElementId> elementIds, IFCEntityType expectedType)
+        {
+            foreach (ElementId elementId in elementIds)
+            {
+                IFCAnyHandle handle;
+                if (m_ElementIdToHandleDictionary.TryGetValue(elementId, out handle))
+                {
+                    try
+                    {
+                        bool isType = IFCAnyHandleUtil.IsSubTypeOf(handle, expectedType);
+                        if (!isType)
+                            m_ElementIdToHandleDictionary.Remove(elementId);
+                    }
+                    catch
+                    {
+                        m_ElementIdToHandleDictionary.Remove(elementId);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -66,10 +94,10 @@ namespace Revit.IFC.Export.Utility
         /// </param>
         public void Register(ElementId elementId, IFCAnyHandle handle)
         {
-            if (elementIdToHandleDictionary.ContainsKey(elementId))
+            if (m_ElementIdToHandleDictionary.ContainsKey(elementId))
                 return;
 
-            elementIdToHandleDictionary[elementId] = handle;
+            m_ElementIdToHandleDictionary[elementId] = handle;
         }
     }
 }
