@@ -124,6 +124,12 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_2ED7256D103048EB8509B56FD3883772"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_AC040452B93D9361AB73E5240D49FC20"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -137,12 +143,6 @@
         {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_FBBD765F6D830E316E0586B84454180E"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_2ED7256D103048EB8509B56FD3883772"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -740,15 +740,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:IFC Export UI for Autodesk Revit 2014"
-        "ProductCode" = "8:{8C15419E-DF4E-4A34-91C6-4184D391BF16}"
-        "PackageCode" = "8:{82B127DF-6E63-4B2D-81E8-409EED00FB81}"
+        "ProductCode" = "8:{EBC6787B-FE8B-4561-8201-A53A681D7F55}"
+        "PackageCode" = "8:{5264E05E-C843-4507-A8C7-E52D18AA5CD8}"
         "UpgradeCode" = "8:{5DE97805-1D15-43B6-BBFD-A9238E20EE86}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:2.1.0"
+        "ProductVersion" = "8:2.2.0"
         "Manufacturer" = "8:Revit IFC export alternate UI"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
