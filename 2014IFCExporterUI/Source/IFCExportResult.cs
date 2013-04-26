@@ -40,11 +40,6 @@ namespace BIM.IFC.Export.UI
         ExportAndSaveSettings,
 
         /// <summary>
-        /// Save settings but do not export
-        /// </summary>
-        SaveSettings,
-
-        /// <summary>
         /// Cancel all changes
         /// </summary>
         Cancel

@@ -29,7 +29,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Autodesk, Inc.")]
 [assembly: AssemblyProduct("Modify Addin file")]
-[assembly: AssemblyCopyright("© 2013 Autodesk, Inc. All rights reserved.")]
+[assembly: AssemblyCopyright("© 2012-2013 Autodesk, Inc. All rights reserved.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
