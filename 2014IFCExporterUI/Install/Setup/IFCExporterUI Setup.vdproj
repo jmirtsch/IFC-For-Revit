@@ -63,14 +63,20 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_91D56AE3712A189442E7F038001860A3"
+        "MsmKey" = "8:_92ACB509F6EC4DE2B405BD667B52C045"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_97DB968D61AE7016AA2938BAEDC615A0"
         "OwnerKey" = "8:_2ED7256D103048EB8509B56FD3883772"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_92ACB509F6EC4DE2B405BD667B52C045"
-        "OwnerKey" = "8:_UNDEFINED"
+        "MsmKey" = "8:_97DB968D61AE7016AA2938BAEDC615A0"
+        "OwnerKey" = "8:_FB0D9CB6E9CF0CEB565BD8645383675D"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -81,20 +87,26 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_C172D3291704A6627B4E5ABE321BF1AD"
+        "MsmKey" = "8:_BC5FEE7CF08BFBD10D757A94C4A6202A"
         "OwnerKey" = "8:_2ED7256D103048EB8509B56FD3883772"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_C172D3291704A6627B4E5ABE321BF1AD"
-        "OwnerKey" = "8:_91D56AE3712A189442E7F038001860A3"
+        "MsmKey" = "8:_BC5FEE7CF08BFBD10D757A94C4A6202A"
+        "OwnerKey" = "8:_97DB968D61AE7016AA2938BAEDC615A0"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_D34129F791424B1189EBF9500434D614"
         "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_FB0D9CB6E9CF0CEB565BD8645383675D"
+        "OwnerKey" = "8:_2ED7256D103048EB8509B56FD3883772"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -112,13 +124,19 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_91D56AE3712A189442E7F038001860A3"
+        "OwnerKey" = "8:_FB0D9CB6E9CF0CEB565BD8645383675D"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_C172D3291704A6627B4E5ABE321BF1AD"
+        "OwnerKey" = "8:_97DB968D61AE7016AA2938BAEDC615A0"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_BC5FEE7CF08BFBD10D757A94C4A6202A"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -366,37 +384,6 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_91D56AE3712A189442E7F038001860A3"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:RevitAPIIFC, Version=2014.0.0.0, Culture=neutral, processorArchitecture=AMD64"
-                "ScatterAssemblies"
-                {
-                    "_91D56AE3712A189442E7F038001860A3"
-                    {
-                    "Name" = "8:RevitAPIIFC.dll"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:RevitAPIIFC.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_C1E5272C0F814A53BA7DB8E77FD46EA7"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_92ACB509F6EC4DE2B405BD667B52C045"
             {
             "SourcePath" = "8:..\\Program Files to Install\\IFCExporterUI.addin"
@@ -415,6 +402,37 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_97DB968D61AE7016AA2938BAEDC615A0"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:RevitAPI, Version=2014.0.0.0, Culture=neutral, processorArchitecture=AMD64"
+                "ScatterAssemblies"
+                {
+                    "_97DB968D61AE7016AA2938BAEDC615A0"
+                    {
+                    "Name" = "8:RevitAPI.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:RevitAPI.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_C1E5272C0F814A53BA7DB8E77FD46EA7"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:TRUE"
+            "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B46116F5C8074037923082ED61A0BEF3"
@@ -437,20 +455,20 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_C172D3291704A6627B4E5ABE321BF1AD"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_BC5FEE7CF08BFBD10D757A94C4A6202A"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:RevitAPI, Version=2014.0.0.0, Culture=neutral, processorArchitecture=AMD64"
+            "AssemblyAsmDisplayName" = "8:DBManagedServices, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
                 "ScatterAssemblies"
                 {
-                    "_C172D3291704A6627B4E5ABE321BF1AD"
+                    "_BC5FEE7CF08BFBD10D757A94C4A6202A"
                     {
-                    "Name" = "8:RevitAPI.dll"
+                    "Name" = "8:DBManagedServices.dll"
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:RevitAPI.dll"
+            "SourcePath" = "8:DBManagedServices.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_C1E5272C0F814A53BA7DB8E77FD46EA7"
@@ -486,6 +504,37 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_FB0D9CB6E9CF0CEB565BD8645383675D"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:RevitAPIIFC, Version=2014.0.0.0, Culture=neutral, processorArchitecture=AMD64"
+                "ScatterAssemblies"
+                {
+                    "_FB0D9CB6E9CF0CEB565BD8645383675D"
+                    {
+                    "Name" = "8:RevitAPIIFC.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:RevitAPIIFC.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_C1E5272C0F814A53BA7DB8E77FD46EA7"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:TRUE"
+            "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
         }

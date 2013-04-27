@@ -39,20 +39,44 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_242FE63B1BE17F70E115BD69E7B2D84F"
+        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_242FE63B1BE17F70E115BD69E7B2D84F"
+        "OwnerKey" = "8:_D968FA3152534721BA16800A2291CC9E"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_242FE63B1BE17F70E115BD69E7B2D84F"
+        "OwnerKey" = "8:_362A78F3B6E6B1F344436AEE03E35914"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_242FE63B1BE17F70E115BD69E7B2D84F"
+        "OwnerKey" = "8:_E56ED276FA64A163CF7009996A87F2DD"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_2E5ADDBF3BA8451490344098E95C73FB"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_470A2642ECEC40039CA71C71BD3233D7"
-        "OwnerKey" = "8:_UNDEFINED"
+        "MsmKey" = "8:_362A78F3B6E6B1F344436AEE03E35914"
+        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_4938D8908A54CA17C307204453BBD64E"
-        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
+        "MsmKey" = "8:_470A2642ECEC40039CA71C71BD3233D7"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -75,54 +99,48 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_76D7A8872D0BBF68D88C0D640E85C5F6"
-        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_76D7A8872D0BBF68D88C0D640E85C5F6"
-        "OwnerKey" = "8:_A3CD9C4A7F6616AC35C761DD54EC86BF"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_76D7A8872D0BBF68D88C0D640E85C5F6"
-        "OwnerKey" = "8:_4938D8908A54CA17C307204453BBD64E"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_76D7A8872D0BBF68D88C0D640E85C5F6"
-        "OwnerKey" = "8:_D968FA3152534721BA16800A2291CC9E"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_A3CD9C4A7F6616AC35C761DD54EC86BF"
-        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_A3CD9C4A7F6616AC35C761DD54EC86BF"
-        "OwnerKey" = "8:_4938D8908A54CA17C307204453BBD64E"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_A3CD9C4A7F6616AC35C761DD54EC86BF"
-        "OwnerKey" = "8:_D968FA3152534721BA16800A2291CC9E"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_D968FA3152534721BA16800A2291CC9E"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
+        "MsmKey" = "8:_E56ED276FA64A163CF7009996A87F2DD"
+        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_E56ED276FA64A163CF7009996A87F2DD"
+        "OwnerKey" = "8:_D968FA3152534721BA16800A2291CC9E"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_E56ED276FA64A163CF7009996A87F2DD"
+        "OwnerKey" = "8:_362A78F3B6E6B1F344436AEE03E35914"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_F0E5D3D33D66F6E2F5C314CD1D18D214"
+        "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_F0E5D3D33D66F6E2F5C314CD1D18D214"
+        "OwnerKey" = "8:_D968FA3152534721BA16800A2291CC9E"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_F0E5D3D33D66F6E2F5C314CD1D18D214"
+        "OwnerKey" = "8:_242FE63B1BE17F70E115BD69E7B2D84F"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_02AE303CEEA349CEB9F734C84CA8CB52"
         "MsmSig" = "8:_UNDEFINED"
@@ -130,25 +148,31 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_76D7A8872D0BBF68D88C0D640E85C5F6"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_A3CD9C4A7F6616AC35C761DD54EC86BF"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_4938D8908A54CA17C307204453BBD64E"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_D968FA3152534721BA16800A2291CC9E"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_362A78F3B6E6B1F344436AEE03E35914"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_E56ED276FA64A163CF7009996A87F2DD"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_242FE63B1BE17F70E115BD69E7B2D84F"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_F0E5D3D33D66F6E2F5C314CD1D18D214"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -316,6 +340,37 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_242FE63B1BE17F70E115BD69E7B2D84F"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:RevitAPI, Version=2014.0.0.0, Culture=neutral, processorArchitecture=AMD64"
+                "ScatterAssemblies"
+                {
+                    "_242FE63B1BE17F70E115BD69E7B2D84F"
+                    {
+                    "Name" = "8:RevitAPI.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:RevitAPI.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_7AAFB596686C49259B5B7332069C98A5"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:TRUE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_2E5ADDBF3BA8451490344098E95C73FB"
             {
             "SourcePath" = "8:..\\Program Files to Install\\bundle\\Contents\\Resources\\IFCExporter2014.png"
@@ -336,6 +391,37 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_362A78F3B6E6B1F344436AEE03E35914"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:BIM.IFC.Common, Version=3.2.0.0, Culture=neutral, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_362A78F3B6E6B1F344436AEE03E35914"
+                    {
+                    "Name" = "8:BIM.IFC.Common.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:BIM.IFC.Common.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_7AAFB596686C49259B5B7332069C98A5"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:TRUE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_470A2642ECEC40039CA71C71BD3233D7"
             {
             "SourcePath" = "8:..\\Program Files to Install\\Revit.IFC.addin"
@@ -354,32 +440,6 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_4938D8908A54CA17C307204453BBD64E"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:BIM.IFC.Common, Version=3.2.0.0, Culture=neutral, processorArchitecture=MSIL"
-                "ScatterAssemblies"
-                {
-                }
-            "SourcePath" = "8:BIM.IFC.Common.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_7AAFB596686C49259B5B7332069C98A5"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_676FB9DDF9A74332B114C73C00E5E94B"
@@ -442,15 +502,20 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_76D7A8872D0BBF68D88C0D640E85C5F6"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_E56ED276FA64A163CF7009996A87F2DD"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:RevitAPI, Version=2014.0.0.0, Culture=neutral, processorArchitecture=AMD64"
+            "AssemblyAsmDisplayName" = "8:RevitAPIIFC, Version=2014.0.0.0, Culture=neutral, processorArchitecture=AMD64"
                 "ScatterAssemblies"
                 {
+                    "_E56ED276FA64A163CF7009996A87F2DD"
+                    {
+                    "Name" = "8:RevitAPIIFC.dll"
+                    "Attributes" = "3:512"
+                    }
                 }
-            "SourcePath" = "8:RevitAPI.dll"
+            "SourcePath" = "8:RevitAPIIFC.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_7AAFB596686C49259B5B7332069C98A5"
@@ -468,15 +533,20 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_A3CD9C4A7F6616AC35C761DD54EC86BF"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_F0E5D3D33D66F6E2F5C314CD1D18D214"
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:RevitAPIIFC, Version=2014.0.0.0, Culture=neutral, processorArchitecture=AMD64"
+            "AssemblyAsmDisplayName" = "8:DBManagedServices, Version=2013.0.0.0, Culture=neutral, processorArchitecture=AMD64"
                 "ScatterAssemblies"
                 {
+                    "_F0E5D3D33D66F6E2F5C314CD1D18D214"
+                    {
+                    "Name" = "8:DBManagedServices.dll"
+                    "Attributes" = "3:512"
+                    }
                 }
-            "SourcePath" = "8:RevitAPIIFC.dll"
+            "SourcePath" = "8:DBManagedServices.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_7AAFB596686C49259B5B7332069C98A5"
