@@ -255,14 +255,11 @@
     <ProjectReference Include="..\Revit.IFC.Common\BIM.IFC.Common.csproj">
       <Project>{032EA4DC-181F-4453-9F93-E08DE1C07D95}</Project>
       <Name>BIM.IFC.Common</Name>
-      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project=".\Revit.IFC.Export.props" />
   <PropertyGroup>
-    <PostBuildEvent>call $(SolutionDir)SignFile.bat $(TargetPath)
-$(SolutionDir)..\..\ThirdParty\RevitAPI\Identification\SignData\Release\SignData.exe $(TargetPath) $(SolutionDir)..\..\ThirdParty\RevitAPI\Identification\pair.dat LT
-perl $(SolutionDir)PostBuild.pl $(ProjectDir) $(TargetPath) $(Configuration) $(Platform)</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>
