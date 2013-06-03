@@ -37,6 +37,18 @@ namespace BIM.IFC.Exporter
     class BodyExporter
     {
         /// <summary>
+        /// Get the tessellation level set by the default export options.
+        /// Used by floors, railings, ramps, spaces and stairs.
+        /// </summary>
+        /// <returns></returns>
+        public static BodyExporterOptions.BodyTessellationLevel GetTessellationLevel()
+        {
+            if (ExporterCacheManager.ExportOptionsCache.UseCoarseTessellation)
+                return BodyExporterOptions.BodyTessellationLevel.Coarse;
+            return BodyExporterOptions.BodyTessellationLevel.Default;
+        }
+
+        /// <summary>
         /// Sets best material id for current export state.
         /// </summary>
         /// <param name="geometryObject">The geometry object to get the best material id.</param>
@@ -621,7 +633,7 @@ namespace BIM.IFC.Exporter
 
             IList<IFCAnyHandle> vertexHandles = new List<IFCAnyHandle>();
             HashSet<IFCAnyHandle> currentFaceSet = new HashSet<IFCAnyHandle>();
-            IDictionary<XYZ, IFCAnyHandle> vertexCache = new Dictionary<XYZ, IFCAnyHandle>();
+            IDictionary<XYZ, IFCAnyHandle> vertexCache = new Dictionary<XYZ, IFCAnyHandle>(new GeometryUtil.XYZComparer());
             IDictionary<Edge, IList<IFCAnyHandle>> edgeCache = new Dictionary<Edge, IList<IFCAnyHandle>>();
 
             foreach (Face face in solid.Faces)
@@ -1146,7 +1158,8 @@ namespace BIM.IFC.Exporter
         // In shipped code, these are always false, and should be kept false until API support routines are proved to be reliable.
         private static BodyData ExportBodyAsBRep(ExporterIFC exporterIFC, IList<GeometryObject> splitGeometryList, 
             IList<int> exportAsBRep, IList<IFCAnyHandle> bodyItems,
-            Element element, ElementId categoryId, ElementId overrideMaterialId, IFCAnyHandle contextOfItems, double eps, BodyExporterOptions options, BodyData bodyDataIn)
+            Element element, ElementId categoryId, ElementId overrideMaterialId, IFCAnyHandle contextOfItems, double eps, 
+            BodyExporterOptions options, BodyData bodyDataIn)
         {
             bool exportAsBReps = true;
             IFCFile file = exporterIFC.GetFile();

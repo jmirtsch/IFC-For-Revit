@@ -36,6 +36,32 @@ namespace BIM.IFC.Utility
     public class GeometryUtil
     {
         /// <summary>
+        /// The comparer for comparing XYZ.
+        /// </summary>
+        public struct XYZComparer : IEqualityComparer<XYZ>
+        {
+            /// <summary>
+            /// Two XYZ is equal if they are almost equal.
+            /// </summary>
+            /// <param name="x">The XYZ.</param>
+            /// <param name="y">The XYZ.</param>
+            /// <returns>True if two XYZ are almost equal; false otherwise.</returns>
+            public bool Equals(XYZ x, XYZ y)
+            {
+                return x.IsAlmostEqualTo(y);
+            }
+            /// <summary>
+            /// Return 0 to let call Equals.
+            /// </summary>
+            /// <param name="obj">The XYZ.</param>
+            /// <returns>0 for all XYZ.</returns>
+            public int GetHashCode(XYZ obj)
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>
         /// Creates a default plane.
         /// </summary>
         /// <remarks>

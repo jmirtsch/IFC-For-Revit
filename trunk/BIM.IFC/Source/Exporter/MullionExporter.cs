@@ -96,6 +96,8 @@ namespace BIM.IFC.Exporter
 
                     IFCAnyHandle mullionHnd = IFCInstanceExporter.CreateMember(file, elemGUID, ownerHistory, name, description, objectType,
                        mullionLocalPlacement, repHnd, elemTag);
+                    ExporterCacheManager.HandleToElementCache.Register(mullionHnd, mullion.Id);
+
                     productWrapper.AddElement(mullionHnd, mullionSetter, extraParams, false);
 
                     ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, mullion);

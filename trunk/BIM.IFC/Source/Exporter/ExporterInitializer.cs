@@ -209,7 +209,7 @@ namespace BIM.IFC.Exporter
             //property set wall common
             PropertySetDescription propertySetWallCommon = new PropertySetDescription();
             propertySetWallCommon.Name = "Pset_WallCommon";
-            propertySetWallCommon.SubElementIndex = (int)IFCWallSubElements.PSetWallCommon;
+            propertySetWallCommon.SubElementIndex = (int)IFCCommonPSets.PSetWallCommon;
 
             propertySetWallCommon.EntityTypes.Add(IFCEntityType.IfcWall);
 
@@ -248,7 +248,7 @@ namespace BIM.IFC.Exporter
             //property set curtain wall common
             PropertySetDescription propertySetCurtainWallCommon = new PropertySetDescription();
             propertySetCurtainWallCommon.Name = "Pset_CurtainWallCommon";
-            propertySetCurtainWallCommon.SubElementIndex = (int)IFCCurtainWallSubElements.PSetCurtainWallCommon;
+            propertySetCurtainWallCommon.SubElementIndex = (int)IFCCommonPSets.PSetCurtainWallCommon;
 
             propertySetCurtainWallCommon.EntityTypes.Add(IFCEntityType.IfcCurtainWall);
 
@@ -280,7 +280,7 @@ namespace BIM.IFC.Exporter
             //property set covering common
             PropertySetDescription propertySetCoveringCommon = new PropertySetDescription();
             propertySetCoveringCommon.Name = "Pset_CoveringCommon";
-            propertySetCoveringCommon.SubElementIndex = (int)IFCCoveringSubElements.PSetCoveringCommon;
+            propertySetCoveringCommon.SubElementIndex = (int)IFCCommonPSets.PSetCoveringCommon;
 
             propertySetCoveringCommon.EntityTypes.Add(IFCEntityType.IfcCovering);
 
@@ -321,7 +321,7 @@ namespace BIM.IFC.Exporter
             //property set wall common
             PropertySetDescription propertySetDoorCommon = new PropertySetDescription();
             propertySetDoorCommon.Name = "Pset_DoorCommon";
-            propertySetDoorCommon.SubElementIndex = (int)IFCDoorSubElements.PSetDoorCommon;
+            propertySetDoorCommon.SubElementIndex = (int)IFCCommonPSets.PSetDoorCommon;
 
             propertySetDoorCommon.EntityTypes.Add(IFCEntityType.IfcDoor);
 
@@ -358,7 +358,7 @@ namespace BIM.IFC.Exporter
             //property set wall common
             PropertySetDescription propertySetWindowCommon = new PropertySetDescription();
             propertySetWindowCommon.Name = "Pset_WindowCommon";
-            propertySetWindowCommon.SubElementIndex = (int)IFCWindowSubElements.PSetWindowCommon;
+            propertySetWindowCommon.SubElementIndex = (int)IFCCommonPSets.PSetWindowCommon;
 
             propertySetWindowCommon.EntityTypes.Add(IFCEntityType.IfcWindow);
 
@@ -393,7 +393,7 @@ namespace BIM.IFC.Exporter
             //property beam common
             PropertySetDescription propertySetLightFixtureTypeCommon = new PropertySetDescription();
             propertySetLightFixtureTypeCommon.Name = "Pset_LightFixtureTypeCommon";
-            propertySetLightFixtureTypeCommon.SubElementIndex = (int)IFCLightFixtureTypeSubElements.PSetLightFixtureTypeCommon;
+            propertySetLightFixtureTypeCommon.SubElementIndex = (int)IFCCommonPSets.PSetLightFixtureTypeCommon;
 
             propertySetLightFixtureTypeCommon.EntityTypes.Add(IFCEntityType.IfcLightFixtureType);
 
@@ -431,7 +431,7 @@ namespace BIM.IFC.Exporter
             //property beam common
             PropertySetDescription propertyDistributionFlowElementCommon = new PropertySetDescription();
             propertyDistributionFlowElementCommon.Name = "Pset_DistributionFlowElementCommon";
-            propertyDistributionFlowElementCommon.SubElementIndex = (int)IFCDistributionFlowElementSubElements.PSetDistributionFlowElementCommon;
+            propertyDistributionFlowElementCommon.SubElementIndex = (int)IFCCommonPSets.PSetDistributionFlowElementCommon;
 
             propertyDistributionFlowElementCommon.EntityTypes.Add(IFCEntityType.IfcDistributionFlowElement);
 
@@ -498,7 +498,7 @@ namespace BIM.IFC.Exporter
             //property beam common
             PropertySetDescription propertyFlowTerminalAirTerminal = new PropertySetDescription();
             propertyFlowTerminalAirTerminal.Name = "Pset_FlowTerminalAirTerminal";
-            propertyFlowTerminalAirTerminal.SubElementIndex = (int)IFCDistributionFlowElementSubElements.PSetFlowTerminalAirTerminal;
+            propertyFlowTerminalAirTerminal.SubElementIndex = (int)IFCCommonPSets.PSetFlowTerminalAirTerminal;
 
             propertyFlowTerminalAirTerminal.EntityTypes.Add(IFCEntityType.IfcFlowTerminal);
 
@@ -519,7 +519,7 @@ namespace BIM.IFC.Exporter
             //property air terminal type common
             PropertySetDescription propertyAirTerminalTypeCommon = new PropertySetDescription();
             propertyAirTerminalTypeCommon.Name = "Pset_AirTerminalTypeCommon";
-            propertyAirTerminalTypeCommon.SubElementIndex = (int)IFCDistributionFlowElementSubElements.PSetAirTerminalTypeCommon;
+            propertyAirTerminalTypeCommon.SubElementIndex = (int)IFCCommonPSets.PSetAirTerminalTypeCommon;
 
             propertyAirTerminalTypeCommon.EntityTypes.Add(IFCEntityType.IfcAirTerminalType);
 
@@ -565,7 +565,7 @@ namespace BIM.IFC.Exporter
             //property beam common
             PropertySetDescription propertySetBeamCommon = new PropertySetDescription();
             propertySetBeamCommon.Name = "Pset_BeamCommon";
-            propertySetBeamCommon.SubElementIndex = (int)IFCBeamSubElements.PSetBeamCommon;
+            propertySetBeamCommon.SubElementIndex = (int)IFCCommonPSets.PSetBeamCommon;
 
             propertySetBeamCommon.EntityTypes.Add(IFCEntityType.IfcBeam);
 
@@ -603,7 +603,7 @@ namespace BIM.IFC.Exporter
             //property beam common
             PropertySetDescription propertySetMemberCommon = new PropertySetDescription();
             propertySetMemberCommon.Name = "Pset_MemberCommon";
-            propertySetMemberCommon.SubElementIndex = (int)IFCMemberSubElements.PSetMemberCommon;
+            propertySetMemberCommon.SubElementIndex = (int)IFCCommonPSets.PSetMemberCommon;
 
             propertySetMemberCommon.EntityTypes.Add(IFCEntityType.IfcMember);
 
@@ -640,7 +640,7 @@ namespace BIM.IFC.Exporter
         {
             PropertySetDescription propertySetPlateCommon = new PropertySetDescription();
             propertySetPlateCommon.Name = "Pset_PlateCommon";
-            propertySetPlateCommon.SubElementIndex = (int)IFCPlateSubElements.PSetPlateCommon;
+            propertySetPlateCommon.SubElementIndex = (int)IFCCommonPSets.PSetPlateCommon;
 
             propertySetPlateCommon.EntityTypes.Add(IFCEntityType.IfcPlate);
 
@@ -662,7 +662,7 @@ namespace BIM.IFC.Exporter
         {
             PropertySetDescription propertySetReinforcingBarCommon = new PropertySetDescription();
             propertySetReinforcingBarCommon.Name = "Pset_ReinforcingBarBendingsBECCommon";
-            propertySetReinforcingBarCommon.SubElementIndex = (int)IFCReinforcingBarSubElements.PSetBECCommon;
+            propertySetReinforcingBarCommon.SubElementIndex = (int)IFCCommonPSets.PSetBECCommon;
 
             propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
 
@@ -688,7 +688,7 @@ namespace BIM.IFC.Exporter
         {
             PropertySetDescription propertySetReinforcingBarCommon = new PropertySetDescription();
             propertySetReinforcingBarCommon.Name = "Pset_ReinforcingBarBendingsBS8666Common";
-            propertySetReinforcingBarCommon.SubElementIndex = (int)IFCReinforcingBarSubElements.PSetBS8666Common;
+            propertySetReinforcingBarCommon.SubElementIndex = (int)IFCCommonPSets.PSetBS8666Common;
 
             propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
 
@@ -708,7 +708,7 @@ namespace BIM.IFC.Exporter
         {
             PropertySetDescription propertySetReinforcingBarCommon = new PropertySetDescription();
             propertySetReinforcingBarCommon.Name = "Pset_ReinforcingBarBendingsDIN135610Common";
-            propertySetReinforcingBarCommon.SubElementIndex = (int)IFCReinforcingBarSubElements.PSetDIN135610Common;
+            propertySetReinforcingBarCommon.SubElementIndex = (int)IFCCommonPSets.PSetDIN135610Common;
 
             propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
 
@@ -728,7 +728,7 @@ namespace BIM.IFC.Exporter
         {
             PropertySetDescription propertySetReinforcingBarCommon = new PropertySetDescription();
             propertySetReinforcingBarCommon.Name = "Pset_ReinforcingBarBendingsISOCD3766Common";
-            propertySetReinforcingBarCommon.SubElementIndex = (int)IFCReinforcingBarSubElements.PSetISOCD3766Common;
+            propertySetReinforcingBarCommon.SubElementIndex = (int)IFCCommonPSets.PSetISOCD3766Common;
 
             propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
 
@@ -811,7 +811,7 @@ namespace BIM.IFC.Exporter
             // Pset_RoofCommon
             PropertySetDescription propertySetRoofCommon = new PropertySetDescription();
             propertySetRoofCommon.Name = "Pset_RoofCommon";
-            propertySetRoofCommon.SubElementIndex = (int)IFCRoofSubElements.PSetRoofCommon;
+            propertySetRoofCommon.SubElementIndex = (int)IFCCommonPSets.PSetRoofCommon;
 
             propertySetRoofCommon.EntityTypes.Add(IFCEntityType.IfcRoof);
 
@@ -847,7 +847,7 @@ namespace BIM.IFC.Exporter
             // Pset_SlabCommon
             PropertySetDescription propertySetSlabCommon = new PropertySetDescription();
             propertySetSlabCommon.Name = "Pset_SlabCommon";
-            propertySetSlabCommon.SubElementIndex = (int)IFCSlabSubElements.PSetSlabCommon;
+            propertySetSlabCommon.SubElementIndex = (int)IFCCommonPSets.PSetSlabCommon;
             
             propertySetSlabCommon.EntityTypes.Add(IFCEntityType.IfcSlab);
 
@@ -917,7 +917,7 @@ namespace BIM.IFC.Exporter
             // Pset_RampCommon
             PropertySetDescription propertySetRampCommon = new PropertySetDescription();
             propertySetRampCommon.Name = "Pset_RampCommon";
-            propertySetRampCommon.SubElementIndex = (int)IFCRampSubElements.PSetRampCommon;
+            propertySetRampCommon.SubElementIndex = (int)IFCCommonPSets.PSetRampCommon;
 
             propertySetRampCommon.EntityTypes.Add(IFCEntityType.IfcRamp);
 
@@ -1028,7 +1028,7 @@ namespace BIM.IFC.Exporter
             // Pset_StairCommon
             PropertySetDescription propertySetStairCommon = new PropertySetDescription();
             propertySetStairCommon.Name = "Pset_StairCommon";
-            propertySetStairCommon.SubElementIndex = (int)IFCStairSubElements.PSetStairCommon;
+            propertySetStairCommon.SubElementIndex = (int)IFCCommonPSets.PSetStairCommon;
 
             propertySetStairCommon.EntityTypes.Add(IFCEntityType.IfcStair);
 
@@ -1077,7 +1077,7 @@ namespace BIM.IFC.Exporter
             PropertySetDescription propertySetBuildingCommon = new PropertySetDescription();
             propertySetBuildingCommon.Name = "Pset_BuildingCommon";
             propertySetBuildingCommon.EntityTypes.Add(IFCEntityType.IfcBuilding);
-            propertySetBuildingCommon.SubElementIndex = (int)IFCProjectSubElements.PSetBuildingCommon;
+            propertySetBuildingCommon.SubElementIndex = (int)IFCCommonPSets.PSetBuildingCommon;
 
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateIdentifier("BuildingID"));
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateBoolean("IsPermanentID"));
@@ -1111,7 +1111,7 @@ namespace BIM.IFC.Exporter
             PropertySetDescription propertySetLevelCommon = new PropertySetDescription();
             propertySetLevelCommon.Name = "Pset_BuildingStoreyCommon";
             propertySetLevelCommon.EntityTypes.Add(IFCEntityType.IfcBuildingStorey);
-            propertySetLevelCommon.SubElementIndex = (int)IFCLevelSubElements.PSetBuildingStoreyCommon;
+            propertySetLevelCommon.SubElementIndex = (int)IFCCommonPSets.PSetBuildingStoreyCommon;
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("EntranceLevel");
             propertySetLevelCommon.AddEntry(ifcPSE);
@@ -1147,7 +1147,7 @@ namespace BIM.IFC.Exporter
             PropertySetDescription propertySetSiteCommon = new PropertySetDescription();
             propertySetSiteCommon.Name = "Pset_SiteCommon";
             propertySetSiteCommon.EntityTypes.Add(IFCEntityType.IfcSite);
-            propertySetSiteCommon.SubElementIndex = (int)IFCProjectSubElements.PSetSiteCommon;
+            propertySetSiteCommon.SubElementIndex = (int)IFCCommonPSets.PSetSiteCommon;
 
             PropertySetEntry ifcPSE = PropertySetEntry.CreateArea("BuildableArea");
             propertySetSiteCommon.AddEntry(ifcPSE);

@@ -75,7 +75,8 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
         {
             if (element is Ceiling)
             {
-                IList<ElementId> matIds = HostObjectExporter.GetFinishMaterialIds(element as HostObject);
+                m_Finish = string.Empty;
+                ISet<ElementId> matIds = HostObjectExporter.GetFinishMaterialIds(element as HostObject);
                 foreach (ElementId matId in matIds)
                 {
                     m_Finish += element.Document.GetElement(matId).Name + ";";

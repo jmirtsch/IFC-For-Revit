@@ -352,7 +352,7 @@ namespace BIM.IFC.Exporter
         /// <returns>True if the element should be exported.</returns>
         protected virtual bool CanExportElement(ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView, Autodesk.Revit.DB.Element element)
         {
-            if (!ElementFilteringUtil.ShouldCategoryBeExported(exporterIFC, element))
+            if (!ElementFilteringUtil.ShouldElementBeExported(exporterIFC, element))
                 return false;
 
             // if we allow exporting parts as independent building elements, then prevent also exporting the host elements containing the parts.
@@ -984,6 +984,10 @@ namespace BIM.IFC.Exporter
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction transaction = new IFCTransaction(file))
             {
+                // In some cases, like multi-story stairs and ramps, we may have the same Pset used for multiple levels.
+                // If ifcParams is null, re-use the property set.
+                ISet<string> locallyUsedGUIDs = new HashSet<string>();
+                
                 foreach (KeyValuePair<ElementId, StairRampContainerInfo> stairRamp in ExporterCacheManager.StairRampContainerInfoCache)
                 {
                     StairRampContainerInfo stairRampInfo = stairRamp.Value;
@@ -1001,6 +1005,11 @@ namespace BIM.IFC.Exporter
 
                         Element elem = document.GetElement(stairRamp.Key);
                         string guid = ExporterIFCUtils.CreateSubElementGUID(elem, (int)IFCStairSubElements.ContainmentRelation);
+                        if (locallyUsedGUIDs.Contains(guid))
+                            guid = ExporterIFCUtils.CreateGUID();
+                        else
+                            locallyUsedGUIDs.Add(guid);
+
                         ExporterUtil.RelateObjects(exporterIFC, guid, hnd, comps);
                     }
                 }
@@ -1542,6 +1551,14 @@ namespace BIM.IFC.Exporter
                 ICollection<IFCAnyHandle> productSet = productWrapper.GetAllObjects();
                 IList<IList<PropertySetDescription>> psetsToCreate = ExporterCacheManager.ParameterCache.PropertySets;
 
+                // In some cases, like multi-story stairs and ramps, we may have the same Pset used for multiple levels.
+                // If ifcParams is null, re-use the property set.
+                ISet<string> locallyUsedGUIDs = new HashSet<string>();
+                IDictionary<Tuple<Element, Element, string>, IFCAnyHandle> createdPropertySets =
+                    new Dictionary<Tuple<Element, Element, string>, IFCAnyHandle>();
+                IDictionary<IFCAnyHandle, HashSet<IFCAnyHandle>> relDefinesByPropertiesMap =
+                    new Dictionary<IFCAnyHandle, HashSet<IFCAnyHandle>>();
+
                 foreach (IFCAnyHandle prodHnd in productSet)
                 {
                     IList<PropertySetDescription> currPsetsToCreate = GetCurrPSetsToCreate(prodHnd, psetsToCreate);
@@ -1558,23 +1575,35 @@ namespace BIM.IFC.Exporter
 
                     foreach (PropertySetDescription currDesc in currPsetsToCreate)
                     {
-                        HashSet<IFCAnyHandle> props = currDesc.ProcessEntries(file, exporterIFC, ifcParams, elementToUse, elemTypeToUse);
-                        if (props.Count > 0)
+                        Tuple<Element, Element, string> propertySetKey = new Tuple<Element, Element, string>(elementToUse, elemTypeToUse, currDesc.Name);
+                        IFCAnyHandle propertySet = null;
+                        if ((ifcParams != null) || (!createdPropertySets.TryGetValue(propertySetKey, out propertySet)))
                         {
-                            int subElementIndex = CheckElementTypeValidityForSubIndex(currDesc, prodHnd, element);
-
-                            string guid = null;
-                            if (subElementIndex > 0)
+                            HashSet<IFCAnyHandle> props = currDesc.ProcessEntries(file, exporterIFC, ifcParams, elementToUse, elemTypeToUse);
+                            if (props.Count > 0)
                             {
-                                guid = ExporterIFCUtils.CreateSubElementGUID(elementToUse, subElementIndex);
-                            }
-                            else
-                            {
-                                guid = ExporterIFCUtils.CreateGUID();
-                            }
+                                int subElementIndex = CheckElementTypeValidityForSubIndex(currDesc, prodHnd, element);
 
-                            string paramSetName = currDesc.Name;
-                            IFCAnyHandle propertySet = IFCInstanceExporter.CreatePropertySet(file, guid, ownerHistory, paramSetName, null, props);
+                                string guid = null;
+								if (subElementIndex > 0)
+									guid = ExporterIFCUtils.CreateSubElementGUID(elementToUse, subElementIndex);
+                                else
+                                    locallyUsedGUIDs.Add(guid);
+
+                                if (locallyUsedGUIDs.Contains(guid))
+                                    guid = ExporterIFCUtils.CreateGUID();
+                                else
+                                    locallyUsedGUIDs.Add(guid);
+
+                                string paramSetName = currDesc.Name;
+                                propertySet = IFCInstanceExporter.CreatePropertySet(file, guid, ownerHistory, paramSetName, null, props);
+                                if (ifcParams == null)
+                                    createdPropertySets[propertySetKey] = propertySet;
+                            }
+                        }
+                 
+                        if (propertySet != null)
+                        {
                             IFCAnyHandle prodHndToUse = prodHnd;
                             DescriptionCalculator ifcRDC = currDesc.DescriptionCalculator;
                             if (ifcRDC != null)
@@ -1583,12 +1612,24 @@ namespace BIM.IFC.Exporter
                                 if (!IFCAnyHandleUtil.IsNullOrHasNoValue(overrideHnd))
                                     prodHndToUse = overrideHnd;
                             }
-                            HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
+
+                            HashSet<IFCAnyHandle> relatedObjects = null;
+                            if (!relDefinesByPropertiesMap.TryGetValue(propertySet, out relatedObjects))
+                            {
+                                relatedObjects = new HashSet<IFCAnyHandle>();
+                                relDefinesByPropertiesMap[propertySet] = relatedObjects;
+                            }
                             relatedObjects.Add(prodHndToUse);
-                            IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, propertySet);
                         }
                     }
                 }
+
+                foreach (KeyValuePair<IFCAnyHandle, HashSet<IFCAnyHandle>> relDefinesByProperties in relDefinesByPropertiesMap)
+                {
+                    IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null,
+                        relDefinesByProperties.Value, relDefinesByProperties.Key);
+                }
+
                 transaction.Commit();
             }
 

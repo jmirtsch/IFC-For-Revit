@@ -190,7 +190,7 @@ namespace BIM.IFC.Exporter
                                 using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                                 {
                                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                                    bodyExporterOptions.TessellationLevel = BodyExporterOptions.BodyTessellationLevel.Coarse;
+                                    bodyExporterOptions.TessellationLevel = BodyExporter.GetTessellationLevel();
                                     BodyData bodyData;
                                     IFCAnyHandle prodDefHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
                                         floorElement, catId, geometryElement, bodyExporterOptions, null, ecData, out bodyData);

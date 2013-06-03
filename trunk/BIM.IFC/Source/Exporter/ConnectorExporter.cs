@@ -143,8 +143,8 @@ namespace BIM.IFC.Exporter
                 if (flowDir == IFCFlowDirection.Sink)
                 {
                     // Reverse the direction of the connector.
-                    Transform mirrorTrf = Transform.get_Rotation(XYZ.Zero, connectorCoordinateSystem.BasisX, Math.PI);
-                    connectorCoordinateSystem = connectorCoordinateSystem.Multiply(mirrorTrf);
+                    connectorCoordinateSystem.BasisX = -connectorCoordinateSystem.BasisX;
+                    connectorCoordinateSystem.BasisZ = -connectorCoordinateSystem.BasisZ;
                 }
 
                 Transform relTransform = origTrf.Inverse.Multiply(connectorCoordinateSystem);

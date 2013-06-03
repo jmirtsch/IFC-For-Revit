@@ -363,7 +363,7 @@ namespace BIM.IFC.Exporter
                             if (filterView != null && !ElementFilteringUtil.IsElementVisible(filterView, spatialElement))
                                 continue;
 
-                            if (!ElementFilteringUtil.ShouldCategoryBeExported(exporterIFC, spatialElement))
+                            if (!ElementFilteringUtil.ShouldElementBeExported(exporterIFC, spatialElement))
                                 continue;
 
                             Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
@@ -898,7 +898,7 @@ namespace BIM.IFC.Exporter
                     if (!ExporterCacheManager.ExportOptionsCache.Use2DRoomBoundaryForRoomVolumeCreation && geomElem != null)
                     {
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                        bodyExporterOptions.TessellationLevel = BodyExporterOptions.BodyTessellationLevel.Coarse;
+                        bodyExporterOptions.TessellationLevel = BodyExporter.GetTessellationLevel();
                         repHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, spatialElement,
                             catId, geomElem, bodyExporterOptions, null, extraParams);
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))
