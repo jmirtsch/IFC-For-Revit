@@ -32,11 +32,6 @@ namespace BIM.IFC.Toolkit
         RelContainedInSpatialStructure = 1,
         RelAggregates = 2
     }
-    
-    enum IFCBeamSubElements
-    {
-        PSetBeamCommon = 1
-    }
 
     enum IFCBuildingSubElements
     {
@@ -51,16 +46,37 @@ namespace BIM.IFC.Toolkit
         RelAggregates = 2
     }
 
-    enum IFCCoveringSubElements
+    enum IFCCommonPSets
     {
-        PSetCoveringCommon = 1
+        PSetAirTerminalTypeCommon = 3048,
+        PSetBeamCommon = 3049,
+        PSetBECCommon = 3050,
+        PSetBuildingCommon = 3051,
+        PSetBuildingStoreyCommon = 3052,
+        PSetBS8666Common = 3053,
+        PSetCoveringCommon = 3054,
+        PSetCurtainWallCommon = 3055,
+        PSetDoorCommon = 3056,
+        PSetDIN135610Common = 3057,
+        PSetDistributionFlowElementCommon = 3058,
+        PSetFlowTerminalAirTerminal = 3059,
+        PSetISOCD3766Common = 3060,
+        PSetLightFixtureTypeCommon = 3061,
+        PSetMemberCommon = 3062,
+        PSetPlateCommon = 3063,
+        PSetRampCommon = 3064,
+        PSetRoofCommon = 3065,
+        PSetSiteCommon = 3066,
+        PSetSlabCommon = 3067,
+        PSetStairCommon = 3068,
+        PSetWallCommon = 3069,
+        PSetWindowCommon = 3070,
     }
 
     // Curtain Walls can be created from a variety of elements, including Walls and Roofs.
     // As such, start their subindexes high enough to not bother potential hosts.
     enum IFCCurtainWallSubElements
     {
-        PSetCurtainWallCommon = 1,
         RelAggregates = 1024
     }
 
@@ -69,17 +85,9 @@ namespace BIM.IFC.Toolkit
         DoorLining = 1,
         DoorPanelStart = 2,
         DoorPanelEnd = 17, // 2 through 17 are reserved for panels.
-        PSetDoorCommon = 18,
         DoorOpening = 19,
         DoorOpeningRelVoid = 20,
         DoorStyle = 21,
-    }
-
-    enum IFCDistributionFlowElementSubElements
-    {
-        PSetDistributionFlowElementCommon = 1024,
-        PSetFlowTerminalAirTerminal = 1025,
-        PSetAirTerminalTypeCommon = 1026,
     }
 
     enum IFCGroupSubElements
@@ -96,11 +104,6 @@ namespace BIM.IFC.Toolkit
         PSetRevitInternalRelEnd = PSetRevitInternalRelStart + 255, // 2047
     }
 
-    enum IFCLightFixtureTypeSubElements
-    {
-        PSetLightFixtureTypeCommon = 1
-    }
-
     // Family Instances can create a variety of elements.
     // As such, start their subindexes high enough to not bother potential hosts.
     enum IFCFamilyInstanceSubElements
@@ -108,72 +111,37 @@ namespace BIM.IFC.Toolkit
         InstanceAsType = 2048
     }
 
-    enum IFCLevelSubElements
-    {
-        PSetBuildingStoreyCommon = 1,
-    }
-
-    enum IFCMemberSubElements
-    {
-        PSetMemberCommon = 1
-    }
-
-    enum IFCPlateSubElements
-    {
-        PSetPlateCommon = 1
-    }
-
-    enum IFCProjectSubElements
-    {
-        PSetBuildingCommon = 1,
-        PSetSiteCommon = 2
-    }
-
     enum IFCRampSubElements
     {
-        PSetRampCommon = 1,
         ContainedRamp = 2,
         ContainmentRelation = 3 // same as IFCStairSubElements.ContainmentRelation
     }
 
     enum IFCReinforcingBarSubElements
     {
-        PSetBECCommon = 1,
-        PSetBS8666Common = 2,
-        PSetDIN135610Common = 3,
-        PSetISOCD3766Common = 4,
         BarStart = 5,
         BarEnd = BarStart + 255
     }
 
     enum IFCRoofSubElements
     {
-        PSetRoofCommon = 1,
         RoofSlabStart = 2,
         RoofSlabEnd = RoofSlabStart + 255
     }
 
-    enum IFCSlabSubElements
-    {
-        PSetSlabCommon = 1
-    }
-
     enum IFCStairSubElements
     {
-        PSetStairCommon = 1,
         ContainedStair = 2,
         ContainmentRelation = 3
     }
 
     enum IFCWallSubElements
     {
-        PSetWallCommon = 1,
         RelAggregatesReserved = IFCCurtainWallSubElements.RelAggregates
     }
 
     enum IFCWindowSubElements
     {
-        PSetWindowCommon = 1,
         WindowOpening = IFCDoorSubElements.DoorOpening,
         WindowOpeningRelVoid = IFCDoorSubElements.DoorOpeningRelVoid,
         WindowStyle = IFCDoorSubElements.DoorStyle,

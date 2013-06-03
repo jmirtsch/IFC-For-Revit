@@ -64,6 +64,7 @@ namespace BIM.IFC.Utility
             cache.ExportSurfaceStylesOverride = null;
             cache.ExportBoundingBoxOverride = null;
             cache.IncludeSiteElevation = false;
+            cache.UseCoarseTessellation = true;
             
             cache.PropertySetOptions = PropertySetOptions.Create(exporterIFC, filterView, cache);
 
@@ -163,6 +164,10 @@ namespace BIM.IFC.Utility
             // Include IFCSITE elevation in the site local placement origin
             bool? includeIfcSiteElevation = GetNamedBooleanOption(options, "IncludeSiteElevation");
             cache.IncludeSiteElevation = includeIfcSiteElevation != null ? includeIfcSiteElevation.Value : false;
+
+            // Use coarse tessellation for floors, railings, ramps, spaces and stairs.
+            bool? useCoarseTessellation = GetNamedBooleanOption(options, "UseCoarseTessellation");
+            cache.UseCoarseTessellation = useCoarseTessellation != null ? useCoarseTessellation.Value : true;
 
             // "FileType" - note - setting is not respected yet
             ParseFileType(options, cache);
@@ -446,6 +451,16 @@ namespace BIM.IFC.Utility
             set;
         }
 
+        /// <summary>
+        /// Whether or not to use coarse tessellation for selected element types.
+        /// This is currently: floors, railings, ramps, spaces, and stairs.
+        /// </summary>
+        public bool UseCoarseTessellation
+        {
+            get;
+            set;
+        }
+        
         /// <summary>
         /// Cache variable for the Alternate UI version override (if export from Alternate UI)
         /// </summary>

@@ -35,7 +35,7 @@ namespace BIM.IFC.Utility
     public enum IFCExportType
     {
         /// <summary>
-        /// Don't export.
+        /// This is the default "Don't Export" that could be overwritten by other methods.
         /// </summary>
         DontExport,
         /// <summary>
@@ -587,7 +587,7 @@ namespace BIM.IFC.Utility
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The element.</param>
         /// <returns>True if the element should be exported, false otherwise.</returns>
-        public static bool ShouldCategoryBeExported(ExporterIFC exporterIFC, Element element)
+        private static bool ShouldCategoryBeExported(ExporterIFC exporterIFC, Element element)
         {
             IFCExportType exportType = IFCExportType.DontExport;
             String ifcClassName = ExporterIFCUtils.GetIFCClassName(element, exporterIFC);
@@ -614,6 +614,27 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Checks if element should be exported by checking IfcExportAs.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="element">The element.</param>
+        /// <returns>True if the element should be exported, false otherwise.</returns>
+        public static bool ShouldElementBeExported(ExporterIFC exporterIFC, Element element)
+        {
+            if (!ShouldCategoryBeExported(exporterIFC, element))
+                return false;
+
+            string exportAsEntity = "IFCExportAs";
+            string elementClassName;
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, exportAsEntity, out elementClassName))
+            {
+                if (CompareAlphaOnly(elementClassName, "DONTEXPORT"))
+                    return false;
+            }
+            return true;
+        }
+        
+        /// <summary>
         /// Checks if name is equal to base or its type name.
         /// </summary>
         /// <param name="name">The object type name.</param>
@@ -626,6 +647,31 @@ namespace BIM.IFC.Utility
 
             String typeName = baseName + "Type";
             return (String.Compare(name, typeName, true) == 0);
+        }
+
+        /// <summary>
+        /// Compares two strings, ignoring spaces, punctuation and case.
+        /// </summary>
+        /// <param name="name">The string to compare.</param>
+        /// <param name="baseNameAllCapsNoSpaces">String to compare to, all caps, no punctuation or cases.</param>
+        /// <returns></returns>
+        private static bool CompareAlphaOnly(String name, String baseNameAllCapsNoSpaces)
+        {
+            string nameToUpper = name.ToUpper();
+            int loc = 0;
+            int maxLen = baseNameAllCapsNoSpaces.Length;
+            foreach (char c in nameToUpper)
+            {
+                if (c >= 'A' && c <= 'Z')
+                {
+                    if (baseNameAllCapsNoSpaces[loc] != c)
+                        return false;
+                    loc++;
+                    if (loc == maxLen)
+                        return true;
+                }
+            }
+            return false;
         }
 
         /// <summary>

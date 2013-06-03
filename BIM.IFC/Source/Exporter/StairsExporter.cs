@@ -920,10 +920,9 @@ namespace BIM.IFC.Exporter
         /// <param name="ifcEnumType">>The ifc type.</param>
         /// <param name="legacyStair">The legacy stairs or ramp element.</param>
         /// <param name="geometryElement">The geometry element.</param>
-        /// <param name="useCoarseTessellation">Export using a coarse tessellation if true.</param>
         /// <param name="productWrapper">The ProductWrapper.</param>
         public static void ExportLegacyStairOrRampAsContainer(ExporterIFC exporterIFC, string ifcEnumType, Element legacyStair, GeometryElement geometryElement,
-            bool useCoarseTessellation, ProductWrapper productWrapper)
+            ProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
             ElementId categoryId = CategoryUtil.GetSafeCategoryId(legacyStair);
@@ -985,8 +984,7 @@ namespace BIM.IFC.Exporter
                         for (int ii = 0; ii < runCount; ii++)
                         {
                             BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                            if (useCoarseTessellation)
-                                bodyExporterOptions.TessellationLevel = BodyExporterOptions.BodyTessellationLevel.Coarse;
+                            bodyExporterOptions.TessellationLevel = BodyExporter.GetTessellationLevel();
 
                             IList<GeometryObject> geometriesOfARun = geometriesOfRuns[ii];
                             BodyData bodyData = BodyExporter.ExportBody(exporterIFC, legacyStair, categoryId, ElementId.InvalidElementId, geometriesOfARun,
@@ -1293,7 +1291,7 @@ namespace BIM.IFC.Exporter
                 }
                 else if (IsLegacyStairs(element))
                 {
-                    ExportLegacyStairOrRampAsContainer(exporterIFC, ifcEnumType, element, geometryElement, true, productWrapper);
+                    ExportLegacyStairOrRampAsContainer(exporterIFC, ifcEnumType, element, geometryElement, productWrapper);
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(productWrapper.GetAnElement()))
                     {
                         double defaultHeight = GetDefaultHeightForLegacyStair(exporterIFC.LinearScale);

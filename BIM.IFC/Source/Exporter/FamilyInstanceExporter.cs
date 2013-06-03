@@ -1098,6 +1098,7 @@ namespace BIM.IFC.Exporter
 
                         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
                         {
+                            ExporterCacheManager.HandleToElementCache.Register(instanceHandle, familyInstance.Id);
                             if (doorWindowInfo != null)
                             {
                                 if (!ignoreDoorWindowOpening)

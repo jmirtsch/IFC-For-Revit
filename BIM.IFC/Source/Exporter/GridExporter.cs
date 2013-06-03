@@ -31,32 +31,6 @@ using BIM.IFC.Exporter.PropertySet;
 namespace BIM.IFC.Exporter
 {
     /// <summary>
-    /// The comparer for comparing XYZ.
-    /// </summary>
-    struct XYZComparer : IEqualityComparer<XYZ>
-    {
-        /// <summary>
-        /// Two XYZ is equal if they are almost equal.
-        /// </summary>
-        /// <param name="x">The XYZ.</param>
-        /// <param name="y">The XYZ.</param>
-        /// <returns>True if two XYZ are almost equal; false otherwise.</returns>
-        public bool Equals(XYZ x, XYZ y)
-        {
-            return x.IsAlmostEqualTo(y);
-        }
-        /// <summary>
-        /// Return 0 to let call Equals.
-        /// </summary>
-        /// <param name="obj">The XYZ.</param>
-        /// <returns>0 for all XYZ.</returns>
-        public int GetHashCode(XYZ obj)
-        {
-            return 0;
-        }
-    }
-
-    /// <summary>
     /// Provides methods to export Grid.
     /// </summary>
     class GridExporter
@@ -77,8 +51,8 @@ namespace BIM.IFC.Exporter
             // Get grids in each level and export.
             foreach (ElementId levelId in levelGrids.Keys)
             {
-                IDictionary<XYZ, List<Grid>> linearGrids = new Dictionary<XYZ, List<Grid>>(new XYZComparer());
-                IDictionary<XYZ, List<Grid>> radialGrids = new Dictionary<XYZ, List<Grid>>(new XYZComparer());
+                IDictionary<XYZ, List<Grid>> linearGrids = new Dictionary<XYZ, List<Grid>>(new GeometryUtil.XYZComparer());
+                IDictionary<XYZ, List<Grid>> radialGrids = new Dictionary<XYZ, List<Grid>>(new GeometryUtil.XYZComparer());
                 List<Grid> exportedLinearGrids = new List<Grid>();
 
                 List<Grid> gridsOneLevel = levelGrids[levelId];
@@ -467,8 +441,8 @@ namespace BIM.IFC.Exporter
         /// <param name="radialGrids">The radial grids in one level.</param>
         private static void SortGrids(List<Grid> gridsOneLevel, out IDictionary<XYZ, List<Grid>> linearGrids, out IDictionary<XYZ, List<Grid>> radialGrids)
         {
-            linearGrids = new Dictionary<XYZ, List<Grid>>(new XYZComparer());
-            radialGrids = new Dictionary<XYZ, List<Grid>>(new XYZComparer());
+            linearGrids = new Dictionary<XYZ, List<Grid>>(new GeometryUtil.XYZComparer());
+            radialGrids = new Dictionary<XYZ, List<Grid>>(new GeometryUtil.XYZComparer());
 
             foreach (Grid grid in gridsOneLevel)
             {
