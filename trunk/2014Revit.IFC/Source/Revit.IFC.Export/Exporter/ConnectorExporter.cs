@@ -145,8 +145,8 @@ namespace Revit.IFC.Export.Exporter
                 if (flowDir == IFCFlowDirection.Sink)
                 {
                     // Reverse the direction of the connector.
-                    Transform mirrorTrf = Transform.CreateRotation(connectorCoordinateSystem.BasisX, Math.PI);
-                    connectorCoordinateSystem = connectorCoordinateSystem.Multiply(mirrorTrf);
+                    connectorCoordinateSystem.BasisX = -connectorCoordinateSystem.BasisX;
+                    connectorCoordinateSystem.BasisZ = -connectorCoordinateSystem.BasisZ;
                 }
 
                 Transform relTransform = origTrf.Inverse.Multiply(connectorCoordinateSystem);

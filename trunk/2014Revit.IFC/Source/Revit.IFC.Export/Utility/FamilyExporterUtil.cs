@@ -75,8 +75,9 @@ namespace Revit.IFC.Export.Exporter
         /// </returns>
         public static bool IsEnergyConversionDeviceSubType(IFCExportType exportType)
         {
+            // Note: Implementer's agreement #CV-2x3-166 changes IfcSpaceHeaterType from IfcEnergyConversionDevice to IfcFlowTerminal.
             return (exportType >= IFCExportType.ExportAirToAirHeatRecoveryType &&
-               exportType <= IFCExportType.ExportUnitaryEquipmentType);
+               exportType <= IFCExportType.ExportUnitaryEquipmentType) && (exportType != IFCExportType.ExportSpaceHeaterType);
         }
 
         /// <summary>
@@ -150,8 +151,9 @@ namespace Revit.IFC.Export.Exporter
         /// </returns>
         public static bool IsFlowTerminalSubType(IFCExportType exportType)
         {
+            // Note: Implementer's agreement #CV-2x3-166 changes IfcSpaceHeaterType from IfcEnergyConversionDevice to IfcFlowTerminal.
             return (exportType >= IFCExportType.ExportAirTerminalType &&
-               exportType <= IFCExportType.ExportWasteTerminalType);
+               exportType <= IFCExportType.ExportWasteTerminalType) || (exportType == IFCExportType.ExportSpaceHeaterType);
         }
 
         /// <summary>

@@ -302,9 +302,9 @@ namespace Revit.IFC.Export.Exporter
                         ElementId catId = CategoryUtil.GetSafeCategoryId(element);
                         BodyData bodyData = null;
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+                        bodyExporterOptions.TessellationLevel = BodyExporter.GetTessellationLevel();
                         //bodyExporterOptions.UseGroupsIfPossible = true;
                         //bodyExporterOptions.UseMappedGeometriesIfPossible = true;
-                        bodyExporterOptions.TessellationLevel = BodyExporterOptions.BodyTessellationLevel.Coarse;
 
                         if (solids.Count > 0 || meshes.Count > 0)
                         {

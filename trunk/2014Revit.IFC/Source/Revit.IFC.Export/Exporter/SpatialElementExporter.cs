@@ -926,7 +926,7 @@ namespace Revit.IFC.Export.Exporter
                     if (!ExporterCacheManager.ExportOptionsCache.Use2DRoomBoundaryForRoomVolumeCreation && geomElem != null)
                     {
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                        bodyExporterOptions.TessellationLevel = BodyExporterOptions.BodyTessellationLevel.Coarse;
+                        bodyExporterOptions.TessellationLevel = BodyExporter.GetTessellationLevel();
                         repHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, spatialElement,
                             catId, geomElem, bodyExporterOptions, null, extraParams);
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))

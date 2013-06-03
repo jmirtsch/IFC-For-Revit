@@ -168,12 +168,16 @@ namespace Revit.IFC.Export.Utility
 
             IList<DoorWindowOpeningInfo> doorWindowOpeningInfoList = new List<DoorWindowOpeningInfo>();
 
+            Element doorElem = doc.GetElement(InsertId);
+            string openingGUID = GUIDUtil.CreateSubElementGUID(doorElem, (int)IFCDoorSubElements.DoorOpening);
             if (ExtrusionData != null)
             {
                 foreach (IFCExtrusionData extrusionData in ExtrusionData)
                 {
+                    if (doorWindowOpeningInfoList.Count > 0)
+                        openingGUID = GUIDUtil.CreateGUID();
                     DoorWindowOpeningInfo openingInfo = DoorWindowUtil.CreateOpeningForDoorWindow(exporterIFC, doc, hostObjHnd,
-                        HostId, InsertId, extrusionData.GetLoops()[0], extrusionData.ExtrusionDirection,
+                        HostId, InsertId, openingGUID, extrusionData.GetLoops()[0], extrusionData.ExtrusionDirection,
                         UnitUtil.UnscaleLength(extrusionData.ScaledExtrusionLength), PosHingeSide, IsRecess);
                     if (openingInfo != null && !IFCAnyHandleUtil.IsNullOrHasNoValue(openingInfo.OpeningHnd))
                         doorWindowOpeningInfoList.Add(openingInfo);
@@ -184,8 +188,10 @@ namespace Revit.IFC.Export.Utility
             {
                 foreach (Solid solid in Solids)
                 {
+                    if (doorWindowOpeningInfoList.Count > 0)
+                        openingGUID = GUIDUtil.CreateGUID();
                     DoorWindowOpeningInfo openingInfo = DoorWindowUtil.CreateOpeningForDoorWindow(exporterIFC, doc, hostObjHnd,
-                        HostId, InsertId, solid, ScaledHostWidth, IsRecess);
+                        HostId, InsertId, openingGUID, solid, ScaledHostWidth, IsRecess);
                     if (openingInfo != null && !IFCAnyHandleUtil.IsNullOrHasNoValue(openingInfo.OpeningHnd))
                         doorWindowOpeningInfoList.Add(openingInfo);
                 }
