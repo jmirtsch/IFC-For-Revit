@@ -862,6 +862,8 @@ namespace Revit.IFC.Export.Exporter
 
                         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
                         {
+                            ExporterCacheManager.HandleToElementCache.Register(instanceHandle, familyInstance.Id);
+
                             if (!exportParts)
                                 CategoryUtil.CreateMaterialAssociations(doc, exporterIFC, instanceHandle, typeInfo.MaterialIds);
 

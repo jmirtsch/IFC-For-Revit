@@ -878,8 +878,23 @@ namespace Revit.IFC.Export.Utility
             }
         }
 
+        /// <summary>
+        /// Create the opening associated to an already created door or window.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter class.</param>
+        /// <param name="doc">The document.</param>
+        /// <param name="hostObjHnd">The host object IFC handle.</param>
+        /// <param name="hostId">The host object element id.</param>
+        /// <param name="insertId">The insert element id.</param>
+        /// <param name="openingGUID">The GUID for the IfcOpeningElement.</param>
+        /// <param name="cutLoop">The 2D outline representing the opening geometry.</param>
+        /// <param name="cutDir">The direction of the extrusion representing the opening geometry.</param>
+        /// <param name="origUnscaledDepth">The width of the host object that the opening is cutting.</param>
+        /// <param name="posHingeSide">Tue if the 2D outline is on the plane containing the hinge.</param>
+        /// <param name="isRecess">True if the IfcOpeningElement should represent a recess.</param>
+        /// <returns>The class containing information about the opening.</returns>
         static public DoorWindowOpeningInfo CreateOpeningForDoorWindow(ExporterIFC exporterIFC, Document doc,
-            IFCAnyHandle hostObjHnd, ElementId hostId, ElementId insertId, CurveLoop cutLoop, XYZ cutDir,
+            IFCAnyHandle hostObjHnd, ElementId hostId, ElementId insertId, string openingGUID, CurveLoop cutLoop, XYZ cutDir,
             double origUnscaledDepth, bool posHingeSide, bool isRecess)
         {
             // calculate some values.
@@ -1044,7 +1059,6 @@ namespace Revit.IFC.Export.Utility
             openingPlacement = ExporterUtil.CreateLocalPlacement(file, hostObjPlacementHnd, scaledOrig, relZ, relX);
 
             string openingObjectType = isRecess ? "Recess": "Opening";
-            string openingGUID = GUIDUtil.CreateSubElementGUID(doorWindowElement, (int)IFCDoorSubElements.DoorOpening);
             string origOpeningName = NamingUtil.GetIFCNamePlusIndex(doorWindowElement, 1);
             string openingName = NamingUtil.GetNameOverride(doorWindowElement, origOpeningName);
 
@@ -1082,8 +1096,21 @@ namespace Revit.IFC.Export.Utility
             return DoorWindowOpeningInfo.Create(openingHnd, openingPlacement, openingHeight, openingWidth);
         }
 
+        /// <summary>
+        /// Create the opening associated to an already created door or window.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter class.</param>
+        /// <param name="doc">The document.</param>
+        /// <param name="hostObjHnd">The host object IFC handle.</param>
+        /// <param name="hostId">The host object element id.</param>
+        /// <param name="insertId">The insert element id.</param>
+        /// <param name="openingGUID">The GUID for the IfcOpeningElement.</param>
+        /// <param name="solid">The solid representing the opening geometry.</param>
+        /// <param name="scaledHostWidth">The width of the host object that the opening is cutting.</param>
+        /// <param name="isRecess">True if the IfcOpeningElement should represent a recess.</param>
+        /// <returns>The class containing information about the opening.</returns>
         static public DoorWindowOpeningInfo CreateOpeningForDoorWindow(ExporterIFC exporterIFC, Document doc,
-            IFCAnyHandle hostObjHnd, ElementId hostId, ElementId insertId, Solid solid, double scaledHostWidth, bool isRecess)
+            IFCAnyHandle hostObjHnd, ElementId hostId, ElementId insertId, string openingGUID, Solid solid, double scaledHostWidth, bool isRecess)
         {
             IFCFile file = exporterIFC.GetFile();
             Element hostElement = doc.GetElement(hostId);
@@ -1098,7 +1125,7 @@ namespace Revit.IFC.Export.Utility
                     extrusionCreationData.SetLocalPlacement(ExporterUtil.CreateLocalPlacement(file, setter.LocalPlacement, null));
                     extrusionCreationData.ReuseLocalPlacement = true;
 
-                    IFCAnyHandle openingHnd = OpeningUtil.CreateOpening(exporterIFC, hostObjHnd, hostElement, insertElement, solid, scaledHostWidth, isRecess, extrusionCreationData, null, null);
+                    IFCAnyHandle openingHnd = OpeningUtil.CreateOpening(exporterIFC, hostObjHnd, hostElement, insertElement, openingGUID, solid, scaledHostWidth, isRecess, extrusionCreationData, null, null);
 
                     return DoorWindowOpeningInfo.Create(openingHnd, extrusionCreationData.GetLocalPlacement(),
                         UnitUtil.UnscaleLength(extrusionCreationData.ScaledHeight), UnitUtil.UnscaleLength(extrusionCreationData.ScaledWidth));

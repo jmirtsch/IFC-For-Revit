@@ -365,9 +365,9 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="hostObject">The host object.</param>
         /// <returns>The material ids.</returns>
-        public static IList<ElementId> GetFinishMaterialIds(HostObject hostObject)
+        public static ISet<ElementId> GetFinishMaterialIds(HostObject hostObject)
         {
-            List<ElementId> matIds = new List<ElementId>();
+            HashSet<ElementId> matIds = new HashSet<ElementId>();
 
             ElementId typeElemId = hostObject.GetTypeId();
             HostObjAttributes hostObjAttr = hostObject.Document.GetElement(typeElemId) as HostObjAttributes;
