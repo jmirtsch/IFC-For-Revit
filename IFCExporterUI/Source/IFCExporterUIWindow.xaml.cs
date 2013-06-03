@@ -49,7 +49,7 @@ namespace BIM.IFC.Export.UI
         /// <summary>
         /// The file to store the previous window bounds.
         /// </summary>
-        string m_SettingFile = "IFCExporterUIWindowSettings_v5.txt";    // update the file when resize window bounds.
+        string m_SettingFile = "IFCExporterUIWindowSettings_v6.txt";    // update the file when resize window bounds.
 
         /// <summary>
         /// Constructs a new IFC export options window.
@@ -175,6 +175,7 @@ namespace BIM.IFC.Export.UI
             checkboxExportAdvancedSweptSolids.IsChecked = configuration.ExportAdvancedSweptSolids;
             checkboxExportBoundingBox.IsChecked = configuration.ExportBoundingBox;
             checkboxIncludeIfcSiteElevation.IsChecked = configuration.IncludeSiteElevation;
+            checkboxUseCoarseTessellation.IsChecked = configuration.UseCoarseTessellation;
 
             UIElement[] configurationElements = new UIElement[]{comboboxIfcType, 
                                                                 comboboxFileType, 
@@ -191,7 +192,8 @@ namespace BIM.IFC.Export.UI
                                                                 checkboxExportSurfaceStyles,
                                                                 checkboxExportAdvancedSweptSolids,
                                                                 checkboxExportBoundingBox,
-                                                                checkboxIncludeIfcSiteElevation
+                                                                checkboxIncludeIfcSiteElevation,
+                                                                checkboxUseCoarseTessellation
                                                                 };
             foreach (UIElement element in configurationElements)
             {
@@ -678,6 +680,21 @@ namespace BIM.IFC.Export.UI
             if (configuration != null)
             {
                 configuration.IncludeSiteElevation = GetCheckbuttonChecked(checkBox);
+            }
+        }
+
+        /// <summary>
+        /// Updates the configuration UseCoarseTessellation when the Export Bounding Box changed in the check box.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments that contains the event data.</param>
+        private void checkboxUseCoarseTessellation_Checked(object sender, RoutedEventArgs e)
+        {
+            CheckBox checkBox = (CheckBox)sender;
+            IFCExportConfiguration configuration = GetSelectedConfiguration();
+            if (configuration != null)
+            {
+                configuration.UseCoarseTessellation = GetCheckbuttonChecked(checkBox);
             }
         }
     }
