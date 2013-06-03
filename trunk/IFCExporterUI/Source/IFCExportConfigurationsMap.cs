@@ -133,6 +133,8 @@ namespace BIM.IFC.Export.UI
                             configuration.ExportBoundingBox = bool.Parse(configMap[s_setupExportBoundingBox]);
                         if (configMap.ContainsKey(s_setupIncludeSiteElevation))
                             configuration.IncludeSiteElevation = bool.Parse(configMap[s_setupIncludeSiteElevation]);
+                        if (configMap.ContainsKey(s_setupUseCoarseTessellation))
+                            configuration.UseCoarseTessellation = bool.Parse(configMap[s_setupUseCoarseTessellation]);
 
                         Add(configuration);
                     }
@@ -175,6 +177,9 @@ namespace BIM.IFC.Export.UI
                         Field fieldIncludeSiteElevation = m_schema.GetField(s_setupIncludeSiteElevation);
                         if (fieldIncludeSiteElevation != null)
                             configuration.IncludeSiteElevation = configEntity.Get<bool>(s_setupIncludeSiteElevation);
+                        Field fieldUseCoarseTessellation = m_schema.GetField(s_setupUseCoarseTessellation);
+                        if (fieldUseCoarseTessellation != null)
+                            configuration.UseCoarseTessellation = configEntity.Get<bool>(s_setupUseCoarseTessellation);
 
                         Add(configuration);
                     }
@@ -208,6 +213,7 @@ namespace BIM.IFC.Export.UI
         private const String s_setupExportAdvancedSweptSolids = "ExportAdvancedSweptSolids";
         private const String s_setupExportBoundingBox = "ExportBoundingBox";
         private const String s_setupIncludeSiteElevation = "IncludeSiteElevation";
+        private const String s_setupUseCoarseTessellation = "UseCoarseTessellation";
 
         /// <summary>
         /// Updates the setups to save into the document.
@@ -312,6 +318,7 @@ namespace BIM.IFC.Export.UI
                    mapData.Add(s_setupExportAdvancedSweptSolids, configuration.ExportAdvancedSweptSolids.ToString());
                    mapData.Add(s_setupExportBoundingBox, configuration.ExportBoundingBox.ToString());
                    mapData.Add(s_setupIncludeSiteElevation, configuration.IncludeSiteElevation.ToString());
+                   mapData.Add(s_setupUseCoarseTessellation, configuration.UseCoarseTessellation.ToString());
                    mapEntity.Set<IDictionary<string, String>>(s_configMapField, mapData);
 
                 configStorage.SetEntity(mapEntity);

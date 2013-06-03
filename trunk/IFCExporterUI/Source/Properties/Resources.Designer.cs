@@ -313,6 +313,15 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use coarse tessellation for some BReps.
+        /// </summary>
+        internal static string UseCoarseTessellation {
+            get {
+                return ResourceManager.GetString("UseCoarseTessellation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use family and type name for references.
         /// </summary>
         internal static string UseFamilyAndTypeNameForReferences {

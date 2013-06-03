@@ -206,4 +206,7 @@
   <data name="IncludeIfcSiteElevation" xml:space="preserve">
     <value>Include IFCSITE elevation in the site local placement origin</value>
   </data>
+  <data name="UseCoarseTessellation" xml:space="preserve">
+    <value>Use coarse tessellation for some BReps</value>
+  </data>
 </root>
