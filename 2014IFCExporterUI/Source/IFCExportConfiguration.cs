@@ -130,6 +130,12 @@ namespace BIM.IFC.Export.UI
         /// </summary>
         public bool IncludeSiteElevation { get; set; }
 
+        /// <summary>
+        /// True to use coarse tessellation for certain elements (currently floors, spaces, stairs, ramps and railings).
+        /// Will reduce the size of the export file, but may create less usable geometry.
+        /// </summary>
+        public bool UseCoarseTessellation { get; set; }
+
         private bool m_isBuiltIn = false;
         private bool m_isInSession = false;
         private static IFCExportConfiguration s_inSessionConfiguration = null;
@@ -187,6 +193,7 @@ namespace BIM.IFC.Export.UI
             this.ExportAdvancedSweptSolids = false;
             this.ExportBoundingBox = false;
             this.IncludeSiteElevation = false;
+            this.UseCoarseTessellation = true;
             this.m_isBuiltIn = false; 
             this.m_isInSession = false;
         }
@@ -232,6 +239,7 @@ namespace BIM.IFC.Export.UI
             configuration.ExportAdvancedSweptSolids = false;
             configuration.ExportBoundingBox = exportBoundingBox;
             configuration.IncludeSiteElevation = false;
+            configuration.UseCoarseTessellation = true;
             configuration.m_isBuiltIn = true;
             configuration.m_isInSession = false; 
             return configuration;
@@ -265,6 +273,7 @@ namespace BIM.IFC.Export.UI
             this.ExportAdvancedSweptSolids = other.ExportAdvancedSweptSolids;
             this.ExportBoundingBox = other.ExportBoundingBox;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
+            this.UseCoarseTessellation = other.UseCoarseTessellation;
             this.m_isBuiltIn = other.m_isBuiltIn;
             this.m_isInSession = other.m_isInSession;
         }
@@ -303,6 +312,7 @@ namespace BIM.IFC.Export.UI
             this.ExportAdvancedSweptSolids = other.ExportAdvancedSweptSolids;
             this.ExportBoundingBox = other.ExportBoundingBox;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
+            this.UseCoarseTessellation = other.UseCoarseTessellation;
             this.m_isBuiltIn = false;
             this.m_isInSession = false;
         }
@@ -361,6 +371,7 @@ namespace BIM.IFC.Export.UI
             options.AddOption("ExportAdvancedSweptSolids", ExportAdvancedSweptSolids.ToString());
             options.AddOption("ExportBoundingBox", ExportBoundingBox.ToString());
             options.AddOption("IncludeSiteElevation", IncludeSiteElevation.ToString());
+            options.AddOption("UseCoarseTessellation", UseCoarseTessellation.ToString());
 
             options.AddOption("FileType", IFCFileType.ToString());
             string uiVersion = IFCUISettings.GetAssemblyVersion();
@@ -420,6 +431,7 @@ namespace BIM.IFC.Export.UI
                     ConditionalAddLine(builder, Resources.UseFamilyAndTypeNameForReferences, UseFamilyAndTypeNameForReference, valueToMatch);
                     ConditionalAddLine(builder, Resources.Use2DRoomBoundariesForRoomVolume, Use2DRoomBoundaryForVolume, valueToMatch);
                     ConditionalAddLine(builder, Resources.IncludeIfcSiteElevation, IncludeSiteElevation, valueToMatch);
+                    ConditionalAddLine(builder, Resources.UseCoarseTessellation, UseCoarseTessellation, valueToMatch);
                 }
 
                 return builder.ToString();
