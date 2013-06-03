@@ -2,17 +2,17 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="IFC Export" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" Height="430" Width="729" WindowStyle="SingleBorderWindow" ResizeMode="CanMinimize" Closing="Window_Closing">
-   <Grid HorizontalAlignment="Right" Height="393" Width="710">
-      <TabControl Height="340" HorizontalAlignment="Left" Name="tabControl" VerticalAlignment="Top" Width="466" Margin="236,8,0,0">
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" Height="446" Width="749" WindowStyle="SingleBorderWindow" ResizeMode="CanMinimize" Closing="Window_Closing">
+   <Grid HorizontalAlignment="Right" Height="411" Width="729">
+      <TabControl Height="364" HorizontalAlignment="Left" Name="tabControl" VerticalAlignment="Top" Width="477" Margin="236,8,0,0">
          <TabItem Header="Options" Name="Options">
-            <Grid Height="311" Width="451">
-               <ComboBox Height="23" HorizontalAlignment="Left" Margin="113,76,0,0" Name="comboboxSpaceBoundaries" VerticalAlignment="Top" Width="133" ItemsSource="{Binding}" SelectionChanged="comboboxSpaceBoundaries_SelectionChanged" />
+            <Grid Height="331" Width="469">
+               <ComboBox Height="23" HorizontalAlignment="Left" Margin="135,76,0,0" Name="comboboxSpaceBoundaries" VerticalAlignment="Top" Width="133" ItemsSource="{Binding}" SelectionChanged="comboboxSpaceBoundaries_SelectionChanged" />
                <CheckBox Content="Export base quantities" Height="16" HorizontalAlignment="Left" Margin="6,111,0,0" Name="checkboxExportBaseQuantities" VerticalAlignment="Top" Checked="checkboxExportBaseQuantities_Checked" Unchecked="checkboxExportBaseQuantities_Checked" />
                <CheckBox Content="Split walls and columns by level" Height="16" HorizontalAlignment="Left" Margin="6,133,0,0" Name="checkboxSplitWalls" VerticalAlignment="Top" Checked="checkboxSplitWalls_Checked" Unchecked="checkboxSplitWalls_Checked" />
                <CheckBox Content="Internal Revit property sets" HorizontalAlignment="Left" Margin="6,155,0,140" Name="checkboxInternalPropertySets" Checked="checkboxInternalPropertySets_Checked" Unchecked="checkboxInternalPropertySets_Checked" Width="169" />
                <CheckBox Content="2D plan view elements" Height="16" HorizontalAlignment="Left" Margin="6,199,0,0" Name="checkbox2dElements" VerticalAlignment="Top" Checked="checkbox2dElements_Checked" Unchecked="checkbox2dElements_Checked" />
-               <CheckBox Content="Export Visible elements in view" Height="16" HorizontalAlignment="Left" Margin="249,111,0,0" Name="checkboxVisibleElementsCurrView" VerticalAlignment="Top" Checked="checkboxVisibleElementsCurrView_Checked" Unchecked="checkboxVisibleElementsCurrView_Checked" />
+               <CheckBox Content="Export only elements visible in view" Height="16" HorizontalAlignment="Left" Margin="249,111,0,0" Name="checkboxVisibleElementsCurrView" VerticalAlignment="Top" Checked="checkboxVisibleElementsCurrView_Checked" Unchecked="checkboxVisibleElementsCurrView_Checked" Width="213" />
                <Label Content="Space Boundaries" Height="29" Margin="6,76,335,0" Name="label3" VerticalAlignment="Top" />
                <ComboBox Height="23" Margin="0,6,19,0" Name="comboboxIfcType" VerticalAlignment="Top" Text="" HorizontalAlignment="Right" Width="319" SelectionChanged="comboboxIfcType_SelectionChanged" />
                <Label Content="IFC Version" Height="29" HorizontalAlignment="Left" Margin="6,6,0,0" Name="label1" VerticalAlignment="Top" Width="70" />
@@ -21,29 +21,29 @@
                <CheckBox Content="Export parts as building elements" Height="16" HorizontalAlignment="Left" Margin="249,133,0,0" Name="checkBoxExportPartsAsBuildingElements" VerticalAlignment="Top" Checked="checkBoxExportPartsAsBuildingElements_Checked" Unchecked="checkBoxExportPartsAsBuildingElements_Checked" Visibility="Visible" />
                <CheckBox Content="IFC common property sets" Height="16" HorizontalAlignment="Left" Margin="6,177,0,0" Name="checkboxIFCCommonPropertySets" VerticalAlignment="Top" Checked="checkboxIFCCommonPropertySets_Checked" Unchecked="checkboxIFCCommonPropertySets_Checked"/>
                <CheckBox Content="Export surface styles " Height="16" HorizontalAlignment="Left" Margin="249,155,0,0" Name="checkboxExportSurfaceStyles" VerticalAlignment="Top" Checked="checkboxExportSurfaceStyles_Checked" Unchecked="checkboxExportSurfaceStyles_Checked"/>
-               <CheckBox Content="Export Advanced Swept Solids" Height="16" HorizontalAlignment="Left" Margin="249,175,0,0" Name="checkboxExportAdvancedSweptSolids" VerticalAlignment="Top" Checked="checkboxExportAdvancedSweptSolids_Checked" Unchecked="checkboxExportAdvancedSweptSolids_Checked" />
+               <CheckBox Content="Export advanced swept solids" Height="16" HorizontalAlignment="Left" Margin="249,175,0,0" Name="checkboxExportAdvancedSweptSolids" VerticalAlignment="Top" Checked="checkboxExportAdvancedSweptSolids_Checked" Unchecked="checkboxExportAdvancedSweptSolids_Checked" />
                <CheckBox Content="Export Bounding Box" Height="16" HorizontalAlignment="Left" Margin="249,195,0,0" Name="checkboxExportBoundingBox" VerticalAlignment="Top" Checked="checkboxExportBoundingBox_Checked" Unchecked="checkboxExportBoundingBox_Checked" />
                <CheckBox Content="Use family and type name for reference" Height="16" HorizontalAlignment="Left" Margin="6,235,0,0" Name="checkBoxFamilyAndTypeName" VerticalAlignment="Top" Checked="checkBoxFamilyAndTypeName_Checked" Unchecked="checkBoxFamilyAndTypeName_Checked" />
                <CheckBox Content="Include IFCSITE elevation in the site local placement origin" Height="16" HorizontalAlignment="Left" Margin="6,279,0,0" Name="checkboxIncludeIfcSiteElevation" VerticalAlignment="Top" Checked="checkboxIfcSiteElevation_Checked" Unchecked="checkboxIfcSiteElevation_Checked" />
                <CheckBox Content="Use 2D room boundaries for room volume" Height="16" HorizontalAlignment="Left" Margin="6,257,0,0" Name="checkBoxUse2DRoomVolumes" VerticalAlignment="Top" Checked="checkBoxUse2DRoomVolumes_Checked" Unchecked="checkBoxUse2DRoomVolumes_Checked" />
+               <CheckBox Content="Use coarse tessellation for some BReps" Height="16" HorizontalAlignment="Left" Margin="6,301,0,0" Name="checkboxUseCoarseTessellation" VerticalAlignment="Top" Checked="checkboxUseCoarseTessellation_Checked" Unchecked="checkboxUseCoarseTessellation_Checked" />
             </Grid>
          </TabItem>
       </TabControl>
-      <Button Content="OK" HorizontalAlignment="Right" Margin="0,0,90,11" Name="buttonOK" Width="63" IsDefault="True" Click="buttonOK_Click" Height="23" VerticalAlignment="Bottom">
+      <Button Content="OK" HorizontalAlignment="Right" Margin="0,0,90,8" Name="buttonOK" Width="63" IsDefault="True" Click="buttonOK_Click" Height="23" VerticalAlignment="Bottom">
       </Button>
-      <Button Content="Cancel" Height="23" HorizontalAlignment="Right" Margin="0,0,16,12" Name="buttonCancel" VerticalAlignment="Bottom" Width="63" Click="buttonCancel_Click" />
-      <ListBox Height="340" HorizontalAlignment="Left" Margin="8,8,0,0" Name="listBoxConfigurations" VerticalAlignment="Top" Width="222" SelectionChanged="listBoxConfigurations_SelectionChanged" />
-      <Button Height="23" HorizontalAlignment="Left" Margin="10,359,0,0" Name="buttonNewSetup" VerticalAlignment="Top" Width="25" Click="buttonNewSetup_Click" ToolTip="Create a new setup.">
+      <Button Content="Cancel" Height="23" HorizontalAlignment="Right" Margin="0,0,16,9" Name="buttonCancel" VerticalAlignment="Bottom" Width="63" Click="buttonCancel_Click" />
+      <ListBox Height="364" HorizontalAlignment="Left" Margin="8,8,0,0" Name="listBoxConfigurations" VerticalAlignment="Top" Width="222" SelectionChanged="listBoxConfigurations_SelectionChanged" />
+      <Button Height="23" HorizontalAlignment="Left" Margin="8,380,0,0" Name="buttonNewSetup" VerticalAlignment="Top" Width="25" Click="buttonNewSetup_Click" ToolTip="Create a new setup.">
          <Image HorizontalAlignment="Stretch" Name="image1" Stretch="Fill" VerticalAlignment="Stretch" Source="/IFCExportUIOverride;component/icons/create.ico" Width="16" Height="16" />
       </Button>
-      <Button Height="23" HorizontalAlignment="Right" Margin="0,359,644,0" Name="buttonDuplicateSetup" VerticalAlignment="Top" Width="25" Click="buttonDuplicateSetup_Click" ToolTip="Create a new setup based on the selected setup.">
-         <Image HorizontalAlignment="Right" Name="image2" Stretch="Fill" Width="16" Height="16" Source="/IFCExportUIOverride;component/icons/duplicate_ico.ico" />
-      </Button>
-      <Button Height="23" HorizontalAlignment="Left" Margin="72,359,0,0" Name="buttonRenameSetup" VerticalAlignment="Top" Width="25" Click="buttonRenameSetup_Click" ToolTip="Rename the selected setup.">
+      <Button Height="23" HorizontalAlignment="Left" Margin="81,380,0,0" Name="buttonRenameSetup" VerticalAlignment="Top" Width="25" Click="buttonRenameSetup_Click" ToolTip="Rename the selected setup.">
          <Image HorizontalAlignment="Stretch" Name="image3" Stretch="Fill" VerticalAlignment="Stretch" Source="/IFCExportUIOverride;component/icons/rename.ico" Width="16" Height="16" />
       </Button>
-      <Button Height="23" HorizontalAlignment="Left" Margin="103,359,0,0" Name="buttonDeleteSetup" VerticalAlignment="Top" Width="25" Click="buttonDeleteSetup_Click" ToolTip="Delete the selected setup.">
+      <Button Height="23" HorizontalAlignment="Left" Margin="117,380,0,0" Name="buttonDeleteSetup" VerticalAlignment="Top" Width="25" Click="buttonDeleteSetup_Click" ToolTip="Delete the selected setup.">
          <Image HorizontalAlignment="Stretch" Name="image4" Stretch="Fill" VerticalAlignment="Stretch" Source="/IFCExportUIOverride;component/icons/delete.ico" Width="16" Height="16" />
       </Button>
+      <Button Height="23" HorizontalAlignment="Right" Margin="0,380,659,0" Name="buttonDuplicateSetup" VerticalAlignment="Top" Width="25" Click="buttonDuplicateSetup_Click" ToolTip="Create a new setup based on the selected setup."></Button>
+      <Image HorizontalAlignment="Right" Name="image2" Stretch="Fill" Width="16" Height="16" Source="/IFCExportUIOverride;component/icons/duplicate_ico.ico" Margin="0,383,663,11" />
    </Grid>
 </Window>
