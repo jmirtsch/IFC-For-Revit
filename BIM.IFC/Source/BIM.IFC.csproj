@@ -193,6 +193,7 @@
     <Compile Include="Utility\PresentationLayerSetCache.cs" />
     <Compile Include="Utility\ProductWrapper.cs" />
     <Compile Include="Utility\PropertyInfoCache.cs" />
+    <Compile Include="Utility\PropertyMap.cs" />
     <Compile Include="Utility\PropertySetOptions.cs" />
     <Compile Include="Utility\RepresentationUtil.cs" />
     <Compile Include="Utility\SimpleSweptSolidAnalyzer.cs" />

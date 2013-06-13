@@ -2265,7 +2265,8 @@ namespace BIM.IFC.Exporter.PropertySet
                                             }
                                         case ParameterType.HVACPower:
                                             {
-                                            double scaledValue = value * (1 / 0.3048) * (1 / 0.3048);
+                                                double scale = 0.3048;
+                                                double scaledValue = value * scale * scale;
                                                 propertyHandle = CreatePowerProperty(file, parameterCaption,
                                                     scaledValue, PropertyValueType.SingleValue);
                                                 break;
@@ -2279,7 +2280,8 @@ namespace BIM.IFC.Exporter.PropertySet
                                             }
                                         case ParameterType.ElectricalPotential:
                                             {
-                                                double scaledValue = value * (1 / 0.3048) * (1 / 0.3048);
+                                                double scale = 0.3048;
+                                                double scaledValue = value * scale * scale;
                                                 propertyHandle = ElectricalVoltagePropertyUtil.CreateElectricalVoltageMeasureProperty(file, parameterCaption,
                                                     scaledValue, PropertyValueType.SingleValue);
                                                 break;
