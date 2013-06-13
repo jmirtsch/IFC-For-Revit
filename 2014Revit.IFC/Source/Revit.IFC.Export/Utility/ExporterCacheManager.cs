@@ -331,6 +331,11 @@ namespace Revit.IFC.Export.Utility
         static IDictionary<ElementId, HashSet<IFCAnyHandle>> m_FabricAreaHandleCache;
 
         /// <summary>
+        /// The PropertyMapCache
+        /// </summary>
+        static IDictionary<Tuple<string, string>, string> m_PropertyMapCache;
+
+        /// <summary>
         /// The ParameterCache object.
         /// </summary>
         public static AllocatedGeometryObjectCache AllocatedGeometryObjectCache
@@ -1057,6 +1062,19 @@ namespace Revit.IFC.Export.Utility
             }
         }
 
+        /// <summary>
+        /// The PropertyMap cache
+        /// </summary>
+        public static IDictionary<Tuple<string, string>, string> PropertyMapCache
+        {
+            get
+            {
+                if (m_PropertyMapCache == null)
+                    m_PropertyMapCache = PropertyMap.LoadParameterMap();
+
+                return m_PropertyMapCache;
+            }
+        }
         
         /// <summary>
         /// Clear all caches contained in this manager.
@@ -1104,6 +1122,7 @@ namespace Revit.IFC.Export.Utility
             m_PresentationLayerSetCache = null;
             m_PresentationStyleCache = null;
             m_PropertyInfoCache = null;
+            m_PropertyMapCache = null;
             m_PropertySetsForTypeCache = null;
             m_RailingCache = null;
             m_RailingSubElementCache = null;

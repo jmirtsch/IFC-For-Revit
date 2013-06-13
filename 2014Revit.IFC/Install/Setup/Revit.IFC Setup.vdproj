@@ -498,7 +498,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:BIM.IFC.Common, Version=3.1.1.0, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:BIM.IFC.Common, Version=3.3.0.0, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                 }
@@ -728,15 +728,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:IFC Exporter for Revit 2014"
-        "ProductCode" = "8:{872399F1-1B24-47BC-BB33-CA2C2F46910C}"
-        "PackageCode" = "8:{FCEC252D-AF75-4C36-A449-136FE47CED15}"
+        "ProductCode" = "8:{2A3B05ED-81DF-4BC7-81F3-289D8D10107D}"
+        "PackageCode" = "8:{A7D8CC8D-D671-41DA-A5F7-DE73F27755F5}"
         "UpgradeCode" = "8:{0520EC24-9B8C-4F18-82E6-93F13FD0089F}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:3.3.0"
+        "ProductVersion" = "8:3.3.2"
         "Manufacturer" = "8:IFC Exporter for Revit"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:http://sourceforge.net/projects/ifcexporter/"
