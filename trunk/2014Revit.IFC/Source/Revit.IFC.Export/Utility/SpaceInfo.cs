@@ -148,7 +148,7 @@ namespace Revit.IFC.Export.Utility
             if (!ContainsRooms)
                 ContainsRooms = spatialElement is Room;
             if (!ContainsSpaces)
-                ContainsRooms = spatialElement is Space;
+                ContainsSpaces = spatialElement is Space;
         }
 
         /// <summary>
