@@ -209,4 +209,28 @@
   <data name="UseCoarseTessellation" xml:space="preserve">
     <value>Use coarse tessellation for some BReps</value>
   </data>
+  <data name="StoreIFCGUID" xml:space="preserve">
+    <value>Store the IFC GUID in an element parameter after export</value>
+  </data>
+  <data name="IFCMVD4CV2" xml:space="preserve">
+    <value>IFC 4 Coordination View 2.0</value>
+  </data>
+  <data name="PropertySets" xml:space="preserve">
+    <value>Export property sets</value>
+  </data>
+  <data name="PropertySetsIFCCommon" xml:space="preserve">
+    <value>IFC Common only</value>
+  </data>
+  <data name="PropertySetsInternalRevit" xml:space="preserve">
+    <value>Internal Revit only</value>
+  </data>
+  <data name="PropertySetsNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="PropertySetsRevitPlusIFC" xml:space="preserve">
+    <value>Internal Revit, IFC Common</value>
+  </data>
+  <data name="PropertySetsUnrecognized" xml:space="preserve">
+    <value>Unrecognized property sets</value>
+  </data>
 </root>

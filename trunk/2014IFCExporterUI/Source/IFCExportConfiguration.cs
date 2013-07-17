@@ -136,6 +136,11 @@ namespace BIM.IFC.Export.UI
         /// </summary>
         public bool UseCoarseTessellation { get; set; }
 
+        /// <summary>
+        /// True to store the IFC GUID in the file after the export.  This will require manually saving the file to keep the parameter.
+        /// </summary>
+        public bool StoreIFCGUID { get; set; }
+
         private bool m_isBuiltIn = false;
         private bool m_isInSession = false;
         private static IFCExportConfiguration s_inSessionConfiguration = null;
@@ -194,6 +199,7 @@ namespace BIM.IFC.Export.UI
             this.ExportBoundingBox = false;
             this.IncludeSiteElevation = false;
             this.UseCoarseTessellation = true;
+            this.StoreIFCGUID = false;
             this.m_isBuiltIn = false; 
             this.m_isInSession = false;
         }
@@ -240,6 +246,7 @@ namespace BIM.IFC.Export.UI
             configuration.ExportBoundingBox = exportBoundingBox;
             configuration.IncludeSiteElevation = false;
             configuration.UseCoarseTessellation = true;
+            configuration.StoreIFCGUID = false;
             configuration.m_isBuiltIn = true;
             configuration.m_isInSession = false; 
             return configuration;
@@ -274,6 +281,7 @@ namespace BIM.IFC.Export.UI
             this.ExportBoundingBox = other.ExportBoundingBox;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
             this.UseCoarseTessellation = other.UseCoarseTessellation;
+            this.StoreIFCGUID = other.StoreIFCGUID;
             this.m_isBuiltIn = other.m_isBuiltIn;
             this.m_isInSession = other.m_isInSession;
         }
@@ -372,6 +380,7 @@ namespace BIM.IFC.Export.UI
             options.AddOption("ExportBoundingBox", ExportBoundingBox.ToString());
             options.AddOption("IncludeSiteElevation", IncludeSiteElevation.ToString());
             options.AddOption("UseCoarseTessellation", UseCoarseTessellation.ToString());
+            options.AddOption("StoreIFCGUID", StoreIFCGUID.ToString());
 
             options.AddOption("FileType", IFCFileType.ToString());
             string uiVersion = IFCUISettings.GetAssemblyVersion();
@@ -411,6 +420,9 @@ namespace BIM.IFC.Export.UI
                 IFCSpaceBoundariesAttributes spaceBoundaryAttributes = new IFCSpaceBoundariesAttributes(SpaceBoundaries);
                 builder.AppendLine(GetDescriptionLine(Resources.SpaceBoundaries, spaceBoundaryAttributes.ToString()));
 
+                IFCExportedPropertySets exportedPropertySets = new IFCExportedPropertySets(ExportInternalRevitPropertySets, ExportIFCCommonPropertySets);
+                builder.AppendLine(GetDescriptionLine(Resources.PropertySets, exportedPropertySets.ToString()));
+
                 // Sort by "do" and "don't"
                 for (int pass = 0; pass < 2; pass++)
                 {
@@ -418,8 +430,6 @@ namespace BIM.IFC.Export.UI
 
                     ConditionalAddLine(builder, Resources.ExportBaseQuantities, ExportBaseQuantities, valueToMatch);
                     ConditionalAddLine(builder, Resources.SplitWallsAndColumns, SplitWallsAndColumns, valueToMatch);
-                    ConditionalAddLine(builder, Resources.ExportRevitPropertySets, ExportInternalRevitPropertySets, valueToMatch);
-                    ConditionalAddLine(builder, Resources.ExportIFCCommonPropertySets, ExportIFCCommonPropertySets, valueToMatch);
                     ConditionalAddLine(builder, Resources.ExportPlanViewElements, Export2DElements, valueToMatch);
 
                     ConditionalAddLine(builder, Resources.ExportVisibleElementsInView, VisibleElementsOfCurrentView, valueToMatch);
@@ -432,6 +442,7 @@ namespace BIM.IFC.Export.UI
                     ConditionalAddLine(builder, Resources.Use2DRoomBoundariesForRoomVolume, Use2DRoomBoundaryForVolume, valueToMatch);
                     ConditionalAddLine(builder, Resources.IncludeIfcSiteElevation, IncludeSiteElevation, valueToMatch);
                     ConditionalAddLine(builder, Resources.UseCoarseTessellation, UseCoarseTessellation, valueToMatch);
+                    ConditionalAddLine(builder, Resources.StoreIFCGUID, StoreIFCGUID, valueToMatch);
                 }
 
                 return builder.ToString();

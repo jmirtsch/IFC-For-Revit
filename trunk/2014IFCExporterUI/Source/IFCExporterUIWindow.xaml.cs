@@ -121,8 +121,8 @@ namespace BIM.IFC.Export.UI
             comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC2x3CV2));
             comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFCCOBIE));
             comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFCBCA));
-            // TODO - how to handle IFC4?
-
+            comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC4));
+            
             foreach (IFCFileFormat fileType in Enum.GetValues(typeof(IFCFileFormat)))
             {
                 IFCFileFormatAttributes item = new IFCFileFormatAttributes(fileType);
@@ -176,6 +176,7 @@ namespace BIM.IFC.Export.UI
             checkboxExportBoundingBox.IsChecked = configuration.ExportBoundingBox;
             checkboxIncludeIfcSiteElevation.IsChecked = configuration.IncludeSiteElevation;
             checkboxUseCoarseTessellation.IsChecked = configuration.UseCoarseTessellation;
+            checkboxStoreIFCGUID.IsChecked = configuration.StoreIFCGUID;
 
             UIElement[] configurationElements = new UIElement[]{comboboxIfcType, 
                                                                 comboboxFileType, 
@@ -193,7 +194,8 @@ namespace BIM.IFC.Export.UI
                                                                 checkboxExportAdvancedSweptSolids,
                                                                 checkboxExportBoundingBox,
                                                                 checkboxIncludeIfcSiteElevation,
-                                                                checkboxUseCoarseTessellation
+                                                                checkboxUseCoarseTessellation,
+                                                                checkboxStoreIFCGUID
                                                                 };
             foreach (UIElement element in configurationElements)
             {
@@ -684,7 +686,7 @@ namespace BIM.IFC.Export.UI
         }
 
         /// <summary>
-        /// Updates the configuration UseCoarseTessellation when the Export Bounding Box changed in the check box.
+        /// Updates the configuration UseCoarseTessellation when the Use Coarse Tessellation changed in the check box.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">Event arguments that contains the event data.</param>
@@ -695,6 +697,21 @@ namespace BIM.IFC.Export.UI
             if (configuration != null)
             {
                 configuration.UseCoarseTessellation = GetCheckbuttonChecked(checkBox);
+            }
+        }
+
+        /// <summary>
+        /// Updates the configuration StoreIFCGUID when the Store IFC GUID changed in the check box.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments that contains the event data.</param>
+        private void checkboxStoreIFCGUID_Checked(object sender, RoutedEventArgs e)
+        {
+            CheckBox checkBox = (CheckBox)sender;
+            IFCExportConfiguration configuration = GetSelectedConfiguration();
+            if (configuration != null)
+            {
+                configuration.StoreIFCGUID = GetCheckbuttonChecked(checkBox);
             }
         }
     }
