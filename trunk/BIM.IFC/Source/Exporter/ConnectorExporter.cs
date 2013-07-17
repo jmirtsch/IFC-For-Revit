@@ -178,7 +178,7 @@ namespace BIM.IFC.Exporter
                     if (m_ProcessedWires.Contains(outElement.Id))
                         return;
                     m_ProcessedWires.Add(outElement.Id);
-                    
+
                     try
                     {
                         ConnectorSet wireConnectorSet = MEPCache.GetConnectorsForWire(outElement as Wire);
@@ -257,7 +257,9 @@ namespace BIM.IFC.Exporter
             HashSet<MEPSystem> systemList = new HashSet<MEPSystem>();
             try
             {
-                systemList.Add(connector.MEPSystem);
+                MEPSystem system = connector.MEPSystem;
+                if (system != null)
+                    systemList.Add(system);
             }
             catch
             {
@@ -265,7 +267,9 @@ namespace BIM.IFC.Exporter
 
             try
             {
-                systemList.Add(connected.MEPSystem);
+                MEPSystem system = connected.MEPSystem;
+                if (system != null)
+                    systemList.Add(system);
             }
             catch
             {

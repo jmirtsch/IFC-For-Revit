@@ -2547,8 +2547,8 @@ namespace BIM.IFC.Exporter
                 if (gStyle != null)
                 {
                     ElementId catId = gStyle.GraphicsStyleCategory.Id;
-                    string ifcClassName = ExporterIFCUtils.GetIFCClassNameByCategory(catId, exporterIFC);
-                    if (ifcClassName != "")
+                    string ifcClassName = ExporterUtil.GetIFCClassNameFromExportTable(exporterIFC, catId);
+                    if (!string.IsNullOrEmpty(ifcClassName))
                     {
                         bool foundName = String.Compare(ifcClassName, "Default", true) != 0;
                         if (foundName)

@@ -2542,6 +2542,61 @@ namespace BIM.IFC.Toolkit
     }
 
     /// <summary>
+    /// Defines the PsetSanitaryTerminalTypeBath::BathType possible values.
+    /// </summary>
+    public enum PsetSanitaryTerminalTypeBath_BathType
+    {
+        Domestic,
+        DomesticCorner,
+        Foot,
+        Jacuzzi,
+        Plunge,
+        Sitz,
+        Treatment,
+        Whirlpool,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    /// <summary>
+    /// Defines the PsetSanitaryTerminalTypeShower::ShowerType possible values.
+    /// </summary>
+    public enum PsetSanitaryTerminalTypeShower_ShowerType
+    {
+        Drench,
+        Individual,
+        Tunnel,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    /// <summary>
+    /// Defines the PsetSanitaryTerminalTypeSink::SinkType possible values.
+    /// </summary>
+    public enum PsetSanitaryTerminalTypeSink_SinkType
+    {
+        Belfast,
+        Bucket,
+        Cleaners,
+        Combination_Left,
+        Combination_Right,
+        Combination_Double,
+        Drip,
+        Laboratory,
+        London,
+        Plaster,
+        Pot,
+        Rinsing,
+        Shelf,
+        VegetablePreparation,
+        Other,
+        NotKnown,
+        Unset
+    }
+
+    /// <summary>
     /// Defines the PsetSanitaryTerminalTypeToiletPan::ToiletType possible values.
     /// </summary>
     public enum PsetSanitaryTerminalTypeToiletPan_ToiletType
@@ -2584,6 +2639,22 @@ namespace BIM.IFC.Toolkit
         Unset
     }
 
+    /// <summary>
+    /// Defines the PsetSanitaryTerminalTypeWashHandBasin::WashHandBasinType possible values.
+    /// </summary>
+    public enum PsetSanitaryTerminalTypeWashHandBasin_WashHandBasinType
+    {
+        DentalCuspidor,
+        HandRinse,
+        Hospital,
+        Tipup,
+        Washfountain,
+        WashingTrough,
+        Other,
+        NotKnown,
+        Unset 
+    }
+    
     // <summary>
     /// Defines the PSetElectricalDeviceCommon::InsulationStandardClass possible values.
     /// </summary>

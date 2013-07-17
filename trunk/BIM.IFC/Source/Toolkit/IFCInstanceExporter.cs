@@ -2147,6 +2147,32 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Creates an IfcRelCoversBldgElements, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="relatingBuildingElement">The element that is covered by one or more coverings.</param>
+        /// <param name="relatedCoverings">The IfcCoverings covering the building element.</param>
+        /// <returns>The handle.</returns>
+        /// <remarks>This has been deprecated in IFC4, and will redirect to CreateRelAggregates instead.</remarks>
+        public static IFCAnyHandle CreateRelCoversBldgElements(IFCFile file, string guid, IFCAnyHandle ownerHistory,
+            string name, string description, IFCAnyHandle relatingBuildingElement, HashSet<IFCAnyHandle> relatedCoverings)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(relatingBuildingElement, false, IFCEntityType.IfcElement);
+            IFCAnyHandleUtil.ValidateSubTypeOf(relatedCoverings, false, IFCEntityType.IfcCovering);
+            ValidateRelConnects(guid, ownerHistory, name, description);
+
+            IFCAnyHandle relCoversBldgElements = CreateInstance(file, IFCEntityType.IfcRelCoversBldgElements);
+            IFCAnyHandleUtil.SetAttribute(relCoversBldgElements, "RelatingBuildingElement", relatingBuildingElement);
+            IFCAnyHandleUtil.SetAttribute(relCoversBldgElements, "RelatedCoverings", relatedCoverings);
+            SetRelConnects(relCoversBldgElements, guid, ownerHistory, name, description);
+            return relCoversBldgElements;
+        }
+
+        /// <summary>
         /// Creates an IfcRelContainedInSpatialStructure, and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>

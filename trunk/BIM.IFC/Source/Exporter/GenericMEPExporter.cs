@@ -37,19 +37,12 @@ namespace BIM.IFC.Exporter
         /// <summary>
         /// Exports a MEP family instance.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
-        public static void Export(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, ProductWrapper productWrapper)
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        /// <returns>True if an entity was created, false otherwise.</returns>
+        public static bool Export(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction tr = new IFCTransaction(file))
@@ -68,12 +61,12 @@ namespace BIM.IFC.Exporter
 
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                         BodyData bodyData = null;
-                        IFCAnyHandle productRepresentation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, 
+                        IFCAnyHandle productRepresentation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
                             element, catId, geometryElement, bodyExporterOptions, null, extraParams, out bodyData);
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(productRepresentation))
                         {
                             extraParams.ClearOpenings();
-                            return;
+                            return false;
                         }
 
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
@@ -171,7 +164,7 @@ namespace BIM.IFC.Exporter
                         }
 
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
-                            return;
+                            return false;
 
                         if (roomId != ElementId.InvalidElementId)
                         {
@@ -191,7 +184,7 @@ namespace BIM.IFC.Exporter
 
                         if (bodyData != null && bodyData.MaterialIds.Count != 0)
                             CategoryUtil.CreateMaterialAssociations(element.Document, exporterIFC, instanceHandle, bodyData.MaterialIds);
-                        
+
                         PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
 
                         ExporterCacheManager.MEPCache.Register(element, instanceHandle);
@@ -200,6 +193,7 @@ namespace BIM.IFC.Exporter
                     }
                 }
             }
+            return true;
         }
     }
 }
