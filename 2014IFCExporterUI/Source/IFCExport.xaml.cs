@@ -259,5 +259,10 @@ namespace BIM.IFC.Export.UI
             IFCAssignment assignmentWindow = new IFCAssignment(m_document);
             assignmentWindow.ShowDialog();
         }
+
+        private void textBoxSetupDescription_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
     }
 }

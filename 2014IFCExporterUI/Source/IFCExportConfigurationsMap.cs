@@ -73,6 +73,7 @@ namespace BIM.IFC.Export.UI
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 Basic FM Handover View", IFCVersion.IFC2x3, 1, true, true, false, true, true, false));
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x2 Coordination View", IFCVersion.IFC2x2, 1, false, false, true, false, true, false));
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x2 Singapore BCA e-Plan Check", IFCVersion.IFCBCA, 1, false, true, true, false, true, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC4 Basic Coordination View 2.0", IFCVersion.IFC4, 0, false, false, false, false, true, false)); 
         }
 
         /// <summary>
@@ -135,6 +136,8 @@ namespace BIM.IFC.Export.UI
                             configuration.IncludeSiteElevation = bool.Parse(configMap[s_setupIncludeSiteElevation]);
                         if (configMap.ContainsKey(s_setupUseCoarseTessellation))
                             configuration.UseCoarseTessellation = bool.Parse(configMap[s_setupUseCoarseTessellation]);
+                        if (configMap.ContainsKey(s_setupStoreIFCGUID))
+                            configuration.StoreIFCGUID = bool.Parse(configMap[s_setupStoreIFCGUID]);
 
                         Add(configuration);
                     }
@@ -180,6 +183,9 @@ namespace BIM.IFC.Export.UI
                         Field fieldUseCoarseTessellation = m_schema.GetField(s_setupUseCoarseTessellation);
                         if (fieldUseCoarseTessellation != null)
                             configuration.UseCoarseTessellation = configEntity.Get<bool>(s_setupUseCoarseTessellation);
+                        Field fieldStoreIFCGUID = m_schema.GetField(s_setupStoreIFCGUID);
+                        if (fieldStoreIFCGUID != null)
+                            configuration.StoreIFCGUID = configEntity.Get<bool>(s_setupStoreIFCGUID);
 
                         Add(configuration);
                     }
@@ -214,6 +220,7 @@ namespace BIM.IFC.Export.UI
         private const String s_setupExportBoundingBox = "ExportBoundingBox";
         private const String s_setupIncludeSiteElevation = "IncludeSiteElevation";
         private const String s_setupUseCoarseTessellation = "UseCoarseTessellation";
+        private const String s_setupStoreIFCGUID = "StoreIFCGUID";
 
         /// <summary>
         /// Updates the setups to save into the document.
@@ -329,6 +336,7 @@ namespace BIM.IFC.Export.UI
                    mapData.Add(s_setupExportBoundingBox, configuration.ExportBoundingBox.ToString());
                    mapData.Add(s_setupIncludeSiteElevation, configuration.IncludeSiteElevation.ToString());
                    mapData.Add(s_setupUseCoarseTessellation, configuration.UseCoarseTessellation.ToString());
+                   mapData.Add(s_setupStoreIFCGUID, configuration.StoreIFCGUID.ToString());
                    mapEntity.Set<IDictionary<string, String>>(s_configMapField, mapData);
 
                    configStorage.SetEntity(mapEntity);

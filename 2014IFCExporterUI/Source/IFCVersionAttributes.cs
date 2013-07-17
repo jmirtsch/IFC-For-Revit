@@ -60,6 +60,8 @@ namespace BIM.IFC.Export.UI
                     return Resources.IFCVersion2x3;
                 case IFCVersion.IFC2x3CV2:
                     return Resources.IFCMVD2x3CV2;
+                case IFCVersion.IFC4:
+                    return Resources.IFCMVD4CV2;
                 case IFCVersion.IFCBCA:
                     return Resources.IFCMVDBCA;
                 case IFCVersion.IFCCOBIE:

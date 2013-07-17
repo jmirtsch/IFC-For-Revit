@@ -190,8 +190,16 @@ namespace BIM.IFC.Export.UI
                             taskDialog.Show();
                         }
 
-                        // Always roll back the transaction started earlier
-                        transaction.RollBack();
+                        // This option should be rarely used, and is only for consistency with old files.  As such, it is set by environment variable only.
+                        String use2009GUID = Environment.GetEnvironmentVariable("Assign2009GUIDToBuildingStoriesOnIFCExport");
+                        bool use2009BuildingStoreyGUIDs = (use2009GUID != null && use2009GUID == "1");
+
+                        // Roll back the transaction started earlier, unless certain options are set.
+                        if (use2009BuildingStoreyGUIDs || selectedConfig.StoreIFCGUID)
+                            transaction.Commit();
+                        else
+                            transaction.RollBack();
+                        
                         // Remember last successful export location
                         m_mruExportPath = path;
                     }   

@@ -10,7 +10,7 @@
          <ColumnDefinition Width="392*" />
       </Grid.ColumnDefinitions>
       <ComboBox Height="23" HorizontalAlignment="Left" Margin="0,35,0,0" Name="currentSelectedSetup" VerticalAlignment="Top" Width="267" SelectionChanged="currentSelectedSetup_SelectionChanged" ItemsSource="{Binding}" DataContext="{Binding}" Grid.Column="1" />
-        <TextBox Height="292" HorizontalAlignment="Left" Margin="0,64,0,0" Name="textBoxSetupDescription" VerticalAlignment="Top" Width="376" IsEnabled="True" IsReadOnly="True"  TextWrapping="WrapWithOverflow" Grid.Column="1" />
+        <TextBox Height="280" HorizontalAlignment="Left" Margin="0,72,0,0" Name="textBoxSetupDescription" VerticalAlignment="Top" Width="376" IsEnabled="True" IsReadOnly="True"  TextWrapping="WrapWithOverflow" Grid.Column="1" TextChanged="textBoxSetupDescription_TextChanged" />
         <Button Content="Modify Setup ..." Height="23" HorizontalAlignment="Left" Margin="273,35,0,0" Name="buttonEditSetup" VerticalAlignment="Top" Width="103" Click="buttonEditSetup_Click" Grid.Column="1" />
         <Button Content="Cancel" Height="23" HorizontalAlignment="Right" Margin="0,362,16,0" Name="buttonCancel" VerticalAlignment="Top" Width="75" Click="buttonCancel_Click" Grid.Column="1" />
       <Button Content="Export..." Height="23" HorizontalAlignment="Left" Margin="220,362,0,0" Name="buttonNext" VerticalAlignment="Top" Width="75" Click="buttonNext_Click" IsDefault="True" Grid.Column="1" />
