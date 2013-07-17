@@ -135,6 +135,8 @@ namespace BIM.IFC.Export.UI
                             configuration.IncludeSiteElevation = bool.Parse(configMap[s_setupIncludeSiteElevation]);
                         if (configMap.ContainsKey(s_setupUseCoarseTessellation))
                             configuration.UseCoarseTessellation = bool.Parse(configMap[s_setupUseCoarseTessellation]);
+                        if (configMap.ContainsKey(s_setupStoreIFCGUID))
+                            configuration.StoreIFCGUID = bool.Parse(configMap[s_setupStoreIFCGUID]);
 
                         Add(configuration);
                     }
@@ -180,6 +182,9 @@ namespace BIM.IFC.Export.UI
                         Field fieldUseCoarseTessellation = m_schema.GetField(s_setupUseCoarseTessellation);
                         if (fieldUseCoarseTessellation != null)
                             configuration.UseCoarseTessellation = configEntity.Get<bool>(s_setupUseCoarseTessellation);
+                        Field fieldStoreIFCGUID = m_schema.GetField(s_setupStoreIFCGUID);
+                        if (fieldStoreIFCGUID != null)
+                            configuration.StoreIFCGUID = configEntity.Get<bool>(s_setupStoreIFCGUID);
 
                         Add(configuration);
                     }
@@ -214,6 +219,7 @@ namespace BIM.IFC.Export.UI
         private const String s_setupExportBoundingBox = "ExportBoundingBox";
         private const String s_setupIncludeSiteElevation = "IncludeSiteElevation";
         private const String s_setupUseCoarseTessellation = "UseCoarseTessellation";
+        private const String s_setupStoreIFCGUID = "StoreIFCGUID";
 
         /// <summary>
         /// Updates the setups to save into the document.
@@ -319,6 +325,7 @@ namespace BIM.IFC.Export.UI
                    mapData.Add(s_setupExportBoundingBox, configuration.ExportBoundingBox.ToString());
                    mapData.Add(s_setupIncludeSiteElevation, configuration.IncludeSiteElevation.ToString());
                    mapData.Add(s_setupUseCoarseTessellation, configuration.UseCoarseTessellation.ToString());
+                   mapData.Add(s_setupStoreIFCGUID, configuration.StoreIFCGUID.ToString());
                    mapEntity.Set<IDictionary<string, String>>(s_configMapField, mapData);
 
                 configStorage.SetEntity(mapEntity);

@@ -250,6 +250,60 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Export property sets.
+        /// </summary>
+        internal static string PropertySets {
+            get {
+                return ResourceManager.GetString("PropertySets", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to IFC Common only.
+        /// </summary>
+        internal static string PropertySetsIFCCommon {
+            get {
+                return ResourceManager.GetString("PropertySetsIFCCommon", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Revit only.
+        /// </summary>
+        internal static string PropertySetsInternalRevit {
+            get {
+                return ResourceManager.GetString("PropertySetsInternalRevit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to None.
+        /// </summary>
+        internal static string PropertySetsNone {
+            get {
+                return ResourceManager.GetString("PropertySetsNone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Revit, IFC Common.
+        /// </summary>
+        internal static string PropertySetsRevitPlusIFC {
+            get {
+                return ResourceManager.GetString("PropertySetsRevitPlusIFC", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unrecognized property sets.
+        /// </summary>
+        internal static string PropertySetsUnrecognized {
+            get {
+                return ResourceManager.GetString("PropertySetsUnrecognized", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Space boundaries.
         /// </summary>
         internal static string SpaceBoundaries {
@@ -300,6 +354,15 @@ namespace BIM.IFC.Export.UI.Properties {
         internal static string SplitWallsAndColumns {
             get {
                 return ResourceManager.GetString("SplitWallsAndColumns", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Store the IFC GUID in an element parameter after export.
+        /// </summary>
+        internal static string StoreIFCGUID {
+            get {
+                return ResourceManager.GetString("StoreIFCGUID", resourceCulture);
             }
         }
         
