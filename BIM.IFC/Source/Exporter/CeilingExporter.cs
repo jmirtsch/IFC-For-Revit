@@ -94,7 +94,7 @@ namespace BIM.IFC.Exporter
         /// </param>
         public static void ExportCeilingElement(ExporterIFC exporterIFC, Ceiling ceiling, GeometryElement geomElement, ProductWrapper productWrapper)
         {
-            string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, ceiling);
+            string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, ceiling);
             if (String.IsNullOrEmpty(ifcEnumType))
                 ifcEnumType = "CEILING";
             ExportCovering(exporterIFC, ceiling, geomElement, ifcEnumType, productWrapper);
@@ -140,7 +140,7 @@ namespace BIM.IFC.Exporter
 
                             BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                             prodRep = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, element,
-                                categoryId, geomElem, bodyExporterOptions, null, ecData);
+                                categoryId, geomElem, bodyExporterOptions, null, ecData, true);
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodRep))
                             {
                                 ecData.ClearOpenings();

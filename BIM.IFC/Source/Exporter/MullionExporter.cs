@@ -77,9 +77,8 @@ namespace BIM.IFC.Exporter
                     ElementId catId = CategoryUtil.GetSafeCategoryId(mullion);
 
                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                    BodyData bodyData = null;
                     IFCAnyHandle repHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, mullion, catId,
-                        geometryElement, bodyExporterOptions, null, extraParams, out bodyData);
+                        geometryElement, bodyExporterOptions, null, extraParams, true);
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))
                     {
                         extraParams.ClearOpenings();

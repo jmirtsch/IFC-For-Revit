@@ -900,7 +900,7 @@ namespace BIM.IFC.Exporter
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                         bodyExporterOptions.TessellationLevel = BodyExporter.GetTessellationLevel();
                         repHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, spatialElement,
-                            catId, geomElem, bodyExporterOptions, null, extraParams);
+                            catId, geomElem, bodyExporterOptions, null, extraParams, false);
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))
                             extraParams.ClearOpenings();
                     }

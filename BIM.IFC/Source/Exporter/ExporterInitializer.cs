@@ -154,7 +154,11 @@ namespace BIM.IFC.Exporter
             InitPropertySetFlowTerminalAirTerminal(commonPropertySets);
             InitPropertySetLightFixtureTypeCommon(commonPropertySets);
             InitPropertySetProvisionForVoid(commonPropertySets);
+            InitPropertySetSanitaryTerminalTypeBath(commonPropertySets);
+            InitPropertySetSanitaryTerminalTypeShower(commonPropertySets);
+            InitPropertySetSanitaryTerminalTypeSink(commonPropertySets);
             InitPropertySetSanitaryTerminalTypeToiletPan(commonPropertySets);
+            InitPropertySetSanitaryTerminalTypeWashHandBasin(commonPropertySets);
             InitPropertySetSwitchingDeviceTypeCommon(commonPropertySets);
             InitPropertySetSwitchingDeviceTypeToggleSwitch(commonPropertySets);
             InitPropertySetZoneCommon(commonPropertySets, fileVersion);
@@ -1510,6 +1514,86 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
+        /// Initializes Pset_SanitaryTerminalTypeBath
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetSanitaryTerminalTypeBath(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetBath = new PropertySetDescription();
+            propertySetBath.Name = "Pset_SanitaryTerminalTypeBath";
+            propertySetBath.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
+            propertySetBath.PredefinedType = "BATH";
+
+            propertySetBath.AddEntry(PropertySetEntry.CreateEnumeratedValue("BathType", PropertyType.Label,
+                typeof(PsetSanitaryTerminalTypeBath_BathType)));
+            propertySetBath.AddEntry(PropertySetEntry.CreatePositiveLength("NominalLength"));
+            propertySetBath.AddEntry(PropertySetEntry.CreatePositiveLength("NominalWidth"));
+            propertySetBath.AddEntry(PropertySetEntry.CreatePositiveLength("NominalDepth"));
+
+            //propertySetBath.AddEntry(PropertySetEntry.CreateMaterial("Material"));
+            propertySetBath.AddEntry(PropertySetEntry.CreatePositiveLength("MaterialThickness"));
+            propertySetBath.AddEntry(PropertySetEntry.CreateText("Color"));
+            propertySetBath.AddEntry(PropertySetEntry.CreatePositiveLength("DrainSize"));
+            propertySetBath.AddEntry(PropertySetEntry.CreateBoolean("HasGrabHandles"));
+            
+            commonPropertySets.Add(propertySetBath);
+        }
+
+        /// <summary>
+        /// Initializes Pset_SanitaryTerminalTypeShower
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetSanitaryTerminalTypeShower(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetShower = new PropertySetDescription();
+            propertySetShower.Name = "Pset_SanitaryTerminalTypeShower";
+            propertySetShower.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
+            propertySetShower.PredefinedType = "SHOWER";
+
+            propertySetShower.AddEntry(PropertySetEntry.CreateEnumeratedValue("ShowerType", PropertyType.Label,
+                typeof(PsetSanitaryTerminalTypeShower_ShowerType)));
+            propertySetShower.AddEntry(PropertySetEntry.CreateBoolean("HasTray"));
+            propertySetShower.AddEntry(PropertySetEntry.CreatePositiveLength("NominalLength"));
+            propertySetShower.AddEntry(PropertySetEntry.CreatePositiveLength("NominalWidth"));
+            propertySetShower.AddEntry(PropertySetEntry.CreatePositiveLength("NominalDepth"));
+
+            //propertySetShower.AddEntry(PropertySetEntry.CreateMaterial("Material"));
+            propertySetShower.AddEntry(PropertySetEntry.CreatePositiveLength("MaterialThickness"));
+            propertySetShower.AddEntry(PropertySetEntry.CreateText("Color"));
+            propertySetShower.AddEntry(PropertySetEntry.CreateText("ShowerHeadDescription")); 
+            propertySetShower.AddEntry(PropertySetEntry.CreatePositiveLength("DrainSize"));
+            
+            commonPropertySets.Add(propertySetShower);
+        }
+
+        /// <summary>
+        /// Initializes Pset_SanitaryTerminalTypeSink
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetSanitaryTerminalTypeSink(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetSink = new PropertySetDescription();
+            propertySetSink.Name = "Pset_SanitaryTerminalTypeSink";
+            propertySetSink.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
+            propertySetSink.PredefinedType = "SINK";
+
+            propertySetSink.AddEntry(PropertySetEntry.CreateEnumeratedValue("SinkType", PropertyType.Label,
+                typeof(PsetSanitaryTerminalTypeSink_SinkType)));
+            // PsetSanitaryTerminalTypeToiletPan_SanitaryMounting is purposely reused, as it is identical.
+            propertySetSink.AddEntry(PropertySetEntry.CreateEnumeratedValue("SinkMounting", PropertyType.Label,
+                typeof(PsetSanitaryTerminalTypeToiletPan_SanitaryMounting)));
+            propertySetSink.AddEntry(PropertySetEntry.CreatePositiveLength("NominalLength"));
+            propertySetSink.AddEntry(PropertySetEntry.CreatePositiveLength("NominalWidth"));
+            propertySetSink.AddEntry(PropertySetEntry.CreatePositiveLength("NominalDepth"));
+
+            //propertySetSink.AddEntry(PropertySetEntry.CreateMaterial("Material"));
+            propertySetSink.AddEntry(PropertySetEntry.CreateText("Color"));
+            propertySetSink.AddEntry(PropertySetEntry.CreatePositiveLength("DrainSize"));
+
+            commonPropertySets.Add(propertySetSink);
+        }
+        
+        /// <summary>
         /// Initializes Pset_SanitaryTerminalTypeToiletPan
         /// </summary>
         /// <param name="commonPropertySets">List to store property sets.</param>
@@ -1518,7 +1602,7 @@ namespace BIM.IFC.Exporter
             PropertySetDescription propertySetToiletPan = new PropertySetDescription();
             propertySetToiletPan.Name = "Pset_SanitaryTerminalTypeToiletPan";
             propertySetToiletPan.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
-            // TODO: Restrict to Toilet Pans only.
+            propertySetToiletPan.PredefinedType = "TOILETPAN";
 
             propertySetToiletPan.AddEntry(PropertySetEntry.CreateEnumeratedValue("ToiletType", PropertyType.Label,
                 typeof(PsetSanitaryTerminalTypeToiletPan_ToiletType)));
@@ -1534,6 +1618,32 @@ namespace BIM.IFC.Exporter
             propertySetToiletPan.AddEntry(PropertySetEntry.CreatePositiveLength("NominalDepth"));
 
             commonPropertySets.Add(propertySetToiletPan);
+        }
+
+        /// <summary>
+        /// Initializes Pset_SanitaryTerminalTypeWashHandBasin
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetSanitaryTerminalTypeWashHandBasin(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetWashHandBasin = new PropertySetDescription();
+            propertySetWashHandBasin.Name = "Pset_SanitaryTerminalTypeWashHandBasin";
+            propertySetWashHandBasin.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
+            propertySetWashHandBasin.PredefinedType = "WASHHANDBASIN";
+
+            propertySetWashHandBasin.AddEntry(PropertySetEntry.CreateEnumeratedValue("WashHandBasinType", PropertyType.Label,
+                typeof(PsetSanitaryTerminalTypeWashHandBasin_WashHandBasinType)));
+            // PsetSanitaryTerminalTypeToiletPan_SanitaryMounting is purposely reused, as it is identical.
+            propertySetWashHandBasin.AddEntry(PropertySetEntry.CreateEnumeratedValue("WashHandBasinMounting", PropertyType.Label,
+                typeof(PsetSanitaryTerminalTypeToiletPan_SanitaryMounting)));
+            //propertySetWashHandBasin.AddEntry(PropertySetEntry.CreateMaterial("Material"));
+            propertySetWashHandBasin.AddEntry(PropertySetEntry.CreatePositiveLength("NominalLength"));
+            propertySetWashHandBasin.AddEntry(PropertySetEntry.CreatePositiveLength("NominalWidth"));
+            propertySetWashHandBasin.AddEntry(PropertySetEntry.CreatePositiveLength("NominalDepth"));
+            propertySetWashHandBasin.AddEntry(PropertySetEntry.CreateText("Color"));
+            propertySetWashHandBasin.AddEntry(PropertySetEntry.CreatePositiveLength("DrainSize"));
+
+            commonPropertySets.Add(propertySetWashHandBasin);
         }
 
         /// <summary>

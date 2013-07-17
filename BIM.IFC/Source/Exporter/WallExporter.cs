@@ -525,7 +525,7 @@ namespace BIM.IFC.Exporter
                     // get global values.
                     Document doc = element.Document;
                     double scale = exporterIFC.LinearScale;
-
+                    
                     IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                     IFCAnyHandle contextOfItemsAxis = exporterIFC.Get3DContextHandle("Axis");
                     IFCAnyHandle contextOfItemsBody = exporterIFC.Get3DContextHandle("Body");
@@ -867,14 +867,48 @@ namespace BIM.IFC.Exporter
                             string elemObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
                             string elemTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
+                            // For Foundation and Retaining walls, allow exporting as IfcFooting instead.
+                            bool exportAsFooting = false;
+                            string enumTypeValue = null;
+
+                            if (wallElement != null)
+                            {
+                                WallType wallType = wallElement.WallType;
+
+                                if (wallType != null)
+                                {
+                                    int wallFunction;
+                                    if (ParameterUtil.GetIntValueFromElement(wallType, BuiltInParameter.FUNCTION_PARAM, out wallFunction))
+                                    {
+                                        if (wallFunction == (int)WallFunction.Retaining || wallFunction == (int)WallFunction.Foundation)
+                                        {
+                                            // In this case, allow potential to export foundation and retaining walls as footing.
+                                            IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, wallElement, out enumTypeValue);
+                                            if (exportType == IFCExportType.ExportFooting)
+                                                exportAsFooting = true;
+                                        }
+                                    }
+                                }
+                            }
+
                             if (exportedAsWallWithAxis)
                             {
-                                if (exportParts)
+                                if (exportAsFooting)
+                                {
+                                    Toolkit.IFCFootingType footingType = FootingExporter.GetIFCFootingType(element, enumTypeValue);
+                                    wallHnd = IFCInstanceExporter.CreateFooting(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
+                                        localPlacement, exportParts ? null : prodRep, elemTag, footingType);
+                                }
+                                else if (exportParts)
+                                {
                                     wallHnd = IFCInstanceExporter.CreateWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                                    localPlacement, null, elemTag);
+                                        localPlacement, null, elemTag);
+                                }
                                 else
+                                {
                                     wallHnd = IFCInstanceExporter.CreateWallStandardCase(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
                                         localPlacement, prodRep, elemTag);
+                                }
 
                                 if (exportParts)
                                     PartExporter.ExportHostPart(exporterIFC, element, wallHnd, localWrapper, setter, localPlacement, overrideLevelId);
@@ -917,24 +951,33 @@ namespace BIM.IFC.Exporter
                             }
                             else
                             {
-                                wallHnd = IFCInstanceExporter.CreateWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                                    localPlacement, exportParts ? null : prodRep, elemTag);
+                                if (exportAsFooting)
+                                {
+                                    Toolkit.IFCFootingType footingType = FootingExporter.GetIFCFootingType(element, enumTypeValue);
+                                    wallHnd = IFCInstanceExporter.CreateFooting(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
+                                        localPlacement, exportParts ? null : prodRep, elemTag, footingType);
+                                }
+                                else
+                                {
+                                    wallHnd = IFCInstanceExporter.CreateWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
+                                        localPlacement, exportParts ? null : prodRep, elemTag);
+                                }
 
                                 if (exportParts)
                                     PartExporter.ExportHostPart(exporterIFC, element, wallHnd, localWrapper, setter, localPlacement, overrideLevelId);
 
                                 localWrapper.AddElement(wallHnd, setter, extraParams, true);
 
-                                // Only export one material for 2x2; for future versions, export the whole list.
-                                if ((exporterIFC.ExportAs2x2 || famInstWallElem != null) && !exportParts)
-                                {
-                                    matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(solids, meshes, element);
-                                    if (matId != ElementId.InvalidElementId)
-                                        CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, wallHnd, matId);
-                                }
-
                                 if (!exportParts)
                                 {
+                                    // Only export one material for 2x2; for future versions, export the whole list.
+                                    if (exporterIFC.ExportAs2x2 || famInstWallElem != null)
+                                    {
+                                        matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(solids, meshes, element);
+                                        if (matId != ElementId.InvalidElementId)
+                                            CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, wallHnd, matId);
+                                    }
+
                                     if (exportingInplaceOpenings)
                                     {
                                         ExporterIFCUtils.AddOpeningsToElement(exporterIFC, wallHnd, famInstWallElem, 0.0, range, setter, localPlacement, localWrapper.ToNative());
@@ -965,7 +1008,8 @@ namespace BIM.IFC.Exporter
                                         geometryElement, localWrapper, wallLevelId, Toolkit.IFCLayerSetDirection.Axis2);
                             }
 
-                            ExportWallType(exporterIFC, wallHnd, element, matId,exportedAsWallWithAxis);
+                            if (!exportAsFooting)
+                                ExportWallType(exporterIFC, wallHnd, element, matId,exportedAsWallWithAxis);
 
                             exporterIFC.RegisterSpaceBoundingElementHandle(wallHnd, element.Id, wallLevelId);
 
@@ -1019,28 +1063,28 @@ namespace BIM.IFC.Exporter
                 }
                 else
                 {
-                    IFCAnyHandle wallElemHnd = ExportWallBase(exporterIFC, element, geometryElement, productWrapper, levels[0], ranges[0]);
-                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(wallElemHnd))
-                        createdWalls.Add(wallElemHnd);
-                    for (int ii = 1; ii < numPartsToExport; ii++)
-                    {
-                        wallElemHnd = ExportWallBase(exporterIFC, element, geometryElement, productWrapper, levels[ii], ranges[ii]);
+                        IFCAnyHandle wallElemHnd = ExportWallBase(exporterIFC, element, geometryElement, productWrapper, levels[0], ranges[0]);
                         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(wallElemHnd))
                             createdWalls.Add(wallElemHnd);
+                        for (int ii = 1; ii < numPartsToExport; ii++)
+                        {
+                            wallElemHnd = ExportWallBase(exporterIFC, element, geometryElement, productWrapper, levels[ii], ranges[ii]);
+                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(wallElemHnd))
+                                createdWalls.Add(wallElemHnd);
+                        }
                     }
-                }
 
                 if (ExporterCacheManager.DummyHostCache.HasRegistered(element.Id))
                 {
-                    List<KeyValuePair<ElementId, IFCRange>> levelRangeList = ExporterCacheManager.DummyHostCache.Find(element.Id);
-                    foreach (KeyValuePair<ElementId, IFCRange> levelRange in levelRangeList)
-                    {
-                        IFCAnyHandle wallElemHnd = ExportDummyWall(exporterIFC, element, geometryElement, productWrapper, levelRange.Key, levelRange.Value);
-                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(wallElemHnd))
-                            createdWalls.Add(wallElemHnd);
+                        List<KeyValuePair<ElementId, IFCRange>> levelRangeList = ExporterCacheManager.DummyHostCache.Find(element.Id);
+                        foreach (KeyValuePair<ElementId, IFCRange> levelRange in levelRangeList)
+                        {
+                            IFCAnyHandle wallElemHnd = ExportDummyWall(exporterIFC, element, geometryElement, productWrapper, levelRange.Key, levelRange.Value);
+                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(wallElemHnd))
+                                createdWalls.Add(wallElemHnd);
+                        }
                     }
                 }
-            }
 
             if (createdWalls.Count == 0)
                 ExportWallBase(exporterIFC, element, geometryElement, productWrapper, ElementId.InvalidElementId, null);
@@ -1066,11 +1110,14 @@ namespace BIM.IFC.Exporter
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction tr = new IFCTransaction(file))
             {
+                WallType wallType =  wallElement.WallType;
+                WallKind wallTypeKind = wallType.Kind;
+
                 //stacked wall is not supported yet.
-                if (wallElement.WallType.Kind == WallKind.Stacked)
+                if (wallTypeKind == WallKind.Stacked)
                     return;
 
-                if (CurtainSystemExporter.IsCurtainSystem(wallElement))                
+                if (CurtainSystemExporter.IsCurtainSystem(wallElement))
                     CurtainSystemExporter.ExportWall(exporterIFC, wallElement, productWrapper);
                 else
                     ExportWall(exporterIFC, wallElement, geometryElement, productWrapper);
@@ -1142,7 +1189,7 @@ namespace BIM.IFC.Exporter
                 // get global values.
                 Document doc = element.Document;
                 double scale = exporterIFC.LinearScale;
-
+                
                 IFCFile file = exporterIFC.GetFile();
                 IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
 

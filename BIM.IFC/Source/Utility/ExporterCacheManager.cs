@@ -47,6 +47,16 @@ namespace BIM.IFC.Utility
         static AssemblyInstanceCache m_AssemblyInstanceCache;
 
         /// <summary>
+        /// Cache the values of the IFC entity class from the IFC Export table by category.
+        /// </summary>
+        static Dictionary<KeyValuePair<ElementId, int>, string> m_CategoryClassNameCache;
+
+        /// <summary>
+        /// Cache the values of the IFC entity pre-defined type from the IFC Export table by category.
+        /// </summary>
+        static Dictionary<KeyValuePair<ElementId, int>, string> m_CategoryTypeCache;
+
+        /// <summary>
         /// The ClassificationCache object.
         /// Keeps track of created IfcClassifications for re-use.
         /// </summary>
@@ -346,6 +356,32 @@ namespace BIM.IFC.Utility
                 if (m_AssemblyInstanceCache == null)
                     m_AssemblyInstanceCache = new AssemblyInstanceCache();
                 return m_AssemblyInstanceCache;
+            }
+        }
+
+        /// <summary>
+        /// The CategoryClassNameCache object.
+        /// </summary>
+        public static IDictionary<KeyValuePair<ElementId, int>, string> CategoryClassNameCache
+        {
+            get
+            {
+                if (m_CategoryClassNameCache == null)
+                    m_CategoryClassNameCache = new Dictionary<KeyValuePair<ElementId, int>, string>();
+                return m_CategoryClassNameCache;
+            }
+        }
+
+        /// <summary>
+        /// The CategoryTypeCache object.
+        /// </summary>
+        public static IDictionary<KeyValuePair<ElementId, int>, string> CategoryTypeCache
+        {
+            get
+            {
+                if (m_CategoryTypeCache == null)
+                    m_CategoryTypeCache = new Dictionary<KeyValuePair<ElementId, int>, string>();
+                return m_CategoryTypeCache;
             }
         }
 
@@ -1050,6 +1086,8 @@ namespace BIM.IFC.Utility
             m_AreaSchemeCache = null;
             m_AssemblyInstanceCache = null;
             m_BeamSystemCache = null;
+            m_CategoryClassNameCache = null;
+            m_CategoryTypeCache = null;
             m_CeilingSpaceRelCache = null;
             m_ClassificationCache = null;
             m_ClassificationLocationCache = null;

@@ -590,8 +590,9 @@ namespace BIM.IFC.Utility
         private static bool ShouldCategoryBeExported(ExporterIFC exporterIFC, Element element)
         {
             IFCExportType exportType = IFCExportType.DontExport;
-            String ifcClassName = ExporterIFCUtils.GetIFCClassName(element, exporterIFC);
-            if (ifcClassName == "")
+            ElementId categoryId;
+            string ifcClassName = ExporterUtil.GetIFCClassNameFromExportTable(exporterIFC, element, out categoryId);
+            if (string.IsNullOrEmpty(ifcClassName))
             {
                 // Special case: these elements aren't contained in the default export layers mapping table.
                 // This allows these elements to be exported by default.
@@ -603,7 +604,7 @@ namespace BIM.IFC.Utility
                     return false;
             }
 
-            bool foundName = String.Compare(ifcClassName, "Default", true) != 0;
+            bool foundName = string.Compare(ifcClassName, "Default", true) != 0;
             if (foundName)
                 exportType = GetExportTypeFromClassName(ifcClassName);
             // We don't export openings directly, only via the element they are opening.
@@ -681,6 +682,8 @@ namespace BIM.IFC.Utility
         /// <returns>The export type.</returns>
         public static IFCExportType GetExportTypeFromClassName(String ifcClassName)
         {
+            if (ifcClassName.StartsWith("Ifc", true, null))
+            {
             if (String.Compare(ifcClassName, "IfcAnnotation", true) == 0)
             {
                 // Used to mark curves, text, and filled regions for export.
@@ -928,8 +931,7 @@ namespace BIM.IFC.Utility
                 return IFCExportType.ExportValveType;
             else if (IsEqualToTypeName(ifcClassName, ("IfcWasteTerminal")))
                 return IFCExportType.ExportWasteTerminalType;
-            else if (ifcClassName.StartsWith("Ifc", true, null))
-            {
+
                 // This used to throw an exception, but this could abort export if the user enters a bad IFC class name
                 // in the ExportLayerOptions table.  In the future, we should log this.
                 //throw new Exception("IFC: Unknown IFC type in getExportTypeFromClassName: " + ifcClassName);

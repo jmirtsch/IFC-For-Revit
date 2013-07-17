@@ -100,7 +100,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_C0CBDEB82BAB73E544E3E60D8BEE9405"
+        "OwnerKey" = "8:_34C90AB74F2C0DF368D62ED5B7DF3279"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -112,7 +112,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_34C90AB74F2C0DF368D62ED5B7DF3279"
+        "OwnerKey" = "8:_C0CBDEB82BAB73E544E3E60D8BEE9405"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -416,7 +416,7 @@
             {
             "AssemblyRegister" = "3:1"
             "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:IFCExtension, Version=1.8.1.0, Culture=neutral, processorArchitecture=MSIL"
+            "AssemblyAsmDisplayName" = "8:IFCExtension, Version=1.11.7.1, Culture=neutral, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
                 }
@@ -582,15 +582,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:IFC Exporter for Revit 2013"
-        "ProductCode" = "8:{51B8CC25-3BBE-443B-8467-2BC938F821D2}"
-        "PackageCode" = "8:{C80B54B2-C49D-4AB3-B63F-08A1D226E1B5}"
+        "ProductCode" = "8:{7F646624-96AA-4915-BE5F-852AE6741E55}"
+        "PackageCode" = "8:{A2EF2561-E91F-4FC1-B4D1-FA286D197301}"
         "UpgradeCode" = "8:{CF885686-3666-4AE4-AD04-888286C204E6}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:2.11.2"
+        "ProductVersion" = "8:2.12.0"
         "Manufacturer" = "8:IFC Exporter for Revit"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:http://sourceforge.net/projects/ifcexporter/"

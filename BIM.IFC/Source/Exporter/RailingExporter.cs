@@ -185,7 +185,7 @@ namespace BIM.IFC.Exporter
             if (geomElement == null)
                 return;
 
-            string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, railing);
+            string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, railing);
             ExportRailing(exporterIFC, railing, geomElement, ifcEnumType, productWrapper);
         }
 

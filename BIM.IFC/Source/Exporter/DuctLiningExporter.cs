@@ -62,7 +62,7 @@ namespace BIM.IFC.Exporter
 
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                         IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, element,
-                            categoryId, geometryElement, bodyExporterOptions, null, ecData);
+                            categoryId, geometryElement, bodyExporterOptions, null, ecData, true);
 
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(representation))
                         {
@@ -82,6 +82,7 @@ namespace BIM.IFC.Exporter
 
                         IFCAnyHandle ductLining = IFCInstanceExporter.CreateCovering(file, guid,
                             ownerHistory, name, description, objectType, localPlacement, representation, elementTag, IFCCoveringType.Wrapping);
+                        ExporterCacheManager.ElementToHandleCache.Register(element.Id, ductLining);
 
                         productWrapper.AddElement(ductLining, placementSetter.GetLevelInfo(), ecData, true);
 

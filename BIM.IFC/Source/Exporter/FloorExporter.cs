@@ -38,21 +38,13 @@ namespace BIM.IFC.Exporter
         /// <summary>
         /// Exports a floor to IFC slab.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="floor">
-        /// The floor element.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="floor">The floor element.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
         public static void Export(ExporterIFC exporterIFC, HostObject floor, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
-            string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, floor);
+            string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, floor);
 
             // export parts or not
             bool exportParts = PartExporter.CanExportParts(floor);

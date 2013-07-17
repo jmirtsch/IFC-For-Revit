@@ -1273,7 +1273,7 @@ namespace BIM.IFC.Exporter
         /// <param name="productWrapper">The ProductWrapper.</param>
         public static void Export(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
-            string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, element);
+            string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, element);
             IFCFile file = exporterIFC.GetFile();
 
             using (IFCTransaction tr = new IFCTransaction(file))

@@ -187,17 +187,7 @@ namespace BIM.IFC.Utility
                         propertyValue = parameter.AsInteger();
                         return true;
                     case StorageType.String:
-                        {
-                            try
-                            {
-                                propertyValue = Convert.ToDouble(parameter.AsString());
-                                return true;
-                            }
-                            catch
-                            {
-                                return false;
-                            }
-                        }
+                        return Double.TryParse(parameter.AsString(), out propertyValue);
                 }
             }
 

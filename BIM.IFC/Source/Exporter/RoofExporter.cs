@@ -148,7 +148,7 @@ namespace BIM.IFC.Exporter
                 }
                 else
                 {
-                    string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, roof);
+                    string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, roof);
                     
                     IFCAnyHandle roofHnd = ExporterIFCUtils.ExportRoofAsContainer(exporterIFC, ifcEnumType, roof, 
                         geometryElement, productWrapper.ToNative());
@@ -192,7 +192,7 @@ namespace BIM.IFC.Exporter
                         string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
                         //need to convert the string to enum
-                        string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, element);
+                        string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, element);
                         IFCAnyHandle roofHandle = IFCInstanceExporter.CreateRoof(file, elementGUID, ownerHistory, elementName, elementDescription, elementObjectType, localPlacement, prodRepHnd, elementTag, GetIFCRoofType(ifcEnumType));
 
                         // Export the parts

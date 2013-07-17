@@ -104,24 +104,24 @@ namespace BIM.IFC.Exporter
                 }
                 else
                 {
-                    for (int ii = 0; ii < numPartsToExport; ii++)
-                    {
-                        ExportFamilyInstanceAsMappedItem(exporterIFC, familyInstance, exportType, ifcEnumType, productWrapper,
-                          levels[ii], ranges[ii], null);
-                    }
+                        for (int ii = 0; ii < numPartsToExport; ii++)
+                        {
+                            ExportFamilyInstanceAsMappedItem(exporterIFC, familyInstance, exportType, ifcEnumType, productWrapper,
+                              levels[ii], ranges[ii], null);
+                        }
 
                     if (ExporterCacheManager.DummyHostCache.HasRegistered(familyInstance.Id))
                     {
-                        List<KeyValuePair<ElementId, IFCRange>> levelRangeList = ExporterCacheManager.DummyHostCache.Find(familyInstance.Id);
-                        foreach (KeyValuePair<ElementId, IFCRange> levelRange in levelRangeList)
-                        {
-                            ExportFamilyInstanceAsMappedItem(exporterIFC, familyInstance, exportType, ifcEnumType, productWrapper, levelRange.Key, levelRange.Value, null);
+                            List<KeyValuePair<ElementId, IFCRange>> levelRangeList = ExporterCacheManager.DummyHostCache.Find(familyInstance.Id);
+                            foreach (KeyValuePair<ElementId, IFCRange> levelRange in levelRangeList)
+                            {
+                                ExportFamilyInstanceAsMappedItem(exporterIFC, familyInstance, exportType, ifcEnumType, productWrapper, levelRange.Key, levelRange.Value, null);
+                            }
                         }
                     }
-                }
 
                 tr.Commit();
-            }
+                }
         }
 
         /// <summary>
@@ -671,12 +671,12 @@ namespace BIM.IFC.Exporter
                                        familyInstance);
                                     propertySets.UnionWith(doorPanels);
 
-                                    string doorStyleGUID = GUIDUtil.CreateSubElementGUID(originalFamilySymbol, (int)IFCDoorSubElements.DoorStyle);
-                                    typeStyle = IFCInstanceExporter.CreateDoorStyle(file, doorStyleGUID, ownerHistory, gentypeName,
-                                       gentypeDescription, gentypeApplicableOccurrence, propertySets, repMapList, symbolTag,
+                                        string doorStyleGUID = GUIDUtil.CreateSubElementGUID(originalFamilySymbol, (int)IFCDoorSubElements.DoorStyle);
+                                        typeStyle = IFCInstanceExporter.CreateDoorStyle(file, doorStyleGUID, ownerHistory, gentypeName,
+                                           gentypeDescription, gentypeApplicableOccurrence, propertySets, repMapList, symbolTag,
                                        DoorWindowUtil.GetDoorStyleOperation(doorWindowInfo.DoorOperationType),
                                        DoorWindowUtil.GetDoorStyleConstruction(familyInstance),
-                                       paramTakesPrecedence, sizeable);
+                                           paramTakesPrecedence, sizeable);
                                     break;
                                 }
                             case IFCExportType.ExportSystemFurnitureElementType:
@@ -702,9 +702,9 @@ namespace BIM.IFC.Exporter
 
                                     string windowStyleGUID = GUIDUtil.CreateSubElementGUID(originalFamilySymbol, (int)IFCWindowSubElements.WindowStyle);
 
-                                    typeStyle = IFCInstanceExporter.CreateWindowStyle(file, windowStyleGUID, ownerHistory, gentypeName,
-                                       gentypeDescription, gentypeApplicableOccurrence, propertySets, repMapList, symbolTag,
-                                       constructionType, operationType, paramTakesPrecedence, sizeable);
+                                        typeStyle = IFCInstanceExporter.CreateWindowStyle(file, windowStyleGUID, ownerHistory, gentypeName,
+                                           gentypeDescription, gentypeApplicableOccurrence, propertySets, repMapList, symbolTag,
+                                           constructionType, operationType, paramTakesPrecedence, sizeable);
                                     break;
                                 }
                             case IFCExportType.ExportBuildingElementProxy:
@@ -862,7 +862,13 @@ namespace BIM.IFC.Exporter
                         }
 
                         if (ElementFilteringUtil.IsMEPType(exportType))
+                        {
                             ExporterCacheManager.MEPCache.Register(familyInstance, instanceHandle);
+                            // For ducts and pipes, check later if there is an associated duct or pipe.
+                            if (exportType == IFCExportType.ExportDuctFittingType || exportType == IFCExportType.ExportPipeFittingType ||
+                                exportType == IFCExportType.ExportDuctSegmentType || exportType == IFCExportType.ExportPipeSegmentType)
+                                ExporterCacheManager.MEPCache.CoveredElementsCache.Add(familyInstance.Id);
+                        }
 
                         switch (exportType)
                         {
@@ -920,7 +926,7 @@ namespace BIM.IFC.Exporter
                                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(overrideLocalPlacement))
                                         doorWindowLocalPlacement = overrideLocalPlacement;
                                     else
-                                    {
+                                {
                                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(doorWindowInfo.GetLocalPlacement()))
                                             doorWindowInfo.SetLocalPlacement(localPlacement);
 

@@ -66,7 +66,7 @@ namespace BIM.IFC.Exporter
 
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                         IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, element,
-                            categoryId, geometryElement, bodyExporterOptions, null, ecData);
+                            categoryId, geometryElement, bodyExporterOptions, null, ecData, true);
 
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(representation))
                         {

@@ -88,6 +88,10 @@ namespace BIM.IFC.Utility
                 bool? allowGUIDParameterOverride = GetNamedBooleanOption(options, "AllowGUIDParameterOverride");
                 if (allowGUIDParameterOverride != null)
                     cache.GUIDOptions.AllowGUIDParameterOverride = allowGUIDParameterOverride.Value;
+
+                bool? storeIFCGUID = GetNamedBooleanOption(options, "StoreIFCGUID");
+                if (storeIFCGUID != null)
+                    cache.GUIDOptions.StoreIFCGUID = storeIFCGUID.Value;
             }
 
             // Set NamingOptions here.

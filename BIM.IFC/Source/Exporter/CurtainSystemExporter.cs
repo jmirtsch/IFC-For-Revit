@@ -307,7 +307,7 @@ namespace BIM.IFC.Exporter
                     else if (element is RoofBase)
                     {
                         //need to convert the string to enum
-                        string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, element);
+                        string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, element);
                         elemHnd = IFCInstanceExporter.CreateRoof(file, elemGUID, ownerHistory, elemName, elemDesc, elemType, localPlacement,
                             prodRepHnd, elemTag, RoofExporter.GetIFCRoofType(ifcEnumType));
                     }

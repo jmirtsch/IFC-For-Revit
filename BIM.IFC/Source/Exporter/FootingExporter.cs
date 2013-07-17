@@ -102,7 +102,7 @@ namespace BIM.IFC.Exporter
                             matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element);
                             BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                             prodRep = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
-                               element, catId, geometryElement, bodyExporterOptions, null, ecData);
+                               element, catId, geometryElement, bodyExporterOptions, null, ecData, true);
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodRep))
                             {
                                 ecData.ClearOpenings();
