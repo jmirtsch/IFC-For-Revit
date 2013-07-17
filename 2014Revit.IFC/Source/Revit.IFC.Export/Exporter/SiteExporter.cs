@@ -208,29 +208,39 @@ namespace Revit.IFC.Export.Exporter
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(siteHandle))
                     {
                         // We will use the Project Information site name as the primary name, if it exists.
-                        string instanceGUID = GUIDUtil.CreateSiteGUID(doc, element);
-                        string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-                        string siteName = NamingUtil.GetOverrideStringValue(projectInfo, "SiteName", instanceName);
-                        string instanceLongName = NamingUtil.GetLongNameOverride(doc.ProjectInformation, NamingUtil.GetLongNameOverride(element, null));
-                        string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
-                        string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
+                        string siteGUID = GUIDUtil.CreateSiteGUID(doc, element);
+                        string siteName = NamingUtil.GetOverrideStringValue(projectInfo, "SiteName", 
+                            NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element)));
+                        string siteDescription = NamingUtil.GetDescriptionOverride(element, null);
+                        string siteObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
+
+                        // Look in site element for "IfcLongName" or project information for either "IfcLongName" or "SiteLongName".
+                        string siteLongName = NamingUtil.GetLongNameOverride(projectInfo, NamingUtil.GetLongNameOverride(element, null));
+                        if (string.IsNullOrWhiteSpace(siteLongName))
+                            siteLongName = NamingUtil.GetOverrideStringValue(projectInfo, "SiteLongName", null);
+
+                        // Look in site element for "IfcLandTitleNumber" or project information for "SiteLandTitleNumber".
                         string siteLandTitleNumber = NamingUtil.GetOverrideStringValue(element, "IfcLandTitleNumber", null);
+                        if (string.IsNullOrWhiteSpace(siteLandTitleNumber))
+                            siteLandTitleNumber = NamingUtil.GetOverrideStringValue(projectInfo, "SiteLandTitleNumber", null);
 
-
-                        siteHandle = IFCInstanceExporter.CreateSite(file, instanceGUID, ownerHistory, siteName, instanceDescription, instanceObjectType, localPlacement,
-                           siteRepresentation, instanceLongName, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, siteLandTitleNumber, null);
+                        siteHandle = IFCInstanceExporter.CreateSite(file, siteGUID, ownerHistory, siteName, siteDescription, siteObjectType, localPlacement,
+                           siteRepresentation, siteLongName, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, siteLandTitleNumber, null);
                     }
                 }
                 else
                 {
+                    string siteName = NamingUtil.GetOverrideStringValue(projectInfo, "SiteName", "Default");
+                    string siteLongName = NamingUtil.GetLongNameOverride(projectInfo, NamingUtil.GetOverrideStringValue(projectInfo, "SiteLongName", null));
+                    string siteLandTitleNumber = NamingUtil.GetOverrideStringValue(projectInfo, "SiteLandTitleNumber", null);
+
                     // don't bother if we have nothing in the site whatsoever.
-                    if ((latitude.Count == 0 || longitude.Count == 0) && IFCAnyHandleUtil.IsNullOrHasNoValue(relativePlacement))
+                    if ((latitude.Count == 0 || longitude.Count == 0) && IFCAnyHandleUtil.IsNullOrHasNoValue(relativePlacement) &&
+                        string.IsNullOrWhiteSpace(siteLongName) && string.IsNullOrWhiteSpace(siteLandTitleNumber))
                         return;
 
-                    string siteName = NamingUtil.GetOverrideStringValue(projectInfo, "SiteName", "Default");
-                    string longName = NamingUtil.GetLongNameOverride(projectInfo, null);
                     siteHandle = IFCInstanceExporter.CreateSite(file, GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Site), ownerHistory, siteName, null, objectType, localPlacement,
-                       null, longName, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, null, null);
+                       null, siteLongName, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, siteLandTitleNumber, null);
                 }
 
                 productWrapper.AddSite(siteHandle);

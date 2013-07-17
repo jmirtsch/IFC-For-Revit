@@ -84,7 +84,8 @@ namespace Revit.IFC.Export.Exporter
                         string roofObjectType = NamingUtil.GetObjectTypeOverride(roof, NamingUtil.CreateIFCObjectName(exporterIFC, roof));
                         IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
                         string elementTag = NamingUtil.GetTagOverride(roof, NamingUtil.CreateIFCElementId(roof));
-                        IFCRoofType roofType = GetIFCRoofType(ifcEnumType);
+                        string roofType = GetIFCRoofType(ifcEnumType);
+                        roofType = IFCValidateEntry.GetValidIFCType(roof, ifcEnumType);
 
                         IFCAnyHandle roofHnd = IFCInstanceExporter.CreateRoof(file, guid, ownerHistory, roofName, roofDescription,
                             roofObjectType, localPlacement, exportSlab ? null : representation, elementTag, roofType);
@@ -104,7 +105,7 @@ namespace Revit.IFC.Export.Exporter
                             IFCAnyHandle slabLocalPlacementHnd = ExporterUtil.CopyLocalPlacement(file, localPlacement);
 
                             IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(file, slabGUID, ownerHistory, slabName,
-                               roofDescription, roofObjectType, slabLocalPlacementHnd, representation, elementTag, IFCSlabType.Roof);
+                               roofDescription, roofObjectType, slabLocalPlacementHnd, representation, elementTag, "ROOF");
 
                             Transform offsetTransform = (bodyData != null) ? bodyData.OffsetTransform : Transform.Identity;
                             OpeningUtil.CreateOpeningsIfNecessary(slabHnd, roof, ecData, offsetTransform,
@@ -149,7 +150,7 @@ namespace Revit.IFC.Export.Exporter
                 }
                 else
                 {
-                    string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, roof);
+                    string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, roof);
                     
                     IFCAnyHandle roofHnd = ExportRoofAsContainer(exporterIFC, ifcEnumType, roof, 
                         geometryElement, productWrapper);
@@ -221,8 +222,10 @@ namespace Revit.IFC.Export.Exporter
                                 string elementDescription = NamingUtil.GetDescriptionOverride(element, null);
                                 string elementObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
                                 string elementId = NamingUtil.CreateIFCElementId(element);
+                                string roofType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
 
-                                IFCAnyHandle roofHandle = IFCInstanceExporter.CreateRoof(file, elementGUID, ownerHistory, elementName, elementDescription, elementObjectType, localPlacement, prodRepHnd, elementId, GetIFCRoofType(ifcEnumType));
+                                IFCAnyHandle roofHandle = IFCInstanceExporter.CreateRoof(file, elementGUID, ownerHistory, elementName, elementDescription, 
+                                    elementObjectType, localPlacement, prodRepHnd, elementId, roofType);
 
 
                                 IList<IFCAnyHandle> elementHandles = new List<IFCAnyHandle>();
@@ -275,7 +278,7 @@ namespace Revit.IFC.Export.Exporter
 
                                         IFCAnyHandle slabPlacement = ExporterUtil.CreateLocalPlacement(file, slabExtrusionCreationData.GetLocalPlacement(), null);
                                         IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(file, slabGUID, ownerHistory, elementName,
-                                           elementDescription, elementObjectType, slabPlacement, repHnd, elementId, IFCSlabType.Roof);
+                                           elementDescription, elementObjectType, slabPlacement, repHnd, elementId, "ROOF");
 
                                         //slab quantities
                                         slabExtrusionCreationData.ScaledLength = scaledExtrusionDepth;
@@ -334,8 +337,11 @@ namespace Revit.IFC.Export.Exporter
                     string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
                     //need to convert the string to enum
-                    string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, element);
-                    IFCAnyHandle roofHandle = IFCInstanceExporter.CreateRoof(file, elementGUID, ownerHistory, elementName, elementDescription, elementObjectType, localPlacement, prodRepHnd, elementTag, GetIFCRoofType(ifcEnumType));
+                    string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, element);
+                    ifcEnumType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
+
+                    IFCAnyHandle roofHandle = IFCInstanceExporter.CreateRoof(file, elementGUID, ownerHistory, elementName, elementDescription, 
+                        elementObjectType, localPlacement, prodRepHnd, elementTag, ifcEnumType);
 
                     // Export the parts
                     PartExporter.ExportHostPart(exporterIFC, element, roofHandle, productWrapper, setter, localPlacement, null);
@@ -354,45 +360,45 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="roofTypeName">The roof type name.</param>
         /// <returns>The IFCRoofType.</returns>
-        public static IFCRoofType GetIFCRoofType(string roofTypeName)
+        public static string GetIFCRoofType(string roofTypeName)
         {
             string typeName = NamingUtil.RemoveSpacesAndUnderscores(roofTypeName);
 
             if (String.Compare(typeName, "ROOFTYPEENUM", true) == 0 ||
                 String.Compare(typeName, "ROOFTYPEENUMFREEFORM", true) == 0)
-                return Toolkit.IFCRoofType.FreeForm;
+                return "FREEFORM";
             if (String.Compare(typeName, "FLAT", true) == 0 ||
                 String.Compare(typeName, "FLATROOF", true) == 0)
-                return Toolkit.IFCRoofType.Flat_Roof;
+                return "FLAT_ROOF";
             if (String.Compare(typeName, "SHED", true) == 0 ||
                 String.Compare(typeName, "SHEDROOF", true) == 0)
-                return Toolkit.IFCRoofType.Shed_Roof;
+                return "SHED_ROOF";
             if (String.Compare(typeName, "GABLE", true) == 0 ||
                 String.Compare(typeName, "GABLEROOF", true) == 0)
-                return Toolkit.IFCRoofType.Gable_Roof;
+                return "GABLE_ROOF";
             if (String.Compare(typeName, "HIP", true) == 0 ||
                 String.Compare(typeName, "HIPROOF", true) == 0)
-                return Toolkit.IFCRoofType.Hip_Roof;
+                return "HIP_ROOF";
             if (String.Compare(typeName, "HIPPED_GABLE", true) == 0 ||
                 String.Compare(typeName, "HIPPED_GABLEROOF", true) == 0)
-                return Toolkit.IFCRoofType.Hipped_Gable_Roof;
+                return "HIPPED_GABLE_ROOF";
             if (String.Compare(typeName, "MANSARD", true) == 0 ||
                 String.Compare(typeName, "MANSARDROOF", true) == 0)
-                return Toolkit.IFCRoofType.Mansard_Roof;
+                return "MANSARD_ROOF";
             if (String.Compare(typeName, "BARREL", true) == 0 ||
                 String.Compare(typeName, "BARRELROOF", true) == 0)
-                return Toolkit.IFCRoofType.Barrel_Roof;
+                return "BARREL_ROOF";
             if (String.Compare(typeName, "BUTTERFLY", true) == 0 ||
                 String.Compare(typeName, "BUTTERFLYROOF", true) == 0)
-                return Toolkit.IFCRoofType.Butterfly_Roof;
+                return "BUTTERFLY_ROOF";
             if (String.Compare(typeName, "PAVILION", true) == 0 ||
                 String.Compare(typeName, "PAVILIONROOF", true) == 0)
-                return Toolkit.IFCRoofType.Pavilion_Roof;
+                return "PAVILION_ROOF";
             if (String.Compare(typeName, "DOME", true) == 0 ||
                 String.Compare(typeName, "DOMEROOF", true) == 0)
-                return Toolkit.IFCRoofType.Dome_Roof;
+                return "DOME_ROOF";
 
-            return Toolkit.IFCRoofType.NotDefined;
+            return typeName;        //return unchanged. Validation for ENUM will be done later specific to schema version
         }
     }
 }

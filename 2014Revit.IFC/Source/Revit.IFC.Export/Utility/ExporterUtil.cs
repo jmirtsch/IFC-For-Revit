@@ -646,22 +646,134 @@ namespace Revit.IFC.Export.Utility
                 IFCAnyHandleUtil.GetProductDefinitionShapeDescription(origProductDefinitionShape), representations);
         }
 
+        private static string GetIFCClassNameFromExportTable(ExporterIFC exporterIFC, Element element, ElementId categoryId, int specialClassId)
+        {
+            if (element == null)
+                return null;
+
+            KeyValuePair<ElementId, int> key = new KeyValuePair<ElementId, int>(categoryId, specialClassId);
+            string ifcClassName = null;
+            if (!ExporterCacheManager.CategoryClassNameCache.TryGetValue(key, out ifcClassName))
+            {
+                ifcClassName = ExporterIFCUtils.GetIFCClassName(element, exporterIFC);
+                ExporterCacheManager.CategoryClassNameCache[key] = ifcClassName;
+            }
+
+            return ifcClassName;
+        }
+
+        private static string GetIFCTypeFromExportTable(ExporterIFC exporterIFC, Element element, ElementId categoryId, int specialClassId)
+        {
+            if (element == null)
+                return null;
+
+            KeyValuePair<ElementId, int> key = new KeyValuePair<ElementId, int>(categoryId, specialClassId);
+            string ifcType = null;
+            if (!ExporterCacheManager.CategoryTypeCache.TryGetValue(key, out ifcType))
+            {
+                ifcType = ExporterIFCUtils.GetIFCType(element, exporterIFC);
+                ExporterCacheManager.CategoryTypeCache[key] = ifcType;
+            }
+
+            return ifcType;
+        }
+
+        /// <summary>
+        /// Get the IFC class name assigned in the export layers table for a category.  Cache values to avoid calls to internal code.
+        /// </summary>
+        /// <param name="exporterIFC">The exporterIFC class.</param>
+        /// <param name="categoryId">The category id.</param>
+        /// <returns>The entity name.</returns>
+        public static string GetIFCClassNameFromExportTable(ExporterIFC exporterIFC, ElementId categoryId)
+        {
+            if (categoryId == ElementId.InvalidElementId)
+                return null;
+
+            KeyValuePair<ElementId, int> key = new KeyValuePair<ElementId, int>(categoryId, -1);
+            string ifcClassName = null;
+            if (!ExporterCacheManager.CategoryClassNameCache.TryGetValue(key, out ifcClassName))
+            {
+                ifcClassName = ExporterIFCUtils.GetIFCClassNameByCategory(categoryId, exporterIFC);
+                ExporterCacheManager.CategoryClassNameCache[key] = ifcClassName;
+            }
+
+            return ifcClassName;
+        }
+
+        private static string GetIFCClassNameOrTypeFromSpecialEntry(ExporterIFC exporterIFC, Element element, ElementId categoryId, bool getClassName)
+        {
+            if (categoryId == new ElementId(BuiltInCategory.OST_Walls))
+            {
+                if (element is Wall)
+                {
+                    WallType wallType = (element as Wall).WallType;
+                    if (wallType != null)
+                    {
+                        int wallFunction;
+                        if (ParameterUtil.GetIntValueFromElement(wallType, BuiltInParameter.FUNCTION_PARAM, out wallFunction))
+                        {
+                            if (getClassName)
+                                return GetIFCClassNameFromExportTable(exporterIFC, element, categoryId, wallFunction);
+                            else
+                                return GetIFCTypeFromExportTable(exporterIFC, element, categoryId, wallFunction);
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Get the IFC class name assigned in the export layers table for a category.  Cache values to avoid calls to internal code.
+        /// </summary>
+        /// <param name="exporterIFC">The exporterIFC class.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="categoryId">The returned category id.</param>
+        /// <returns>The entity name.</returns>
+        public static string GetIFCClassNameFromExportTable(ExporterIFC exporterIFC, Element element, out ElementId categoryId)
+        {
+            categoryId = ElementId.InvalidElementId;
+
+            Category category = element.Category;
+            if (category == null)
+                return null;
+
+            categoryId = category.Id;
+            string specialEntry = GetIFCClassNameOrTypeFromSpecialEntry(exporterIFC, element, categoryId, true);
+            if (specialEntry != null)
+                return specialEntry;
+
+            return GetIFCClassNameFromExportTable(exporterIFC, categoryId);
+        }
+
+        /// <summary>
+        /// Get the IFC predefined type assigned in the export layers table for a category.  Cache values to avoid calls to internal code.
+        /// </summary>
+        /// <param name="exporterIFC">The exporterIFC class.</param>
+        /// <param name="element">The element.</param>
+        /// <returns>The predefined type.</returns>
+        public static string GetIFCTypeFromExportTable(ExporterIFC exporterIFC, Element element)
+        {
+            Category category = element.Category;
+            if (category == null)
+                return null;
+
+            ElementId categoryId = category.Id;
+            string specialEntry = GetIFCClassNameOrTypeFromSpecialEntry(exporterIFC, element, categoryId, false);
+            if (specialEntry != null)
+                return specialEntry;
+
+            return GetIFCTypeFromExportTable(exporterIFC, element, categoryId, -1);
+        }
 
         /// <summary>
         /// Gets export type for an element.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="enumTypeValue">
-        /// The output string value represents the enum type.
-        /// </param>
-        /// <returns>
-        /// The IFCExportType.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="enumTypeValue">The output string value represents the enum type.</param>
+        /// <returns>The IFCExportType.</returns>
         public static IFCExportType GetExportType(ExporterIFC exporterIFC, Element element,
            out string enumTypeValue)
         {
@@ -696,16 +808,14 @@ namespace Revit.IFC.Export.Utility
                 }
             }
 
-            Category category = element.Category;
-            if (category == null)
+            ElementId categoryId;
+            string ifcClassName = GetIFCClassNameFromExportTable(exporterIFC, element, out categoryId);
+            if (categoryId == ElementId.InvalidElementId)
                 return IFCExportType.DontExport;
 
-            ElementId categoryId = category.Id;
-
-            string ifcClassName = ExporterIFCUtils.GetIFCClassName(element, exporterIFC);
-            if (ifcClassName != "")
+            if (!string.IsNullOrEmpty(ifcClassName))
             {
-                enumTypeValue = ExporterIFCUtils.GetIFCType(element, exporterIFC);
+                enumTypeValue = GetIFCTypeFromExportTable(exporterIFC, element);
                 // if using name, override category id if match is found.
                 if (!ifcClassName.Equals("Default", StringComparison.OrdinalIgnoreCase))
                     exportType = ElementFilteringUtil.GetExportTypeFromClassName(ifcClassName);
@@ -720,7 +830,7 @@ namespace Revit.IFC.Export.Utility
 
             // if not set, fall back on symbol functions.
             // allow override of IfcBuildingElementProxy.
-            if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.ExportBuildingElementProxy))
+            if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.IfcBuildingElementProxy))
             {
                 // TODO: add isColumn.
                 //if (familySymbol.IsColumn())
@@ -732,14 +842,14 @@ namespace Revit.IFC.Export.Utility
                     switch (familyInstance.StructuralType)
                     {
                         case Autodesk.Revit.DB.Structure.StructuralType.Beam:
-                            exportType = IFCExportType.ExportBeam;
+                            exportType = IFCExportType.IfcBeam;
                             break;
                         case Autodesk.Revit.DB.Structure.StructuralType.Brace:
-                            exportType = IFCExportType.ExportMemberType;
+                            exportType = IFCExportType.IfcMemberType;
                             enumTypeValue = "BRACE";
                             break;
                         case Autodesk.Revit.DB.Structure.StructuralType.Footing:
-                            exportType = IFCExportType.ExportFooting;
+                            exportType = IFCExportType.IfcFooting;
                             break;
                     }
                 }

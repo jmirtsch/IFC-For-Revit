@@ -67,7 +67,7 @@ namespace Revit.IFC.Export.Exporter
 
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                         IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, element,
-                            categoryId, geometryElement, bodyExporterOptions, null, ecData);
+                            categoryId, geometryElement, bodyExporterOptions, null, ecData, true);
 
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(representation))
                         {
@@ -86,7 +86,7 @@ namespace Revit.IFC.Export.Exporter
                         string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
                         buildingElementProxy = IFCInstanceExporter.CreateBuildingElementProxy(file, guid,
-                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag, Toolkit.IFCElementComposition.Element);
+                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag, "Element");
 
                         productWrapper.AddElement(buildingElementProxy, placementSetter.LevelInfo, ecData, true);
                     }

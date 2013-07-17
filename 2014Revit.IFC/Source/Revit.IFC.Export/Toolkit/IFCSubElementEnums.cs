@@ -88,6 +88,7 @@ namespace Revit.IFC.Export.Toolkit
         DoorOpening = 19,
         DoorOpeningRelVoid = 20,
         DoorStyle = 21,
+        DoorType = 22
     }
 
     enum IFCGroupSubElements

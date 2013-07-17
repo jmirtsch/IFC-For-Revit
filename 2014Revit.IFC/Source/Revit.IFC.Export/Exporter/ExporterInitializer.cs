@@ -38,6 +38,17 @@ namespace Revit.IFC.Export.Exporter
     class ExporterInitializer
     {
         /// <summary>
+        /// This member variable MUST be set by all the public function to correctly contains the selected export schema version
+        /// </summary>
+        private static IFCVersion m_ExportSchema = IFCVersion.IFC4;
+
+        private static IFCVersion ExportSchema
+        {
+            get { return m_ExportSchema; }
+            set { m_ExportSchema = value; }
+        }
+
+        /// <summary>
         /// Initializes property sets.
         /// </summary>
         /// <param name="propertySetsToExport">Existing functions to call for property set initialization.</param>
@@ -45,6 +56,8 @@ namespace Revit.IFC.Export.Exporter
         public static void InitPropertySets(Exporter.PropertySetsToExport propertySetsToExport, IFCVersion fileVersion)
         {
             ParameterCache cache = ExporterCacheManager.ParameterCache;
+
+            ExportSchema = fileVersion; // set the variable accordingly
 
             if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportIFCCommon)
             {
@@ -54,7 +67,7 @@ namespace Revit.IFC.Export.Exporter
                     propertySetsToExport += InitCommonPropertySets;
             }
 
-            if (fileVersion == IFCVersion.IFCCOBIE)
+            if (ExportSchema == IFCVersion.IFCCOBIE)
             {
                 if (propertySetsToExport == null)
                     propertySetsToExport = InitCOBIEPropertySets;
@@ -63,7 +76,7 @@ namespace Revit.IFC.Export.Exporter
             }
 
             if (propertySetsToExport != null)
-                propertySetsToExport(cache.PropertySets, fileVersion);
+                propertySetsToExport(cache.PropertySets, ExportSchema);
         }
 
         /// <summary>
@@ -75,6 +88,8 @@ namespace Revit.IFC.Export.Exporter
         {
             ParameterCache cache = ExporterCacheManager.ParameterCache;
 
+            ExportSchema = fileVersion; // set the variable accordingly
+
             if (exportBaseQuantities)
             {
                 if (quantitiesToExport == null)
@@ -83,7 +98,7 @@ namespace Revit.IFC.Export.Exporter
                     quantitiesToExport += InitBaseQuantities;
             }
 
-            if (fileVersion == IFCVersion.IFCCOBIE)
+            if (ExportSchema == IFCVersion.IFCCOBIE)
             {
                 if (quantitiesToExport == null)
                     quantitiesToExport = InitCOBIEQuantities;
@@ -106,20 +121,19 @@ namespace Revit.IFC.Export.Exporter
             IList<PropertySetDescription> commonPropertySets = new List<PropertySetDescription>();
 
             // Building/Site property sets.
-            InitPropertySetBuildingCommon(commonPropertySets, fileVersion);
-            InitPropertySetBuildingWaterStorage(commonPropertySets);
+            InitPropertySetBuildingCommon(commonPropertySets);
             InitPropertySetSiteCommon(commonPropertySets);
 
             // Architectural property sets.
             InitPropertySetBuildingElementProxyCommon(commonPropertySets);
-            InitPropertySetCoveringCommon(commonPropertySets, fileVersion);
+            InitPropertySetCoveringCommon(commonPropertySets);
             InitPropertySetCurtainWallCommon(commonPropertySets);
             InitPropertySetDoorCommon(commonPropertySets);
-            InitPropertySetLevelCommon(commonPropertySets, fileVersion);
+            InitPropertySetLevelCommon(commonPropertySets);
             InitPropertySetRailingCommon(commonPropertySets);
             InitPropertySetRampCommon(commonPropertySets);
             InitPropertySetRampFlightCommon(commonPropertySets);
-            InitPropertySetRoofCommon(commonPropertySets, fileVersion);
+            InitPropertySetRoofCommon(commonPropertySets);
             InitPropertySetSlabCommon(commonPropertySets);
             InitPropertySetStairCommon(commonPropertySets);
             InitPropertySetStairFlightCommon(commonPropertySets);
@@ -127,44 +141,56 @@ namespace Revit.IFC.Export.Exporter
             InitPropertySetWindowCommon(commonPropertySets);
 
             // Space property sets.
-            InitPropertySetSpaceCommon(commonPropertySets, fileVersion);
+            InitPropertySetSpaceCommon(commonPropertySets);
             InitPropertySetSpaceFireSafetyRequirements(commonPropertySets);
             InitPropertySetSpaceLightingRequirements(commonPropertySets);
             InitPropertySetSpaceThermalDesign(commonPropertySets);
-            InitPropertySetSpaceThermalRequirements(commonPropertySets, fileVersion);
+            InitPropertySetSpaceThermalRequirements(commonPropertySets);
             InitPropertySetGSASpaceCategories(commonPropertySets);
             InitPropertySetSpaceOccupant(commonPropertySets);
             InitPropertySetSpaceOccupancyRequirements(commonPropertySets);
-            InitPropertySetSpaceZones(commonPropertySets, fileVersion);
+            InitPropertySetSpaceZones(commonPropertySets);
 
             // Structural property sets.
             InitPropertySetBeamCommon(commonPropertySets);
             InitPropertySetColumnCommon(commonPropertySets);
             InitPropertySetMemberCommon(commonPropertySets);
             InitPropertySetPlateCommon(commonPropertySets);
-            InitPropertySetReinforcingBarBendingsBECCommon(commonPropertySets);
-            InitPropertySetReinforcingBarBendingsBS8666Common(commonPropertySets);
-            InitPropertySetReinforcingBarBendingsDIN135610Common(commonPropertySets);
-            InitPropertySetReinforcingBarBendingsISOCD3766Common(commonPropertySets);
 
             // MEP property sets.
             InitPropertySetAirTerminalTypeCommon(commonPropertySets);
-            InitPropertySetDistributionFlowElementCommon(commonPropertySets);
-            InitPropertySetElectricalCircuit(commonPropertySets);
             InitPropertySetElectricalDeviceCommon(commonPropertySets);
-            InitPropertySetFlowTerminalAirTerminal(commonPropertySets);
             InitPropertySetLightFixtureTypeCommon(commonPropertySets);
             InitPropertySetProvisionForVoid(commonPropertySets);
             InitPropertySetSanitaryTerminalTypeToiletPan(commonPropertySets);
             InitPropertySetSwitchingDeviceTypeCommon(commonPropertySets);
             InitPropertySetSwitchingDeviceTypeToggleSwitch(commonPropertySets);
-            InitPropertySetZoneCommon(commonPropertySets, fileVersion);
-
-            // Energy Analysis property sets.
-            InitPropertySetElementShading(commonPropertySets);
+            InitPropertySetZoneCommon(commonPropertySets);
 
             // Misc. property sets
             InitPropertySetManufacturerTypeInformation(commonPropertySets);
+
+            if (ExportSchema == IFCVersion.IFC4)
+                InitPropertySetSpaceCoveringRequirements(commonPropertySets);
+            else
+            {
+                InitPropertySetBuildingWaterStorage(commonPropertySets);
+
+                // Structural property sets.
+                InitPropertySetReinforcingBarBendingsBECCommon(commonPropertySets);
+                InitPropertySetReinforcingBarBendingsBS8666Common(commonPropertySets);
+                InitPropertySetReinforcingBarBendingsDIN135610Common(commonPropertySets);
+                InitPropertySetReinforcingBarBendingsISOCD3766Common(commonPropertySets);
+
+                // MEP property sets
+                InitPropertySetDistributionFlowElementCommon(commonPropertySets);
+                InitPropertySetElectricalCircuit(commonPropertySets);
+                InitPropertySetFlowTerminalAirTerminal(commonPropertySets);
+
+                // Energy Analysis property sets.
+                InitPropertySetElementShading(commonPropertySets);
+            }
+
 
             propertySets.Add(commonPropertySets);
         }
@@ -197,6 +223,13 @@ namespace Revit.IFC.Export.Exporter
 
             ifcPSE = PropertySetEntry.CreateLabel("ProductionYear");
             propertySetManufacturer.AddEntry(ifcPSE);
+
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetManufacturer.AddEntry(PropertySetEntry.CreateIdentifier("GlobalTradeItemNumber"));
+                propertySetManufacturer.AddEntry(PropertySetEntry.CreateEnumeratedValue("AssemblyPlace",
+                    PropertyType.Label, typeof(Toolkit.IFC4.PsetManufacturerTypeInformation_AssemblyPlace)));
+            }
 
             commonPropertySets.Add(propertySetManufacturer);
         }
@@ -236,6 +269,9 @@ namespace Revit.IFC.Export.Exporter
             propertySetWallCommon.AddEntry(PropertySetEntryUtil.CreateSurfaceSpreadOfFlameEntry());
             propertySetWallCommon.AddEntry(PropertySetEntryUtil.CreateCombustibleEntry());
             propertySetWallCommon.AddEntry(PropertySetEntryUtil.CreateCompartmentationEntry());
+
+            if (ExportSchema == IFCVersion.IFC4)
+                propertySetWallCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
             
             commonPropertySets.Add(propertySetWallCommon);
         }
@@ -269,6 +305,9 @@ namespace Revit.IFC.Export.Exporter
             propertySetCurtainWallCommon.AddEntry(PropertySetEntryUtil.CreateSurfaceSpreadOfFlameEntry());
             propertySetCurtainWallCommon.AddEntry(PropertySetEntryUtil.CreateCombustibleEntry());
 
+            if (ExportSchema == IFCVersion.IFC4)
+                propertySetCurtainWallCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+            
             commonPropertySets.Add(propertySetCurtainWallCommon);
         }
 
@@ -276,7 +315,7 @@ namespace Revit.IFC.Export.Exporter
         /// Initializes common covering property sets.
         /// </summary>
         /// <param name="commonPropertySets">List to store property sets.</param>
-        private static void InitPropertySetCoveringCommon(IList<PropertySetDescription> commonPropertySets, IFCVersion fileVersion)
+        private static void InitPropertySetCoveringCommon(IList<PropertySetDescription> commonPropertySets)
         {
             //property set covering common
             PropertySetDescription propertySetCoveringCommon = new PropertySetDescription();
@@ -297,18 +336,28 @@ namespace Revit.IFC.Export.Exporter
             propertySetCoveringCommon.AddEntry(PropertySetEntryUtil.CreateCombustibleEntry());
 
 
-            if (fileVersion == IFCVersion.IFC2x2)
-                propertySetCoveringCommon.AddEntry(PropertySetEntry.CreateLabel("Fragility"));
-            else
+            if (ExportSchema == IFCVersion.IFC4)
                 propertySetCoveringCommon.AddEntry(PropertySetEntry.CreateLabel("FragilityRating"));
+            else
+                propertySetCoveringCommon.AddEntry(PropertySetEntry.CreateLabel("Fragility"));
 
             ifcPSE = PropertySetEntry.CreateText("Finish");
             ifcPSE.PropertyCalculator = CoveringFinishCalculator.Instance;
             propertySetCoveringCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreatePositiveLength("TotalThickness");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.CEILING_THICKNESS;
-            propertySetCoveringCommon.AddEntry(ifcPSE);
+
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetCoveringCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+                propertySetCoveringCommon.AddEntry(PropertySetEntryUtil.CreateIsExternalEntry());
+                propertySetCoveringCommon.AddEntry(PropertySetEntryUtil.CreateThermalTransmittanceEntry());
+            }
+            else
+            {
+                ifcPSE = PropertySetEntry.CreatePositiveLength("Thickness");
+                ifcPSE.RevitBuiltInParameter = BuiltInParameter.CEILING_THICKNESS;
+                propertySetCoveringCommon.AddEntry(ifcPSE);
+            }
 
             commonPropertySets.Add(propertySetCoveringCommon);
         }
@@ -340,12 +389,20 @@ namespace Revit.IFC.Export.Exporter
 
             propertySetDoorCommon.AddEntry(PropertySetEntryUtil.CreateAcousticRatingEntry());
             propertySetDoorCommon.AddEntry(PropertySetEntry.CreateLabel("SecurityRating"));
-            propertySetDoorCommon.AddEntry(PropertySetEntry.CreateBoolean("HandicapAccessible"));
+            propertySetDoorCommon.AddEntry(PropertySetEntryUtil.CreateHandicapAccessibleEntry());
             propertySetDoorCommon.AddEntry(PropertySetEntry.CreateBoolean("FireExit"));
             propertySetDoorCommon.AddEntry(PropertySetEntry.CreateBoolean("SelfClosing"));
             propertySetDoorCommon.AddEntry(PropertySetEntry.CreateBoolean("SmokeStop"));
             propertySetDoorCommon.AddEntry(PropertySetEntry.CreateReal("GlazingAreaFraction"));
             propertySetDoorCommon.AddEntry(PropertySetEntry.CreateVolumetricFlowRate("Infiltration"));
+
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetDoorCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+                propertySetDoorCommon.AddEntry(PropertySetEntry.CreateLabel("DurabilityRating"));
+                propertySetDoorCommon.AddEntry(PropertySetEntry.CreateLabel("HygrothermalRating"));
+                propertySetDoorCommon.AddEntry(PropertySetEntry.CreateBoolean("HasDrive"));
+            }
 
             commonPropertySets.Add(propertySetDoorCommon);
         }
@@ -382,6 +439,15 @@ namespace Revit.IFC.Export.Exporter
             propertySetWindowCommon.AddEntry(PropertySetEntry.CreateReal("GlazingAreaFraction"));
             propertySetWindowCommon.AddEntry(PropertySetEntry.CreateVolumetricFlowRate("Infiltration"));
 
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetWindowCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+                propertySetWindowCommon.AddEntry(PropertySetEntry.CreateBoolean("HasSillExternal"));
+                propertySetWindowCommon.AddEntry(PropertySetEntry.CreateBoolean("HasSillInternal"));
+                propertySetWindowCommon.AddEntry(PropertySetEntry.CreateBoolean("HasDrive"));
+                propertySetWindowCommon.AddEntry(PropertySetEntry.CreateBoolean("FireExit"));
+            }
+
             commonPropertySets.Add(propertySetWindowCommon);
         }
 
@@ -414,11 +480,21 @@ namespace Revit.IFC.Export.Exporter
             propertySetLightFixtureTypeCommon.AddEntry(ifcPSE);
 
             propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntry.CreateReal("MaintenanceFactor"));
-            propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntry.CreateText("ManufacturersSpecificInformation"));
 
             // The value below is incorrect.  Although it is specified in IFC2x3, it is a duplicate of Pset_ManufacturerTypeInformation,
             // where it is correctly labelled as IfcIdentifier.
             //propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntry.CreateClassificationReference("ArticleNumber"));
+
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntryUtil.CreateReferenceEntry());
+                propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+                propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntry.CreatePower("MaximumPlenumSensibleLoad"));
+                propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntry.CreatePower("MaximumSpaceSensibleLoad"));
+                propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntry.CreatePositiveRatio("SensibleLoadToRadiant"));
+            }
+            else
+                propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntry.CreateText("ManufacturersSpecificInformation"));
 
             commonPropertySets.Add(propertySetLightFixtureTypeCommon);
         }
@@ -474,18 +550,30 @@ namespace Revit.IFC.Export.Exporter
 
             propertySetElectricalDeviceCommon.EntityTypes.Add(IFCEntityType.IfcDistributionElement);
 
-            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateElectricalCurrent("NominalCurrent"));
-            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateElectricalCurrent("UsageCurrent"));
-            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateElectricalVoltage("NominalVoltage"));
-            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreatePower("ElectricalDeviceNominalPower"));
+            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateFrequency("NominalFrequencyRange"));
             propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateInteger("NumberOfPoles"));
             propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateBoolean("HasProtectiveEarth"));
-            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateFrequency("NominalFrequencyRange"));
-            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreatePositivePlaneAngle("PhaseAngle"));
             propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateLabel("IP_Code"));
             propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("InsulationStandardClass",
                 PropertyType.Label, typeof(PSetElectricalDeviceCommon_InsulationStandardClass)));
-            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateIdentifier("PhaseReference"));
+
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateElectricalCurrent("RatedCurrent"));
+                propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateElectricalVoltage("RatedVoltage"));
+                propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateRatio("PowerFactor"));
+                propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("ConductorFunction", PropertyType.Label,
+                    typeof(Toolkit.IFC4.PsetElectricalDeviceCommon_ConductorFunction)));
+            }
+            else
+            {
+                propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateElectricalCurrent("NominalCurrent"));
+                propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateElectricalCurrent("UsageCurrent"));
+                propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateElectricalVoltage("NominalVoltage"));
+                propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreatePower("ElectricalDeviceNominalPower"));
+                propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreatePositivePlaneAngle("PhaseAngle"));
+                propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateIdentifier("PhaseReference"));
+            }
 
             commonPropertySets.Add(propertySetElectricalDeviceCommon);
         }
@@ -551,6 +639,18 @@ namespace Revit.IFC.Export.Exporter
             propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateBoolean("HasThermalInsulation"));
             propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateArea("NeckArea"));
             propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateArea("EffectiveArea"));
+
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
+                propertyAirTerminalTypeCommon.AddEntry(ifcPSE);
+                propertyAirTerminalTypeCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+                propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateLabel("FaceType"));
+                propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateLength("SlotWidth"));
+                propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateLength("SlotLength"));
+                propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateInteger("NumberOfSlots"));
+                propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreatePositiveRatio("AirFlowrateVersusFlowControlElement"));
+            }
             //propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateMass("Weight"));
             //AirFlowrateVersusFlowControlElement: IfcPropertyTableValue not supported.
             
@@ -591,6 +691,13 @@ namespace Revit.IFC.Export.Exporter
             ifcPSE.PropertyCalculator = SlopeCalculator.Instance;
             propertySetBeamCommon.AddEntry(ifcPSE);
 
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetBeamCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+                propertySetBeamCommon.AddEntry(PropertySetEntry.CreatePlaneAngle("Roll"));
+                propertySetBeamCommon.AddEntry(PropertySetEntryUtil.CreateThermalTransmittanceEntry());
+            }
+
             commonPropertySets.Add(propertySetBeamCommon);
         }
 
@@ -629,6 +736,13 @@ namespace Revit.IFC.Export.Exporter
             ifcPSE.PropertyCalculator = SlopeCalculator.Instance;
             propertySetMemberCommon.AddEntry(ifcPSE);
 
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetMemberCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry()); 
+                propertySetMemberCommon.AddEntry(PropertySetEntry.CreatePlaneAngle("Roll"));
+                propertySetMemberCommon.AddEntry(PropertySetEntryUtil.CreateThermalTransmittanceEntry());
+            }
+
             commonPropertySets.Add(propertySetMemberCommon);
         }
 
@@ -651,6 +765,9 @@ namespace Revit.IFC.Export.Exporter
             propertySetPlateCommon.AddEntry(PropertySetEntryUtil.CreateAcousticRatingEntry());
             propertySetPlateCommon.AddEntry(PropertySetEntryUtil.CreateFireRatingEntry());
             propertySetPlateCommon.AddEntry(PropertySetEntryUtil.CreateThermalTransmittanceEntry());
+
+            if (ExportSchema == IFCVersion.IFC4)
+                propertySetPlateCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
 
             commonPropertySets.Add(propertySetPlateCommon);
         }
@@ -800,6 +917,13 @@ namespace Revit.IFC.Export.Exporter
             ifcPSE.PropertyCalculator = SlopeCalculator.Instance;
             propertySetColumnCommon.AddEntry(ifcPSE);
 
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetColumnCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+                propertySetColumnCommon.AddEntry(PropertySetEntry.CreatePlaneAngle("Roll"));
+                propertySetColumnCommon.AddEntry(PropertySetEntryUtil.CreateThermalTransmittanceEntry());
+            }
+
             commonPropertySets.Add(propertySetColumnCommon);
         }
 
@@ -807,7 +931,7 @@ namespace Revit.IFC.Export.Exporter
         /// Initializes common roof property sets.
         /// </summary>
         /// <param name="commonPropertySets">List to store property sets.</param>
-        private static void InitPropertySetRoofCommon(IList<PropertySetDescription> commonPropertySets, IFCVersion fileVersion)
+        private static void InitPropertySetRoofCommon(IList<PropertySetDescription> commonPropertySets)
         {
             // Pset_RoofCommon
             PropertySetDescription propertySetRoofCommon = new PropertySetDescription();
@@ -825,7 +949,7 @@ namespace Revit.IFC.Export.Exporter
             ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
             propertySetRoofCommon.AddEntry(ifcPSE);
 
-            if (fileVersion != IFCVersion.IFC2x2)
+            if (ExportSchema != IFCVersion.IFC2x2)
             {
                 ifcPSE = PropertySetEntry.CreateArea("TotalArea");
                 ifcPSE.RevitBuiltInParameter = BuiltInParameter.HOST_AREA_COMPUTED;
@@ -834,6 +958,13 @@ namespace Revit.IFC.Export.Exporter
                 ifcPSE = PropertySetEntry.CreateArea("ProjectedArea");
                 ifcPSE.PropertyCalculator = RoofProjectedAreaCalculator.Instance;
                 propertySetRoofCommon.AddEntry(ifcPSE);
+
+                if (ExportSchema == IFCVersion.IFC4)
+                {
+                    propertySetRoofCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+                    propertySetRoofCommon.AddEntry(PropertySetEntry.CreateLabel("AcousticRating"));
+                    propertySetRoofCommon.AddEntry(PropertySetEntryUtil.CreateThermalTransmittanceEntry());
+                }
             }
 
             commonPropertySets.Add(propertySetRoofCommon);
@@ -883,6 +1014,9 @@ namespace Revit.IFC.Export.Exporter
             ifcPSE.PropertyCalculator = SlopeCalculator.Instance;
             propertySetSlabCommon.AddEntry(ifcPSE);
 
+            if (ExportSchema == IFCVersion.IFC4)
+                propertySetSlabCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+
             commonPropertySets.Add(propertySetSlabCommon);
         }
 
@@ -910,6 +1044,9 @@ namespace Revit.IFC.Export.Exporter
 
             // Railing diameter not supported.
 
+            if (ExportSchema == IFCVersion.IFC4)
+                propertySetRailingCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+
             commonPropertySets.Add(propertySetRailingCommon);
         }
 
@@ -935,11 +1072,14 @@ namespace Revit.IFC.Export.Exporter
             ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
             propertySetRampCommon.AddEntry(ifcPSE);
 
-            propertySetRampCommon.AddEntry(PropertySetEntry.CreateBoolean("HandicapAccessible"));
+            propertySetRampCommon.AddEntry(PropertySetEntryUtil.CreateHandicapAccessibleEntry());
             propertySetRampCommon.AddEntry(PropertySetEntry.CreateBoolean("FireExit"));
             propertySetRampCommon.AddEntry(PropertySetEntry.CreateBoolean("HasNonSkidSurface"));
             propertySetRampCommon.AddEntry(PropertySetEntry.CreateReal("RequiredHeadroom"));
             propertySetRampCommon.AddEntry(PropertySetEntry.CreateReal("RequiredSlope"));
+
+            if (ExportSchema == IFCVersion.IFC4)
+                propertySetRampCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
 
             commonPropertySets.Add(propertySetRampCommon);
         }
@@ -999,6 +1139,9 @@ namespace Revit.IFC.Export.Exporter
 
             propertySetStairFlightCommon.AddEntry(PropertySetEntry.CreatePositiveLength("Headroom"));
 
+            if (ExportSchema == IFCVersion.IFC4)
+                propertySetStairFlightCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+
             commonPropertySets.Add(propertySetStairFlightCommon);
         }
 
@@ -1020,6 +1163,13 @@ namespace Revit.IFC.Export.Exporter
             ifcPSE = PropertySetEntry.CreatePlaneAngle("Slope");
             ifcPSE.PropertyCalculator = RampFlightSlopeCalculator.Instance;
             propertySetRampFlightCommon.AddEntry(ifcPSE);
+
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetRampFlightCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+                propertySetRampFlightCommon.AddEntry(PropertySetEntry.CreatePositiveLength("ClearWidth"));
+                propertySetRampFlightCommon.AddEntry(PropertySetEntry.CreatePlaneAngle("CounterSlope"));
+            }
 
             commonPropertySets.Add(propertySetRampFlightCommon);
         }
@@ -1063,10 +1213,20 @@ namespace Revit.IFC.Export.Exporter
             ifcPSE.PropertyCalculator = stairRiserAndTreadsCalculator;
             propertySetStairCommon.AddEntry(ifcPSE);
 
-            propertySetStairCommon.AddEntry(PropertySetEntry.CreateBoolean("HandicapAccessible"));
+            propertySetStairCommon.AddEntry(PropertySetEntryUtil.CreateHandicapAccessibleEntry());
             propertySetStairCommon.AddEntry(PropertySetEntry.CreateBoolean("FireExit"));
             propertySetStairCommon.AddEntry(PropertySetEntry.CreateBoolean("HasNonSkidSurface"));
             propertySetStairCommon.AddEntry(PropertySetEntry.CreateBoolean("RequiredHeadroom"));
+
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetStairCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+                propertySetStairCommon.AddEntry(PropertySetEntry.CreateLength("NosingLength"));
+                propertySetStairCommon.AddEntry(PropertySetEntry.CreatePositiveLength("WalkingLineOffset"));
+                propertySetStairCommon.AddEntry(PropertySetEntry.CreatePositiveLength("TreadLengthAtOffset"));
+                propertySetStairCommon.AddEntry(PropertySetEntry.CreatePositiveLength("TreadLengthAtInnerSide"));
+                propertySetStairCommon.AddEntry(PropertySetEntry.CreatePositiveLength("WaistThickness"));
+            }
 
             commonPropertySets.Add(propertySetStairCommon);
         }
@@ -1076,7 +1236,7 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="commonPropertySets">List to store property sets.</param>
         /// <param name="fileVersion">The IFC file version.</param>
-        private static void InitPropertySetBuildingCommon(IList<PropertySetDescription> commonPropertySets, IFCVersion fileVersion)
+        private static void InitPropertySetBuildingCommon(IList<PropertySetDescription> commonPropertySets)
         {
             // Pset_BuildingCommon
             PropertySetDescription propertySetBuildingCommon = new PropertySetDescription();
@@ -1086,8 +1246,18 @@ namespace Revit.IFC.Export.Exporter
 
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateIdentifier("BuildingID"));
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateBoolean("IsPermanentID"));
-            propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("MainFireUse"));
-            propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("AncillaryFireUse"));
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
+                propertySetBuildingCommon.AddEntry(ifcPSE);
+                propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("ConstructionMethod"));
+                propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("FireProtectionClass"));
+            }
+            else
+            {
+                propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("MainFireUse"));
+                propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("AncillaryFireUse"));
+            }
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateBoolean("SprinklerProtection"));
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateBoolean("SprinklerProtectionAutomatic"));
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("OccupancyType"));
@@ -1095,11 +1265,12 @@ namespace Revit.IFC.Export.Exporter
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("YearOfConstruction"));
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateBoolean("IsLandmarked"));
 
-            if (fileVersion != IFCVersion.IFC2x2)
+            if (ExportSchema != IFCVersion.IFC2x2)
             {
                 PropertySetEntry ifcPSE = PropertySetEntry.CreateInteger("NumberOfStoreys");
                 ifcPSE.PropertyCalculator = NumberOfStoreysCalculator.Instance;
                 propertySetBuildingCommon.AddEntry(ifcPSE);
+
             }
 
             commonPropertySets.Add(propertySetBuildingCommon);
@@ -1110,7 +1281,7 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="commonPropertySets">List to store property sets.</param>
         /// <param name="fileVersion">The IFC file version.</param>
-        private static void InitPropertySetLevelCommon(IList<PropertySetDescription> commonPropertySets, IFCVersion fileVersion)
+        private static void InitPropertySetLevelCommon(IList<PropertySetDescription> commonPropertySets)
         {
             //property level common
             PropertySetDescription propertySetLevelCommon = new PropertySetDescription();
@@ -1133,7 +1304,7 @@ namespace Revit.IFC.Export.Exporter
             ifcPSE = PropertySetEntry.CreateReal("GrossAreaPlanned");
             propertySetLevelCommon.AddEntry(ifcPSE);
 
-            if (fileVersion != IFCVersion.IFC2x2)
+            if (ExportSchema != IFCVersion.IFC2x2)
             {
                 ifcPSE = PropertySetEntry.CreateReal("NetAreaPlanned");
                 propertySetLevelCommon.AddEntry(ifcPSE);
@@ -1160,8 +1331,18 @@ namespace Revit.IFC.Export.Exporter
             ifcPSE = PropertySetEntry.CreatePositiveLength("BuildingHeightLimit");
             propertySetSiteCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreateArea("TotalArea");
-            propertySetSiteCommon.AddEntry(ifcPSE);
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetSiteCommon.AddEntry(PropertySetEntryUtil.CreateReferenceEntry());
+                propertySetSiteCommon.AddEntry(PropertySetEntry.CreatePositiveRatio("SiteCoverageRatio"));
+                propertySetSiteCommon.AddEntry(PropertySetEntry.CreatePositiveRatio("FloorAreaRatio"));
+                propertySetSiteCommon.AddEntry(PropertySetEntry.CreateArea("TotalArea"));
+            }
+            else
+            {
+                ifcPSE = PropertySetEntry.CreateArea("GrossAreaPlanned");
+                propertySetSiteCommon.AddEntry(ifcPSE);
+            }
 
             commonPropertySets.Add(propertySetSiteCommon);
         }
@@ -1179,6 +1360,19 @@ namespace Revit.IFC.Export.Exporter
 
             PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertySetBuildingElementProxyCommon.AddEntry(ifcPSE);
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetBuildingElementProxyCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+
+                ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
+                propertySetBuildingElementProxyCommon.AddEntry(ifcPSE);
+
+                propertySetBuildingElementProxyCommon.AddEntry(PropertySetEntryUtil.CreateThermalTransmittanceEntry());
+                propertySetBuildingElementProxyCommon.AddEntry(PropertySetEntry.CreateBoolean("LoadBearing"));
+
+                ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
+                propertySetBuildingElementProxyCommon.AddEntry(ifcPSE);
+            }
 
             commonPropertySets.Add(propertySetBuildingElementProxyCommon);
         }
@@ -1187,7 +1381,7 @@ namespace Revit.IFC.Export.Exporter
         /// Initializes common space property sets.
         /// </summary>
         /// <param name="commonPropertySets">List to store property sets.</param>
-        private static void InitPropertySetSpaceCommon(IList<PropertySetDescription> commonPropertySets, IFCVersion fileVersion)
+        private static void InitPropertySetSpaceCommon(IList<PropertySetDescription> commonPropertySets)
         {
             //property set space common
             PropertySetDescription propertySetSpaceCommon = new PropertySetDescription();
@@ -1199,16 +1393,23 @@ namespace Revit.IFC.Export.Exporter
             propertySetSpaceCommon.AddEntry(ifcPSE);
 
             propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateBoolean("PubliclyAccessible"));
-            propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateBoolean("HandicapAccessible"));
+            propertySetSpaceCommon.AddEntry(PropertySetEntryUtil.CreateHandicapAccessibleEntry());
             propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateArea("GrossPlannedArea"));
 
-            if (fileVersion == IFCVersion.IFC2x2)
+            if (ExportSchema == IFCVersion.IFC2x2)
             {
                 propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateLabel("OccupancyType"));
                 propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateReal("OccupancyNumber"));
             
                 ifcPSE = PropertySetEntry.CreateBoolean("Concealed");
                 ifcPSE.PropertyCalculator = SpaceConcealCalculator.Instance;
+                propertySetSpaceCommon.AddEntry(ifcPSE);
+            }
+            else if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetSpaceCommon.AddEntry(PropertySetEntry.CreateArea("NetPlannedArea"));
+
+                ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
                 propertySetSpaceCommon.AddEntry(ifcPSE);
             }
             else
@@ -1263,7 +1464,7 @@ namespace Revit.IFC.Export.Exporter
         /// Initializes common zone property sets.
         /// </summary>
         /// <param name="commonPropertySets">List to store property sets.</param>
-        private static void InitPropertySetZoneCommon(IList<PropertySetDescription> commonPropertySets, IFCVersion fileVersion)
+        private static void InitPropertySetZoneCommon(IList<PropertySetDescription> commonPropertySets)
         {
             //property set zone common
             PropertySetDescription propertySetZoneCommon = new PropertySetDescription();
@@ -1278,7 +1479,18 @@ namespace Revit.IFC.Export.Exporter
             propertySetZoneCommon.AddEntry(PropertySetEntry.CreateArea("GrossAreaPlanned"));
             propertySetZoneCommon.AddEntry(PropertySetEntry.CreateArea("NetAreaPlanned"));
             propertySetZoneCommon.AddEntry(PropertySetEntry.CreateBoolean("PubliclyAccessible"));
-            propertySetZoneCommon.AddEntry(PropertySetEntry.CreateBoolean("HandicapAccessible"));
+            propertySetZoneCommon.AddEntry(PropertySetEntryUtil.CreateHandicapAccessibleEntry());
+
+            if (ExportSchema == IFCVersion.IFC4)
+                propertySetZoneCommon.AddEntry(PropertySetEntryUtil.CreateIsExternalEntry());
+            else
+            {
+                propertySetZoneCommon.AddEntry(PropertySetEntry.CreateLabel("OccupancyType"));
+                propertySetZoneCommon.AddEntry(PropertySetEntry.CreateCount("OccupancyNumber"));
+                propertySetZoneCommon.AddEntry(PropertySetEntry.CreateBoolean("NaturalVentilation"));
+                propertySetZoneCommon.AddEntry(PropertySetEntry.CreateCount("NaturalVentilationRate"));
+                propertySetZoneCommon.AddEntry(PropertySetEntry.CreateCount("MechanicalVentilationRate"));
+            }
 
             commonPropertySets.Add(propertySetZoneCommon);
         }
@@ -1294,10 +1506,13 @@ namespace Revit.IFC.Export.Exporter
 
             propertySetSpaceFireSafetyRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-            propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("MainFireUse"));
-            propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("AncillaryFireUse"));
+            if (ExportSchema != IFCVersion.IFC4)
+            {
+                propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("MainFireUse"));
+                propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("AncillaryFireUse"));
+                propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("FireHazardFactor"));
+            }
             propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("FireRiskFactor"));
-            propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("FireHazardFactor"));
             propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateBoolean("FlammableStorage"));
             propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateBoolean("FireExit"));
             propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateBoolean("SprinklerProtection"));
@@ -1328,12 +1543,13 @@ namespace Revit.IFC.Export.Exporter
         /// Initializes SpaceThermalRequirements property sets.
         /// </summary>
         /// <param name="commonPropertySets">List to store property sets.</param>
-        private static void InitPropertySetSpaceThermalRequirements(IList<PropertySetDescription> commonPropertySets, IFCVersion fileVersion)
+        private static void InitPropertySetSpaceThermalRequirements(IList<PropertySetDescription> commonPropertySets)
         {
             PropertySetDescription propertySetSpaceThermalRequirements = new PropertySetDescription();
             propertySetSpaceThermalRequirements.Name = "Pset_SpaceThermalRequirements";
 
             propertySetSpaceThermalRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
+
 
             propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureMax"));
             propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureMin"));
@@ -1347,7 +1563,7 @@ namespace Revit.IFC.Export.Exporter
             propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateBoolean("AirConditioning"));
             propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateBoolean("AirConditioningCentral"));
 
-            if (fileVersion == IFCVersion.IFC2x2)
+            if (ExportSchema == IFCVersion.IFC2x2)
             {
                 PropertySetEntry ifcPSE = PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureSummer");
                 ifcPSE.PropertyCalculator = new SpaceTemperatureCalculator("SpaceTemperatureSummer");
@@ -1357,6 +1573,16 @@ namespace Revit.IFC.Export.Exporter
                 ifcPSE.PropertyCalculator = new SpaceTemperatureCalculator("SpaceTemperatureWinter");
                 propertySetSpaceThermalRequirements.AddEntry(ifcPSE);
             }
+            else if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperature"));
+                propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureSummerMax"));
+                propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureSummerMin"));
+                propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureWinterMax"));
+                propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureWinterMin"));
+                propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceHumidityMax"));
+                propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceHumidityMin"));
+            }
             else
             {
                 propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureSummerMax"));
@@ -1364,8 +1590,40 @@ namespace Revit.IFC.Export.Exporter
                 propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureWinterMax"));
                 propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureWinterMin"));
             }
-
+            
             commonPropertySets.Add(propertySetSpaceThermalRequirements);
+        }
+
+        private static void InitPropertySetSpaceCoveringRequirements(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetSpaceCoveringRequirements = new PropertySetDescription();
+            propertySetSpaceCoveringRequirements.Name = "Pset_SpaceCoveringRequirements";
+
+            propertySetSpaceCoveringRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
+
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateLabel("CeilingCovering");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.ROOM_FINISH_CEILING;
+            propertySetSpaceCoveringRequirements.AddEntry(ifcPSE);
+            propertySetSpaceCoveringRequirements.AddEntry(PropertySetEntry.CreateReal("CeilingCoveringThickness"));
+
+            ifcPSE = PropertySetEntry.CreateLabel("WallCovering");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.ROOM_FINISH_WALL;
+            propertySetSpaceCoveringRequirements.AddEntry(ifcPSE);
+            propertySetSpaceCoveringRequirements.AddEntry(PropertySetEntry.CreateReal("WallCoveringThickness"));
+
+            ifcPSE = PropertySetEntry.CreateLabel("FloorCovering");
+            ifcPSE.RevitBuiltInParameter = BuiltInParameter.ROOM_FINISH_FLOOR;
+            propertySetSpaceCoveringRequirements.AddEntry(ifcPSE);
+            propertySetSpaceCoveringRequirements.AddEntry(PropertySetEntry.CreateReal("FloorCoveringThickness"));
+
+            propertySetSpaceCoveringRequirements.AddEntry(PropertySetEntry.CreateLabel("SkirtingBoard"));
+            propertySetSpaceCoveringRequirements.AddEntry(PropertySetEntry.CreateReal("SkirtingBoardHeight"));
+            propertySetSpaceCoveringRequirements.AddEntry(PropertySetEntry.CreateLabel("Molding"));
+            propertySetSpaceCoveringRequirements.AddEntry(PropertySetEntry.CreateReal("MoldingHeight"));
+            propertySetSpaceCoveringRequirements.AddEntry(PropertySetEntry.CreateBoolean("ConcealedFlooring"));
+            propertySetSpaceCoveringRequirements.AddEntry(PropertySetEntry.CreateBoolean("ConcealedCeiling"));
+
+            commonPropertySets.Add(propertySetSpaceCoveringRequirements);
         }
 
         /// <summary>
@@ -1410,7 +1668,7 @@ namespace Revit.IFC.Export.Exporter
         /// Initializes Space Zones property sets.
         /// </summary>
         /// <param name="commonPropertySets">List to store property sets.</param>
-        private static void InitPropertySetSpaceZones(IList<PropertySetDescription> commonPropertySets, IFCVersion fileVersion)
+        private static void InitPropertySetSpaceZones(IList<PropertySetDescription> commonPropertySets)
         {
             PropertySetDescription propertySetSpaceZones = new PropertySetDescription();
             propertySetSpaceZones.Name = "Space Zones";
@@ -1420,7 +1678,7 @@ namespace Revit.IFC.Export.Exporter
             propertySetSpaceZones.AddEntry(PropertySetEntry.CreateLabel("Security Zone"));
             propertySetSpaceZones.AddEntry(PropertySetEntry.CreateLabel("Preservation Zone"));
             propertySetSpaceZones.AddEntry(PropertySetEntry.CreateLabel("Privacy Zone"));
-            if (fileVersion != IFCVersion.IFC2x2)
+            if (ExportSchema != IFCVersion.IFC2x2)
             {
                 propertySetSpaceZones.AddEntry(PropertySetEntry.CreateLabel("Zone GrossAreaPlanned"));
                 propertySetSpaceZones.AddEntry(PropertySetEntry.CreateLabel("Zone NetAreaPlanned"));
@@ -1483,7 +1741,11 @@ namespace Revit.IFC.Export.Exporter
         private static void InitPropertySetProvisionForVoid(IList<PropertySetDescription> commonPropertySets)
         {
             PropertySetDescription propertySetProvisionForVoid= new PropertySetDescription();
-            propertySetProvisionForVoid.Name = "Pset_ProvisionForVoid";
+            if (ExportSchema == IFCVersion.IFC4)
+                propertySetProvisionForVoid.Name = "Pset_BuildingElementProxyProvisionForVoid";
+            else
+                propertySetProvisionForVoid.Name = "Pset_ProvisionForVoid";
+
             propertySetProvisionForVoid.EntityTypes.Add(IFCEntityType.IfcBuildingElementProxy);
             propertySetProvisionForVoid.ObjectType = "ProvisionForVoid";
 
@@ -1532,7 +1794,10 @@ namespace Revit.IFC.Export.Exporter
             propertySetToiletPan.AddEntry(PropertySetEntry.CreateEnumeratedValue("PanMounting", PropertyType.Label,
                 typeof(PsetSanitaryTerminalTypeToiletPan_SanitaryMounting)));
             //propertySetToiletPan.AddEntry(PropertySetEntry.CreateMaterial("PanMaterial"));
-            propertySetToiletPan.AddEntry(PropertySetEntry.CreateText("PanColor"));
+            if (ExportSchema == IFCVersion.IFC4)
+                propertySetToiletPan.AddEntry(PropertySetEntry.CreateLabel("Color"));
+            else
+                propertySetToiletPan.AddEntry(PropertySetEntry.CreateText("PanColor"));
             propertySetToiletPan.AddEntry(PropertySetEntry.CreatePositiveLength("SpilloverLevel"));
             propertySetToiletPan.AddEntry(PropertySetEntry.CreatePositiveLength("NominalLength"));
             propertySetToiletPan.AddEntry(PropertySetEntry.CreatePositiveLength("NominalWidth"));
@@ -1556,6 +1821,15 @@ namespace Revit.IFC.Export.Exporter
                 PropertyType.Label, typeof(PsetSwitchingDeviceTypeCommon_SwitchFunction)));
             propertySetSwitchingDeviceTypeCommon.AddEntry(PropertySetEntry.CreateBoolean("HasLock"));
 
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetSwitchingDeviceTypeCommon.AddEntry(PropertySetEntryUtil.CreateReferenceEntry());
+                propertySetSwitchingDeviceTypeCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
+                propertySetSwitchingDeviceTypeCommon.AddEntry(PropertySetEntry.CreateBoolean("IsIlluminated"));
+                propertySetSwitchingDeviceTypeCommon.AddEntry(PropertySetEntry.CreateLabel("Legend"));
+                // cannot support table value: skip SetPoint property
+            }
+
             commonPropertySets.Add(propertySetSwitchingDeviceTypeCommon);
         }
 
@@ -1576,8 +1850,13 @@ namespace Revit.IFC.Export.Exporter
                 PropertyType.Label, typeof(PsetSwitchingDeviceTypeToggleSwitch_SwitchUsage)));
             propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateEnumeratedValue("SwitchActivation",
                 PropertyType.Label, typeof(PsetSwitchingDeviceTypeToggleSwitch_SwitchActivation)));
-            propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateBoolean("IsIlluminated"));
-            propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateLabel("Legend"));
+
+            if (ExportSchema != IFCVersion.IFC4)
+            {
+                // properties have been removed in IFc4
+                propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateBoolean("IsIlluminated"));
+                propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateLabel("Legend"));
+            }
 
             commonPropertySets.Add(propertySetSwitchingDeviceTypeToggleSwitch);
         }

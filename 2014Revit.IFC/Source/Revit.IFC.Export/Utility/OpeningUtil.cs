@@ -457,7 +457,7 @@ namespace Revit.IFC.Export.Utility
                 string ifcEnumType;
                 IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, openingElem, out ifcEnumType);
                 Element instHost = (openingElem as FamilyInstance).Host;
-                return (exportType == IFCExportType.ExportDoorType || exportType == IFCExportType.ExportWindowType) &&
+                return (exportType == IFCExportType.IfcDoorType || exportType == IFCExportType.IfcWindowType) &&
                     (instHost != null && instHost.Id == hostElement.Id);
             }
 

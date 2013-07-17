@@ -77,6 +77,32 @@ namespace Revit.IFC.Common.Utility
         }
 
         /// <summary>
+        /// New overload for ValidateSubType that takes the string of IFC type instead of the enum. String must be validated first!
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <param name="nullAllowed"></param>
+        /// <param name="types"></param>
+        public static void ValidateSubTypeOf(IFCAnyHandle handle, bool nullAllowed, params string[] types)
+        {
+            if (handle == null)
+            {
+                if (!nullAllowed)
+                    throw new ArgumentNullException("handle");
+
+                return;
+            }
+            else
+            {
+                for (int ii = 0; ii < types.Length; ii++)
+                {
+                    if (handle.IsSubTypeOf(types[ii]))
+                        return;
+                }
+            }
+            throw new ArgumentException("Handle is not SubType of anything.", "handle");
+        }
+
+        /// <summary>
         /// Validates if the handle is one of the desired entity type.
         /// </summary>
         /// <param name="handle">The handle.</param>
@@ -169,6 +195,15 @@ namespace Revit.IFC.Common.Utility
 
             if (value != null)
                 handle.SetAttribute(name, IFCData.CreateEnumeration(value.ToString()));
+        }
+
+        public static void SetAttribute(IFCAnyHandle handle, string name, string value, bool forEnum)
+        {
+            if (String.IsNullOrEmpty(name))
+                throw new ArgumentException("The name is empty.", "name");
+
+            if (value != null && forEnum)
+                handle.SetAttribute(name, IFCData.CreateEnumeration(value));
         }
 
         /// <summary>

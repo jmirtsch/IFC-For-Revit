@@ -386,7 +386,7 @@ namespace Revit.IFC.Export.Exporter
 
                                         exportedSpaceIds.Add(spatialElement.Id);
 
-                                        XYZ offset = GetSapceBoundaryOffset(setter);
+                                        XYZ offset = GetSpaceBoundaryOffset(setter);
 
                                         //get boundary information from surfaces
                                         IList<EnergyAnalysisSurface> surfaces = space.GetAnalyticalSurfaces();
@@ -676,7 +676,7 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="setter">The placement settter.</param>
         /// <returns>The offset.</returns>
-        static XYZ GetSapceBoundaryOffset(PlacementSetter setter)
+        static XYZ GetSpaceBoundaryOffset(PlacementSetter setter)
         {
             IFCAnyHandle localPlacement = setter.LocalPlacement;
             double zOffset = setter.Offset;
@@ -928,7 +928,7 @@ namespace Revit.IFC.Export.Exporter
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                         bodyExporterOptions.TessellationLevel = BodyExporter.GetTessellationLevel();
                         repHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, spatialElement,
-                            catId, geomElem, bodyExporterOptions, null, extraParams);
+                            catId, geomElem, bodyExporterOptions, null, extraParams, false);
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))
                             extraParams.ClearOpenings();
                     }

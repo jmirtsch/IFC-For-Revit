@@ -39,13 +39,18 @@ namespace Revit.IFC.Export.Utility
         /// <summary>
         /// The dictionary mapping from a MEP element elementId to an Ifc handle. 
         /// </summary>
-        private Dictionary<ElementId, IFCAnyHandle> MEPElementHandleDictionary = new Dictionary<ElementId, IFCAnyHandle>();
+        private Dictionary<ElementId, IFCAnyHandle> m_MEPElementHandleDictionary = new Dictionary<ElementId, IFCAnyHandle>();
 
         /// <summary>
         /// A list of connectors
         /// </summary>
         public List<ConnectorSet> MEPConnectors = new List<ConnectorSet>();
-           
+
+        /// <summary>
+        /// A cache of elements (Ducts and Pipes) that may have coverings (Linings and/or Insulations).
+        /// </summary>
+        public HashSet<ElementId> CoveredElementsCache = new HashSet<ElementId>();
+
         /// <summary>
         /// Finds the Ifc handle from the dictionary.
         /// </summary>
@@ -58,7 +63,7 @@ namespace Revit.IFC.Export.Utility
         public IFCAnyHandle Find(ElementId elementId)
         {
             IFCAnyHandle handle;
-            if (MEPElementHandleDictionary.TryGetValue(elementId, out handle))
+            if (m_MEPElementHandleDictionary.TryGetValue(elementId, out handle))
             {
                 return handle;
             }
@@ -76,10 +81,10 @@ namespace Revit.IFC.Export.Utility
         /// </param>
         public void Register(Element element, IFCAnyHandle handle)
         {
-            if (MEPElementHandleDictionary.ContainsKey(element.Id))
+            if (m_MEPElementHandleDictionary.ContainsKey(element.Id))
                 return;
 
-            MEPElementHandleDictionary[element.Id] = handle;
+            m_MEPElementHandleDictionary[element.Id] = handle;
 
             ConnectorSet connectorts = GetConnectors(element);
             if (connectorts != null)

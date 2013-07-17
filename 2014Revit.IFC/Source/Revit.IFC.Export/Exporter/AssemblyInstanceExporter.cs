@@ -80,7 +80,7 @@ namespace Revit.IFC.Export.Exporter
 
                 string ifcEnumType;
                 IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
-                if (exportAs == IFCExportType.ExportSystem)
+                if (exportAs == IFCExportType.IfcSystem)
                 {
                     assemblyInstanceHnd = IFCInstanceExporter.CreateSystem(file, guid,
                         ownerHistory, name, description, objectType);
@@ -101,34 +101,35 @@ namespace Revit.IFC.Export.Exporter
                         // We have limited support for exporting assemblies as other container types.
                         localPlacement = placementSetter.LocalPlacement;
                         levelInfo = placementSetter.LevelInfo;
+                        ifcEnumType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
 
                         switch (exportAs)
                         {
-                            case IFCExportType.ExportCurtainWall:
+                            case IFCExportType.IfcCurtainWall:
                                 assemblyInstanceHnd = IFCInstanceExporter.CreateCurtainWall(file, guid,
                                     ownerHistory, name, description, objectType, localPlacement, representation, elementTag);
                                 break;
-                            case IFCExportType.ExportRamp:
-                                IFCRampType rampPredefinedType = RampExporter.GetIFCRampType(ifcEnumType);
+                            case IFCExportType.IfcRamp:
+                                string rampPredefinedType = RampExporter.GetIFCRampType(ifcEnumType);
                                 assemblyInstanceHnd = IFCInstanceExporter.CreateRamp(file, guid,
                                     ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
                                     rampPredefinedType);
                                 break;
-                            case IFCExportType.ExportRoof:
-                                IFCRoofType roofPredefinedType = RoofExporter.GetIFCRoofType(ifcEnumType);
+                            case IFCExportType.IfcRoof:
                                 assemblyInstanceHnd = IFCInstanceExporter.CreateRoof(file, guid,
                                     ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
-                                    roofPredefinedType);
+                                    ifcEnumType);
                                 break;
-                            case IFCExportType.ExportStair:
-                                IFCStairType stairPredefinedType = StairsExporter.GetIFCStairType(ifcEnumType);
+                            case IFCExportType.IfcStair:
+                                string stairPredefinedType = StairsExporter.GetIFCStairType(ifcEnumType);
                                 assemblyInstanceHnd = IFCInstanceExporter.CreateStair(file, guid,
                                     ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
                                     stairPredefinedType);
                                 break;
-                            case IFCExportType.ExportWall:
+                            case IFCExportType.IfcWall:
                                 assemblyInstanceHnd = IFCInstanceExporter.CreateWall(file, guid,
-                                    ownerHistory, name, description, objectType, localPlacement, representation, elementTag);
+                                    ownerHistory, name, description, objectType, localPlacement, representation, elementTag, 
+                                    ifcEnumType);
                                 break;
                             default:
                                 IFCElementAssemblyType assemblyPredefinedType = GetPredefinedTypeFromObjectType(objectType);

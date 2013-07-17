@@ -177,7 +177,7 @@ namespace Revit.IFC.Export.Exporter
             {
                 IList<ElementId> levels = new List<ElementId>();
                 IList<IFCRange> ranges = new List<IFCRange>();
-                IFCExportType exportType = isWall ? IFCExportType.ExportWall : IFCExportType.ExportColumnType;
+                IFCExportType exportType = isWall ? IFCExportType.IfcWall : IFCExportType.IfcColumnType;
                 LevelUtil.CreateSplitLevelRangesForElement(exporterIFC, exportType, part, out levels, out ranges);
                 if (ranges.Count == 0)
                 {
@@ -283,6 +283,7 @@ namespace Revit.IFC.Export.Exporter
                         IList<Mesh> meshes = solidMeshInfo.GetMeshes();
 
                         ElementId catId = CategoryUtil.GetSafeCategoryId(partElement);
+                        ElementId hostCatId = CategoryUtil.GetSafeCategoryId(hostElement);
 
                         BodyData bodyData = null;
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
@@ -331,41 +332,49 @@ namespace Revit.IFC.Export.Exporter
                         }
                         else
                         {
-                            string ifcEnumType;
+                            string ifcEnumType = null;
                             IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
+
+                            string defaultValue = null;
+                            // This replicates old functionality before IFC4 addition, where the default for slab was "FLOOR".
+                            // Really the export layer table should be fixed for this case.
+                            if (string.IsNullOrWhiteSpace(ifcEnumType) && hostCatId == new ElementId(BuiltInCategory.OST_Floors))
+                                ifcEnumType = "FLOOR";
+                            ifcEnumType = IFCValidateEntry.GetValidIFCType(hostElement, ifcEnumType, defaultValue);
+                            
                             switch (exportType)
                             {
-                                case IFCExportType.ExportColumnType:
+                                case IFCExportType.IfcColumnType:
                                     ifcPart = IFCInstanceExporter.CreateColumn(file, partGUID, ownerHistory, partName, partDescription, partObjectType, 
-                                        extrusionCreationData.GetLocalPlacement(), prodRep, partTag);
+                                        extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
                                     break;
-                                case IFCExportType.ExportCovering:
-                                    IFCCoveringType coveringType = CeilingExporter.GetIFCCoveringType(hostElement, ifcEnumType);
+                                case IFCExportType.IfcCovering:
                                     ifcPart = IFCInstanceExporter.CreateCovering(file, partGUID, ownerHistory, partName, partDescription, partObjectType, 
-                                        extrusionCreationData.GetLocalPlacement(), prodRep, partTag, coveringType);
+                                        extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
                                     break;
-                                case IFCExportType.ExportFooting:
-                                    IFCFootingType footingType = FootingExporter.GetIFCFootingType(hostElement, ifcEnumType);
+                                case IFCExportType.IfcFooting:
                                     ifcPart = IFCInstanceExporter.CreateFooting(file, partGUID, ownerHistory, partName, partDescription, partObjectType, 
-                                        extrusionCreationData.GetLocalPlacement(), prodRep, partTag, footingType);
+                                        extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
                                     break;
-                                case IFCExportType.ExportRoof:
-                                    IFCRoofType roofType = RoofExporter.GetIFCRoofType(ifcEnumType);
+                                case IFCExportType.IfcPile:
+                                    ifcPart = IFCInstanceExporter.CreatePile(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
+                                        extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType, null);
+                                    break;
+                                case IFCExportType.IfcRoof:
                                     ifcPart = IFCInstanceExporter.CreateRoof(file, partGUID, ownerHistory, partName, partDescription, partObjectType, 
-                                        extrusionCreationData.GetLocalPlacement(), prodRep, partTag, roofType);
+                                        extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
                                     break;
-                                case IFCExportType.ExportSlab:
-                                    IFCSlabType slabType = FloorExporter.GetIFCSlabType(ifcEnumType);
-                                    ifcPart = IFCInstanceExporter.CreateSlab(file, partGUID, ownerHistory, partName, partDescription, partObjectType, 
-                                        extrusionCreationData.GetLocalPlacement(), prodRep, partTag, slabType);
+                                case IFCExportType.IfcSlab:
+                                    ifcPart = IFCInstanceExporter.CreateSlab(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
+                                        extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
                                     break;
-                                case IFCExportType.ExportWall:
+                                case IFCExportType.IfcWall:
                                     ifcPart = IFCInstanceExporter.CreateWall(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
-                                    extrusionCreationData.GetLocalPlacement(), prodRep, partTag);
+                                    extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
                                     break;
                                 default:
                                     ifcPart = IFCInstanceExporter.CreateBuildingElementProxy(file, partGUID, ownerHistory, partName, partDescription, 
-                                        partObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, partTag, IFCElementComposition.Element);
+                                        partObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, partTag, "Element");
                                     break;
                             }
                         }
@@ -482,7 +491,7 @@ namespace Revit.IFC.Export.Exporter
         {
             string ifcEnumType;
             IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
-            return (exportType == IFCExportType.ExportWall) || (exportType == IFCExportType.ExportColumnType);
+            return (exportType == IFCExportType.IfcWall) || (exportType == IFCExportType.IfcColumnType);
         }
 
         /// <summary>
@@ -519,10 +528,10 @@ namespace Revit.IFC.Export.Exporter
 
             switch (exportType)
             {
-                case IFCExportType.ExportWall:
-                case IFCExportType.ExportColumnType:
-                case IFCExportType.ExportSlab:
-                case IFCExportType.ExportRoof:
+                case IFCExportType.IfcWall:
+                case IFCExportType.IfcColumnType:
+                case IFCExportType.IfcSlab:
+                case IFCExportType.IfcRoof:
                     return IFCExtrusionAxes.TryZ;
                 default:
                     return IFCExtrusionAxes.TryXY;

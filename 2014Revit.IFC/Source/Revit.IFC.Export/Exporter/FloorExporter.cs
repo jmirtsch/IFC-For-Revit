@@ -39,21 +39,13 @@ namespace Revit.IFC.Export.Exporter
         /// <summary>
         /// Exports a floor to IFC slab.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="floor">
-        /// The floor element.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="floor">The floor element.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
         public static void Export(ExporterIFC exporterIFC, HostObject floor, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
-            string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, floor);
+            string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, floor);
 
             // export parts or not
             bool exportParts = PartExporter.CanExportParts(floor);
@@ -214,14 +206,14 @@ namespace Revit.IFC.Export.Exporter
                         // Allow export as IfcSlab or IfcFooting.  Ignore altIfcEnumType value; use value passed in.
                         string altIfcEnumType;
                         IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, floorElement, out altIfcEnumType);
-                        bool exportAsFooting = (exportAs == IFCExportType.ExportFooting);
+                        bool exportAsFooting = (exportAs == IFCExportType.IfcFooting);
 
-                        IFCFootingType? footingType = null;
-                        IFCSlabType? slabType = null;
+                        string footingType = null;
+                        string slabType = null;
                         if (exportAsFooting)
-                            footingType = FootingExporter.GetIFCFootingType(ifcEnumType);
+                            footingType = IFCValidateEntry.GetValidIFCType(floorElement, FootingExporter.GetIFCFootingType(altIfcEnumType)); 
                         else
-                            slabType = GetIFCSlabType(ifcEnumType);
+                            slabType = IFCValidateEntry.GetValidIFCType(floorElement, ifcEnumType, "FLOOR");
                         
                         for (int ii = 0; ii < numReps; ii++)
                         {
@@ -238,13 +230,13 @@ namespace Revit.IFC.Export.Exporter
                             {
                                 slabHnd = IFCInstanceExporter.CreateFooting(file, currentGUID, ownerHistory, ifcName,
                                     ifcDescription, ifcObjectType, localPlacementHnd, exportParts ? null : prodReps[ii], 
-                                    ifcTag, footingType.Value);
+                                    ifcTag, footingType);
                             }
                             else
                             {
                                 slabHnd = IFCInstanceExporter.CreateSlab(file, currentGUID, ownerHistory, ifcName, 
                                     ifcDescription, ifcObjectType, localPlacementHnd, exportParts ? null : prodReps[ii], 
-                                    ifcTag, slabType.Value);
+                                    ifcTag, slabType);
                             }
 
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(slabHnd))

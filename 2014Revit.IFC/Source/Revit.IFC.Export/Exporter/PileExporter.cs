@@ -71,7 +71,7 @@ namespace Revit.IFC.Export.Exporter
                             matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element);
                             BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                             prodRep = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
-                               element, catId, geometryElement, bodyExporterOptions, null, ecData);
+                               element, catId, geometryElement, bodyExporterOptions, null, ecData, true);
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodRep))
                             {
                                 ecData.ClearOpenings();
@@ -84,7 +84,7 @@ namespace Revit.IFC.Export.Exporter
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
                         string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
-                        Toolkit.IFCPileType pileType = GetPileType(element, ifcEnumType);
+                        string pileType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
 
                         IFCAnyHandle pile = IFCInstanceExporter.CreatePile(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
                             instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(), prodRep, instanceTag, pileType, null);
@@ -114,27 +114,5 @@ namespace Revit.IFC.Export.Exporter
             }
         }
 
-        private static IFCPileType GetPileType(Element element, string ifcEnumType)
-        {
-            string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
-                value = ifcEnumType;
-            }
-
-            if (String.IsNullOrEmpty(value))
-                return IFCPileType.NotDefined;
-
-            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
-
-            if (String.Compare(newValue, "COHESION", true) == 0)
-                return IFCPileType.Cohesion;
-            if (String.Compare(newValue, "FRICTION", true) == 0)
-                return IFCPileType.Friction;
-            if (String.Compare(newValue, "SUPPORT", true) == 0)
-                return IFCPileType.Support;
-
-            return IFCPileType.UserDefined;
-        }
     }
 }

@@ -46,11 +46,7 @@ namespace Revit.IFC.Export.Utility
         /// 1. true: Use the "IFCGuid" parameter, if set. (default)
         /// 2. false: Ignore the "IFCGuid" parameter; always use the Revit API DWF/IFC GUID creation function.
         /// </summary>
-        public bool AllowGUIDParameterOverride
-        {
-            get;
-            set;
-        }
+        public bool AllowGUIDParameterOverride { get; set; }
 
         /// <summary>
         /// Whether or not to use R2009 GUIDs for exporting Levels.  If this option is set, export will write the old
@@ -58,10 +54,12 @@ namespace Revit.IFC.Export.Utility
         /// ensure that the old GUID is used permanently.
         /// To set this to true, add the environment variable Assign2009GUIDToBuildingStoriesOnIFCExport and set the value to 1.
         /// </summary>
-        public bool Use2009BuildingStoreyGUIDs
-        {
-            get;
-            set;
-        }
+        public bool Use2009BuildingStoreyGUIDs { get; set; }
+
+        /// <summary>
+        /// Whether or not to store the IFC GUIDs generated during export.  The user is required to save the file if they want to
+        /// ensure that the GUID parameter is used permanently.
+        /// </summary>
+        public bool StoreIFCGUID { get; set; }
     }
 }
