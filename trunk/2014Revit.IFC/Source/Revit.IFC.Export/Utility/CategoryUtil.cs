@@ -55,22 +55,6 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
-        /// Gets IFC type name of an element.
-        /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <returns>
-        /// The IFC type name.
-        /// </returns>
-        public static string GetIFCEnumTypeName(ExporterIFC exporterIFC, Element element)
-        {
-            string ifcEnumType = ExporterIFCUtils.GetIFCType(element, exporterIFC);
-
-            return ifcEnumType;
-        }
-
-        /// <summary>
         /// Gets category name of an element.
         /// </summary>
         /// <param name="element">

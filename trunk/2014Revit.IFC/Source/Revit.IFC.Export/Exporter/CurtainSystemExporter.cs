@@ -100,7 +100,7 @@ namespace Revit.IFC.Export.Exporter
 
                                         string ifcEnumType;
                                         IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, subElem, out ifcEnumType);
-                                        if (exportType == IFCExportType.ExportCurtainWall)
+                                        if (exportType == IFCExportType.IfcCurtainWall)
                                         {
                                             // By default, panels and mullions are set to the same category as their parent.  In this case,
                                             // ask to get the exportType from the category id, since we don't want to inherit the parent class.
@@ -111,16 +111,16 @@ namespace Revit.IFC.Export.Exporter
 
                                         if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
                                         {
-                                            if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.ExportPlateType) ||
-                                               (exportType == IFCExportType.ExportMemberType))
-                                                exportType = IFCExportType.ExportBuildingElementProxy;
+                                            if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.IfcPlateType) ||
+                                               (exportType == IFCExportType.IfcMemberType))
+                                                exportType = IFCExportType.IfcBuildingElementProxy;
                                         }
                                         else
                                         {
                                             if (exportType == IFCExportType.DontExport)
                                             {
                                                 ifcEnumType = "CURTAIN_PANEL";
-                                                exportType = IFCExportType.ExportPlateType;
+                                                exportType = IFCExportType.IfcPlateType;
                                             }
                                         }
 
@@ -304,9 +304,10 @@ namespace Revit.IFC.Export.Exporter
                     else if (element is RoofBase)
                     {
                         //need to convert the string to enum
-                        string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, element);
+                        string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, element);
+                        ifcEnumType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
                         elemHnd = IFCInstanceExporter.CreateRoof(file, elemGUID, ownerHistory, elemName, elemDesc, elemType, localPlacement,
-                            prodRepHnd, elemTag, RoofExporter.GetIFCRoofType(ifcEnumType));
+                            prodRepHnd, elemTag, ifcEnumType);
                     }
                     else
                     {

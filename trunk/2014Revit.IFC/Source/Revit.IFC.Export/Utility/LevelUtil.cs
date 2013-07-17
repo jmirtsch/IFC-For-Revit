@@ -308,7 +308,7 @@ namespace Revit.IFC.Export.Utility
             ranges = new List<IFCRange>();
             double extension = GetLevelExtension();
 
-            if ((exportType == IFCExportType.ExportColumnType || exportType == IFCExportType.ExportWall) && (ExporterCacheManager.ExportOptionsCache.WallAndColumnSplitting))
+            if ((exportType == IFCExportType.IfcColumnType || exportType == IFCExportType.IfcWall) && (ExporterCacheManager.ExportOptionsCache.WallAndColumnSplitting))
             {
                 BoundingBoxXYZ boundingBox = element.get_BoundingBox(null);
                 {

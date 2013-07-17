@@ -36,6 +36,8 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Enums\IFC2xEntityType.cs" />
+    <Compile Include="Enums\IFC4EntityType.cs" />
     <Compile Include="Enums\IFCEntityType.cs" />
     <Compile Include="Extension\IFCAddress.cs" />
     <Compile Include="Extension\IFCAddressItem.cs" />
@@ -45,6 +47,7 @@
     <Compile Include="Extension\IFCFileHeaderItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <AppDesigner Include="Properties\" />
+    <Compile Include="Utility\IFCCompatibilityType.cs" />
     <Compile Include="Utility\IFCAnyHandleUtil.cs" />
     <Compile Include="Utility\MathUtil.cs" />
   </ItemGroup>

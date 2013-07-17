@@ -112,7 +112,26 @@ namespace Revit.IFC.Export.Utility
                     return paramValue;
             }
 
-            return ExporterIFCUtils.CreateProjectLevelGUID(document, guidType);
+            string guid = ExporterIFCUtils.CreateProjectLevelGUID(document, guidType);
+            if ((projectInfo != null) && ExporterCacheManager.ExportOptionsCache.GUIDOptions.StoreIFCGUID)
+            {
+                BuiltInParameter parameterId = BuiltInParameter.INVALID;
+                switch (guidType)
+                {
+                    case IFCProjectLevelGUIDType.Building:
+                        parameterId = BuiltInParameter.IFC_BUILDING_GUID;
+                        break;
+                    case IFCProjectLevelGUIDType.Project:
+                        parameterId = BuiltInParameter.IFC_PROJECT_GUID;
+                        break;
+                    case IFCProjectLevelGUIDType.Site:
+                        parameterId = BuiltInParameter.IFC_SITE_GUID;
+                        break;
+                }
+                if (parameterId != BuiltInParameter.INVALID)
+                    ParameterUtil.SetStringParameter(projectInfo, parameterId, guid);
+            }
+            return guid;
         }
 
         /// <summary>
@@ -149,7 +168,12 @@ namespace Revit.IFC.Export.Utility
         public static string GetLevelGUID(Level level)
         {
             if (!ExporterCacheManager.ExportOptionsCache.GUIDOptions.Use2009BuildingStoreyGUIDs)
-                return ExporterIFCUtils.CreateAlternateGUID(level);
+            {
+                string ifcGUID = ExporterIFCUtils.CreateAlternateGUID(level);
+                if (ExporterCacheManager.ExportOptionsCache.GUIDOptions.StoreIFCGUID)
+                    ParameterUtil.SetStringParameter(level, BuiltInParameter.IFC_GUID, ifcGUID);
+                return ifcGUID;
+            }
             else
             {
                 return CreateGUID(level);
@@ -185,16 +209,22 @@ namespace Revit.IFC.Export.Utility
         /// <returns>A consistent GUID for the element.</returns>
         static public string CreateGUID(Element element)
         {
-            string ifcGUIDFromParameter = null;
+            string ifcGUID = null;
+            BuiltInParameter parameterName = (element is ElementType) ? BuiltInParameter.IFC_TYPE_GUID : BuiltInParameter.IFC_GUID;
+                
             if (ExporterCacheManager.ExportOptionsCache.GUIDOptions.AllowGUIDParameterOverride)
-                ParameterUtil.GetStringValueFromElement(element, (element is ElementType) ? BuiltInParameter.IFC_TYPE_GUID : BuiltInParameter.IFC_GUID, out ifcGUIDFromParameter);
-            if (String.IsNullOrEmpty(ifcGUIDFromParameter))
+                ParameterUtil.GetStringValueFromElement(element, parameterName, out ifcGUID);
+            if (String.IsNullOrEmpty(ifcGUID))
             {
                 System.Guid guid = ExportUtils.GetExportId(element.Document, element.Id);
-                return ConvertToIFCGuid(guid);
+                ifcGUID = ConvertToIFCGuid(guid);
+
+                if (ExporterCacheManager.ExportOptionsCache.GUIDOptions.StoreIFCGUID || 
+                    (ExporterCacheManager.ExportOptionsCache.GUIDOptions.Use2009BuildingStoreyGUIDs && element is Level))
+                    ParameterUtil.SetStringParameter(element, parameterName, ifcGUID);
             }
 
-            return ifcGUIDFromParameter;
+            return ifcGUID;
         }
     }
 }

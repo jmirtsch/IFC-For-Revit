@@ -103,7 +103,7 @@ namespace Revit.IFC.Export.Exporter
                             matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element);
                             BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                             prodRep = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
-                               element, catId, geometryElement, bodyExporterOptions, null, ecData);
+                               element, catId, geometryElement, bodyExporterOptions, null, ecData, true);
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodRep))
                             {
                                 ecData.ClearOpenings();
@@ -116,7 +116,8 @@ namespace Revit.IFC.Export.Exporter
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
                         string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
-                        Toolkit.IFCFootingType footingType = GetIFCFootingType(element, ifcEnumType);
+                        string footingType = GetIFCFootingType(ifcEnumType);    // need to keep it for legacy support when original data follows slightly diff naming
+                        footingType = IFCValidateEntry.GetValidIFCType(element, footingType);
 
                         IFCAnyHandle footing = IFCInstanceExporter.CreateFooting(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
                             instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(), prodRep, instanceTag, footingType);
@@ -151,42 +152,26 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="value">The type name.</param>
         /// <returns>The IFCFootingType.</returns>
-        public static Toolkit.IFCFootingType GetIFCFootingType(string value)
+        public static string GetIFCFootingType(string value)
         {
             if (String.IsNullOrEmpty(value))
-                return Toolkit.IFCFootingType.NotDefined;
+                return "NOTDEFINED";
 
             string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
             if (String.Compare(newValue, "USERDEFINED", true) == 0)
-                return Toolkit.IFCFootingType.UserDefined;
+                return "USERDEFINED";
             if (String.Compare(newValue, "FOOTINGBEAM", true) == 0)
-                return Toolkit.IFCFootingType.Footing_Beam;
+                return "FOOTING_BEAM";
             if (String.Compare(newValue, "PADFOOTING", true) == 0)
-                return Toolkit.IFCFootingType.Pad_Footing;
+                return "PAD_FOOTING";
             if (String.Compare(newValue, "PILECAP", true) == 0)
-                return Toolkit.IFCFootingType.Pile_Cap;
+                return "PILE_CAP";
             if (String.Compare(newValue, "STRIPFOOTING", true) == 0)
-                return Toolkit.IFCFootingType.Strip_Footing;
+                return "STRIP_FOOTING";
 
-            return Toolkit.IFCFootingType.UserDefined;
+            return newValue;
         }
 
-        /// <summary>
-        /// Gets IFC footing type for an element.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="typeName">The type name.</param>
-        /// <returns>The IFCFootingType.</returns>
-        public static Toolkit.IFCFootingType GetIFCFootingType(Element element, string typeName)
-        {
-            string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
-                value = typeName;
-            }
-
-            return GetIFCFootingType(value);
-        }
     }
 }

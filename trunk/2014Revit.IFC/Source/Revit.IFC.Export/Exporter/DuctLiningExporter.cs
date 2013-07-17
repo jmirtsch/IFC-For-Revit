@@ -63,7 +63,7 @@ namespace Revit.IFC.Export.Exporter
 
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                         IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, element,
-                            categoryId, geometryElement, bodyExporterOptions, null, ecData);
+                            categoryId, geometryElement, bodyExporterOptions, null, ecData, true);
 
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(representation))
                         {
@@ -82,7 +82,8 @@ namespace Revit.IFC.Export.Exporter
                         string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
                         IFCAnyHandle ductLining = IFCInstanceExporter.CreateCovering(file, guid,
-                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag, IFCCoveringType.Wrapping);
+                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag, "Wrapping");
+                        ExporterCacheManager.ElementToHandleCache.Register(element.Id, ductLining);
 
                         productWrapper.AddElement(ductLining, placementSetter.LevelInfo, ecData, true);
 

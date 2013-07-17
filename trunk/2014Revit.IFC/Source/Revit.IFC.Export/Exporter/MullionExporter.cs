@@ -78,9 +78,8 @@ namespace Revit.IFC.Export.Exporter
                     ElementId catId = CategoryUtil.GetSafeCategoryId(mullion);
 
                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                    BodyData bodyData = null;
                     IFCAnyHandle repHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, mullion, catId,
-                        geometryElement, bodyExporterOptions, null, extraParams, out bodyData);
+                        geometryElement, bodyExporterOptions, null, extraParams, true);
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))
                     {
                         extraParams.ClearOpenings();
@@ -96,7 +95,7 @@ namespace Revit.IFC.Export.Exporter
                     string elemTag = NamingUtil.GetTagOverride(mullion, NamingUtil.CreateIFCElementId(mullion));
 
                     IFCAnyHandle mullionHnd = IFCInstanceExporter.CreateMember(file, elemGUID, ownerHistory, name, description, objectType,
-                       mullionLocalPlacement, repHnd, elemTag);
+                       mullionLocalPlacement, repHnd, elemTag, "MULLION");
                     ExporterCacheManager.HandleToElementCache.Register(mullionHnd, mullion.Id);
 
                     productWrapper.AddElement(mullionHnd, mullionSetter, extraParams, false);

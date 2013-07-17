@@ -38,19 +38,12 @@ namespace Revit.IFC.Export.Exporter
         /// <summary>
         /// Exports a MEP family instance.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
-        public static void Export(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, ProductWrapper productWrapper)
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        /// <returns>True if an entity was created, false otherwise.</returns>
+        public static bool Export(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction tr = new IFCTransaction(file))
@@ -69,12 +62,12 @@ namespace Revit.IFC.Export.Exporter
 
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                         BodyData bodyData = null;
-                        IFCAnyHandle productRepresentation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, 
+                        IFCAnyHandle productRepresentation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
                             element, catId, geometryElement, bodyExporterOptions, null, extraParams, out bodyData);
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(productRepresentation))
                         {
                             extraParams.ClearOpenings();
-                            return;
+                            return false;
                         }
 
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
@@ -120,59 +113,23 @@ namespace Revit.IFC.Export.Exporter
                         }
 
                         IFCAnyHandle instanceHandle = null;
-                        if (FamilyExporterUtil.IsFurnishingElementSubType(exportType))
+
+                        // For MEP objects
+                        string exportEntityStr = exportType.ToString();
+                        Common.Enums.IFCEntityType exportEntity;
+
+                        if (String.Compare(exportEntityStr.Substring(exportEntityStr.Length - 4), "Type", true) == 0)
+                            exportEntityStr = exportEntityStr.Substring(0, (exportEntityStr.Length - 4));
+                        if (Enum.TryParse(exportEntityStr, out exportEntity))
                         {
-                            instanceHandle = IFCInstanceExporter.CreateFurnishingElement(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
-                        }
-                        else if (FamilyExporterUtil.IsDistributionFlowElementSubType(exportType))
-                        {
-                            instanceHandle = IFCInstanceExporter.CreateDistributionFlowElement(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
-                        }
-                        else if (FamilyExporterUtil.IsEnergyConversionDeviceSubType(exportType))
-                        {
-                            instanceHandle = IFCInstanceExporter.CreateEnergyConversionDevice(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
-                        }
-                        else if (FamilyExporterUtil.IsFlowFittingSubType(exportType))
-                        {
-                            instanceHandle = IFCInstanceExporter.CreateFlowFitting(file, instanceGUID, ownerHistory,
-                              instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
-                        }
-                        else if (FamilyExporterUtil.IsFlowMovingDeviceSubType(exportType))
-                        {
-                            instanceHandle = IFCInstanceExporter.CreateFlowMovingDevice(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
-                        }
-                        else if (FamilyExporterUtil.IsFlowSegmentSubType(exportType))
-                        {
-                            instanceHandle = IFCInstanceExporter.CreateFlowSegment(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
-                        }
-                        else if (FamilyExporterUtil.IsFlowStorageDeviceSubType(exportType))
-                        {
-                            instanceHandle = IFCInstanceExporter.CreateFlowStorageDevice(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
-                        }
-                        else if (FamilyExporterUtil.IsFlowTerminalSubType(exportType))
-                        {
-                            instanceHandle = IFCInstanceExporter.CreateFlowTerminal(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
-                        }
-                        else if (FamilyExporterUtil.IsFlowTreatmentDeviceSubType(exportType))
-                        {
-                            instanceHandle = IFCInstanceExporter.CreateFlowTreatmentDevice(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
-                        }
-                        else if (FamilyExporterUtil.IsFlowControllerSubType(exportType))
-                        {
-                            instanceHandle = IFCInstanceExporter.CreateFlowController(file, instanceGUID, ownerHistory,
+                            // For MEP object creation
+                            instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(exportEntity, file, instanceGUID, ownerHistory,
                                instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
                         }
 
+
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
-                            return;
+                            return false;
 
                         if (roomId != ElementId.InvalidElementId)
                         {
@@ -192,7 +149,7 @@ namespace Revit.IFC.Export.Exporter
 
                         if (bodyData != null && bodyData.MaterialIds.Count != 0)
                             CategoryUtil.CreateMaterialAssociations(element.Document, exporterIFC, instanceHandle, bodyData.MaterialIds);
-                        
+
                         PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
 
                         ExporterCacheManager.MEPCache.Register(element, instanceHandle);
@@ -201,6 +158,7 @@ namespace Revit.IFC.Export.Exporter
                     }
                 }
             }
+            return true;
         }
     }
 }

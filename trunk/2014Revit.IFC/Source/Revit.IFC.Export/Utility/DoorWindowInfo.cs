@@ -81,9 +81,29 @@ namespace Revit.IFC.Export.Utility
         public bool PosHingeSide { get; set; }
 
         /// <summary>
+        /// The Window partitioning type enum
+        /// </summary>
+        public string WindowPartitioningTypeString { get; set; }
+
+        /// <summary>
+        /// Captures user defined partitioning type from parameter
+        /// </summary>
+        public string UserDefinedPartitioningType { get; set; }
+
+        /// <summary>
         /// The door operation type enum.
         /// </summary>
-        public IFCDoorStyleOperation DoorOperationType { get; set; }
+        public string DoorOperationTypeString { get; set; }
+
+        /// <summary>
+        /// Captures user defined operation type from parameter
+        /// </summary>
+        public string UserDefinedOperationType { get; set; }
+
+        /// <summary>
+        /// PreDefinedType Enum
+        /// </summary>
+        public string PreDefinedType { get; set; }
 
         private DoorWindowInfo()
         {
@@ -96,7 +116,10 @@ namespace Revit.IFC.Export.Utility
             FlippedX = false;
             FlippedY = false;
             FlippedSymbol = false;
-            DoorOperationType = IFCDoorStyleOperation.NotDefined;
+            DoorOperationTypeString = "NOTDEFINED";
+            WindowPartitioningTypeString = "NOTDEFINED";
+            UserDefinedOperationType = null;
+            UserDefinedPartitioningType = null;
         }
 
         private KeyValuePair<double, double> GetAdjustedEndParameters(Arc arc, bool flipped, double offset)
@@ -110,48 +133,45 @@ namespace Revit.IFC.Export.Utility
             return new KeyValuePair<double, double>(endParam0, endParam1);
         }
 
-        private IFCDoorStyleOperation ReverseDoorStyleOperation(IFCDoorStyleOperation orig)
+        private string ReverseDoorStyleOperation(string orig)
         {
-            switch (orig)
-            {
-                case IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeLeft:
-                    return IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeRight;
-                case IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeRight:
-                    return IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeLeft;
-                case IFCDoorStyleOperation.DoubleSwingLeft:
-                    return IFCDoorStyleOperation.DoubleSwingRight;
-                case IFCDoorStyleOperation.DoubleSwingRight:
-                    return IFCDoorStyleOperation.DoubleSwingLeft;
-                case IFCDoorStyleOperation.FoldingToLeft:
-                    return IFCDoorStyleOperation.FoldingToRight;
-                case IFCDoorStyleOperation.FoldingToRight:
-                    return IFCDoorStyleOperation.FoldingToLeft;
-                case IFCDoorStyleOperation.SingleSwingLeft:
-                    return IFCDoorStyleOperation.SingleSwingRight;
-                case IFCDoorStyleOperation.SingleSwingRight:
-                    return IFCDoorStyleOperation.SingleSwingLeft;
-                default:
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(orig, "DoubleDoorSingleSwingOppositeLeft"))
+                return "DOUBLE_DOOR_SINGLE_SWING_OPPOSITE_RIGHT";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(orig, "DoubleDoorSingleSwingOppositeRight"))
+                return "DOUBLE_DOOR_SINGLE_SWING_OPPOSITE_LEFT";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(orig, "DoubleSwingLeft"))
+                return "DOUBLE_SWING_RIGHT";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(orig, "DoubleSwingRight"))
+                return "DOUBLE_SWING_LEFT";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(orig, "FoldingToLeft"))
+                return "FOLDING_TO_RIGHT";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(orig, "FoldingToRight"))
+                return "FOLDING_TO_LEFT";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(orig, "SingleSwingLeft"))
+                return "SINGLE_SWING_RIGHT";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(orig, "SingleSwingRight"))
+                return "SINGLE_SWING_LEFT";
+            else
                     return orig;
             }
-        }
 
-        private IFCDoorStyleOperation CalculateDoorOperationStyle(FamilyInstance currElem)
+        private string CalculateDoorOperationStyle(FamilyInstance currElem)
         {
             const double smallAngle = Math.PI / 36;
 
             if (currElem == null)
-                return IFCDoorStyleOperation.NotDefined;
+                return "NOTDEFINED";
 
             FamilySymbol famSymbol = currElem.Symbol;
             if (famSymbol == null)
-                return IFCDoorStyleOperation.NotDefined;
+                return "NOTDEFINED";
             Family fam = famSymbol.Family;
             if (fam == null)
-                return IFCDoorStyleOperation.NotDefined;
+                return "NOTDEFINED";
 
             IList<Arc> origArcs = ExporterIFCUtils.GetDoor2DArcsFromFamily(fam);
             if (origArcs == null || (origArcs.Count == 0))
-                return IFCDoorStyleOperation.NotDefined;
+                return "NOTDEFINED";
 
             IList<Arc> filteredArcs = new List<Arc>();
             IList<bool> flippedArcs = new List<bool>();
@@ -179,7 +199,7 @@ namespace Revit.IFC.Export.Utility
 
             int numArcs = filteredArcs.Count;
             if (numArcs == 0)
-                return IFCDoorStyleOperation.NotDefined;
+                return "NOTDEFINED";
 
             double angleEps = MathUtil.AngleEps();
 
@@ -187,15 +207,15 @@ namespace Revit.IFC.Export.Utility
             {
                 // single swing or revolving.
                 if (!filteredArcs[0].IsBound)
-                    return IFCDoorStyleOperation.Revolving;
+                    return "REVOLVING";
 
                 KeyValuePair<double, double> endParams = GetAdjustedEndParameters(filteredArcs[0], flippedArcs[0], offsetAngles[0]);
                 if ((endParams.Value - endParams.Key) <= Math.PI + angleEps)
                 {
                     if ((Math.Abs(endParams.Key) <= angleEps) || (Math.Abs(endParams.Key - Math.PI) <= angleEps))
-                        return IFCDoorStyleOperation.SingleSwingLeft;
+                        return "SINGLE_SWING_LEFT";
                     if ((Math.Abs(endParams.Value - Math.PI) <= angleEps) || (Math.Abs(endParams.Value - 2.0 * Math.PI) <= angleEps))
-                        return IFCDoorStyleOperation.SingleSwingRight;
+                        return "SINGLE_SWING_RIGHT";
                 }
             }
             else if (numArcs == 2)
@@ -222,17 +242,17 @@ namespace Revit.IFC.Export.Utility
                                     if (((Math.Abs(endParams1.Value - Math.PI) < smallAngle) && (Math.Abs(endParams2.Key - Math.PI) < smallAngle)) ||
                                         ((Math.Abs(endParams1.Key - Math.PI) < smallAngle) && (Math.Abs(endParams2.Value - Math.PI) < smallAngle)))
                                     {
-                                        return IFCDoorStyleOperation.DoubleSwingRight;
+                                        return "DOUBLE_SWING_RIGHT";
                                     }
                                     else if (((Math.Abs(endParams1.Value - 2.0 * Math.PI) < smallAngle) && (Math.Abs(endParams2.Key) < smallAngle)) ||
                                         ((Math.Abs(endParams1.Key) < smallAngle) && (Math.Abs(endParams2.Value - 2.0 * Math.PI) < smallAngle)))
                                     {
-                                        return IFCDoorStyleOperation.DoubleSwingLeft;
+                                        return "DOUBLE_SWING_LEFT";
                                     }
                                 }
                                 else // if (sameY)
                                 {
-                                    return IFCDoorStyleOperation.DoubleDoorSingleSwing;
+                                    return "DOUBLE_DOOR_SINGLE_SWING";
                                 }
                             }
                         }
@@ -284,12 +304,12 @@ namespace Revit.IFC.Export.Utility
                         (Math.Abs(ctrDiff2[0]) < ShortDist) &&
                         (Math.Abs(ctrDiff3[1]) < ShortDist))
                     {
-                        return IFCDoorStyleOperation.DoubleDoorDoubleSwing;
+                        return "DOUBLE_DOOR_DOUBLE_SWING";
                     }
                 }
             }
 
-            return IFCDoorStyleOperation.NotDefined;
+            return "NOTDEFINED";
         }
 
         private void Initialize(bool isDoor, bool isWindow, FamilyInstance famInst, HostObject hostObject)
@@ -298,11 +318,17 @@ namespace Revit.IFC.Export.Utility
             InsertInstance = famInst;
 
             ExportingDoor = isDoor;
+            if (isDoor) 
+		        PreDefinedType = "DOOR";
+
             ExportingWindow = isWindow;
+            if (isWindow) 
+		        PreDefinedType = "WINDOW";
 
             FlippedSymbol = false;
 
-            DoorOperationType = IFCDoorStyleOperation.NotDefined;
+            DoorOperationTypeString = "NOTDEFINED";
+            WindowPartitioningTypeString = "NOTDEFINED";
 
             FlippedX = (famInst == null) ? false : famInst.HandFlipped;
             FlippedY = (famInst == null) ? false : famInst.FacingFlipped;
@@ -312,7 +338,7 @@ namespace Revit.IFC.Export.Utility
             HasRealWallHost = ((wall != null) && (centerCurve != null) && ((centerCurve is Line) || (centerCurve is Arc)));
         }
 
-        private void CalculateDoorWindowInformation(ExporterIFC exporterIFC, FamilyInstance famInst, 
+        private void CalculateDoorWindowInformation(ExporterIFC exporterIFC, FamilyInstance famInst,
             ElementId overrideLevelId, Transform trf)
         {
             IFCFile file = exporterIFC.GetFile();
@@ -320,31 +346,54 @@ namespace Revit.IFC.Export.Utility
             if (ExportingDoor)
             {
                 string doorOperationType = null;
+
                 Element doorType = famInst.Document.GetElement(famInst.GetTypeId());
                 if (doorType != null)
                     ParameterUtil.GetStringValueFromElement(doorType, BuiltInParameter.DOOR_OPERATION_TYPE, out doorOperationType);
-                if (string.IsNullOrWhiteSpace(doorOperationType))
-                    DoorOperationType = IFCDoorStyleOperation.NotDefined;
-                else
+
+                DoorOperationTypeString = "NOTDEFINED";
+                if (!string.IsNullOrWhiteSpace(doorOperationType))
                 {
-                    foreach (IFCDoorStyleOperation ifcDoorStyleOperation in Enum.GetValues(typeof(IFCDoorStyleOperation)))
+                    Type enumType = null;
+                    if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+                        enumType = typeof(Toolkit.IFC4.IFCDoorStyleOperation);
+                    else
+                        enumType = typeof(IFCDoorStyleOperation);
+
+                    foreach (Enum ifcDoorStyleOperation in Enum.GetValues(enumType))
                     {
-                        if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperation.ToString(), doorOperationType))
+                        string enumAsString = ifcDoorStyleOperation.ToString();
+                        if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(enumAsString, doorOperationType))
                         {
-                            DoorOperationType = ifcDoorStyleOperation;
+                            DoorOperationTypeString = enumAsString;
                             break;
                         }
                     }
                 }
 
-                if (DoorOperationType == IFCDoorStyleOperation.NotDefined)
+                if (DoorOperationTypeString == "NOTDEFINED")
                 {
                     // We are going to try to guess the hinge placement.
-                    DoorOperationType = CalculateDoorOperationStyle(famInst);
+                    DoorOperationTypeString = CalculateDoorOperationStyle(famInst);
                 }
 
                 if (FlippedX ^ FlippedY)
-                    DoorOperationType = ReverseDoorStyleOperation(DoorOperationType);
+                    DoorOperationTypeString = ReverseDoorStyleOperation(DoorOperationTypeString);
+
+                if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+                    DoorOperationTypeString = IFCValidateEntry.ValidateStrEnum<Revit.IFC.Export.Toolkit.IFC4.IFCDoorTypeOperation>(DoorOperationTypeString);
+                else
+                    DoorOperationTypeString = IFCValidateEntry.ValidateStrEnum<Revit.IFC.Export.Toolkit.IFCDoorStyleOperation>(DoorOperationTypeString);
+
+                if (String.Compare(DoorOperationTypeString, "USERDEFINED", true) == 0)
+                {
+                    string userDefinedOperationType;
+                    ParameterUtil.GetStringValueFromElementOrSymbol(doorType, "UserDefinedOperationType", out userDefinedOperationType);
+                    if (!string.IsNullOrEmpty(userDefinedOperationType))
+                        UserDefinedOperationType = userDefinedOperationType;
+                    else
+                        DoorOperationTypeString = "NOTDEFINED";         //re-set to NotDefined if operation type is set to UserDefined but the userDefinedOperationType parameter is empty!
+                }
             }
 
             if (HasRealWallHost)

@@ -234,9 +234,11 @@ namespace Revit.IFC.Export.Exporter
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, NamingUtil.CreateIFCObjectName(exporterIFC, element));
                         string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
+                        string preDefinedType = "BEAM";     // Default predefined type for Beam
+                        preDefinedType = IFCValidateEntry.GetValidIFCType (element, preDefinedType);
 
                         IFCAnyHandle beam = IFCInstanceExporter.CreateBeam(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
-                            instanceName, instanceDescription, instanceObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, instanceTag);
+                            instanceName, instanceDescription, instanceObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, instanceTag, preDefinedType);
 
                         productWrapper.AddElement(beam, setter, extrusionCreationData, true);
 

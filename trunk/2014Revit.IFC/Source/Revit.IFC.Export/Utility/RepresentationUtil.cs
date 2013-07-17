@@ -440,14 +440,17 @@ namespace Revit.IFC.Export.Utility
         /// <param name="bodyExporterOptions">The body exporter options.</param>
         /// <param name="extraReps">Extra representations (e.g. Axis, Boundary).  May be null.</param>
         /// <param name="extrusionCreationData">The extrusion creation data.</param>
+        /// <param name="allowOffsetTransform">Allows local coordinate system to be placed close to geometry.</param>
         /// <returns>The handle.</returns>
+        /// <remarks>allowOffsetTransform should only be set to true if no other associated geometry is going to be exported.  Otherwise,
+        /// there could be an offset between this geometry and the other, non-transformed, geometry.</remarks>
         public static IFCAnyHandle CreateAppropriateProductDefinitionShape(ExporterIFC exporterIFC, Element element, ElementId categoryId,
             GeometryElement geometryElement, BodyExporterOptions bodyExporterOptions, IList<IFCAnyHandle> extraReps, 
-            IFCExtrusionCreationData extrusionCreationData)
+            IFCExtrusionCreationData extrusionCreationData, bool allowOffsetTransform)
         {
             BodyData bodyData;
             BodyExporterOptions newBodyExporterOptions = new BodyExporterOptions(bodyExporterOptions);
-            newBodyExporterOptions.AllowOffsetTransform = false;
+            newBodyExporterOptions.AllowOffsetTransform = allowOffsetTransform;
 
             return CreateAppropriateProductDefinitionShape(exporterIFC, element, categoryId,
                 geometryElement, newBodyExporterOptions, extraReps, extrusionCreationData, out bodyData);

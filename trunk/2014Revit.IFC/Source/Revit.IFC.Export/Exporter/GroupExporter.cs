@@ -63,7 +63,7 @@ namespace Revit.IFC.Export.Exporter
 
                 string ifcEnumType;
                 IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
-                if (exportAs == IFCExportType.ExportGroup)
+                if (exportAs == IFCExportType.IfcGroup)
                 {
                     groupHnd = IFCInstanceExporter.CreateGroup(file, guid, ownerHistory, name, description, objectType);
                 }

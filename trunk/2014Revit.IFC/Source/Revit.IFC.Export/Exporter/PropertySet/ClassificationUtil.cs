@@ -65,7 +65,8 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                 ExporterCacheManager.ClassificationCache.Add(uniformatKeyString, classification);
             }
 
-            InsertClassificationReference(exporterIFC, file, element, elemHnd, uniformatKeyString, uniformatCode, uniformatDescription, "http://www.csiorg.net/uniformat" );
+            if (!String.IsNullOrEmpty(uniformatCode))
+                InsertClassificationReference(exporterIFC, file, element, elemHnd, uniformatKeyString, uniformatCode, uniformatDescription, "http://www.csiorg.net/uniformat" );
 
         }
 
@@ -130,7 +131,8 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                     {
                         ExporterCacheManager.ClassificationLocationCache.TryGetValue(classificationName, out location);
                     }
-                    InsertClassificationReference(exporterIFC, file, element, elemHnd, classificationName, classificationCode, classificationDescription, location);
+                    if (!String.IsNullOrEmpty(classificationCode)) 
+                        InsertClassificationReference(exporterIFC, file, element, elemHnd, classificationName, classificationCode, classificationDescription, location);
                 }
             }
         }

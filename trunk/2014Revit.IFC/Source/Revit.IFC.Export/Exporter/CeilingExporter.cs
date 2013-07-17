@@ -36,49 +36,6 @@ namespace Revit.IFC.Export.Exporter
     class CeilingExporter
     {
         /// <summary>
-        /// Gets IFC covering type for an element.
-        /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="typeName">
-        /// The type name.
-        /// </param>
-        public static Toolkit.IFCCoveringType GetIFCCoveringType(Element element, string typeName)
-        {
-            string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
-                value = typeName;
-            }
-            if (String.IsNullOrEmpty(value))
-                return Toolkit.IFCCoveringType.NotDefined;
-
-            string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
-
-            if (String.Compare(newValue, "USERDEFINED", true) == 0)
-                return Toolkit.IFCCoveringType.UserDefined;
-            if (String.Compare(newValue, "CEILING", true) == 0)
-                return Toolkit.IFCCoveringType.Ceiling;
-            if (String.Compare(newValue, "FLOORING", true) == 0)
-                return Toolkit.IFCCoveringType.Flooring;
-            if (String.Compare(newValue, "CLADDING", true) == 0)
-                return Toolkit.IFCCoveringType.Cladding;
-            if (String.Compare(newValue, "ROOFING", true) == 0)
-                return Toolkit.IFCCoveringType.Roofing;
-            if (String.Compare(newValue, "INSULATION", true) == 0)
-                return Toolkit.IFCCoveringType.Insulation;
-            if (String.Compare(newValue, "MEMBRANE", true) == 0)
-                return Toolkit.IFCCoveringType.Membrane;
-            if (String.Compare(newValue, "SLEEVING", true) == 0)
-                return Toolkit.IFCCoveringType.Sleeving;
-            if (String.Compare(newValue, "WRAPPING", true) == 0)
-                return Toolkit.IFCCoveringType.Wrapping;
-
-            return Toolkit.IFCCoveringType.NotDefined;
-        }
-
-        /// <summary>
         /// Exports a ceiling to IFC covering.
         /// </summary>
         /// <param name="exporterIFC">
@@ -95,7 +52,7 @@ namespace Revit.IFC.Export.Exporter
         /// </param>
         public static void ExportCeilingElement(ExporterIFC exporterIFC, Ceiling ceiling, GeometryElement geomElement, ProductWrapper productWrapper)
         {
-            string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, ceiling);
+            string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, ceiling);
             if (String.IsNullOrEmpty(ifcEnumType))
                 ifcEnumType = "CEILING";
             ExportCovering(exporterIFC, ceiling, geomElement, ifcEnumType, productWrapper);
@@ -141,7 +98,7 @@ namespace Revit.IFC.Export.Exporter
 
                             BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                             prodRep = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, element,
-                                categoryId, geomElem, bodyExporterOptions, null, ecData);
+                                categoryId, geomElem, bodyExporterOptions, null, ecData, true);
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodRep))
                             {
                                 ecData.ClearOpenings();
@@ -154,7 +111,7 @@ namespace Revit.IFC.Export.Exporter
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
                         string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
-                        Toolkit.IFCCoveringType coveringType = GetIFCCoveringType(element, ifcEnumType);
+                        string coveringType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
 
                         IFCAnyHandle covering = IFCInstanceExporter.CreateCovering(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
                             instanceName, instanceDescription, instanceObjectType, setter.LocalPlacement, prodRep, instanceTag, coveringType);

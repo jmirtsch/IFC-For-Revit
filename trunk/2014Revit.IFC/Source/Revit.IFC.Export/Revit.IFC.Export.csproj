@@ -142,6 +142,8 @@
     <Compile Include="Exporter\WallSweepExporter.cs" />
     <Compile Include="Exporter\ZoneExporter.cs" />
     <Compile Include="Exporter\ZoneInfo.cs" />
+    <Compile Include="Toolkit\IFCValidateEntry.cs" />
+    <Compile Include="Toolkit\IFC4Enums.cs" />
     <Compile Include="Toolkit\IFCEnums.cs" />
     <Compile Include="Toolkit\IFCInstanceExporter.cs" />
     <Compile Include="Toolkit\PlacementSetter.cs" />

@@ -94,32 +94,32 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="rampTypeName">The ramp type name.</param>
         /// <returns>The IFCRampType.</returns>
-        public static IFCRampType GetIFCRampType(string rampTypeName)
+        public static string GetIFCRampType(string rampTypeName)
         {
             string typeName = NamingUtil.RemoveSpacesAndUnderscores(rampTypeName);
 
             if (String.Compare(typeName, "StraightRun", true) == 0 ||
                 String.Compare(typeName, "StraightRunRamp", true) == 0)
-                return Toolkit.IFCRampType.Straight_Run_Ramp;
+                return "Straight_Run_Ramp";
             if (String.Compare(typeName, "TwoStraightRun", true) == 0 ||
                 String.Compare(typeName, "TwoStraightRunRamp", true) == 0)
-                return Toolkit.IFCRampType.Two_Straight_Run_Ramp;
+                return "Two_Straight_Run_Ramp";
             if (String.Compare(typeName, "QuarterTurn", true) == 0 ||
                 String.Compare(typeName, "QuarterTurnRamp", true) == 0)
-                return Toolkit.IFCRampType.Quarter_Turn_Ramp;
+                return "Quarter_Turn_Ramp";
             if (String.Compare(typeName, "TwoQuarterTurn", true) == 0 ||
                 String.Compare(typeName, "TwoQuarterTurnRamp", true) == 0)
-                return Toolkit.IFCRampType.Two_Quarter_Turn_Ramp;
+                return "Two_Quarter_Turn_Ramp";
             if (String.Compare(typeName, "HalfTurn", true) == 0 ||
                 String.Compare(typeName, "HalfTurnRamp", true) == 0)
-                return Toolkit.IFCRampType.Half_Turn_Ramp;
+                return "Half_Turn_Ramp";
             if (String.Compare(typeName, "Spiral", true) == 0 ||
                 String.Compare(typeName, "SpiralRamp", true) == 0)
-                return Toolkit.IFCRampType.Spiral_Ramp;
+                return "Spiral_Ramp";
             if (String.Compare(typeName, "UserDefined", true) == 0)
-                return Toolkit.IFCRampType.UserDefined;
+                return "UserDefined";
 
-            return Toolkit.IFCRampType.NotDefined;
+            return "NotDefined";
         }
 
         /// <summary>
@@ -224,7 +224,7 @@ namespace Revit.IFC.Export.Exporter
                 if (isSubRamp)
                 {
                     string componentType = IFCAnyHandleUtil.GetEnumerationAttribute(component, "ShapeType");
-                    IFCRampType localRampType = GetIFCRampType(componentType);
+                    string localRampType = GetIFCRampType(componentType);
 
                     for (int ii = 0; ii < numFlights - 1; ii++)
                     {
@@ -245,7 +245,7 @@ namespace Revit.IFC.Export.Exporter
 
                         localComponentHnds.Add(IFCInstanceExporter.CreateRampFlight(file, GUIDUtil.CreateGUID(), ownerHistory,
                             localComponentNames[ii], componentDescription, componentObjectType, componentPlacementHnds[ii], representationCopy,
-                            componentElementTag));
+                            componentElementTag, "NOTDEFINED"));
                     }
                 }
                 else if (IFCAnyHandleUtil.IsSubTypeOf(component, IFCEntityType.IfcSlab))
@@ -260,7 +260,7 @@ namespace Revit.IFC.Export.Exporter
 
                         localComponentHnds.Add(IFCInstanceExporter.CreateSlab(file, GUIDUtil.CreateGUID(), ownerHistory,
                             localComponentNames[ii], componentDescription, componentObjectType, componentPlacementHnds[ii], representationCopy,
-                            componentElementTag, localLandingType));
+                            componentElementTag, localLandingType.ToString()));
                     }
                 }
                 else if (IFCAnyHandleUtil.IsSubTypeOf(component, IFCEntityType.IfcMember))
@@ -272,7 +272,7 @@ namespace Revit.IFC.Export.Exporter
 
                         localComponentHnds.Add(IFCInstanceExporter.CreateMember(file, GUIDUtil.CreateGUID(), ownerHistory,
                             localComponentNames[ii], componentDescription, componentObjectType, componentPlacementHnds[ii], representationCopy,
-                            componentElementTag));
+                            componentElementTag, "STRINGER"));
                     }
                 }
 
@@ -296,7 +296,7 @@ namespace Revit.IFC.Export.Exporter
                 string rampDescription = IFCAnyHandleUtil.GetStringAttribute(rampHnd, "Description");
                 string rampElementTag = IFCAnyHandleUtil.GetStringAttribute(rampHnd, "Tag");
                 string rampTypeAsString = IFCAnyHandleUtil.GetEnumerationAttribute(rampHnd, "ShapeType");
-                IFCRampType rampType = GetIFCRampType(rampTypeAsString);
+                string rampType = GetIFCRampType(rampTypeAsString);
 
                 string containerRampName = rampName + ":" + (ii + 2);
                 rampCopyHnds.Add(IFCInstanceExporter.CreateRamp(file, GUIDUtil.CreateGUID(), ownerHistory,
@@ -361,7 +361,7 @@ namespace Revit.IFC.Export.Exporter
                         string rampObjectType = NamingUtil.GetObjectTypeOverride(ramp, NamingUtil.CreateIFCObjectName(exporterIFC, ramp));
                         IFCAnyHandle containedRampLocalPlacement = ExporterUtil.CreateLocalPlacement(file, ecData.GetLocalPlacement(), null);
                         string elementTag = NamingUtil.GetTagOverride(ramp, NamingUtil.CreateIFCElementId(ramp));
-                        IFCRampType rampType = GetIFCRampType(ifcEnumType);
+                        string rampType = GetIFCRampType(ifcEnumType);
 
                         List<IFCAnyHandle> components = new List<IFCAnyHandle>();
                         IList<IFCExtrusionCreationData> componentExtrusionData = new List<IFCExtrusionCreationData>();
@@ -401,7 +401,7 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="productWrapper">The ProductWrapper.</param>
         public static void Export(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
-            string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, element);
+            string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, element);
             IFCFile file = exporterIFC.GetFile();
 
             using (IFCTransaction tr = new IFCTransaction(file))

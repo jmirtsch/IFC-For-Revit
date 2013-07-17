@@ -151,7 +151,7 @@ namespace Revit.IFC.Export.Exporter
                         string ifcEnumType;
                         IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
 
-                        if (exportType == IFCExportType.ExportBuildingElementProxy)
+                        if (exportType == IFCExportType.IfcBuildingElementProxy)
                         {
                             if (rebarGeometry != null)
                             {
@@ -187,7 +187,12 @@ namespace Revit.IFC.Export.Exporter
                     int numberOfBarPositions = GetNumberOfBarPositions(element);
 
                     string steelGrade = NamingUtil.GetOverrideStringValue(element, "SteelGrade", null);
-                    IFCReinforcingBarRole role = GetReinforcingBarRole(NamingUtil.GetOverrideStringValue(element, "BarRole", null));
+                    
+                    // Allow use of IFC2x3 or IFC4 naming.
+                    string predefinedType = NamingUtil.GetOverrideStringValue(element, "BarRole", null);
+                    if (string.IsNullOrWhiteSpace(predefinedType))
+                        predefinedType = NamingUtil.GetOverrideStringValue(element, "PredefinedType", null);
+                    IFCReinforcingBarRole role = GetReinforcingBarRole(predefinedType);
 
                     string origRebarName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                     string rebarDescription = NamingUtil.GetDescriptionOverride(element, null);

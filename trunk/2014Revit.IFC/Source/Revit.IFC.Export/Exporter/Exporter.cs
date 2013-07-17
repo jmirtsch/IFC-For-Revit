@@ -86,11 +86,14 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="eventArgs">The event args.</param>
         private void OnApplicationInitialized(object sender, EventArgs eventArgs)
         {
-            bool isRegistered = ExporterIFCRegistry.IsIFCExporterRegistered();
-            if (!isRegistered)
+            SingleServerService service = ExternalServiceRegistry.GetService(ExternalServices.BuiltInExternalServices.IFCExporterService) as SingleServerService;
+            if (service != null)
             {
-                ExporterIFCRegistry.RegisterIFCExporter(new Exporter());
+                Exporter exporter = new Exporter();
+                service.AddServer(exporter);
+                service.SetActiveServer(exporter.GetServerId());
             }
+            // TODO log this failure accordingly
         }
     }
 
@@ -502,7 +505,7 @@ namespace Revit.IFC.Export.Exporter
         private bool ExportAsProxy(Element element, IFCExportType exportType)
         {
             // FaceWall should be exported as IfcWall.
-            return ((element is FaceWall) || (element is ModelText) || (exportType == IFCExportType.ExportBuildingElementProxy));
+            return ((element is FaceWall) || (element is ModelText) || (exportType == IFCExportType.IfcBuildingElementProxy));
         }
 
         /// <summary>
@@ -730,14 +733,15 @@ namespace Revit.IFC.Export.Exporter
                         string ifcEnumType;
                         IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
 
+                        bool exported = false;
                         if (IsMEPType(exporterIFC, element, exportType))
-                        {
-                            GenericMEPExporter.Export(exporterIFC, element, geomElem, productWrapper);
-                        }
+                            exported = GenericMEPExporter.Export(exporterIFC, element, geomElem, productWrapper);
                         else if (ExportAsProxy(element, exportType))
-                        {
-                            ProxyElementExporter.Export(exporterIFC, element, geomElem, productWrapper);
-                        }
+                            exported = ProxyElementExporter.Export(exporterIFC, element, geomElem, productWrapper);
+
+                        // For ducts and pipes, we will add a IfcRelCoversBldgElements during the end of export.
+                        if (exported && (element is Duct || element is Pipe))
+                            ExporterCacheManager.MEPCache.CoveredElementsCache.Add(element.Id);
                     }
 
                     if (element.AssemblyInstanceId != ElementId.InvalidElementId)
@@ -745,7 +749,11 @@ namespace Revit.IFC.Export.Exporter
                     if (element.GroupId != ElementId.InvalidElementId)
                         ExporterCacheManager.GroupCache.RegisterElements(element.GroupId, productWrapper);
 
-                    st.RollBack();
+                    if (ExporterCacheManager.ExportOptionsCache.GUIDOptions.StoreIFCGUID ||
+                        ExporterCacheManager.ExportOptionsCache.GUIDOptions.Use2009BuildingStoreyGUIDs && (element is Level))
+                        st.Commit();
+                    else
+                        st.RollBack();
                 }
             }
             finally
@@ -767,9 +775,8 @@ namespace Revit.IFC.Export.Exporter
             }
             else if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
             {
-                // This is IFC4 Release Candidate 4, to be replaced by the final version when it is available.
-                modelOptions.SchemaFile = Path.Combine(ExporterUtil.RevitProgramPath, "EDM\\IFC4RC4.exp");
-                modelOptions.SchemaName = "IFC4RC4";
+                modelOptions.SchemaFile = Path.Combine(ExporterUtil.RevitProgramPath, "EDM\\IFC4.exp");
+                modelOptions.SchemaName = "IFC4";
             }
             else
             {
@@ -882,9 +889,9 @@ namespace Revit.IFC.Export.Exporter
                 
                 IFCAnyHandle buildingAddress = CreateIFCAddress(file, document, projectInfo);
 
+                string buildingGUID = GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building);
                 IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(file,
-                    GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building),
-                    ownerHistory, buildingName, buildingDescription, null, buildingPlacement, null, buildingLongName,
+                    buildingGUID, ownerHistory, buildingName, buildingDescription, null, buildingPlacement, null, buildingLongName,
                     Toolkit.IFCElementComposition.Element, null, null, buildingAddress);
                 exporterIFC.SetBuilding(buildingHandle);
 
@@ -978,17 +985,6 @@ namespace Revit.IFC.Export.Exporter
                         levelName, objectType, description, placement,
                         null, longName, Toolkit.IFCElementComposition.Element, elevation);
 
-                    // If we are using the R2009 Level GUIDs, write it to a shared paramter in the file to ensure that it is preserved.
-                    if (ExporterCacheManager.ExportOptionsCache.GUIDOptions.Use2009BuildingStoreyGUIDs)
-                    {
-                        string oldLevelGUID;
-                        ParameterUtil.GetStringValueFromElement(level, BuiltInParameter.IFC_GUID, out oldLevelGUID);
-                        if (String.IsNullOrEmpty(oldLevelGUID))
-                        {
-                            ParameterUtil.SetStringParameter(level, BuiltInParameter.IFC_GUID, levelGUID);
-                        }
-                    }
-
                     if (prevBuildingStorey == null)
                     {
                         foreach (Level baseLevel in unassignedBaseLevels)
@@ -1031,6 +1027,19 @@ namespace Revit.IFC.Export.Exporter
             }
         }
 
+        private void GetElementHandles(ICollection<ElementId> ids, ISet<IFCAnyHandle> handles)
+        {
+            if (ids != null)
+            {
+                foreach (ElementId id in ids)
+                {
+                    IFCAnyHandle handle = ExporterCacheManager.ElementToHandleCache.Find(id);
+                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(handle))
+                        handles.Add(handle);
+                }
+            }
+        }
+
         /// <summary>
         /// Completes the export process by writing information stored incrementally during export to the file.
         /// </summary>
@@ -1039,12 +1048,46 @@ namespace Revit.IFC.Export.Exporter
         private void EndExport(ExporterIFC exporterIFC, Document document)
         {
             IFCFile file = exporterIFC.GetFile();
+            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                            
             using (IFCTransaction transaction = new IFCTransaction(file))
             {
                 // In some cases, like multi-story stairs and ramps, we may have the same Pset used for multiple levels.
                 // If ifcParams is null, re-use the property set.
                 ISet<string> locallyUsedGUIDs = new HashSet<string>();
                 
+                // Relate Ducts and Pipes to their coverings (insulations and linings)
+                foreach (ElementId ductOrPipeId in ExporterCacheManager.MEPCache.CoveredElementsCache)
+                {
+                    IFCAnyHandle ductOrPipeHandle = ExporterCacheManager.MEPCache.Find(ductOrPipeId);
+                    if (IFCAnyHandleUtil.IsNullOrHasNoValue(ductOrPipeHandle))
+                        continue;
+
+                    HashSet<IFCAnyHandle> coveringHandles = new HashSet<IFCAnyHandle>();
+
+                    try
+                    {
+                        ICollection<ElementId> liningIds = InsulationLiningBase.GetLiningIds(document, ductOrPipeId);
+                        GetElementHandles(liningIds, coveringHandles);
+                    }
+                    catch
+                    {
+                    }
+
+                    try
+                    {
+                        ICollection<ElementId> insulationIds = InsulationLiningBase.GetInsulationIds(document, ductOrPipeId);
+                        GetElementHandles(insulationIds, coveringHandles);
+                    }
+                    catch
+                    {
+                    }
+
+                    if (coveringHandles.Count > 0)
+                        IFCInstanceExporter.CreateRelCoversBldgElements(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, ductOrPipeHandle, coveringHandles);
+                }
+
+                // Relate stair components to stairs
                 foreach (KeyValuePair<ElementId, StairRampContainerInfo> stairRamp in ExporterCacheManager.StairRampContainerInfoCache)
                 {
                     StairRampContainerInfo stairRampInfo = stairRamp.Value;
@@ -1093,7 +1136,6 @@ namespace Revit.IFC.Export.Exporter
 
                         if (IFCAnyHandleUtil.IsSubTypeOf(assemblyInstanceHandle, IFCEntityType.IfcSystem))
                         {
-                            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                             IFCInstanceExporter.CreateRelAssignsToGroup(file, guid, ownerHistory, null, null, elementHandles, null, assemblyInstanceHandle);
                         }
                         else
@@ -1129,7 +1171,6 @@ namespace Revit.IFC.Export.Exporter
 
                         if (elementHandles != null && groupHandle != null && elementHandles.Count > 0)
                         {
-                            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                             IFCInstanceExporter.CreateRelAssignsToGroup(file, guid, ownerHistory, null, null, elementHandles, null, groupHandle);
                         }
                     }
@@ -1142,7 +1183,7 @@ namespace Revit.IFC.Export.Exporter
                     HashSet<IFCAnyHandle> relatedElementSet = new HashSet<IFCAnyHandle>(relatedElements);
                     string guid = GUIDUtil.CreateSubElementGUID(projectInfo, (int)IFCBuildingSubElements.RelContainedInSpatialStructure);
                     IFCInstanceExporter.CreateRelContainedInSpatialStructure(file, guid,
-                        exporterIFC.GetOwnerHistoryHandle(), null, null, relatedElementSet, buildingHnd);
+                        ownerHistory, null, null, relatedElementSet, buildingHnd);
                 }
 
                 ICollection<IFCAnyHandle> relatedProducts = exporterIFC.GetRelatedProducts();
@@ -1205,7 +1246,7 @@ namespace Revit.IFC.Export.Exporter
                 // create material layer associations
                 foreach (IFCAnyHandle materialSetLayerUsageHnd in ExporterCacheManager.MaterialLayerRelationsCache.Keys)
                 {
-                    IFCInstanceExporter.CreateRelAssociatesMaterial(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                    IFCInstanceExporter.CreateRelAssociatesMaterial(file, GUIDUtil.CreateGUID(), ownerHistory,
                         null, null, ExporterCacheManager.MaterialLayerRelationsCache[materialSetLayerUsageHnd],
                         materialSetLayerUsageHnd);
                 }
@@ -1213,14 +1254,14 @@ namespace Revit.IFC.Export.Exporter
                 // create material associations
                 foreach (IFCAnyHandle materialHnd in ExporterCacheManager.MaterialRelationsCache.Keys)
                 {
-                    IFCInstanceExporter.CreateRelAssociatesMaterial(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                    IFCInstanceExporter.CreateRelAssociatesMaterial(file, GUIDUtil.CreateGUID(), ownerHistory,
                         null, null, ExporterCacheManager.MaterialRelationsCache[materialHnd], materialHnd);
                 }
 
                 // create type relations
                 foreach (IFCAnyHandle typeObj in ExporterCacheManager.TypeRelationsCache.Keys)
                 {
-                    IFCInstanceExporter.CreateRelDefinesByType(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                    IFCInstanceExporter.CreateRelDefinesByType(file, GUIDUtil.CreateGUID(), ownerHistory,
                         null, null, ExporterCacheManager.TypeRelationsCache[typeObj], typeObj);
                 }
 
@@ -1235,7 +1276,7 @@ namespace Revit.IFC.Export.Exporter
 
                     foreach (IFCAnyHandle propertySet in propertySets)
                     {
-                        IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                        IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory,
                             null, null, elements, propertySet);
                     }
                 }
@@ -1265,7 +1306,7 @@ namespace Revit.IFC.Export.Exporter
 
                             // NOTE: Definition of RelConnectsPathElements has the connection information reversed
                             // with respect to the order of the paths.
-                            IFCInstanceExporter.CreateRelConnectsPathElements(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                            IFCInstanceExporter.CreateRelConnectsPathElements(file, GUIDUtil.CreateGUID(), ownerHistory,
                                 null, null, wallConnectionData.ConnectionGeometry, wallElementHandle, otherElementHandle, relatingPriorities,
                                 relatedPriorities, wallConnectionData.SecondConnectionType, wallConnectionData.FirstConnectionType);
                         }
@@ -1280,9 +1321,9 @@ namespace Revit.IFC.Export.Exporter
                         ZoneInfo zoneInfo = ExporterCacheManager.ZoneInfoCache.Find(zoneName);
                         if (zoneInfo != null)
                         {
-                            IFCAnyHandle zoneHandle = IFCInstanceExporter.CreateZone(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                            IFCAnyHandle zoneHandle = IFCInstanceExporter.CreateZone(file, GUIDUtil.CreateGUID(), ownerHistory,
                                 zoneName, zoneInfo.Description, zoneInfo.ObjectType);
-                            IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                            IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(), ownerHistory,
                                 relAssignsToGroupName, null, zoneInfo.RoomHandles, null, zoneHandle);
 
                             HashSet<IFCAnyHandle> zoneHnds = new HashSet<IFCAnyHandle>();
@@ -1291,19 +1332,19 @@ namespace Revit.IFC.Export.Exporter
                             foreach (KeyValuePair<string, IFCAnyHandle> classificationReference in zoneInfo.ClassificationReferences)
                             {
                                 IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
-                                    exporterIFC.GetOwnerHistoryHandle(), classificationReference.Key, "", zoneHnds, classificationReference.Value);
+                                    ownerHistory, classificationReference.Key, "", zoneHnds, classificationReference.Value);
                             }
 
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.EnergyAnalysisProperySetHandle))
                             {
                                 IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
-                                    exporterIFC.GetOwnerHistoryHandle(), null, null, zoneHnds, zoneInfo.EnergyAnalysisProperySetHandle);
+                                    ownerHistory, null, null, zoneHnds, zoneInfo.EnergyAnalysisProperySetHandle);
                             }
 
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.ZoneCommonProperySetHandle))
                             {
                                 IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
-                                    exporterIFC.GetOwnerHistoryHandle(), null, null, zoneHnds, zoneInfo.ZoneCommonProperySetHandle);
+                                    ownerHistory, null, null, zoneHnds, zoneInfo.ZoneCommonProperySetHandle);
                             }
                         }
                     }
@@ -1318,8 +1359,8 @@ namespace Revit.IFC.Export.Exporter
                         {
                             IFCAnyHandle person = IFCInstanceExporter.CreatePerson(file, null, spaceOccupantName, null, null, null, null, null, null);
                             IFCAnyHandle spaceOccupantHandle = IFCInstanceExporter.CreateOccupant(file, GUIDUtil.CreateGUID(),
-                                exporterIFC.GetOwnerHistoryHandle(), null, null, spaceOccupantName, person, IFCOccupantType.NotDefined);
-                            IFCInstanceExporter.CreateRelOccupiesSpaces(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                                ownerHistory, null, null, spaceOccupantName, person, IFCOccupantType.NotDefined);
+                            IFCInstanceExporter.CreateRelOccupiesSpaces(file, GUIDUtil.CreateGUID(), ownerHistory,
                                 null, null, spaceOccupantInfo.RoomHandles, null, spaceOccupantHandle, null);
 
                             HashSet<IFCAnyHandle> spaceOccupantHandles = new HashSet<IFCAnyHandle>();
@@ -1328,13 +1369,13 @@ namespace Revit.IFC.Export.Exporter
                             foreach (KeyValuePair<string, IFCAnyHandle> classificationReference in spaceOccupantInfo.ClassificationReferences)
                             {
                                 IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
-                                    exporterIFC.GetOwnerHistoryHandle(), classificationReference.Key, "", spaceOccupantHandles, classificationReference.Value);
+                                    ownerHistory, classificationReference.Key, "", spaceOccupantHandles, classificationReference.Value);
                             }
 
                             if (spaceOccupantInfo.SpaceOccupantProperySetHandle != null && spaceOccupantInfo.SpaceOccupantProperySetHandle.HasValue)
                             {
                                 IFCAnyHandle relHnd = IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
-                                    exporterIFC.GetOwnerHistoryHandle(), null, null, spaceOccupantHandles, spaceOccupantInfo.SpaceOccupantProperySetHandle);
+                                    ownerHistory, null, null, spaceOccupantHandles, spaceOccupantInfo.SpaceOccupantProperySetHandle);
                             }
                         }
                     }
@@ -1350,26 +1391,36 @@ namespace Revit.IFC.Export.Exporter
                     if (systemElem == null)
                         continue;
 
+                    Element baseEquipment = systemElem.BaseEquipment;
+                    if (baseEquipment != null)
+                    {
+                        IFCAnyHandle memberHandle = ExporterCacheManager.MEPCache.Find(baseEquipment.Id);
+                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(memberHandle))
+                            system.Value.Add(memberHandle);
+                    }
+
                     ElementType systemElemType = document.GetElement(systemElem.GetTypeId()) as ElementType;
                     string name = NamingUtil.GetNameOverride(systemElem, systemElem.Name);
                     string desc = NamingUtil.GetDescriptionOverride(systemElem, null);
                     string objectType = NamingUtil.GetObjectTypeOverride(systemElem,
                         (systemElemType != null) ? systemElemType.Name : "");
 
-                    IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file, GUIDUtil.CreateGUID(systemElem),
-                        exporterIFC.GetOwnerHistoryHandle(), name, desc, objectType);
+                    string systemGUID = GUIDUtil.CreateGUID(systemElem);
+                    IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file, systemGUID,
+                        ownerHistory, name, desc, objectType);
                     ISet<IFCAnyHandle> systemHandles = new HashSet<IFCAnyHandle>();
                     systemHandles.Add(systemHandle);
+
                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, systemElem, systemHandles);
 
                     IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
-                        exporterIFC.GetOwnerHistoryHandle(), null, null, systemHandle, relatedBuildings);
+                        ownerHistory, null, null, systemHandle, relatedBuildings);
 
                     IFCObjectType? objType = null;
                     if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
                         objType = IFCObjectType.Product;
                     IFCAnyHandle relAssignsToGroup = IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(),
-                        exporterIFC.GetOwnerHistoryHandle(), null, null, system.Value, objType, systemHandle);
+                        ownerHistory, null, null, system.Value, objType, systemHandle);
                 }
 
                 foreach (KeyValuePair<ElementId, ISet<IFCAnyHandle>> entries in ExporterCacheManager.SystemsCache.ElectricalSystemsCache)
@@ -1378,6 +1429,14 @@ namespace Revit.IFC.Export.Exporter
                     MEPSystem systemElem = document.GetElement(systemId) as MEPSystem;
                     if (systemElem == null)
                         continue;
+
+                    Element baseEquipment = systemElem.BaseEquipment;
+                    if (baseEquipment != null)
+                    {
+                        IFCAnyHandle memberHandle = ExporterCacheManager.MEPCache.Find(baseEquipment.Id);
+                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(memberHandle))
+                            entries.Value.Add(memberHandle);
+                    }
 
                     ElementSet members = systemElem.Elements;
                     foreach (Element member in members)
@@ -1396,21 +1455,22 @@ namespace Revit.IFC.Export.Exporter
                     string objectType = NamingUtil.GetObjectTypeOverride(systemElem,
                         (systemElemType != null) ? systemElemType.Name : "");
 
-                    IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file, 
-                        GUIDUtil.CreateGUID(systemElem), exporterIFC.GetOwnerHistoryHandle(), name, 
-                        desc, objectType);
+                    string systemGUID = GUIDUtil.CreateGUID(systemElem);
+                    IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file,
+                        systemGUID, ownerHistory, name, desc, objectType);
                     ISet<IFCAnyHandle> systemHandles = new HashSet<IFCAnyHandle>();
                     systemHandles.Add(systemHandle);
+
                     PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, systemElem, systemHandles);
 
                     IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
-                        exporterIFC.GetOwnerHistoryHandle(), null, null, systemHandle, relatedBuildings);
+                        ownerHistory, null, null, systemHandle, relatedBuildings);
 
                     IFCObjectType? objType = null;
                     if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
                         objType = IFCObjectType.Product;
                     IFCAnyHandle relAssignsToGroup = IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(),
-                        exporterIFC.GetOwnerHistoryHandle(), null, null, entries.Value, objType, systemHandle);
+                        ownerHistory, null, null, entries.Value, objType, systemHandle);
                 }
 
                 // Add presentation layer assignments - this is in addition to those added in EndExportInternal, and will
@@ -1435,7 +1495,7 @@ namespace Revit.IFC.Export.Exporter
                 {
                     if (spaceInfo.RelatedElements.Count > 0)
                     {
-                        IFCInstanceExporter.CreateRelContainedInSpatialStructure(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                        IFCInstanceExporter.CreateRelContainedInSpatialStructure(file, GUIDUtil.CreateGUID(), ownerHistory,
                             null, null, spaceInfo.RelatedElements, spaceInfo.SpaceHandle);
                     }
                 }
@@ -2019,7 +2079,6 @@ namespace Revit.IFC.Export.Exporter
             {
                 double trueNorthAngleConverted = -trueNorthAngleInRadians + Math.PI / 2.0;
                 List<double> dirRatios = new List<double>();
-                dirRatios.Add(2);
                 dirRatios.Add(Math.Cos(trueNorthAngleConverted));
                 dirRatios.Add(Math.Sin(trueNorthAngleConverted));
                 trueNorth = IFCInstanceExporter.CreateDirection(file, dirRatios);
@@ -2143,8 +2202,8 @@ namespace Revit.IFC.Export.Exporter
             if (projectInfo != null)
                 ParameterUtil.GetStringValueFromElement(projectInfo, "Project Phase", out projectPhase);
 
-            IFCAnyHandle projectHandle = IFCInstanceExporter.CreateProject(file,
-                GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Project), ownerHistory,
+            string projectGUID = GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Project);
+            IFCAnyHandle projectHandle = IFCInstanceExporter.CreateProject(file, projectGUID, ownerHistory,
                 projectName, projectDescription, projectObjectType, projectLongName, projectPhase, repContexts, units);
             exporterIFC.SetProject(projectHandle);
 

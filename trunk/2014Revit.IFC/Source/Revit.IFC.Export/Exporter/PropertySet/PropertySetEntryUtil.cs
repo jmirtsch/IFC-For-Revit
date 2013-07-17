@@ -167,7 +167,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
             ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "参考号");
             ifcPSE.AddLocalizedParameterName(LanguageType.German, "Bauteiltyp");
+            ifcPSE.AddLocalizedParameterName(LanguageType.French, "Reference");
             ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "参照記号");
+            ifcPSE.AddLocalizedParameterName(LanguageType.Korean, "참조 ID");
             ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
             return ifcPSE;
         }
@@ -196,6 +198,34 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             ifcPSE.AddLocalizedParameterName(LanguageType.French, "TransmissionThermique");
             ifcPSE.AddLocalizedParameterName(LanguageType.German, "U-Wert");
             ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "熱貫流率");
+            return ifcPSE;
+        }
+
+        /// <summary>
+        /// Create PropertySetEntry for "Status", which is used by many property sets
+        /// </summary>
+        /// <returns></returns>
+        public static PropertySetEntry CreateStatusEntry()
+        {
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateEnumeratedValue("Status", PropertyType.Label,
+                typeof(Toolkit.IFC4.PsetElementStatus));
+            ifcPSE.AddLocalizedParameterName(LanguageType.German, "Status");
+            ifcPSE.AddLocalizedParameterName(LanguageType.French, "Statut");
+            ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "状態");
+            return ifcPSE;
+        }
+
+        /// <summary>
+        /// Create PropertySetEntry for "HandicapAccessible", which is used by many property sets
+        /// </summary>
+        /// <returns></returns>
+        public static PropertySetEntry CreateHandicapAccessibleEntry()
+        {
+            PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("HandicapAccessible");
+            ifcPSE.AddLocalizedParameterName(LanguageType.German, "Behindertengerecht");
+            ifcPSE.AddLocalizedParameterName(LanguageType.French, "AccessibleHandicapes");
+            ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "ハンディキャップアクセス可能性");
+            ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "是否为无障碍设施");
             return ifcPSE;
         }
     }

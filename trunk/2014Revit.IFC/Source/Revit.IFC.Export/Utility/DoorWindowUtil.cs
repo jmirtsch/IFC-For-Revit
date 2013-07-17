@@ -48,37 +48,40 @@ namespace Revit.IFC.Export.Utility
         /// <returns>
         /// The string represents the door panel operation.
         /// </returns>
-        public static IFCDoorPanelOperation GetPanelOperationFromDoorStyleOperation(IFCDoorStyleOperation ifcDoorStyleOperationType)
+        public static string GetPanelOperationFromDoorStyleOperation(string ifcDoorStyleOperationType)
         {
-            switch (ifcDoorStyleOperationType)
-            {
-                case IFCDoorStyleOperation.SingleSwingLeft:
-                case IFCDoorStyleOperation.SingleSwingRight:
-                case IFCDoorStyleOperation.DoubleDoorSingleSwing:
-                case IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeLeft:
-                case IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeRight:
-                    return IFCDoorPanelOperation.Swinging;
-                case IFCDoorStyleOperation.DoubleSwingLeft:
-                case IFCDoorStyleOperation.DoubleSwingRight:
-                case IFCDoorStyleOperation.DoubleDoorDoubleSwing:
-                    return IFCDoorPanelOperation.Double_Acting;
-                case IFCDoorStyleOperation.SlidingToLeft:
-                case IFCDoorStyleOperation.SlidingToRight:
-                case IFCDoorStyleOperation.DoubleDoorSliding:
-                    return IFCDoorPanelOperation.Sliding;
-                case IFCDoorStyleOperation.FoldingToLeft:
-                case IFCDoorStyleOperation.FoldingToRight:
-                case IFCDoorStyleOperation.DoubleDoorFolding:
-                    return IFCDoorPanelOperation.Folding;
-                case IFCDoorStyleOperation.Revolving:
-                    return IFCDoorPanelOperation.Revolving;
-                case IFCDoorStyleOperation.RollingUp:
-                    return IFCDoorPanelOperation.RollingUp;
-                case IFCDoorStyleOperation.UserDefined:
-                    return IFCDoorPanelOperation.UserDefined;
-                default:
-                    return IFCDoorPanelOperation.NotDefined;
-            }
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "SingleSwingLeft") ||
+                NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "SingleSwingRight") ||
+                NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "DoubleDoorSingleSwing") ||
+                NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "DoubleDoorSingleSwingOppositeLeft") ||
+                NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "DoubleDoorSingleSwingOppositeRight"))
+                return "SWINGING";
+
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "DoubleSwingLeft") ||
+                NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "DoubleSwingRight") ||
+                NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "DoubleDoorDoubleSwing"))
+                return "DOUBLE_ACTING";
+
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "SlidingToLeft") ||
+                NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "SlidingToRight") ||
+                NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "DoubleDoorSliding"))
+                return "SLIDING";
+
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "FoldingToLeft") ||
+                NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "FoldingToRight") ||
+                NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "DoubleDoorFolding"))
+                return "FOLDING";
+
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "Revolving"))
+                return "REVOLVING";
+
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "RollingUp"))
+                return "ROLLINGUP";
+
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(ifcDoorStyleOperationType, "UserDefined"))
+                return "USERDEFINED";
+            else
+                return "NOTDEFINED";
         }
 
         /// <summary>
@@ -99,8 +102,8 @@ namespace Revit.IFC.Export.Utility
             IList<double?> panelDepthList = new List<double?>();
             IList<double?> panelWidthList = new List<double?>();
 
-            IList<IFCDoorPanelOperation> panelOperationList = new List<IFCDoorPanelOperation>();
-            IList<IFCDoorPanelPosition> panelPositionList = new List<IFCDoorPanelPosition>();
+            IList<string> panelOperationList = new List<string>();
+            IList<string> panelPositionList = new List<string>();
 
             int panelNumber = 1;
             const int maxPanels = 64;  // arbitrary large number to prevent infinite loops.
@@ -112,17 +115,17 @@ namespace Revit.IFC.Export.Utility
                 // We will always have at least one panel definition as long as the panelOperation is not
                 // NotDefined.
 
-                panelOperationList.Add(GetPanelOperationFromDoorStyleOperation(doorWindowInfo.DoorOperationType));
+                panelOperationList.Add(GetPanelOperationFromDoorStyleOperation(doorWindowInfo.DoorOperationTypeString));
 
                 // If the panel operation is defined we'll allow no panel position for the 1st panel.
-                IFCDoorPanelPosition? panelPosition = GetIFCDoorPanelPosition("", familyInstance, panelNumber);
+                string panelPosition = GetIFCDoorPanelPosition("", familyInstance, panelNumber);
                 if (panelPosition == null)
                 {
                     if (panelNumber == 1)
                         panelPosition = GetIFCDoorPanelPosition("", familyInstance, -1);
                     if ((panelPosition == null) && (panelNumber > 1))
                     {
-                        panelPositionList.Add(IFCDoorPanelPosition.NotDefined);
+                        panelPositionList.Add("NOTDEFINED");
                         break;
                     }
                 }
@@ -130,7 +133,7 @@ namespace Revit.IFC.Export.Utility
                 if (doorWindowInfo.FlippedX ^ doorWindowInfo.FlippedY)
                     panelPosition = ReverseDoorPanelPosition(panelPosition);
 
-                panelPositionList.Add(panelPosition != null ? (IFCDoorPanelPosition)panelPosition : IFCDoorPanelPosition.NotDefined);
+                panelPositionList.Add(panelPosition != null ? panelPosition : "NOTDEFINED");
 
                 double value1 = 0.0, value2 = 0.0;
                 bool foundDepth = ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, panelDepthCurrString, out value1);
@@ -272,7 +275,7 @@ namespace Revit.IFC.Export.Utility
         /// <returns>
         /// The string represents the door panel position.
         /// </returns>
-        public static IFCDoorPanelPosition? GetIFCDoorPanelPosition(string typeName, Element element, int number)
+        public static string GetIFCDoorPanelPosition(string typeName, Element element, int number)
         {
             string currPanelName;
             if (number == -1)
@@ -287,13 +290,13 @@ namespace Revit.IFC.Export.Utility
             if (value == "")
                 return null;
             else if (String.Compare(value, "left", true) == 0)
-                return IFCDoorPanelPosition.Left;
+                return "LEFT";
             else if (String.Compare(value, "middle", true) == 0)
-                return IFCDoorPanelPosition.Middle;
+                return "MIDDLE";
             else if (String.Compare(value, "right", true) == 0)
-                return IFCDoorPanelPosition.Right;
+                return "RIGHT";
             else
-                return IFCDoorPanelPosition.NotDefined;
+                return "NOTDEFINED";
         }
 
         /// <summary>
@@ -305,15 +308,15 @@ namespace Revit.IFC.Export.Utility
         /// <returns>
         /// The string represents the reversed door panel position.
         /// </returns>
-        public static IFCDoorPanelPosition ReverseDoorPanelPosition(IFCDoorPanelPosition? originalPosition)
+        public static string ReverseDoorPanelPosition(string originalPosition)
         {
             if (originalPosition == null)
-                return IFCDoorPanelPosition.NotDefined;
-            else if (originalPosition == IFCDoorPanelPosition.Left)
-                return IFCDoorPanelPosition.Right;
-            else if (originalPosition == IFCDoorPanelPosition.Right)
-                return IFCDoorPanelPosition.Left;
-            return (IFCDoorPanelPosition)originalPosition;
+                return "NOTDEFINED";
+            else if (String.Compare(originalPosition, "Left", true) == 0)
+                return "RIGHT";
+            else if (String.Compare(originalPosition, "Right", true) == 0)
+                return "LEFT";
+            return originalPosition;
         }
 
         /// <summary>
@@ -357,6 +360,66 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
+        /// New in IFC4: to get Partitioning type information from Window. In IFC2x3 is called Window Operation Type
+        /// </summary>
+        /// <param name="familySymbol"></param>
+        /// <returns>The partitioning type information.</returns>
+        public static string GetIFCWindowPartitioningType(ElementType familySymbol)
+        {
+            string value;
+            ParameterUtil.GetStringValueFromElement(familySymbol, "WINDOW_PARTITIONING_TYPE", out value);
+
+            if (String.IsNullOrEmpty(value))
+                return "NOTDEFINED";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "UserDefined"))
+                return "USERDEFINED";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "SinglePanel"))
+                return "SINGLE_PANEL";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "DoublePanelVertical"))
+                return "DOUBLE_PANEL_VERTICAL";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "DoublePanelHorizontal"))
+                return "DOUBLE_PANEL_HORIZONTAL";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "TriplePanelVertical"))
+                return "TRIPLE_PANEL_VERTICAL";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "TriplePanelHorizontal"))
+                return "TRIPLE_PANEL_HORIZONTAL";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "TriplePanelBottom"))
+                return "TRIPLE_PANEL_BOTTOM";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "TriplePanelTop"))
+                return "TRIPLE_PANEL_TOP";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "TriplePanelLeft"))
+                return "TRIPLE_PANEL_LEFT";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "TriplePanelRight"))
+                return "TRIPLE_PANEL_RIGHT";
+
+            return "NOTDEFINED";
+        }
+
+        public static string GetIFCWindowType(ElementType familySymbol)
+        {
+            string value;
+            ParameterUtil.GetStringValueFromElement(familySymbol, "WINDOW_PREDEFINED_TYPE", out value);
+
+            if (String.IsNullOrEmpty(value))
+                return "NOTDEFINED";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Movable"))
+                return "MOVABLE";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Parapet"))
+                return "PARAPET";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Partitioning"))
+                return "PARTITIONING";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "PlumbingWall"))
+                return "PLUMBINGWALL";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Shear"))
+                return "SHEAR";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "SolidWall"))
+                return "SOLIDWALL";
+            
+            return "NOTDEFINED";
+
+        }
+
+        /// <summary>
         /// Gets IFCDoorStyleConstruction from construction type name.
         /// </summary>
         /// <param name="element">The element.</param>
@@ -372,21 +435,21 @@ namespace Revit.IFC.Export.Utility
 
             string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
-            if (String.Compare(newValue, "USERDEFINED", true) == 0)
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(newValue, "USERDEFINED"))
                 return IFCDoorStyleConstruction.UserDefined;
-            if (String.Compare(newValue, "ALUMINIUM", true) == 0)
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(newValue, "ALUMINIUM"))
                 return IFCDoorStyleConstruction.Aluminium;
-            if (String.Compare(newValue, "HIGH_GRADE_STEEL", true) == 0)
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(newValue, "HIGHGRADESTEEL"))
                 return IFCDoorStyleConstruction.High_Grade_Steel;
-            if (String.Compare(newValue, "STEEL", true) == 0)
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(newValue, "STEEL"))
                 return IFCDoorStyleConstruction.Steel;
-            if (String.Compare(newValue, "WOOD", true) == 0)
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(newValue, "WOOD"))
                 return IFCDoorStyleConstruction.Wood;
-            if (String.Compare(newValue, "ALUMINIUM_WOOD", true) == 0)
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(newValue, "ALUMINIUMWOOD"))
                 return IFCDoorStyleConstruction.Aluminium_Wood;
-            if (String.Compare(newValue, "ALUMINIUM_PLASTIC", true) == 0)
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(newValue, "ALUMINIUMPLASTIC"))
                 return IFCDoorStyleConstruction.Aluminium_Plastic;
-            if (String.Compare(newValue, "PLASTIC", true) == 0)
+            if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(newValue, "PLASTIC"))
                 return IFCDoorStyleConstruction.Plastic;
 
             return IFCDoorStyleConstruction.UserDefined;
@@ -1138,46 +1201,50 @@ namespace Revit.IFC.Export.Utility
         /// </summary>
         /// <param name="operation">The Revit IFCDoorStyleOperation.</param>
         /// <returns>The IFCDoorStyleOperation.</returns>
-        public static Toolkit.IFCDoorStyleOperation GetDoorStyleOperation(Autodesk.Revit.DB.IFC.IFCDoorStyleOperation operation)
+        public static string GetDoorStyleOperation(string operationString)
         {
+            Autodesk.Revit.DB.IFC.IFCDoorStyleOperation operation;
+            if (!Enum.TryParse(operationString, true, out operation))
+                operation = IFCDoorStyleOperation.NotDefined;
+
             switch (operation)
             {
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorDoubleSwing:
-                    return Toolkit.IFCDoorStyleOperation.Double_Door_Double_Swing;
+                    return "DOUBLE_DOOR_DOUBLE_SWING";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorFolding:
-                    return Toolkit.IFCDoorStyleOperation.Double_Door_Folding;
+                    return "DOUBLE_DOOR_FOLDING";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorSingleSwing:
-                    return Toolkit.IFCDoorStyleOperation.Double_Door_Single_Swing;
+                    return "DOUBLE_DOOR_SINGLE_SWING";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeLeft:
-                    return Toolkit.IFCDoorStyleOperation.Double_Door_Single_Swing_Opposite_Left;
+                    return "DOUBLE_DOOR_SINGLE_SWING_OPPOSITE_LEFT";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeRight:
-                    return Toolkit.IFCDoorStyleOperation.Double_Door_Single_Swing_Opposite_Right;
+                    return "DOUBLE_DOOR_SINGLE_SWING_OPPOSITE_RIGHT";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorSliding:
-                    return Toolkit.IFCDoorStyleOperation.Double_Door_Sliding;
+                    return "DOUBLE_DOOR_SLIDING";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleSwingLeft:
-                    return Toolkit.IFCDoorStyleOperation.Double_Swing_Left;
+                    return "DOUBLE_SWING_LEFT";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleSwingRight:
-                    return Toolkit.IFCDoorStyleOperation.Double_Swing_Right;
+                    return "DOUBLE_SWING_RIGHT";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.FoldingToLeft:
-                    return Toolkit.IFCDoorStyleOperation.Folding_To_Left;
+                    return "FOLDING_TO_LEFT";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.FoldingToRight:
-                    return Toolkit.IFCDoorStyleOperation.Folding_To_Right;
+                    return "FOLDING_TO_RIGHT";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.Revolving:
-                    return Toolkit.IFCDoorStyleOperation.Revolving;
+                    return "REVOLVING";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.RollingUp:
-                    return Toolkit.IFCDoorStyleOperation.RollingUp;
+                    return "ROLLINGUP";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.SingleSwingLeft:
-                    return Toolkit.IFCDoorStyleOperation.Single_Swing_Left;
+                    return "SINGLE_SWING_LEFT";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.SingleSwingRight:
-                    return Toolkit.IFCDoorStyleOperation.Single_Swing_Right;
+                    return "SINGLE_SWING_RIGHT";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.SlidingToLeft:
-                    return Toolkit.IFCDoorStyleOperation.Sliding_To_Left;
+                    return "SLIDING_TO_LEFT";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.SlidingToRight:
-                    return Toolkit.IFCDoorStyleOperation.Sliding_To_Right;
+                    return "SLIDING_TO_RIGHT";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.UserDefined:
-                    return Toolkit.IFCDoorStyleOperation.UserDefined;
+                    return "USERDEFINED";
                 case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.NotDefined:
-                    return Toolkit.IFCDoorStyleOperation.NotDefined;
+                    return "NOTDEFINED";
                 default:
                     throw new ArgumentException("No corresponding type.", "operation");
             }

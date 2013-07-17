@@ -145,7 +145,6 @@ namespace Revit.IFC.Export.Exporter
             IFCAnyHandle newProdRep = ExporterUtil.CopyProductDefinitionShape(exporterIFC, elem, catId, origRailingRep);
 
             string ifcEnumTypeAsString = IFCAnyHandleUtil.GetEnumerationAttribute(origRailing, "PredefinedType");
-            IFCRailingType railingType = GetIFCRailingTypeFromString(ifcEnumTypeAsString);
 
             string copyGUID = GUIDUtil.CreateGUID();
             IFCAnyHandle copyOwnerHistory = IFCAnyHandleUtil.GetInstanceAttribute(origRailing, "OwnerHistory");
@@ -156,7 +155,7 @@ namespace Revit.IFC.Export.Exporter
 
             return IFCInstanceExporter.CreateRailing(file, copyGUID, copyOwnerHistory, copyName, copyDescription, copyObjectType,
                 newLocalPlacement, newProdRep,
-                copyElemId, railingType);
+                copyElemId, ifcEnumTypeAsString);
         }
 
         /// <summary>
@@ -186,7 +185,7 @@ namespace Revit.IFC.Export.Exporter
             if (geomElement == null)
                 return;
 
-            string ifcEnumType = CategoryUtil.GetIFCEnumTypeName(exporterIFC, railing);
+            string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, railing);
             ExportRailing(exporterIFC, railing, geomElement, ifcEnumType, productWrapper);
         }
 
@@ -348,7 +347,8 @@ namespace Revit.IFC.Export.Exporter
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
                         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
                         string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
-                        Toolkit.IFCRailingType railingType = GetIFCRailingType(element, ifcEnumType);
+
+                        string railingType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
 
                         IFCAnyHandle railing = IFCInstanceExporter.CreateRailing(file, instanceGUID, ownerHistory,
                             instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(),
