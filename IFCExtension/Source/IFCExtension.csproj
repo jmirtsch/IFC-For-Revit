@@ -29,6 +29,7 @@
     <Compile Include="IFCClassificationMgr.cs" />
     <Compile Include="IFCFileHeader.cs" />
     <Compile Include="IFCFileHeaderItem.cs" />
+    <Compile Include="IFCStoredGUID.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project=".\IFCExtension.props" />
