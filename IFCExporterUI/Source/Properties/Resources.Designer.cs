@@ -61,15 +61,6 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Export advanced swept solids.
-        /// </summary>
-        internal static string ExportAdvancedSweptSolids {
-            get {
-                return ResourceManager.GetString("ExportAdvancedSweptSolids", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Export base quantities.
         /// </summary>
         internal static string ExportBaseQuantities {
@@ -124,11 +115,20 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Export surface styles.
+        ///   Looks up a localized string similar to Export schedules as property sets.
         /// </summary>
-        internal static string ExportSurfaceStyles {
+        internal static string ExportSchedulesAsPsets {
             get {
-                return ResourceManager.GetString("ExportSurfaceStyles", resourceCulture);
+                return ResourceManager.GetString("ExportSchedulesAsPsets", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Export solid models when possible.
+        /// </summary>
+        internal static string ExportSolidModelRep {
+            get {
+                return ResourceManager.GetString("ExportSolidModelRep", resourceCulture);
             }
         }
         
@@ -291,6 +291,42 @@ namespace BIM.IFC.Export.UI.Properties {
         internal static string PropertySetsRevitPlusIFC {
             get {
                 return ResourceManager.GetString("PropertySetsRevitPlusIFC", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Schedules only.
+        /// </summary>
+        internal static string PropertySetsSchedules {
+            get {
+                return ResourceManager.GetString("PropertySetsSchedules", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to IFC Common, Schedules.
+        /// </summary>
+        internal static string PropertySetsSchedulesPlusIFC {
+            get {
+                return ResourceManager.GetString("PropertySetsSchedulesPlusIFC", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Revit, Schedules.
+        /// </summary>
+        internal static string PropertySetsSchedulesPlusRevit {
+            get {
+                return ResourceManager.GetString("PropertySetsSchedulesPlusRevit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Revit, IFC Common, Schedules.
+        /// </summary>
+        internal static string PropertySetsSchedulesPlusRevitPlusIFC {
+            get {
+                return ResourceManager.GetString("PropertySetsSchedulesPlusRevitPlusIFC", resourceCulture);
             }
         }
         
