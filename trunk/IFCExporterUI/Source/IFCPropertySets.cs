@@ -45,9 +45,10 @@ namespace BIM.IFC.Export.UI
         /// </summary>
         /// <param name="exportInternalRevit">if true, internal Revit parameter groups are exported.</param>
         /// <param name="exportIFCCommon">if true, IFC Common property sets are exported.</param>
-        public IFCExportedPropertySets(bool exportInternalRevit, bool exportIFCCommon)
+        /// <param name="exportSchedules">if true, schedules are exported.</param>
+        public IFCExportedPropertySets(bool exportInternalRevit, bool exportIFCCommon, bool exportSchedules)
         {
-            ExportedPropertySets = ((exportInternalRevit) ? 1 : 0) + ((exportIFCCommon) ? 2 : 0);
+            ExportedPropertySets = ((exportInternalRevit) ? 1 : 0) + ((exportIFCCommon) ? 2 : 0) + ((exportSchedules) ? 4 : 0);
         }
 
         /// <summary>
@@ -66,6 +67,14 @@ namespace BIM.IFC.Export.UI
                     return Resources.PropertySetsIFCCommon;
                 case 3:
                     return Resources.PropertySetsRevitPlusIFC;
+                case 4:
+                    return Resources.PropertySetsSchedules;
+                case 5:
+                    return Resources.PropertySetsSchedulesPlusRevit;
+                case 6:
+                    return Resources.PropertySetsSchedulesPlusIFC;
+                case 7:
+                    return Resources.PropertySetsSchedulesPlusRevitPlusIFC;
                 default:
                     return Resources.PropertySetsUnrecognized;
             }
