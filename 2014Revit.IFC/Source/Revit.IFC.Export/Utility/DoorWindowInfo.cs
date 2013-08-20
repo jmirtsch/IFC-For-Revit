@@ -152,8 +152,8 @@ namespace Revit.IFC.Export.Utility
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(orig, "SingleSwingRight"))
                 return "SINGLE_SWING_LEFT";
             else
-                    return orig;
-            }
+                return orig;
+        }
 
         private string CalculateDoorOperationStyle(FamilyInstance currElem)
         {
@@ -338,7 +338,7 @@ namespace Revit.IFC.Export.Utility
             HasRealWallHost = ((wall != null) && (centerCurve != null) && ((centerCurve is Line) || (centerCurve is Arc)));
         }
 
-        private void CalculateDoorWindowInformation(ExporterIFC exporterIFC, FamilyInstance famInst,
+        private void CalculateDoorWindowInformation(ExporterIFC exporterIFC, FamilyInstance famInst, 
             ElementId overrideLevelId, Transform trf)
         {
             IFCFile file = exporterIFC.GetFile();
@@ -376,7 +376,7 @@ namespace Revit.IFC.Export.Utility
                     // We are going to try to guess the hinge placement.
                     DoorOperationTypeString = CalculateDoorOperationStyle(famInst);
                 }
-
+                
                 if (FlippedX ^ FlippedY)
                     DoorOperationTypeString = ReverseDoorStyleOperation(DoorOperationTypeString);
 
@@ -414,7 +414,7 @@ namespace Revit.IFC.Export.Utility
 
                     Curve curve = WallExporter.GetWallAxis(wall);
 
-                    XYZ wallZDir = ExporterIFCUtils.GetWallHeightDirection(wall);
+                    XYZ wallZDir = WallExporter.GetWallHeightDirection(wall);
 
                     double param = famInst.HostParameter;
 

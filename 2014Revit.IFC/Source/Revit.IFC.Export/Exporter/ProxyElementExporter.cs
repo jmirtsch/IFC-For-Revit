@@ -88,7 +88,7 @@ namespace Revit.IFC.Export.Exporter
                         buildingElementProxy = IFCInstanceExporter.CreateBuildingElementProxy(file, guid,
                             ownerHistory, name, description, objectType, localPlacement, representation, elementTag, "Element");
 
-                        productWrapper.AddElement(buildingElementProxy, placementSetter.LevelInfo, ecData, true);
+                        productWrapper.AddElement(element, buildingElementProxy, placementSetter.LevelInfo, ecData, true);
                     }
                     tr.Commit();
                 }
@@ -118,10 +118,7 @@ namespace Revit.IFC.Export.Exporter
             {
                 exported = (ExportBuildingElementProxy(exporterIFC, element, geometryElement, productWrapper) != null);
                 if (exported)
-                {
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     tr.Commit();
-                }
             }
 
             return exported;

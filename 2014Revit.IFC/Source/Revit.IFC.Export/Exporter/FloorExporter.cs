@@ -261,14 +261,12 @@ namespace Revit.IFC.Export.Exporter
                         for (int ii = 0; ii < numReps; ii++)
                         {
                             IFCExtrusionCreationData loopExtraParam = ii < loopExtraParams.Count ? loopExtraParams[ii] : null;
-                            productWrapper.AddElement(slabHnds[ii], placementSetter, loopExtraParam, true);
+                            productWrapper.AddElement(floorElement, slabHnds[ii], placementSetter, loopExtraParam, true);
                         }
 
                         if (exportedAsInternalExtrusion)
                             ExporterIFCUtils.ExportExtrudedSlabOpenings(exporterIFC, floorElement, placementSetter.LevelInfo,
                                localPlacements[0], slabHnds, extrusionLoops, floorPlane, productWrapper.ToNative());
-
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, floorElement, productWrapper);
                     }
 
                     if (!exportParts)

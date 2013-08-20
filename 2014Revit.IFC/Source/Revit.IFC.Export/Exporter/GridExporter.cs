@@ -269,7 +269,7 @@ namespace Revit.IFC.Export.Exporter
                     XYZ orig = new XYZ(0.0, 0.0, elevation);
                     IFCAnyHandle copyLevelPlacement = ExporterUtil.CopyLocalPlacement(ifcFile, levelObjectPlacement);
                     IFCAnyHandle ifcGrid = IFCInstanceExporter.CreateGrid(ifcFile, gridGUID, ownerHistory, gridName, null, null, copyLevelPlacement, productRep, axesU, axesV, axesW);
-                    productWrapper.AddElement(ifcGrid, levelInfo, null, true);
+                    productWrapper.AddElement(null, ifcGrid, levelInfo, null, true);
 
                     transaction.Commit();
                 }
@@ -370,8 +370,6 @@ namespace Revit.IFC.Export.Exporter
                 
                 gridRepresentationData.m_Grids.Add(grid);
                 gridRepresentationData.m_curveSets.Add(curveSet);
-
-                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, grid, productWrapper);
             }
 
             return ifcGridAxes;

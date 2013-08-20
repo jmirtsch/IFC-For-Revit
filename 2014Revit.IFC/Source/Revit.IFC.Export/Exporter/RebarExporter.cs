@@ -41,16 +41,14 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="exporterIFC">The exporter.</param>
         /// <param name="element">The element.</param>
-        /// <param name="filterView">The view.</param>
         /// <param name="productWrapper">The product wrapper.</param>
-        public static void Export(ExporterIFC exporterIFC,
-          Element element, Autodesk.Revit.DB.View filterView, ProductWrapper productWrapper)
+        public static void Export(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
         {
             ISet<IFCAnyHandle> createdRebars = null;
 
             if (element is Rebar)
             {
-                ExportRebar(exporterIFC, element, filterView, productWrapper);
+                ExportRebar(exporterIFC, element, productWrapper);
             }
             else if (element is AreaReinforcement)
             {
@@ -61,7 +59,7 @@ namespace Revit.IFC.Export.Exporter
                 foreach (ElementId id in rebarIds)
                 {
                     Element rebarInSystem = doc.GetElement(id);
-                    createdRebars = ExportRebar(exporterIFC, rebarInSystem, filterView, productWrapper);
+                    createdRebars = ExportRebar(exporterIFC, rebarInSystem, productWrapper);
                 }
             }
             else if (element is PathReinforcement)
@@ -73,7 +71,7 @@ namespace Revit.IFC.Export.Exporter
                 foreach (ElementId id in rebarIds)
                 {
                     Element rebarInSystem = doc.GetElement(id);
-                    createdRebars = ExportRebar(exporterIFC, rebarInSystem, filterView, productWrapper);
+                    createdRebars = ExportRebar(exporterIFC, rebarInSystem, productWrapper);
                 }
             }
 
@@ -92,12 +90,11 @@ namespace Revit.IFC.Export.Exporter
                     IFCAnyHandle rebarGroup = IFCInstanceExporter.CreateGroup(file, guid,
                         ownerHistory, name, description, objectType);
 
-                    productWrapper.AddElement(rebarGroup);
+                    productWrapper.AddElement(element, rebarGroup);
 
                     IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(), ownerHistory,
                         null, null, createdRebars, null, rebarGroup);
 
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     tr.Commit();
                 }
             }
@@ -132,8 +129,7 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="element">The element to be exported.</param>
         /// <param name="productWrapper">The ProductWrapper.</param>
         /// <returns>The list of IfcReinforcingBar handles created.</returns>
-        public static ISet<IFCAnyHandle> ExportRebar(ExporterIFC exporterIFC,
-           Element element, Autodesk.Revit.DB.View filterView, ProductWrapper productWrapper)
+        public static ISet<IFCAnyHandle> ExportRebar(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
             HashSet<IFCAnyHandle> createdRebars = new HashSet<IFCAnyHandle>();
@@ -144,7 +140,7 @@ namespace Revit.IFC.Export.Exporter
                 {
                     if (element is Rebar)
                     {
-                        GeometryElement rebarGeometry = ExporterIFCUtils.GetRebarGeometry(element as Rebar, filterView);
+                        GeometryElement rebarGeometry = ExporterIFCUtils.GetRebarGeometry(element as Rebar, ExporterCacheManager.ExportOptionsCache.FilterViewForExport);
 
                         // only options are: Not Export, BuildingElementProxy, or ReinforcingBar/Mesh, depending on layout.
                         // Not Export is handled previously, and ReinforcingBar vs Mesh will be determined below.
@@ -250,13 +246,11 @@ namespace Revit.IFC.Export.Exporter
                             barLength, role, null);
                         createdRebars.Add(elemHnd);
 
-                        productWrapper.AddElement(elemHnd, setter.LevelInfo, null, true);
+                        productWrapper.AddElement(element, elemHnd, setter.LevelInfo, null, true);
                         ExporterCacheManager.HandleToElementCache.Register(elemHnd, element.Id);
 
                         CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, elemHnd, materialId);
                     }
-
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                 }
                 transaction.Commit();
             }

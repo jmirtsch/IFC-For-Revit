@@ -141,8 +141,16 @@ namespace Revit.IFC.Export.Exporter
                     double thickestLayer = 0.0;
                     for (int i = 0; i < matIds.Count; ++i)
                     {
-                        if (widths[i] < MathUtil.Eps())
+                        // Require positive width for IFC2x3 and before, and non-negative width for IFC4.
+                        if (widths[i] < -MathUtil.Eps())
                             continue;
+
+                        bool almostZeroWidth = MathUtil.IsAlmostZero(widths[i]);
+                        if (ExporterCacheManager.ExportOptionsCache.FileVersion != IFCVersion.IFC4 && almostZeroWidth)
+                            continue;
+
+                        if (almostZeroWidth)
+                            widths[i] = 0.0;
 
                         IFCAnyHandle materialHnd = CategoryUtil.GetOrCreateMaterialHandle(hostObjAttr.Document, exporterIFC, matIds[i]);
                         if (primaryMaterialHnd == null || (widths[i] > thickestLayer))

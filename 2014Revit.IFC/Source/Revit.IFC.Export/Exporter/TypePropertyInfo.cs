@@ -30,15 +30,25 @@ namespace Revit.IFC.Export.Exporter
     /// </summary>
     public class TypePropertyInfo
     {
+        bool m_assignedToType = false;
         HashSet<IFCAnyHandle> m_PropertySets;
         HashSet<IFCAnyHandle> m_Elements;
 
         /// <summary>
         /// Default constructor.
         /// </summary>
-        public TypePropertyInfo()
+        protected TypePropertyInfo()
         {
+        }
 
+        /// <summary>
+        /// The flag that determines if the type properties have been associated with an IfcTypeObject, and should not
+        /// be associated with an IfcElement.
+        /// </summary>
+        public bool AssignedToType
+        {
+            get { return m_assignedToType; }
+            set { m_assignedToType = value; }
         }
 
         /// <summary>

@@ -39,16 +39,16 @@ namespace Revit.IFC.Export.Utility
         private static IDictionary<ElementId, ParameterElementCache> m_IFCParameters =
             new Dictionary<ElementId, ParameterElementCache>();
 
-        public static IDictionary<BuiltInParameterGroup, ParameterElementCache> GetNonIFCParametersForElement(Element element)
+        public static IDictionary<BuiltInParameterGroup, ParameterElementCache> GetNonIFCParametersForElement(ElementId elemId)
         {
-            if (element == null)
+            if (elemId == ElementId.InvalidElementId)
                 return null;
 
             IDictionary<BuiltInParameterGroup, ParameterElementCache> nonIFCParametersForElement = null;
-            if (!m_NonIFCParameters.TryGetValue(element.Id, out nonIFCParametersForElement))
+            if (!m_NonIFCParameters.TryGetValue(elemId, out nonIFCParametersForElement))
             {
-                CacheParametersForElement(element);
-                m_NonIFCParameters.TryGetValue(element.Id, out nonIFCParametersForElement);
+                CacheParametersForElement(elemId);
+                m_NonIFCParameters.TryGetValue(elemId, out nonIFCParametersForElement);
             }
 
             return nonIFCParametersForElement;
@@ -63,18 +63,9 @@ namespace Revit.IFC.Export.Utility
             m_IFCParameters.Clear();
         }
 
-        /// <summary>
-        /// Gets string value from parameter of an element.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
-        /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
-        /// <returns>True if get the value successfully, false otherwise.</returns>
-        public static bool GetStringValueFromElement(Element element, string propertyName, out string propertyValue)
+        private static bool GetStringValueFromElementBase(ElementId elementId, string propertyName, bool allowUnset, out string propertyValue)
         {
-            if (element == null)
+            if (elementId == ElementId.InvalidElementId)
                 throw new ArgumentNullException("element");
 
             if (String.IsNullOrEmpty(propertyName))
@@ -82,13 +73,22 @@ namespace Revit.IFC.Export.Utility
 
             propertyValue = string.Empty;
 
-            Parameter parameter = GetParameterFromName(element, null, propertyName);
+            Parameter parameter = GetParameterFromName(elementId, null, propertyName);
 
-            if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.String)
+            if (parameter != null && parameter.StorageType == StorageType.String)
             {
-                if (parameter.AsString() != null)
+                if (parameter.HasValue)
                 {
-                    propertyValue = parameter.AsString();
+                    if (parameter.AsString() != null)
+                    {
+                        propertyValue = parameter.AsString();
+                        return true;
+                    }
+                }
+                
+                if (allowUnset)
+                {
+                    propertyValue = null;
                     return true;
                 }
             }
@@ -96,6 +96,34 @@ namespace Revit.IFC.Export.Utility
             return false;
         }
 
+        /// <summary>
+        /// Gets a non-empty string value from parameter of an element.
+        /// </summary>
+        /// <param name="elementId">The element id.</param>
+        /// <param name="propertyName">The property name.</param>
+        /// <param name="propertyValue">The output property value.</param>
+        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
+        /// <returns>True if there is a non-empty string value available, false otherwise.</returns>
+        public static bool GetStringValueFromElement(ElementId elementId, string propertyName, out string propertyValue)
+        {
+            return GetStringValueFromElementBase(elementId, propertyName, false, out propertyValue);
+        }
+
+        /// <summary>
+        /// Gets a string value from parameter of an element.
+        /// </summary>
+        /// <param name="elementId">The element id.</param>
+        /// <param name="propertyName">The property name.</param>
+        /// <param name="propertyValue">The output property value.</param>
+        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
+        /// <returns>True if the parameter is set, even if the value is empty, false otherwise.</returns>
+        public static bool GetOptionalStringValueFromElement(ElementId elementId, string propertyName, out string propertyValue)
+        {
+            return GetStringValueFromElementBase(elementId, propertyName, true, out propertyValue);
+        }
+        
         /// <summary>
         /// Gets integer value from parameter of an element.
         /// </summary>
@@ -115,7 +143,7 @@ namespace Revit.IFC.Export.Utility
 
             propertyValue = 0;
 
-            Parameter parameter = GetParameterFromName(element, null, propertyName);
+            Parameter parameter = GetParameterFromName(element.Id, null, propertyName);
 
             if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Integer)
             {
@@ -174,7 +202,7 @@ namespace Revit.IFC.Export.Utility
 
             propertyValue = 0.0;
 
-            Parameter parameter = GetParameterFromName(element, group, propertyName);
+            Parameter parameter = GetParameterFromName(element.Id, group, propertyName);
 
             if (parameter != null && parameter.HasValue)
             {
@@ -533,18 +561,18 @@ namespace Revit.IFC.Export.Utility
         /// <summary>
         /// Gets the parameter by name from an element from the parameter cache.
         /// </summary>
-        /// <param name="element">The element.</param>
+        /// <param name="elementId">The element id.</param>
         /// <param name="propertyName">The property name.</param>
         /// <returns>The Parameter.</returns>
-        static private Parameter getParameterByNameFromCache(Element element, string propertyName)
+        static private Parameter getParameterByNameFromCache(ElementId elementId, string propertyName)
         {
             Parameter parameter = null;
             string cleanPropertyName = NamingUtil.RemoveSpaces(propertyName);
 
-            if (m_IFCParameters[element.Id].ParameterCache.TryGetValue(cleanPropertyName, out parameter))
+            if (m_IFCParameters[elementId].ParameterCache.TryGetValue(cleanPropertyName, out parameter))
                 return parameter;
 
-            foreach (ParameterElementCache otherCache in m_NonIFCParameters[element.Id].Values)
+            foreach (ParameterElementCache otherCache in m_NonIFCParameters[elementId].Values)
             {
                 if (otherCache.ParameterCache.TryGetValue(cleanPropertyName, out parameter))
                     return parameter;
@@ -556,11 +584,11 @@ namespace Revit.IFC.Export.Utility
         /// <summary>
         /// Gets the parameter by name from an element from the parameter cache.
         /// </summary>
-        /// <param name="element">The element.</param>
+        /// <param name="elementId">The element id.</param>
         /// <param name="group">The parameter group.</param>
         /// <param name="propertyName">The property name.</param>
         /// <returns>The Parameter.</returns>
-        static private Parameter getParameterByNameFromCache(Element element, BuiltInParameterGroup group,
+        static private Parameter getParameterByNameFromCache(ElementId elementId, BuiltInParameterGroup group,
             string propertyName)
         {
             Parameter parameter = null;
@@ -568,28 +596,27 @@ namespace Revit.IFC.Export.Utility
 
             if (group == BuiltInParameterGroup.PG_IFC)
             {
-                m_IFCParameters[element.Id].ParameterCache.TryGetValue(cleanPropertyName, out parameter);
+                m_IFCParameters[elementId].ParameterCache.TryGetValue(cleanPropertyName, out parameter);
                 return null;
             }
 
             ParameterElementCache otherCache = null;
-            m_NonIFCParameters[element.Id].TryGetValue(group, out otherCache);
+            m_NonIFCParameters[elementId].TryGetValue(group, out otherCache);
             if (otherCache != null)
                 otherCache.ParameterCache.TryGetValue(cleanPropertyName, out parameter);
 
             return parameter;
         }
-        
+
         /// <summary>
         /// Cache the parameters for an element, allowing quick access later.
         /// </summary>
-        /// <param name="element">The element.</param>
-        static private void CacheParametersForElement(Element element)
+        /// <param name="id">The element id.</param>
+        static private void CacheParametersForElement(ElementId id)
         {
-            if (element == null)
+            if (id == ElementId.InvalidElementId)
                 return;
 
-            ElementId id = element.Id;
             if (m_NonIFCParameters.ContainsKey(id))
                 return;
 
@@ -598,6 +625,10 @@ namespace Revit.IFC.Export.Utility
 
             m_NonIFCParameters[id] = nonIFCParameters;
             m_IFCParameters[id] = ifcParameters;
+
+            Element element = ExporterCacheManager.Document.GetElement(id);
+            if (element == null)
+                return;
 
             ParameterSet parameterIds = element.Parameters;
             if (parameterIds.Size == 0)
@@ -665,52 +696,58 @@ namespace Revit.IFC.Export.Utility
         /// <summary>
         /// Gets the parameter by name from an element for a specific parameter group.
         /// </summary>
-        /// <param name="element">The element.</param>
+        /// <param name="elemId">The element id.</param>
         /// <param name="group">The optional parameter group.</param>
         /// <param name="propertyName">The property name.</param>
         /// <returns>The Parameter.</returns>
-        static Parameter GetParameterFromName(Element element, BuiltInParameterGroup? group, string propertyName)
+        static Parameter GetParameterFromName(ElementId elemId, BuiltInParameterGroup? group, string propertyName)
         {
-            if (!m_IFCParameters.ContainsKey(element.Id))
-                CacheParametersForElement(element);
+            if (!m_IFCParameters.ContainsKey(elemId))
+                CacheParametersForElement(elemId);
 
-            return group.HasValue ? 
-                getParameterByNameFromCache(element, group.Value, propertyName) :
-                getParameterByNameFromCache(element, propertyName);
+            return group.HasValue ?
+                getParameterByNameFromCache(elemId, group.Value, propertyName) :
+                getParameterByNameFromCache(elemId, propertyName);
         }
-        
+
+        private static bool GetStringValueFromElementOrSymbolBase(Element element, string propertyName, bool allowUnset, out string propertyValue)
+        {
+            bool foundInInstance = GetStringValueFromElementBase(element.Id, propertyName, allowUnset, out propertyValue);
+            if (foundInInstance)
+            {
+                if (!string.IsNullOrEmpty(propertyValue))
+                    return true;
+            }
+            
+            ElementId typeId = element.GetTypeId();
+            if (typeId != ElementId.InvalidElementId)
+                return GetStringValueFromElementBase(typeId, propertyName, allowUnset, out propertyValue);
+
+            return foundInInstance;
+        }
+
         /// <summary>
         /// Gets string value from parameter of an element or its element type.
         /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="propertyName">
-        /// The property name.
-        /// </param>
-        /// <param name="propertyValue">
-        /// The output property value.
-        /// </param>
-        /// <returns>
-        /// True if get the value successfully, false otherwise.
-        /// </returns>
+        /// <param name="element">The element.</param>
+        /// <param name="propertyName">The property name.</param>
+        /// <param name="propertyValue">The output property value.</param>
+        /// <returns>True if get the value successfully, false otherwise.</returns>
         public static bool GetStringValueFromElementOrSymbol(Element element, string propertyName, out string propertyValue)
         {
-            if (GetStringValueFromElement(element, propertyName, out propertyValue))
-                return true;
-            else
-            {
-                Document document = element.Document;
-                ElementId typeId = element.GetTypeId();
+            return GetStringValueFromElementOrSymbolBase(element, propertyName, false, out propertyValue);
+        }
 
-                Element elemType = document.GetElement(typeId);
-                if (elemType != null)
-                {
-                    return GetStringValueFromElement(elemType, propertyName, out propertyValue);
-                }
-                else
-                    return false;
-            }
+        /// <summary>
+        /// Gets string value from parameter of an element or its element type, which is allowed to be optional.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <param name="propertyName">The property name.</param>
+        /// <param name="propertyValue">The output property value.</param>
+        /// <returns>True if get the value successfully, even if it is empty, false otherwise.</returns>
+        public static bool GetOptionalStringValueFromElementOrSymbol(Element element, string propertyName, out string propertyValue)
+        {
+            return GetStringValueFromElementOrSymbolBase(element, propertyName, true, out propertyValue);
         }
 
         /// <summary>

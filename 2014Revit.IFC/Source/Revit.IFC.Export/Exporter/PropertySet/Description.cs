@@ -43,6 +43,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         string m_Name = String.Empty;
 
         /// <summary>
+        /// The element id of the view schedule generating this Description, if appropriate.
+        /// </summary>
+        ElementId m_ViewScheduleId = ElementId.InvalidElementId;
+
+        /// <summary>
         /// The types of element appropriate for this property or quantity set.
         /// </summary>
         List<IFCEntityType> m_IFCEntityTypes = new List<IFCEntityType>();
@@ -51,6 +56,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// The object type of element appropriate for this property or quantity set.
         /// </summary>
         string m_ObjectType = String.Empty;
+
+        /// <summary>
+        /// The predefined or shape type of element appropriate for this property or quantity set.
+        /// </summary>
+        string m_PredefinedType = String.Empty;
 
         /// <summary>
         /// The index used to create a consistent GUID for this item.
@@ -134,22 +144,54 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             string objectType = IFCAnyHandleUtil.GetObjectType(handle);
             return (NamingUtil.IsEqualIgnoringCaseAndSpaces(ObjectType, objectType));
         }
+
+        /// <summary>
+        /// Identifies if the input handle matches the predefined type only to which this description applies.
+        /// </summary>
+        /// <param name="handle">The handle.</param>
+        /// <param name="predefinedType">Optional predefined type.  Will be set if null.</param>
+        /// <returns>True if it matches, false otherwise. </returns>
+        /// <remarks>Currently only works with types that have "PredefinedType", not "ShapeType".</remarks>
+        public bool IsAppropriatePredefinedType(IFCAnyHandle handle, string predefinedType)
+        {
+            if (handle == null)
+                return false;
+            if (PredefinedType == "")
+                return true;
+
+            if (string.IsNullOrEmpty(predefinedType))
+            {
+                try
+                {
+                    predefinedType = IFCAnyHandleUtil.GetEnumerationAttribute(handle, "PredefinedType");
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            return (NamingUtil.IsEqualIgnoringCaseAndSpaces(PredefinedType, predefinedType));
+        }
         
         /// <summary>
         /// The name of the property or quantity set.
         /// </summary>
         public string Name
         {
-            get
-            {
-                return m_Name;
-            }
-            set
-            {
-                m_Name = value;
-            }
+            get { return m_Name; }
+            set { m_Name = value; }
         }
 
+        /// <summary>
+        /// The element id of the ViewSchedule that generatd this description.
+        /// </summary>
+        public ElementId ViewScheduleId
+        {
+            get { return m_ViewScheduleId; }
+            set { m_ViewScheduleId = value; }
+        }
+        
         /// <summary>
         /// The type of element appropriate for this property or quantity set.
         /// </summary>
@@ -165,6 +207,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// The object type of element appropriate for this property or quantity set.
         /// Primarily used for identifying proxies.
         /// </summary>
+        /// <remarks>Currently limited to one entity type.</remarks>
         public string ObjectType
         {
             get
@@ -177,6 +220,23 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             }
         }
 
+        /// <summary>
+        /// The pre-defined type of element appropriate for this property or quantity set.
+        /// Primarily used for identifying sub-types of MEP objects.
+        /// </summary>
+        /// <remarks>Currently limited to one entity type.</remarks>
+        public string PredefinedType
+        {
+            get
+            {
+                return m_PredefinedType;
+            }
+            set
+            {
+                m_PredefinedType = value;
+            }
+        }
+        
         /// <summary>
         /// The index used to create a consistent GUID for this item.
         /// It is expected that this index will come from the list in IFCSubElementEnums.cs.

@@ -206,7 +206,7 @@ namespace Revit.IFC.Export.Exporter
             PlacementSetter placementSetter, IFCAnyHandle originalPlacement, IFCRange range, IFCExtrusionAxes ifcExtrusionAxes,
             Element hostElement, ElementId overrideLevelId, bool asBuildingElement)
         {
-            if (!ElementFilteringUtil.IsElementVisible(ExporterCacheManager.ExportOptionsCache.FilterViewForExport, partElement))
+            if (!ElementFilteringUtil.IsElementVisible(partElement))
                 return;
 
             Part part = partElement as Part;
@@ -379,7 +379,9 @@ namespace Revit.IFC.Export.Exporter
                             }
                         }
 
-                        productWrapper.AddElement(ifcPart, standaloneExport || asBuildingElement ? standalonePlacementSetter : placementSetter, extrusionCreationData, standaloneExport || asBuildingElement);
+                        bool containedInLevel = (standaloneExport || asBuildingElement);
+                        PlacementSetter whichPlacementSetter = containedInLevel ? standalonePlacementSetter : placementSetter;
+                        productWrapper.AddElement(partElement, ifcPart, whichPlacementSetter, extrusionCreationData, containedInLevel);
 
                         //Add the exported part to exported cache.
                         TraceExportedParts(partElement, partExportLevel, standaloneExport || asBuildingElement ? ElementId.InvalidElementId : hostElement.Id);

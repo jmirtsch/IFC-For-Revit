@@ -85,12 +85,10 @@ namespace Revit.IFC.Export.Exporter
                             ownerHistory, name, description, objectType, localPlacement, representation, elementTag, "Insulation");
                         ExporterCacheManager.ElementToHandleCache.Register(element.Id, insulation);
 
-                        productWrapper.AddElement(insulation, placementSetter.LevelInfo, ecData, true);
+                        productWrapper.AddElement(element, insulation, placementSetter.LevelInfo, ecData, true);
 
                         ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element);
                         CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, insulation, matId);
-
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }
                 }
                 tr.Commit();

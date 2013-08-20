@@ -367,7 +367,7 @@ namespace Revit.IFC.Export.Utility
         public static string GetIFCWindowPartitioningType(ElementType familySymbol)
         {
             string value;
-            ParameterUtil.GetStringValueFromElement(familySymbol, "WINDOW_PARTITIONING_TYPE", out value);
+            ParameterUtil.GetStringValueFromElement(familySymbol.Id, "WINDOW_PARTITIONING_TYPE", out value);
 
             if (String.IsNullOrEmpty(value))
                 return "NOTDEFINED";
@@ -398,7 +398,7 @@ namespace Revit.IFC.Export.Utility
         public static string GetIFCWindowType(ElementType familySymbol)
         {
             string value;
-            ParameterUtil.GetStringValueFromElement(familySymbol, "WINDOW_PREDEFINED_TYPE", out value);
+            ParameterUtil.GetStringValueFromElement(familySymbol.Id, "WINDOW_PREDEFINED_TYPE", out value);
 
             if (String.IsNullOrEmpty(value))
                 return "NOTDEFINED";
@@ -1188,7 +1188,8 @@ namespace Revit.IFC.Export.Utility
                     extrusionCreationData.SetLocalPlacement(ExporterUtil.CreateLocalPlacement(file, setter.LocalPlacement, null));
                     extrusionCreationData.ReuseLocalPlacement = true;
 
-                    IFCAnyHandle openingHnd = OpeningUtil.CreateOpening(exporterIFC, hostObjHnd, hostElement, insertElement, openingGUID, solid, scaledHostWidth, isRecess, extrusionCreationData, null, null);
+                    IFCAnyHandle openingHnd = OpeningUtil.CreateOpening(exporterIFC, hostObjHnd, hostElement, insertElement, openingGUID, solid, scaledHostWidth, 
+                        isRecess, extrusionCreationData, null, null);
 
                     return DoorWindowOpeningInfo.Create(openingHnd, extrusionCreationData.GetLocalPlacement(),
                         UnitUtil.UnscaleLength(extrusionCreationData.ScaledHeight), UnitUtil.UnscaleLength(extrusionCreationData.ScaledWidth));

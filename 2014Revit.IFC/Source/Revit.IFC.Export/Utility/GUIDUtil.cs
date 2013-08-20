@@ -107,7 +107,7 @@ namespace Revit.IFC.Export.Utility
             if (projectInfo != null)
             {
                 string paramValue = null;
-                ParameterUtil.GetStringValueFromElement(projectInfo, parameterName, out paramValue);
+                ParameterUtil.GetStringValueFromElement(projectInfo.Id, parameterName, out paramValue);
                 if ((paramValue != null) && (IsValidIFCGUID(paramValue)))
                     return paramValue;
             }
@@ -148,7 +148,7 @@ namespace Revit.IFC.Export.Utility
             if (projectInfo != null)
             {
                 string paramValue = null;
-                ParameterUtil.GetStringValueFromElement(projectInfo, "IfcSiteGUID", out paramValue);
+                ParameterUtil.GetStringValueFromElement(projectInfo.Id, "IfcSiteGUID", out paramValue);
                 if ((paramValue != null) && (IsValidIFCGUID(paramValue)))
                     return paramValue;
             }
@@ -202,6 +202,23 @@ namespace Revit.IFC.Export.Utility
             return ExporterIFCUtils.CreateGUID();
         }
 
+        static private string CreateGUIDBase(Element element, BuiltInParameter parameterName, out bool shouldStore)
+        {
+            shouldStore = false;
+            string ifcGUID = null;
+            
+            if (ExporterCacheManager.ExportOptionsCache.GUIDOptions.AllowGUIDParameterOverride)
+                ParameterUtil.GetStringValueFromElement(element, parameterName, out ifcGUID);
+            if (String.IsNullOrEmpty(ifcGUID))
+            {
+                System.Guid guid = ExportUtils.GetExportId(element.Document, element.Id);
+                ifcGUID = ConvertToIFCGuid(guid);
+                shouldStore = true;
+            }
+
+            return ifcGUID;
+        }
+
         /// <summary>
         /// Thin wrapper for the CreateGUID(element) Revit API function.
         /// </summary>
@@ -209,22 +226,29 @@ namespace Revit.IFC.Export.Utility
         /// <returns>A consistent GUID for the element.</returns>
         static public string CreateGUID(Element element)
         {
-            string ifcGUID = null;
+            bool shouldStore;
             BuiltInParameter parameterName = (element is ElementType) ? BuiltInParameter.IFC_TYPE_GUID : BuiltInParameter.IFC_GUID;
-                
-            if (ExporterCacheManager.ExportOptionsCache.GUIDOptions.AllowGUIDParameterOverride)
-                ParameterUtil.GetStringValueFromElement(element, parameterName, out ifcGUID);
-            if (String.IsNullOrEmpty(ifcGUID))
-            {
-                System.Guid guid = ExportUtils.GetExportId(element.Document, element.Id);
-                ifcGUID = ConvertToIFCGuid(guid);
-
-                if (ExporterCacheManager.ExportOptionsCache.GUIDOptions.StoreIFCGUID || 
-                    (ExporterCacheManager.ExportOptionsCache.GUIDOptions.Use2009BuildingStoreyGUIDs && element is Level))
-                    ParameterUtil.SetStringParameter(element, parameterName, ifcGUID);
-            }
+            
+            string ifcGUID = CreateGUIDBase(element, parameterName, out shouldStore);
+            if (shouldStore && ExporterCacheManager.ExportOptionsCache.GUIDOptions.StoreIFCGUID ||
+                (ExporterCacheManager.ExportOptionsCache.GUIDOptions.Use2009BuildingStoreyGUIDs && element is Level))
+                ParameterUtil.SetStringParameter(element, parameterName, ifcGUID);
 
             return ifcGUID;
+        }
+
+        /// <summary>
+        /// Returns true if elementGUID == CreateGUID(element).
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <param name="elementGUID">The GUID to check</param>
+        /// <returns></returns>
+        static public bool IsGUIDFor(Element element, string elementGUID)
+        {
+            bool shouldStore;   // not used.
+            BuiltInParameter parameterName = (element is ElementType) ? BuiltInParameter.IFC_TYPE_GUID : BuiltInParameter.IFC_GUID;
+
+            return (string.Compare(elementGUID, CreateGUIDBase(element, parameterName, out shouldStore)) == 0);
         }
     }
 }

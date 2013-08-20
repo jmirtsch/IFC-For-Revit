@@ -149,7 +149,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <summary>
         /// An electrical voltage value
         /// </summary>
-        ElectricalVoltage
+        ElectricalVoltage,
+        /// <summary>
+        /// Volume
+        /// </summary>
+        Volume
     }
 
     /// <summary>
@@ -601,6 +605,90 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Creates an entry for a given parameter.
+        /// </summary>
+        /// <param name="parameter">Revit parameter.</param>
+        /// <returns>The PropertySetEntry.</returns>
+        public static PropertySetEntry CreateParameterEntry(Parameter parameter)
+        {
+            Definition parameterDefinition = parameter.Definition;
+            if (parameterDefinition == null)
+                return null;
+
+            PropertySetEntry pse = new PropertySetEntry(parameterDefinition.Name);
+            switch (parameter.StorageType)
+            {
+                case StorageType.None:
+                    return null;
+                case StorageType.Integer:
+                    {
+                        // YesNo or actual integer?
+                        if (parameterDefinition.ParameterType == ParameterType.YesNo)
+                            pse.PropertyType = PropertyType.Boolean;
+                        else if (parameterDefinition.ParameterType == ParameterType.Invalid)
+                            pse.PropertyType = PropertyType.Identifier;
+                        else
+                            pse.PropertyType = PropertyType.Count;
+                        break;
+                    }
+                case StorageType.Double:
+                    {
+                        bool assigned = true;
+                        switch (parameterDefinition.ParameterType)
+                        {
+                            case ParameterType.Length:
+                                pse.PropertyType = PropertyType.Length;
+                                break;
+                            case ParameterType.Angle:
+                                pse.PropertyType = PropertyType.PlaneAngle;
+                                break;
+                            case ParameterType.Area:
+                                pse.PropertyType = PropertyType.Area;
+                                break;
+                            case ParameterType.Volume:
+                                pse.PropertyType = PropertyType.Volume;
+                                break;
+                            case ParameterType.HVACAirflow:
+                            case ParameterType.PipingFlow:
+                                pse.PropertyType = PropertyType.VolumetricFlowRate;
+                                break;
+                            case ParameterType.HVACPower:
+                                pse.PropertyType = PropertyType.Power;
+                                break;
+                            case ParameterType.ElectricalCurrent:
+                                pse.PropertyType = PropertyType.ElectricalCurrent;
+                                break;
+                            case ParameterType.ElectricalPotential:
+                                pse.PropertyType = PropertyType.ElectricalVoltage;
+                                break;
+                            case ParameterType.ElectricalFrequency:
+                                pse.PropertyType = PropertyType.Frequency;
+                                break;
+                            default:
+                                assigned = false;
+                                break;
+                        }
+
+                        if (!assigned)
+                            pse.PropertyType = PropertyType.Real;
+                        break;
+                    }
+                case StorageType.String:
+                    {
+                        pse.PropertyType = PropertyType.Text;
+                        break;
+                    }
+                case StorageType.ElementId:
+                    {
+                        pse.PropertyType = PropertyType.Text;
+                        break;
+                    }
+            }            
+            
+            return pse;
+        }
+
+        /// <summary>
         /// Process to create element property.
         /// </summary>
         /// <param name="file">
@@ -722,6 +810,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                 case PropertyType.Area:
                     {
                         propHnd = PropertyUtil.CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                            builtInParameter, ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.Volume:
+                    {
+                        propHnd = PropertyUtil.CreateVolumeMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
                             builtInParameter, ifcPropertyName, valueType);
                         break;
                     }

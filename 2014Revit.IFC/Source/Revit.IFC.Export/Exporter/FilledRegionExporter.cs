@@ -78,7 +78,7 @@ namespace Revit.IFC.Export.Exporter
                 ElementId fillPatternId = filledRegionType != null ? filledRegionType.FillPatternId : ElementId.InvalidElementId;
                 ElementId categoryId = CategoryUtil.GetSafeCategoryId(filledRegion);
 
-                using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, filledRegion, null, orientTrf, ElementId.InvalidElementId))
+                using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, filledRegion, null, orientTrf))
                 {
                     foreach (IList<CurveLoop> curveLoopList in sortedLoops)
                     {

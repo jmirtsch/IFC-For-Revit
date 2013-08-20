@@ -710,6 +710,9 @@ namespace Revit.IFC.Export.Exporter
 
                 for (int ii = 0; ii < edgeArraySize; ii++)
                 {
+                    if (edgeArrayVertices[ii].Count < 3)
+                        continue;
+
                     IFCAnyHandle faceLoop = IFCInstanceExporter.CreatePolyLoop(file, edgeArrayVertices[ii]);
                     IFCAnyHandle faceBound = (ii == outerEdgeArrayIndex) ?
                         IFCInstanceExporter.CreateFaceOuterBound(file, faceLoop, true) :
@@ -1513,9 +1516,11 @@ namespace Revit.IFC.Export.Exporter
 
             Document document = element.Document;
             bool tryToExportAsExtrusion = options.TryToExportAsExtrusion;
+            bool canExportSolidModelRep = tryToExportAsExtrusion && ExporterCacheManager.ExportOptionsCache.CanExportSolidModelRep;
+            
+            // This will default to false for now in all cases, as swept solids are not included in CV2.0.
             bool tryToExportAsSweptSolid = options.TryToExportAsSweptSolid;
-            bool canExportSolidModelRep = false;
-
+            
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle contextOfItems = exporterIFC.Get3DContextHandle("Body");
 
@@ -1722,9 +1727,7 @@ namespace Revit.IFC.Export.Exporter
                             }
 
                             if (!exported)
-                            {
                                 exportAsBRep.Add(ii);
-                            }
                         }
                     }
 
@@ -1764,7 +1767,11 @@ namespace Revit.IFC.Export.Exporter
                         return bodyData;
                     }
 
-                    tr.RollBack();
+                    // If we are going to export a solid model, keep the created items.
+                    if (!canExportSolidModelRep)
+                        tr.RollBack();
+                    else
+                        tr.Commit();
                 }
 
                 // We couldn't export it as an extrusion; export as a solid, brep, or a surface model.

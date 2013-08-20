@@ -515,11 +515,6 @@ namespace Revit.IFC.Export.Toolkit.IFC4
 	,NOTDEFINED}
 
 
-    public enum IFCCurtainWallType
-	{USERDEFINED
-	,NOTDEFINED}
-
-
     public enum IFCCurveInterpolation
 	{LINEAR
 	,LOG_LINEAR

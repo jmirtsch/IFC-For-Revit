@@ -51,7 +51,7 @@ h3 {font-size:14.0px;line-height:16px;height:14px;margin-bottom:3px;margin-top:1
 <body>
 <div id="heading">
 	<div id="plugin-icon"><img width=85 height=85 id="Rectangle 3" src="IFCExporter2013.png"></div>
-	<div id="plugin-name"><h1 class="separator-line">IFC Exporter for Revit</h1></div>
+	<div id="plugin-name"><h1 class="separator-line">IFC Exporter for Revit 2014</h1></div>
 	<p id="plugin-description">
 	This application seamlessly replaces the built-in IFC export capabilities of Revit 2014.  It contains enhancements to functionality and defect fixes provided by Autodesk and Open Source contributors that did not appear in the initial shipping version.
     </p>
@@ -77,7 +77,7 @@ h3 {font-size:14.0px;line-height:16px;height:14px;margin-bottom:3px;margin-top:1
 <h3>Usage</h3>
 <p>
 The IFC Exporter for Revit button on the Revit UI provides access to the htm help document and brings up a dialog specifying the version of the 
-app installed. This applcation seemlessly replaces the built-in IFC export mechanism and so the users do not have to perform any additional
+app installed. This application seamlessly replaces the built-in IFC export mechanism and so the users do not have to perform any additional
 steps while exporting their models to IFC format using Revit UI.</p>
 
 <h2 id="Install" name="Install">Installation and Uninstallation</h2>
@@ -87,7 +87,7 @@ The installer that ran when you downloaded this plug-in from Revit Exchange
   the plug-in.
 </p>
 <p>
-To uninstall this plug-in, exit Revit if you are currenting running it, 
+To uninstall this plug-in, exit Revit if you are currently running it, 
   simply rerun the installer by downloading it again 
   from Exchange, and select the 'Uninstall' button, or you can uninstall it from 
   'Control Panel\Programs\Programs and Features' (Windows 7) or Add/Remove 
@@ -104,7 +104,7 @@ also available on the Exchange store.  However, it is not required to get the la
 installing this application.  Nor is it required to use this alternate UI when getting the latest IFC Exporter UI.</p>
 <h3>Known Issues</h3>
 <p>The third party toolkit we use to write out IFC files has a limit on the maximum size of IFC file it can create.  
-While there is no absolute metric for this, in practice it is about 750MB.  The toolkit provider is aware of these issues and is 
+While there is no absolute metric for this, in practice it is about 250MB.  The toolkit provider is aware of these issues and is 
 working on expanding and eventually removing this limit, and we will be tracking their progress on this issue.</p>
 <h2 id="Contact" name="Contact">Contact</h2>
   <p>Autodesk. Please visit us at: <a href="http://www.autodesk.com/" target=_blank>http://www.autodesk.com/</a></p>
@@ -122,32 +122,101 @@ working on expanding and eventually removing this limit, and we will be tracking
 <p>Login to subscription customer: <a href="http://www.autodesk.com/subscriptionlogin" target= _blank>http://www.autodesk.com/subscriptionlogin</a></p>
 <p>To learn more about subscription: <a href="http://www.autodesk.com/subscription" target=_blank>http://www.autodesk.com/subscription</a></p>
 <p>or if you have an inquiry specific to this add-in, send us an e-mail to: <a href="mailto:Revit.apps@autodesk.com">Revit.apps@autodesk.com</a></p>
-<h2 id="VersionHistory" name="VersionHistory">Version History</h2><br>
+<h2 id="VersionHistory" name="VersionHistory">Version History</h2>
 
 <div class="versionset">
-<div class="version"><b>3.2.0.0</b></div><div class="versioninfo-bullet"></div>
-<br><br>New Functionality:
+<div class="version">3.5.0.0</div><div class="versioninfo-bullet">
+General:
 
-<tab><div class="versioninfo-bullet">Add property sets: Pset_ElectricalDeviceCommon, Pset_SwitchingDeviceTypeCommon, Pset_SwitchingDeviceTypeToggleSwitch</div>
-<tab><div class="versioninfo-bullet">Allow Name/ObjectType/Description override fo IfcSystem.</div>
-<tab><div class="versioninfo-bullet">Export DuctLining.</div>
-<tab><div class="versioninfo-bullet">Export Groups, including nested groups, as IfcGroup.</div>
-<tab><div class="versioninfo-bullet">Export electrical systems and connectors.</div>
-<tab><div class="versioninfo-bullet">Export local coordinate system for IfcDistributionPorts.</div>
-<tab><div class="versioninfo-bullet">Export PipeInsulation.</div>
+<li>Initialize GUIDOptions so that GUIDUtil.CreateGUID(element) can be used outside of the exporter code.
+<li>Remove filterView argument from many functions; used cached value instead.
+<li>Various minor optimizations to slightly improve the time to export.
 
-<br>Bug Fixes:<br>
+<p>New Functionality:
 
-<tab><div class="versioninfo-bullet">Allow MEP zones to export Pset_ZoneCommon, fix 2 property names.</div>
-<tab><div class="versioninfo-bullet">Correct material assignment for generic MEP exporter.</div>
-<tab><div class="versioninfo-bullet">Correct units and unit scaling for volumetric flow rate.</div>
-<tab><div class="versioninfo-bullet">Fix export of multi-storey stairs.</div>
-<tab><div class="versioninfo-bullet">Get material for ducts and pipes from system.</div>
-<tab><div class="versioninfo-bullet">Properly scale door and window lining properties.</div>
-<tab><div class="versioninfo-bullet">Remove extraneous property sets when exporting Rebars.</div>
-<tab><div class="versioninfo-bullet">Return correct boolean value for GetBooleanAtribute function.</div>
-<br>
-<div class="version"><b>3.1.0.0</b></div><div class="versioninfo-bullet">First Release</div>
+<li>IFC4: Allow export of 0 thickness material layers.
+<li>IFC4: Export IfcFootingType (IFC2x3: use IfcTypeObject instead) for wall-based footings only.
+<li>Allow export schedules as custom property sets.  The name of the schedule is the property set name; the column names are the IFC parameter names.
+<li>Allow export of solid models, which allow for mixing Breps an extrusions for an entity.  This can result in smaller IFC files.
+<li>Export IfcCurtainWallType (IFC2x2: use IfcTypeObject instead).
+<li>Export the currently selected non-primary design option when exporting in current view only mode.
+<li>Use the base level parameter of an element to determine which level to associate the element to; use geometric containment only for cases where this is no base level.
+
+<p>Bug Fixes:
+
+<li>Don't export some extraneous local placements.
+<li>Don't export type if instance isn't exported for family.
+<li>Fix Pset_CoveringCommon: Thickness -> TotalThickness
+<li>Generic rework of how instance and type properties are assigned to IFC entities.  If an exported entity has a related type object, then the entity will have the instance properties assigned, and the type object the type properties.  If there is no type object, the exported entity will contain both instance and type properties.  This should also remove any repetition of exported property sets.
+<li>Look at all "ZoneName X" shared parameters for a room even if some have no value.  This still assumes that they are sequential (i.e., if there is no "ZoneName 4" shared parameter at all, "ZoneName 5" will not be processed).
+<li>Prevent export of IfcPolyLoops with less than 3 vertices.
+<li>Properly scale all known Revit parameter types to the units specified for the IFC file.  Note that there are potentially many Revit parameter types that map to one unit type (e.g., PipeSize, WireSize, and Length are both length parameters); we do not create different units for each of these, but instead use the main unit type.
+<li>Respect visibilty options of curtain wall panels and mullions when exporting in current view only mode.
+<li>Use category id as default for IfcCoverings for ceilings, floors, and roofs.
+</div>
+
+<div class="version">3.4.0.0</div><div class="versioninfo-bullet">
+General:
+
+<li>Added basic support for IFC4 export, corresponding to the Coordination View 2.0 MVD.  Please see the Wiki for more details.  This requires Revit 2014 Update Release 1 to be installed.  Note that currently the ifcXML format for IFC4 is not supported.
+<li>Minor performance improvement by reducing the number of calls to the IFC export mapping table.
+<li>This version is the Revit MEP certified version of the exporter.  Revit is now certified for all 3 possible export certifications: Architectural, Structural, and MEP.
+
+<p>New Functionality:
+
+<li>Add new MEP property sets: Pset_SanitaryTerminalBath, Pset_SanitaryTerminalShower, Pset_SanitaryTerminalSink, Pset_SanitaryTerminalWashBasin
+<li>Add support for IfcRelCoversBldgElements for ducts and pipes.
+<li>Allow association of property set descriptions to a specific pre-defined type of an entity.
+<li>Allow exporting foundation and retaining walls as IfcFooting, if set in the IFC export mapping tabble, or using "IfcExportAs" for the particular wall.
+<li>Export "SiteLandTitleNumber" and "SiteLongName" shared parameters from Project Information to IfcSite, if they are set.
+<li>Optionally allow storing the generated IFC GUIDs into the project file after export.  This will add "IFC GUID" parameters to elements, their types, and Project Information for Project, Site, and Building GUIDS.  This requires version v2.4 of the alternate UI to set the option, and requires a manual save.
+<li>Read in ParameterMappingTable.txt, which allows users to specify a mapping from Revit properties to IFC common parameter sets.  Please see the Wiki on custom parameter mapping for more information.  Special thanks to: Tom Pesman (http://nl.linkedin.com/in/tompesman) and the Dutch Revit User Group (www.revitgg.nl / www.dutchrevitstandards.com) for their contribution of this improvement to the Open Source.
+
+<p>Bug Fixes:
+
+<li>Add base equipment to the IfcSystem.
+<li>Correct export of true north for IfcSite.
+<li>Move more local coordinate systems closer to the entity's geometry.
+<li>Properly export space containment for equipment.
+</div>
+<div class="version">3.3.0.0</div><div class="versioninfo-bullet">
+New Functionality:
+<li>#CV-2x3-166: change the corresponding instance entity class for IfcSpaceHeaterType from IfcEnergyConversionDevice to IfcFlowTerminal.<br/>
+Bug Fixes:
+<li>Assign correct Revit internal properties for elements in containers.
+<li>Allow MEP zones to export Pset_ZoneCommon, fix 2 property names.
+<li>Fix orientation of some connectors.
+<li>Properly calculate Ceiling:Finish property.  Previously, the value was not reset between ceilings, resulting in an ever-growing list of finish materials.
+<li>Stabilise GUIDs for some Psets that re-used the same GUID values.  Note that this will have the affect of a one-time change of many GUID values for IfcPropertySets.
+<li>Stop duplication of Cartesian points in the output of some BReps.
+</div>
+<div class="version">3.2.0.0</div><div class="versioninfo-bullet">
+New Functionality:
+<li>Add property sets: Pset_ElectricalDeviceCommon, Pset_SwitchingDeviceTypeCommon, Pset_SwitchingDeviceTypeToggleSwitch
+<li>Add support for electrical current, electrical voltage, frequency, and positive plane angle units.
+<li>Allow Name/ObjectType/Description override fo IfcSystem.
+<li>Allow using "IfcExportAs" = "DontExport" to remove an individual element or type from the export.
+<li>Export DuctLining.
+<li>Export Groups, including nested groups, as IfcGroup.
+<li>Export electrical systems and connectors.
+<li>Export local coordinate system for IfcDistributionPorts.
+<li>Export PipeInsulation.<br/>
+Bug Fixes:
+<li>Remove stale IfcSurfaceStyle and IfcPresentationStyleAssignment handles from caches for some aborted attempts to export items as multiple IfcExtrudedAreaSolid.
+<li>Allow MEP zones to export Pset_ZoneCommon, fix 2 property names.
+<li>Correct export of parts for Coordination View 2.0.
+<li>Correct height of Revit Areas.
+<li>Correct material assignment for generic MEP exporter.
+<li>Correct units and unit scaling for volumetric flow rate.
+<li>Fix export of multi-storey stairs.
+<li>Get material for ducts and pipes from system.
+<li>Properly associate internal ElementType Revit property sets with IfcElementType, instead of adding to instances.
+<li>Properly scale door and window lining properties.
+<li>Protect against trying to add a null property to an IfcPropertySet.
+<li>Remove extraneous property sets when exporting Rebars.
+<li>Return correct boolean value for GetBooleanAtribute function.
+</div>
+<div class="version">3.1.0.0</div><div class="versioninfo-bullet">First Release</div>
 </div>
 </body>
 </html>

@@ -46,7 +46,7 @@ namespace Revit.IFC.Export.Exporter
         /// </returns>
         public static bool IsDistributionControlElementSubType(IFCExportType exportType)
         {
-            return (exportType >= IFCExportType.IfcActuatorType && exportType <= IFCExportType.IFCSensorType);
+            return (exportType >= IFCExportType.IfcActuatorType && exportType <= IFCExportType.IfcSensorType);
         }
 
         /// <summary>
@@ -257,7 +257,6 @@ namespace Revit.IFC.Export.Exporter
 
                         // Register the members's IFC handle for later use by truss export.
                         ExporterCacheManager.ElementToHandleCache.Register(familyInstance.Id, instanceHandle);
-
                         break;
                     }
                 case IFCExportType.IfcPlateType:
@@ -367,15 +366,11 @@ namespace Revit.IFC.Export.Exporter
 
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
             {
-                if (roomId == ElementId.InvalidElementId)
-                {
-                    wrapper.AddElement(instanceHandle, setter, extraParams, !isChildInContainer);
-                }
-                else
-                {
+                bool containedInSpace = (roomId != ElementId.InvalidElementId);
+                bool associateToLevel = containedInSpace ? false : !isChildInContainer;
+                wrapper.AddElement(familyInstance, instanceHandle, setter, extraParams, associateToLevel);
+                if (containedInSpace)
                     ExporterCacheManager.SpaceInfoCache.RelateToSpace(roomId, instanceHandle);
-                    wrapper.AddElement(instanceHandle, setter, extraParams, false);
-                }
             }
             return instanceHandle;
         }
@@ -431,13 +426,11 @@ namespace Revit.IFC.Export.Exporter
                         break;
                     }
             }
-
             
             IFCAnyHandle typeHandle = ExportGenericTypeBase(file, type, ifcEnumType, guid, ownerHistory, name, description, applicableOccurrence,
                null, representationMapList, elemIdToUse, instanceElementType, instance, symbol);
             
             return typeHandle;
-
         }
 
         /// <summary>
@@ -475,9 +468,7 @@ namespace Revit.IFC.Export.Exporter
         {
             Revit.IFC.Common.Enums.IFCEntityType IFCTypeEntity;
             if (!Enum.TryParse(type.ToString(), out IFCTypeEntity))
-            {
                 return null;    // The export type is unknown IFC type entity
-            }
 
             if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
             {
@@ -699,7 +690,7 @@ namespace Revit.IFC.Export.Exporter
                         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
                             typeName, GetPreDefinedType<Toolkit.IFC4.IFCSanitaryTerminalType>(instance, ifcEnumType).ToString());
-                    case IFCExportType.IFCSensorType:
+                    case IFCExportType.IfcSensorType:
                         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
                             typeName, GetPreDefinedType<Toolkit.IFC4.IFCSensorType>(instance, ifcEnumType).ToString());
@@ -977,7 +968,7 @@ namespace Revit.IFC.Export.Exporter
                         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
                             typeName, GetPreDefinedType<Toolkit.IFCSanitaryTerminalType>(instance, ifcEnumType).ToString());
-                    case IFCExportType.IFCSensorType:
+                    case IFCExportType.IfcSensorType:
                         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
                             typeName, GetPreDefinedType<Toolkit.IFCSensorType>(instance, ifcEnumType).ToString());

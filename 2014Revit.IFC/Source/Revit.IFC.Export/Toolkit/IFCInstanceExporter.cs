@@ -1482,6 +1482,90 @@ namespace Revit.IFC.Export.Toolkit
         }
 
         /// <summary>
+        /// Creates a handle representing an IfcFootingType and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID to use to label the wall.</param>
+        /// <param name="ownerHistory">The IfcOwnerHistory.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="applicableOccurrence">The attribute optionally defines the data type of the occurrence object.</param>
+        /// <param name="propertySets">The property set(s) associated with the type.</param>
+        /// <param name="representationMaps">The mapped geometries associated with the type.</param>
+        /// <param name="elementTag">The tag that represents the entity.</param>
+        /// <param name="elementType">The type name.</param>
+        /// <param name="predefinedType">The predefined types.</param>
+        /// <returns>The handle.</returns>
+        /// <remarks>IfcFootingType is an IFC4 entity.  For previous versions, IfcTypeObject is used, which does not
+        /// support representationMaps, elementTag, elementType, or predefinedType.</remarks>
+        public static IFCAnyHandle CreateFootingType(IFCFile file, string guid, IFCAnyHandle ownerHistory,
+            string name, string description, string applicableOccurrence, HashSet<IFCAnyHandle> propertySets,
+            List<IFCAnyHandle> representationMaps, string elementTag, string elementType, string predefinedType)
+        {
+            ValidateElementType(guid, ownerHistory, name, description, applicableOccurrence, propertySets, representationMaps, elementTag, elementType);
+
+            IFCAnyHandle footingType = null;
+
+            if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+            {
+                footingType = CreateInstance(file, IFCEntityType.IfcFootingType);
+                string validatedType = IFCValidateEntry.ValidateStrEnum<IFCFootingType>(predefinedType);
+                IFCAnyHandleUtil.SetAttribute(footingType, "PredefinedType", validatedType, true);
+                SetElementType(footingType, guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                    representationMaps, elementTag, elementType);
+            }
+            else
+            {
+                // TODO: warn if representationMaps, elementTag, elementType, or predefinedType are non-null.
+                footingType = CreateInstance(file, IFCEntityType.IfcTypeObject);
+                SetTypeObject(footingType, guid, ownerHistory, name, description, applicableOccurrence, propertySets);
+            }
+
+            return footingType;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcCurtainWallType and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID to use to label the wall.</param>
+        /// <param name="ownerHistory">The IfcOwnerHistory.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="applicableOccurrence">The attribute optionally defines the data type of the occurrence object.</param>
+        /// <param name="propertySets">The property set(s) associated with the type.</param>
+        /// <param name="representationMaps">The mapped geometries associated with the type.</param>
+        /// <param name="elementTag">The tag that represents the entity.</param>
+        /// <param name="elementType">The type name.</param>
+        /// <param name="predefinedType">The predefined types.</param>
+        /// <returns>The handle.</returns>
+        /// <remarks>IfcCurtainWallType is new to IFC2x3; we will use IfcTypeObject for IFC2x2.</remarks>
+        public static IFCAnyHandle CreateCurtainWallType(IFCFile file, string guid, IFCAnyHandle ownerHistory,
+            string name, string description, string applicableOccurrence, HashSet<IFCAnyHandle> propertySets,
+            List<IFCAnyHandle> representationMaps, string elementTag, string elementType, string predefinedType)
+        {
+            ValidateElementType(guid, ownerHistory, name, description, applicableOccurrence, propertySets, representationMaps, elementTag, elementType);
+
+            IFCAnyHandle curtainWallType = null;
+            if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
+            {
+                curtainWallType = CreateInstance(file, IFCEntityType.IfcTypeObject);
+                SetTypeObject(curtainWallType, guid, ownerHistory, name, description, applicableOccurrence, propertySets);
+            }
+            else
+            {
+                curtainWallType = CreateInstance(file, IFCEntityType.IfcCurtainWallType);
+                string validatedType = IFCValidateEntry.ValidateStrEnum<IFCCurtainWallType>(predefinedType);
+
+                IFCAnyHandleUtil.SetAttribute(curtainWallType, "PredefinedType", validatedType, true);
+                SetElementType(curtainWallType, guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                    representationMaps, elementTag, elementType);
+            }
+
+            return curtainWallType;
+        }
+        
+        /// <summary>
         /// Creates a handle representing an IfcWallType and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -3205,6 +3289,9 @@ namespace Revit.IFC.Export.Toolkit
         {
             if (polygon == null)
                 throw new ArgumentNullException("polygon");
+
+            if (polygon.Count < 3)
+                throw new InvalidOperationException("IfcPolyLoop has fewer than 3 vertices, ignoring.");
 
             IFCAnyHandle polyLoop = CreateInstance(file, IFCEntityType.IfcPolyLoop);
             IFCAnyHandleUtil.SetAttribute(polyLoop, "Polygon", polygon);
