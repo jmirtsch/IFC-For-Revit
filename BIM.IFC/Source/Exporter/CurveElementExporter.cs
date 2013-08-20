@@ -107,7 +107,7 @@ namespace BIM.IFC.Exporter
 
             using (IFCTransaction transaction = new IFCTransaction(file))
             {
-                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, curveElement))
+                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, curveElement, null, null, ExporterUtil.GetBaseLevelIdForElement(curveElement)))
                 {
                     IFCAnyHandle localPlacement = setter.GetPlacement();
                     IFCAnyHandle axisPlacement = GeometryUtil.GetRelativePlacementFromLocalPlacement(localPlacement);

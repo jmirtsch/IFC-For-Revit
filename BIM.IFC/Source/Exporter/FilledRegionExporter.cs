@@ -77,7 +77,7 @@ namespace BIM.IFC.Exporter
                 ElementId fillPatternId = filledRegionType != null ? filledRegionType.FillPatternId : ElementId.InvalidElementId;
                 ElementId categoryId = CategoryUtil.GetSafeCategoryId(filledRegion);
 
-                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, filledRegion, null, orientTrf, ElementId.InvalidElementId))
+                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, filledRegion, null, orientTrf, ExporterUtil.GetBaseLevelIdForElement(filledRegion)))
                 {
                     foreach (IList<CurveLoop> curveLoopList in sortedLoops)
                     {

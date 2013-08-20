@@ -41,6 +41,11 @@ namespace BIM.IFC.Exporter.PropertySet
         string m_Name = String.Empty;
 
         /// <summary>
+        /// The element id of the view schedule generating this Description, if appropriate.
+        /// </summary>
+        ElementId m_ViewScheduleId = ElementId.InvalidElementId;
+
+        /// <summary>
         /// The types of element appropriate for this property or quantity set.
         /// </summary>
         List<IFCEntityType> m_IFCEntityTypes = new List<IFCEntityType>();
@@ -172,16 +177,19 @@ namespace BIM.IFC.Exporter.PropertySet
         /// </summary>
         public string Name
         {
-            get
-            {
-                return m_Name;
-            }
-            set
-            {
-                m_Name = value;
-            }
+            get { return m_Name; }
+            set { m_Name = value; }
         }
 
+        /// <summary>
+        /// The element id of the ViewSchedule that generatd this description.
+        /// </summary>
+        public ElementId ViewScheduleId
+        {
+            get { return m_ViewScheduleId; }
+            set { m_ViewScheduleId = value; }
+        }
+        
         /// <summary>
         /// The type of element appropriate for this property or quantity set.
         /// </summary>

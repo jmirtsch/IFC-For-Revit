@@ -34,6 +34,8 @@ namespace BIM.IFC.Utility
     /// </summary>
     public class ExportOptionsCache
     {
+        private GUIDOptions m_GUIDOptions;
+
         /// <summary>
         /// Private default constructor.
         /// </summary>
@@ -61,12 +63,11 @@ namespace BIM.IFC.Utility
             cache.ExportAllLevels = false;
             cache.ExportAnnotationsOverride = null;
             cache.FilterViewForExport = filterView;
-            cache.ExportSurfaceStylesOverride = null;
             cache.ExportBoundingBoxOverride = null;
             cache.IncludeSiteElevation = false;
             cache.UseCoarseTessellation = true;
-            
-            cache.PropertySetOptions = PropertySetOptions.Create(exporterIFC, filterView, cache);
+
+            cache.PropertySetOptions = PropertySetOptions.Create(exporterIFC, cache);
 
             String use2DRoomBoundary = Environment.GetEnvironmentVariable("Use2DRoomBoundaryForRoomVolumeCalculationOnIFCExport");
             bool? use2DRoomBoundaryOption = GetNamedBooleanOption(options, "Use2DRoomBoundaryForVolume");
@@ -75,11 +76,10 @@ namespace BIM.IFC.Utility
                 cache.ExportAs2x2 ||
                 (use2DRoomBoundaryOption != null && use2DRoomBoundaryOption.GetValueOrDefault()));
 
-                bool? exportAdvancedSweptSolids = GetNamedBooleanOption(options, "ExportAdvancedSweptSolids");
+            bool? exportAdvancedSweptSolids = GetNamedBooleanOption(options, "ExportAdvancedSweptSolids");
             cache.ExportAdvancedSweptSolids = (exportAdvancedSweptSolids.HasValue) ? exportAdvancedSweptSolids.Value : false;
-            
+
             // Set GUIDOptions here.
-            cache.GUIDOptions = new GUIDOptions();
             {
                 // This option should be rarely used, and is only for consistency with old files.  As such, it is set by environment variable only.
                 String use2009GUID = Environment.GetEnvironmentVariable("Assign2009GUIDToBuildingStoriesOnIFCExport");
@@ -156,9 +156,6 @@ namespace BIM.IFC.Utility
             // "ExportSeparateParts" override
             cache.ExportPartsAsBuildingElementsOverride = GetNamedBooleanOption(options, "ExportPartsAsBuildingElements");
 
-            // "ExportSurfaceStyles" override
-            cache.ExportSurfaceStylesOverride = GetNamedBooleanOption(options, "ExportSurfaceStyles");
-
             // "ExportBoundingBox" override
             cache.ExportBoundingBoxOverride = GetNamedBooleanOption(options, "ExportBoundingBox");
 
@@ -172,6 +169,10 @@ namespace BIM.IFC.Utility
             // Use coarse tessellation for floors, railings, ramps, spaces and stairs.
             bool? useCoarseTessellation = GetNamedBooleanOption(options, "UseCoarseTessellation");
             cache.UseCoarseTessellation = useCoarseTessellation != null ? useCoarseTessellation.Value : true;
+
+            /// Allow exporting a mix of extrusions and BReps as a solid model, if possible.
+            bool? canExportSolidModelRep = GetNamedBooleanOption(options, "ExportSolidModelRep");
+            cache.CanExportSolidModelRep = canExportSolidModelRep != null ? canExportSolidModelRep.Value : false;
 
             // "FileType" - note - setting is not respected yet
             ParseFileType(options, cache);
@@ -397,29 +398,6 @@ namespace BIM.IFC.Utility
         }
 
         
-            /// <summary>
-        /// Cache variable for the ExportSurfaceStyles override (if set independently via the UI)
-        /// </summary>
-        public bool? ExportSurfaceStylesOverride
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Whether or not export the surface styles.
-        /// </summary>
-        public bool ExportSurfaceStyles
-        {
-            get
-            {
-                // if the option is set by alternate UI, return the setting in UI.
-                if (ExportSurfaceStylesOverride != null)
-                    return (bool)ExportSurfaceStylesOverride;
-                return true;
-            }
-        }
-
         /// <summary>
         /// Cache variable for the ExportBoundingBox override (if set independently via the UI)
         /// </summary>
@@ -550,8 +528,12 @@ namespace BIM.IFC.Utility
         /// </summary>
         public GUIDOptions GUIDOptions
         {
-            get;
-            set;
+            get
+            {
+                if (m_GUIDOptions == null)
+                    m_GUIDOptions = new GUIDOptions();
+                return m_GUIDOptions;
+            }
         }
 
         /// <summary>
@@ -582,5 +564,9 @@ namespace BIM.IFC.Utility
             set;
         }
 
+        /// <summary>
+        /// Allow exporting a mix of extrusions and BReps as a solid model, if possible.
+        /// </summary>
+        public bool CanExportSolidModelRep { get; set; }
     }
 }

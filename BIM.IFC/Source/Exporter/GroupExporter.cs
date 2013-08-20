@@ -70,9 +70,7 @@ namespace BIM.IFC.Exporter
                 if (groupHnd == null)
                     return false;
 
-                productWrapper.AddElement(groupHnd);
-
-                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
+                productWrapper.AddElement(element, groupHnd);
 
                 ExporterCacheManager.GroupCache.RegisterGroup(element.Id, groupHnd);
 

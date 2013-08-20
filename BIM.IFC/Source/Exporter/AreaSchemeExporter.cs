@@ -69,12 +69,11 @@ namespace BIM.IFC.Exporter
                 IFCAnyHandle areaScheme = IFCInstanceExporter.CreateGroup(file, guid,
                     ownerHistory, name, description, objectType);
 
-                productWrapper.AddElement(areaScheme);
+                productWrapper.AddElement(element, areaScheme);
 
                 IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(), ownerHistory,
                     null, null, areaHandles, null, areaScheme);
 
-                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                 tr.Commit();
                 return;
             }

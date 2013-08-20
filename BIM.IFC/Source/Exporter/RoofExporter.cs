@@ -53,7 +53,7 @@ namespace BIM.IFC.Exporter
 
             using (IFCTransaction tr = new IFCTransaction(file))
             {
-                using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, roof))
+                using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, roof, null, null, ExporterUtil.GetBaseLevelIdForElement(roof)))
                 {
                     using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                     {
@@ -88,13 +88,11 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle roofHnd = IFCInstanceExporter.CreateRoof(file, guid, ownerHistory, roofName, roofDescription,
                             roofObjectType, localPlacement, exportSlab ? null : representation, elementTag, roofType);
 
-                        productWrapper.AddElement(roofHnd, placementSetter.GetLevelInfo(), ecData, true);
+                        productWrapper.AddElement(roof, roofHnd, placementSetter.GetLevelInfo(), ecData, true);
 
                         // will export its host object materials later if it is a roof
                         if (!(roof is RoofBase))
-                        {
                             CategoryUtil.CreateMaterialAssociations(roof.Document, exporterIFC, roofHnd, bodyData.MaterialIds);
-                        }
 
                         if (exportSlab)
                         {
@@ -111,7 +109,7 @@ namespace BIM.IFC.Exporter
 
                             ExporterUtil.RelateObject(exporterIFC, roofHnd, slabHnd);
 
-                            productWrapper.AddElement(slabHnd, placementSetter.GetLevelInfo(), ecData, false);
+                            productWrapper.AddElement(null, slabHnd, placementSetter.GetLevelInfo(), ecData, false);
                             CategoryUtil.CreateMaterialAssociations(roof.Document, exporterIFC, slabHnd, bodyData.MaterialIds);
                         }
                     }
@@ -155,8 +153,6 @@ namespace BIM.IFC.Exporter
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(roofHnd))
                         ExportRoof(exporterIFC, ifcEnumType, roof, geometryElement, productWrapper);
 
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, roof, productWrapper);
-
                     // call for host objects; curtain roofs excused from call (no material information)
                     HostObjectExporter.ExportHostObjectMaterials(exporterIFC, roof, productWrapper.GetAnElement(),
                         geometryElement, productWrapper, ElementId.InvalidElementId, IFCLayerSetDirection.Axis3);
@@ -178,29 +174,27 @@ namespace BIM.IFC.Exporter
 
             using (IFCTransaction transaction = new IFCTransaction(file))
             {
-                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element))
+                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element, null, null, ExporterUtil.GetBaseLevelIdForElement(element)))
                 {
                     IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                     IFCAnyHandle localPlacement = setter.GetPlacement();
 
-                        IFCAnyHandle prodRepHnd = null;
+                    IFCAnyHandle prodRepHnd = null;
 
-                        string elementGUID = GUIDUtil.CreateGUID(element);
-                        string elementName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-                        string elementDescription = NamingUtil.GetDescriptionOverride(element, null);
-                        string elementObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
-                        string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
+                    string elementGUID = GUIDUtil.CreateGUID(element);
+                    string elementName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
+                    string elementDescription = NamingUtil.GetDescriptionOverride(element, null);
+                    string elementObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
+                    string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
-                        //need to convert the string to enum
-                        string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, element);
+                    //need to convert the string to enum
+                    string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, element);
                         IFCAnyHandle roofHandle = IFCInstanceExporter.CreateRoof(file, elementGUID, ownerHistory, elementName, elementDescription, elementObjectType, localPlacement, prodRepHnd, elementTag, GetIFCRoofType(ifcEnumType));
 
-                        // Export the parts
-                        PartExporter.ExportHostPart(exporterIFC, element, roofHandle, productWrapper, setter, localPlacement, null);
+                    // Export the parts
+                    PartExporter.ExportHostPart(exporterIFC, element, roofHandle, productWrapper, setter, localPlacement, null);
 
-                    productWrapper.AddElement(roofHandle, setter, null, true);
-
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
+                    productWrapper.AddElement(element, roofHandle, setter, null, true);
 
                     transaction.Commit();
                 }

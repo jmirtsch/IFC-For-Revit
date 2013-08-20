@@ -70,13 +70,18 @@ namespace BIM.IFC.Exporter
                             Element subElem = wallElement.Document.GetElement(subElemId);
                             if (subElem == null)
                                 continue;
-                            GeometryElement geomElem = subElem.get_Geometry(geomOptions);
-                            if (geomElem == null)
-                                continue;
 
                             if (alreadyVisited.Contains(subElem.Id))
                                 continue;
                             alreadyVisited.Add(subElem.Id);
+
+                            // Respect element visibility settings.
+                            if (!ElementFilteringUtil.CanExportElement(exporterIFC, subElem) || !ElementFilteringUtil.IsElementVisible(subElem))
+                                continue;
+
+                            GeometryElement geomElem = subElem.get_Geometry(geomOptions);
+                            if (geomElem == null)
+                                continue;
 
                             try
                             {
@@ -281,14 +286,9 @@ namespace BIM.IFC.Exporter
             {
                 try
                 {
-                    ElementId curtainWallLevel = ElementId.InvalidElementId;
-                    if (element.Level != null)
-                    {
-                        curtainWallLevel = element.Level.Id;
-                    }
                     Transform orientationTrf = Transform.Identity;
                     IFCAnyHandle localPlacement = null;
-                    setter = IFCPlacementSetter.Create(exporterIFC, element, null, orientationTrf, curtainWallLevel);
+                    setter = IFCPlacementSetter.Create(exporterIFC, element, null, orientationTrf, ExporterUtil.GetBaseLevelIdForElement(element));
                     localPlacement = setter.GetPlacement();
 
                     string objectType = NamingUtil.CreateIFCObjectName(exporterIFC, element);
@@ -319,7 +319,7 @@ namespace BIM.IFC.Exporter
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(elemHnd))
                         return;
 
-                    wrapper.AddElement(elemHnd, setter, null, true);
+                    wrapper.AddElement(element, elemHnd, setter, null, true);
 
                     bool canExportCurtainWallAsContainer = CanExportCurtainWallAsContainer(allSubElements, element.Document);
                     IFCAnyHandle rep = null;
@@ -334,7 +334,6 @@ namespace BIM.IFC.Exporter
                         ExportCurtainObjectCommonAsContainer(allSubElements, element, exporterIFC, curtainWallSubWrapper, setter);
                     }
 
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, wrapper);
                     ICollection<IFCAnyHandle> relatedElementIds = curtainWallSubWrapper.GetAllObjects();
                     if (relatedElementIds.Count > 0)
                     {
@@ -344,6 +343,7 @@ namespace BIM.IFC.Exporter
                     }
                     exporterIFC.RegisterSpaceBoundingElementHandle(elemHnd, element.Id, ElementId.InvalidElementId);
 
+                    ExportCurtainWallType(exporterIFC, wrapper, elemHnd, element);
                 }
                 finally
                 {
@@ -550,6 +550,49 @@ namespace BIM.IFC.Exporter
             }
 
             return curtainGridSet;
+        }
+
+        /// <summary>
+        /// Exports curtain wall types to IfcCurtainWallType.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="wrapper">The ProductWrapper class.</param>
+        /// <param name="elementHandle">The element handle.</param>
+        /// <param name="element">The element.</param>
+        public static void ExportCurtainWallType(ExporterIFC exporterIFC, ProductWrapper wrapper, IFCAnyHandle elementHandle, Element element)
+        {
+            if (elementHandle == null || element == null)
+                return;
+
+            Document doc = element.Document;
+            ElementId typeElemId = element.GetTypeId();
+            Element elementType = doc.GetElement(typeElemId);
+            if (elementType == null)
+                return;
+
+            IFCAnyHandle wallType = null;
+            if (ExporterCacheManager.WallTypeCache.TryGetValue(typeElemId, out wallType))
+            {
+                ExporterCacheManager.TypeRelationsCache.Add(wallType, elementHandle);
+                return;
+            }
+
+            string elemGUID = GUIDUtil.CreateGUID(elementType);
+            string elemName = NamingUtil.GetNameOverride(elementType, NamingUtil.GetIFCName(elementType));
+            string elemDesc = NamingUtil.GetDescriptionOverride(elementType, null);
+            string elemTag = NamingUtil.GetTagOverride(elementType, NamingUtil.CreateIFCElementId(elementType));
+            string elemApplicableOccurence = NamingUtil.GetOverrideStringValue(elementType, "IfcApplicableOccurence", null);
+            string elemElementType = NamingUtil.GetOverrideStringValue(elementType, "IfcElementType", null);
+
+            // Property sets will be set later.
+            wallType = IFCInstanceExporter.CreateCurtainWallType(exporterIFC.GetFile(), elemGUID, exporterIFC.GetOwnerHistoryHandle(),
+                elemName, elemDesc, elemApplicableOccurence, null, null, elemTag, elemElementType,
+                (elemElementType != null) ? IFCCurtainWallType.UserDefined : IFCCurtainWallType.NotDefined);
+
+            wrapper.RegisterHandleWithElementType(elementType as ElementType, wallType, null);
+            
+            ExporterCacheManager.WallTypeCache[typeElemId] = wallType;
+            ExporterCacheManager.TypeRelationsCache.Add(wallType, elementHandle);
         }
     }
 }

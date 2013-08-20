@@ -43,19 +43,17 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
-        /// Adds IFC type elements to the existing element type info.
+        /// Adds new IFC element handles to the existing element type info.
         /// </summary>
         /// <param name="elementId">The element id.</param>
         /// <param name="elements">The IFC elements.</param>
-        public void AddTypeProperties(ElementId elementId, ICollection<IFCAnyHandle> elements)
+        public void AddNewElementHandles(ElementId elementId, ICollection<IFCAnyHandle> elements)
         {
             TypePropertyInfo typePropertyInfo;
             if (TryGetValue(elementId, out typePropertyInfo))
             {
                 foreach (IFCAnyHandle element in elements)
-                {
                     typePropertyInfo.Elements.Add(element);
-                }
             }
         }
 

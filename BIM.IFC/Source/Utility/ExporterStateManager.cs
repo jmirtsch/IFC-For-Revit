@@ -39,6 +39,66 @@ namespace BIM.IFC.Utility
         static IList<string> m_CADLayerOverrides;
 
         /// <summary>
+        /// Preserve the element parameter cache after the element export, as it will be used again.
+        /// This should be checked before it is overridden
+        /// </summary>
+        static Element m_CurrentElementToPreserveParameterCache = null;
+
+        /// <summary>
+        /// Determines whether this elements parameter cache should be removed after this element is exported.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <param name="preserve">True to preserve, false otherwise.</param>
+        static public void PreserveElementParameterCache(Element element, bool preserve)
+        {
+            m_CurrentElementToPreserveParameterCache = preserve ? element : null;
+        }
+
+        static public bool ShouldPreserveElementParameterCache(Element element)
+        {
+            return (m_CurrentElementToPreserveParameterCache == element);
+        }
+
+        /// <summary>
+        /// Skip the "CanElementBeExported" function for cached elements that have already passed the test.
+        /// </summary>
+        static bool m_CanExportElementOverride = false;
+
+        /// <summary>
+        /// A utility class that skips the "CanElementBeExported" function for cached elements that have already passed the test.
+        /// </summary>
+        public class ForceElementExport : IDisposable
+        {
+            bool m_OldCanExportElementOverride;
+
+            /// <summary>
+            /// The constructor that sets forced element export to be true.
+            /// </summary>
+            public ForceElementExport()
+            {
+                m_OldCanExportElementOverride = m_CanExportElementOverride;
+                m_CanExportElementOverride = true;
+            }
+
+            /// <summary>
+            /// The destructor that sets forced element export to be false.
+            /// </summary>
+            public void Dispose()
+            {
+                m_CanExportElementOverride = m_OldCanExportElementOverride;
+            }
+        }
+
+        /// <summary>
+        /// If true, skip the CanExportElement() check and export the element.
+        /// </summary>
+        /// <returns>True if the element should be exported.</returns>
+        static public bool CanExportElementOverride()
+        {
+            return m_CanExportElementOverride;
+        }
+
+        /// <summary>
         /// A utility class that manages pushing and popping CAD layer overrides for containers.  Intended to be using with "using" keyword.
         /// </summary>
         public class CADLayerOverrideSetter : IDisposable

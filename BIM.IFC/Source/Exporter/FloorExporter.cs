@@ -93,7 +93,7 @@ namespace BIM.IFC.Exporter
             {
                 using (IFCTransformSetter transformSetter = IFCTransformSetter.Create())
                 {
-                    using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, floorElement))
+                    using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, floorElement, null, null, ExporterUtil.GetBaseLevelIdForElement(floorElement)))
                     {
                         IFCAnyHandle localPlacement = placementSetter.GetPlacement();
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
@@ -261,14 +261,12 @@ namespace BIM.IFC.Exporter
                         for (int ii = 0; ii < numReps; ii++)
                         {
                             IFCExtrusionCreationData loopExtraParam = ii < loopExtraParams.Count ? loopExtraParams[ii] : null;
-                            productWrapper.AddElement(slabHnds[ii], placementSetter, loopExtraParam, true);
+                            productWrapper.AddElement(floorElement, slabHnds[ii], placementSetter, loopExtraParam, true);
                         }
 
                         if (exportedAsInternalExtrusion)
                             ExporterIFCUtils.ExportExtrudedSlabOpenings(exporterIFC, floorElement, placementSetter,
                                localPlacements[0], slabHnds, extrusionLoops, floorPlane, productWrapper.ToNative());
-
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, floorElement, productWrapper);
                     }
 
                     if (!exportParts)

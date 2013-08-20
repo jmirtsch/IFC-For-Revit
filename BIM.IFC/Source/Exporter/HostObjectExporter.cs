@@ -141,6 +141,7 @@ namespace BIM.IFC.Exporter
                     double thickestLayer = 0.0;
                     for (int i = 0; i < matIds.Count; ++i)
                     {
+                        // Require positive width for IFC2x3 and before.
                         if (widths[i] < MathUtil.Eps())
                             continue;
 

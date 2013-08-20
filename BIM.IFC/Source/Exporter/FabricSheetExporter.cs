@@ -87,12 +87,11 @@ namespace BIM.IFC.Exporter
                 IFCAnyHandle fabricArea = IFCInstanceExporter.CreateGroup(file, guid,
                     ownerHistory, name, description, objectType);
 
-                productWrapper.AddElement(fabricArea);
+                productWrapper.AddElement(element, fabricArea);
 
                 IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(), ownerHistory,
                     null, null, fabricSheetHandles, null, fabricArea);
 
-                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                 tr.Commit();
                 return true;
             }
@@ -117,7 +116,7 @@ namespace BIM.IFC.Exporter
 
             using (IFCTransaction tr = new IFCTransaction(file))
             {
-                using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, sheet))
+                using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, sheet, null, null, ExporterUtil.GetBaseLevelIdForElement(sheet)))
                 {
                     using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                     {
@@ -223,11 +222,9 @@ namespace BIM.IFC.Exporter
                             fabricSheets.Add(fabricSheet);
                         }
 
-                        productWrapper.AddElement(fabricSheet, placementSetter.GetLevelInfo(), ecData, true);
+                        productWrapper.AddElement(sheet, fabricSheet, placementSetter.GetLevelInfo(), ecData, true);
 
                         CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, fabricSheet, materialId);
-
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, sheet, productWrapper);
                     }
                 }
                 tr.Commit();

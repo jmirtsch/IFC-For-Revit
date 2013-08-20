@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/TR/REC-html40" xml:lang="en" dir="ltr" class="js">
 <head>
 <meta http-equiv=Content-Type content="text/html; charset=utf-8">
-<title>Revit Exchange - IFC Exporter for Revit Help</title>
+<title>Revit Exchange - IFC Exporter for Revit 2013 Help</title>
 </head>
 
 <style> 
@@ -51,7 +51,7 @@ h3 {font-size:14.0px;line-height:16px;height:14px;margin-bottom:3px;margin-top:1
 <body>
 <div id="heading">
 	<div id="plugin-icon"><img width=85 height=85 id="Rectangle 3" src="IFCExporter2013.png"></div>
-	<div id="plugin-name"><h1 class="separator-line">IFC Exporter for Revit</h1></div>
+	<div id="plugin-name"><h1 class="separator-line">IFC Exporter for Revit 2013</h1></div>
 	<p id="plugin-description">
 	This application seamlessly replaces the built-in IFC export capabilities of Revit 2013.  It contains enhancements to functionality and defect fixes provided by Autodesk and Open Source contributors that did not appear in the initial shipping version.
     </p>
@@ -62,7 +62,7 @@ h3 {font-size:14.0px;line-height:16px;height:14px;margin-bottom:3px;margin-top:1
 <h2 id="GettingStarted" name="GettingStarted">Getting Started</h2>
 <div class="command">
 	<div class="command icon"><img width=32 height=32 src="IFCExporter2013_32.png" alt=Icon></div>
-	<div class="command name">IFC Exporter for Revit</div>
+	<div class="command name">IFC Exporter for Revit 2013</div>
 	<div class="command description">
     <p> 
     The IFC exporter for Revit 2013 contains up-to-date improvements on the default IFC export capabilities of Revit contributed by Autodesk and our Open 
@@ -76,7 +76,7 @@ h3 {font-size:14.0px;line-height:16px;height:14px;margin-bottom:3px;margin-top:1
 </div>
 <h3>Usage</h3>
 <p>
-The IFC Exporter for Revit button on the Revit UI provides access to the htm help document and brings up a dialog specifying the version of the 
+The IFC Exporter for Revit 2013 button on the Revit UI provides access to the htm help document and brings up a dialog specifying the version of the 
 app installed. This applcation seemlessly replaces the built-in IFC export mechanism and so the users do not have to perform any additional
 steps while exporting their models to IFC format using Revit UI.</p>
 
@@ -125,7 +125,355 @@ working on expanding and eventually removing this limit, and we will be tracking
 <h2 id="VersionHistory" name="VersionHistory">Version History</h2>
 
 <div class="versionset">
-<div class="version">2.1.0.0</div><div class="versioninfo-bullet">New Functionality and Bug Fixes</div>
+
+<div class="version">2.13.0</div><div class="versioninfo-bullet">General:
+
+<li>Initialize GUIDOptions so that GUIDUtil.CreateGUID(element) can be used outside of the exporter code.
+<li>Remove filterView argument from many functions; used cached value instead.
+<li>Various minor optimizations to slightly improve the time to export.
+
+<p>New Functionality:
+
+<li>Allow export schedules as custom property sets.  The name of the schedule is the property set name; the column names are the IFC parameter names.
+<li>Allow export of solid models, which allow for mixing Breps an extrusions for an entity.  This can result in smaller IFC files.
+<li>Export IfcCurtainWallType (IFC2x2: use IfcTypeObject instead).
+<li>Export the currently selected non-primary design option when exporting in current view only mode.
+<li>Use the base level parameter of an element to determine which level to associate the element to; use geometric containment only for cases where this is no base level.
+
+<p>Bug Fixes:
+
+<li>Don't export some extraneous local placements.
+<li>Don't export type if instance isn't exported for family.
+<li>Fix Pset_CoveringCommon: Thickness -> TotalThickness
+<li>Generic rework of how instance and type properties are assigned to IFC entities.  If an exported entity has a related type object, then the entity will have the instance properties assigned, and the type object the type properties.  If there is no type object, the exported entity will contain both instance and type properties.  This should also remove any repetition of exported property sets.
+<li>Look at all "ZoneName X" shared parameters for a room even if some have no value.  This still assumes that they are sequential (i.e., if there is no "ZoneName 4" shared parameter at all, "ZoneName 5" will not be processed).
+<li>Prevent export of IfcPolyLoops with less than 3 vertices.
+<li>Properly scale all known Revit parameter types to the units specified for the IFC file.  Note that there are potentially many Revit parameter types that map to one unit type (e.g., PipeSize, WireSize, and Length are both length parameters); we do not create different units for each of these, but instead use the main unit type.
+<li>Respect visibilty options of curtain wall panels and mullions when exporting in current view only mode.
+<li>Use category id as default for IfcCoverings for ceilings, floors, and roofs.
+
+</div>
+
+<div class="version">2.12.0</div><div class="versioninfo-bullet">
+General:
+
+<li>This version is the Revit MEP certified version of the exporter.  Revit is now certified for all 3 possible export certifications: Architectural, Structural, and MEP.
+<li>Minor performance improvement by reducing the number of calls to the IFC export mapping table.
+
+<p>New Functionality:
+
+<li>Add new MEP property sets: Pset_SanitaryTerminalBath, Pset_SanitaryTerminalShower, Pset_SanitaryTerminalSink, Pset_SanitaryTerminalWashBasin
+<li>Add support for IfcRelCoversBldgElements for ducts and pipes.
+<li>Allow association of property set descriptions to a specific pre-defined type of an entity.
+<li>Allow exporting foundation and retaining walls as IfcFooting, if set in the IFC export mapping tabble, or using "IfcExportAs" for the particular wall.
+<li>Export "SiteLandTitleNumber" and "SiteLongName" shared parameters from Project Information to IfcSite, if they are set.
+<li>Optionally allow storing the generated IFC GUIDs into the project file after export.  This will add "IFC GUID" parameters to elements, their types, and Project Information for Project, Site, and Building GUIDS.  This requires version v1.12 of the alternate UI to set the option, and requires a manual save.
+<li>Read in ParameterMappingTable.txt, which allows users to specify a mapping from Revit properties to IFC common parameter sets.  Please see the Wiki on custom parameter mapping for more information.  Special thanks to: Tom Pesman (http://nl.linkedin.com/in/tompesman) and the Dutch Revit User Group (www.revitgg.nl / www.dutchrevitstandards.com) for their contribution of this improvement to the Open Source.
+
+<p>Bug Fixes:
+
+<li>Add base equipment to the IfcSystem.
+<li>Correct export of true north for IfcSite.
+<li>Correct scaling of Voltage values on export.
+<li>Move more local coordinate systems closer to the entity's geometry.
+
+</div>
+
+<div class="version">2.11.0</div><div class="versioninfo-bullet">
+New Functionality:
+<li>#CV-2x3-166: change the corresponding instance entity class for IfcSpaceHeaterType from IfcEnergyConversionDevice to IfcFlowTerminal.<br/>
+Bug Fixes:
+<li>Assign correct Revit internal properties for elements in containers.
+<li>Allow MEP zones to export Pset_ZoneCommon, fix 2 property names.
+<li>Fix export of multi-story ramps.
+<li>Fix orientation of some connectors.
+<li>Properly calculate Ceiling:Finish property.  Previously, the value was not reset between ceilings, resulting in an ever-growing list of finish materials.
+<li>Prevent duplicate GUIDs for some elements and Psets that re-used the same GUID values.  Note that this will have the affect of a one-time change of GUID values for some IfcPropertySets.
+<li>Stop duplication of Cartesian points in the output of some BReps.
+</div>
+<div class="version">2.10.0</div><div class="versioninfo-bullet">
+<p>New Functionality
+<ul>
+<li>Add property sets: Pset_ElectricalDeviceCommon, Pset_SwitchingDeviceTypeCommon, Pset_SwitchingDeviceTypeToggleSwitch
+<li>Add support for electrical current, electrical voltage, frequency, and positive plane angle units.
+<li>Allow Name/ObjectType/Description override fo IfcSystem.
+<li>Allow using "IfcExportAs" = "DontExport" to remove an individual element or type from the export.
+<li>Export DuctLining.
+<li>Export Groups, including nested groups, as IfcGroup.
+<li>Export electrical systems and connectors.
+<li>Export local coordinate system for IfcDistributionPorts.
+<li>Export PipeInsulation.
+</ul></p>
+<p>Bug Fixes
+<ul>
+<li>Allow MEP zones to export Pset_ZoneCommon, fix 2 property names.
+<li>Correct export of parts for Coordination View 2.0.
+<li>Correct height of Revit Areas.
+<li>Correct material assignment for generic MEP exporter.
+<li>Correct units and unit scaling for volumetric flow rate.
+<li>Fix export of multi-storey stairs.
+<li>Get material for ducts and pipes from system.
+<li>Properly associate internal ElementType Revit property sets with IfcElementType, instead of adding to instances.
+<li>Properly scale door and window lining properties.
+<li>Protect against trying to add a null property to an IfcPropertySet.
+<li>Remove extraneous property sets when exporting Rebars.
+<li>Remove stale IfcSurfaceStyle and IfcPresentationStyleAssignment handles from caches for some aborted attempts to export items as multiple IfcExtrudedAreaSolid.
+<li>Return correct boolean value for GetBooleanAtribute function.
+</ul></p>
+</div>
+
+<div class="version">2.9.0.0</div><div class="versioninfo-bullet">
+<p>New Functionality
+<ul>
+<li>Add/fix property sets: Pset_SpaceThermalDesign, PsetSanitaryTerminalTypeToiletPan</li>
+<li>Add support for IfcBuilding Description and LongName.</li>
+<li>Add support for IfcBuildingStorey Name override, ObjectType, Description, and LongName.</li>
+<li>Allow exporting a Revit Assembly as an IfcSystem.</li>
+<li>Allow exporting a Revit Floor as an IfcFooting.</li>
+<li>Parameters in Revit no longer have to have the same base type as their corresponding IFC property.  For example, an IFCTEXT property in IFC could now have a corresponding "Number" parameter in Revit.</li>
+</ul></p>
+<p>Bug Fixes
+<ul><li>Add material associations for FabricSheets.</li>
+<li>Change the precision given in IFCGEOMETRICREPRESENTATIONCONTEXT to VertexTolerance/10 (about 1/1600").</li>
+<li>Create local placement closer to geometry for many Family-based instances.</li>
+<li>Don't create orphaned IFCAXIS2PLACEMENTs with invalid IFCCARTESIANPOINT references.</li>
+<li>Ensure that the IFCFACEOUTERBOUND for an IFCFACE with more than one boundary corresponding to the boundary with the largest area.</li>
+<li>Export rooms, areas, and MEP spaces when exporting 2nd level space boundaries, even if they aren't part of the energy analysis model (like gross design areas).</li>
+<li>In the case where linear grid lines were grouped into 3 distinct direction sets, and 2 of the directions were orthogonal, the 3rd set of grid lines would not be exported.  This has been fixed.</li>
+<li>Fix issue where elements in assemblies would not be related to building storeys if the parent assembly were marked as not exported.</li>
+<li>For properties where they are defined with a different Revit parameter name and IFC property name, if the Revit parameter name is not found, look for the IFC property name.</li>
+<li>Only export beam/column/member quantities if "QTO" export is chosen.</li>
+<li>Use IfcRelAssignsToGroup, not IfcRelAggregates, for IfcZones; stabilize IfcRelAssignsToGroup GUID.</li>
+</ul></p>
+</div>
+<div class="version">2.8.1.0</div><div class="versioninfo-bullet">General:
+<ul>
+<li>This version is the Revit Architecture Coordination View 2.0 certified version.</li>
+<li>The way that GSA Gross Design Areas are exported has changed.  Please look at https://sourceforge.net/p/ifcexporter/wiki/Exporting%20GSA%20Gross%20Design%20Area/ for more information.</li>
+</ul>
+<p>New Functionality
+<ul>
+<li>Allow curtain wall "IFCCadLayer" shared parameter override to be inherited by its mullions and panels.</li>
+<li>Export Areas and Area Schemes as IfcSpace and IfcGroup, respectively.</li>
+<menu><li>Note: the default export settings may have the Area set as "Not Exported" - this have to be updated manually to "IfcSpace".</li></menu>
+<li>Export AreaReinforcement and PathReinforcement as IfcGroup.</li>
+<li>Export Beam Systems and Revit Trusses as IfcElementAssemblies of type Beam_Grid and Truss, respectively.</li>
+<menu><li>Note: the default export settings may have these set as "Not Exported" - these have to be updated manually to "IfcElementAssembly".</li></menu>
+<li>Export MEP Zones as IfcZone.</li>
+</ul></p>
+<p>Bug Fixes
+<ul><li>Allow export of families with non-solid 3D geometry.</li>
+<li>Export presentation information for all materials.</li>
+<li>Fix local placement of rebars that export as multiple IfcReinforcingBar.</li>
+<li>Fix the opening height calculation for some door and window openings that have arcs in their elevation profile.</li>
+<li>Previously, the door panel width ratio parameter for IfcDoorPanelProperties was scaled such that the sum of all of the panel widths was equal to 1.0.  This is no longer done, as it prevented the case where the door frame was inside the opening from working properly.</li>
+<li>Protect against crash in getting the room boundary information for the ceiling space boundary calculator.</li>
+<li>Use IfcWall, not IfcWallStandardCase, when "Export Parts As Building Elements" is true.</li>
+</ul></p>
+</div>
+<div class="version">2.8.0.0</div><div class="versioninfo-bullet">General:
+<ul>
+<li>Clean up code dealing with door and window operation and construction type.</li>
+<li>Clean up code dealing with getting Solids from element geometry.</li>
+<li>Finalize support for FM Handover view.  The new functionality for this is included in the lists below.</li>
+<li>Replace native function call to create some columns as extrusions with .NET code.</li>
+<li>Renamed the shared parameters for many entity properties to have "Ifc" at the front.</li>
+<li>Sort parameter names on export to minimize changes in IFC file from subsequent exports of the same file.</li>
+</ul>
+<p>New Functionality
+<ul>
+<li>Add 11 new IFC common parameter sets, including: Pset_AirTerminalTypeCommon, Pset_DistrubutionFlowElementCommon, Pset_FlowTerminalAirTerminal, Pset_SpaceOccupancyRequirements, Pset_PlateCommon, Pset_ReinforcingBar*Common</li>
+<li>Add support for IfcLengthMeaure parameter export.</li>
+<li>Add support IfcCircleHollowProfileDef; use for extrusions if appropriate.</li>
+<li>Add support for Provisions for Voids.</li>
+<li>Allow specification and export of a user-defined classification system, instead of just Uniformat.</li>
+<li>Allow exporting elements as IfcDiscreteAccessory/IfcDiscreteAccessoryType.</li>
+<li>Allow "IfcExportAs" to take both the entity name and the type name in the format "IfcEntityName.TypeName".</li>
+<li>Export base quantities for 5 elements: IfcBuildingStorey, IfcCovering, IfcDoor, IfcSpace, IfcWindow.  Some of these were already supported and were just moved from native to .NET.</li>
+<li>Export FabricArea and FabricSheet as IfcReinforcingMesh and IfcGroup, respectively.(Note: that the default export settings have these set as "Not Exported" - these have to be updated manually to "IfcReinforcingMesh" and "IfcGroup")</li>
+<li>Export ceilings as extrusions or BReps if possible, instead of just surface models.</li>
+<li>Export surface styles by default for Coordination View 2.0.</li>
+<li>Include Ceiling as a room bounding element on export if it is part of only one room.</li>
+<li>Stabilise GUIDs for Pset_Building/BuildingStorey/SiteCommon, internal Revit property sets, and slabs in roof containers (only for  the case of an IfcRoof containing a single IfcSlab, however.)</li>
+</ul></p>
+<p>Bug Fixes
+<ul><li>Changed incorrect "PSet" to correct "Pset" for various parameter set names.</li>
+<li>Don't create openings for doors and windows when the host is exported as parts</li>
+<li>Don't export RepresentationMap for IfcTypeProduct with 0 items.</li>
+<li>Don't ignore an internal Revit parameter on export if it has the same name as a parameter in another group.</li>
+<li>Export materials for IfcReinforcementBar; make body representation "AdvancedSweptSolid".</li>
+<li>Fix export of grids so that only one IfcShapeRepresentation is created.</li>
+<li>Fix export of some extruded columns that were split into separate components by other elements.</li>
+<li>Fix issue where classification reference was not exported in non-English versions of Revit.</li>
+<li>Make "NosingLength" parameter of PSet_StairFlightCommon IfcLengthMeasure.</li>
+<li>Make GetExportTypeFromClassName not reject some unrecognized IFC class names.</li>
+<li>Move the local placement of many entities with extrusions and mapped representations for geometry to be closer to the geometry.</li>
+<li>Properly export Pset_ZoneCommon for IfcZones.</li>
+<li>Properly label some mislabelled IfcOpeningElements as "Opening" or "Recess".</li>
+<li>Properly scale door panel properties, window frame properties, and base quantities on export.</li>
+<li>Remove incorrect PsetLightFixtureCommon.ArticleNumber property.</li>
+</ul></p>
+</div>
+<div class="version">2.7.0.0</div><div class="versioninfo-bullet">New Functionality:
+<ul>
+<li>Consistent support across elements of Name, Description, and ObjectType overrides.  
+Added a Tag override and some entity specific parameter support (e.g. CapacityByWeight, CapacityByNumber, 
+LandTitleNumber, SpaceElevationWithFlooring).</li>
+<li>Consistent usage across element types of ApplicableOccurence and ElementType overrides.</li>
+<li>IFC property names can now be localized, based on the language of the Revit project file.  See PSet_WallCommon as an example.</li>
+<li>Support better interface for inputing IFC File Header and Postal Address data.  This is in conjunction with v1.7.0 of the UI.</li>
+</ul>
+<p>Bug Fixes
+<ul><li>Fix issue for some slabs that had their inner and outer boundaries reversed.</li>
+<li>Include IfcSite boundary information when there is only one Revit Site element.</li>
+</ul></p>
+</div>
+<div class="version">2.6.0.0</div><div class="versioninfo-bullet">New Functionality:
+<ul>
+<li>"ExportAnnotations" now controls the export of the IfcCurveStyle.CurveWidth.</li>
+<li>Allow Revit assemblies to be exported as an IfcCurtainWall, IfcRamp, IfcRoof, IfcStair or IfcWall container.</li>
+<li>Add curtain wall panels space boundary information.</li>
+<li>Add PSet_LightFistureTypeCommon, PSet_ZoneCommon.</li>
+<li>Add support for IfcFurnishingElementType.</li>
+<li>Allow "IfcExportAs" to work for curtain wall panels.</li>
+<li>Identify and export Revit braces as IfcMember of type ".BRACE.".</li>
+</ul>
+<p>Bug Fixes
+<ul><li>Add material information to some in-place floors.</li>
+<li>Don't export curtain wall panels of type door or window twice.</li>
+<li>Export file in inches when the display type is in fractional inches.</li>
+<li>Export opening for door in cases where a door is hosted, but doesn't know its host.</li>
+<li>Export some missing type parameters.</li>
+<li>Fix local placement of various entities in containers.</li>
+<li>Minor fixes to PSet_CeilingCommon property names and types.</li>
+<li>Properly scale: properties with HVAC_Power units, door/window space boundaries.</li>
+<li>Set IfcSite origin relative to IfcSite.RefElevation.</li>
+<li>Stabilise the following GUIDs: DoorStyle, WindowStyle, stringer, and family instances with instance geometry.</li>
+</ul></p>
+</div>
+<div class="version">2.5.0.0</div><div class="versioninfo-bullet">New Functionality:
+<ul><li>General: We made two significant usability and performance changes.  In particular:</li>
+<menu><li>Major performance enhancements in exporting parameters that can decrease the overall time for export by 50% or more.  This is especially noticable if using an export version after v2.1.0.</li></li>
+<li>Add the version number of the exporter to the header of the IFC file.</li>
+</menu>
+<li>Allow export of assemblies as IfcStair, IfcRamp, IfcRoof, or IfcWall container, either via the export mapping table or the "IfcExportAs" shared parameter.  It is the user's responsbility to ensure that the entities contained in the assembly containers are meaningful for the top level container type.</li>
+<li>Create ProductWrapper class, primarily as a .NET shell for the native IFCProductWrapper.</li>
+<li>Consolidate GUID creation functions in GUIDUtil class.</li>
+<li>Export grid color for grid lines.</li>
+<li>Export AreaReinforcement and PathReinforcement as IfcReinforcingBar.</li>
+<li>Parameter set improvements:</li>
+<menu><li>Add support for IfcDerivedUnit, IfcDerivedUnitElement, and IfcPile.</li>
+<li>Add support for ThermalTransmittance and VolumetricFlowRate unit types.</li>
+<li>Add PSet_MemberCommon.</li>
+<li>Move PSet_ColumnCommon, PSet_DoorCommon and PSet_WindowCommon to open source.</li>
+<li>Add TotalArea parameter to PSet_SpaceCommon.</li>
+<li>Add PitchAngle to PSet_SlabCommon.</li></menu>
+<li>Use IfcMaterialList for BRep IfcSlabs with multiple materials.</li>
+</ul>
+<p>Bug Fixes
+<ul><li>Correct IsExternal calculation for hosted family instances.</li>
+<li>Fix beam slope and span calculators for extrusions and BReps.</li>
+<li>Fix object placement for some IfcBuildingElementParts.</li>
+<li>Properly cache parameters when exporting an ElementType.</li>
+<li>Remove redundant IfcRelAssociatesMaterial relations to the same material.</li>
+<li>Remove redundant property set for some columns.</li>
+<li>Use Structural Material parameter on export, if it exists and is set.</li>
+<li>Use IfcWall instead of IfcWallStandardCase for walls divided into parts.</li></ul>
+</p>
+</div>
+<div class="version">2.4.0.0</div><div class="versioninfo-bullet">New Functionality:
+<ul><li>Add a simple swept solid analyzer, currently only used in wall export.  This will create an IfcSweptSolid in very simples cases.  We expect to expand the usage in future releases.</li>
+<li>Add property sets to grid lines.</li>
+<li>Add IfcCountMeasure support for integer properties; add IfcRatioMeasure support.</li>
+<li>Allow export of families as IfcFastener and IfcMechanicalFastener.</li>
+<li>Improve memory usage of export by clearing some caches after they are likely no longer necessary.</li>
+</ul>
+
+<p>Bug Fixes
+<ul><li>Add material information for ramps and stairs.</li>
+<li>Allow better manual override of Site and Grid names.</li>
+<li>IFCIDENTIFIER and IFCLABEL are always truncated to 255 characters; IFCTEXT is now used as the default type for internal properties.</li>
+<li>Don't export invisible (to the user) internal properties.</li>
+<li>Export slope for beams created with ExtrusionAnalyzer.</li>
+<li>Fix the axis export for some beams exported with old extrusion code (not ExtrusionAnalyzer).</li>
+<li>Fix placement of some openings in roofs.</li>
+<li>Fix the names and data types for many common properties.</li>
+<li>Fix relative placement of landings in Stairs and Ramps.</li>
+<li>Rebars are now properly exported (R2013 UR2 is required for this functionality).</li>
+</ul></p>
+</div>
+
+<div class="versionset">
+<div class="version">2.3.0.0</div><div class="versioninfo-bullet">New Functionality:
+<ul><li>General: The Open Source code is now easier to override without modifying the Open Source code itself. This includes:</li>
+<menu><li>Top level routines arecleaned up and made more modular, and several were made virtual to allow override.</li>
+<li>Many classes are now public.</li>
+<li>The user can now add their own custom property set, quantity and element traversal routines in addition to, or instead of, the standard Open Source routines.</li>
+</menu>
+<li>Add flag to disable export of GSA Gross Design Area.</li>
+<li>Add IfcMaterialList to IfcCurtainWall, IfcDoor, IfcDoorStyle and IfcWindowStyle.</li>
+<li>Add material and property type information to IfcWallType instead of IfcWall.</li>
+<li>Add option to set Entity name to be the same as the Revit element name as seen in the UI.</li>
+<li>Allow user to add shared parameter "IFC CAD Layer" to an element to override the DWG Layer table used for IfcPresentationLayerAssignment.</li>
+<li>Entity name is now created in open source code instead of Revit native code.</li>
+<li>Extend use of ExtrusionAnalyzer to many columns with openings and clippings, using CSG to improve the quality and decrease the size of the data.</li>
+<li>Export slanted walls with material layers as IfcWall.</li></ul>
+
+<p>Bug Fixes
+<ul><li>GSA: Fixed minor typos in the names of certain properties and property sets.</li>
+<li>Changed the Tag field associated with some revit ElementTypes to be the Type id, not an arbitrary instance id.</li>
+<li>Fix some material assignments for Columns, Walls, and containers.</li>
+<li>Properly set the IfcLocalPlacement relative to their containers for various types including IfcCurtainWalls.</li>
+<li>Protect against crash on export for some Spaces that have invalid 3d room geometry; export Space without it.</li>
+<li>Remove components of IfcCurtainWall from IfcRelContainedInSpatialStructure.</li>
+<li>Unchecking "ExportIFCCommonPropertySets" now correctly doesn't export any IFC Common property sets that are still in native code.</li>
+<li>Several other minor fixes and cleanups, including fixing the data type for some common properties.</li>
+</ul></p>
+</div>
+
+<div class="version">2.2.0.0</div><div class="versioninfo-bullet">New Functionality:
+<ul><li>Export MEP systems</li>
+<li>Export Grids</li>
+<li>Export internal enumerated property values as strings, not integers</li>
+<li>Export IfcOwnerHistory.CreationDate based on Revit file creation date</li>
+<li>Include language code in application name</li>
+<li>Allow Site to have LongName override</li>
+<li>(GSA) Bounding Box export for most elements</li>
+<li>New options with IFC Exporter Alternate UI Options: "ExportSurfaceStyles", "IFCCommonPropertySets"</li></ul>
+
+<p>Bug Fixes
+<ul><li>Add material information for some elements</li>
+<li>Correct unit for ”Air Charges Per Hour” property</li>
+<li>Disallow reusing IfcCartesianPoint in IFCPOLYLOOP</li>
+<li>Don't export some quantities when quantity export disabled</li>
+<li>Use "IfcProject GUID", "IfcSite GUID", or "IfcBuilding GUID" Project Information shared parameters if set</li>
+<li>(GSA) Export ePSet_SpatialElementEnergyAnalysis for Energy Analysis zones</li></ul></p>
+
+<p>General Code Changes:
+<ul><li>Minor performance improvements</li>
+<li>Added and fixed some comments</li>
+<li>Cleaned up main ExportIFC function</li>
+<li>Converted some return types to ICollection<> from HashSet<></li>
+<li>Split out createRevitInternalPropertySets to have a version that doesn't use IfcProductWrapper</li></ul></p>
+</div>
+
+<div class="version">2.1.0.0</div><div class="versioninfo-bullet">New Functionality: 
+<ul><li>Add Pset_ManufacturerTypeInformation for all IfcElements</li>
+<li>Allow parts to be exported as separate entities, rather than as BuildingElementparts (requires Alternate UI v1.1 to set this option)</li>
+<li>Change the Detail Level of a view to be the level used in Current View Only, still be Fine if no current view.</li>
+<li>Merge all triangles of planar faces on export of faceted solids.</li>
+<li>Use ExtrusionAnalyzer for some simple beams and floor slabs.</li>
+<li>(GSA) Allow ePset_PhotovoltaicArray for walls as well as roofs.</li>
+<li>(GSA) Exporting Classification for general elements.</li>
+</ul>
+
+<p>Bug Fixes
+<ul><li>Correct beam axis local placement for some extruded beams.</li>
+<li>Correct issue with property sets based on object type not always exported for some entities.</li>
+<li>Improve IShapeProfileDef recognition.</li>
+</ul></p>
+
+</div>
 <div class="version">2.0.1.0</div><div class="versioninfo-bullet">First Release</div>
 </div>
 </body>

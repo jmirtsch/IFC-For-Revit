@@ -62,7 +62,7 @@ namespace BIM.IFC.Exporter
 
             using (IFCTransaction tr = new IFCTransaction(file))
             {
-                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element))
+                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element, null, null, ExporterUtil.GetBaseLevelIdForElement(element)))
                 {
                     using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                     {
@@ -121,15 +121,11 @@ namespace BIM.IFC.Exporter
                             exporterIFC.GetOwnerHistoryHandle(), name, description, objectType, localPlacementToUse, prodRep,
                             tag);
 
-                        if (roomId == ElementId.InvalidElementId)
-                        {
-                            productWrapper.AddElement(elemHnd, setter.GetLevelInfo(), ecData, true);
-                        }
-                        else
-                        {
-                            exporterIFC.RelateSpatialElement(roomId, elemHnd);
-                            productWrapper.AddElement(elemHnd, setter.GetLevelInfo(), ecData, false);
-                        }
+                        bool containedInSpace = (roomId != ElementId.InvalidElementId);
+                        productWrapper.AddElement(element, elemHnd, setter.GetLevelInfo(), ecData, !containedInSpace);
+
+                        if (containedInSpace)
+                            exporterIFC.RegisterSpatialElementHandle(roomId, elemHnd);
 
                         OpeningUtil.CreateOpeningsIfNecessary(elemHnd, element, ecData, null,
                             exporterIFC, localPlacementToUse, setter, productWrapper);

@@ -126,17 +126,17 @@ namespace BIM.IFC.Exporter
 
             using (IFCTransaction transaction = new IFCTransaction(file))
             {
-                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element))
+                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element, null, null, ExporterUtil.GetBaseLevelIdForElement(element)))
                 {
                     using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                     {
+                        ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
+
                         IFCAnyHandle prodRep = null;
                         if (!exportParts)
                         {
                             ecData.SetLocalPlacement(setter.GetPlacement());
                             ecData.PossibleExtrusionAxes = IFCExtrusionAxes.TryZ;
-
-                            ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
 
                             BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                             prodRep = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, element,
@@ -147,6 +147,17 @@ namespace BIM.IFC.Exporter
                                 return;
                             }
                         }
+                        // We will use the category of the element to set a default value for the covering.
+                        if (string.IsNullOrEmpty(ifcEnumType))
+						{
+	                        if (categoryId == new ElementId(BuiltInCategory.OST_Ceilings))
+    	                        ifcEnumType = "CEILING";
+        	                else if (categoryId == new ElementId(BuiltInCategory.OST_Floors))
+            	                ifcEnumType = "FLOORING";
+                	        else if (categoryId == new ElementId(BuiltInCategory.OST_Roofs))
+                    	        ifcEnumType = "ROOFING";
+						}
+
                         string instanceGUID = GUIDUtil.CreateGUID(element);
                         string instanceName = NamingUtil.GetIFCName(element);
                         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
@@ -162,7 +173,7 @@ namespace BIM.IFC.Exporter
                             PartExporter.ExportHostPart(exporterIFC, element, covering, productWrapper, setter, setter.GetPlacement(), null);
                         }
 
-                        Boolean containInSpace = false;
+                        bool containInSpace = false;
                         IFCAnyHandle localPlacementToUse = setter.GetPlacement();
 
                         // Assign ceiling to room/IfcSpace if it is bounding a single Room for FMHandOver view only
@@ -176,7 +187,7 @@ namespace BIM.IFC.Exporter
                                 // Process Ceiling to be contained in a Space only when it is exactly bounding one Space
                                 if (roomlist.Count == 1)
                                 {
-                                    productWrapper.AddElement(covering, setter, null, false);
+                                    productWrapper.AddElement(element, covering, setter, null, false);
 
                                     // Modify the Ceiling placement to be relative to the Space that it bounds 
                                     IFCAnyHandle roomPlacement = IFCAnyHandleUtil.GetObjectPlacement(ExporterCacheManager.SpatialElementHandleCache.Find(roomlist[0]));
@@ -194,7 +205,7 @@ namespace BIM.IFC.Exporter
 
                         // if not contained in Space, assign it to default containment in Level
                         if (!containInSpace)
-                            productWrapper.AddElement(covering, setter, null, true);
+                            productWrapper.AddElement(element, covering, setter, null, true);
 
                         if (!exportParts)
                         {
@@ -213,8 +224,6 @@ namespace BIM.IFC.Exporter
 
                         OpeningUtil.CreateOpeningsIfNecessary(covering, element, ecData, null,
                             exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);
-
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }
                 }
                 transaction.Commit();
