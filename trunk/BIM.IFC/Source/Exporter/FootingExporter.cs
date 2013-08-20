@@ -86,7 +86,7 @@ namespace BIM.IFC.Exporter
 
             using (IFCTransaction tr = new IFCTransaction(file))
             {
-                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element))
+                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element, null, null, ExporterUtil.GetBaseLevelIdForElement(element)))
                 {
                     using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                     {                      
@@ -132,12 +132,10 @@ namespace BIM.IFC.Exporter
                             }
                         }
 
-                        productWrapper.AddElement(footing, setter, ecData, true);
+                        productWrapper.AddElement(element, footing, setter, ecData, true);
 
                         OpeningUtil.CreateOpeningsIfNecessary(footing, element, ecData, null, 
                             exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);
-
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }
                 }
 

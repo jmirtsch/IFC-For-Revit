@@ -56,7 +56,7 @@ namespace BIM.IFC.Exporter
             IFCAnyHandle buildingElementProxy = null;
             using (IFCTransaction tr = new IFCTransaction(file))
             {
-                using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, element))
+                using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, element, null, null, ExporterUtil.GetBaseLevelIdForElement(element)))
                 {
                     using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                     {
@@ -87,7 +87,7 @@ namespace BIM.IFC.Exporter
                         buildingElementProxy = IFCInstanceExporter.CreateBuildingElementProxy(file, guid,
                             ownerHistory, name, description, objectType, localPlacement, representation, elementTag, Toolkit.IFCElementComposition.Element);
 
-                        productWrapper.AddElement(buildingElementProxy, placementSetter.GetLevelInfo(), ecData, true);
+                        productWrapper.AddElement(element, buildingElementProxy, placementSetter.GetLevelInfo(), ecData, true);
                     }
                     tr.Commit();
                 }
@@ -117,10 +117,7 @@ namespace BIM.IFC.Exporter
             {
                 exported = (ExportBuildingElementProxy(exporterIFC, element, geometryElement, productWrapper) != null);
                 if (exported)
-                {
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     tr.Commit();
-                }
             }
 
             return exported;

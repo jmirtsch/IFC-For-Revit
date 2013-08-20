@@ -53,7 +53,15 @@ namespace BIM.IFC.Exporter
                     propertySetsToExport += InitCommonPropertySets;
             }
 
-            if (fileVersion == IFCVersion.IFCCOBIE)
+            if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportSchedulesAsPsets)
+            {
+                if (propertySetsToExport == null)
+                    propertySetsToExport = InitCustomPropertySets;
+                else
+                    propertySetsToExport += InitCustomPropertySets;
+            }
+
+            if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
             {
                 if (propertySetsToExport == null)
                     propertySetsToExport = InitCOBIEPropertySets;
@@ -95,6 +103,122 @@ namespace BIM.IFC.Exporter
         }
 
         // Properties
+
+        /// <summary>
+        /// Initializes custom property sets from schedules.
+        /// </summary>
+        /// <param name="propertySets">List to store property sets.</param>
+        /// <param name="fileVersion">The IFC file version.</param>
+        private static void InitCustomPropertySets(IList<IList<PropertySetDescription>> propertySets, IFCVersion fileVersion)
+        {
+            Document document = ExporterCacheManager.Document;
+            IList<PropertySetDescription> customPropertySets = new List<PropertySetDescription>();
+
+            // Collect all ViewSchedules from the document to use as custom property sets.
+            FilteredElementCollector viewScheduleElementCollector = new FilteredElementCollector(document);
+
+            ElementFilter viewScheduleElementFilter = new ElementClassFilter(typeof(ViewSchedule));
+            viewScheduleElementCollector.WherePasses(viewScheduleElementFilter);
+
+            int unnamedScheduleIndex = 1;
+            foreach (ViewSchedule schedule in viewScheduleElementCollector)
+            {
+                //property set Manufacturer Information
+                PropertySetDescription customPSet = new PropertySetDescription();
+
+                string scheduleName = schedule.Name;
+                if (string.IsNullOrWhiteSpace(scheduleName))
+                {
+                    scheduleName = "Unnamed Schedule " + unnamedScheduleIndex;
+                    unnamedScheduleIndex++;
+                }
+                customPSet.Name = scheduleName;
+                
+                ScheduleDefinition definition = schedule.Definition;
+                if (definition == null)
+                    continue;
+
+                // The schedule will be responsible for determining which elements to actually export.
+                customPSet.ViewScheduleId = schedule.Id;
+                customPSet.EntityTypes.Add(IFCEntityType.IfcElement);
+                
+                int fieldCount = definition.GetFieldCount();
+                if (fieldCount == 0)
+                    continue;
+
+                HashSet<ElementId> containedElementIds = new HashSet<ElementId>();
+                FilteredElementCollector elementsInViewScheduleCollector = new FilteredElementCollector(document, schedule.Id);
+                foreach (Element containedElement in elementsInViewScheduleCollector)
+                {
+                    containedElementIds.Add(containedElement.Id);
+                }
+                ExporterCacheManager.ViewScheduleElementCache.Add(new KeyValuePair<ElementId, HashSet<ElementId>>(schedule.Id, containedElementIds));
+
+                IDictionary<ElementId, Element> cachedElementTypes = new Dictionary<ElementId, Element>();
+
+                for (int ii = 0; ii < fieldCount; ii++)
+                {
+                    ScheduleField field = definition.GetField(ii);
+
+                    SchedulableField schedulableField = field.GetSchedulableField();
+                    ScheduleFieldType fieldType = schedulableField.FieldType;
+                    if (fieldType != ScheduleFieldType.Instance && fieldType != ScheduleFieldType.ElementType)
+                        continue;
+
+                    ElementId parameterId = field.ParameterId;
+                    if (parameterId == ElementId.InvalidElementId)
+                        continue;
+
+                    // We use asBuiltInParameterId to get the parameter by id below.  We don't want to use it later, however, so
+                    // we store builtInParameterId only if it is a proper member of the enumeration.
+                    BuiltInParameter asBuiltInParameterId = (BuiltInParameter)parameterId.IntegerValue;
+                    BuiltInParameter builtInParameterId =
+                        Enum.IsDefined(typeof(BuiltInParameter), asBuiltInParameterId) ? asBuiltInParameterId : BuiltInParameter.INVALID;
+
+                    Parameter containedElementParameter = null;
+                   
+                    // We could cache the actual elements when we store the element ids.  However, this would almost certainly take more
+                    // time than getting one of the first few elements in the collector.
+                    foreach (Element containedElement in elementsInViewScheduleCollector)
+                    {
+                        if (fieldType == ScheduleFieldType.Instance)
+                            containedElementParameter = containedElement.get_Parameter(asBuiltInParameterId);
+
+                        // shared parameters can return ScheduleFieldType.Instance, even if they are type parameters, so take a look.
+                        if (containedElementParameter == null)
+                        {
+                            ElementId containedElementTypeId = containedElement.GetTypeId();
+                            Element containedElementType = null;
+                            if (containedElementTypeId != ElementId.InvalidElementId)
+                            {
+                                if (!cachedElementTypes.TryGetValue(containedElementTypeId, out containedElementType))
+                                {
+                                    containedElementType = document.GetElement(containedElementTypeId);
+                                    cachedElementTypes[containedElementTypeId] = containedElementType;
+                                }
+                            }
+                            if (containedElementType != null)
+                                containedElementParameter = containedElementType.get_Parameter(asBuiltInParameterId);
+                        }
+
+                        if (containedElementParameter != null)
+                            break;
+                    }
+                    if (containedElementParameter == null)
+                        continue;
+
+                    PropertySetEntry ifcPSE = PropertySetEntry.CreateParameterEntry(containedElementParameter);
+                    ifcPSE.RevitBuiltInParameter = builtInParameterId;
+                    ifcPSE.PropertyName = field.ColumnHeading;
+                    customPSet.AddEntry(ifcPSE);
+                }
+
+                customPropertySets.Add(customPSet);
+            }
+
+            propertySets.Add(customPropertySets);
+        }
+        
         /// <summary>
         /// Initializes common property sets.
         /// </summary>

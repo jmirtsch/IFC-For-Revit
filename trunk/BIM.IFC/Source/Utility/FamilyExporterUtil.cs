@@ -354,10 +354,10 @@ namespace BIM.IFC.Exporter
                                instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
                         }
                         else if ((type == IFCExportType.ExportFlowTreatmentDevice) || IsFlowTreatmentDeviceSubType(type))
-                        {
+                            {
                             instanceHandle = IFCInstanceExporter.CreateFlowTreatmentDevice(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
-                        }
+                                   instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
+                            }
                         else if ((type == IFCExportType.ExportFlowController) || IsFlowControllerSubType(type))
                         {
                             instanceHandle = IFCInstanceExporter.CreateFlowController(file, instanceGUID, ownerHistory,
@@ -374,15 +374,11 @@ namespace BIM.IFC.Exporter
 
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
             {
-                if (roomId == ElementId.InvalidElementId)
-                {
-                    wrapper.AddElement(instanceHandle, setter, extraParams, !isChildInContainer);
-                }
-                else
-                {
-                    exporterIFC.RelateSpatialElement(roomId, instanceHandle);
-                    wrapper.AddElement(instanceHandle, setter, extraParams, false);
-                }
+                bool containedInSpace = (roomId != ElementId.InvalidElementId);
+                bool associateToLevel = containedInSpace ? false : !isChildInContainer;
+                wrapper.AddElement(familyInstance, instanceHandle, setter, extraParams, associateToLevel);
+                if (containedInSpace)
+                    exporterIFC.RegisterSpatialElementHandle(roomId, instanceHandle);
             }
             return instanceHandle;
         }
@@ -480,272 +476,272 @@ namespace BIM.IFC.Exporter
            Element instance,
            ElementType symbol)
         {
-            switch (type)
-            {
+                switch (type)
+                {
                 case IFCExportType.ExportActuatorType:
                     return IFCInstanceExporter.CreateActuatorType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetActuatorType(instance, ifcEnumType));
                 case IFCExportType.ExportAirTerminalBoxType:
                     return IFCInstanceExporter.CreateAirTerminalBoxType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetAirTerminalBoxType(instance, ifcEnumType));
                 case IFCExportType.ExportAirTerminalType:
                     return IFCInstanceExporter.CreateAirTerminalType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetAirTerminalType(instance, ifcEnumType));
                 case IFCExportType.ExportAirToAirHeatRecoveryType:
                     return IFCInstanceExporter.CreateAirToAirHeatRecoveryType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetAirToAirHeatRecoveryType(instance, ifcEnumType));
                 case IFCExportType.ExportAlarmType:
                     return IFCInstanceExporter.CreateAlarmType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetAlarmType(instance, ifcEnumType));
                 case IFCExportType.ExportBoilerType:
                     return IFCInstanceExporter.CreateBoilerType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetBoilerType(instance, ifcEnumType));
                 case IFCExportType.ExportCableCarrierFittingType:
                     return IFCInstanceExporter.CreateCableCarrierFittingType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetCableCarrierFittingType(instance, ifcEnumType));
                 case IFCExportType.ExportCableCarrierSegmentType:
                     return IFCInstanceExporter.CreateCableCarrierSegmentType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetCableCarrierSegmentType(instance, ifcEnumType));
                 case IFCExportType.ExportCableSegmentType:
                     return IFCInstanceExporter.CreateCableSegmentType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetCableSegmentType(instance, ifcEnumType));
                 case IFCExportType.ExportChillerType:
                     return IFCInstanceExporter.CreateChillerType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetChillerType(instance, ifcEnumType));
                 case IFCExportType.ExportCoilType:
                     return IFCInstanceExporter.CreateCoilType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetCoilType(instance, ifcEnumType));
                 case IFCExportType.ExportCompressorType:
                     return IFCInstanceExporter.CreateCompressorType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetCompressorType(instance, ifcEnumType));
                 case IFCExportType.ExportCondenserType:
                     return IFCInstanceExporter.CreateCondenserType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetCondenserType(instance, ifcEnumType));
                 case IFCExportType.ExportControllerType:
                     return IFCInstanceExporter.CreateControllerType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetControllerType(instance, ifcEnumType));
                 case IFCExportType.ExportCooledBeamType:
                     return IFCInstanceExporter.CreateCooledBeamType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetCooledBeamType(instance, ifcEnumType));
                 case IFCExportType.ExportCoolingTowerType:
                     return IFCInstanceExporter.CreateCoolingTowerType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetCoolingTowerType(instance, ifcEnumType));
                 case IFCExportType.ExportDamperType:
                     return IFCInstanceExporter.CreateDamperType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetDamperType(instance, ifcEnumType));
                 case IFCExportType.ExportDiscreteAccessoryType:
                     return IFCInstanceExporter.CreateDiscreteAccessoryType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName);
                 case IFCExportType.ExportDistributionChamberElementType:
                     return IFCInstanceExporter.CreateDistributionChamberElementType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetDistributionChamberElementType(instance, ifcEnumType));
                 case IFCExportType.ExportDuctFittingType:
                     return IFCInstanceExporter.CreateDuctFittingType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetDuctFittingType(instance, ifcEnumType));
                 case IFCExportType.ExportDuctSegmentType:
                     return IFCInstanceExporter.CreateDuctSegmentType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetDuctSegmentType(instance, ifcEnumType));
                 case IFCExportType.ExportDuctSilencerType:
                     return IFCInstanceExporter.CreateDuctSilencerType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetDuctSilencerType(instance, ifcEnumType));
                 case IFCExportType.ExportElectricApplianceType:
                     return IFCInstanceExporter.CreateElectricApplianceType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetElectricApplianceType(instance, ifcEnumType));
                 case IFCExportType.ExportElectricFlowStorageDeviceType:
                     return IFCInstanceExporter.CreateElectricFlowStorageDeviceType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetElectricFlowStorageDeviceType(instance, ifcEnumType));
                 case IFCExportType.ExportElectricGeneratorType:
                     return IFCInstanceExporter.CreateElectricGeneratorType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetElectricGeneratorType(instance, ifcEnumType));
                 case IFCExportType.ExportElectricHeaterType:
                     return IFCInstanceExporter.CreateElectricHeaterType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetElectricHeaterType(instance, ifcEnumType));
                 case IFCExportType.ExportElectricMotorType:
                     return IFCInstanceExporter.CreateElectricMotorType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetElectricMotorType(instance, ifcEnumType));
                 case IFCExportType.ExportElectricTimeControlType:
                     return IFCInstanceExporter.CreateElectricTimeControlType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetElectricTimeControlType(instance, ifcEnumType));
                 case IFCExportType.ExportEvaporativeCoolerType:
                     return IFCInstanceExporter.CreateEvaporativeCoolerType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetEvaporativeCoolerType(instance, ifcEnumType));
                 case IFCExportType.ExportEvaporatorType:
                     return IFCInstanceExporter.CreateEvaporatorType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetEvaporatorType(instance, ifcEnumType));
                 case IFCExportType.ExportFastenerType:
                     return IFCInstanceExporter.CreateFastenerType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName);
                 case IFCExportType.ExportFanType:
                     return IFCInstanceExporter.CreateFanType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetFanType(instance, ifcEnumType));
                 case IFCExportType.ExportFilterType:
                     return IFCInstanceExporter.CreateFilterType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetFilterType(instance, ifcEnumType));
                 case IFCExportType.ExportFireSuppressionTerminalType:
                     return IFCInstanceExporter.CreateFireSuppressionTerminalType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetFireSuppressionTerminalType(instance, ifcEnumType));
                 case IFCExportType.ExportFlowInstrumentType:
                     return IFCInstanceExporter.CreateFlowInstrumentType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetFlowInstrumentType(instance, ifcEnumType));
                 case IFCExportType.ExportFlowMeterType:
                     return IFCInstanceExporter.CreateFlowMeterType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetFlowMeterType(instance, ifcEnumType));
                 case IFCExportType.ExportFurnishingElement:
                     return IFCInstanceExporter.CreateFurnishingElementType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
-                       typeName);
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                           typeName);
                 case IFCExportType.ExportFurnitureType:
-                    return IFCInstanceExporter.CreateFurnitureType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                        return IFCInstanceExporter.CreateFurnitureType(file, guid, ownerHistory, name,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetAssemblyPlace(instance, ifcEnumType));
                 case IFCExportType.ExportGasTerminalType:
                     return IFCInstanceExporter.CreateGasTerminalType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetGasTerminalType(instance, ifcEnumType));
                 case IFCExportType.ExportHeatExchangerType:
                     return IFCInstanceExporter.CreateHeatExchangerType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetHeatExchangerType(instance, ifcEnumType));
                 case IFCExportType.ExportHumidifierType:
                     return IFCInstanceExporter.CreateHumidifierType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetHumidifierType(instance, ifcEnumType));
                 case IFCExportType.ExportJunctionBoxType:
                     return IFCInstanceExporter.CreateJunctionBoxType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetJunctionBoxType(instance, ifcEnumType));
                 case IFCExportType.ExportLampType:
                     return IFCInstanceExporter.CreateLampType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetLampType(instance, ifcEnumType));
                 case IFCExportType.ExportLightFixtureType:
                     return IFCInstanceExporter.CreateLightFixtureType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetLightFixtureType(instance, ifcEnumType));
                 case IFCExportType.ExportMechanicalFastenerType:
                     return IFCInstanceExporter.CreateMechanicalFastenerType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName);
                 case IFCExportType.ExportMemberType:
                     return IFCInstanceExporter.CreateMemberType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetMemberType(instance, ifcEnumType));
                 case IFCExportType.ExportMotorConnectionType:
                     return IFCInstanceExporter.CreateMotorConnectionType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetMotorConnectionType(instance, ifcEnumType));
                 case IFCExportType.ExportOutletType:
                     return IFCInstanceExporter.CreateOutletType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetOutletType(instance, ifcEnumType));
                 case IFCExportType.ExportPlateType:
                     return IFCInstanceExporter.CreatePlateType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetPlateType(instance, ifcEnumType));
                 case IFCExportType.ExportPipeFittingType:
                     return IFCInstanceExporter.CreatePipeFittingType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetPipeFittingType(instance, ifcEnumType));
                 case IFCExportType.ExportPipeSegmentType:
                     return IFCInstanceExporter.CreatePipeSegmentType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetPipeSegmentType(instance, ifcEnumType));
                 case IFCExportType.ExportProtectiveDeviceType:
                     return IFCInstanceExporter.CreateProtectiveDeviceType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetProtectiveDeviceType(instance, ifcEnumType));
                 case IFCExportType.ExportPumpType:
                     return IFCInstanceExporter.CreatePumpType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetPumpType(instance, ifcEnumType));
                 case IFCExportType.ExportSanitaryTerminalType:
                     return IFCInstanceExporter.CreateSanitaryTerminalType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetSanitaryTerminalType(instance, ifcEnumType));
                 case IFCExportType.ExportSensorType:
                     return IFCInstanceExporter.CreateSensorType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetSensorType(instance, ifcEnumType));
                 case IFCExportType.ExportSpaceHeaterType:
                     return IFCInstanceExporter.CreateSpaceHeaterType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetSpaceHeaterType(instance, ifcEnumType));
                 case IFCExportType.ExportStackTerminalType:
                     return IFCInstanceExporter.CreateStackTerminalType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetStackTerminalType(instance, ifcEnumType));
                 case IFCExportType.ExportSwitchingDeviceType:
                     return IFCInstanceExporter.CreateSwitchingDeviceType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetSwitchingDeviceType(instance, ifcEnumType));
                 case IFCExportType.ExportTankType:
                     return IFCInstanceExporter.CreateTankType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetTankType(instance, ifcEnumType));
                 case IFCExportType.ExportTransformerType:
                     return IFCInstanceExporter.CreateTransformerType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetTransformerType(instance, ifcEnumType));
                 case IFCExportType.ExportTransportElementType:
                     return IFCInstanceExporter.CreateTransportElementType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetTransportElementType(instance, ifcEnumType));
                 case IFCExportType.ExportTubeBundleType:
                     return IFCInstanceExporter.CreateTubeBundleType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetTubeBundleType(instance, ifcEnumType));
                 case IFCExportType.ExportUnitaryEquipmentType:
                     return IFCInstanceExporter.CreateUnitaryEquipmentType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetUnitaryEquipmentType(instance, ifcEnumType));
                 case IFCExportType.ExportValveType:
                     return IFCInstanceExporter.CreateValveType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetValveType(instance, ifcEnumType));
                 case IFCExportType.ExportWasteTerminalType:
                     return IFCInstanceExporter.CreateWasteTerminalType(file, guid, ownerHistory, name,
-                       description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetWasteTerminalType(instance, ifcEnumType));
-                default:
-                    return null;
+                    default:
+                        return null;
+                }
             }
-        }
 
         /// <summary>
         /// Checks if export type is room related.
@@ -2403,7 +2399,7 @@ namespace BIM.IFC.Exporter
         {
             string value = null;
             if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+        {
                 value = ifcEnumType;
             }
 
@@ -2461,11 +2457,11 @@ namespace BIM.IFC.Exporter
         private static IFCWasteTerminalType GetWasteTerminalType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+                if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
+                {
                 value = ifcEnumType;
-            }
-
+                }
+            
             if (String.IsNullOrEmpty(value))
                 return IFCWasteTerminalType.NotDefined;
 

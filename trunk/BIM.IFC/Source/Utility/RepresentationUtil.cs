@@ -163,12 +163,7 @@ namespace BIM.IFC.Utility
         {
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle brep = IFCInstanceExporter.CreateFacetedBrep(file, shell);
-
-            // The option can be changed by alternate UI.
-            if (ExporterCacheManager.ExportOptionsCache.ExportSurfaceStyles)
-            {
-                BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document, brep, overrideMaterialId);
-            }
+            BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document, brep, overrideMaterialId);
             return brep;
         }
 
@@ -456,7 +451,7 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
-        /// Creates a SweptSolid, Brep, or SurfaceModel product definition shape representation, based on the geometry and IFC version.
+        /// Creates a SweptSolid, Brep, SolidModel or SurfaceModel product definition shape representation, based on the geometry and IFC version.
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="categoryId">The category id.</param>

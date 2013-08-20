@@ -52,7 +52,7 @@ namespace BIM.IFC.Exporter
 
             using (IFCTransaction tr = new IFCTransaction(file))
             {
-                using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, element))
+                using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, element, null, null, ExporterUtil.GetBaseLevelIdForElement(element)))
                 {
                     using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                     {
@@ -84,12 +84,10 @@ namespace BIM.IFC.Exporter
                             ownerHistory, name, description, objectType, localPlacement, representation, elementTag, IFCCoveringType.Insulation);
                         ExporterCacheManager.ElementToHandleCache.Register(element.Id, insulation);
 
-                        productWrapper.AddElement(insulation, placementSetter.GetLevelInfo(), ecData, true);
+                        productWrapper.AddElement(element, insulation, placementSetter.GetLevelInfo(), ecData, true);
 
                         ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element);
                         CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, insulation, matId);
-
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }
                 }
                 tr.Commit();

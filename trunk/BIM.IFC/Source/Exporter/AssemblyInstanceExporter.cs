@@ -85,14 +85,14 @@ namespace BIM.IFC.Exporter
                         ownerHistory, name, description, objectType);
 
                     HashSet<IFCAnyHandle> relatedBuildings = new HashSet<IFCAnyHandle>();
-                    relatedBuildings.Add(exporterIFC.GetBuilding());
+                    relatedBuildings.Add(ExporterCacheManager.BuildingHandle);
 
                     IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
                         exporterIFC.GetOwnerHistoryHandle(), null, null, assemblyInstanceHnd, relatedBuildings);
                 }
                 else
                 {
-                    using (placementSetter = IFCPlacementSetter.Create(exporterIFC, element))
+                    using (placementSetter = IFCPlacementSetter.Create(exporterIFC, element, null, null, ExporterUtil.GetBaseLevelIdForElement(element)))
                     {
                         string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
                         IFCAnyHandle representation = null;
@@ -143,9 +143,7 @@ namespace BIM.IFC.Exporter
                     return false;
 
                 bool relateToLevel = (levelInfo != null);
-                productWrapper.AddElement(assemblyInstanceHnd, levelInfo, null, relateToLevel);
-
-                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
+                productWrapper.AddElement(element, assemblyInstanceHnd, levelInfo, null, relateToLevel);
 
                 ExporterCacheManager.AssemblyInstanceCache.RegisterAssemblyInstance(element.Id, assemblyInstanceHnd);
 
@@ -241,7 +239,7 @@ namespace BIM.IFC.Exporter
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction tr = new IFCTransaction(file))
             {
-                using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, assemblyElem))
+                using (IFCPlacementSetter placementSetter = IFCPlacementSetter.Create(exporterIFC, assemblyElem, null, null, ExporterUtil.GetBaseLevelIdForElement(assemblyElem)))
                 {
                     IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                     IFCAnyHandle localPlacement = placementSetter.GetPlacement();
@@ -256,10 +254,7 @@ namespace BIM.IFC.Exporter
                         ownerHistory, name, description, objectType, localPlacement, null, elementTag,
                         IFCAssemblyPlace.NotDefined, assemblyType);
 
-                    productWrapper.AddElement(assemblyInstanceHnd, placementSetter.GetLevelInfo(), null, true);
-
-
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, assemblyElem, productWrapper);
+                    productWrapper.AddElement(assemblyElem, assemblyInstanceHnd, placementSetter.GetLevelInfo(), null, true);
 
                     string aggregateGuid = GUIDUtil.CreateSubElementGUID(assemblyElem, (int)IFCAssemblyInstanceSubElements.RelAggregates);
                     IFCInstanceExporter.CreateRelAggregates(file, aggregateGuid, ownerHistory, null, null, assemblyInstanceHnd, memberHnds);

@@ -60,7 +60,7 @@ namespace BIM.IFC.Exporter
         {
             IFCFile file = exporterIFC.GetFile();
 
-            using (IFCPlacementSetter mullionSetter = IFCPlacementSetter.Create(exporterIFC, mullion))
+            using (IFCPlacementSetter mullionSetter = IFCPlacementSetter.Create(exporterIFC, mullion, null, null, ExporterUtil.GetBaseLevelIdForElement(mullion)))
             {
                 using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
                 {
@@ -97,11 +97,10 @@ namespace BIM.IFC.Exporter
                        mullionLocalPlacement, repHnd, elemTag);
                     ExporterCacheManager.HandleToElementCache.Register(mullionHnd, mullion.Id);
 
-                    productWrapper.AddElement(mullionHnd, mullionSetter, extraParams, false);
+                    productWrapper.AddElement(mullion, mullionHnd, mullionSetter, extraParams, false);
 
                     ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, mullion);
                     CategoryUtil.CreateMaterialAssociation(mullion.Document, exporterIFC, mullionHnd, matId);
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, mullion, productWrapper);
                 }
             }
         }

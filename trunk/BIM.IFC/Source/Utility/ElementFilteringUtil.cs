@@ -26,6 +26,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Electrical;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.DB.Structure;
+using BIM.IFC.Exporter;
 
 namespace BIM.IFC.Utility
 {
@@ -223,8 +224,8 @@ namespace BIM.IFC.Utility
         ExportFlowInstrumentType,
         /// <summary>
         /// Sensor type.
-        /// </summary>
         ExportSensorType,
+        /// </summary>
         // types of EnergyConversionDeviceType
         /// <summary>
         /// Air to air heat recovery type.
@@ -485,11 +486,10 @@ namespace BIM.IFC.Utility
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="filterView">The view for current view export.</param>
         /// <returns>The element filter.</returns>
-        public static ElementFilter GetSpatialElementFilter(Document document, ExporterIFC exporterIFC, Element filterView)
+        public static ElementFilter GetSpatialElementFilter(Document document, ExporterIFC exporterIFC)
         {
-            return GetExportFilter(document, exporterIFC, filterView, true);
+            return GetExportFilter(document, exporterIFC, true);
         }
 
         /// <summary>
@@ -497,11 +497,10 @@ namespace BIM.IFC.Utility
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="filterView">The view for current view export.</param>
         /// <returns>The Element filter.</returns>
-        public static ElementFilter GetNonSpatialElementFilter(Document document, ExporterIFC exporterIFC, Element filterView)
+        public static ElementFilter GetNonSpatialElementFilter(Document document, ExporterIFC exporterIFC)
         {
-            return GetExportFilter(document, exporterIFC, filterView, false);
+            return GetExportFilter(document, exporterIFC, false);
         }
 
         /// <summary>
@@ -509,11 +508,9 @@ namespace BIM.IFC.Utility
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="filterView">The view for current view export.</param>
         /// <param name="forSpatialElements">True to get spatial element filter, false for non spatial elements filter.</param>
         /// <returns>The element filter.</returns>
-        private static ElementFilter GetExportFilter(Document document, ExporterIFC exporterIFC, Element filterView, 
-            bool forSpatialElements)
+        private static ElementFilter GetExportFilter(Document document, ExporterIFC exporterIFC, bool forSpatialElements)
         {
             List<ElementFilter> filters = new List<ElementFilter>();
 
@@ -544,7 +541,7 @@ namespace BIM.IFC.Utility
             filters.Add(GetDesignOptionFilter());
 
             // Phases
-            filters.Add(GetPhaseStatusFilter(document, filterView));
+            filters.Add(GetPhaseStatusFilter(document));
 
             return new LogicalAndFilter(filters);
         }
@@ -570,9 +567,23 @@ namespace BIM.IFC.Utility
         /// <returns>The element filter.</returns>
         private static ElementFilter GetDesignOptionFilter()
         {
-            ElementFilter designOptionFilter = new ElementDesignOptionFilter(ElementId.InvalidElementId);
+            // We will respect the active design option if we are exporting a specific view.
+            ElementFilter noDesignOptionFilter = new ElementDesignOptionFilter(ElementId.InvalidElementId);
             ElementFilter primaryOptionsFilter = new PrimaryDesignOptionMemberFilter();
-            return new LogicalOrFilter(designOptionFilter, primaryOptionsFilter);
+            ElementFilter designOptionFilter = new LogicalOrFilter(noDesignOptionFilter, primaryOptionsFilter);
+
+            View filterView = ExporterCacheManager.ExportOptionsCache.FilterViewForExport;
+            if (filterView != null)
+            {
+                ElementId designOptionId = DesignOption.GetActiveDesignOptionId(ExporterCacheManager.Document);
+                if (designOptionId != ElementId.InvalidElementId)
+                {
+                    ElementFilter activeDesignOptionFilter = new ElementDesignOptionFilter(designOptionId);
+                    return new LogicalOrFilter(designOptionFilter, activeDesignOptionFilter);
+                }
+            }
+
+            return designOptionFilter;
         }
 
         // Cannot be implemented until ExportLayerTable can be read.  Replacement is ShouldCategoryBeExported()
@@ -622,6 +633,9 @@ namespace BIM.IFC.Utility
         /// <returns>True if the element should be exported, false otherwise.</returns>
         public static bool ShouldElementBeExported(ExporterIFC exporterIFC, Element element)
         {
+            if (ExporterStateManager.CanExportElementOverride())
+                return true;
+
             if (!ShouldCategoryBeExported(exporterIFC, element))
                 return false;
 
@@ -634,7 +648,25 @@ namespace BIM.IFC.Utility
             }
             return true;
         }
-        
+
+        /// <summary>
+        /// Determines if the selected element meets extra criteria for export.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter class.</param>
+        /// <param name="element">The current element to export.</param>
+        /// <returns>True if the element should be exported.</returns>
+        public static bool CanExportElement(ExporterIFC exporterIFC, Autodesk.Revit.DB.Element element)
+        {
+            if (!ElementFilteringUtil.ShouldElementBeExported(exporterIFC, element))
+                return false;
+
+            // if we allow exporting parts as independent building elements, then prevent also exporting the host elements containing the parts.
+            if (ExporterCacheManager.ExportOptionsCache.ExportPartsAsBuildingElements && PartExporter.CanExportParts(element))
+                return false;
+
+            return true;
+        }
+
         /// <summary>
         /// Checks if name is equal to base or its type name.
         /// </summary>
@@ -1142,7 +1174,7 @@ namespace BIM.IFC.Utility
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <returns>The element filter.</returns>
-        private static ElementFilter GetPhaseStatusFilter(Document document, Element filterView)
+        private static ElementFilter GetPhaseStatusFilter(Document document)
         {
             List<ElementOnPhaseStatus> phaseStatuses = new List<ElementOnPhaseStatus>();
             phaseStatuses.Add(ElementOnPhaseStatus.None);  //include "none" because we might want to export phaseless elements.
@@ -1152,6 +1184,8 @@ namespace BIM.IFC.Utility
             PhaseArray phaseArray = document.Phases;
 
             ElementId phaseId = ElementId.InvalidElementId;
+            Element filterView = ExporterCacheManager.ExportOptionsCache.FilterViewForExport;
+
             if (filterView != null)
             {
                 Parameter currPhase = filterView.get_Parameter(BuiltInParameter.VIEW_PHASE);
@@ -1174,7 +1208,7 @@ namespace BIM.IFC.Utility
             m_CategoryVisibilityCache.Clear();
         }
 
-        private static bool CheckIsCategoryHidden(View filterView, Element element)
+        private static bool CheckIsCategoryHidden(Element element)
         {
             bool value = false;
             Category category = element.Category;
@@ -1184,6 +1218,7 @@ namespace BIM.IFC.Utility
             if (m_CategoryVisibilityCache.TryGetValue(category.Id, out value))
                 return value;
 
+            View filterView = ExporterCacheManager.ExportOptionsCache.FilterViewForExport;
             value = (category.get_AllowsVisibilityControl(filterView) && !category.get_Visible(filterView));
             m_CategoryVisibilityCache[category.Id] = value;
             return value;
@@ -1192,17 +1227,20 @@ namespace BIM.IFC.Utility
         /// <summary>
         /// Checks if element is visible for certain view.
         /// </summary>
-        /// <param name="filterView">The view.</param>
         /// <param name="element">The element.</param>
         /// <returns>True if the element is visible, false otherwise.</returns>
-        public static bool IsElementVisible(View filterView, Element element)
+        public static bool IsElementVisible(Element element)
         {
+            View filterView = ExporterCacheManager.ExportOptionsCache.FilterViewForExport;
+            if (filterView == null)
+                return true;
+
             bool hidden = element.IsHidden(filterView);
             if (hidden)
                 return false;
 
             Category category = element.Category;
-            hidden = CheckIsCategoryHidden(filterView, element);
+            hidden = CheckIsCategoryHidden(element);
             if (hidden)
                 return false;
 

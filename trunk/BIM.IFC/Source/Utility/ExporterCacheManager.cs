@@ -47,6 +47,11 @@ namespace BIM.IFC.Utility
         static AssemblyInstanceCache m_AssemblyInstanceCache;
 
         /// <summary>
+        /// The IfcBuilding handle.
+        /// </summary>
+        static public IFCAnyHandle BuildingHandle { get; set; }
+
+        /// <summary>
         /// Cache the values of the IFC entity class from the IFC Export table by category.
         /// </summary>
         static Dictionary<KeyValuePair<ElementId, int>, string> m_CategoryClassNameCache;
@@ -103,6 +108,12 @@ namespace BIM.IFC.Utility
         /// This is used to identify which element should be used for properties, for elements (e.g. Stairs) that contain other elements.
         /// </summary>
         static HandleToElementCache m_HandleToElementCache;
+
+        /// <summary>
+        /// The IsExternal parameter value cache.
+        /// This stores the IsExternal value from the shared parameters, if any, for elements that may be used by hosted elements later.
+        /// We use this because we clear the ParametersCache after we export an element, and do not want to create just for IsExternal.
+        static Dictionary<ElementId, bool?> m_IsExternalParameterValueCache;
 
         /// <summary>
         /// The language of the current Revit document.
@@ -197,6 +208,12 @@ namespace BIM.IFC.Utility
         /// This keeps track of all of the truss in the document, to export after all beams and members.
         /// </summary>
         static HashSet<ElementId> m_TrussCache;
+
+        /// <summary>
+        /// The ViewSchedule element cache.
+        /// This tracks the element ids of the elements in a view schedule that is being exported.  Not used unless schedules are being exported.
+        /// </summary>
+        static IDictionary<ElementId, HashSet<ElementId>> m_ViewScheduleElementCache;
 
         ///<summary>
         /// The AreaScheme cache.
@@ -314,7 +331,7 @@ namespace BIM.IFC.Utility
         static List<Element> m_GridCache;
 
         /// <summary>
-        /// The WallType cache that maps Revit wall type id to the IFC wall type handle.
+        /// The WallType cache that maps Revit wall type or curtain wall type id to the IFC wall type handle.
         /// </summary>
         static IDictionary<ElementId, IFCAnyHandle> m_WallTypeCache;
 
@@ -408,6 +425,19 @@ namespace BIM.IFC.Utility
                 if (m_HandleToElementCache == null)
                     m_HandleToElementCache = new HandleToElementCache();
                 return m_HandleToElementCache;
+            }
+        }
+
+        /// <summary>
+        /// The IsExternalParameterValueCache object.
+        /// </summary>
+        public static IDictionary<ElementId, bool?> IsExternalParameterValueCache
+        {
+            get
+            {
+                if (m_IsExternalParameterValueCache == null)
+                    m_IsExternalParameterValueCache = new Dictionary<ElementId, bool?>();
+                return m_IsExternalParameterValueCache;
             }
         }
 
@@ -631,6 +661,19 @@ namespace BIM.IFC.Utility
                 if (m_TrussCache == null)
                     m_TrussCache = new HashSet<ElementId>();
                 return m_TrussCache;
+            }
+        }
+
+        /// <summary>
+        /// The ViewScheduleElementCache object.
+        /// </summary>
+        public static IDictionary<ElementId, HashSet<ElementId>> ViewScheduleElementCache
+        {
+            get
+            {
+                if (m_ViewScheduleElementCache == null)
+                    m_ViewScheduleElementCache = new Dictionary<ElementId, HashSet<ElementId>>();
+                return m_ViewScheduleElementCache;
             }
         }
 
@@ -1021,7 +1064,7 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
-        /// The WallType cache that maps Revit wall type id to the IFC wall type handle.
+        /// The WallType cache that maps Revit wall type or curtain wall type id to the IFC wall type handle.
         /// </summary>
         public static IDictionary<ElementId, IFCAnyHandle> WallTypeCache
         {
@@ -1105,6 +1148,7 @@ namespace BIM.IFC.Utility
             m_GroupElementGeometryCache = null;
             m_HandleToElementCache = null;
             m_HostPartsCache = null;
+            m_IsExternalParameterValueCache = null;
             m_LevelInfoCache = null;
             m_MaterialIdToStyleHandleCache = null;
             m_MaterialLayerRelationsCache = null;
@@ -1130,6 +1174,7 @@ namespace BIM.IFC.Utility
             m_TypeObjectsCache = null;
             m_TypePropertyInfoCache = null;
             m_TypeRelationsCache = null;
+            m_ViewScheduleElementCache = null;
             m_WallConnectionDataCache = null;
             m_WallTypeCache = null;
             m_UnitsCache = null;

@@ -72,7 +72,7 @@ namespace BIM.IFC.Exporter
                 HashSet<IFCAnyHandle> presHndSet = new HashSet<IFCAnyHandle>();
                 presHndSet.Add(presHnd);
 
-                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, textNote))
+                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, textNote, null, null, ExporterUtil.GetBaseLevelIdForElement(textNote)))
                 {
                     double linScale = exporterIFC.LinearScale;
                     const double planScale = 100.0;  // currently hardwired.

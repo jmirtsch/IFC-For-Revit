@@ -94,7 +94,7 @@ namespace BIM.IFC.Utility
                 string elementId = NamingUtil.CreateIFCElementId(element);
                 IFCAnyHandle openingElement = IFCInstanceExporter.CreateOpeningElement(file, guid, ownerHistory,
                    openingName, null, openingObjectType, openingPlacement, openingRep, elementId);
-                wrapper.AddElement(openingElement, setter, extraParams, true);
+                wrapper.AddElement(null, openingElement, setter, extraParams, true);
                 if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities && (extraParams != null))
                     ExporterIFCUtils.CreateOpeningQuantities(exporterIFC, openingElement, extraParams);
 

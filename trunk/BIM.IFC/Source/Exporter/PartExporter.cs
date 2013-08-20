@@ -205,7 +205,7 @@ namespace BIM.IFC.Exporter
             IFCPlacementSetter placementSetter, IFCAnyHandle originalPlacement, IFCRange range, IFCExtrusionAxes ifcExtrusionAxes,
             Element hostElement, ElementId overrideLevelId, bool asBuildingElement)
         {
-            if (!ElementFilteringUtil.IsElementVisible(ExporterCacheManager.ExportOptionsCache.FilterViewForExport, partElement))
+            if (!ElementFilteringUtil.IsElementVisible(partElement))
                 return;
 
             Part part = partElement as Part;
@@ -216,7 +216,9 @@ namespace BIM.IFC.Exporter
             bool standaloneExport = hostElement == null && !asBuildingElement;
 
             ElementId partExportLevel = null;
-            if (standaloneExport || asBuildingElement)
+            if (overrideLevelId != null)
+                partExportLevel = overrideLevelId;
+            else if (standaloneExport || asBuildingElement)
             {
                 if (partElement.Level != null)
                     partExportLevel = partElement.Level.Id;
@@ -227,8 +229,6 @@ namespace BIM.IFC.Exporter
                     return;
                 partExportLevel = hostElement.Level.Id;
             }
-            if (overrideLevelId != null)
-                partExportLevel = overrideLevelId;
 
             if (ExporterCacheManager.PartExportedCache.HasExported(partElement.Id, partExportLevel))
                 return;
@@ -370,7 +370,9 @@ namespace BIM.IFC.Exporter
                             }
                         }
 
-                        productWrapper.AddElement(ifcPart, standaloneExport || asBuildingElement ? standalonePlacementSetter : placementSetter, extrusionCreationData, standaloneExport || asBuildingElement);
+                        bool containedInLevel = (standaloneExport || asBuildingElement);
+                        IFCPlacementSetter whichPlacementSetter = containedInLevel ? standalonePlacementSetter : placementSetter;
+                        productWrapper.AddElement(partElement, ifcPart, whichPlacementSetter, extrusionCreationData, containedInLevel);
 
                         //Add the exported part to exported cache.
                         TraceExportedParts(partElement, partExportLevel, standaloneExport || asBuildingElement ? ElementId.InvalidElementId : hostElement.Id);

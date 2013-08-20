@@ -1692,6 +1692,15 @@ namespace BIM.IFC.Toolkit
     }
 
     /// <summary>
+    /// Defines the predefined types of curtain walls.
+    /// </summary>
+    public enum IFCCurtainWallType
+    {
+        UserDefined,
+        NotDefined
+    }
+
+    /// <summary>
     /// IFC entity types.
     /// </summary>
     public enum IFCEntityType

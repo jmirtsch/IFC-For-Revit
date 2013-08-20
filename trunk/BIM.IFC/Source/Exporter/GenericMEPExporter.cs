@@ -40,17 +40,17 @@ namespace BIM.IFC.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The element.</param>
         /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="exportType">The export type of the element.
+        /// <param name="ifcEnumType">The sub-type of the element.</param></param>
         /// <param name="productWrapper">The ProductWrapper.</param>
         /// <returns>True if an entity was created, false otherwise.</returns>
-        public static bool Export(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, ProductWrapper productWrapper)
+        public static bool Export(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, 
+            IFCExportType exportType, string ifcEnumType, ProductWrapper productWrapper)
         {
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction tr = new IFCTransaction(file))
             {
-                string ifcEnumType;
-                IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
-
-                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element))
+                using (IFCPlacementSetter setter = IFCPlacementSetter.Create(exporterIFC, element, null, null, ExporterUtil.GetBaseLevelIdForElement(element)))
                 {
                     IFCAnyHandle localPlacementToUse = setter.GetPlacement();
                     using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
@@ -91,7 +91,7 @@ namespace BIM.IFC.Exporter
                                typeDescription, applicableOccurence, null, repMapListOpt, typeTag, typeElementType, element, type);
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(styleHandle))
                             {
-                                Exporter.CreateElementTypeProperties(exporterIFC, type, null, styleHandle);
+                                productWrapper.RegisterHandleWithElementType(type, styleHandle, null);
 
                                 currentTypeInfo.Style = styleHandle;
                                 ExporterCacheManager.TypeObjectsCache.Register(typeId, false, currentTypeInfo);
@@ -166,15 +166,10 @@ namespace BIM.IFC.Exporter
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
                             return false;
 
-                        if (roomId != ElementId.InvalidElementId)
-                        {
+                        bool relatedToSpace = (roomId != ElementId.InvalidElementId);
+                        productWrapper.AddElement(element, instanceHandle, setter, extraParams, !relatedToSpace);
+                        if (relatedToSpace)
                             exporterIFC.RelateSpatialElement(roomId, instanceHandle);
-                            productWrapper.AddElement(instanceHandle, setter, extraParams, false);
-                        }
-                        else
-                        {
-                            productWrapper.AddElement(instanceHandle, setter, extraParams, true);
-                        }
 
                         OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, element, extraParams, null,
                             exporterIFC, localPlacementToUse, setter, productWrapper);
@@ -184,8 +179,6 @@ namespace BIM.IFC.Exporter
 
                         if (bodyData != null && bodyData.MaterialIds.Count != 0)
                             CategoryUtil.CreateMaterialAssociations(element.Document, exporterIFC, instanceHandle, bodyData.MaterialIds);
-
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
 
                         ExporterCacheManager.MEPCache.Register(element, instanceHandle);
 
