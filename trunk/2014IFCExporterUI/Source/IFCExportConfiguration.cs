@@ -108,16 +108,16 @@ namespace BIM.IFC.Export.UI
         public bool ExportPartsAsBuildingElements { get; set; }
 
         /// <summary>
-        /// True to export the surface styles. 
+        /// True to allow exports of solid models when possible.
         /// False to exclude them.
         /// </summary>
-        public bool ExportSurfaceStyles { get; set; }
+        public bool ExportSolidModelRep { get; set; }
 
         /// <summary>
-        /// True to export advanced Swept Solids.
+        /// True to allow exports of schedules as custom property sets.
         /// False to exclude them.
         /// </summary>
-        public bool ExportAdvancedSweptSolids { get; set; }
+        public bool ExportSchedulesAsPsets { get; set; }
 
         /// <summary>
         /// True to export bounding box.
@@ -194,9 +194,9 @@ namespace BIM.IFC.Export.UI
             this.ExportIFCCommonPropertySets = true;
             this.Export2DElements = false;
             this.ExportPartsAsBuildingElements = false;
-            this.ExportSurfaceStyles = true;
-            this.ExportAdvancedSweptSolids = false;
             this.ExportBoundingBox = false;
+            this.ExportSolidModelRep = false;
+            this.ExportSchedulesAsPsets = false;
             this.IncludeSiteElevation = false;
             this.UseCoarseTessellation = true;
             this.StoreIFCGUID = false;
@@ -214,7 +214,6 @@ namespace BIM.IFC.Export.UI
         /// <param name="splitWalls">The SplitWallsAndColumns.</param>
         /// <param name="internalSets">The ExportInternalRevitPropertySets.</param>
         /// <param name="PlanElems2D">The Export2DElements.</param>
-        /// <param name="surfaceStyles">The ExportSurfaceStyles.</param>
         /// <param name="exportBoundingBox">The exportBoundingBox.</param>
         /// <returns>The builtIn configuration.</returns>
         public static IFCExportConfiguration CreateBuiltInConfiguration(string name, 
@@ -224,7 +223,6 @@ namespace BIM.IFC.Export.UI
                                    bool splitWalls,
                                    bool internalSets,
                                    bool PlanElems2D,
-                                   bool surfaceStyles, 
                                    bool exportBoundingBox)
         {
             IFCExportConfiguration configuration = new IFCExportConfiguration();
@@ -241,9 +239,9 @@ namespace BIM.IFC.Export.UI
             configuration.Use2DRoomBoundaryForVolume = false;
             configuration.UseFamilyAndTypeNameForReference = false;
             configuration.ExportPartsAsBuildingElements = false;
-            configuration.ExportSurfaceStyles = surfaceStyles;
-            configuration.ExportAdvancedSweptSolids = false;
             configuration.ExportBoundingBox = exportBoundingBox;
+            configuration.ExportSolidModelRep = false;
+            configuration.ExportSchedulesAsPsets = false;
             configuration.IncludeSiteElevation = false;
             configuration.UseCoarseTessellation = true;
             configuration.StoreIFCGUID = false;
@@ -276,9 +274,9 @@ namespace BIM.IFC.Export.UI
             this.Use2DRoomBoundaryForVolume = other.Use2DRoomBoundaryForVolume;
             this.UseFamilyAndTypeNameForReference = other.UseFamilyAndTypeNameForReference;
             this.ExportPartsAsBuildingElements = other.ExportPartsAsBuildingElements;
-            this.ExportSurfaceStyles = other.ExportSurfaceStyles;
-            this.ExportAdvancedSweptSolids = other.ExportAdvancedSweptSolids;
             this.ExportBoundingBox = other.ExportBoundingBox;
+            this.ExportSolidModelRep = other.ExportSolidModelRep;
+            this.ExportSchedulesAsPsets = other.ExportSchedulesAsPsets;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
             this.UseCoarseTessellation = other.UseCoarseTessellation;
             this.StoreIFCGUID = other.StoreIFCGUID;
@@ -316,9 +314,9 @@ namespace BIM.IFC.Export.UI
             this.Use2DRoomBoundaryForVolume = other.Use2DRoomBoundaryForVolume;
             this.UseFamilyAndTypeNameForReference = other.UseFamilyAndTypeNameForReference;
             this.ExportPartsAsBuildingElements = other.ExportPartsAsBuildingElements;
-            this.ExportSurfaceStyles = other.ExportSurfaceStyles;
-            this.ExportAdvancedSweptSolids = other.ExportAdvancedSweptSolids;
             this.ExportBoundingBox = other.ExportBoundingBox;
+            this.ExportSolidModelRep = other.ExportSolidModelRep;
+            this.ExportSchedulesAsPsets = other.ExportSchedulesAsPsets;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
             this.UseCoarseTessellation = other.UseCoarseTessellation;
             this.m_isBuiltIn = false;
@@ -375,9 +373,9 @@ namespace BIM.IFC.Export.UI
             options.AddOption("Use2DRoomBoundaryForVolume",Use2DRoomBoundaryForVolume.ToString());
             options.AddOption("UseFamilyAndTypeNameForReference",UseFamilyAndTypeNameForReference.ToString());
             options.AddOption("ExportPartsAsBuildingElements", ExportPartsAsBuildingElements.ToString());
-            options.AddOption("ExportSurfaceStyles", ExportSurfaceStyles.ToString());
-            options.AddOption("ExportAdvancedSweptSolids", ExportAdvancedSweptSolids.ToString());
             options.AddOption("ExportBoundingBox", ExportBoundingBox.ToString());
+            options.AddOption("ExportSolidModelRep", ExportSolidModelRep.ToString());
+            options.AddOption("ExportSchedulesAsPsets", ExportSchedulesAsPsets.ToString());
             options.AddOption("IncludeSiteElevation", IncludeSiteElevation.ToString());
             options.AddOption("UseCoarseTessellation", UseCoarseTessellation.ToString());
             options.AddOption("StoreIFCGUID", StoreIFCGUID.ToString());
@@ -420,7 +418,7 @@ namespace BIM.IFC.Export.UI
                 IFCSpaceBoundariesAttributes spaceBoundaryAttributes = new IFCSpaceBoundariesAttributes(SpaceBoundaries);
                 builder.AppendLine(GetDescriptionLine(Resources.SpaceBoundaries, spaceBoundaryAttributes.ToString()));
 
-                IFCExportedPropertySets exportedPropertySets = new IFCExportedPropertySets(ExportInternalRevitPropertySets, ExportIFCCommonPropertySets);
+                IFCExportedPropertySets exportedPropertySets = new IFCExportedPropertySets(ExportInternalRevitPropertySets, ExportIFCCommonPropertySets, ExportSchedulesAsPsets);
                 builder.AppendLine(GetDescriptionLine(Resources.PropertySets, exportedPropertySets.ToString()));
 
                 // Sort by "do" and "don't"
@@ -434,9 +432,8 @@ namespace BIM.IFC.Export.UI
 
                     ConditionalAddLine(builder, Resources.ExportVisibleElementsInView, VisibleElementsOfCurrentView, valueToMatch);
                     ConditionalAddLine(builder, Resources.ExportPartsAsBuildingElements, ExportPartsAsBuildingElements, valueToMatch);
-                    ConditionalAddLine(builder, Resources.ExportSurfaceStyles, ExportSurfaceStyles, valueToMatch);
-                    ConditionalAddLine(builder, Resources.ExportAdvancedSweptSolids, ExportAdvancedSweptSolids, valueToMatch);
                     ConditionalAddLine(builder, Resources.ExportBoundingBox, ExportBoundingBox, valueToMatch);
+                    ConditionalAddLine(builder, Resources.ExportSolidModelRep, ExportBoundingBox, valueToMatch);
 
                     ConditionalAddLine(builder, Resources.UseFamilyAndTypeNameForReferences, UseFamilyAndTypeNameForReference, valueToMatch);
                     ConditionalAddLine(builder, Resources.Use2DRoomBoundariesForRoomVolume, Use2DRoomBoundaryForVolume, valueToMatch);

@@ -70,6 +70,8 @@ namespace BIM.IFC.Export.UI
             RestorePreviousWindow();
 
             UpdateCurrentSelectedSetupCombo(selectedConfigName);
+
+            Title = "IFC Export (" + IFCUISettings.GetAssemblyVersion() + ")";
        }
 
         /// <summary>
