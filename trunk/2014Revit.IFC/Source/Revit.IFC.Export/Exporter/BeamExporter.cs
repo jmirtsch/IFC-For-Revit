@@ -105,7 +105,7 @@ namespace Revit.IFC.Export.Exporter
                         canExportAxis = false;
                 }
 
-                using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, element, null, canExportAxis ? orientTrf : null, ElementId.InvalidElementId))
+                using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, element, null, canExportAxis ? orientTrf : null))
                 {
                     IFCAnyHandle localPlacement = setter.LocalPlacement;
                     SolidMeshGeometryInfo solidMeshInfo = GeometryUtil.GetSplitSolidMeshGeometry(geometryElement);
@@ -240,7 +240,7 @@ namespace Revit.IFC.Export.Exporter
                         IFCAnyHandle beam = IFCInstanceExporter.CreateBeam(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
                             instanceName, instanceDescription, instanceObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, instanceTag, preDefinedType);
 
-                        productWrapper.AddElement(beam, setter, extrusionCreationData, true);
+                        productWrapper.AddElement(element, beam, setter, extrusionCreationData, true);
 
                         OpeningUtil.CreateOpeningsIfNecessary(beam, element, extrusionCreationData, offsetTransform, exporterIFC, 
                             extrusionCreationData.GetLocalPlacement(), setter, productWrapper);
@@ -259,8 +259,6 @@ namespace Revit.IFC.Export.Exporter
 
                         // Register the beam's IFC handle for later use by truss and beam system export.
                         ExporterCacheManager.ElementToHandleCache.Register(element.Id, beam);
-                                
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }
                 }
 

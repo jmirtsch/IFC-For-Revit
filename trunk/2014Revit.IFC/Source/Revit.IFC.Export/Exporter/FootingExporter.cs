@@ -134,12 +134,10 @@ namespace Revit.IFC.Export.Exporter
                             }
                         }
 
-                        productWrapper.AddElement(footing, setter, ecData, true);
+                        productWrapper.AddElement(element, footing, setter, ecData, true);
 
                         OpeningUtil.CreateOpeningsIfNecessary(footing, element, ecData, null, 
                             exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);
-
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }
                 }
 

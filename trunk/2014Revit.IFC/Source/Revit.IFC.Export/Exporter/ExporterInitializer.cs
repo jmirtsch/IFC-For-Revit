@@ -67,6 +67,14 @@ namespace Revit.IFC.Export.Exporter
                     propertySetsToExport += InitCommonPropertySets;
             }
 
+            if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportSchedulesAsPsets)
+            {
+                if (propertySetsToExport == null)
+                    propertySetsToExport = InitCustomPropertySets;
+                else
+                    propertySetsToExport += InitCustomPropertySets;
+            }
+
             if (ExportSchema == IFCVersion.IFCCOBIE)
             {
                 if (propertySetsToExport == null)
@@ -111,6 +119,122 @@ namespace Revit.IFC.Export.Exporter
         }
 
         // Properties
+
+        /// <summary>
+        /// Initializes custom property sets from schedules.
+        /// </summary>
+        /// <param name="propertySets">List to store property sets.</param>
+        /// <param name="fileVersion">The IFC file version.</param>
+        private static void InitCustomPropertySets(IList<IList<PropertySetDescription>> propertySets, IFCVersion fileVersion)
+        {
+            Document document = ExporterCacheManager.Document;
+            IList<PropertySetDescription> customPropertySets = new List<PropertySetDescription>();
+
+            // Collect all ViewSchedules from the document to use as custom property sets.
+            FilteredElementCollector viewScheduleElementCollector = new FilteredElementCollector(document);
+
+            ElementFilter viewScheduleElementFilter = new ElementClassFilter(typeof(ViewSchedule));
+            viewScheduleElementCollector.WherePasses(viewScheduleElementFilter);
+
+            int unnamedScheduleIndex = 1;
+            foreach (ViewSchedule schedule in viewScheduleElementCollector)
+            {
+                //property set Manufacturer Information
+                PropertySetDescription customPSet = new PropertySetDescription();
+
+                string scheduleName = schedule.Name;
+                if (string.IsNullOrWhiteSpace(scheduleName))
+                {
+                    scheduleName = "Unnamed Schedule " + unnamedScheduleIndex;
+                    unnamedScheduleIndex++;
+                }
+                customPSet.Name = scheduleName;
+                
+                ScheduleDefinition definition = schedule.Definition;
+                if (definition == null)
+                    continue;
+
+                // The schedule will be responsible for determining which elements to actually export.
+                customPSet.ViewScheduleId = schedule.Id;
+                customPSet.EntityTypes.Add(IFCEntityType.IfcElement);
+                
+                int fieldCount = definition.GetFieldCount();
+                if (fieldCount == 0)
+                    continue;
+
+                HashSet<ElementId> containedElementIds = new HashSet<ElementId>();
+                FilteredElementCollector elementsInViewScheduleCollector = new FilteredElementCollector(document, schedule.Id);
+                foreach (Element containedElement in elementsInViewScheduleCollector)
+                {
+                    containedElementIds.Add(containedElement.Id);
+                }
+                ExporterCacheManager.ViewScheduleElementCache.Add(new KeyValuePair<ElementId, HashSet<ElementId>>(schedule.Id, containedElementIds));
+
+                IDictionary<ElementId, Element> cachedElementTypes = new Dictionary<ElementId, Element>();
+
+                for (int ii = 0; ii < fieldCount; ii++)
+                {
+                    ScheduleField field = definition.GetField(ii);
+
+                    SchedulableField schedulableField = field.GetSchedulableField();
+                    ScheduleFieldType fieldType = schedulableField.FieldType;
+                    if (fieldType != ScheduleFieldType.Instance && fieldType != ScheduleFieldType.ElementType)
+                        continue;
+
+                    ElementId parameterId = field.ParameterId;
+                    if (parameterId == ElementId.InvalidElementId)
+                        continue;
+
+                    // We use asBuiltInParameterId to get the parameter by id below.  We don't want to use it later, however, so
+                    // we store builtInParameterId only if it is a proper member of the enumeration.
+                    BuiltInParameter asBuiltInParameterId = (BuiltInParameter)parameterId.IntegerValue;
+                    BuiltInParameter builtInParameterId =
+                        Enum.IsDefined(typeof(BuiltInParameter), asBuiltInParameterId) ? asBuiltInParameterId : BuiltInParameter.INVALID;
+
+                    Parameter containedElementParameter = null;
+                   
+                    // We could cache the actual elements when we store the element ids.  However, this would almost certainly take more
+                    // time than getting one of the first few elements in the collector.
+                    foreach (Element containedElement in elementsInViewScheduleCollector)
+                    {
+                        if (fieldType == ScheduleFieldType.Instance)
+                            containedElementParameter = containedElement.get_Parameter(asBuiltInParameterId);
+
+                        // shared parameters can return ScheduleFieldType.Instance, even if they are type parameters, so take a look.
+                        if (containedElementParameter == null)
+                        {
+                            ElementId containedElementTypeId = containedElement.GetTypeId();
+                            Element containedElementType = null;
+                            if (containedElementTypeId != ElementId.InvalidElementId)
+                            {
+                                if (!cachedElementTypes.TryGetValue(containedElementTypeId, out containedElementType))
+                                {
+                                    containedElementType = document.GetElement(containedElementTypeId);
+                                    cachedElementTypes[containedElementTypeId] = containedElementType;
+                                }
+                            }
+                            if (containedElementType != null)
+                                containedElementParameter = containedElementType.get_Parameter(asBuiltInParameterId);
+                        }
+
+                        if (containedElementParameter != null)
+                            break;
+                    }
+                    if (containedElementParameter == null)
+                        continue;
+
+                    PropertySetEntry ifcPSE = PropertySetEntry.CreateParameterEntry(containedElementParameter);
+                    ifcPSE.RevitBuiltInParameter = builtInParameterId;
+                    ifcPSE.PropertyName = field.ColumnHeading;
+                    customPSet.AddEntry(ifcPSE);
+                }
+
+                customPropertySets.Add(customPSet);
+            }
+
+            propertySets.Add(customPropertySets);
+        }
+        
         /// <summary>
         /// Initializes common property sets.
         /// </summary>
@@ -162,7 +286,11 @@ namespace Revit.IFC.Export.Exporter
             InitPropertySetElectricalDeviceCommon(commonPropertySets);
             InitPropertySetLightFixtureTypeCommon(commonPropertySets);
             InitPropertySetProvisionForVoid(commonPropertySets);
+            InitPropertySetSanitaryTerminalTypeBath(commonPropertySets);
+            InitPropertySetSanitaryTerminalTypeShower(commonPropertySets);
+            InitPropertySetSanitaryTerminalTypeSink(commonPropertySets);
             InitPropertySetSanitaryTerminalTypeToiletPan(commonPropertySets);
+            InitPropertySetSanitaryTerminalTypeWashHandBasin(commonPropertySets);
             InitPropertySetSwitchingDeviceTypeCommon(commonPropertySets);
             InitPropertySetSwitchingDeviceTypeToggleSwitch(commonPropertySets);
             InitPropertySetZoneCommon(commonPropertySets);
@@ -354,7 +482,7 @@ namespace Revit.IFC.Export.Exporter
             }
             else
             {
-                ifcPSE = PropertySetEntry.CreatePositiveLength("Thickness");
+                ifcPSE = PropertySetEntry.CreatePositiveLength("TotalThickness");
                 ifcPSE.RevitBuiltInParameter = BuiltInParameter.CEILING_THICKNESS;
                 propertySetCoveringCommon.AddEntry(ifcPSE);
             }
@@ -1777,6 +1905,86 @@ namespace Revit.IFC.Export.Exporter
         }
 
         /// <summary>
+        /// Initializes Pset_SanitaryTerminalTypeBath
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetSanitaryTerminalTypeBath(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetBath = new PropertySetDescription();
+            propertySetBath.Name = "Pset_SanitaryTerminalTypeBath";
+            propertySetBath.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
+            propertySetBath.PredefinedType = "BATH";
+
+            propertySetBath.AddEntry(PropertySetEntry.CreateEnumeratedValue("BathType", PropertyType.Label,
+                typeof(PsetSanitaryTerminalTypeBath_BathType)));
+            propertySetBath.AddEntry(PropertySetEntry.CreatePositiveLength("NominalLength"));
+            propertySetBath.AddEntry(PropertySetEntry.CreatePositiveLength("NominalWidth"));
+            propertySetBath.AddEntry(PropertySetEntry.CreatePositiveLength("NominalDepth"));
+
+            //propertySetBath.AddEntry(PropertySetEntry.CreateMaterial("Material"));
+            propertySetBath.AddEntry(PropertySetEntry.CreatePositiveLength("MaterialThickness"));
+            propertySetBath.AddEntry(PropertySetEntry.CreateText("Color"));
+            propertySetBath.AddEntry(PropertySetEntry.CreatePositiveLength("DrainSize"));
+            propertySetBath.AddEntry(PropertySetEntry.CreateBoolean("HasGrabHandles"));
+            
+            commonPropertySets.Add(propertySetBath);
+        }
+
+        /// <summary>
+        /// Initializes Pset_SanitaryTerminalTypeShower
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetSanitaryTerminalTypeShower(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetShower = new PropertySetDescription();
+            propertySetShower.Name = "Pset_SanitaryTerminalTypeShower";
+            propertySetShower.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
+            propertySetShower.PredefinedType = "SHOWER";
+
+            propertySetShower.AddEntry(PropertySetEntry.CreateEnumeratedValue("ShowerType", PropertyType.Label,
+                typeof(PsetSanitaryTerminalTypeShower_ShowerType)));
+            propertySetShower.AddEntry(PropertySetEntry.CreateBoolean("HasTray"));
+            propertySetShower.AddEntry(PropertySetEntry.CreatePositiveLength("NominalLength"));
+            propertySetShower.AddEntry(PropertySetEntry.CreatePositiveLength("NominalWidth"));
+            propertySetShower.AddEntry(PropertySetEntry.CreatePositiveLength("NominalDepth"));
+
+            //propertySetShower.AddEntry(PropertySetEntry.CreateMaterial("Material"));
+            propertySetShower.AddEntry(PropertySetEntry.CreatePositiveLength("MaterialThickness"));
+            propertySetShower.AddEntry(PropertySetEntry.CreateText("Color"));
+            propertySetShower.AddEntry(PropertySetEntry.CreateText("ShowerHeadDescription")); 
+            propertySetShower.AddEntry(PropertySetEntry.CreatePositiveLength("DrainSize"));
+            
+            commonPropertySets.Add(propertySetShower);
+        }
+
+        /// <summary>
+        /// Initializes Pset_SanitaryTerminalTypeSink
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetSanitaryTerminalTypeSink(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetSink = new PropertySetDescription();
+            propertySetSink.Name = "Pset_SanitaryTerminalTypeSink";
+            propertySetSink.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
+            propertySetSink.PredefinedType = "SINK";
+
+            propertySetSink.AddEntry(PropertySetEntry.CreateEnumeratedValue("SinkType", PropertyType.Label,
+                typeof(PsetSanitaryTerminalTypeSink_SinkType)));
+            // PsetSanitaryTerminalTypeToiletPan_SanitaryMounting is purposely reused, as it is identical.
+            propertySetSink.AddEntry(PropertySetEntry.CreateEnumeratedValue("SinkMounting", PropertyType.Label,
+                typeof(PsetSanitaryTerminalTypeToiletPan_SanitaryMounting)));
+            propertySetSink.AddEntry(PropertySetEntry.CreatePositiveLength("NominalLength"));
+            propertySetSink.AddEntry(PropertySetEntry.CreatePositiveLength("NominalWidth"));
+            propertySetSink.AddEntry(PropertySetEntry.CreatePositiveLength("NominalDepth"));
+
+            //propertySetSink.AddEntry(PropertySetEntry.CreateMaterial("Material"));
+            propertySetSink.AddEntry(PropertySetEntry.CreateText("Color"));
+            propertySetSink.AddEntry(PropertySetEntry.CreatePositiveLength("DrainSize"));
+
+            commonPropertySets.Add(propertySetSink);
+        }
+        
+        /// <summary>
         /// Initializes Pset_SanitaryTerminalTypeToiletPan
         /// </summary>
         /// <param name="commonPropertySets">List to store property sets.</param>
@@ -1785,7 +1993,7 @@ namespace Revit.IFC.Export.Exporter
             PropertySetDescription propertySetToiletPan = new PropertySetDescription();
             propertySetToiletPan.Name = "Pset_SanitaryTerminalTypeToiletPan";
             propertySetToiletPan.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
-            // TODO: Restrict to Toilet Pans only.
+            propertySetToiletPan.PredefinedType = "TOILETPAN";
 
             propertySetToiletPan.AddEntry(PropertySetEntry.CreateEnumeratedValue("ToiletType", PropertyType.Label,
                 typeof(PsetSanitaryTerminalTypeToiletPan_ToiletType)));
@@ -1804,6 +2012,32 @@ namespace Revit.IFC.Export.Exporter
             propertySetToiletPan.AddEntry(PropertySetEntry.CreatePositiveLength("NominalDepth"));
 
             commonPropertySets.Add(propertySetToiletPan);
+        }
+
+        /// <summary>
+        /// Initializes Pset_SanitaryTerminalTypeWashHandBasin
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetSanitaryTerminalTypeWashHandBasin(IList<PropertySetDescription> commonPropertySets)
+        {
+            PropertySetDescription propertySetWashHandBasin = new PropertySetDescription();
+            propertySetWashHandBasin.Name = "Pset_SanitaryTerminalTypeWashHandBasin";
+            propertySetWashHandBasin.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
+            propertySetWashHandBasin.PredefinedType = "WASHHANDBASIN";
+
+            propertySetWashHandBasin.AddEntry(PropertySetEntry.CreateEnumeratedValue("WashHandBasinType", PropertyType.Label,
+                typeof(PsetSanitaryTerminalTypeWashHandBasin_WashHandBasinType)));
+            // PsetSanitaryTerminalTypeToiletPan_SanitaryMounting is purposely reused, as it is identical.
+            propertySetWashHandBasin.AddEntry(PropertySetEntry.CreateEnumeratedValue("WashHandBasinMounting", PropertyType.Label,
+                typeof(PsetSanitaryTerminalTypeToiletPan_SanitaryMounting)));
+            //propertySetWashHandBasin.AddEntry(PropertySetEntry.CreateMaterial("Material"));
+            propertySetWashHandBasin.AddEntry(PropertySetEntry.CreatePositiveLength("NominalLength"));
+            propertySetWashHandBasin.AddEntry(PropertySetEntry.CreatePositiveLength("NominalWidth"));
+            propertySetWashHandBasin.AddEntry(PropertySetEntry.CreatePositiveLength("NominalDepth"));
+            propertySetWashHandBasin.AddEntry(PropertySetEntry.CreateText("Color"));
+            propertySetWashHandBasin.AddEntry(PropertySetEntry.CreatePositiveLength("DrainSize"));
+
+            commonPropertySets.Add(propertySetWashHandBasin);
         }
 
         /// <summary>

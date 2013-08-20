@@ -98,11 +98,10 @@ namespace Revit.IFC.Export.Exporter
                        mullionLocalPlacement, repHnd, elemTag, "MULLION");
                     ExporterCacheManager.HandleToElementCache.Register(mullionHnd, mullion.Id);
 
-                    productWrapper.AddElement(mullionHnd, mullionSetter, extraParams, false);
+                    productWrapper.AddElement(mullion, mullionHnd, mullionSetter, extraParams, false);
 
                     ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, mullion);
                     CategoryUtil.CreateMaterialAssociation(mullion.Document, exporterIFC, mullionHnd, matId);
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, mullion, productWrapper);
                 }
             }
         }

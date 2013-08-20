@@ -86,7 +86,7 @@ namespace Revit.IFC.Export.Exporter
                         ownerHistory, name, description, objectType);
 
                     HashSet<IFCAnyHandle> relatedBuildings = new HashSet<IFCAnyHandle>();
-                    relatedBuildings.Add(exporterIFC.GetBuilding());
+                    relatedBuildings.Add(ExporterCacheManager.BuildingHandle);
 
                     IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
                         exporterIFC.GetOwnerHistoryHandle(), null, null, assemblyInstanceHnd, relatedBuildings);
@@ -145,9 +145,7 @@ namespace Revit.IFC.Export.Exporter
                     return false;
 
                 bool relateToLevel = (levelInfo != null);
-                productWrapper.AddElement(assemblyInstanceHnd, levelInfo, null, relateToLevel);
-
-                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
+                productWrapper.AddElement(element, assemblyInstanceHnd, levelInfo, null, relateToLevel);
 
                 ExporterCacheManager.AssemblyInstanceCache.RegisterAssemblyInstance(element.Id, assemblyInstanceHnd);
 
@@ -258,9 +256,7 @@ namespace Revit.IFC.Export.Exporter
                         ownerHistory, name, description, objectType, localPlacement, null, elementTag,
                         IFCAssemblyPlace.NotDefined, assemblyType);
 
-                    productWrapper.AddElement(assemblyInstanceHnd, placementSetter.LevelInfo, null, true);
-
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, assemblyElem, productWrapper);
+                    productWrapper.AddElement(assemblyElem, assemblyInstanceHnd, placementSetter.LevelInfo, null, true);
 
                     string aggregateGuid = GUIDUtil.CreateSubElementGUID(assemblyElem, (int)IFCAssemblyInstanceSubElements.RelAggregates);
                     IFCInstanceExporter.CreateRelAggregates(file, aggregateGuid, ownerHistory, null, null, assemblyInstanceHnd, memberHnds);

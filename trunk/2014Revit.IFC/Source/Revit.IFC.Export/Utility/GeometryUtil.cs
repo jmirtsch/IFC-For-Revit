@@ -1350,8 +1350,10 @@ namespace Revit.IFC.Export.Utility
 
                 // sew, “closing” them with a simple line
                 IList<IList<Curve>> curvesCollection = new List<IList<Curve>>();
-                curvesCollection.Add(firstValidCurves);
-                curvesCollection.Add(secondValidCurves);
+                if (firstValidCurves != null)
+                    curvesCollection.Add(firstValidCurves);
+                if (secondValidCurves != null)
+                    curvesCollection.Add(secondValidCurves);
 
                 foreach (IList<Curve> curves in curvesCollection)
                 {

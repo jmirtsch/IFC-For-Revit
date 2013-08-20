@@ -122,15 +122,11 @@ namespace Revit.IFC.Export.Exporter
                             exporterIFC.GetOwnerHistoryHandle(), name, description, objectType, localPlacementToUse, prodRep,
                             tag);
 
-                        if (roomId == ElementId.InvalidElementId)
-                        {
-                            productWrapper.AddElement(elemHnd, setter.LevelInfo, ecData, true);
-                        }
-                        else
-                        {
+                        bool containedInSpace = (roomId != ElementId.InvalidElementId);
+                        productWrapper.AddElement(element, elemHnd, setter.LevelInfo, ecData, !containedInSpace);
+                        
+                        if (containedInSpace)
                             ExporterCacheManager.SpaceInfoCache.RelateToSpace(roomId, elemHnd);
-                            productWrapper.AddElement(elemHnd, setter.LevelInfo, ecData, false);
-                        }
 
                         OpeningUtil.CreateOpeningsIfNecessary(elemHnd, element, ecData, null,
                             exporterIFC, localPlacementToUse, setter, productWrapper);

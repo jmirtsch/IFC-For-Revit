@@ -24,7 +24,9 @@ using System.Text;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Architecture;
+using Autodesk.Revit.DB.Structure;
 using Revit.IFC.Common.Utility;
+using Revit.IFC.Export.Exporter;
 using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Toolkit
@@ -44,7 +46,6 @@ namespace Revit.IFC.Export.Toolkit
         IFCLevelInfo m_LevelInfo = null;
         IFCAnyHandle m_LocalPlacement = null;
         double m_Offset = 0;
-        double m_BaseOffset = 0;
 
         /// <summary>
         ///    The handle to the IfcLocalPlacement stored with this setter.
@@ -63,18 +64,6 @@ namespace Revit.IFC.Export.Toolkit
         }
 
         /// <summary>
-        ///    The offset to the base level.
-        /// </summary>
-        /// <remarks>
-        ///    This may differ from Offset as this comes from the base level info, which could be different from the level info
-        ///    (level info is based on a calculated level for the object; baseLevelInfo is based strictly on input level, regardless of overrides).
-        /// </remarks>
-        public double BaseOffset
-        {
-            get { return m_BaseOffset; }
-        }
-
-        /// <summary>
         ///    The level id associated with the element and placement.
         /// </summary>
         public ElementId LevelId
@@ -90,44 +79,70 @@ namespace Revit.IFC.Export.Toolkit
             get { return m_LevelInfo; }
         }
 
+        public static ElementId GetBaseLevelIdForElement(Element elem)
+        {
+            if (elem.ViewSpecific)
+            {
+                ElementId viewId = elem.OwnerViewId;
+                ElementId viewSpecificlevelId;
+                if (ExporterCacheManager.DBViewsToExport.TryGetValue(viewId, out viewSpecificlevelId))
+                    return viewSpecificlevelId;
+            }
+                
+            Parameter levelParameter = null;
+            if (elem is FamilyInstance)
+                levelParameter = elem.get_Parameter(BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM);
+            else if (elem is Truss)
+                levelParameter = elem.get_Parameter(BuiltInParameter.TRUSS_ELEMENT_REFERENCE_LEVEL_PARAM);
+            else if (elem is Stairs || StairsExporter.IsLegacyStairs(elem))
+                levelParameter = elem.get_Parameter(BuiltInParameter.STAIRS_BASE_LEVEL_PARAM);
+            else if (elem is ExtrusionRoof)
+                levelParameter = elem.get_Parameter(BuiltInParameter.ROOF_CONSTRAINT_LEVEL_PARAM);
+
+            if (levelParameter != null && levelParameter.StorageType == StorageType.ElementId)
+                return levelParameter.AsElementId();
+            else
+                return elem.LevelId;
+        }
+
         /// <summary>
         ///    Creates a new placement setter instance for the given element.
         /// </summary>
-        /// <param name="exporterIFC">
-        ///    The exporter.
-        /// </param>
-        /// <param name="element">
-        ///    The element.
-        /// </param>
-        /// <returns>
-        ///    The placement setter.
-        /// </returns>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="element">The element.</param>
+        /// <returns>The placement setter.</returns>
         public static PlacementSetter Create(ExporterIFC exporterIFC, Element elem)
         {
-            return new PlacementSetter(exporterIFC, elem, null, null, ElementId.InvalidElementId);
+            return new PlacementSetter(exporterIFC, elem, null, null, GetBaseLevelIdForElement(elem));
         }
 
+        /// <summary>
+        ///    Creates a new placement setter instance for the given element with the ability to specific overridden transformations.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="instanceOffsetTrf">The offset transformation for the instance of a type.  Optional, can be <see langword="null"/>.</param>
+        /// <param name="orientationTrf">The orientation transformation for the local coordinates being used to export the element.  
+        /// Optional, can be <see langword="null"/>.</param>
+        public static PlacementSetter Create(ExporterIFC exporterIFC, Element elem, Transform instanceOffsetTrf, Transform orientationTrf)
+        {
+            return new PlacementSetter(exporterIFC, elem, instanceOffsetTrf, orientationTrf, GetBaseLevelIdForElement(elem));
+        }
+        
         /// <summary>
         ///    Creates a new placement setter instance for the given element with the ability to specific overridden transformations
         ///    and level id.
         /// </summary>
-        /// <param name="exporterIFC">
-        ///    The exporter.
-        /// </param>
-        /// <param name="element">
-        ///    The element.
-        /// </param>
-        /// <param name="instanceOffsetTrf">
-        ///    The offset transformation for the instance of a type.  Optional, can be <see langword="null"/>.
-        /// </param>
-        /// <param name="orientationTrf">
-        ///    The orientation transformation for the local coordinates being used to export the element.  Optional, can be <see langword="null"/>.
-        /// </param>
-        /// <param name="overrideLevelId">
-        ///    The level id to reference.
-        /// </param>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="instanceOffsetTrf">The offset transformation for the instance of a type.  Optional, can be <see langword="null"/>.</param>
+        /// <param name="orientationTrf">The orientation transformation for the local coordinates being used to export the element.  
+        /// Optional, can be <see langword="null"/>.</param>
+        /// <param name="overrideLevelId">The level id to reference.  This is intended for use when splitting walls and columns by level.</param>
         public static PlacementSetter Create(ExporterIFC exporterIFC, Element elem, Transform instanceOffsetTrf, Transform orientationTrf, ElementId overrideLevelId)
         {
+            if (overrideLevelId == null || overrideLevelId == ElementId.InvalidElementId)
+                overrideLevelId = GetBaseLevelIdForElement(elem);
             return new PlacementSetter(exporterIFC, elem, instanceOffsetTrf, orientationTrf, overrideLevelId);
         }
 
@@ -135,21 +150,12 @@ namespace Revit.IFC.Export.Toolkit
         ///    Constructs a new placement setter instance for the given element with the ability to specific overridden transformations
         ///    and level id.
         /// </summary>
-        /// <param name="exporterIFC">
-        ///    The exporter.
-        /// </param>
-        /// <param name="element">
-        ///    The element.
-        /// </param>
-        /// <param name="instanceOffsetTrf">
-        ///    The offset transformation for the instance of a type.  Optional, can be <see langword="null"/>.
-        /// </param>
-        /// <param name="orientationTrf">
-        ///    The orientation transformation for the local coordinates being used to export the element.  Optional, can be <see langword="null"/>.
-        /// </param>
-        /// <param name="overrideLevelId">
-        ///    The level id to reference.
-        /// </param>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="instanceOffsetTrf">The offset transformation for the instance of a type.  Optional, can be <see langword="null"/>.</param>
+        /// <param name="orientationTrf">The orientation transformation for the local coordinates being used to export the element.
+        /// Optional, can be <see langword="null"/>.</param>
+        /// <param name="overrideLevelId">The level id to reference.</param>
         public PlacementSetter(ExporterIFC exporterIFC, Element elem, Transform instanceOffsetTrf, Transform orientationTrf, ElementId overrideLevelId)
         {
             commonInit(exporterIFC, elem, instanceOffsetTrf, orientationTrf, overrideLevelId);
@@ -158,12 +164,8 @@ namespace Revit.IFC.Export.Toolkit
         /// <summary>
         ///    Obtains the handle to an alternate local placement for a room-related element.
         /// </summary>
-        /// <param name="element">
-        ///    The element.
-        /// </param>
-        /// <param name="placementToUse">
-        ///    The handle to the IfcLocalPlacement to use for the given room-related element.
-        /// </param>
+        /// <param name="element">The element.</param>
+        /// <param name="placementToUse">The handle to the IfcLocalPlacement to use for the given room-related element.</param>
         /// <returns>
         ///    The id of the spatial element related to the element.  InvalidElementId if the element
         ///    is not room-related, in which case the output will contain the placement handle from
@@ -198,21 +200,11 @@ namespace Revit.IFC.Export.Toolkit
         /// <summary>
         ///    Gets the level info related to an offset of the element's local placement.
         /// </summary>
-        /// <param name="offset">
-        ///    The vertical offset to the local placement.
-        /// </param>
-        /// <param name="scale">
-        ///    The linear scale.
-        /// </param>
-        /// <param name="pPlacementHnd">
-        ///    The handle to the new local placement.
-        /// </param>
-        /// <param name="pScaledOffsetFromNewLevel">
-        ///    The scaled offset from the new level.
-        /// </param>
-        /// <returns>
-        ///    The level info.
-        /// </returns>
+        /// <param name="offset">The vertical offset to the local placement.</param>
+        /// <param name="scale">The linear scale.</param>
+        /// <param name="pPlacementHnd">The handle to the new local placement.</param>
+        /// <param name="pScaledOffsetFromNewLevel">The scaled offset from the new level.</param>
+        /// <returns>The level info.</returns>
         public IFCLevelInfo GetOffsetLevelInfoAndHandle(double offset, double scale, out IFCAnyHandle placementHnd, out double scaledOffsetFromNewLevel)
         {
             placementHnd = null;
@@ -260,21 +252,14 @@ namespace Revit.IFC.Export.Toolkit
             Document doc = elem.Document;
             Element hostElem = elem;
             ElementId elemId = elem.Id;
-            ElementId levelId = overrideLevelId;
+            ElementId newLevelId = overrideLevelId;
 
             bool useOverrideOrigin = false;
             XYZ overrideOrigin = XYZ.Zero;
 
             IDictionary<ElementId, IFCLevelInfo> levelInfos = exporterIFC.GetLevelInfos();
 
-            if (elem.ViewSpecific)
-            {
-                ElementId viewId = elem.OwnerViewId;
-                ElementId viewSpecificlevelId;
-                if (ExporterCacheManager.DBViewsToExport.TryGetValue(viewId, out viewSpecificlevelId))
-                    levelId = viewSpecificlevelId;
-            }
-            else if (overrideLevelId == ElementId.InvalidElementId || orientationTrf != null)
+            if (overrideLevelId == ElementId.InvalidElementId)
             {
                 if (familyTrf == null)
                 {
@@ -307,18 +292,11 @@ namespace Revit.IFC.Export.Toolkit
                             hostElem = doc.GetElement(hostElemId);
                         }
 
-                        levelId = hostElem != null ? hostElem.LevelId : ElementId.InvalidElementId;
+                        newLevelId = hostElem != null ? hostElem.LevelId : ElementId.InvalidElementId;
 
-                        if (levelId == ElementId.InvalidElementId)
+                        if (newLevelId == ElementId.InvalidElementId)
                         {
                             ExporterIFCUtils.GetLevelIdByHeight(exporterIFC, hostElem);
-                        }
-
-                        // Roofs, for some reason, don't store their level the same way.  Get the roof information if we still haven't found a
-                        // match.
-                        if (levelId == ElementId.InvalidElementId && elem is ExtrusionRoof)
-                        {
-                            ParameterUtil.GetElementIdValueFromElement(elem, BuiltInParameter.ROOF_CONSTRAINT_LEVEL_PARAM, out levelId);
                         }
                     }
                 }
@@ -326,11 +304,11 @@ namespace Revit.IFC.Export.Toolkit
                 // todo: store.
                 double bottomHeight = double.MaxValue;
                 ElementId bottomLevelId = ElementId.InvalidElementId;
-                if ((levelId == ElementId.InvalidElementId) || orientationTrf != null)
+                if ((newLevelId == ElementId.InvalidElementId) || orientationTrf != null)
                 {
                     // if we have a trf, it might geometrically push the instance to a new level.  Check that case.
                     // actually, we should ALWAYS check the bbox vs the settings
-                    levelId = ElementId.InvalidElementId;
+                    newLevelId = ElementId.InvalidElementId;
                     XYZ originToUse = XYZ.Zero;
                     bool originIsValid = useOverrideOrigin;
 
@@ -376,7 +354,7 @@ namespace Revit.IFC.Export.Toolkit
 
                         if (originIsValid && ((originToUse[2] > (startHeight - MathUtil.Eps())) && (!useHeight || originToUse[2] < (endHeight - MathUtil.Eps()))))
                         {
-                            levelId = levelInfoPair.Key;
+                            newLevelId = levelInfoPair.Key;
                         }
 
                         if (startHeight < (bottomHeight + MathUtil.Eps()))
@@ -387,30 +365,16 @@ namespace Revit.IFC.Export.Toolkit
                     }
                 }
 
-                if (levelId == ElementId.InvalidElementId)
-                    levelId = bottomLevelId;
+                if (newLevelId == ElementId.InvalidElementId)
+                    newLevelId = bottomLevelId;
             }
-
-            ElementId newLevelId = overrideLevelId != ElementId.InvalidElementId ? overrideLevelId : levelId;
 
             m_LevelInfo = exporterIFC.GetLevelInfo(newLevelId);
+            if (m_LevelInfo == null)
+                m_LevelInfo = levelInfos.Values.First<IFCLevelInfo>();
 
-            IFCLevelInfo newLevelInfo = null;
-            if (newLevelId != ElementId.InvalidElementId)
-            {
-                newLevelInfo = exporterIFC.GetLevelInfo(newLevelId);
-                if (newLevelInfo == null)
-                    newLevelInfo = levelInfos.Values.First<IFCLevelInfo>();
-            }
-
-            double elevation = 0.0;
-            IFCAnyHandle levelPlacement = null;
-
-            if (newLevelInfo != null)
-            {
-                elevation = newLevelInfo.Elevation;
-                levelPlacement = newLevelInfo.GetLocalPlacement();
-            }
+            double elevation = m_LevelInfo.Elevation;
+            IFCAnyHandle levelPlacement = m_LevelInfo.GetLocalPlacement();
 
             IFCFile file = exporterIFC.GetFile();
 
@@ -441,15 +405,6 @@ namespace Revit.IFC.Export.Toolkit
                 XYZ origin, xDir, yDir, zDir;
 
                 xDir = orientationTrf.BasisX; yDir = orientationTrf.BasisY; zDir = orientationTrf.BasisZ; origin = orientationTrf.Origin;
-
-                IFCLevelInfo baseLevelInfo = null;
-                if (levelId != ElementId.InvalidElementId)
-                {
-                    baseLevelInfo = exporterIFC.GetLevelInfo(levelId);
-                    if (baseLevelInfo == null)
-                        baseLevelInfo = levelInfos.Values.First<IFCLevelInfo>();
-                }
-                m_BaseOffset = baseLevelInfo != null ? baseLevelInfo.Elevation : 0;
 
                 XYZ levelOrigin = new XYZ(0, 0, elevation);
                 origin = origin - levelOrigin;

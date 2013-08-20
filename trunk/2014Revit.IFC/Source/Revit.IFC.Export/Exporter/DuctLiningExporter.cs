@@ -85,12 +85,10 @@ namespace Revit.IFC.Export.Exporter
                             ownerHistory, name, description, objectType, localPlacement, representation, elementTag, "Wrapping");
                         ExporterCacheManager.ElementToHandleCache.Register(element.Id, ductLining);
 
-                        productWrapper.AddElement(ductLining, placementSetter.LevelInfo, ecData, true);
+                        productWrapper.AddElement(element, ductLining, placementSetter.LevelInfo, ecData, true);
 
                         ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element);
                         CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, ductLining, matId);
-                        
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }
                 }
                 tr.Commit();

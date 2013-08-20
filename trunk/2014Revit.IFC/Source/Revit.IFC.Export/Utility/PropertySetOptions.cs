@@ -84,6 +84,30 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
+        /// Override for the ExportSchedulesAsPsets value from UI or API options.
+        /// </summary>
+        private bool? ExportSchedulesAsPsetsOverride
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Whether or not to use schedules as templates for custom property sets.
+        /// </summary>
+        public bool ExportSchedulesAsPsets
+        {
+            get
+            {
+                // if the option is set by alternate UI, return the setting in UI.
+                if (ExportSchedulesAsPsetsOverride != null)
+                    return (bool)ExportSchedulesAsPsetsOverride;
+                // otherwise return false by default.
+                return false;
+            }
+        }
+        
+        /// <summary>
         /// Private default constructor.
         /// </summary>
         private PropertySetOptions()
@@ -95,8 +119,7 @@ namespace Revit.IFC.Export.Utility
         /// <param name="exporterIFC">The ExporterIFC handle passed during export.</param>
         /// <returns>The new cache.</returns>
         /// <remarks>Please initialize this after all other code, as it relies on a consistent cache otherwise.</remarks>
-        public static PropertySetOptions Create(ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView,
-            ExportOptionsCache cache)
+        public static PropertySetOptions Create(ExporterIFC exporterIFC, ExportOptionsCache cache)
         {
             IDictionary<String, String> options = exporterIFC.GetOptions();
 
@@ -110,6 +133,9 @@ namespace Revit.IFC.Export.Utility
             // "ExportIFCCommonPropertySets" override
             propertySetOptions.ExportIFCCommonOverride = ExportOptionsCache.GetNamedBooleanOption(options, "ExportIFCCommonPropertySets");
 
+            // "ExportSchedulesAsPsets" override
+            propertySetOptions.ExportSchedulesAsPsetsOverride = ExportOptionsCache.GetNamedBooleanOption(options, "ExportSchedulesAsPsets");
+            
             return propertySetOptions;
         }
     }

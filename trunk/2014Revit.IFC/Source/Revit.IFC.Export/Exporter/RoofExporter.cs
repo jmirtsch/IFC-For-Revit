@@ -90,13 +90,11 @@ namespace Revit.IFC.Export.Exporter
                         IFCAnyHandle roofHnd = IFCInstanceExporter.CreateRoof(file, guid, ownerHistory, roofName, roofDescription,
                             roofObjectType, localPlacement, exportSlab ? null : representation, elementTag, roofType);
 
-                        productWrapper.AddElement(roofHnd, placementSetter.LevelInfo, ecData, true);
+                        productWrapper.AddElement(roof, roofHnd, placementSetter.LevelInfo, ecData, true);
 
                         // will export its host object materials later if it is a roof
                         if (!(roof is RoofBase))
-                        {
                             CategoryUtil.CreateMaterialAssociations(roof.Document, exporterIFC, roofHnd, bodyData.MaterialIds);
-                        }
 
                         if (exportSlab)
                         {
@@ -113,7 +111,7 @@ namespace Revit.IFC.Export.Exporter
 
                             ExporterUtil.RelateObject(exporterIFC, roofHnd, slabHnd);
 
-                            productWrapper.AddElement(slabHnd, placementSetter.LevelInfo, ecData, false);
+                            productWrapper.AddElement(null, slabHnd, placementSetter.LevelInfo, ecData, false);
                             CategoryUtil.CreateMaterialAssociations(roof.Document, exporterIFC, slabHnd, bodyData.MaterialIds);
                         }
                     }
@@ -156,8 +154,6 @@ namespace Revit.IFC.Export.Exporter
                         geometryElement, productWrapper);
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(roofHnd))
                         ExportRoof(exporterIFC, ifcEnumType, roof, geometryElement, productWrapper);
-
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, roof, productWrapper);
 
                     // call for host objects; curtain roofs excused from call (no material information)
                     HostObjectExporter.ExportHostObjectMaterials(exporterIFC, roof, productWrapper.GetAnElement(),
@@ -227,7 +223,6 @@ namespace Revit.IFC.Export.Exporter
                                 IFCAnyHandle roofHandle = IFCInstanceExporter.CreateRoof(file, elementGUID, ownerHistory, elementName, elementDescription, 
                                     elementObjectType, localPlacement, prodRepHnd, elementId, roofType);
 
-
                                 IList<IFCAnyHandle> elementHandles = new List<IFCAnyHandle>();
                                 elementHandles.Add(roofHandle);
 
@@ -286,12 +281,14 @@ namespace Revit.IFC.Export.Exporter
                                         slabExtrusionCreationData.ScaledOuterPerimeter = UnitUtil.ScaleLength(curveLoops[0].GetExactLength());
                                         slabExtrusionCreationData.Slope = UnitUtil.ScaleAngle(Math.Acos(Math.Abs(planeDirs[numLoop].Z)));
 
-                                        productWrapper.AddElement(slabHnd, setter, slabExtrusionCreationData, false);
+                                        productWrapper.AddElement(null, slabHnd, setter, slabExtrusionCreationData, false);
                                         elementHandles.Add(slabHnd);
                                         slabHandles.Add(slabHnd);
                                     }
                                 }
-                                productWrapper.AddElement(roofHandle, setter, extrusionCreationData, true);
+
+                                productWrapper.AddElement(element, roofHandle, setter, extrusionCreationData, true);
+
                                 ExporterUtil.RelateObjects(exporterIFC, null, roofHandle, slabHandles);
 
                                 OpeningUtil.AddOpeningsToElement(exporterIFC, elementHandles, roofCurveloops, element, null, roofComponents.ScaledDepth,
@@ -346,9 +343,7 @@ namespace Revit.IFC.Export.Exporter
                     // Export the parts
                     PartExporter.ExportHostPart(exporterIFC, element, roofHandle, productWrapper, setter, localPlacement, null);
 
-                    productWrapper.AddElement(roofHandle, setter, null, true);
-
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
+                    productWrapper.AddElement(element, roofHandle, setter, null, true);
 
                     transaction.Commit();
                 }

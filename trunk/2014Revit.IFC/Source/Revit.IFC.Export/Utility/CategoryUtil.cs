@@ -160,9 +160,8 @@ namespace Revit.IFC.Export.Utility
         /// All other elements are internal.
         /// </remarks>
         /// <param name="element">The element.</param>
-        /// <param name="useParameterIfFound">Looks for the (potentially localized) IsExternal parameter if set.</param>
         /// <returns>True if the element is external, false otherwise.</returns>
-        public static bool IsElementExternal(Element element, bool useParameterIfFound)
+        public static bool IsElementExternal(Element element)
         {
             if (element == null)
                 return false;
@@ -170,15 +169,29 @@ namespace Revit.IFC.Export.Utility
             Document document = element.Document;
             
             // Look for a parameter "IsExternal", potentially localized.
-            if (useParameterIfFound)
             {
-                int isExternal;
-                string localExternalParamName = PropertySetEntryUtil.GetLocalizedIsExternal(ExporterCacheManager.LanguageType);
-                if ((localExternalParamName != null) && ParameterUtil.GetIntValueFromElementOrSymbol(element, localExternalParamName, out isExternal))
-                    return (isExternal != 0);
-                string externalParamName = PropertySetEntryUtil.GetLocalizedIsExternal(LanguageType.English_USA);
-                if (ParameterUtil.GetIntValueFromElementOrSymbol(element, externalParamName, out isExternal))
-                    return (isExternal != 0);
+                ElementId elementId = element.Id;
+
+                bool? maybeIsExternal = null;
+                if (!ExporterCacheManager.IsExternalParameterValueCache.TryGetValue(elementId, out maybeIsExternal))
+                {
+                    int intIsExternal = 0;
+                    string localExternalParamName = PropertySetEntryUtil.GetLocalizedIsExternal(ExporterCacheManager.LanguageType);
+                    if ((localExternalParamName != null) && ParameterUtil.GetIntValueFromElementOrSymbol(element, localExternalParamName, out intIsExternal))
+                        maybeIsExternal = (intIsExternal != 0);
+
+                    if (!maybeIsExternal.HasValue && (ExporterCacheManager.LanguageType != LanguageType.English_USA))
+                    {
+                        string externalParamName = PropertySetEntryUtil.GetLocalizedIsExternal(LanguageType.English_USA);
+                        if (ParameterUtil.GetIntValueFromElementOrSymbol(element, externalParamName, out intIsExternal))
+                            maybeIsExternal = (intIsExternal != 0);
+                    }
+
+                    ExporterCacheManager.IsExternalParameterValueCache.Add(new KeyValuePair<ElementId, bool?>(elementId, maybeIsExternal));
+                }
+
+                if (maybeIsExternal.HasValue)
+                    return maybeIsExternal.Value;
             }
 
             // Specific element types that know if they are external or not 
@@ -213,7 +226,7 @@ namespace Revit.IFC.Export.Utility
                 }
 
                 if (familyInstanceHost != null)
-                    return IsElementExternal(familyInstanceHost, true);
+                    return IsElementExternal(familyInstanceHost);
             }
 
             return false;
@@ -383,7 +396,7 @@ namespace Revit.IFC.Export.Utility
                         {
                             styles.Add(matStyleHnd);
 
-                            if (fillPatternId != ElementId.InvalidElementId && !ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
+                            if (fillPatternId != ElementId.InvalidElementId && !ExporterCacheManager.ExportOptionsCache.ExportAsCoordinationView2)
                             {
                                 IFCAnyHandle cutStyleHnd = exporterIFC.GetOrCreateFillPattern(fillPatternId, color, planScale);
                                 if (cutStyleHnd.HasValue)

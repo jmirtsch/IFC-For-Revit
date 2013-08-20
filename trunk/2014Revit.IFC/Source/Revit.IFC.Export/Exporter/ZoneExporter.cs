@@ -76,9 +76,7 @@ namespace Revit.IFC.Export.Exporter
 
                 IFCAnyHandle zoneHnd = IFCInstanceExporter.CreateZone(file, guid, ownerHistory, name, description, objectType);
 
-                productWrapper.AddElement(zoneHnd);
-
-                PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
+                productWrapper.AddElement(element, zoneHnd);
 
                 string relAssignsGuid = GUIDUtil.CreateSubElementGUID(element, (int) IFCZoneSubElements.RelAssignsToGroup);
                 IFCInstanceExporter.CreateRelAssignsToGroup(file, relAssignsGuid, ownerHistory, null, null, spaceHnds, null, zoneHnd);

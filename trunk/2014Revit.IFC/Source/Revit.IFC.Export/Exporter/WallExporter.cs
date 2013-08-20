@@ -35,7 +35,7 @@ namespace Revit.IFC.Export.Exporter
     /// </summary>
     class WallExporter
     {
-        private static IFCAnyHandle FallbackTryToCreateAsExtrusion(ExporterIFC exporterIFC, Wall wallElement, SolidMeshGeometryInfo smCapsule,
+        private static IFCAnyHandle FallbackTryToCreateAsExtrusion(ExporterIFC exporterIFC, Wall wallElement, SolidMeshGeometryInfo smCapsule, double baseWallElevation,
             ElementId catId, Curve curve, Plane plane, double depth, IFCRange zSpan, IFCRange range, PlacementSetter setter,
             out IList<IFCExtrusionData> cutPairOpenings, out bool isCompletelyClipped, out double scaledFootprintArea, out double scaledLength)
         {
@@ -139,7 +139,7 @@ namespace Revit.IFC.Export.Exporter
             scaledFootprintArea = ExporterIFCUtils.ComputeAreaOfCurveLoops(boundaryLoops);
 
             // origin gets scaled later.
-            XYZ setterOffset = new XYZ(0, 0, setter.Offset + (localOrig[2] - setter.BaseOffset));
+            XYZ setterOffset = new XYZ(0, 0, setter.Offset + (localOrig[2] - baseWallElevation));
 
             IFCAnyHandle baseBodyItemHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, boundaryLoops, plane,
                 extrusionDir, depth);
@@ -208,15 +208,23 @@ namespace Revit.IFC.Export.Exporter
                     Wall wallElement = element as Wall;
                     FamilyInstance famInstWallElem = element as FamilyInstance;
                     FaceWall faceWall = element as FaceWall;
-
+                    
                     if (wallElement == null && famInstWallElem == null && faceWall == null)
                         return null;
 
                     if (wallElement != null && IsWallCompletelyClipped(wallElement, exporterIFC, range))
                         return null;
 
-                    // get global values.
                     Document doc = element.Document;
+                    
+                    double baseWallElevation = 0.0;
+                    ElementId baseLevelId = PlacementSetter.GetBaseLevelIdForElement(element);
+                    if (baseLevelId != ElementId.InvalidElementId)
+                    {
+                        Element baseLevel = doc.GetElement(baseLevelId);
+                        if (baseLevel is Level)
+                            baseWallElevation = (baseLevel as Level).Elevation;
+                    }
                     
                     IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                     IFCAnyHandle contextOfItemsAxis = exporterIFC.Get3DContextHandle("Axis");
@@ -426,7 +434,7 @@ namespace Revit.IFC.Export.Exporter
                             {
                                 // Fallback - use native routines to try to export wall.
                                 bool isCompletelyClipped;
-                                bodyRep = FallbackTryToCreateAsExtrusion(exporterIFC, wallElement, solidMeshInfo,
+                                bodyRep = FallbackTryToCreateAsExtrusion(exporterIFC, wallElement, solidMeshInfo, baseWallElevation,
                                     catId, curve, plane, depth, zSpan, range, setter,
                                     out cutPairOpenings, out isCompletelyClipped, out scaledFootprintArea, out scaledLength);
                                 if (isCompletelyClipped)
@@ -485,8 +493,8 @@ namespace Revit.IFC.Export.Exporter
 
                                 BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
                                 
-                                // Swept solids are not natively exported as part of CV2.0.  However, we will add UI to allow a user
-                                // to switch of advanced swept solid support.
+                                // Swept solids are not natively exported as part of CV2.0.  
+                                // We have removed the UI toggle for this, so that it is by default false, but keep for possible future use.
                                 if (ExporterCacheManager.ExportOptionsCache.ExportAdvancedSweptSolids)
                                     bodyExporterOptions.TryToExportAsSweptSolid = true;
 
@@ -616,7 +624,7 @@ namespace Revit.IFC.Export.Exporter
                                 if (exportParts)
                                     PartExporter.ExportHostPart(exporterIFC, element, wallHnd, localWrapper, setter, localPlacement, overrideLevelId);
 
-                                localWrapper.AddElement(wallHnd, setter, extraParams, true);
+                                localWrapper.AddElement(element, wallHnd, setter, extraParams, true);
 
                                 if (!exportParts)
                                 {
@@ -659,7 +667,7 @@ namespace Revit.IFC.Export.Exporter
                                 if (exportParts)
                                     PartExporter.ExportHostPart(exporterIFC, element, wallHnd, localWrapper, setter, localPlacement, overrideLevelId);
 
-                                localWrapper.AddElement(wallHnd, setter, extraParams, true);
+                                localWrapper.AddElement(element, wallHnd, setter, extraParams, true);
 
                                 if (!exportParts)
                                 {
@@ -685,8 +693,6 @@ namespace Revit.IFC.Export.Exporter
                                 }
                             }
 
-                            PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, localWrapper);
-
                             ElementId wallLevelId = (validRange) ? setter.LevelId : ElementId.InvalidElementId;
 
                             if ((wallElement != null || faceWall != null) && !exportParts)
@@ -701,9 +707,7 @@ namespace Revit.IFC.Export.Exporter
                                         geometryElement, localWrapper, wallLevelId, Toolkit.IFCLayerSetDirection.Axis2);
                             }
 
-                            // TODO: For IfcFooting, Support IfcFootingType for IFC4, and use IfcTypeObject for IFC2x3.
-                            if (!exportAsFooting)
-                                ExportWallType(exporterIFC, wallHnd, element, matId, exportedAsWallWithAxis);
+                            ExportWallType(exporterIFC, localWrapper, wallHnd, element, matId, exportedAsWallWithAxis, exportAsFooting);
 
                             SpaceBoundingElementUtil.RegisterSpaceBoundingElementHandle(exporterIFC, wallHnd, element.Id, wallLevelId);
 
@@ -936,9 +940,7 @@ namespace Revit.IFC.Export.Exporter
                     IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData();
                     extraParams.PossibleExtrusionAxes = IFCExtrusionAxes.TryZ;   // only allow vertical extrusions!
                     extraParams.AreInnerRegionsOpenings = true;
-                    localWrapper.AddElement(wallHnd, setter, extraParams, true);
-
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, localWrapper);
+                    localWrapper.AddElement(element, wallHnd, setter, extraParams, true);
 
                     ElementId wallLevelId = (validRange) ? setter.LevelId : ElementId.InvalidElementId;
                     SpaceBoundingElementUtil.RegisterSpaceBoundingElementHandle(exporterIFC, wallHnd, element.Id, wallLevelId);
@@ -952,11 +954,14 @@ namespace Revit.IFC.Export.Exporter
         /// Exports wall types.
         /// </summary>
         /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="wrapper">The ProductWrapper class.</param>
         /// <param name="elementHandle">The element handle.</param>
         /// <param name="element">The element.</param>
         /// <param name="overrideMaterialId">The material id used for the element type.</param>
         /// <param name="isStandard">True if it is a standard wall, false otherwise.</param>
-        public static void ExportWallType(ExporterIFC exporterIFC, IFCAnyHandle elementHandle, Element element, ElementId overrideMaterialId, bool isStandard)
+        /// <param name="asFooting">Export as IfcFootingType instead.</param>
+        public static void ExportWallType(ExporterIFC exporterIFC, ProductWrapper wrapper, IFCAnyHandle elementHandle, Element element, ElementId overrideMaterialId, 
+            bool isStandard, bool asFooting)
         {
             if (elementHandle == null || element == null)
                 return;
@@ -964,6 +969,9 @@ namespace Revit.IFC.Export.Exporter
             Document doc = element.Document;
             ElementId typeElemId = element.GetTypeId();
             Element elementType = doc.GetElement(typeElemId);
+            if (elementType == null)
+                return;
+
             IFCAnyHandle wallType = null;
             if (ExporterCacheManager.WallTypeCache.TryGetValue(typeElemId, out wallType))
             {
@@ -978,20 +986,15 @@ namespace Revit.IFC.Export.Exporter
             string elemApplicableOccurence = NamingUtil.GetOverrideStringValue(elementType, "IfcApplicableOccurence", null);
             string elemElementType = NamingUtil.GetOverrideStringValue(elementType, "IfcElementType", null);
 
-            HashSet<IFCAnyHandle> propertySets = null;
-            if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportInternalRevit)
-            {
-                //should already be cached by wall export during create internal Revit property sets
-                TypePropertyInfo typePropertyInfo = ExporterCacheManager.TypePropertyInfoCache[typeElemId];
-                if (typePropertyInfo != null)
-                {
-                    propertySets = typePropertyInfo.PropertySets != null ? new HashSet<IFCAnyHandle>(typePropertyInfo.PropertySets) : null;
-                    typePropertyInfo.Elements.Remove(elementHandle); // we have property sets in type, no need to add them to element
-                }
-            }
+            // Property sets will be set later.
+            if (asFooting)
+                wallType = IFCInstanceExporter.CreateFootingType(exporterIFC.GetFile(), elemGUID, exporterIFC.GetOwnerHistoryHandle(),
+                    elemName, elemDesc, elemApplicableOccurence, null, null, null, null, null);
+            else
+                wallType = IFCInstanceExporter.CreateWallType(exporterIFC.GetFile(), elemGUID, exporterIFC.GetOwnerHistoryHandle(),
+                    elemName, elemDesc, elemApplicableOccurence, null, null, elemTag, elemElementType, isStandard ? "STANDARD" : "NOTDEFINED");
 
-            wallType = IFCInstanceExporter.CreateWallType(exporterIFC.GetFile(), elemGUID, exporterIFC.GetOwnerHistoryHandle(),
-                elemName, elemDesc, elemApplicableOccurence, propertySets, null, elemTag, elemElementType, isStandard ? "STANDARD" : "NOTDEFINED");
+            wrapper.RegisterHandleWithElementType(elementType as ElementType, wallType, null);
 
             if (overrideMaterialId != ElementId.InvalidElementId)
             {
@@ -1152,15 +1155,13 @@ namespace Revit.IFC.Export.Exporter
         /// <summary>
         /// Obtains a special snapshot of the geometry of an in-place wall element suitable for export.
         /// </summary>
-        /// <param name="wallElement">
-        /// The wall.
-        /// </param>
-        /// <returns>
-        /// The direction of the wall.
-        /// </returns>
-        static XYZ GetWallHeightDirection(Wall wallElement)
+        /// <param name="wallElement">The wall.</param>
+        /// <returns>The direction of the wall.</returns>
+        /// <remarks>All Wall elements in Revit have a direction of (0,0,1).  If this changes in the future, this
+        /// routine may need to be revisited.</remarks>
+        public static XYZ GetWallHeightDirection(Wall wallElement)
         {
-            return ExporterIFCUtils.GetWallHeightDirection(wallElement);
+            return new XYZ(0,0,1);
         }
 
         /// <summary>

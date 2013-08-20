@@ -17,6 +17,8 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
+#pragma warning disable 0618
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -42,8 +44,6 @@ using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Utility;
 using Revit.IFC.Common.Enums;
 using Autodesk.Revit.DB.ExternalService;
-
-#pragma warning disable 0618
 
 namespace Revit.IFC.Export.Exporter
 {
@@ -108,8 +108,7 @@ namespace Revit.IFC.Export.Exporter
         private IFCFile m_IfcFile;
 
         // Allow a derived class to add Element exporter routines.
-        public delegate void ElementExporter(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document, 
-            Autodesk.Revit.DB.View filterView);
+        public delegate void ElementExporter(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document);
         
         protected ElementExporter m_ElementExporter = null;
 
@@ -161,7 +160,7 @@ namespace Revit.IFC.Export.Exporter
 
                 InitializeElementExporters();
                 if (m_ElementExporter != null)
-                    m_ElementExporter(exporterIFC, document, filterView);
+                    m_ElementExporter(exporterIFC, document);
 
                 EndExport(exporterIFC, document);
             }
@@ -211,10 +210,10 @@ namespace Revit.IFC.Export.Exporter
 
         #endregion
 
-        protected void ExportSpatialElements(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document,
-            Autodesk.Revit.DB.View filterView)
+        protected void ExportSpatialElements(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
             ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
+            View filterView = exportOptionsCache.FilterViewForExport;
 
             FilteredElementCollector spatialElementCollector;
             ICollection<ElementId> idsToExport = exportOptionsCache.ElementsForExport;
@@ -230,24 +229,24 @@ namespace Revit.IFC.Export.Exporter
 
             ISet<ElementId> exportedSpaces = null;
             if (exportOptionsCache.SpaceBoundaryLevel == 2)
-                exportedSpaces = SpatialElementExporter.ExportSpatialElement2ndLevel(this, exporterIFC, document, filterView);
+                exportedSpaces = SpatialElementExporter.ExportSpatialElement2ndLevel(this, exporterIFC, document);
 
             //export all spatial elements for no or 1st level room boundaries; for 2nd level, export spaces that couldn't be exported above.
             SpatialElementExporter.InitializeSpatialElementGeometryCalculator(document, exporterIFC);
-            ElementFilter spatialElementFilter = ElementFilteringUtil.GetSpatialElementFilter(document, exporterIFC, filterView);
+            ElementFilter spatialElementFilter = ElementFilteringUtil.GetSpatialElementFilter(document, exporterIFC);
             spatialElementCollector.WherePasses(spatialElementFilter);
             foreach (Element element in spatialElementCollector)
             {
                 if ((element == null) || (exportedSpaces != null && exportedSpaces.Contains(element.Id)))
                     continue;
-                ExportElement(exporterIFC, filterView, element);
+                ExportElement(exporterIFC, element);
             }
         }
 
-        protected void ExportNonSpatialElements(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document, 
-            Autodesk.Revit.DB.View filterView)
+        protected void ExportNonSpatialElements(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
             FilteredElementCollector otherElementCollector;
+            View filterView = ExporterCacheManager.ExportOptionsCache.FilterViewForExport;
 
             ICollection<ElementId> idsToExport = ExporterCacheManager.ExportOptionsCache.ElementsForExport;
             if (idsToExport.Count > 0)
@@ -260,11 +259,11 @@ namespace Revit.IFC.Export.Exporter
                     new FilteredElementCollector(document) : new FilteredElementCollector(document, filterView.Id);
             }
 
-            ElementFilter nonSpatialElementFilter = ElementFilteringUtil.GetNonSpatialElementFilter(document, exporterIFC, filterView);
+            ElementFilter nonSpatialElementFilter = ElementFilteringUtil.GetNonSpatialElementFilter(document, exporterIFC);
             otherElementCollector.WherePasses(nonSpatialElementFilter);
             foreach (Element element in otherElementCollector)
             {
-                ExportElement(exporterIFC, filterView, element);
+                ExportElement(exporterIFC, element);
             }
 
         }
@@ -274,16 +273,17 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <param name="exporterIFC">The exporterIFC class.</param>
-        /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
-        protected void ExportContainers(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document,
-            Autodesk.Revit.DB.View filterView)
+        protected void ExportContainers(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
-            ExportCachedRailings(exporterIFC, document, filterView);
-            ExportCachedFabricAreas(exporterIFC, document, filterView);
-            ExportTrusses(exporterIFC, document, filterView);
-            ExportBeamSystems(exporterIFC, document, filterView);
-            ExportAreaSchemes(exporterIFC, document, filterView);
-            ExportZones(exporterIFC, document, filterView);
+            using (ExporterStateManager.ForceElementExport forceElementExport = new ExporterStateManager.ForceElementExport())
+            {
+                ExportCachedRailings(exporterIFC, document);
+                ExportCachedFabricAreas(exporterIFC, document);
+                ExportTrusses(exporterIFC, document);
+                ExportBeamSystems(exporterIFC, document);
+                ExportAreaSchemes(exporterIFC, document);
+                ExportZones(exporterIFC, document);
+            }
         }
 
         /// <summary>
@@ -293,14 +293,12 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <param name="exporterIFC">The exporterIFC class.</param>
-        /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
-        protected void ExportCachedRailings(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document, 
-            Autodesk.Revit.DB.View filterView)
+        protected void ExportCachedRailings(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
             foreach (ElementId elementId in ExporterCacheManager.RailingCache)
             {
                 Element element = document.GetElement(elementId);
-                ExportElement(exporterIFC, filterView, element);
+                ExportElement(exporterIFC, element);
             }
         }
 
@@ -310,14 +308,12 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <param name="exporterIFC">The exporterIFC class.</param>
-        /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
-        protected void ExportCachedFabricAreas(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document,
-            Autodesk.Revit.DB.View filterView)
+        protected void ExportCachedFabricAreas(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
             foreach (ElementId elementId in ExporterCacheManager.FabricAreaHandleCache.Keys)
             {
                 Element element = document.GetElement(elementId);
-                ExportElement(exporterIFC, filterView, element);
+                ExportElement(exporterIFC, element);
             }
         }
 
@@ -326,14 +322,12 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <param name="exporterIFC">The exporterIFC class.</param>
-        /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
-        protected void ExportTrusses(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document,
-            Autodesk.Revit.DB.View filterView)
+        protected void ExportTrusses(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
             foreach (ElementId elementId in ExporterCacheManager.TrussCache)
             {
                 Element element = document.GetElement(elementId);
-                ExportElement(exporterIFC, filterView, element);
+                ExportElement(exporterIFC, element);
             }
         }
 
@@ -342,14 +336,12 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <param name="exporterIFC">The exporterIFC class.</param>
-        /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
-        protected void ExportBeamSystems(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document,
-            Autodesk.Revit.DB.View filterView)
+        protected void ExportBeamSystems(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
             foreach (ElementId elementId in ExporterCacheManager.BeamSystemCache)
             {
                 Element element = document.GetElement(elementId);
-                ExportElement(exporterIFC, filterView, element);
+                ExportElement(exporterIFC, element);
             }
         }
 
@@ -358,14 +350,12 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <param name="exporterIFC">The exporterIFC class.</param>
-        /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
-        protected void ExportZones(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document,
-            Autodesk.Revit.DB.View filterView)
+        protected void ExportZones(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
             foreach (ElementId elementId in ExporterCacheManager.ZoneCache)
             {
                 Element element = document.GetElement(elementId);
-                ExportElement(exporterIFC, filterView, element);
+                ExportElement(exporterIFC, element);
             }
         }
 
@@ -374,26 +364,22 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <param name="exporterIFC">The exporterIFC class.</param>
-        /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
-        protected void ExportAreaSchemes(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document,
-            Autodesk.Revit.DB.View filterView)
+        protected void ExportAreaSchemes(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
             foreach (ElementId elementId in ExporterCacheManager.AreaSchemeCache.Keys)
             {
                 Element element = document.GetElement(elementId);
-                ExportElement(exporterIFC, filterView, element);
+                ExportElement(exporterIFC, element);
             }
         }
 
-        protected void ExportGrids(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document, 
-            Autodesk.Revit.DB.View filterView)
+        protected void ExportGrids(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
             // Export the grids
             GridExporter.Export(exporterIFC, document);
         }
 
-        protected void ExportConnectors(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document, 
-            Autodesk.Revit.DB.View filterView)
+        protected void ExportConnectors(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
             ConnectorExporter.Export(exporterIFC);
         }
@@ -402,30 +388,21 @@ namespace Revit.IFC.Export.Exporter
         /// Determines if the selected element meets extra criteria for export.
         /// </summary>
         /// <param name="exporterIFC">The exporter class.</param>
-        /// <param name="filterView">The filter view.</param>
         /// <param name="element">The current element to export.</param>
         /// <returns>True if the element should be exported.</returns>
-        protected virtual bool CanExportElement(ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView, Autodesk.Revit.DB.Element element)
+        protected virtual bool CanExportElement(ExporterIFC exporterIFC, Autodesk.Revit.DB.Element element)
         {
-            if (!ElementFilteringUtil.ShouldElementBeExported(exporterIFC, element))
-                return false;
-
-            // if we allow exporting parts as independent building elements, then prevent also exporting the host elements containing the parts.
-            if (ExporterCacheManager.ExportOptionsCache.ExportPartsAsBuildingElements && PartExporter.CanExportParts(element))
-                return false;
-
-            return true;
+            return ElementFilteringUtil.CanExportElement(exporterIFC, element);
         }
 
         /// <summary>
         /// Performs the export of elements, including spatial and non-spatial elements.
         /// </summary>
         /// <param name="exporterIFC">The IFC exporter object.</param>
-        /// <param name="filterView">The view whose filter visibility settings govern the export.</param>
         /// <param name="element ">The element to export.</param>
-        public virtual void ExportElement(ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView, Autodesk.Revit.DB.Element element)
+        public virtual void ExportElement(ExporterIFC exporterIFC, Autodesk.Revit.DB.Element element)
         {
-            if (!CanExportElement(exporterIFC, filterView, element))
+            if (!CanExportElement(exporterIFC, element))
                 return;
 
             //WriteIFCExportedElements
@@ -439,21 +416,13 @@ namespace Revit.IFC.Export.Exporter
             {
                 using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, true))
                 {
-                    ExportElementImpl(exporterIFC, element, filterView, productWrapper);
-
-                    // Export PropertySet, Quantity (if set) and Classification (or Uniformat for COBIE) here
-                    ExportElementProperties(exporterIFC, element, productWrapper);
-                    if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities && !(ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE))
-                        ExportElementQuantities(exporterIFC, element, productWrapper);
-                    ExportElementClassifications(exporterIFC, element, productWrapper);                     // Exporting ClassificationCode from IFC parameter 
-                    if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
-                        ExportElementUniformatClassifications(exporterIFC, element, productWrapper);
-
+                    ExportElementImpl(exporterIFC, element, productWrapper);
+                    ExporterUtil.ExportRelatedProperties(exporterIFC, element, productWrapper);
                 }
 
                 // We are going to clear the parameter cache for the element (not the type) after the export.
                 // We do not expect to need the parameters for this element again, so we can free up the space.
-                if (!(element is ElementType))
+                if (!(element is ElementType) && !ExporterStateManager.ShouldPreserveElementParameterCache(element))
                     ParameterUtil.RemoveElementFromCache(element);
             }
             catch (System.Exception ex)
@@ -523,10 +492,8 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="exporterIFC">The IFC exporter object.</param>
         /// <param name="element">The element to export.</param>
-        /// <param name="filterView">The view to export, if it exists.</param>
         /// <param name="productWrapper">The ProductWrapper object.</param>
-        public virtual void ExportElementImpl(ExporterIFC exporterIFC, Element element, Autodesk.Revit.DB.View filterView,
-            ProductWrapper productWrapper)
+        public virtual void ExportElementImpl(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
         {
             Options options;
             View ownerView = element.Document.GetElement(element.OwnerViewId) as View;
@@ -541,6 +508,9 @@ namespace Revit.IFC.Export.Exporter
             }
             GeometryElement geomElem = element.get_Geometry(options);
 
+            // Default: we don't preserve the element parameter cache after export.
+            bool shouldPreserveParameterCache = false;
+
             try
             {
                 exporterIFC.PushExportState(element, geomElem);
@@ -552,7 +522,7 @@ namespace Revit.IFC.Export.Exporter
                     // A long list of supported elements.  Please keep in alphabetical order.
                     if (element is AreaReinforcement || element is PathReinforcement || element is Rebar)
                     {
-                        RebarExporter.Export(exporterIFC, element, filterView, productWrapper);
+                        RebarExporter.Export(exporterIFC, element, productWrapper);
                     }
                     else if (element is AreaScheme)
                     {
@@ -568,7 +538,10 @@ namespace Revit.IFC.Export.Exporter
                         if (ExporterCacheManager.BeamSystemCache.Contains(element.Id))
                             AssemblyInstanceExporter.ExportBeamSystem(exporterIFC, element as BeamSystem, productWrapper);
                         else
+                        {
                             ExporterCacheManager.BeamSystemCache.Add(element.Id);
+                            shouldPreserveParameterCache = true;
+                        }
                     }
                     else if (element is Ceiling)
                     {
@@ -599,7 +572,6 @@ namespace Revit.IFC.Export.Exporter
                     else if (CurtainSystemExporter.IsLegacyCurtainElement(element))
                     {
                         CurtainSystemExporter.ExportLegacyCurtainElement(exporterIFC, element, productWrapper);
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
                     }
                     else if (element is DuctInsulation)
                     {
@@ -674,6 +646,7 @@ namespace Revit.IFC.Export.Exporter
                         {
                             ExporterCacheManager.RailingCache.Add(element.Id);
                             RailingExporter.AddSubElementsToCache(element as Railing);
+                            shouldPreserveParameterCache = true;
                         }
                     }
                     else if (RampExporter.IsRamp(element))
@@ -709,7 +682,10 @@ namespace Revit.IFC.Export.Exporter
                         if (ExporterCacheManager.TrussCache.Contains(element.Id))
                             AssemblyInstanceExporter.ExportTrussElement(exporterIFC, element as Truss, productWrapper);
                         else
+                        {
                             ExporterCacheManager.TrussCache.Add(element.Id);
+                            shouldPreserveParameterCache = true;
+                        }
                     }
                     else if (element is Wall)
                     {
@@ -726,7 +702,10 @@ namespace Revit.IFC.Export.Exporter
                         if (ExporterCacheManager.ZoneCache.Contains(element.Id))
                             ZoneExporter.ExportZone(exporterIFC, element as Zone, productWrapper);
                         else
+                        {
                             ExporterCacheManager.ZoneCache.Add(element.Id);
+                            shouldPreserveParameterCache = true;
+                        }
                     }
                     else
                     {
@@ -735,7 +714,7 @@ namespace Revit.IFC.Export.Exporter
 
                         bool exported = false;
                         if (IsMEPType(exporterIFC, element, exportType))
-                            exported = GenericMEPExporter.Export(exporterIFC, element, geomElem, productWrapper);
+                            exported = GenericMEPExporter.Export(exporterIFC, element, geomElem, exportType, ifcEnumType, productWrapper);
                         else if (ExportAsProxy(element, exportType))
                             exported = ProxyElementExporter.Export(exporterIFC, element, geomElem, productWrapper);
 
@@ -759,6 +738,7 @@ namespace Revit.IFC.Export.Exporter
             finally
             {
                 exporterIFC.PopExportState();
+                ExporterStateManager.PreserveElementParameterCache(element, shouldPreserveParameterCache);
             }
         }
 
@@ -893,7 +873,7 @@ namespace Revit.IFC.Export.Exporter
                 IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(file,
                     buildingGUID, ownerHistory, buildingName, buildingDescription, null, buildingPlacement, null, buildingLongName,
                     Toolkit.IFCElementComposition.Element, null, null, buildingAddress);
-                exporterIFC.SetBuilding(buildingHandle);
+                ExporterCacheManager.BuildingHandle = buildingHandle;
 
                 // create levels
                 List<Level> levels = LevelUtil.FindAllLevels(document);
@@ -1011,17 +991,7 @@ namespace Revit.IFC.Export.Exporter
 
                     ii += coincidentLevels.Count;
 
-                    using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, false))
-                    {
-                        // Add Property set, quantities and classification of Building Storey also to IFC
-                        productWrapper.AddElement(levelInfo.GetBuildingStorey(), levelInfo, null, false);
-
-                        // Create Quantities (if set) and Classification for Levels (Building Stories) here 
-                        // ExportElementProperties(exporterIFC, level, productWrapper);     // PSet creation is done somewhere else (?), so skip it here
-                        if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities && !(ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE))
-                            ExportElementQuantities(exporterIFC, level, productWrapper);
-                        ExportElementClassifications(exporterIFC, level, productWrapper);
-                    }
+                    // We will export element properties, quantities and classifications when we decide to keep the level - we may delete it later.
                 }
                 transaction.Commit();
             }
@@ -1115,7 +1085,7 @@ namespace Revit.IFC.Export.Exporter
                 }
 
                 ProjectInfo projectInfo = document.ProjectInformation;
-                IFCAnyHandle buildingHnd = exporterIFC.GetBuilding();
+                IFCAnyHandle buildingHnd = ExporterCacheManager.BuildingHandle;
 
                 // relate assembly elements to assemblies
                 foreach (KeyValuePair<ElementId, AssemblyInstanceInfo> assemblyInfoEntry in ExporterCacheManager.AssemblyInstanceCache)
@@ -1235,12 +1205,9 @@ namespace Revit.IFC.Export.Exporter
                 // These elements are created internally, but we allow custom property sets for them.  Create them here.
                 using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, true))
                 {
-                    productWrapper.AddBuilding(buildingHnd);
+                    productWrapper.AddBuilding(projectInfo, buildingHnd);
                     if (projectInfo != null)
-                    {
-                        ExportElementProperties(exporterIFC, projectInfo, productWrapper);
-                        PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, projectInfo, productWrapper);
-                    }
+                        ExporterUtil.ExportRelatedProperties(exporterIFC, projectInfo, productWrapper);
                 }
 
                 // create material layer associations
@@ -1268,6 +1235,9 @@ namespace Revit.IFC.Export.Exporter
                 // create type property relations
                 foreach (TypePropertyInfo typePropertyInfo in ExporterCacheManager.TypePropertyInfoCache.Values)
                 {
+                    if (typePropertyInfo.AssignedToType)
+                        continue;
+
                     ICollection<IFCAnyHandle> propertySets = typePropertyInfo.PropertySets;
                     ISet<IFCAnyHandle> elements = typePropertyInfo.Elements;
 
@@ -1276,8 +1246,14 @@ namespace Revit.IFC.Export.Exporter
 
                     foreach (IFCAnyHandle propertySet in propertySets)
                     {
-                        IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory,
-                            null, null, elements, propertySet);
+                        try
+                        {
+                            IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory,
+                                null, null, elements, propertySet);
+                        }
+                        catch
+                        {
+                        }
                     }
                 }
 
@@ -1385,92 +1361,94 @@ namespace Revit.IFC.Export.Exporter
                 HashSet<IFCAnyHandle> relatedBuildings = new HashSet<IFCAnyHandle>();
                 relatedBuildings.Add(buildingHnd);
 
-                foreach (KeyValuePair<ElementId, ISet<IFCAnyHandle>> system in ExporterCacheManager.SystemsCache.BuiltInSystemsCache)
+                using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, true))
                 {
-                    MEPSystem systemElem = document.GetElement(system.Key) as MEPSystem;
-                    if (systemElem == null)
-                        continue;
-
-                    Element baseEquipment = systemElem.BaseEquipment;
-                    if (baseEquipment != null)
+                    foreach (KeyValuePair<ElementId, ISet<IFCAnyHandle>> system in ExporterCacheManager.SystemsCache.BuiltInSystemsCache)
                     {
-                        IFCAnyHandle memberHandle = ExporterCacheManager.MEPCache.Find(baseEquipment.Id);
-                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(memberHandle))
-                            system.Value.Add(memberHandle);
+                        MEPSystem systemElem = document.GetElement(system.Key) as MEPSystem;
+                        if (systemElem == null)
+                            continue;
+
+                        Element baseEquipment = systemElem.BaseEquipment;
+                        if (baseEquipment != null)
+                        {
+                            IFCAnyHandle memberHandle = ExporterCacheManager.MEPCache.Find(baseEquipment.Id);
+                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(memberHandle))
+                                system.Value.Add(memberHandle);
+                        }
+
+                        ElementType systemElemType = document.GetElement(systemElem.GetTypeId()) as ElementType;
+                        string name = NamingUtil.GetNameOverride(systemElem, systemElem.Name);
+                        string desc = NamingUtil.GetDescriptionOverride(systemElem, null);
+                        string objectType = NamingUtil.GetObjectTypeOverride(systemElem,
+                            (systemElemType != null) ? systemElemType.Name : "");
+
+                        string systemGUID = GUIDUtil.CreateGUID(systemElem);
+                        IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file, systemGUID,
+                            ownerHistory, name, desc, objectType);
+                        
+                        productWrapper.AddSystem(systemElem, systemHandle);
+
+                        IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
+                            ownerHistory, null, null, systemHandle, relatedBuildings);
+
+                        IFCObjectType? objType = null;
+                        if (!ExporterCacheManager.ExportOptionsCache.ExportAsCoordinationView2)
+                            objType = IFCObjectType.Product;
+                        IFCAnyHandle relAssignsToGroup = IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(),
+                            ownerHistory, null, null, system.Value, objType, systemHandle);
                     }
-
-                    ElementType systemElemType = document.GetElement(systemElem.GetTypeId()) as ElementType;
-                    string name = NamingUtil.GetNameOverride(systemElem, systemElem.Name);
-                    string desc = NamingUtil.GetDescriptionOverride(systemElem, null);
-                    string objectType = NamingUtil.GetObjectTypeOverride(systemElem,
-                        (systemElemType != null) ? systemElemType.Name : "");
-
-                    string systemGUID = GUIDUtil.CreateGUID(systemElem);
-                    IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file, systemGUID,
-                        ownerHistory, name, desc, objectType);
-                    ISet<IFCAnyHandle> systemHandles = new HashSet<IFCAnyHandle>();
-                    systemHandles.Add(systemHandle);
-
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, systemElem, systemHandles);
-
-                    IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
-                        ownerHistory, null, null, systemHandle, relatedBuildings);
-
-                    IFCObjectType? objType = null;
-                    if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
-                        objType = IFCObjectType.Product;
-                    IFCAnyHandle relAssignsToGroup = IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(),
-                        ownerHistory, null, null, system.Value, objType, systemHandle);
                 }
 
-                foreach (KeyValuePair<ElementId, ISet<IFCAnyHandle>> entries in ExporterCacheManager.SystemsCache.ElectricalSystemsCache)
+                using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, true))
                 {
-                    ElementId systemId = entries.Key;
-                    MEPSystem systemElem = document.GetElement(systemId) as MEPSystem;
-                    if (systemElem == null)
-                        continue;
-
-                    Element baseEquipment = systemElem.BaseEquipment;
-                    if (baseEquipment != null)
+                    foreach (KeyValuePair<ElementId, ISet<IFCAnyHandle>> entries in ExporterCacheManager.SystemsCache.ElectricalSystemsCache)
                     {
-                        IFCAnyHandle memberHandle = ExporterCacheManager.MEPCache.Find(baseEquipment.Id);
-                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(memberHandle))
-                            entries.Value.Add(memberHandle);
+                        ElementId systemId = entries.Key;
+                        MEPSystem systemElem = document.GetElement(systemId) as MEPSystem;
+                        if (systemElem == null)
+                            continue;
+
+                        Element baseEquipment = systemElem.BaseEquipment;
+                        if (baseEquipment != null)
+                        {
+                            IFCAnyHandle memberHandle = ExporterCacheManager.MEPCache.Find(baseEquipment.Id);
+                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(memberHandle))
+                                entries.Value.Add(memberHandle);
+                        }
+
+                        ElementSet members = systemElem.Elements;
+                        foreach (Element member in members)
+                        {
+                            IFCAnyHandle memberHandle = ExporterCacheManager.MEPCache.Find(member.Id);
+                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(memberHandle))
+                                entries.Value.Add(memberHandle);
+                        }
+
+                        if (entries.Value.Count == 0)
+                            continue;
+
+                        ElementType systemElemType = document.GetElement(systemElem.GetTypeId()) as ElementType;
+                        string name = NamingUtil.GetNameOverride(systemElem, systemElem.Name);
+                        string desc = NamingUtil.GetDescriptionOverride(systemElem, null);
+                        string objectType = NamingUtil.GetObjectTypeOverride(systemElem,
+                            (systemElemType != null) ? systemElemType.Name : "");
+
+                        string systemGUID = GUIDUtil.CreateGUID(systemElem);
+                        IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file,
+                            systemGUID, ownerHistory, name, desc, objectType);
+
+                        productWrapper.AddSystem(systemElem, systemHandle);
+
+                        IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
+                            ownerHistory, null, null, systemHandle, relatedBuildings);
+
+                        IFCObjectType? objType = null;
+                        if (!ExporterCacheManager.ExportOptionsCache.ExportAsCoordinationView2)
+                            objType = IFCObjectType.Product;
+                        IFCAnyHandle relAssignsToGroup = IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(),
+                            ownerHistory, null, null, entries.Value, objType, systemHandle);
                     }
-
-                    ElementSet members = systemElem.Elements;
-                    foreach (Element member in members)
-                    {
-                        IFCAnyHandle memberHandle = ExporterCacheManager.MEPCache.Find(member.Id);
-                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(memberHandle))
-                            entries.Value.Add(memberHandle);
-                    }
-
-                    if (entries.Value.Count == 0)
-                        continue;
-
-                    ElementType systemElemType = document.GetElement(systemElem.GetTypeId()) as ElementType;
-                    string name = NamingUtil.GetNameOverride(systemElem, systemElem.Name);
-                    string desc = NamingUtil.GetDescriptionOverride(systemElem, null);
-                    string objectType = NamingUtil.GetObjectTypeOverride(systemElem,
-                        (systemElemType != null) ? systemElemType.Name : "");
-
-                    string systemGUID = GUIDUtil.CreateGUID(systemElem);
-                    IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file,
-                        systemGUID, ownerHistory, name, desc, objectType);
-                    ISet<IFCAnyHandle> systemHandles = new HashSet<IFCAnyHandle>();
-                    systemHandles.Add(systemHandle);
-
-                    PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, systemElem, systemHandles);
-
-                    IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
-                        ownerHistory, null, null, systemHandle, relatedBuildings);
-
-                    IFCObjectType? objType = null;
-                    if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
-                        objType = IFCObjectType.Product;
-                    IFCAnyHandle relAssignsToGroup = IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(),
-                        ownerHistory, null, null, entries.Value, objType, systemHandle);
                 }
 
                 // Add presentation layer assignments - this is in addition to those added in EndExportInternal, and will
@@ -1507,7 +1485,7 @@ namespace Revit.IFC.Export.Exporter
                 ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
 
                 string coordinationView = null;
-                if (exportOptionsCache.ExportAs2x3CoordinationView2)
+                if (exportOptionsCache.ExportAsCoordinationView2)
                     coordinationView = "CoordinationView_V2.0";
                 else
                     coordinationView = "CoordinationView";
@@ -1592,373 +1570,6 @@ namespace Revit.IFC.Export.Exporter
                     writeOptions.XMLConfigFileName = Path.Combine(ExporterUtil.RevitProgramPath, "EDM\\ifcXMLconfiguration.xml");
                 }
                 file.Write(writeOptions);
-            }
-        }
-
-        /// <summary>
-        /// Some elements may not have the right structure to support stable GUIDs for some property sets.  Ignore the index for these cases.
-        /// </summary>
-        private static int CheckElementTypeValidityForSubIndex(PropertySetDescription currDesc, IFCAnyHandle handle, Element element)
-        {
-            int originalIndex = currDesc.SubElementIndex;
-            if (originalIndex > 0)
-            {
-                if (IFCAnyHandleUtil.IsSubTypeOf(handle, IFCEntityType.IfcSlab) || IFCAnyHandleUtil.IsSubTypeOf(handle, IFCEntityType.IfcStairFlight))
-                {
-                    if (StairsExporter.IsLegacyStairs(element))
-                    {
-                        return 0;
-                    }
-                }
-            }
-            return originalIndex;
-        }
-
-        private static IList<PropertySetDescription> GetCurrPSetsToCreate(IFCAnyHandle prodHnd,
-            IList<IList<PropertySetDescription>> psetsToCreate)
-        {
-            IList<PropertySetDescription> currPsetsToCreate = null;
-            IFCEntityType prodHndType = IFCAnyHandleUtil.GetEntityType(prodHnd);
-                    
-            if (!ExporterCacheManager.PropertySetsForTypeCache.TryGetValue(prodHndType, out currPsetsToCreate))
-            {
-                currPsetsToCreate = new List<PropertySetDescription>();
-
-                IList<PropertySetDescription> unconditionalPsetsToCreate = new List<PropertySetDescription>();
-                IList<PropertySetDescription> conditionalPsetsToCreate = new List<PropertySetDescription>();
-
-                foreach (IList<PropertySetDescription> currStandard in psetsToCreate)
-                {
-                    foreach (PropertySetDescription currDesc in currStandard)
-                    {
-                        if (currDesc.IsAppropriateEntityType(prodHnd))
-                        {
-                            if (currDesc.IsAppropriateObjectType(prodHnd))
-                                currPsetsToCreate.Add(currDesc);
-
-                            if (currDesc.ObjectType == "")
-                                unconditionalPsetsToCreate.Add(currDesc);
-                            else
-                                conditionalPsetsToCreate.Add(currDesc);
-                        }
-                    }
-                }
-                ExporterCacheManager.PropertySetsForTypeCache[prodHndType] = unconditionalPsetsToCreate;
-                ExporterCacheManager.ConditionalPropertySetsForTypeCache[prodHndType] = conditionalPsetsToCreate;
-            }
-            else
-            {
-                IList<PropertySetDescription> conditionalPsetsToCreate =
-                    ExporterCacheManager.ConditionalPropertySetsForTypeCache[prodHndType];
-                foreach (PropertySetDescription currDesc in conditionalPsetsToCreate)
-                {
-                    if (currDesc.IsAppropriateObjectType(prodHnd))
-                        currPsetsToCreate.Add(currDesc);
-                }
-            }
-
-            return currPsetsToCreate;
-        }
-
-        /// <summary>
-        /// Exports the element properties.
-        /// </summary>
-        /// <param name="exporterIFC">The IFC exporter object.</param>
-        /// <param name="element">The element whose properties are exported.</param>
-        /// <param name="productWrapper">The ProductWrapper object.</param>
-        public void ExportElementProperties(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
-        {
-            if (productWrapper.IsEmpty())
-                return;
-
-            IFCFile file = exporterIFC.GetFile();
-            using (IFCTransaction transaction = new IFCTransaction(file))
-            {
-                Document doc = element.Document;
-
-                ElementType elemType = doc.GetElement(element.GetTypeId()) as ElementType;
-
-                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-
-                ICollection<IFCAnyHandle> productSet = productWrapper.GetAllObjects();
-                IList<IList<PropertySetDescription>> psetsToCreate = ExporterCacheManager.ParameterCache.PropertySets;
-
-                // In some cases, like multi-story stairs and ramps, we may have the same Pset used for multiple levels.
-                // If ifcParams is null, re-use the property set.
-                ISet<string> locallyUsedGUIDs = new HashSet<string>();
-                IDictionary<Tuple<Element, Element, string>, IFCAnyHandle> createdPropertySets =
-                    new Dictionary<Tuple<Element, Element, string>, IFCAnyHandle>();
-                IDictionary<IFCAnyHandle, HashSet<IFCAnyHandle>> relDefinesByPropertiesMap =
-                    new Dictionary<IFCAnyHandle, HashSet<IFCAnyHandle>>();
-
-                foreach (IFCAnyHandle prodHnd in productSet)
-                {
-                    IList<PropertySetDescription> currPsetsToCreate = GetCurrPSetsToCreate(prodHnd, psetsToCreate);
-                    if (currPsetsToCreate.Count == 0)
-                        continue;
-
-                    ElementId overrideElementId = ExporterCacheManager.HandleToElementCache.Find(prodHnd);
-                    Element elementToUse = (overrideElementId == ElementId.InvalidElementId) ? element : doc.GetElement(overrideElementId);
-                    ElementType elemTypeToUse = (overrideElementId == ElementId.InvalidElementId) ? elemType : doc.GetElement(elementToUse.GetTypeId()) as ElementType;
-                    if (elemTypeToUse == null)
-                        elemTypeToUse = elemType;
-
-                    IFCExtrusionCreationData ifcParams = productWrapper.FindExtrusionCreationParameters(prodHnd);
-
-                    foreach (PropertySetDescription currDesc in currPsetsToCreate)
-                    {
-                        Tuple<Element, Element, string> propertySetKey = new Tuple<Element, Element, string>(elementToUse, elemTypeToUse, currDesc.Name);
-                        IFCAnyHandle propertySet = null;
-                        if ((ifcParams != null) || (!createdPropertySets.TryGetValue(propertySetKey, out propertySet)))
-                        {
-                            HashSet<IFCAnyHandle> props = currDesc.ProcessEntries(file, exporterIFC, ifcParams, elementToUse, elemTypeToUse);
-                            if (props.Count > 0)
-                            {
-                                int subElementIndex = CheckElementTypeValidityForSubIndex(currDesc, prodHnd, element);
-
-                                string guid = GUIDUtil.CreateSubElementGUID(elementToUse, subElementIndex);
-                                if (locallyUsedGUIDs.Contains(guid))
-                                    guid = GUIDUtil.CreateGUID();
-                                else
-                                    locallyUsedGUIDs.Add(guid);
-
-                                string paramSetName = currDesc.Name;
-                                propertySet = IFCInstanceExporter.CreatePropertySet(file, guid, ownerHistory, paramSetName, null, props);
-                                if (ifcParams == null)
-                                    createdPropertySets[propertySetKey] = propertySet;
-                            }
-                        }
-                 
-                        if (propertySet != null)
-                        {
-                            IFCAnyHandle prodHndToUse = prodHnd;
-                            DescriptionCalculator ifcRDC = currDesc.DescriptionCalculator;
-                            if (ifcRDC != null)
-                            {
-                                IFCAnyHandle overrideHnd = ifcRDC.RedirectDescription(exporterIFC, elementToUse);
-                                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(overrideHnd))
-                                    prodHndToUse = overrideHnd;
-                            }
-
-                            HashSet<IFCAnyHandle> relatedObjects = null;
-                            if (!relDefinesByPropertiesMap.TryGetValue(propertySet, out relatedObjects))
-                            {
-                                relatedObjects = new HashSet<IFCAnyHandle>();
-                                relDefinesByPropertiesMap[propertySet] = relatedObjects;
-                            }
-                            relatedObjects.Add(prodHndToUse);
-                        }
-                    }
-                }
-
-                foreach (KeyValuePair<IFCAnyHandle, HashSet<IFCAnyHandle>> relDefinesByProperties in relDefinesByPropertiesMap)
-                {
-                    IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null,
-                        relDefinesByProperties.Value, relDefinesByProperties.Key);
-                }
-
-                transaction.Commit();
-            }
-
-            if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
-                ExportPsetDraughtingFor2x2(exporterIFC, element, productWrapper);
-        }
-
-        /// <summary>
-        /// Creates and associates the common property sets associated with ElementTypes.  These are handled differently than for elements.
-        /// </summary>
-        /// <param name="exporterIFC">The IFC exporter object.</param>
-        /// <param name="elementType">The element type whose properties are exported.</param>
-        /// <param name="existingPropertySets">The handles of property sets already associated with the type.</param>
-        /// <param name="prodTypeHnd">The handle of the entity associated with the element type object.</param>
-        public static void CreateElementTypeProperties(ExporterIFC exporterIFC, ElementType elementType, 
-            HashSet<IFCAnyHandle> existingPropertySets, IFCAnyHandle prodTypeHnd)
-        {
-            HashSet<IFCAnyHandle> propertySets = new HashSet<IFCAnyHandle>();
-            
-            // Pass in an empty set of handles - we don't want IfcRelDefinesByProperties for type properties.
-            ISet<IFCAnyHandle> associatedObjectIds = new HashSet<IFCAnyHandle>();
-            PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, elementType, associatedObjectIds);
-
-            TypePropertyInfo additionalPropertySets = null;
-            if (ExporterCacheManager.TypePropertyInfoCache.TryGetValue(elementType.Id, out additionalPropertySets))
-                propertySets.UnionWith(additionalPropertySets.PropertySets);
-            
-            if (existingPropertySets != null && existingPropertySets.Count > 0)
-                propertySets.UnionWith(existingPropertySets);
-
-            IFCFile file = exporterIFC.GetFile();
-            using (IFCTransaction transaction = new IFCTransaction(file))
-            {
-                Document doc = elementType.Document;
-
-                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-
-                IList<IList<PropertySetDescription>> psetsToCreate = ExporterCacheManager.ParameterCache.PropertySets;
-
-                IList<PropertySetDescription> currPsetsToCreate = GetCurrPSetsToCreate(prodTypeHnd, psetsToCreate);
-                foreach (PropertySetDescription currDesc in currPsetsToCreate)
-                {
-                    HashSet<IFCAnyHandle> props = currDesc.ProcessEntries(file, exporterIFC, null, elementType, elementType);
-                    if (props.Count > 0)
-                    {
-                        int subElementIndex = currDesc.SubElementIndex;
-                        string guid = GUIDUtil.CreateSubElementGUID(elementType, subElementIndex);
-
-                        string paramSetName = currDesc.Name;
-                        IFCAnyHandle propertySet = IFCInstanceExporter.CreatePropertySet(file, guid, ownerHistory, paramSetName, null, props);
-                        propertySets.Add(propertySet);
-                    }
-                }
-
-                if (propertySets.Count != 0)
-                    prodTypeHnd.SetAttribute("HasPropertySets", propertySets);
-
-                transaction.Commit();
-            }
-        }
-
-        /// <summary>
-        /// Exports Pset_Draughting for IFC 2x2 standard.
-        /// </summary>
-        /// <param name="exporterIFC">The IFC exporter object.</param>
-        /// <param name="element ">The element whose properties are exported.</param>
-        /// <param name="productWrapper">The ProductWrapper object.</param>
-        void ExportPsetDraughtingFor2x2(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
-        {
-            IFCFile file = exporterIFC.GetFile();
-            using (IFCTransaction transaction = new IFCTransaction(file))
-            {
-                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-
-                string catName = CategoryUtil.GetCategoryName(element);
-                Color color = CategoryUtil.GetElementColor(element);
-
-
-                HashSet<IFCAnyHandle> nameAndColorProps = new HashSet<IFCAnyHandle>();
-
-                nameAndColorProps.Add(PropertyUtil.CreateLabelPropertyFromCache(file, "Layername", catName, PropertyValueType.SingleValue, true, null));
-
-                //color
-                {
-                    HashSet<IFCAnyHandle> colorProps = new HashSet<IFCAnyHandle>();
-                    colorProps.Add(PropertyUtil.CreateIntegerPropertyFromCache(file, "Red", color.Red, PropertyValueType.SingleValue));
-                    colorProps.Add(PropertyUtil.CreateIntegerPropertyFromCache(file, "Green", color.Green, PropertyValueType.SingleValue));
-                    colorProps.Add(PropertyUtil.CreateIntegerPropertyFromCache(file, "Blue", color.Blue, PropertyValueType.SingleValue));
-
-                    string propertyName = "Color";
-                    nameAndColorProps.Add(IFCInstanceExporter.CreateComplexProperty(file, propertyName, null, propertyName, colorProps));
-                }
-
-                string name = "Pset_Draughting";   // IFC 2x2 standard
-                IFCAnyHandle propertySet2 = IFCInstanceExporter.CreatePropertySet(file, GUIDUtil.CreateGUID(), ownerHistory, name, null, nameAndColorProps);
-
-                HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>(productWrapper.GetAllObjects());
-                IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, propertySet2);
-
-                transaction.Commit();
-            }
-        }
-
-        /// <summary>
-        /// Exports the IFC element quantities.
-        /// </summary>
-        /// <param name="exporterIFC">The IFC exporter object.</param>
-        /// <param name="element ">The element whose quantities are exported.</param>
-        /// <param name="productWrapper">The ProductWrapper object.</param>
-        public void ExportElementQuantities(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
-        {
-            if (productWrapper.IsEmpty())
-                return;
-
-            IFCFile file = exporterIFC.GetFile();
-            using (IFCTransaction transaction = new IFCTransaction(file))
-            {
-                Document doc = element.Document;
-
-                ElementType elemType = doc.GetElement(element.GetTypeId()) as ElementType;
-
-                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-
-                ICollection<IFCAnyHandle> productSet = productWrapper.GetAllObjects();
-                IList<IList<QuantityDescription>> quantitiesToCreate = ExporterCacheManager.ParameterCache.Quantities;
-
-                foreach (IList<QuantityDescription> currStandard in quantitiesToCreate)
-                {
-                    foreach (QuantityDescription currDesc in currStandard)
-                    {
-                        foreach (IFCAnyHandle prodHnd in productSet)
-                        {
-                            if (currDesc.IsAppropriateType(prodHnd))
-                            {
-                                IFCExtrusionCreationData ifcParams = productWrapper.FindExtrusionCreationParameters(prodHnd);
-
-                                HashSet<IFCAnyHandle> quantities = currDesc.ProcessEntries(file, exporterIFC, ifcParams, element, elemType);
-
-                                if (quantities.Count > 0)
-                                {
-                                    string paramSetName = currDesc.Name;
-                                    string methodName = currDesc.MethodOfMeasurement;
-
-                                    IFCAnyHandle propertySet = IFCInstanceExporter.CreateElementQuantity(file, GUIDUtil.CreateGUID(), ownerHistory, paramSetName, methodName, null, quantities);
-                                    IFCAnyHandle prodHndToUse = prodHnd;
-                                    DescriptionCalculator ifcRDC = currDesc.DescriptionCalculator;
-                                    if (ifcRDC != null)
-                                    {
-                                        IFCAnyHandle overrideHnd = ifcRDC.RedirectDescription(exporterIFC, element);
-                                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(overrideHnd))
-                                            prodHndToUse = overrideHnd;
-                                    }
-                                    HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
-                                    relatedObjects.Add(prodHndToUse);
-                                    IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, propertySet);
-                                }
-                            }
-                        }
-                    }
-                }
-                transaction.Commit();
-            }
-        }
-
-        /// <summary>Exports the element classification(s)./// </summary>
-        /// <param name="exporterIFC">The IFC exporter object.</param>
-        /// <param name="element">The element whose classifications are exported.</param>
-        /// <param name="productWrapper">The ProductWrapper object.</param>
-        internal void ExportElementUniformatClassifications(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
-        {
-            if (productWrapper.IsEmpty())
-                return;
-
-            IFCFile file = exporterIFC.GetFile();
-            using (IFCTransaction transaction = new IFCTransaction(file))
-            {
-                ICollection<IFCAnyHandle> productSet = productWrapper.GetAllObjects();
-                foreach (IFCAnyHandle prodHnd in productSet)
-                {
-                    if (IFCAnyHandleUtil.IsSubTypeOf(prodHnd, IFCEntityType.IfcElement))
-                        ClassificationUtil.CreateUniformatClassification(exporterIFC, file, element, prodHnd);
-                }
-                transaction.Commit();
-            }
-        }
-
-        internal void ExportElementClassifications(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
-        {
-            if (productWrapper.IsEmpty())
-                return;
-
-            IFCFile file = exporterIFC.GetFile();
-            using (IFCTransaction transaction = new IFCTransaction(file))
-            {
-                ICollection<IFCAnyHandle> productSet = productWrapper.GetAllObjects();
-                foreach (IFCAnyHandle prodHnd in productSet)
-                {
-                    // No need to check the subtype since Classification can be assigned to IfcRoot
-                    // if (IFCAnyHandleUtil.IsSubTypeOf(prodHnd, IFCEntityType.IfcElement))
-                        ClassificationUtil.CreateClassification(exporterIFC, file, element, prodHnd, "");
-                }
-                transaction.Commit();
             }
         }
 
@@ -2051,13 +1662,10 @@ namespace Revit.IFC.Export.Exporter
         private HashSet<IFCAnyHandle> CreateContextInformation(ExporterIFC exporterIFC, Document doc)
         {
             HashSet<IFCAnyHandle> repContexts = new HashSet<IFCAnyHandle>();
-            double precision = MathUtil.Eps();
-            double scaledPrecision = UnitUtil.ScaleLength(precision);
-            if (scaledPrecision > precision)
-            {
-                int exponent = ((int)(Math.Log10(scaledPrecision) - 0.01)) + 1;
-                precision = Math.Pow(10.0, exponent);
-            }
+            double scaledPrecision = UnitUtil.ScaleLength(doc.Application.VertexTolerance/10.0);
+            int exponent = Convert.ToInt32(Math.Log10(scaledPrecision));
+            double precision = Math.Pow(10.0, exponent);
+            
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle origin = ExporterIFCUtils.GetGlobal3DOriginHandle();
             IFCAnyHandle wcs = IFCInstanceExporter.CreateAxis2Placement3D(file, origin, null, null);
@@ -2200,7 +1808,7 @@ namespace Revit.IFC.Export.Exporter
 
             string projectPhase = null;
             if (projectInfo != null)
-                ParameterUtil.GetStringValueFromElement(projectInfo, "Project Phase", out projectPhase);
+                ParameterUtil.GetStringValueFromElement(projectInfo.Id, "Project Phase", out projectPhase);
 
             string projectGUID = GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Project);
             IFCAnyHandle projectHandle = IFCInstanceExporter.CreateProject(file, projectGUID, ownerHistory,
@@ -2915,13 +2523,10 @@ namespace Revit.IFC.Export.Exporter
                     if (MathUtil.IsAlmostEqual(currentElevation, levelInfo2.Elevation))
                     {
                         foreach (IFCAnyHandle relatedProduct in levelInfo2.GetRelatedProducts())
-                        {
                             relatedProductsToCheck.Add(relatedProduct);
-                        }
+
                         foreach (IFCAnyHandle relatedElement in levelInfo2.GetRelatedElements())
-                        {
                             relatedElementsToCheck.Add(relatedElement);
-                        }
                     }
                     else
                         break;
@@ -2945,21 +2550,19 @@ namespace Revit.IFC.Export.Exporter
                 ii = nextLevelIdx - 1;
 
                 if (relatedProducts.Count == 0 && relatedElements.Count == 0)
-                {
                     levelInfo.GetBuildingStorey().Delete();
-                }
                 else
                 {
-                    bool added = buildingStoreys.Add(levelInfo.GetBuildingStorey());
-                    if (added)
+                    // We have decided to keep the level - export properties, quantities and classifications.
+                    using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, false))
                     {
-                        using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, false))
-                        {
-                            productWrapper.AddElement(levelInfo.GetBuildingStorey(), levelInfo, null, false);
-                            Element element = document.GetElement(levelId);
-                            ExportElementProperties(exporterIFC, element, productWrapper);
-                            PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper);
-                        }
+                        IFCAnyHandle buildingStoreyHandle = levelInfo.GetBuildingStorey();
+                        buildingStoreys.Add(buildingStoreyHandle);
+                    
+                        // Add Property set, quantities and classification of Building Storey also to IFC
+                        productWrapper.AddElement(level, buildingStoreyHandle, levelInfo, null, false);
+
+                        ExporterUtil.ExportRelatedProperties(exporterIFC, level, productWrapper);
                     }
                 }
 
@@ -2981,11 +2584,11 @@ namespace Revit.IFC.Export.Exporter
 
             if (buildingStoreys.Count > 0)
             {
-                IFCAnyHandle building = exporterIFC.GetBuilding();
+                IFCAnyHandle buildingHnd = ExporterCacheManager.BuildingHandle;
                 ProjectInfo projectInfo = document.ProjectInformation;
                 string guid = GUIDUtil.CreateSubElementGUID(projectInfo, (int)IFCBuildingSubElements.RelAggregatesBuildingStoreys);
-                ExporterCacheManager.ContainmentCache.SetGUIDForRelation(building, guid);
-                ExporterCacheManager.ContainmentCache.AddRelations(building, buildingStoreys);
+                ExporterCacheManager.ContainmentCache.SetGUIDForRelation(buildingHnd, guid);
+                ExporterCacheManager.ContainmentCache.AddRelations(buildingHnd, buildingStoreys);
             }
         }
 

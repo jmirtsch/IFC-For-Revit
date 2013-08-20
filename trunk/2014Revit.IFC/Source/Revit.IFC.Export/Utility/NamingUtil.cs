@@ -122,7 +122,7 @@ namespace Revit.IFC.Export.Utility
             // get the IFC Name Override 
             if (element != null)
             {
-                if (ParameterUtil.GetStringValueFromElement(element, paramName, out strValue))
+                if (ParameterUtil.GetStringValueFromElement(element.Id, paramName, out strValue))
                 {
                     if (!String.IsNullOrWhiteSpace(strValue))
                         return strValue;

@@ -96,7 +96,7 @@ namespace Revit.IFC.Export.Utility
                     string elementId = NamingUtil.CreateIFCElementId(element);
                     IFCAnyHandle openingElement = IFCInstanceExporter.CreateOpeningElement(file, guid, ownerHistory,
                        openingName, null, openingObjectType, openingPlacement, openingRep, elementId);
-                    wrapper.AddElement(openingElement, setter, extraParams, true);
+                    wrapper.AddElement(null, openingElement, setter, extraParams, true);
                     if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities && (extraParams != null))
                         PropertyUtil.CreateOpeningQuantities(exporterIFC, openingElement, extraParams);
 
@@ -253,7 +253,8 @@ namespace Revit.IFC.Export.Utility
                         }
                         else
                             openingGUID = GUIDUtil.CreateGUID();
-                        CreateOpening(exporterIFC, parentHandle, element, openingElem, openingGUID, solid, scaledWidth, openingData.IsRecess, extrusionCreationData, setter, localWrapper);
+                        CreateOpening(exporterIFC, parentHandle, element, openingElem, openingGUID, solid, scaledWidth, openingData.IsRecess, extrusionCreationData, 
+                            setter, localWrapper);
                     }
                 }
 
@@ -270,7 +271,8 @@ namespace Revit.IFC.Export.Utility
                     }
                     else
                         openingGUID = GUIDUtil.CreateGUID();
-                    CreateOpening(exporterIFC, parentHandle, localPlacement, element, openingElem, openingGUID, extrusionData, plane, openingData.IsRecess, setter, localWrapper);
+                    CreateOpening(exporterIFC, parentHandle, localPlacement, element, openingElem, openingGUID, extrusionData, plane, openingData.IsRecess, 
+                        setter, localWrapper);
                 }
             }
         }
@@ -350,23 +352,32 @@ namespace Revit.IFC.Export.Utility
             double scaledOpeningLength = extrusionCreationData.ScaledLength;
             string openingObjectType = "Opening";
             if (!MathUtil.IsAlmostZero(scaledHostWidth) && !MathUtil.IsAlmostZero(scaledOpeningLength))
-            {
                  openingObjectType = scaledOpeningLength < (scaledHostWidth - MathUtil.Eps()) ? "Recess" : "Opening";
-            }
             else
-            {
                 openingObjectType = isRecess ? "Recess" : "Opening";
-            }
+            
             string openingName = NamingUtil.GetNameOverride(insertElement, null);
             if (string.IsNullOrEmpty(openingName))
-                openingName = NamingUtil.GetNameOverride(hostElement, NamingUtil.CreateIFCObjectName(exporterIFC, hostElement));
+            {
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(hostObjHnd))
+                    openingName = IFCAnyHandleUtil.GetStringAttribute(hostObjHnd, "Name");
+                else
+                    openingName = NamingUtil.GetNameOverride(hostElement, NamingUtil.CreateIFCObjectName(exporterIFC, hostElement));
+            }
+            
             IFCAnyHandle openingHnd = IFCInstanceExporter.CreateOpeningElement(file, openingGUID, ownerHistory, openingName, null,
                 openingObjectType, openingPlacement, prodRep, null);
             if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities)
                 PropertyUtil.CreateOpeningQuantities(exporterIFC, openingHnd, extrusionCreationData);
 
             if (localWrapper != null)
-                localWrapper.AddElement(openingHnd, setter, extrusionCreationData, true);
+            {
+                Element elementForProperties = null;
+                if (GUIDUtil.IsGUIDFor(insertElement, openingGUID))
+                    elementForProperties = insertElement;
+
+                localWrapper.AddElement(insertElement, openingHnd, setter, extrusionCreationData, true);
+            }
 
             string voidGuid = GUIDUtil.CreateGUID();
             IFCInstanceExporter.CreateRelVoidsElement(file, voidGuid, ownerHistory, null, null, hostObjHnd, openingHnd);
@@ -436,7 +447,13 @@ namespace Revit.IFC.Export.Utility
             }
 
             if (localWrapper != null)
-                localWrapper.AddElement(openingHnd, setter, ecData, true);
+            {
+                Element elementForProperties = null;
+                if (GUIDUtil.IsGUIDFor(insertElement, openingGUID))
+                    elementForProperties = insertElement;
+
+                localWrapper.AddElement(elementForProperties, openingHnd, setter, ecData, true);
+            }
 
             string voidGuid = GUIDUtil.CreateGUID();
             IFCInstanceExporter.CreateRelVoidsElement(file, voidGuid, ownerHistory, null, null, hostObjHnd, openingHnd);
