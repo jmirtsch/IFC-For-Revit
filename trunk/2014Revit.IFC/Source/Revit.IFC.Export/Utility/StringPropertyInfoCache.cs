@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Utility
@@ -28,21 +29,33 @@ namespace Revit.IFC.Export.Utility
     /// <summary>
     /// Used to keep a cache of IFC string properties.
     /// </summary>
-    public class StringPropertyInfoCache : Dictionary<KeyValuePair<string, string>, IFCAnyHandle>
+    public class StringPropertyInfoCache
     {
+        private IDictionary<KeyValuePair<ElementId, string>, IFCAnyHandle> m_PropertiesByIdCache = new Dictionary<KeyValuePair<ElementId, string>, IFCAnyHandle>();
+        
+        private IDictionary<KeyValuePair<string, string>, IFCAnyHandle> m_NamedPropertiesCache = new Dictionary<KeyValuePair<string, string>, IFCAnyHandle>();
+        
         /// <summary>
         /// Finds if it contains the property with the specified string value.
         /// </summary>
-        /// <param name="propertyName">The property name.</param>
+        /// <param name="parameterId">The parameter id.  Can be null or InvalidElementId if propertyName != null.</param>
+        /// <param name="propertyName">The property name.  Can be null if elementId != InvalidElementId.</param>
         /// <param name="value">The value.</param>
         /// <returns>True if it has, false otherwise.</returns>
-        public IFCAnyHandle Find(string propertyName, string value)
+        public IFCAnyHandle Find(ElementId parameterId, string propertyName, string value)
         {
-            KeyValuePair<string, string> key = new KeyValuePair<string, string>(propertyName, value);
-
-            IFCAnyHandle propertyHandle;
-            if (TryGetValue(key, out propertyHandle))
-                return propertyHandle;
+            IFCAnyHandle propertyHandle = null;
+            if ((parameterId != null) && (parameterId != ElementId.InvalidElementId))
+            {
+                ElementId parameterIdToUse = ParameterUtil.MapParameterId(parameterId);
+                if (m_PropertiesByIdCache.TryGetValue(new KeyValuePair<ElementId, string>(parameterIdToUse, value), out propertyHandle))
+                    return propertyHandle;
+            }
+            else
+            {
+                if (m_NamedPropertiesCache.TryGetValue(new KeyValuePair<string, string>(propertyName, value), out propertyHandle))
+                    return propertyHandle;
+            }
 
             return null;
         }
@@ -50,13 +63,19 @@ namespace Revit.IFC.Export.Utility
         /// <summary>
         /// Adds a new property of a string value to the cache.
         /// </summary>
-        /// <param name="propertyName">The property name.</param>
+        /// <param name="parameterId">The parameter id.  Can be null or InvalidElementId if propertyName != null.</param>
+        /// <param name="propertyName">The property name.  Can be null if elementId != InvalidElementId.</param>
         /// <param name="value">The value.</param>
         /// <param name="propertyHandle">The property handle.</param>
-        public void Add(string propertyName, string value, IFCAnyHandle propertyHandle)
+        public void Add(ElementId parameterId, string propertyName, string value, IFCAnyHandle propertyHandle)
         {
-            KeyValuePair<string, string> key = new KeyValuePair<string, string>(propertyName, value);
-            this[key] = propertyHandle;
+            if ((parameterId != null) && (parameterId != ElementId.InvalidElementId))
+            {
+                ElementId parameterIdToUse = ParameterUtil.MapParameterId(parameterId);
+                m_PropertiesByIdCache[new KeyValuePair<ElementId, string>(parameterIdToUse, value)] = propertyHandle;
+            }
+            else
+                m_NamedPropertiesCache[new KeyValuePair<string, string>(propertyName, value)] = propertyHandle;
         }
     }
 }

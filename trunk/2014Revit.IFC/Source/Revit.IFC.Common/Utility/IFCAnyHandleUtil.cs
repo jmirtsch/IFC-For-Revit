@@ -732,6 +732,43 @@ namespace Revit.IFC.Common.Utility
         }
 
         /// <summary>
+        /// Gets aggregate attribute string values from a handle.
+        /// </summary>
+        /// <typeparam name="T">The return type.</typeparam>
+        /// <param name="handle">The handle.</param>
+        /// <param name="name">The attribute name.</param>
+        /// <returns>The collection of attribute values.</returns>
+        public static T GetAggregateStringAttribute<T>(IFCAnyHandle handle, string name) where T : ICollection<string>, new()
+        {
+            if (handle == null)
+                throw new ArgumentNullException("handle");
+
+            if (!handle.HasValue)
+                throw new ArgumentException("Invalid handle.");
+
+            IFCData ifcData = handle.GetAttribute(name);
+
+            T aggregateAttribute = default(T);
+
+            if (ifcData.PrimitiveType == IFCDataPrimitiveType.Aggregate)
+            {
+                IFCAggregate aggregate = ifcData.AsAggregate();
+                if (aggregate != null)
+                {
+                    aggregateAttribute = new T();
+                    foreach (IFCData val in aggregate)
+                    {
+                        if (val.PrimitiveType == IFCDataPrimitiveType.String)
+                        {
+                            aggregateAttribute.Add(val.AsString());
+                        }
+                    }
+                }
+            }
+            return aggregateAttribute;
+        }
+
+        /// <summary>
         /// Gets aggregate attribute instance values from a handle.
         /// </summary>
         /// <typeparam name="T">The return type.</typeparam>

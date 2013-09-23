@@ -152,11 +152,11 @@ namespace Revit.IFC.Export.Exporter
             IFCFile file = exporterIFC.GetFile();
 
             string fontName;
-            if (!ParameterUtil.GetStringValueFromElement(textElemType, BuiltInParameter.TEXT_FONT, out fontName))
+            if (ParameterUtil.GetStringValueFromElement(textElemType, BuiltInParameter.TEXT_FONT, out fontName) == null)
                 fontName = null;
 
             double fontSize;
-            if (!ParameterUtil.GetDoubleValueFromElement(textElemType, BuiltInParameter.TEXT_SIZE, out fontSize))
+            if (ParameterUtil.GetDoubleValueFromElement(textElemType, BuiltInParameter.TEXT_SIZE, out fontSize) == null)
                 fontSize = -1.0;
 
             double viewScale = 100.0;  // currently hardwired.

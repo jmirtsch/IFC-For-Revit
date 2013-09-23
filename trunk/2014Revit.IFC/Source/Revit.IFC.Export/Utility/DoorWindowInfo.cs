@@ -27,7 +27,6 @@ using Revit.IFC.Export.Exporter;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Enums;
 using Revit.IFC.Common.Utility;
-using IFCDoorStyleOperation = Autodesk.Revit.DB.IFC.IFCDoorStyleOperation;
 
 namespace Revit.IFC.Export.Utility
 {
@@ -358,7 +357,7 @@ namespace Revit.IFC.Export.Utility
                     if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
                         enumType = typeof(Toolkit.IFC4.IFCDoorStyleOperation);
                     else
-                        enumType = typeof(IFCDoorStyleOperation);
+                        enumType = typeof(Toolkit.IFCDoorStyleOperation);
 
                     foreach (Enum ifcDoorStyleOperation in Enum.GetValues(enumType))
                     {
@@ -379,11 +378,6 @@ namespace Revit.IFC.Export.Utility
                 
                 if (FlippedX ^ FlippedY)
                     DoorOperationTypeString = ReverseDoorStyleOperation(DoorOperationTypeString);
-
-                if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-                    DoorOperationTypeString = IFCValidateEntry.ValidateStrEnum<Revit.IFC.Export.Toolkit.IFC4.IFCDoorTypeOperation>(DoorOperationTypeString);
-                else
-                    DoorOperationTypeString = IFCValidateEntry.ValidateStrEnum<Revit.IFC.Export.Toolkit.IFCDoorStyleOperation>(DoorOperationTypeString);
 
                 if (String.Compare(DoorOperationTypeString, "USERDEFINED", true) == 0)
                 {

@@ -36,7 +36,7 @@ namespace Revit.IFC.Export.Exporter
         /// Exports a wall swepp.
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="wallSweep">The WallSwepp.</param>
+        /// <param name="wallSweep">The WallSweep.</param>
         /// <param name="geometryElement">The geometry element.</param>
         /// <param name="productWrapper">The ProductWrapper.</param>
         public static void Export(ExporterIFC exporterIFC, WallSweep wallSweep, GeometryElement geometryElement, ProductWrapper productWrapper)
@@ -51,7 +51,7 @@ namespace Revit.IFC.Export.Exporter
 
             HostObjectExporter.ExportHostObjectMaterials(exporterIFC, wallSweep, productWrapper.GetAnElement(),
                 geometryElement, productWrapper,
-                ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis2);
+                ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis2, null);
         }
     }
 }

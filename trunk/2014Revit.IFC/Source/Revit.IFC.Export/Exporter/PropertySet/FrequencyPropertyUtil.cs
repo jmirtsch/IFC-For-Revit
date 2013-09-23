@@ -71,7 +71,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             double propertyValue;
-            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue))
+            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
                 return CreateFrequencyProperty(file, ifcPropertyName, propertyValue, valueType);
             return null;
         }

@@ -62,14 +62,14 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
                 return false;
 
             double slope;
-            if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.RAMP_ATTR_MIN_INV_SLOPE, out slope))
+            if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.RAMP_ATTR_MIN_INV_SLOPE, out slope) == null)
+                return false;
+
+            m_Slope = slope;
+            if (!MathUtil.IsAlmostZero(m_Slope))
             {
-                m_Slope = slope;
-                if (!MathUtil.IsAlmostZero(m_Slope))
-                {
-                    m_Slope = UnitUtil.ScaleAngle(Math.Atan(m_Slope));
-                    return true;
-                }
+                m_Slope = UnitUtil.ScaleAngle(Math.Atan(m_Slope));
+                return true;
             }
 
             return false;

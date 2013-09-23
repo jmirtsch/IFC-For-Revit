@@ -88,7 +88,7 @@ namespace Revit.IFC.Export.Exporter
                         productWrapper.AddElement(element, insulation, placementSetter.LevelInfo, ecData, true);
 
                         ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element);
-                        CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, insulation, matId);
+                        CategoryUtil.CreateMaterialAssociation(exporterIFC, insulation, matId);
                     }
                 }
                 tr.Commit();

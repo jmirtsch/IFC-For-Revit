@@ -177,13 +177,13 @@ namespace Revit.IFC.Export.Utility
                 {
                     int intIsExternal = 0;
                     string localExternalParamName = PropertySetEntryUtil.GetLocalizedIsExternal(ExporterCacheManager.LanguageType);
-                    if ((localExternalParamName != null) && ParameterUtil.GetIntValueFromElementOrSymbol(element, localExternalParamName, out intIsExternal))
+                    if ((localExternalParamName != null) && (ParameterUtil.GetIntValueFromElementOrSymbol(element, localExternalParamName, out intIsExternal) != null))
                         maybeIsExternal = (intIsExternal != 0);
 
                     if (!maybeIsExternal.HasValue && (ExporterCacheManager.LanguageType != LanguageType.English_USA))
                     {
                         string externalParamName = PropertySetEntryUtil.GetLocalizedIsExternal(LanguageType.English_USA);
-                        if (ParameterUtil.GetIntValueFromElementOrSymbol(element, externalParamName, out intIsExternal))
+                        if (ParameterUtil.GetIntValueFromElementOrSymbol(element, externalParamName, out intIsExternal) != null)
                             maybeIsExternal = (intIsExternal != 0);
                     }
 
@@ -207,7 +207,7 @@ namespace Revit.IFC.Export.Utility
             {
                 ElementType wallType = document.GetElement(element.GetTypeId()) as ElementType;
                 int wallFunction;
-                if (ParameterUtil.GetIntValueFromElement(wallType, BuiltInParameter.FUNCTION_PARAM, out wallFunction))
+                if (ParameterUtil.GetIntValueFromElement(wallType, BuiltInParameter.FUNCTION_PARAM, out wallFunction) != null)
                 {
                     return wallFunction != ((int)WallFunction.Interior);
                 }
@@ -235,74 +235,50 @@ namespace Revit.IFC.Export.Utility
         /// <summary>
         /// Creates an association between a material handle and an instance handle.
         /// </summary>
-        /// <param name="document">
-        /// The Revit document.
-        /// </param>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="instanceHandle">
-        /// The IFC instance handle.
-        /// </param>
-        /// <param name="materialId">
-        /// The material id.
-        /// </param>
-        public static void CreateMaterialAssociation(Document document, ExporterIFC exporterIFC, IFCAnyHandle instanceHandle, ElementId materialId)
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="instanceHandle">The IFC instance handle.</param>
+        /// <param name="materialId">The material id.</param>
+        public static void CreateMaterialAssociation(ExporterIFC exporterIFC, IFCAnyHandle instanceHandle, ElementId materialId)
         {
             // Create material association if any.
             if (materialId != ElementId.InvalidElementId)
             {
-                IFCAnyHandle materialNameHandle = GetOrCreateMaterialHandle(document, exporterIFC, materialId);
+                IFCAnyHandle materialNameHandle = GetOrCreateMaterialHandle(exporterIFC, materialId);
 
                 if (!IFCAnyHandleUtil.IsNullOrHasNoValue(materialNameHandle))
-                {
                     ExporterCacheManager.MaterialRelationsCache.Add(materialNameHandle, instanceHandle);
-                }
             }
         }
 
         /// <summary>
         /// Creates an association between a list of material handles and an instance handle.
         /// </summary>
-        /// <param name="document">
-        /// The Revit document.
-        /// </param>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="instanceHandle">
-        /// The IFC instance handle.
-        /// </param>
-        /// <param name="materialId">
-        /// The list of material ids.
-        /// </param>
-        public static void CreateMaterialAssociations(Document document, ExporterIFC exporterIFC, IFCAnyHandle instanceHandle, ICollection<ElementId> materialList)
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="instanceHandle">The IFC instance handle.</param>
+        /// <param name="materialId">The list of material ids.</param>
+        public static void CreateMaterialAssociations(ExporterIFC exporterIFC, IFCAnyHandle instanceHandle, ICollection<ElementId> materialList)
         {
-            if (materialList.Count == 1)
-            {
-                foreach (ElementId materialId in materialList)
-                {
-                    CreateMaterialAssociation(document, exporterIFC, instanceHandle, materialId);
-                    return;
-                }
-            }
-
             // Create material association if any.
             IList<IFCAnyHandle> materials = new List<IFCAnyHandle>();
             foreach (ElementId materialId in materialList)
             {
                 if (materialId != ElementId.InvalidElementId)
                 {
-                    IFCAnyHandle matHnd = GetOrCreateMaterialHandle(document, exporterIFC, materialId);
+                    IFCAnyHandle matHnd = GetOrCreateMaterialHandle(exporterIFC, materialId);
                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(matHnd))
-                    {
                         materials.Add(matHnd);
-                    }
                 }
             }
+
             if (materials.Count == 0)
                 return;
 
+            if (materials.Count == 1)
+            {
+                ExporterCacheManager.MaterialRelationsCache.Add(materials[0], instanceHandle);
+                return;
+            }
+            
             IFCAnyHandle materialListHnd = IFCInstanceExporter.CreateMaterialList(exporterIFC.GetFile(), materials);
             ExporterCacheManager.MaterialRelationsCache.Add(materialListHnd, instanceHandle);
         }
@@ -350,13 +326,13 @@ namespace Revit.IFC.Export.Utility
         /// <summary>
         /// Gets material handle from material id or creates one if there is none.
         /// </summary>
-        /// <param name="document">The Revit document.</param>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="materialId">The material id.</param>
         /// <returns>The handle.</returns>
-        public static IFCAnyHandle GetOrCreateMaterialHandle(Document document, ExporterIFC exporterIFC, ElementId materialId)
+        public static IFCAnyHandle GetOrCreateMaterialHandle(ExporterIFC exporterIFC, ElementId materialId)
         {
-            IFCAnyHandle materialNameHandle = ExporterCacheManager.MaterialHandleCache.Find(materialId);;
+            Document document = ExporterCacheManager.Document;
+            IFCAnyHandle materialNameHandle = ExporterCacheManager.MaterialHandleCache.Find(materialId);
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(materialNameHandle))
             {
                 string materialName = " <Unnamed>";

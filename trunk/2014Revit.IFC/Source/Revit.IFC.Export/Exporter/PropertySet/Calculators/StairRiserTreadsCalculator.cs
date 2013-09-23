@@ -165,7 +165,8 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
                     m_WalkingLineOffset = m_WaistThickness / 2.0;
 
                     double treadLengthAtInnerSide;
-                    if (ParameterUtil.GetDoubleValueFromElement(stairsType, BuiltInParameter.STAIRSTYPE_MINIMUM_TREAD_WIDTH_INSIDE_BOUNDARY, out treadLengthAtInnerSide))
+                    if (ParameterUtil.GetDoubleValueFromElement(stairsType, 
+                        BuiltInParameter.STAIRSTYPE_MINIMUM_TREAD_WIDTH_INSIDE_BOUNDARY, out treadLengthAtInnerSide) != null)
                         m_TreadLengthAtInnerSide = UnitUtil.ScaleLength(treadLengthAtInnerSide);
                     else
                         m_TreadLengthAtInnerSide = 0.0;

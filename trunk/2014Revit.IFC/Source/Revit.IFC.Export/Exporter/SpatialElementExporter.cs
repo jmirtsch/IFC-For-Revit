@@ -196,7 +196,7 @@ namespace Revit.IFC.Export.Exporter
                                         if (curtainGridSet != null)
                                         {
                                             foreach (CurtainGrid curtainGrid in curtainGridSet)
-                                                elemIds.UnionWith(curtainGrid.GetPanelIds());
+                                                elemIds.UnionWith(CurtainSystemExporter.GetVisiblePanelsForGrid(curtainGrid));
                                         }
                                     }
 
@@ -754,7 +754,7 @@ namespace Revit.IFC.Export.Exporter
 
             // OCCS - Space by Function.
             string itemReference = "";
-            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "OmniClass Number", out itemReference))
+            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "OmniClass Number", out itemReference) != null)
             {
                 string itemName;
                 ParameterUtil.GetStringValueFromElement(spatialElement.Id, "OmniClass Title", out itemName);
@@ -774,7 +774,7 @@ namespace Revit.IFC.Export.Exporter
 
             // Space Type (Owner)
             itemReference = "";
-            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Type (Owner) Reference", out itemReference))
+            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Type (Owner) Reference", out itemReference) != null)
             {
                 string itemName;
                 ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Type (Owner) Name", out itemName);
@@ -787,7 +787,7 @@ namespace Revit.IFC.Export.Exporter
 
             // Space Category (Owner)
             itemReference = "";
-            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Category (Owner) Reference", out itemReference))
+            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Category (Owner) Reference", out itemReference) != null)
             {
                 string itemName;
                 ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Category (Owner) Name", out itemName);
@@ -800,7 +800,7 @@ namespace Revit.IFC.Export.Exporter
 
             // Space Category (BOMA)
             itemReference = "";
-            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Category (BOMA) Reference", out itemReference))
+            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Category (BOMA) Reference", out itemReference) != null)
             {
                 string itemName;
                 ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Category (BOMA) Name", out itemName);
@@ -850,7 +850,7 @@ namespace Revit.IFC.Export.Exporter
             ElementId catId = spatialElement.Category != null ? spatialElement.Category.Id : ElementId.InvalidElementId;
 
             double dArea = 0.0;
-            if (ParameterUtil.GetDoubleValueFromElement(spatialElement, BuiltInParameter.ROOM_AREA, out dArea))
+            if (ParameterUtil.GetDoubleValueFromElement(spatialElement, BuiltInParameter.ROOM_AREA, out dArea) != null)
                 dArea = UnitUtil.ScaleArea(dArea);
 
             IFCLevelInfo levelInfo = exporterIFC.GetLevelInfo(levelId);
@@ -859,13 +859,13 @@ namespace Revit.IFC.Export.Exporter
             string strSpaceName = null;
             string strSpaceDesc = null;
 
-            if (!ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NUMBER, out strSpaceNumber))
+            if (ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NUMBER, out strSpaceNumber) == null)
                 strSpaceNumber = null;
 
-            if (!ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NAME, out strSpaceName))
+            if (ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NAME, out strSpaceName) == null)
                 strSpaceName = null;
 
-            if (!ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS, out strSpaceDesc))
+            if (ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS, out strSpaceDesc) == null)
                 strSpaceDesc = null;
 
             string name = strSpaceNumber;
@@ -959,7 +959,7 @@ namespace Revit.IFC.Export.Exporter
 
                     double? spaceElevationWithFlooring = null;
                     double elevationWithFlooring = 0.0;
-                    if (ParameterUtil.GetDoubleValueFromElement(spatialElement, null, "IfcElevationWithFlooring", out elevationWithFlooring) == true)
+                    if (ParameterUtil.GetDoubleValueFromElement(spatialElement, null, "IfcElevationWithFlooring", out elevationWithFlooring) != null)
                         spaceElevationWithFlooring = elevationWithFlooring;
                     spaceHnd = IFCInstanceExporter.CreateSpace(file, GUIDUtil.CreateGUID(spatialElement),
                                                   exporterIFC.GetOwnerHistoryHandle(),
@@ -1086,21 +1086,21 @@ namespace Revit.IFC.Export.Exporter
             HashSet<IFCAnyHandle> properties = new HashSet<IFCAnyHandle>();
 
             string paramValue = "";
-            if (ParameterUtil.GetStringValueFromElement(element.Id, "Spatial Zone Conditioning Requirement", out paramValue))
+            if (ParameterUtil.GetStringValueFromElement(element.Id, "Spatial Zone Conditioning Requirement", out paramValue) != null)
             {
                 IFCData paramVal = Revit.IFC.Export.Toolkit.IFCDataUtil.CreateAsLabel(paramValue);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "SpatialZoneConditioningRequirement", null, paramVal, null);
                 properties.Add(propSingleValue);
             }
 
-            if (ParameterUtil.GetStringValueFromElement(element.Id, "HVAC System Type", out paramValue))
+            if (ParameterUtil.GetStringValueFromElement(element.Id, "HVAC System Type", out paramValue) != null)
             {
                 IFCData paramVal = Revit.IFC.Export.Toolkit.IFCDataUtil.CreateAsLabel(paramValue);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "HVACSystemType", null, paramVal, null);
                 properties.Add(propSingleValue);
             }
 
-            if (ParameterUtil.GetStringValueFromElement(element.Id, "User Defined HVAC System Type", out paramValue))
+            if (ParameterUtil.GetStringValueFromElement(element.Id, "User Defined HVAC System Type", out paramValue) != null)
             {
                 IFCData paramVal = Revit.IFC.Export.Toolkit.IFCDataUtil.CreateAsLabel(paramValue);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "UserDefinedHVACSystemType", null, paramVal, null);
@@ -1108,7 +1108,7 @@ namespace Revit.IFC.Export.Exporter
             }
 
             double infiltrationRate = 0.0;
-            if (ParameterUtil.GetDoubleValueFromElement(element, null, "Infiltration Rate", out infiltrationRate))
+            if (ParameterUtil.GetDoubleValueFromElement(element, null, "Infiltration Rate", out infiltrationRate) != null)
             {
                 IFCData paramVal = Revit.IFC.Export.Toolkit.IFCDataUtil.CreateAsReal(infiltrationRate);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "InfiltrationRate", null, paramVal,
@@ -1117,7 +1117,7 @@ namespace Revit.IFC.Export.Exporter
             }
 
             int isDaylitZone = 0;
-            if (ParameterUtil.GetIntValueFromElement(element, "Is Daylit Zone", out isDaylitZone))
+            if (ParameterUtil.GetIntValueFromElement(element, "Is Daylit Zone", out isDaylitZone) != null)
             {
                 IFCData paramVal = Revit.IFC.Export.Toolkit.IFCDataUtil.CreateAsBoolean(isDaylitZone != 0);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "IsDaylitZone", null, paramVal, null);
@@ -1125,7 +1125,7 @@ namespace Revit.IFC.Export.Exporter
             }
 
             int numberOfDaylightSensors = 0;
-            if (ParameterUtil.GetIntValueFromElement(element, "Number of Daylight Sensors", out numberOfDaylightSensors))
+            if (ParameterUtil.GetIntValueFromElement(element, "Number of Daylight Sensors", out numberOfDaylightSensors) != null)
             {
                 IFCData paramVal = Revit.IFC.Export.Toolkit.IFCDataUtil.CreateAsInteger(numberOfDaylightSensors);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "NumberOfDaylightSensors", null, paramVal, null);
@@ -1133,7 +1133,7 @@ namespace Revit.IFC.Export.Exporter
             }
 
             double designIlluminance = 0.0;
-            if (ParameterUtil.GetDoubleValueFromElement(element, null, "Design Illuminance", out designIlluminance))
+            if (ParameterUtil.GetDoubleValueFromElement(element, null, "Design Illuminance", out designIlluminance) != null)
             {
                 IFCData paramVal = Revit.IFC.Export.Toolkit.IFCDataUtil.CreateAsReal(designIlluminance);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "DesignIlluminance", null, paramVal,
@@ -1141,7 +1141,7 @@ namespace Revit.IFC.Export.Exporter
                 properties.Add(propSingleValue);
             }
 
-            if (ParameterUtil.GetStringValueFromElement(element.Id, "Lighting Controls Type", out paramValue))
+            if (ParameterUtil.GetStringValueFromElement(element.Id, "Lighting Controls Type", out paramValue) != null)
             {
                 IFCData paramVal = Revit.IFC.Export.Toolkit.IFCDataUtil.CreateAsLabel(paramValue);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "LightingControlsType", null, paramVal, null);
@@ -1227,14 +1227,14 @@ namespace Revit.IFC.Export.Exporter
             HashSet<IFCAnyHandle> properties = new HashSet<IFCAnyHandle>();
 
             string paramValue = "";
-            if (ParameterUtil.GetStringValueFromElement(element.Id, "Space Occupant Organization Abbreviation", out paramValue))
+            if (ParameterUtil.GetStringValueFromElement(element.Id, "Space Occupant Organization Abbreviation", out paramValue) != null)
             {
                 IFCData paramVal = Revit.IFC.Export.Toolkit.IFCDataUtil.CreateAsLabel(paramValue);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "SpaceOccupantOrganizationAbbreviation", null, paramVal, null);
                 properties.Add(propSingleValue);
             }
 
-            if (ParameterUtil.GetStringValueFromElement(element.Id, "Space Occupant Organization Name", out paramValue))
+            if (ParameterUtil.GetStringValueFromElement(element.Id, "Space Occupant Organization Name", out paramValue) != null)
             {
                 IFCData paramVal = Revit.IFC.Export.Toolkit.IFCDataUtil.CreateAsLabel(paramValue);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "SpaceOccupantOrganizationName", null, paramVal, null);
@@ -1272,7 +1272,7 @@ namespace Revit.IFC.Export.Exporter
             bool exportToCOBIE = ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE;
 
             string name;
-            if (ParameterUtil.GetStringValueFromElement(element.Id, "Occupant", out name))
+            if (ParameterUtil.GetStringValueFromElement(element.Id, "Occupant", out name) != null)
             {
                 Dictionary<string, IFCAnyHandle> classificationHandles = new Dictionary<string, IFCAnyHandle>();
 
@@ -1287,7 +1287,7 @@ namespace Revit.IFC.Export.Exporter
                         ParameterUtil.GetStringValueFromElement(projectInfo.Id, "BIM Standards URL", out location);
 
                     string itemReference;
-                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Organization ID Reference", out itemReference))
+                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Organization ID Reference", out itemReference) != null)
                     {
                         string itemName;
                         ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Organization ID Name", out itemName);
@@ -1297,7 +1297,7 @@ namespace Revit.IFC.Export.Exporter
                         classificationHandles["Space Occupant Organization ID"] = classificationReference;
                     }
 
-                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Sub-Organization ID Reference", out itemReference))
+                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Sub-Organization ID Reference", out itemReference) != null)
                     {
                         string itemName;
                         ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Sub-Organization ID Name", out itemName);
@@ -1307,7 +1307,7 @@ namespace Revit.IFC.Export.Exporter
                         classificationHandles["Space Occupant Sub-Organization ID"] = classificationReference;
                     }
 
-                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Sub-Organization ID Reference", out itemReference))
+                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Sub-Organization ID Reference", out itemReference) != null)
                     {
                         string itemName;
                         ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Sub-Organization ID Name", out itemName);
@@ -1317,7 +1317,7 @@ namespace Revit.IFC.Export.Exporter
                         classificationHandles["Space Occupant Sub-Organization ID"] = classificationReference;
                     }
 
-                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Organization Billing ID Reference", out itemReference))
+                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Organization Billing ID Reference", out itemReference) != null)
                     {
                         string itemName;
                         ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Organization Billing ID Name", out itemName);
@@ -1379,7 +1379,7 @@ namespace Revit.IFC.Export.Exporter
                 string itemName;
 
                 // Spatial Zone Type (Owner)
-                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Spatial Zone Type (Owner) Reference", out itemReference))
+                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Spatial Zone Type (Owner) Reference", out itemReference) != null)
                 {
                     ParameterUtil.GetStringValueFromElementOrSymbol(element, "Spatial Zone Type (Owner) Name", out itemName);
 
@@ -1389,7 +1389,7 @@ namespace Revit.IFC.Export.Exporter
                 }
 
                 // Spatial Zone Security Level (Owner)
-                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Spatial Zone Security Level (Owner) Reference", out itemReference))
+                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Spatial Zone Security Level (Owner) Reference", out itemReference) != null)
                 {
                     itemName = "";
                     ParameterUtil.GetStringValueFromElementOrSymbol(element, "Spatial Zone Security Level (Owner) Name", out itemName);
@@ -1400,7 +1400,7 @@ namespace Revit.IFC.Export.Exporter
                 }
 
                 // Spatial Zone Type (Energy Analysis)
-                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "ASHRAE Zone Type", out itemName))
+                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "ASHRAE Zone Type", out itemName) != null)
                 {
                     IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
                       "ASHRAE 90.1", "Common Space Type", itemName, null);
@@ -1461,7 +1461,7 @@ namespace Revit.IFC.Export.Exporter
                 string zoneObjectType;
                 string zoneDescription;
 
-                if (!ParameterUtil.GetOptionalStringValueFromElementOrSymbol(element, propZoneName, out zoneName))
+                if (ParameterUtil.GetOptionalStringValueFromElementOrSymbol(element, propZoneName, out zoneName) == null)
                     break;
 
                 // If we have an empty zone name, but the value exists, keep looking to make sure there aren't valid values later.

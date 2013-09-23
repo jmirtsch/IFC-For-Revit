@@ -75,10 +75,20 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
+        /// Converts a force value in Revit internal units to IFC units.
+        /// </summary>
+        /// <param name="unscaledForce">The force value in Revit internal units.</param>
+        /// <returns>The force in IFC units.</returns>
+        static public double ScaleForce(double unscaledForce)
+        {
+            return ExporterCacheManager.UnitsCache.Scale(UnitType.UT_Force, unscaledForce);
+        }
+
+        /// <summary>
         /// Converts a power value in Revit internal units to IFC units.
         /// </summary>
         /// <param name="unscaledPower">The power value in Revit internal units.</param>
-        /// <returns>The volume in IFC units.</returns>
+        /// <returns>The power in IFC units.</returns>
         static public double ScalePower(double unscaledPower)
         {
             return ExporterCacheManager.UnitsCache.Scale(UnitType.UT_HVAC_Power, unscaledPower);

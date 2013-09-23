@@ -254,7 +254,7 @@ namespace Revit.IFC.Export.Exporter
 
                         if (materialIds.Count != 0)
                         {
-                            CategoryUtil.CreateMaterialAssociations(element.Document, exporterIFC, beam, materialIds);
+                            CategoryUtil.CreateMaterialAssociations(exporterIFC, beam, materialIds);
                         }
 
                         // Register the beam's IFC handle for later use by truss and beam system export.

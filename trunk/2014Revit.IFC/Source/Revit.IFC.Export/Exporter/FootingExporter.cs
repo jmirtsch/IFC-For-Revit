@@ -130,7 +130,7 @@ namespace Revit.IFC.Export.Exporter
                         {
                             if (matId != ElementId.InvalidElementId)
                             {
-                                CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, footing, matId);
+                                CategoryUtil.CreateMaterialAssociation(exporterIFC, footing, matId);
                             }
                         }
 

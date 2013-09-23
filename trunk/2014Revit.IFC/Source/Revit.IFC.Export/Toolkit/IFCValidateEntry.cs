@@ -31,11 +31,9 @@ namespace Revit.IFC.Export.Toolkit
         public static string GetValidIFCType(Element element, string typeName, string defaultValue)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcExportType", out value))  // change IFCType to consistent parameter of IfcExportType
-            {
-                if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))  // support IFCType for legacy support
-                    value = typeName;
-            }
+            if ((ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcExportType", out value) == null) && // change IFCType to consistent parameter of IfcExportType
+                (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null))  // support IFCType for legacy support
+                value = typeName;
 
             if (String.IsNullOrEmpty(value))
             {

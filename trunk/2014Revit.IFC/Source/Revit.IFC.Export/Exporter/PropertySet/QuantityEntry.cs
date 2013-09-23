@@ -138,9 +138,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             double val = 0;
             if (useProperty)
             {
-                success = ParameterUtil.GetDoubleValueFromElementOrSymbol(element, RevitParameterName, out val);
+                success = (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, RevitParameterName, out val) != null);
                 if (!success && RevitBuiltInParameter != BuiltInParameter.INVALID)
-                    success = ParameterUtil.GetDoubleValueFromElementOrSymbol(element, RevitBuiltInParameter, out val);
+                    success = (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, RevitBuiltInParameter, out val) != null);
 
                 if (success) // factor in the scale factor for all the parameters depending of the data type to get the correct value
                 {

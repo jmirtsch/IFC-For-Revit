@@ -310,9 +310,9 @@ namespace Revit.IFC.Export.Exporter
                         double? nominalLength = null;
 
                         double nominalDiameterVal, nominalLengthVal;
-                        if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalDiameter", out nominalDiameterVal))
+                        if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalDiameter", out nominalDiameterVal) != null)
                             nominalDiameter = UnitUtil.ScaleLength(nominalDiameterVal);
-                        if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalLength", out nominalLengthVal))
+                        if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalLength", out nominalLengthVal) != null)
                             nominalLength = UnitUtil.ScaleLength(nominalLengthVal);
 
                         instanceHandle = IFCInstanceExporter.CreateMechanicalFastener(file, instanceGUID, ownerHistory,
@@ -1083,11 +1083,9 @@ namespace Revit.IFC.Export.Exporter
             Enum.TryParse("NotDefined", true, out enumValue);
 
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcExportType", out value))
-                if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-                {
-                    value = ifcEnumTypeStr;
-                }
+            if ((ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcExportType", out value) == null) &&
+                (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null))
+                value = ifcEnumTypeStr;
             
             if (String.IsNullOrEmpty(value))
                 return enumValue;
@@ -1102,10 +1100,8 @@ namespace Revit.IFC.Export.Exporter
         private static IFCAssemblyPlace GetAssemblyPlace(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCAssemblyPlace.NotDefined;

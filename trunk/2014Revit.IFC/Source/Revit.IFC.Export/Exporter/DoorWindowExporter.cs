@@ -28,7 +28,6 @@ using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Export.Exporter.PropertySet;
 using Revit.IFC.Common.Enums;
 using Revit.IFC.Common.Utility;
-using IFCDoorStyleOperation = Autodesk.Revit.DB.IFC.IFCDoorStyleOperation;
 
 namespace Revit.IFC.Export.Exporter
 {

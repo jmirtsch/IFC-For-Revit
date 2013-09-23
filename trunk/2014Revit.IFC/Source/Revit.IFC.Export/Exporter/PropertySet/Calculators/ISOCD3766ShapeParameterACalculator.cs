@@ -64,7 +64,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
         /// </returns>
         public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
         {
-            bool ret = ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameterGroup.PG_GEOMETRY, "A", out m_ShapeParameterA);
+            bool ret = (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameterGroup.PG_GEOMETRY, "A", out m_ShapeParameterA) != null);
             if (ret)
                 m_ShapeParameterA = UnitUtil.ScaleLength(m_ShapeParameterA);
             return ret;

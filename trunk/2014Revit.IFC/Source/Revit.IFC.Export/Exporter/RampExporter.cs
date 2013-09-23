@@ -370,7 +370,7 @@ namespace Revit.IFC.Export.Exporter
                         components.Add(containedRampHnd);
                         componentExtrusionData.Add(ecData);
                         //productWrapper.AddElement(containedRampHnd, placementSetter.LevelInfo, ecData, false);
-                        CategoryUtil.CreateMaterialAssociations(ramp.Document, exporterIFC, containedRampHnd, bodyData.MaterialIds);
+                        CategoryUtil.CreateMaterialAssociations(exporterIFC, containedRampHnd, bodyData.MaterialIds);
 
                         string guid = GUIDUtil.CreateGUID(ramp);
                         IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
