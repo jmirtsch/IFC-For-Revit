@@ -176,8 +176,7 @@ namespace Revit.IFC.Export.Exporter
                 {
                     ScheduleField field = definition.GetField(ii);
 
-                    SchedulableField schedulableField = field.GetSchedulableField();
-                    ScheduleFieldType fieldType = schedulableField.FieldType;
+                    ScheduleFieldType fieldType = field.FieldType;
                     if (fieldType != ScheduleFieldType.Instance && fieldType != ScheduleFieldType.ElementType)
                         continue;
 

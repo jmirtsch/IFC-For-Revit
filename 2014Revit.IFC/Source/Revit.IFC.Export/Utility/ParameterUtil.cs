@@ -23,7 +23,7 @@ using System.Text;
 using Autodesk.Revit;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
-
+using Revit.IFC.Export.Exporter.PropertySet;
 
 namespace Revit.IFC.Export.Utility
 {
@@ -63,7 +63,7 @@ namespace Revit.IFC.Export.Utility
             m_IFCParameters.Clear();
         }
 
-        private static bool GetStringValueFromElementBase(ElementId elementId, string propertyName, bool allowUnset, out string propertyValue)
+        private static Parameter GetStringValueFromElementBase(ElementId elementId, string propertyName, bool allowUnset, out string propertyValue)
         {
             if (elementId == ElementId.InvalidElementId)
                 throw new ArgumentNullException("element");
@@ -75,25 +75,34 @@ namespace Revit.IFC.Export.Utility
 
             Parameter parameter = GetParameterFromName(elementId, null, propertyName);
 
-            if (parameter != null && parameter.StorageType == StorageType.String)
+            if (parameter != null)
             {
+                StorageType storageType = parameter.StorageType;
+                if (storageType != StorageType.String && storageType != StorageType.ElementId)
+                    return null;
+
                 if (parameter.HasValue)
                 {
                     if (parameter.AsString() != null)
                     {
                         propertyValue = parameter.AsString();
-                        return true;
+                        return parameter;
+                    }
+                    else if (parameter.AsElementId() != null)
+                    {
+                        propertyValue = PropertyUtil.ElementIdParameterAsString(parameter);
+                        return parameter;
                     }
                 }
                 
                 if (allowUnset)
                 {
                     propertyValue = null;
-                    return true;
+                    return parameter;
                 }
             }
 
-            return false;
+            return null;
         }
 
         /// <summary>
@@ -104,8 +113,8 @@ namespace Revit.IFC.Export.Utility
         /// <param name="propertyValue">The output property value.</param>
         /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
         /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
-        /// <returns>True if there is a non-empty string value available, false otherwise.</returns>
-        public static bool GetStringValueFromElement(ElementId elementId, string propertyName, out string propertyValue)
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetStringValueFromElement(ElementId elementId, string propertyName, out string propertyValue)
         {
             return GetStringValueFromElementBase(elementId, propertyName, false, out propertyValue);
         }
@@ -118,8 +127,8 @@ namespace Revit.IFC.Export.Utility
         /// <param name="propertyValue">The output property value.</param>
         /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
         /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
-        /// <returns>True if the parameter is set, even if the value is empty, false otherwise.</returns>
-        public static bool GetOptionalStringValueFromElement(ElementId elementId, string propertyName, out string propertyValue)
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetOptionalStringValueFromElement(ElementId elementId, string propertyName, out string propertyValue)
         {
             return GetStringValueFromElementBase(elementId, propertyName, true, out propertyValue);
         }
@@ -132,8 +141,8 @@ namespace Revit.IFC.Export.Utility
         /// <param name="propertyValue">The output property value.</param>
         /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
         /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
-        /// <returns>True if get the value successfully, false otherwise.</returns>
-        public static bool GetIntValueFromElement(Element element, string propertyName, out int propertyValue)
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetIntValueFromElement(Element element, string propertyName, out int propertyValue)
         {
             if (element == null)
                 throw new ArgumentNullException("element");
@@ -154,32 +163,32 @@ namespace Revit.IFC.Export.Utility
                             try
                             {
                                 propertyValue = (int)parameter.AsDouble();
-                                return true;
+                                return parameter;
                             }
                             catch
                             {
-                                return false;
+                                return null;
                             }
                         }
                     case StorageType.Integer:
                         propertyValue = parameter.AsInteger();
-                        return true;
+                        return parameter;
                     case StorageType.String:
                         {
                             try
                             {
                                 propertyValue = Convert.ToInt32(parameter.AsString());
-                                return true;
+                                return parameter;
                             }
                             catch
                             {
-                                return false;
+                                return null;
                             }
                         }
                 }
             }
 
-            return false;
+            return null;
         }
 
         /// <summary>
@@ -191,8 +200,8 @@ namespace Revit.IFC.Export.Utility
         /// <param name="propertyValue">The output property value.</param>
         /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
         /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
-        /// <returns>True if get the value successfully, false otherwise.</returns>
-        public static bool GetDoubleValueFromElement(Element element, BuiltInParameterGroup? group, string propertyName, out double propertyValue)
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetDoubleValueFromElement(Element element, BuiltInParameterGroup? group, string propertyName, out double propertyValue)
         {
             if (element == null)
                 throw new ArgumentNullException("element");
@@ -210,40 +219,28 @@ namespace Revit.IFC.Export.Utility
                 {
                     case StorageType.Double:
                         propertyValue = parameter.AsDouble();
-                        return true;
+                        return parameter;
                     case StorageType.Integer:
                         propertyValue = parameter.AsInteger();
-                        return true;
+                        return parameter;
                     case StorageType.String:
-                        return Double.TryParse(parameter.AsString(), out propertyValue);
+                        return Double.TryParse(parameter.AsString(), out propertyValue) ? parameter : null;
                 }
             }
 
-            return false;
+            return null;
         }
 
         /// <summary>
         /// Gets string value from built-in parameter of an element.
         /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="builtInParameter">
-        /// The built-in parameter.
-        /// </param>
-        /// <param name="propertyValue">
-        /// The output property value.
-        /// </param>
-        /// <exception cref="System.ArgumentNullException">
-        /// Thrown when element is null.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// Thrown when builtInParameter in invalid.
-        /// </exception>
-        /// <returns>
-        /// True if get the value successfully, false otherwise.
-        /// </returns>
-        public static bool GetStringValueFromElement(Element element, BuiltInParameter builtInParameter, out string propertyValue)
+        /// <param name="element">The element.</param>
+        /// <param name="builtInParameter">The built-in parameter.</param>
+        /// <param name="propertyValue">The output property value.</param>
+        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when builtInParameter in invalid.</exception>
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetStringValueFromElement(Element element, BuiltInParameter builtInParameter, out string propertyValue)
         {
             if (element == null)
                 throw new ArgumentNullException("element");
@@ -260,17 +257,20 @@ namespace Revit.IFC.Export.Utility
                 {
                     case StorageType.Double:
                         propertyValue = parameter.AsDouble().ToString();
-                        return true;
+                        return parameter;
                     case StorageType.Integer:
                         propertyValue = parameter.AsInteger().ToString();
-                        return true;
+                        return parameter;
                     case StorageType.String:
                         propertyValue = parameter.AsString();
-                        return true;
+                        return parameter;
+                    case StorageType.ElementId:
+                        propertyValue = PropertyUtil.ElementIdParameterAsString(parameter);
+                        return parameter;
                 }
             }
 
-            return false;
+            return null;
         }
 
         /// <summary>Gets string value from built-in parameter of an element or its type.</summary>
@@ -278,45 +278,36 @@ namespace Revit.IFC.Export.Utility
         /// <param name="builtInParameter">The built-in parameter.</param>
         /// <param name="nullAllowed">true if we allow the property value to be empty.</param>
         /// <param name="propertyValue">The output property value.</param>
-        /// <returns>True if get the value successfully, false otherwise.</returns>
-        public static bool GetStringValueFromElementOrSymbol(Element element, BuiltInParameter builtInParameter, bool nullAllowed, out string propertyValue)
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetStringValueFromElementOrSymbol(Element element, BuiltInParameter builtInParameter, bool nullAllowed, out string propertyValue)
         {
-            if (GetStringValueFromElement(element, builtInParameter, out propertyValue))
+            Parameter parameter = GetStringValueFromElement(element, builtInParameter, out propertyValue);
+            if (parameter != null)
             {
                 if (!String.IsNullOrEmpty(propertyValue))
-                    return true;
+                    return parameter;
             }
 
-            bool found = false;
+            parameter = null;
             Element elementType = element.Document.GetElement(element.GetTypeId());
             if (elementType != null)
             {
-                found = GetStringValueFromElement(elementType, builtInParameter, out propertyValue);
-                if (found && !nullAllowed && String.IsNullOrEmpty(propertyValue))
-                    found = false;
+                parameter = GetStringValueFromElement(elementType, builtInParameter, out propertyValue);
+                if ((parameter != null) && !nullAllowed && String.IsNullOrEmpty(propertyValue))
+                    parameter = null;
             }
 
-            return found;
+            return parameter;
         }
 
         /// <summary>
         /// Sets string value of a built-in parameter of an element.
         /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="builtInParameter">
-        /// The built-in parameter.
-        /// </param>
-        /// <param name="propertyValue">
-        /// The property value.
-        /// </param>
-        /// <exception cref="System.ArgumentNullException">
-        /// Thrown when element is null.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// Thrown when builtInParameter in invalid.
-        /// </exception>
+        /// <param name="element">The element.</param>
+        /// <param name="builtInParameter">The built-in parameter.</param>
+        /// <param name="propertyValue">The property value.</param>
+        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when builtInParameter in invalid.</exception>
         public static void SetStringParameter(Element element, BuiltInParameter builtInParameter, string propertyValue)
         {
             if (element == null)
@@ -331,35 +322,21 @@ namespace Revit.IFC.Export.Utility
                 parameter.SetValueString(propertyValue);
                 return;
             }
-            else
-            {
-                ElementId parameterId = new ElementId(builtInParameter);
-                ExporterIFCUtils.AddValueString(element, parameterId, propertyValue);
-            }
+
+            ElementId parameterId = new ElementId(builtInParameter);
+            ExporterIFCUtils.AddValueString(element, parameterId, propertyValue);
         }
 
         /// <summary>
         /// Gets double value from built-in parameter of an element.
         /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="builtInParameter">
-        /// The built-in parameter.
-        /// </param>
-        /// <param name="propertyValue">
-        /// The output property value.
-        /// </param>
-        /// <exception cref="System.ArgumentNullException">
-        /// Thrown when element is null.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// Thrown when builtInParameter in invalid.
-        /// </exception>
-        /// <returns>
-        /// True if get the value successfully, false otherwise.
-        /// </returns>
-        public static bool GetDoubleValueFromElement(Element element, BuiltInParameter builtInParameter, out double propertyValue)
+        /// <param name="element">The element.</param>
+        /// <param name="builtInParameter">The built-in parameter.</param>
+        /// <param name="propertyValue">The output property value.</param>
+        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when builtInParameter in invalid.</exception>
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetDoubleValueFromElement(Element element, BuiltInParameter builtInParameter, out double propertyValue)
         {
             if (element == null)
                 throw new ArgumentNullException("element");
@@ -374,10 +351,10 @@ namespace Revit.IFC.Export.Utility
             if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Double)
             {
                 propertyValue = parameter.AsDouble();
-                return true;
+                return parameter;
             }
 
-            return false;
+            return null;
         }
 
         /// <summary>
@@ -386,14 +363,10 @@ namespace Revit.IFC.Export.Utility
         /// <param name="element">The element.</param>
         /// <param name="builtInParameter">The built-in parameter.</param>
         /// <param name="propertyValue">The output property value.</param>
-        /// <exception cref="System.ArgumentNullException">
-        /// Thrown when element is null.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// Thrown when builtInParameter in invalid.
-        /// </exception>
-        /// <returns>True if get the value successfully, false otherwise.</returns>
-        public static bool GetIntValueFromElement(Element element, BuiltInParameter builtInParameter, out int propertyValue)
+        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown when builtInParameter in invalid.</exception>
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetIntValueFromElement(Element element, BuiltInParameter builtInParameter, out int propertyValue)
         {
             if (element == null)
                 throw new ArgumentNullException("element");
@@ -408,101 +381,71 @@ namespace Revit.IFC.Export.Utility
             if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Integer)
             {
                 propertyValue = parameter.AsInteger();
-                return true;
+                return parameter;
             }
 
-            return false;
+            return null;
         }
 
         /// <summary>
         /// Gets double value from built-in parameter of an element or its element type.
         /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="builtInParameter">
-        /// The built-in parameter.
-        /// </param>
-        /// <param name="propertyValue">
-        /// The output property value.
-        /// </param>
-        /// <returns>
-        /// True if get the value successfully, false otherwise.
-        /// </returns>
-        public static bool GetDoubleValueFromElementOrSymbol(Element element, BuiltInParameter builtInParameter, out double propertyValue)
+        /// <param name="element">The element.</param>
+        /// <param name="builtInParameter">The built-in parameter.</param>
+        /// <param name="propertyValue">The output property value.</param>
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetDoubleValueFromElementOrSymbol(Element element, BuiltInParameter builtInParameter, out double propertyValue)
         {
-            if (GetDoubleValueFromElement(element, builtInParameter, out propertyValue))
-                return true;
-            else
-            {
-                Document document = element.Document;
-                ElementId typeId = element.GetTypeId();
+            Parameter parameter = GetDoubleValueFromElement(element, builtInParameter, out propertyValue);
+            if (parameter != null)
+                return parameter;
 
-                Element elemType = document.GetElement(typeId);
-                if (elemType != null)
-                {
-                    return GetDoubleValueFromElement(elemType, builtInParameter, out propertyValue);
-                }
-                else
-                    return false;
-            }
+            Document document = element.Document;
+            ElementId typeId = element.GetTypeId();
+
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return GetDoubleValueFromElement(elemType, builtInParameter, out propertyValue);
+
+            return null;
         }
 
         /// <summary>
         /// Gets double value from parameter of an element or its element type.
         /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="propertyName">
-        /// The property name.
-        /// </param>
-        /// <param name="propertyValue">
-        /// The output property value.
-        /// </param>
-        /// <returns>
-        /// True if get the value successfully, false otherwise.
-        /// </returns>
-        public static bool GetDoubleValueFromElementOrSymbol(Element element, string propertyName, out double propertyValue)
+        /// <param name="element">The element.</param>
+        /// <param name="propertyName">The property name.</param>
+        /// <param name="propertyValue">The output property value.</param>
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetDoubleValueFromElementOrSymbol(Element element, string propertyName, out double propertyValue)
         {
-            if (GetDoubleValueFromElement(element, null, propertyName, out propertyValue))
-                return true;
-            else
-            {
-                Document document = element.Document;
-                ElementId typeId = element.GetTypeId();
+            Parameter parameter = GetDoubleValueFromElement(element, null, propertyName, out propertyValue);
+            if (parameter != null)
+                return parameter;
 
-                Element elemType = document.GetElement(typeId);
-                if (elemType != null)
-                {
-                    return GetDoubleValueFromElement(elemType, null, propertyName, out propertyValue);
-                }
-                else
-                    return false;
-            }
+            Document document = element.Document;
+            ElementId typeId = element.GetTypeId();
+
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return GetDoubleValueFromElement(elemType, null, propertyName, out propertyValue);
+
+            return null;
         }
 
         /// <summary>
         /// Gets positive double value from parameter of an element or its element type.
         /// </summary>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="propertyName">
-        /// The property name.
-        /// </param>
-        /// <param name="propertyValue">
-        /// The output property value.
-        /// </param>
-        /// <returns>
-        /// True if get the value successfully and the value is positive, false otherwise.
-        /// </returns>
-        public static bool GetPositiveDoubleValueFromElementOrSymbol(Element element, string propertyName, out double propertyValue)
+        /// <param name="element">The element.</param>
+        /// <param name="propertyName">The property name.</param>
+        /// <param name="propertyValue">The output property value.</param>
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetPositiveDoubleValueFromElementOrSymbol(Element element, string propertyName, out double propertyValue)
         {
-            bool found = GetDoubleValueFromElementOrSymbol(element, propertyName, out propertyValue);
-            if (found && (propertyValue > 0.0))
-                return true;
-            return false;
+            Parameter parameter = GetDoubleValueFromElementOrSymbol(element, propertyName, out propertyValue);
+            if ((parameter != null)  && (propertyValue > 0.0))
+                return parameter;
+            return null;
         }
 
         /// <summary>
@@ -511,8 +454,8 @@ namespace Revit.IFC.Export.Utility
         /// <param name="element">The element.</param>
         /// <param name="builtInParameter">The built in parameter.</param>
         /// <param name="propertyValue">The output property value.</param>
-        /// <returns>True if get the value successfully, false otherwise.</returns>
-        public static bool GetElementIdValueFromElement(Element element, BuiltInParameter builtInParameter, out ElementId propertyValue)
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetElementIdValueFromElement(Element element, BuiltInParameter builtInParameter, out ElementId propertyValue)
         {
             if (element == null)
                 throw new ArgumentNullException("element");
@@ -526,10 +469,10 @@ namespace Revit.IFC.Export.Utility
             if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.ElementId)
             {
                 propertyValue = parameter.AsElementId();
-                return true;
+                return parameter;
             }
 
-            return false;
+            return null;
         }
 
         /// <summary>
@@ -538,24 +481,21 @@ namespace Revit.IFC.Export.Utility
         /// <param name="element">The element.</param>
         /// <param name="builtInParameter">The built in parameter.</param>
         /// <param name="propertyValue">The output property value.</param>
-        /// <returns>True if get the value successfully, false otherwise.</returns>
-        public static bool GetElementIdValueFromElementOrSymbol(Element element, BuiltInParameter builtInParameter, out ElementId propertyValue)
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetElementIdValueFromElementOrSymbol(Element element, BuiltInParameter builtInParameter, out ElementId propertyValue)
         {
-            if (GetElementIdValueFromElement(element, builtInParameter, out propertyValue))
-                return true;
-            else
-            {
-                Document document = element.Document;
-                ElementId typeId = element.GetTypeId();
+            Parameter parameter = GetElementIdValueFromElement(element, builtInParameter, out propertyValue);
+            if (parameter != null)
+                return parameter;
 
-                Element elemType = document.GetElement(typeId);
-                if (elemType != null)
-                {
-                    return GetElementIdValueFromElement(elemType, builtInParameter, out propertyValue);
-                }
-                else
-                    return false;
-            }
+            Document document = element.Document;
+            ElementId typeId = element.GetTypeId();
+
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return GetElementIdValueFromElement(elemType, builtInParameter, out propertyValue);
+            
+            return null;
         }
 
         /// <summary>
@@ -609,6 +549,40 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
+        /// Returns true if the built-in parameter has the identical name and value as another parameter.
+        /// Used to remove redundant output from the IFC export.
+        /// </summary>
+        /// <param name="parameter">The parameter</param>
+        /// <returns>Returns true if the built-in parameter has the identical name and value as another parameter.</returns>
+        static private bool IsDuplicateParameter(Parameter parameter)
+        {
+            if (parameter.Id.IntegerValue == (int) BuiltInParameter.ELEM_CATEGORY_PARAM_MT) // Same as ELEM_CATEGORY_PARAM.
+                return true;
+            // DPART_ORIGINAL_CATEGORY_ID is the string version of DPART_ORIGINAL_CATEGORY_ID.  Not going to duplicate the data.
+            if (parameter.Id.IntegerValue == (int) BuiltInParameter.DPART_ORIGINAL_CATEGORY) 
+                return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Maps built-in parameter ids to the supported ids.  In general, this is an identity mapping, except for special
+        /// cases identified in the private function IsDuplicateParameter.
+        /// </summary>
+        /// <param name="parameterId">The original parameter id.</param>
+        /// <returns>The supported parameter id.</returns>
+        static public ElementId MapParameterId(ElementId parameterId)
+        {
+            switch (parameterId.IntegerValue)
+            {
+                case ((int) BuiltInParameter.ELEM_CATEGORY_PARAM_MT):
+                    return new ElementId(BuiltInParameter.ELEM_CATEGORY_PARAM);
+                case ((int)BuiltInParameter.DPART_ORIGINAL_CATEGORY):
+                    return new ElementId(BuiltInParameter.DPART_ORIGINAL_CATEGORY_ID);
+            }
+            return parameterId;
+        }
+
+        /// <summary>
         /// Cache the parameters for an element, allowing quick access later.
         /// </summary>
         /// <param name="id">The element id.</param>
@@ -643,7 +617,10 @@ namespace Revit.IFC.Export.Utility
                 Parameter parameter = parameterIt.Current as Parameter;
                 if (parameter == null)
                     continue;
-                
+
+                if (IsDuplicateParameter(parameter))
+                    continue;
+
                 Definition paramDefinition = parameter.Definition;
                 if (paramDefinition == null)
                     continue;
@@ -710,20 +687,20 @@ namespace Revit.IFC.Export.Utility
                 getParameterByNameFromCache(elemId, propertyName);
         }
 
-        private static bool GetStringValueFromElementOrSymbolBase(Element element, string propertyName, bool allowUnset, out string propertyValue)
+        private static Parameter GetStringValueFromElementOrSymbolBase(Element element, string propertyName, bool allowUnset, out string propertyValue)
         {
-            bool foundInInstance = GetStringValueFromElementBase(element.Id, propertyName, allowUnset, out propertyValue);
-            if (foundInInstance)
+            Parameter parameter = GetStringValueFromElementBase(element.Id, propertyName, allowUnset, out propertyValue);
+            if (parameter != null)
             {
                 if (!string.IsNullOrEmpty(propertyValue))
-                    return true;
+                    return parameter;
             }
             
             ElementId typeId = element.GetTypeId();
             if (typeId != ElementId.InvalidElementId)
                 return GetStringValueFromElementBase(typeId, propertyName, allowUnset, out propertyValue);
 
-            return foundInInstance;
+            return parameter;
         }
 
         /// <summary>
@@ -732,8 +709,8 @@ namespace Revit.IFC.Export.Utility
         /// <param name="element">The element.</param>
         /// <param name="propertyName">The property name.</param>
         /// <param name="propertyValue">The output property value.</param>
-        /// <returns>True if get the value successfully, false otherwise.</returns>
-        public static bool GetStringValueFromElementOrSymbol(Element element, string propertyName, out string propertyValue)
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetStringValueFromElementOrSymbol(Element element, string propertyName, out string propertyValue)
         {
             return GetStringValueFromElementOrSymbolBase(element, propertyName, false, out propertyValue);
         }
@@ -744,8 +721,8 @@ namespace Revit.IFC.Export.Utility
         /// <param name="element">The element.</param>
         /// <param name="propertyName">The property name.</param>
         /// <param name="propertyValue">The output property value.</param>
-        /// <returns>True if get the value successfully, even if it is empty, false otherwise.</returns>
-        public static bool GetOptionalStringValueFromElementOrSymbol(Element element, string propertyName, out string propertyValue)
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetOptionalStringValueFromElementOrSymbol(Element element, string propertyName, out string propertyValue)
         {
             return GetStringValueFromElementOrSymbolBase(element, propertyName, true, out propertyValue);
         }
@@ -756,24 +733,21 @@ namespace Revit.IFC.Export.Utility
         /// <param name="element">The element.</param>
         /// <param name="propertyName">The property name.</param>
         /// <param name="propertyValue">The output property value.</param>
-        /// <returns>True if get the value successfully, false otherwise.</returns>
-        public static bool GetIntValueFromElementOrSymbol(Element element, string propertyName, out int propertyValue)
+        /// <returns>The parameter, or null if not found.</returns>
+        public static Parameter GetIntValueFromElementOrSymbol(Element element, string propertyName, out int propertyValue)
         {
-            if (GetIntValueFromElement(element, propertyName, out propertyValue))
-                return true;
-            else
-            {
-                Document document = element.Document;
-                ElementId typeId = element.GetTypeId();
+            Parameter parameter = GetIntValueFromElement(element, propertyName, out propertyValue);
+            if (parameter != null)
+                return parameter;
 
-                Element elemType = document.GetElement(typeId);
-                if (elemType != null)
-                {
-                    return GetIntValueFromElement(elemType, propertyName, out propertyValue);
-                }
-                else
-                    return false;
-            }
+            Document document = element.Document;
+            ElementId typeId = element.GetTypeId();
+
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return GetIntValueFromElement(elemType, propertyName, out propertyValue);
+            
+            return null;
         }
     }
 }

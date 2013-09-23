@@ -511,7 +511,7 @@ namespace Revit.IFC.Export.Exporter
                                     IFCAnyHandle curveRepresentationItem = IFCInstanceExporter.CreateGeometricSet(file, curveSet);
                                     HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
                                     bodyItems.Add(curveRepresentationItem);
-                                    planRepresentation = RepresentationUtil.CreateGeometricSetRep(exporterIFC, familyInstance, categoryId, "Annotation",
+                                    planRepresentation = RepresentationUtil.CreateGeometricSetRep(exporterIFC, familyInstance, categoryId, "FootPrint",
                                        contextOfItems2d, bodyItems);
                                 }
                             }
@@ -533,7 +533,7 @@ namespace Revit.IFC.Export.Exporter
                     {
                         wrapper.RegisterHandleWithElementType(familySymbol, typeStyle, propertySets);
 
-                        CategoryUtil.CreateMaterialAssociations(doc, exporterIFC, typeStyle, typeInfo.MaterialIds);
+                        CategoryUtil.CreateMaterialAssociations(exporterIFC, typeStyle, typeInfo.MaterialIds);
 
                         typeInfo.Style = typeStyle;
 
@@ -893,7 +893,7 @@ namespace Revit.IFC.Export.Exporter
                             ExporterCacheManager.HandleToElementCache.Register(instanceHandle, familyInstance.Id);
 
                             if (!exportParts)
-                                CategoryUtil.CreateMaterialAssociations(doc, exporterIFC, instanceHandle, typeInfo.MaterialIds);
+                                CategoryUtil.CreateMaterialAssociations(exporterIFC, instanceHandle, typeInfo.MaterialIds);
 
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(typeInfo.Style))
                                 ExporterCacheManager.TypeRelationsCache.Add(typeInfo.Style, instanceHandle);
@@ -1019,10 +1019,8 @@ namespace Revit.IFC.Export.Exporter
         static IFCColumnType GetColumnType(Element element, string columnType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = columnType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCColumnType.Column;

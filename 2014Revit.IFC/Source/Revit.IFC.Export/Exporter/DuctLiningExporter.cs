@@ -88,7 +88,7 @@ namespace Revit.IFC.Export.Exporter
                         productWrapper.AddElement(element, ductLining, placementSetter.LevelInfo, ecData, true);
 
                         ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element);
-                        CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, ductLining, matId);
+                        CategoryUtil.CreateMaterialAssociation(exporterIFC, ductLining, matId);
                     }
                 }
                 tr.Commit();

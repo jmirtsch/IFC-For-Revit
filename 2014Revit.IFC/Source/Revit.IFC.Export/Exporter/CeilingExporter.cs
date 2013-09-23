@@ -171,12 +171,12 @@ namespace Revit.IFC.Export.Exporter
                             if (ceiling != null)
                             {
                                 HostObjectExporter.ExportHostObjectMaterials(exporterIFC, ceiling, covering,
-                                    geomElem, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3);
+                                    geomElem, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3, null);
                             }
                             else
                             {
                                 ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geomElem, exporterIFC, element);
-                                CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, covering, matId);
+                                CategoryUtil.CreateMaterialAssociation(exporterIFC, covering, matId);
                             }
                         }
 

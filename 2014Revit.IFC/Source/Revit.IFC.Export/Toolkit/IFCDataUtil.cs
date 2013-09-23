@@ -294,5 +294,15 @@ namespace Revit.IFC.Export.Toolkit
         {
             return IFCData.CreateDoubleOfType(value, "IfcVolumetricFlowRateMeasure");
         }
+
+        /// <summary>
+        /// Creates an IFCData object as IfcForceMeasure.
+        /// </summary>
+        /// <param name="value">The double value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsForceMeasure(double value)
+        {
+            return IFCData.CreateDoubleOfType(value, "IfcForceMeasure");
+        }
     }
 }

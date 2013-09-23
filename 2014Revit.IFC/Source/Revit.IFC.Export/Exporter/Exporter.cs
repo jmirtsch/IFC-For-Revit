@@ -1417,12 +1417,20 @@ namespace Revit.IFC.Export.Exporter
                                 entries.Value.Add(memberHandle);
                         }
 
-                        ElementSet members = systemElem.Elements;
-                        foreach (Element member in members)
+                        // The Elements property below can throw an InvalidOperationException in some cases, which could
+                        // crash the export.  Protect against this without having too generic a try/catch block.
+                        try
                         {
-                            IFCAnyHandle memberHandle = ExporterCacheManager.MEPCache.Find(member.Id);
-                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(memberHandle))
-                                entries.Value.Add(memberHandle);
+                            ElementSet members = systemElem.Elements;
+                            foreach (Element member in members)
+                            {
+                                IFCAnyHandle memberHandle = ExporterCacheManager.MEPCache.Find(member.Id);
+                                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(memberHandle))
+                                    entries.Value.Add(memberHandle);
+                            }
+                        }
+                        catch
+                        {
                         }
 
                         if (entries.Value.Count == 0)
@@ -1556,6 +1564,9 @@ namespace Revit.IFC.Export.Exporter
                     organization.Add(String.Empty);
 
                 string versionInfos = document.Application.VersionBuild + " - " + ExporterCacheManager.ExportOptionsCache.ExporterVersion + " - " + ExporterCacheManager.ExportOptionsCache.ExporterUIVersion;
+
+                if (fHItem.Authorization == null)
+                    fHItem.Authorization = String.Empty;
 
                 IFCInstanceExporter.CreateFileName(file, projectNumber, author, organization, document.Application.VersionName,
                     versionInfos, fHItem.Authorization);
@@ -1966,6 +1977,18 @@ namespace Revit.IFC.Export.Exporter
             return postalAddress;
         }
 
+        private IFCAnyHandle CreateSIUnit(IFCFile file, UnitType? unitType, IFCUnit ifcUnitType, IFCSIUnitName unitName, IFCSIPrefix? prefix, DisplayUnitType? dut)
+        {
+            IFCAnyHandle siUnit = IFCInstanceExporter.CreateSIUnit(file, ifcUnitType, prefix, unitName);
+            if (unitType.HasValue && dut.HasValue)
+            {
+                double scaleFactor = UnitUtils.ConvertFromInternalUnits(1.0, dut.Value);
+                ExporterCacheManager.UnitsCache.AddUnit(unitType.Value, siUnit, scaleFactor);
+            }
+
+            return siUnit;
+        }
+
         /// <summary>
         /// Creates the IfcUnitAssignment.
         /// </summary>
@@ -2229,12 +2252,7 @@ namespace Revit.IFC.Export.Exporter
             // Mass
             IFCAnyHandle massSIUnit = null;
             {
-                IFCUnit unitType = IFCUnit.MassUnit;
-                IFCSIPrefix prefix = IFCSIPrefix.Kilo;
-                IFCSIUnitName unitName = IFCSIUnitName.Gram;
-
-                massSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, prefix, unitName);
-
+                massSIUnit = CreateSIUnit(file, UnitType.UT_Mass, IFCUnit.MassUnit, IFCSIUnitName.Gram, IFCSIPrefix.Kilo, null);
                 // If we are exporting to GSA standard, we will override kg with pound below.
                 if (!exportToCOBIE)
                     unitSet.Add(massSIUnit);      // created above, so unique.
@@ -2243,29 +2261,20 @@ namespace Revit.IFC.Export.Exporter
             // Time -- support seconds only.
             IFCAnyHandle timeSIUnit = null;
             {
-                IFCUnit unitType = IFCUnit.TimeUnit;
-                IFCSIUnitName unitName = IFCSIUnitName.Second;
-
-                timeSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+                timeSIUnit = CreateSIUnit(file, null, IFCUnit.TimeUnit, IFCSIUnitName.Second, null, null);
                 unitSet.Add(timeSIUnit);      // created above, so unique.
             }
 
             // Frequency = support Hertz only.
             {
-                IFCUnit unitType = IFCUnit.FrequencyUnit;
-                IFCSIUnitName unitName = IFCSIUnitName.Hertz;
-
-                IFCAnyHandle frequencySIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+                IFCAnyHandle frequencySIUnit = CreateSIUnit(file, null, IFCUnit.FrequencyUnit, IFCSIUnitName.Hertz, null, null);
                 unitSet.Add(frequencySIUnit);      // created above, so unique.
             }
 
             // Temperature -- support Kelvin only.
             IFCAnyHandle temperatureSIUnit = null;
             {
-                IFCUnit unitType = IFCUnit.ThermoDynamicTemperatureUnit;
-                IFCSIUnitName unitName = IFCSIUnitName.Kelvin;
-
-                temperatureSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+                temperatureSIUnit = CreateSIUnit(file, null, IFCUnit.ThermoDynamicTemperatureUnit, IFCSIUnitName.Kelvin, null, null);
                 unitSet.Add(temperatureSIUnit);      // created above, so unique.
             }
 
@@ -2297,38 +2306,42 @@ namespace Revit.IFC.Export.Exporter
 
             // Electrical current - support metric ampere only.
             {
-                IFCUnit unitType = IFCUnit.ElectricCurrentUnit;
-                IFCSIUnitName unitName = IFCSIUnitName.Ampere;
-
-                IFCAnyHandle currentSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+                IFCAnyHandle currentSIUnit = CreateSIUnit(file, UnitType.UT_Electrical_Current, IFCUnit.ElectricCurrentUnit, IFCSIUnitName.Ampere, 
+                    null, DisplayUnitType.DUT_AMPERES);
                 unitSet.Add(currentSIUnit);      // created above, so unique.
-
-                double currentFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_AMPERES);
-                ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_Electrical_Current, currentSIUnit, currentFactor);
             }
 
             // Electrical voltage - support metric volt only.
             {
-                IFCUnit unitType = IFCUnit.ElectricVoltageUnit;
-                IFCSIUnitName unitName = IFCSIUnitName.Volt;
-
-                IFCAnyHandle voltageSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+                IFCAnyHandle voltageSIUnit = CreateSIUnit(file, UnitType.UT_Electrical_Potential, IFCUnit.ElectricVoltageUnit, IFCSIUnitName.Volt,
+                    null, DisplayUnitType.DUT_VOLTS);
                 unitSet.Add(voltageSIUnit);      // created above, so unique.
-
-                double voltageFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_VOLTS);
-                ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_Electrical_Potential, voltageSIUnit, voltageFactor);
             }
-            
+
             // Power - support metric watt only.
             {
-                IFCUnit unitType = IFCUnit.PowerUnit;
-                IFCSIUnitName unitName = IFCSIUnitName.Watt;
+                IFCAnyHandle voltageSIUnit = CreateSIUnit(file, UnitType.UT_HVAC_Power, IFCUnit.PowerUnit, IFCSIUnitName.Watt,
+                    null, DisplayUnitType.DUT_WATTS);
+                unitSet.Add(voltageSIUnit);      // created above, so unique.
+            }
 
-                IFCAnyHandle powerSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
-                unitSet.Add(powerSIUnit);      // created above, so unique.
+            // Force - support newtons (N) and kN only.
+            {
+                IFCSIPrefix? prefix = null;
+                FormatOptions forceFormatOptions = doc.GetUnits().GetFormatOptions(UnitType.UT_Force);
+                DisplayUnitType dut = forceFormatOptions.DisplayUnits;
+                switch (dut)
+                {
+                    case DisplayUnitType.DUT_NEWTONS:
+                        break;
+                    case DisplayUnitType.DUT_KILONEWTONS:
+                        prefix = IFCSIPrefix.Kilo;
+                        break;
+                }
 
-                double powerFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_WATTS);
-                ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_HVAC_Power, powerSIUnit, powerFactor);
+                IFCAnyHandle forceSIUnit = CreateSIUnit(file, UnitType.UT_Force, IFCUnit.ForceUnit, IFCSIUnitName.Newton,
+                    prefix, dut);
+                unitSet.Add(forceSIUnit);      // created above, so unique.
             }
 
             // GSA only units.

@@ -351,12 +351,14 @@ namespace Revit.IFC.Export.Exporter
                 if (ExporterCacheManager.ExportOptionsCache.ExportAnnotations)
                 {
                     int outWidth;
-                    double width = ParameterUtil.GetIntValueFromElement(gridType, BuiltInParameter.GRID_END_SEGMENT_WEIGHT, out outWidth) ? outWidth : 1;
+                    double width = 
+                        (ParameterUtil.GetIntValueFromElement(gridType, BuiltInParameter.GRID_END_SEGMENT_WEIGHT, out outWidth) != null) ? outWidth : 1;
                     curveWidth = IFCDataUtil.CreateAsPositiveLengthMeasure(width);
                 }
 
                 int outColor;
-                int color = ParameterUtil.GetIntValueFromElement(gridType, BuiltInParameter.GRID_END_SEGMENT_COLOR, out outColor) ? outColor : 0;
+                int color = 
+                    (ParameterUtil.GetIntValueFromElement(gridType, BuiltInParameter.GRID_END_SEGMENT_COLOR, out outColor) != null) ? outColor : 0;
                 double blueVal = 0.0;
                 double greenVal = 0.0;
                 double redVal = 0.0;

@@ -101,7 +101,7 @@ namespace Revit.IFC.Export.Exporter
                     productWrapper.AddElement(mullion, mullionHnd, mullionSetter, extraParams, false);
 
                     ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, mullion);
-                    CategoryUtil.CreateMaterialAssociation(mullion.Document, exporterIFC, mullionHnd, matId);
+                    CategoryUtil.CreateMaterialAssociation(exporterIFC, mullionHnd, matId);
                 }
             }
         }

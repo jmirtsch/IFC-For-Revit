@@ -66,13 +66,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
             {
                 // Try looking for parameters that we can calculate slope from.
                 double startParamHeight;
-                if (!ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.STRUCTURAL_BEAM_END0_ELEVATION, out startParamHeight))
+                if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.STRUCTURAL_BEAM_END0_ELEVATION, out startParamHeight) == null)
                     return false;
                 double endParamHeight;
-                if (!ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.STRUCTURAL_BEAM_END1_ELEVATION, out endParamHeight))
+                if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.STRUCTURAL_BEAM_END1_ELEVATION, out endParamHeight) == null)
                     return false;
                 double length;
-                if (!ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.INSTANCE_LENGTH_PARAM, out length))
+                if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.INSTANCE_LENGTH_PARAM, out length) == null)
                     return false;
                 m_Slope = UnitUtil.ScaleAngle(Math.Atan2(Math.Abs(endParamHeight - startParamHeight), length));
                 return true;

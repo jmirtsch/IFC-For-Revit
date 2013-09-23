@@ -224,7 +224,7 @@ namespace Revit.IFC.Export.Exporter
 
                         productWrapper.AddElement(sheet, fabricSheet, placementSetter.LevelInfo, ecData, true);
 
-                        CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, fabricSheet, materialId);
+                        CategoryUtil.CreateMaterialAssociation(exporterIFC, fabricSheet, materialId);
                     }
                 }
                 tr.Commit();

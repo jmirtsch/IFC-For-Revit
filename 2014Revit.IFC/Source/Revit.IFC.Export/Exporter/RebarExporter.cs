@@ -249,7 +249,7 @@ namespace Revit.IFC.Export.Exporter
                         productWrapper.AddElement(element, elemHnd, setter.LevelInfo, null, true);
                         ExporterCacheManager.HandleToElementCache.Register(elemHnd, element.Id);
 
-                        CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, elemHnd, materialId);
+                        CategoryUtil.CreateMaterialAssociation(exporterIFC, elemHnd, materialId);
                     }
                 }
                 transaction.Commit();

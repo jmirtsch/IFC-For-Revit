@@ -73,8 +73,8 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
             double height;
             double width;
 
-            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, BuiltInParameter.WINDOW_HEIGHT, out height) &&
-                ParameterUtil.GetDoubleValueFromElementOrSymbol(element, BuiltInParameter.WINDOW_WIDTH, out width))
+            if ((ParameterUtil.GetDoubleValueFromElementOrSymbol(element, BuiltInParameter.WINDOW_HEIGHT, out height) != null) &&
+                (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, BuiltInParameter.WINDOW_WIDTH, out width) != null))
             {
                 m_Area = UnitUtil.ScaleArea(height * width);
                 return true;

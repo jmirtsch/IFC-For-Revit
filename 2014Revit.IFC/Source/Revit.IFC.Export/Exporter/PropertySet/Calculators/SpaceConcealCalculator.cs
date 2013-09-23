@@ -58,20 +58,18 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
         public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
         {
             int concealed = 0;
-            if (ParameterUtil.GetIntValueFromElementOrSymbol(element, "Concealed", out concealed))
+            if (ParameterUtil.GetIntValueFromElementOrSymbol(element, "Concealed", out concealed) != null)
             {
                 m_Concealed = concealed != 0;
                 return true;
             }
-            else
+
+            int concealedFlooring = 0, concealedCovering = 0;
+            if ((ParameterUtil.GetIntValueFromElementOrSymbol(element, "ConcealedFlooring", out concealedFlooring) != null) ||
+                (ParameterUtil.GetIntValueFromElementOrSymbol(element, "ConcealedCovering", out concealedCovering) != null))
             {
-                int concealedFlooring = 0, concealedCovering = 0;
-                if (ParameterUtil.GetIntValueFromElementOrSymbol(element, "ConcealedFlooring", out concealedFlooring) ||
-                    ParameterUtil.GetIntValueFromElementOrSymbol(element, "ConcealedCovering", out concealedCovering))
-                {
-                    m_Concealed = concealedFlooring != 0 || concealedCovering != 0;
-                    return true;
-                }
+                m_Concealed = concealedFlooring != 0 || concealedCovering != 0;
+                return true;
             }
 
             return false;

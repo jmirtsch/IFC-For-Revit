@@ -97,7 +97,7 @@ namespace Revit.IFC.Export.Exporter
                         {
                             if (matId != ElementId.InvalidElementId)
                             {
-                                CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, pile, matId);
+                                CategoryUtil.CreateMaterialAssociation(exporterIFC, pile, matId);
                             }
                         }
 

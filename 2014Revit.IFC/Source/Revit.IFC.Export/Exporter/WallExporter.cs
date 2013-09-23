@@ -589,7 +589,7 @@ namespace Revit.IFC.Export.Exporter
                                 if (wallType != null)
                                 {
                                     int wallFunction;
-                                    if (ParameterUtil.GetIntValueFromElement(wallType, BuiltInParameter.FUNCTION_PARAM, out wallFunction))
+                                    if (ParameterUtil.GetIntValueFromElement(wallType, BuiltInParameter.FUNCTION_PARAM, out wallFunction) != null)
                                     {
                                         if (wallFunction == (int)WallFunction.Retaining || wallFunction == (int)WallFunction.Foundation)
                                         {
@@ -676,7 +676,7 @@ namespace Revit.IFC.Export.Exporter
                                     {
                                         matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(solids, meshes, element);
                                         if (matId != ElementId.InvalidElementId)
-                                            CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, wallHnd, matId);
+                                            CategoryUtil.CreateMaterialAssociation(exporterIFC, wallHnd, matId);
                                     }
 
                                     if (exportingInplaceOpenings)
@@ -702,9 +702,9 @@ namespace Revit.IFC.Export.Exporter
                                     hostObject = wallElement;
                                 else
                                     hostObject = faceWall;
-                                if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x2 || exportedAsWallWithAxis) //will move this check into ExportHostObject
+                                if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x2 || exportedAsWallWithAxis)
                                     HostObjectExporter.ExportHostObjectMaterials(exporterIFC, hostObject, localWrapper.GetAnElement(),
-                                        geometryElement, localWrapper, wallLevelId, Toolkit.IFCLayerSetDirection.Axis2);
+                                        geometryElement, localWrapper, wallLevelId, Toolkit.IFCLayerSetDirection.Axis2, !exportedAsWallWithAxis);
                             }
 
                             ExportWallType(exporterIFC, localWrapper, wallHnd, element, matId, exportedAsWallWithAxis, exportAsFooting);
@@ -722,18 +722,10 @@ namespace Revit.IFC.Export.Exporter
         /// <summary>
         /// Exports element as Wall.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
         public static void ExportWall(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement,
            ProductWrapper productWrapper)
         {
@@ -818,7 +810,7 @@ namespace Revit.IFC.Export.Exporter
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction tr = new IFCTransaction(file))
             {
-                WallType wallType =  wallElement.WallType;
+                WallType wallType = wallElement.WallType;
                 WallKind wallTypeKind = wallType.Kind;
 
                 //stacked wall is not supported yet.
@@ -998,7 +990,7 @@ namespace Revit.IFC.Export.Exporter
 
             if (overrideMaterialId != ElementId.InvalidElementId)
             {
-                CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, wallType, overrideMaterialId);
+                CategoryUtil.CreateMaterialAssociation(exporterIFC, wallType, overrideMaterialId);
             }
             else
             {
