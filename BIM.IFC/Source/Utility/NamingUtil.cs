@@ -122,7 +122,7 @@ namespace BIM.IFC.Utility
             // get the IFC Name Override 
             if (element != null)
             {
-                if (ParameterUtil.GetStringValueFromElement(element.Id, paramName, out strValue))
+                if (ParameterUtil.GetStringValueFromElement(element.Id, paramName, out strValue) != null)
                 {
                     if (!String.IsNullOrWhiteSpace(strValue))
                         return strValue;

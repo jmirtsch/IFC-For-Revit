@@ -73,8 +73,8 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
             double height;
             double width;
 
-            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, BuiltInParameter.WINDOW_HEIGHT, out height) &&
-                ParameterUtil.GetDoubleValueFromElementOrSymbol(element, BuiltInParameter.WINDOW_WIDTH, out width))
+            if ((ParameterUtil.GetDoubleValueFromElementOrSymbol(element, BuiltInParameter.WINDOW_HEIGHT, out height) != null) &&
+                (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, BuiltInParameter.WINDOW_WIDTH, out width) != null))
             {
                 double scale = exporterIFC.LinearScale; 
                 m_Area = (height*scale) * (width*scale);

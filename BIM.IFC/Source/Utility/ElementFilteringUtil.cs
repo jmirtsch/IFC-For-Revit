@@ -641,7 +641,7 @@ namespace BIM.IFC.Utility
 
             string exportAsEntity = "IFCExportAs";
             string elementClassName;
-            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, exportAsEntity, out elementClassName))
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, exportAsEntity, out elementClassName) != null)
             {
                 if (CompareAlphaOnly(elementClassName, "DONTEXPORT"))
                     return false;

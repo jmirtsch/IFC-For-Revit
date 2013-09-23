@@ -108,7 +108,7 @@ namespace BIM.IFC.Exporter.PropertySet
         public static IFCAnyHandle CreateElectricalVoltageMeasurePropertyFromElementOrSymbol(IFCFile file, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             double propertyValue;
-            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue))
+            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
             {
                 double scale = 0.3048;
                 propertyValue *= scale * scale;

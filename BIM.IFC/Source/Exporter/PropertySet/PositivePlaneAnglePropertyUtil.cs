@@ -112,7 +112,7 @@ namespace BIM.IFC.Exporter.PropertySet
         public static IFCAnyHandle CreatePositivePlaneAngleMeasurePropertyFromElementOrSymbol(IFCFile file, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             double propertyValue;
-            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue))
+            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
             {
                 // Although the default units for IFC files is radians, IFC files almost universally use degrees as their unit of measurement. 
                 // However, many old IFC files failed to include degrees as the unit of measurement.

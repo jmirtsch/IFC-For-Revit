@@ -36,33 +36,18 @@ namespace BIM.IFC.Exporter
         /// <summary>
         /// Exports materials for host object.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="hostObject">
-        /// The host object.
-        /// </param>
-        /// <param name="elemHnds">
-        /// The host IFC handles.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
-        /// <param name="levelId">
-        /// The level id.
-        /// </param>
-        /// <param name="direction">
-        /// The IFCLayerSetDirection.
-        /// </param>
-        /// <returns>
-        /// True if exported successfully, false otherwise.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="hostObject">The host object.</param>
+        /// <param name="elemHnds">The host IFC handles.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        /// <param name="levelId">The level id.</param>
+        /// <param name="direction">The IFCLayerSetDirection.</param>
+        /// <param name="containsBRepGeometry">True if the geometry contains BRep geoemtry.  If so, we will export an IfcMaterialList</param>
+        /// <returns>True if exported successfully, false otherwise.</returns>
         public static bool ExportHostObjectMaterials(ExporterIFC exporterIFC, HostObject hostObject,
             IList<IFCAnyHandle> elemHnds, GeometryElement geometryElement, ProductWrapper productWrapper,
-            ElementId levelId, Toolkit.IFCLayerSetDirection direction)
+            ElementId levelId, Toolkit.IFCLayerSetDirection direction, bool containsBRepGeometry)
         {
             if (hostObject == null)
                 return true; //nothing to do
@@ -71,8 +56,6 @@ namespace BIM.IFC.Exporter
                 return true; //nothing to do
 
             IFCFile file = exporterIFC.GetFile();
-
-
             using (IFCTransaction tr = new IFCTransaction(file))
             {
                 if (productWrapper != null)
@@ -145,7 +128,7 @@ namespace BIM.IFC.Exporter
                         if (widths[i] < MathUtil.Eps())
                             continue;
 
-                        IFCAnyHandle materialHnd = CategoryUtil.GetOrCreateMaterialHandle(hostObjAttr.Document, exporterIFC, matIds[i]);
+                        IFCAnyHandle materialHnd = CategoryUtil.GetOrCreateMaterialHandle(exporterIFC, matIds[i]);
                         if (primaryMaterialHnd == null || (widths[i] > thickestLayer))
                         {
                             primaryMaterialHnd = materialHnd;
@@ -164,11 +147,21 @@ namespace BIM.IFC.Exporter
                     if (layers.Count == 0)
                         return false;
 
-                    string layerSetName = exporterIFC.GetFamilyName();
-                    materialLayerSet = IFCInstanceExporter.CreateMaterialLayerSet(file, layers, layerSetName);
+                    if (!containsBRepGeometry)
+                    {
+                        string layerSetName = exporterIFC.GetFamilyName();
+                        materialLayerSet = IFCInstanceExporter.CreateMaterialLayerSet(file, layers, layerSetName);
 
-                    ExporterCacheManager.MaterialLayerSetCache.Register(typeElemId, materialLayerSet);
-                    ExporterCacheManager.MaterialLayerSetCache.RegisterPrimaryMaterialHnd(typeElemId, primaryMaterialHnd);
+                        ExporterCacheManager.MaterialLayerSetCache.Register(typeElemId, materialLayerSet);
+                        ExporterCacheManager.MaterialLayerSetCache.RegisterPrimaryMaterialHnd(typeElemId, primaryMaterialHnd);
+                    }
+                    else
+                    {
+                        foreach (IFCAnyHandle elemHnd in elemHnds)
+                        {
+                            CategoryUtil.CreateMaterialAssociations(exporterIFC, elemHnd, matIds);
+                        }
+                    }
                 }
 
                 // IfcMaterialLayerSetUsage is not supported for IfcWall, only IfcWallStandardCase.
@@ -179,33 +172,21 @@ namespace BIM.IFC.Exporter
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(elemHnd))
                         continue;
 
+                    exporterIFC.RegisterSpaceBoundingElementHandle(elemHnd, hostObject.Id, levelId);
+                    if (containsBRepGeometry)
+                        continue;
+
                     HashSet<IFCAnyHandle> relDecomposesSet = IFCAnyHandleUtil.GetRelDecomposes(elemHnd);
 
-                    IList<IFCAnyHandle> subElemHnds = new List<IFCAnyHandle>();
+                    IList<IFCAnyHandle> subElemHnds = null;
                     if (relDecomposesSet != null && relDecomposesSet.Count == 1)
                     {
                         IFCAnyHandle relAggregates = relDecomposesSet.First();
                         if (IFCAnyHandleUtil.IsTypeOf(relAggregates, IFCEntityType.IfcRelAggregates))
-                        {
-                            IFCData ifcData = relAggregates.GetAttribute("RelatedObjects");
-                            if (ifcData.PrimitiveType == IFCDataPrimitiveType.Aggregate)
-                            {
-                                IFCAggregate aggregate = ifcData.AsAggregate();
-                                if (aggregate != null && aggregate.Count > 0)
-                                {
-                                    foreach (IFCData val in aggregate)
-                                    {
-                                        if (val.PrimitiveType == IFCDataPrimitiveType.Instance)
-                                        {
-                                            subElemHnds.Add(val.AsInstance());
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                            subElemHnds = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(relAggregates, "RelatedObjects");
                     }
 
-                    bool hasSubElems = !(subElemHnds.Count == 0);
+                    bool hasSubElems = (subElemHnds != null && subElemHnds.Count != 0);
                     bool isRoof = IFCAnyHandleUtil.IsTypeOf(elemHnd, IFCEntityType.IfcRoof);
                     if (!hasSubElems && !isRoof && !IFCAnyHandleUtil.IsTypeOf(elemHnd, IFCEntityType.IfcWall))
                     {
@@ -256,8 +237,6 @@ namespace BIM.IFC.Exporter
                             ExporterCacheManager.MaterialLayerRelationsCache.Add(primaryMaterialHnd, elemHnd);
                         }
                     }
-
-                    exporterIFC.RegisterSpaceBoundingElementHandle(elemHnd, hostObject.Id, levelId);
                 }
 
                 tr.Commit();
@@ -268,37 +247,26 @@ namespace BIM.IFC.Exporter
         /// <summary>
         /// Exports materials for host object.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="hostObject">
-        /// The host object.
-        /// </param>
-        /// <param name="elemHnd">
-        /// The host IFC handle.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
-        /// <param name="levelId">
-        /// The level id.
-        /// </param>
-        /// <param name="direction">
-        /// The IFCLayerSetDirection.
-        /// </param>
-        /// <returns>
-        /// True if exported successfully, false otherwise.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="hostObject">The host object.</param>
+        /// <param name="elemHnd">The host IFC handle.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        /// <param name="levelId">The level id.</param>
+        /// <param name="direction">The IFCLayerSetDirection.</param>
+        /// <param name="containsBRepGeometry">True if the geometry contains BRep geoemtry.  If so, we will export an IfcMaterialList.  If null, we will calculate.</param>
+        /// <returns>True if exported successfully, false otherwise.</returns>
         public static bool ExportHostObjectMaterials(ExporterIFC exporterIFC, HostObject hostObject,
             IFCAnyHandle elemHnd, GeometryElement geometryElement, ProductWrapper productWrapper,
-            ElementId levelId, Toolkit.IFCLayerSetDirection direction)
+            ElementId levelId, Toolkit.IFCLayerSetDirection direction, bool? containsBRepGeometry)
         {
             IList<IFCAnyHandle> elemHnds = new List<IFCAnyHandle>();
             elemHnds.Add(elemHnd);
-            return ExportHostObjectMaterials(exporterIFC, hostObject, elemHnds, geometryElement, productWrapper, levelId, direction);
+
+            // Setting doesContainBRepGeometry to false below preserves the original behavior that we created IfcMaterialLists for all geometries.
+            // TODO: calculate, or pass in, a valid bool value for Ceilings, Roofs, and Wall Sweeps.
+            bool doesContainBRepGeometry = containsBRepGeometry.HasValue ? containsBRepGeometry.Value : false;
+            return ExportHostObjectMaterials(exporterIFC, hostObject, elemHnds, geometryElement, productWrapper, levelId, direction, doesContainBRepGeometry);
         }
 
         /// <summary>
@@ -324,41 +292,6 @@ namespace BIM.IFC.Exporter
             }
 
             return ElementId.InvalidElementId;
-        }
-
-        /// <summary>
-        /// Gets the material ids of the host object.
-        /// </summary>
-        /// <param name="hostObject">The host object.</param>
-        /// <returns>The material ids.</returns>
-        public static IList<ElementId> GetMaterialIds(HostObject hostObject)
-        {
-            ElementId typeElemId = hostObject.GetTypeId();
-            HostObjAttributes hostObjAttr = hostObject.Document.GetElement(typeElemId) as HostObjAttributes;
-            if (hostObjAttr == null)
-                return null;
-
-            CompoundStructure cs = hostObjAttr.GetCompoundStructure();
-            IList<ElementId> matIds = new List<ElementId>();
-            if (cs != null)
-            {
-                ElementId baseMatId = CategoryUtil.GetBaseMaterialIdForElement(hostObject);
-
-                for (int i = 0; i < cs.LayerCount; ++i)
-                {
-                    ElementId matId = cs.GetMaterialId(i);
-                    if (matId != ElementId.InvalidElementId)
-                    {
-                        matIds.Add(matId);
-                    }
-                    else
-                    {
-                        matIds.Add(baseMatId);
-                    }
-                }
-            }
-
-            return matIds;
         }
 
         /// <summary>

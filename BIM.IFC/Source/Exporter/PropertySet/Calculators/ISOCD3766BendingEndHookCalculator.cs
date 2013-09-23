@@ -74,7 +74,7 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
                 if (bendData.HookLength1 > MathUtil.Eps())
                 {
                     ElementId hookAtEndTypeId;
-                    if (ParameterUtil.GetElementIdValueFromElement(element, BuiltInParameter.REBAR_ELEM_HOOK_END_TYPE, out hookAtEndTypeId))
+                    if (ParameterUtil.GetElementIdValueFromElement(element, BuiltInParameter.REBAR_ELEM_HOOK_END_TYPE, out hookAtEndTypeId) != null)
                     {
                         RebarHookType rebarHookType = element.Document.GetElement(hookAtEndTypeId) as RebarHookType;
                         if (rebarHookType != null)

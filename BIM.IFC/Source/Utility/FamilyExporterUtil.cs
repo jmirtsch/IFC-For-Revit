@@ -306,9 +306,9 @@ namespace BIM.IFC.Exporter
 
                         double scale = exporterIFC.LinearScale;
 
-                        if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalDiameter", out nominalDiameterVal))
+                        if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalDiameter", out nominalDiameterVal) != null)
                             nominalDiameter = nominalDiameterVal * scale;
-                        if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalLength", out nominalLengthVal))
+                        if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalLength", out nominalLengthVal) != null)
                             nominalLength = nominalLengthVal * scale;
 
                         instanceHandle = IFCInstanceExporter.CreateMechanicalFastener(file, instanceGUID, ownerHistory,
@@ -766,10 +766,8 @@ namespace BIM.IFC.Exporter
         private static IFCActuatorType GetActuatorType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCActuatorType.NotDefined;
@@ -797,10 +795,8 @@ namespace BIM.IFC.Exporter
         private static IFCAirTerminalBoxType GetAirTerminalBoxType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value)  == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCAirTerminalBoxType.NotDefined;
@@ -822,10 +818,8 @@ namespace BIM.IFC.Exporter
         private static IFCAirTerminalType GetAirTerminalType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCAirTerminalType.NotDefined;
@@ -855,10 +849,8 @@ namespace BIM.IFC.Exporter
         private static IFCAirToAirHeatRecoveryType GetAirToAirHeatRecoveryType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCAirToAirHeatRecoveryType.NotDefined;
@@ -892,10 +884,8 @@ namespace BIM.IFC.Exporter
         private static IFCAlarmType GetAlarmType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCAlarmType.NotDefined;
@@ -923,10 +913,8 @@ namespace BIM.IFC.Exporter
         private static IFCBoilerType GetBoilerType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCBoilerType.NotDefined;
@@ -944,10 +932,8 @@ namespace BIM.IFC.Exporter
         private static IFCCableCarrierFittingType GetCableCarrierFittingType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCCableCarrierFittingType.NotDefined;
@@ -969,10 +955,8 @@ namespace BIM.IFC.Exporter
         private static IFCCableCarrierSegmentType GetCableCarrierSegmentType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCCableCarrierSegmentType.NotDefined;
@@ -994,10 +978,8 @@ namespace BIM.IFC.Exporter
         private static IFCCableSegmentType GetCableSegmentType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCCableSegmentType.NotDefined;
@@ -1015,10 +997,8 @@ namespace BIM.IFC.Exporter
         private static IFCChillerType GetChillerType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCChillerType.NotDefined;
@@ -1038,10 +1018,8 @@ namespace BIM.IFC.Exporter
         private static IFCCoilType GetCoilType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCCoilType.NotDefined;
@@ -1067,10 +1045,8 @@ namespace BIM.IFC.Exporter
         private static IFCCompressorType GetCompressorType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCCompressorType.NotDefined;
@@ -1114,10 +1090,8 @@ namespace BIM.IFC.Exporter
         private static IFCCondenserType GetCondenserType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCCondenserType.NotDefined;
@@ -1143,10 +1117,8 @@ namespace BIM.IFC.Exporter
         private static IFCControllerType GetControllerType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCControllerType.NotDefined;
@@ -1172,10 +1144,8 @@ namespace BIM.IFC.Exporter
         private static IFCCooledBeamType GetCooledBeamType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCCooledBeamType.NotDefined;
@@ -1193,10 +1163,8 @@ namespace BIM.IFC.Exporter
         private static IFCCoolingTowerType GetCoolingTowerType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCCoolingTowerType.NotDefined;
@@ -1216,10 +1184,8 @@ namespace BIM.IFC.Exporter
         private static IFCDamperType GetDamperType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCDamperType.NotDefined;
@@ -1255,11 +1221,9 @@ namespace BIM.IFC.Exporter
         private static IFCDistributionChamberElementType GetDistributionChamberElementType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
-
+            
             if (String.IsNullOrEmpty(value))
                 return IFCDistributionChamberElementType.NotDefined;
 
@@ -1288,11 +1252,9 @@ namespace BIM.IFC.Exporter
         private static IFCDuctFittingType GetDuctFittingType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
-
+            
             if (String.IsNullOrEmpty(value))
                 return IFCDuctFittingType.NotDefined;
 
@@ -1319,10 +1281,8 @@ namespace BIM.IFC.Exporter
         private static IFCDuctSegmentType GetDuctSegmentType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCDuctSegmentType.NotDefined;
@@ -1340,11 +1300,9 @@ namespace BIM.IFC.Exporter
         private static IFCDuctSilencerType GetDuctSilencerType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
-
+            
             if (String.IsNullOrEmpty(value))
                 return IFCDuctSilencerType.NotDefined;
 
@@ -1363,10 +1321,8 @@ namespace BIM.IFC.Exporter
         private static IFCElectricApplianceType GetElectricApplianceType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCElectricApplianceType.NotDefined;
@@ -1428,10 +1384,8 @@ namespace BIM.IFC.Exporter
         private static IFCElectricFlowStorageDeviceType GetElectricFlowStorageDeviceType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCElectricFlowStorageDeviceType.NotDefined;
@@ -1455,10 +1409,8 @@ namespace BIM.IFC.Exporter
         private static IFCElectricGeneratorType GetElectricGeneratorType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCElectricGeneratorType.NotDefined;
@@ -1469,10 +1421,8 @@ namespace BIM.IFC.Exporter
         private static IFCElectricHeaterType GetElectricHeaterType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCElectricHeaterType.NotDefined;
@@ -1492,10 +1442,8 @@ namespace BIM.IFC.Exporter
         private static IFCElectricMotorType GetElectricMotorType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCElectricMotorType.NotDefined;
@@ -1519,10 +1467,8 @@ namespace BIM.IFC.Exporter
         private static IFCElectricTimeControlType GetElectricTimeControlType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCElectricTimeControlType.NotDefined;
@@ -1542,10 +1488,8 @@ namespace BIM.IFC.Exporter
         private static IFCEvaporativeCoolerType GetEvaporativeCoolerType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCEvaporativeCoolerType.NotDefined;
@@ -1577,10 +1521,8 @@ namespace BIM.IFC.Exporter
         private static IFCEvaporatorType GetEvaporatorType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCEvaporatorType.NotDefined;
@@ -1604,10 +1546,8 @@ namespace BIM.IFC.Exporter
         private static IFCFanType GetFanType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCFanType.NotDefined;
@@ -1635,10 +1575,8 @@ namespace BIM.IFC.Exporter
         private static IFCFilterType GetFilterType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCFilterType.NotDefined;
@@ -1662,10 +1600,8 @@ namespace BIM.IFC.Exporter
         private static IFCFireSuppressionTerminalType GetFireSuppressionTerminalType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCFireSuppressionTerminalType.NotDefined;
@@ -1689,10 +1625,8 @@ namespace BIM.IFC.Exporter
         private static IFCFlowInstrumentType GetFlowInstrumentType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCFlowInstrumentType.NotDefined;
@@ -1722,10 +1656,8 @@ namespace BIM.IFC.Exporter
         private static IFCFlowMeterType GetFlowMeterType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCFlowMeterType.NotDefined;
@@ -1751,10 +1683,8 @@ namespace BIM.IFC.Exporter
         private static IFCGasTerminalType GetGasTerminalType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCGasTerminalType.NotDefined;
@@ -1774,10 +1704,8 @@ namespace BIM.IFC.Exporter
         private static IFCHeatExchangerType GetHeatExchangerType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCHeatExchangerType.NotDefined;
@@ -1795,10 +1723,8 @@ namespace BIM.IFC.Exporter
         private static IFCHumidifierType GetHumidifierType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCHumidifierType.NotDefined;
@@ -1838,10 +1764,8 @@ namespace BIM.IFC.Exporter
         private static IFCJunctionBoxType GetJunctionBoxType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCJunctionBoxType.NotDefined;
@@ -1852,10 +1776,8 @@ namespace BIM.IFC.Exporter
         private static IFCLampType GetLampType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCLampType.NotDefined;
@@ -1881,10 +1803,8 @@ namespace BIM.IFC.Exporter
         private static IFCLightFixtureType GetLightFixtureType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCLightFixtureType.NotDefined;
@@ -1902,10 +1822,8 @@ namespace BIM.IFC.Exporter
         private static IFCMemberType GetMemberType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCMemberType.NotDefined;
@@ -1943,10 +1861,8 @@ namespace BIM.IFC.Exporter
         private static IFCMotorConnectionType GetMotorConnectionType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCMotorConnectionType.NotDefined;
@@ -1966,10 +1882,8 @@ namespace BIM.IFC.Exporter
         private static IFCOutletType GetOutletType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCOutletType.NotDefined;
@@ -1989,10 +1903,8 @@ namespace BIM.IFC.Exporter
         private static IFCPlateType GetPlateType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCPlateType.NotDefined;
@@ -2010,11 +1922,9 @@ namespace BIM.IFC.Exporter
         private static IFCPipeFittingType GetPipeFittingType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
-
+            
             if (String.IsNullOrEmpty(value))
                 return IFCPipeFittingType.NotDefined;
 
@@ -2041,10 +1951,8 @@ namespace BIM.IFC.Exporter
         private static IFCPipeSegmentType GetPipeSegmentType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCPipeSegmentType.NotDefined;
@@ -2066,10 +1974,8 @@ namespace BIM.IFC.Exporter
         private static IFCProtectiveDeviceType GetProtectiveDeviceType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCProtectiveDeviceType.NotDefined;
@@ -2095,10 +2001,8 @@ namespace BIM.IFC.Exporter
         private static IFCPumpType GetPumpType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCPumpType.NotDefined;
@@ -2122,10 +2026,8 @@ namespace BIM.IFC.Exporter
         private static IFCSanitaryTerminalType GetSanitaryTerminalType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCSanitaryTerminalType.NotDefined;
@@ -2159,10 +2061,8 @@ namespace BIM.IFC.Exporter
         private static IFCSensorType GetSensorType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCSensorType.NotDefined;
@@ -2202,10 +2102,8 @@ namespace BIM.IFC.Exporter
         private static IFCSpaceHeaterType GetSpaceHeaterType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCSpaceHeaterType.NotDefined;
@@ -2233,10 +2131,8 @@ namespace BIM.IFC.Exporter
         private static IFCStackTerminalType GetStackTerminalType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCStackTerminalType.NotDefined;
@@ -2256,10 +2152,8 @@ namespace BIM.IFC.Exporter
         private static IFCSwitchingDeviceType GetSwitchingDeviceType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCSwitchingDeviceType.NotDefined;
@@ -2283,10 +2177,8 @@ namespace BIM.IFC.Exporter
         private static IFCTankType GetTankType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCTankType.NotDefined;
@@ -2308,10 +2200,8 @@ namespace BIM.IFC.Exporter
         private static IFCTransformerType GetTransformerType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCTransformerType.NotDefined;
@@ -2331,10 +2221,8 @@ namespace BIM.IFC.Exporter
         private static IFCTransportElementType GetTransportElementType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCTransportElementType.NotDefined;
@@ -2354,10 +2242,8 @@ namespace BIM.IFC.Exporter
         private static IFCTubeBundleType GetTubeBundleType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCTubeBundleType.NotDefined;
@@ -2373,10 +2259,8 @@ namespace BIM.IFC.Exporter
         private static IFCUnitaryEquipmentType GetUnitaryEquipmentType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCUnitaryEquipmentType.NotDefined;
@@ -2398,10 +2282,8 @@ namespace BIM.IFC.Exporter
         private static IFCValveType GetValveType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-        {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCValveType.NotDefined;
@@ -2457,10 +2339,8 @@ namespace BIM.IFC.Exporter
         private static IFCWasteTerminalType GetWasteTerminalType(Element element, string ifcEnumType)
         {
             string value = null;
-                if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-                {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-                }
             
             if (String.IsNullOrEmpty(value))
                 return IFCWasteTerminalType.NotDefined;
@@ -2494,10 +2374,8 @@ namespace BIM.IFC.Exporter
         private static IFCAssemblyPlace GetAssemblyPlace(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCAssemblyPlace.NotDefined;

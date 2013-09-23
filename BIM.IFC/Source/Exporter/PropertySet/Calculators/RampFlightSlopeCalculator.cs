@@ -61,15 +61,15 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
                 return false;
 
             double slope;
-            if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.RAMP_ATTR_MIN_INV_SLOPE, out slope))
-            {
+            if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.RAMP_ATTR_MIN_INV_SLOPE, out slope) == null)
+                return false;
+
                 m_Slope = slope;
                 if (!MathUtil.IsAlmostZero(m_Slope))
                 {
                     m_Slope = Math.Atan(m_Slope) * 180 / Math.PI; // ratio -> radians -> degrees
                     return true;
                 }
-            }
 
             return false;
         }

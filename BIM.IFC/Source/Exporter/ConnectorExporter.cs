@@ -59,11 +59,14 @@ namespace BIM.IFC.Exporter
         // If originalConnector != null, use that connector for AddConnection routine, instead of connector.
         private static void ProcessConnections(ExporterIFC exporterIFC, Connector connector, Connector originalConnector)
         {
-            bool isElectricalDomain = (connector.Domain == Domain.DomainElectrical);
+            Domain domain = connector.Domain;
+            bool isElectricalDomain = (domain == Domain.DomainElectrical);
+            bool supportsDirection = (domain == Domain.DomainHvac || domain == Domain.DomainPiping);
 
-            if (connector.ConnectorType == ConnectorType.End ||
-                connector.ConnectorType == ConnectorType.Curve ||
-                connector.ConnectorType == ConnectorType.Physical)
+            ConnectorType connectorType = connector.ConnectorType;
+            if (connectorType == ConnectorType.End ||
+                connectorType == ConnectorType.Curve ||
+                connectorType == ConnectorType.Physical)
             {
 
                 if (connector.IsConnected)
@@ -79,12 +82,13 @@ namespace BIM.IFC.Exporter
                             if (connected.Owner.Id != connector.Owner.Id)
                             {
                                 // look for physical connections
-                                if (connected.ConnectorType == ConnectorType.End ||
-                                    connected.ConnectorType == ConnectorType.Curve ||
-                                    connected.ConnectorType == ConnectorType.Physical)
+                                ConnectorType connectedType = connected.ConnectorType;
+                                if (connectedType == ConnectorType.End ||
+                                    connectedType == ConnectorType.Curve ||
+                                    connectedType == ConnectorType.Physical)
                                 {
                                     Connector originalConnectorToUse = (originalConnector != null) ? originalConnector : connector;
-                                    FlowDirectionType flowDirection = isElectricalDomain ? FlowDirectionType.Bidirectional : connector.Direction;
+                                    FlowDirectionType flowDirection = supportsDirection ? connector.Direction : FlowDirectionType.Bidirectional;
                                     if (flowDirection == FlowDirectionType.Out)
                                     {
                                         AddConnection(exporterIFC, connected, originalConnectorToUse, false, isElectricalDomain);

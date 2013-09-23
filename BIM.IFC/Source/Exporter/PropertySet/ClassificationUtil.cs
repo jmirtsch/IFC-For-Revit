@@ -47,13 +47,13 @@ namespace BIM.IFC.Exporter.PropertySet
             // Create Uniformat classification, if it is not set.
             string uniformatKeyString = "Uniformat";
             string uniformatCode = "";
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, BuiltInParameter.UNIFORMAT_CODE, false, out uniformatCode))
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, BuiltInParameter.UNIFORMAT_CODE, false, out uniformatCode) == null)
                 ParameterUtil.GetStringValueFromElementOrSymbol(element, "Assembly Code", out uniformatCode);
             string uniformatDescription = "";
 
             if (!String.IsNullOrWhiteSpace(uniformatCode))
             {
-                if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, BuiltInParameter.UNIFORMAT_DESCRIPTION, false, out uniformatDescription))
+                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, BuiltInParameter.UNIFORMAT_DESCRIPTION, false, out uniformatDescription) == null)
                     ParameterUtil.GetStringValueFromElementOrSymbol(element, "Assembly Description", out uniformatDescription);
             }
 
@@ -91,7 +91,7 @@ namespace BIM.IFC.Exporter.PropertySet
             for (int n = 0; n < noClassCodeParam; n++)
             {
                 // Create A classification, if it is not set.
-                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, classCodeParamName[n], out paramClassificationCode))
+                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, classCodeParamName[n], out paramClassificationCode) != null)
                 {
                     ret = parseClassificationCode(paramClassificationCode, out classificationName, out classificationCode, out classificationDescription);
 
