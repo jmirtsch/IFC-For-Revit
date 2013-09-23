@@ -678,7 +678,7 @@ namespace BIM.IFC.Exporter.PropertySet
                     }
                 case StorageType.ElementId:
                     {
-                        pse.PropertyType = PropertyType.Text;
+                        pse.PropertyType = PropertyType.Label;
                         break;
                     }
             }            
@@ -941,7 +941,7 @@ namespace BIM.IFC.Exporter.PropertySet
                             else
                             {
                                 bool cacheLabel = PropertyCalculator.CacheStringValues;
-                                propHnd = PropertyUtil.CreateLabelPropertyFromCache(file, PropertyName, PropertyCalculator.GetStringValue(), valueType, cacheLabel, propertyEnumerationType);
+                                propHnd = PropertyUtil.CreateLabelPropertyFromCache(file, null, PropertyName, PropertyCalculator.GetStringValue(), valueType, cacheLabel, propertyEnumerationType);
                             }
                             break;
                         }

@@ -63,7 +63,7 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
         /// </returns>
         public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
         {
-            bool ret = ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameterGroup.PG_GEOMETRY, "D", out m_ShapeParameterD);
+            bool ret = (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameterGroup.PG_GEOMETRY, "D", out m_ShapeParameterD) != null);
             if (ret)
                 m_ShapeParameterD = m_ShapeParameterD * exporterIFC.LinearScale;
             return ret;

@@ -68,7 +68,7 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
                     propSpecZoneString = basePropSpecZoneString + " " + val;
 
                 string value;
-                if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, propSpecZoneString, out value)
+                if ((ParameterUtil.GetStringValueFromElementOrSymbol(element, propSpecZoneString, out value) == null)
                     || string.IsNullOrEmpty(value))
                     break;
 

@@ -46,10 +46,9 @@ namespace BIM.IFC.Exporter
         public static Toolkit.IFCCoveringType GetIFCCoveringType(Element element, string typeName)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = typeName;
-            }
+
             if (String.IsNullOrEmpty(value))
                 return Toolkit.IFCCoveringType.NotDefined;
 
@@ -213,12 +212,12 @@ namespace BIM.IFC.Exporter
                             if (ceiling != null)
                             {
                                 HostObjectExporter.ExportHostObjectMaterials(exporterIFC, ceiling, covering,
-                                    geomElem, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3);
+                                    geomElem, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3, null);
                             }
                             else
                             {
                                 ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geomElem, exporterIFC, element);
-                                CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, covering, matId);
+                                CategoryUtil.CreateMaterialAssociation(exporterIFC, covering, matId);
                             }
                         }
 

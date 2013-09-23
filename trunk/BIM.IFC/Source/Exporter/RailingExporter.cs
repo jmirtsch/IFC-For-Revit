@@ -64,10 +64,9 @@ namespace BIM.IFC.Exporter
         private static Toolkit.IFCRailingType GetIFCRailingType(Element element, string typeName)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = typeName;
-            }
+
             if (String.IsNullOrEmpty(value))
                 return Toolkit.IFCRailingType.NotDefined;
 
@@ -359,7 +358,7 @@ namespace BIM.IFC.Exporter
                         OpeningUtil.CreateOpeningsIfNecessary(railing, element, ecData, bodyData.OffsetTransform,
                             exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);
 
-                        CategoryUtil.CreateMaterialAssociations(element.Document, exporterIFC, railing, bodyData.MaterialIds);
+                        CategoryUtil.CreateMaterialAssociations(exporterIFC, railing, bodyData.MaterialIds);
 
                         // Create multi-story duplicates of this railing.
                         if (stairRampInfo != null)
@@ -375,7 +374,7 @@ namespace BIM.IFC.Exporter
                                     IFCAnyHandle railingHndCopy = CopyRailingHandle(exporterIFC, element, catId, railingLocalPlacement, railing);
                                     stairRampInfo.AddComponent(ii, railingHndCopy);
                                     productWrapper.AddElement(element, railingHndCopy, (IFCLevelInfo)null, ecData, false);
-                                    CategoryUtil.CreateMaterialAssociations(element.Document, exporterIFC, railingHndCopy, bodyData.MaterialIds);
+                                    CategoryUtil.CreateMaterialAssociations(exporterIFC, railingHndCopy, bodyData.MaterialIds);
                                 }
                             }
 

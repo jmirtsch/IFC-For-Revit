@@ -687,23 +687,23 @@ namespace BIM.IFC.Utility
 
         private static string GetIFCClassNameOrTypeFromSpecialEntry(ExporterIFC exporterIFC, Element element, ElementId categoryId, bool getClassName)
         {
-            if (categoryId == new ElementId(BuiltInCategory.OST_Walls))
+            if (categoryId != new ElementId(BuiltInCategory.OST_Walls))
+                return null;
+            
+            if (!(element is Wall))
+                return null;
+                
+            WallType wallType = (element as Wall).WallType;
+            if (wallType == null)
+                return null;
+                    
+            int wallFunction;
+            if (ParameterUtil.GetIntValueFromElement(wallType, BuiltInParameter.FUNCTION_PARAM, out wallFunction) != null)
             {
-                if (element is Wall)
-                {
-                    WallType wallType = (element as Wall).WallType;
-                    if (wallType != null)
-                    {
-                        int wallFunction;
-                        if (ParameterUtil.GetIntValueFromElement(wallType, BuiltInParameter.FUNCTION_PARAM, out wallFunction))
-                        {
-                            if (getClassName)
-                                return GetIFCClassNameFromExportTable(exporterIFC, element, categoryId, wallFunction);
-                            else
-                                return GetIFCTypeFromExportTable(exporterIFC, element, categoryId, wallFunction);
-                        }
-                    }
-                }
+                if (getClassName)
+                    return GetIFCClassNameFromExportTable(exporterIFC, element, categoryId, wallFunction);
+                else
+                    return GetIFCTypeFromExportTable(exporterIFC, element, categoryId, wallFunction);
             }
 
             return null;
@@ -845,7 +845,7 @@ namespace BIM.IFC.Utility
 
                 HashSet<IFCAnyHandle> nameAndColorProps = new HashSet<IFCAnyHandle>();
 
-                nameAndColorProps.Add(PropertyUtil.CreateLabelPropertyFromCache(file, "Layername", catName, PropertyValueType.SingleValue, true, null));
+                nameAndColorProps.Add(PropertyUtil.CreateLabelPropertyFromCache(file, null, "Layername", catName, PropertyValueType.SingleValue, true, null));
 
                 //color
                 {

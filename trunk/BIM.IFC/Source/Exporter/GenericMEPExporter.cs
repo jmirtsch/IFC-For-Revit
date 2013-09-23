@@ -178,7 +178,7 @@ namespace BIM.IFC.Exporter
                             ExporterCacheManager.TypeRelationsCache.Add(currentTypeInfo.Style, instanceHandle);
 
                         if (bodyData != null && bodyData.MaterialIds.Count != 0)
-                            CategoryUtil.CreateMaterialAssociations(element.Document, exporterIFC, instanceHandle, bodyData.MaterialIds);
+                            CategoryUtil.CreateMaterialAssociations(exporterIFC, instanceHandle, bodyData.MaterialIds);
 
                         ExporterCacheManager.MEPCache.Register(element, instanceHandle);
 

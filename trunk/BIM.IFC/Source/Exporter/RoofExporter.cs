@@ -92,7 +92,7 @@ namespace BIM.IFC.Exporter
 
                         // will export its host object materials later if it is a roof
                         if (!(roof is RoofBase))
-                            CategoryUtil.CreateMaterialAssociations(roof.Document, exporterIFC, roofHnd, bodyData.MaterialIds);
+                            CategoryUtil.CreateMaterialAssociations(exporterIFC, roofHnd, bodyData.MaterialIds);
 
                         if (exportSlab)
                         {
@@ -110,7 +110,7 @@ namespace BIM.IFC.Exporter
                             ExporterUtil.RelateObject(exporterIFC, roofHnd, slabHnd);
 
                             productWrapper.AddElement(null, slabHnd, placementSetter.GetLevelInfo(), ecData, false);
-                            CategoryUtil.CreateMaterialAssociations(roof.Document, exporterIFC, slabHnd, bodyData.MaterialIds);
+                            CategoryUtil.CreateMaterialAssociations(exporterIFC, slabHnd, bodyData.MaterialIds);
                         }
                     }
                     tr.Commit();
@@ -155,7 +155,7 @@ namespace BIM.IFC.Exporter
 
                     // call for host objects; curtain roofs excused from call (no material information)
                     HostObjectExporter.ExportHostObjectMaterials(exporterIFC, roof, productWrapper.GetAnElement(),
-                        geometryElement, productWrapper, ElementId.InvalidElementId, IFCLayerSetDirection.Axis3);
+                        geometryElement, productWrapper, ElementId.InvalidElementId, IFCLayerSetDirection.Axis3, null);
                 }
                 tr.Commit();
             }

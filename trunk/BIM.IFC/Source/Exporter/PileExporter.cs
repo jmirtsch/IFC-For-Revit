@@ -96,7 +96,7 @@ namespace BIM.IFC.Exporter
                         {
                             if (matId != ElementId.InvalidElementId)
                             {
-                                CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, pile, matId);
+                                CategoryUtil.CreateMaterialAssociation(exporterIFC, pile, matId);
                             }
                         }
 
@@ -114,10 +114,8 @@ namespace BIM.IFC.Exporter
         private static IFCPileType GetPileType(Element element, string ifcEnumType)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = ifcEnumType;
-            }
 
             if (String.IsNullOrEmpty(value))
                 return IFCPileType.NotDefined;

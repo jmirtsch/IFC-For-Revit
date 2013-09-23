@@ -194,7 +194,7 @@ namespace BIM.IFC.Exporter
                                         if (curtainGridSet != null)
                                         {
                                             foreach (CurtainGrid curtainGrid in curtainGridSet)
-                                                elemIds.UnionWith(curtainGrid.GetPanelIds());
+                                                elemIds.UnionWith(CurtainSystemExporter.GetVisiblePanelsForGrid(curtainGrid));
                                         }
                                     }
 
@@ -288,7 +288,7 @@ namespace BIM.IFC.Exporter
                                             continue;
                                         if (origEndParams[1] < parameters[0] + (1.0 / (12.0 * 16.0)))
                                             continue;
-                                        
+
                                         if (parameters[0] > origEndParams[0])
                                             instCurve.set_EndParameter(0, parameters[0]);
                                         if (parameters[1] < origEndParams[1])
@@ -713,7 +713,7 @@ namespace BIM.IFC.Exporter
         /// <param name="spaceHnd">The space handle.</param>
         /// <param name="projectInfo">The project info.</param>
         /// <param name="spatialElement">The spatial element.</param>
-        private static void CreateCOBIESpaceClassifications(ExporterIFC exporterIFC, IFCFile file, IFCAnyHandle spaceHnd, 
+        private static void CreateCOBIESpaceClassifications(ExporterIFC exporterIFC, IFCFile file, IFCAnyHandle spaceHnd,
             ProjectInfo projectInfo, SpatialElement spatialElement)
         {
             HashSet<IFCAnyHandle> spaceHnds = new HashSet<IFCAnyHandle>();
@@ -724,7 +724,7 @@ namespace BIM.IFC.Exporter
 
             // OCCS - Space by Function.
             string itemReference = "";
-            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "OmniClass Number", out itemReference))
+            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "OmniClass Number", out itemReference) != null)
             {
                 string itemName;
                 ParameterUtil.GetStringValueFromElement(spatialElement.Id, "OmniClass Title", out itemName);
@@ -744,7 +744,7 @@ namespace BIM.IFC.Exporter
 
             // Space Type (Owner)
             itemReference = "";
-            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Type (Owner) Reference", out itemReference))
+            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Type (Owner) Reference", out itemReference) != null)
             {
                 string itemName;
                 ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Type (Owner) Name", out itemName);
@@ -757,7 +757,7 @@ namespace BIM.IFC.Exporter
 
             // Space Category (Owner)
             itemReference = "";
-            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Category (Owner) Reference", out itemReference))
+            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Category (Owner) Reference", out itemReference) != null)
             {
                 string itemName;
                 ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Category (Owner) Name", out itemName);
@@ -770,7 +770,7 @@ namespace BIM.IFC.Exporter
 
             // Space Category (BOMA)
             itemReference = "";
-            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Category (BOMA) Reference", out itemReference))
+            if (ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Category (BOMA) Reference", out itemReference) != null)
             {
                 string itemName;
                 ParameterUtil.GetStringValueFromElement(spatialElement.Id, "Space Category (BOMA) Name", out itemName);
@@ -821,7 +821,7 @@ namespace BIM.IFC.Exporter
             ElementId catId = spatialElement.Category != null ? spatialElement.Category.Id : ElementId.InvalidElementId;
 
             double dArea = 0.0;
-            if (ParameterUtil.GetDoubleValueFromElement(spatialElement, BuiltInParameter.ROOM_AREA, out dArea))
+            if (ParameterUtil.GetDoubleValueFromElement(spatialElement, BuiltInParameter.ROOM_AREA, out dArea) != null)
                 dArea *= (scale * scale);
 
             IFCLevelInfo levelInfo = exporterIFC.GetLevelInfo(levelId);
@@ -830,13 +830,13 @@ namespace BIM.IFC.Exporter
             string strSpaceName = null;
             string strSpaceDesc = null;
 
-            if (!ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NUMBER, out strSpaceNumber))
+            if (ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NUMBER, out strSpaceNumber) == null)
                 strSpaceNumber = null;
 
-            if (!ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NAME, out strSpaceName))
+            if (ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NAME, out strSpaceName) == null)
                 strSpaceName = null;
 
-            if (!ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS, out strSpaceDesc))
+            if (ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS, out strSpaceDesc) == null)
                 strSpaceDesc = null;
 
             string name = strSpaceNumber;
@@ -932,7 +932,7 @@ namespace BIM.IFC.Exporter
 
                     double? spaceElevationWithFlooring = null;
                     double elevationWithFlooring = 0.0;
-                    if (ParameterUtil.GetDoubleValueFromElement(spatialElement, null, "IfcElevationWithFlooring", out elevationWithFlooring) == true)
+                    if (ParameterUtil.GetDoubleValueFromElement(spatialElement, null, "IfcElevationWithFlooring", out elevationWithFlooring) != null)
                         spaceElevationWithFlooring = elevationWithFlooring;
                     spaceHnd = IFCInstanceExporter.CreateSpace(file, GUIDUtil.CreateGUID(spatialElement),
                                                   exporterIFC.GetOwnerHistoryHandle(),
@@ -1058,21 +1058,21 @@ namespace BIM.IFC.Exporter
             HashSet<IFCAnyHandle> properties = new HashSet<IFCAnyHandle>();
 
             string paramValue = "";
-            if (ParameterUtil.GetStringValueFromElement(element.Id, "Spatial Zone Conditioning Requirement", out paramValue))
+            if (ParameterUtil.GetStringValueFromElement(element.Id, "Spatial Zone Conditioning Requirement", out paramValue) != null)
             {
                 IFCData paramVal = BIM.IFC.Toolkit.IFCDataUtil.CreateAsLabel(paramValue);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "SpatialZoneConditioningRequirement", null, paramVal, null);
                 properties.Add(propSingleValue);
             }
 
-            if (ParameterUtil.GetStringValueFromElement(element.Id, "HVAC System Type", out paramValue))
+            if (ParameterUtil.GetStringValueFromElement(element.Id, "HVAC System Type", out paramValue) != null)
             {
                 IFCData paramVal = BIM.IFC.Toolkit.IFCDataUtil.CreateAsLabel(paramValue);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "HVACSystemType", null, paramVal, null);
                 properties.Add(propSingleValue);
             }
 
-            if (ParameterUtil.GetStringValueFromElement(element.Id, "User Defined HVAC System Type", out paramValue))
+            if (ParameterUtil.GetStringValueFromElement(element.Id, "User Defined HVAC System Type", out paramValue) != null)
             {
                 IFCData paramVal = BIM.IFC.Toolkit.IFCDataUtil.CreateAsLabel(paramValue);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "UserDefinedHVACSystemType", null, paramVal, null);
@@ -1080,7 +1080,7 @@ namespace BIM.IFC.Exporter
             }
 
             double infiltrationRate = 0.0;
-            if (ParameterUtil.GetDoubleValueFromElement(element, null, "Infiltration Rate", out infiltrationRate))
+            if (ParameterUtil.GetDoubleValueFromElement(element, null, "Infiltration Rate", out infiltrationRate) != null)
             {
                 IFCData paramVal = BIM.IFC.Toolkit.IFCDataUtil.CreateAsReal(infiltrationRate);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "InfiltrationRate", null, paramVal,
@@ -1089,7 +1089,7 @@ namespace BIM.IFC.Exporter
             }
 
             int isDaylitZone = 0;
-            if (ParameterUtil.GetIntValueFromElement(element, "Is Daylit Zone", out isDaylitZone))
+            if (ParameterUtil.GetIntValueFromElement(element, "Is Daylit Zone", out isDaylitZone) != null)
             {
                 IFCData paramVal = BIM.IFC.Toolkit.IFCDataUtil.CreateAsBoolean(isDaylitZone != 0);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "IsDaylitZone", null, paramVal, null);
@@ -1097,7 +1097,7 @@ namespace BIM.IFC.Exporter
             }
 
             int numberOfDaylightSensors = 0;
-            if (ParameterUtil.GetIntValueFromElement(element, "Number of Daylight Sensors", out numberOfDaylightSensors))
+            if (ParameterUtil.GetIntValueFromElement(element, "Number of Daylight Sensors", out numberOfDaylightSensors) != null)
             {
                 IFCData paramVal = BIM.IFC.Toolkit.IFCDataUtil.CreateAsInteger(numberOfDaylightSensors);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "NumberOfDaylightSensors", null, paramVal, null);
@@ -1105,15 +1105,15 @@ namespace BIM.IFC.Exporter
             }
 
             double designIlluminance = 0.0;
-            if (ParameterUtil.GetDoubleValueFromElement(element, null, "Design Illuminance", out designIlluminance))
+            if (ParameterUtil.GetDoubleValueFromElement(element, null, "Design Illuminance", out designIlluminance) != null)
             {
                 IFCData paramVal = BIM.IFC.Toolkit.IFCDataUtil.CreateAsReal(designIlluminance);
-                IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "DesignIlluminance", null, paramVal, 
+                IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "DesignIlluminance", null, paramVal,
                     ExporterCacheManager.UnitsCache["LUX"]);
                 properties.Add(propSingleValue);
             }
 
-            if (ParameterUtil.GetStringValueFromElement(element.Id, "Lighting Controls Type", out paramValue))
+            if (ParameterUtil.GetStringValueFromElement(element.Id, "Lighting Controls Type", out paramValue) != null)
             {
                 IFCData paramVal = BIM.IFC.Toolkit.IFCDataUtil.CreateAsLabel(paramValue);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "LightingControlsType", null, paramVal, null);
@@ -1199,14 +1199,14 @@ namespace BIM.IFC.Exporter
             HashSet<IFCAnyHandle> properties = new HashSet<IFCAnyHandle>();
 
             string paramValue = "";
-            if (ParameterUtil.GetStringValueFromElement(element.Id, "Space Occupant Organization Abbreviation", out paramValue))
+            if (ParameterUtil.GetStringValueFromElement(element.Id, "Space Occupant Organization Abbreviation", out paramValue) != null)
             {
                 IFCData paramVal = BIM.IFC.Toolkit.IFCDataUtil.CreateAsLabel(paramValue);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "SpaceOccupantOrganizationAbbreviation", null, paramVal, null);
                 properties.Add(propSingleValue);
             }
 
-            if (ParameterUtil.GetStringValueFromElement(element.Id, "Space Occupant Organization Name", out paramValue))
+            if (ParameterUtil.GetStringValueFromElement(element.Id, "Space Occupant Organization Name", out paramValue) != null)
             {
                 IFCData paramVal = BIM.IFC.Toolkit.IFCDataUtil.CreateAsLabel(paramValue);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "SpaceOccupantOrganizationName", null, paramVal, null);
@@ -1244,7 +1244,7 @@ namespace BIM.IFC.Exporter
             bool exportToCOBIE = ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE;
 
             string name;
-            if (ParameterUtil.GetStringValueFromElement(element.Id, "Occupant", out name))
+            if (ParameterUtil.GetStringValueFromElement(element.Id, "Occupant", out name) != null)
             {
                 Dictionary<string, IFCAnyHandle> classificationHandles = new Dictionary<string, IFCAnyHandle>();
 
@@ -1258,7 +1258,7 @@ namespace BIM.IFC.Exporter
                         ParameterUtil.GetStringValueFromElement(projectInfo.Id, "BIM Standards URL", out location);
 
                     string itemReference;
-                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Organization ID Reference", out itemReference))
+                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Organization ID Reference", out itemReference) != null)
                     {
                         string itemName;
                         ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Organization ID Name", out itemName);
@@ -1268,7 +1268,7 @@ namespace BIM.IFC.Exporter
                         classificationHandles["Space Occupant Organization ID"] = classificationReference;
                     }
 
-                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Sub-Organization ID Reference", out itemReference))
+                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Sub-Organization ID Reference", out itemReference) != null)
                     {
                         string itemName;
                         ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Sub-Organization ID Name", out itemName);
@@ -1278,7 +1278,7 @@ namespace BIM.IFC.Exporter
                         classificationHandles["Space Occupant Sub-Organization ID"] = classificationReference;
                     }
 
-                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Sub-Organization ID Reference", out itemReference))
+                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Sub-Organization ID Reference", out itemReference) != null)
                     {
                         string itemName;
                         ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Sub-Organization ID Name", out itemName);
@@ -1288,7 +1288,7 @@ namespace BIM.IFC.Exporter
                         classificationHandles["Space Occupant Sub-Organization ID"] = classificationReference;
                     }
 
-                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Organization Billing ID Reference", out itemReference))
+                    if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Organization Billing ID Reference", out itemReference) != null)
                     {
                         string itemName;
                         ParameterUtil.GetStringValueFromElementOrSymbol(element, "Space Occupant Organization Billing ID Name", out itemName);
@@ -1329,65 +1329,65 @@ namespace BIM.IFC.Exporter
                 }
             }
         }
-        
+
         static private bool CreateGSAInformation(ExporterIFC exporterIFC, Element element, string zoneObjectType,
             Dictionary<string, IFCAnyHandle> classificationHandles, IFCAnyHandle energyAnalysisPSetHnd)
         {
             IFCFile file = exporterIFC.GetFile();
 
-                            bool isSpatialZone = NamingUtil.IsEqualIgnoringCaseAndSpaces(zoneObjectType, "SpatialZone");
-                            if (isSpatialZone)
-                            {
-                                // Classifications.
-                                Document doc = element.Document;
-                                ProjectInfo projectInfo = doc.ProjectInformation;
+            bool isSpatialZone = NamingUtil.IsEqualIgnoringCaseAndSpaces(zoneObjectType, "SpatialZone");
+            if (isSpatialZone)
+            {
+                // Classifications.
+                Document doc = element.Document;
+                ProjectInfo projectInfo = doc.ProjectInformation;
 
                                 string location;
-                                    ParameterUtil.GetStringValueFromElement(projectInfo.Id, "BIM Standards URL", out location);
+                    ParameterUtil.GetStringValueFromElement(projectInfo.Id, "BIM Standards URL", out location);
 
-                                string itemReference;
-                                string itemName;
-                            
-                                // Spatial Zone Type (Owner)
-                                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Spatial Zone Type (Owner) Reference", out itemReference))
-                                {
-                                    ParameterUtil.GetStringValueFromElementOrSymbol(element, "Spatial Zone Type (Owner) Name", out itemName);
-                                    
-                                    IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
-                                      location, itemReference, itemName, null);
-                                    classificationHandles["Spatial Zone Type (Owner)"] = classificationReference;
-                                }
+                string itemReference;
+                string itemName;
 
-                                // Spatial Zone Security Level (Owner)
-                                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Spatial Zone Security Level (Owner) Reference", out itemReference))
-                                {
-                                    itemName = "";
-                                    ParameterUtil.GetStringValueFromElementOrSymbol(element, "Spatial Zone Security Level (Owner) Name", out itemName);
+                // Spatial Zone Type (Owner)
+                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Spatial Zone Type (Owner) Reference", out itemReference) != null)
+                {
+                    ParameterUtil.GetStringValueFromElementOrSymbol(element, "Spatial Zone Type (Owner) Name", out itemName);
 
-                                    IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
-                                      location, itemReference, itemName, null);
-                                    classificationHandles["Spatial Zone Security Level (Owner)"] = classificationReference;
-                                }
+                    IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
+                      location, itemReference, itemName, null);
+                    classificationHandles["Spatial Zone Type (Owner)"] = classificationReference;
+                }
 
-                                // Spatial Zone Type (Energy Analysis)
-                                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "ASHRAE Zone Type", out itemName))
-                                {
-                                    IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
-                                      "ASHRAE 90.1", "Common Space Type", itemName, null);
-                                    classificationHandles["ASHRAE Zone Type"] = classificationReference;
-                                }
-                            }
+                // Spatial Zone Security Level (Owner)
+                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Spatial Zone Security Level (Owner) Reference", out itemReference) != null)
+                {
+                    itemName = "";
+                    ParameterUtil.GetStringValueFromElementOrSymbol(element, "Spatial Zone Security Level (Owner) Name", out itemName);
 
-                            if (isSpatialZone || NamingUtil.IsEqualIgnoringCaseAndSpaces(zoneObjectType, "EnergyAnalysisZone"))
-                            {
-                                // Property Sets.  We don't use the generic Property Set mechanism because Zones aren't "real" elements.
-                                energyAnalysisPSetHnd = CreateSpatialZoneEnergyAnalysisPSet(exporterIFC, file, element);
+                    IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
+                      location, itemReference, itemName, null);
+                    classificationHandles["Spatial Zone Security Level (Owner)"] = classificationReference;
+                }
 
-                                if (classificationHandles.Count > 0 || energyAnalysisPSetHnd != null)
+                // Spatial Zone Type (Energy Analysis)
+                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "ASHRAE Zone Type", out itemName) != null)
+                {
+                    IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
+                      "ASHRAE 90.1", "Common Space Type", itemName, null);
+                    classificationHandles["ASHRAE Zone Type"] = classificationReference;
+                }
+            }
+
+            if (isSpatialZone || NamingUtil.IsEqualIgnoringCaseAndSpaces(zoneObjectType, "EnergyAnalysisZone"))
+            {
+                // Property Sets.  We don't use the generic Property Set mechanism because Zones aren't "real" elements.
+                energyAnalysisPSetHnd = CreateSpatialZoneEnergyAnalysisPSet(exporterIFC, file, element);
+
+                if (classificationHandles.Count > 0 || energyAnalysisPSetHnd != null)
                     return true;
-                            }
+            }
             return false;
-                        }
+        }
 
         /// <summary>
         /// Collect information to create zones and cache them to create when end export.
@@ -1431,7 +1431,7 @@ namespace BIM.IFC.Exporter
                 string zoneObjectType;
                 string zoneDescription;
 
-                if (!ParameterUtil.GetOptionalStringValueFromElementOrSymbol(element, propZoneName, out zoneName))
+                if (ParameterUtil.GetOptionalStringValueFromElementOrSymbol(element, propZoneName, out zoneName) == null)
                     break;
 
                 // If we have an empty zone name, but the value exists, keep looking to make sure there aren't valid values later.
@@ -1452,43 +1452,43 @@ namespace BIM.IFC.Exporter
                             classificationHandles, energyAnalysisPSetHnd);
                     }
 
-                        ZoneInfo zoneInfo = ExporterCacheManager.ZoneInfoCache.Find(zoneName);
-                        if (zoneInfo == null)
-                        {
-                            IFCAnyHandle zoneCommonPropertySetHandle = CreateZoneCommonPSet(exporterIFC, file, element);
-                            zoneInfo = new ZoneInfo(zoneObjectType, zoneDescription, roomHandle, classificationHandles, energyAnalysisPSetHnd, zoneCommonPropertySetHandle);
-                            ExporterCacheManager.ZoneInfoCache.Register(zoneName, zoneInfo);
-                        }
-                        else
-                        {
-                            // if description and object type were empty, overwrite.
-                            if (!String.IsNullOrEmpty(zoneObjectType) && String.IsNullOrEmpty(zoneInfo.ObjectType))
-                                zoneInfo.ObjectType = zoneObjectType;
-                            if (!String.IsNullOrEmpty(zoneDescription) && String.IsNullOrEmpty(zoneInfo.Description))
-                                zoneInfo.Description = zoneDescription;
-
-                            zoneInfo.RoomHandles.Add(roomHandle);
-                            foreach (KeyValuePair<string, IFCAnyHandle> classificationReference in classificationHandles)
-                            {
-                                if (!zoneInfo.ClassificationReferences[classificationReference.Key].HasValue)
-                                    zoneInfo.ClassificationReferences[classificationReference.Key] = classificationReference.Value;
-                                else
-                                {
-                                    // Delete redundant IfcClassificationReference from file.
-                                    classificationReference.Value.Delete();
-                                }
-                            }
-
-                            if (IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.EnergyAnalysisProperySetHandle))
-                                zoneInfo.EnergyAnalysisProperySetHandle = energyAnalysisPSetHnd;
-                            else if (energyAnalysisPSetHnd.HasValue)
-                                energyAnalysisPSetHnd.Delete();
-
-                            if (IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.ZoneCommonProperySetHandle))
-                                zoneInfo.ZoneCommonProperySetHandle = CreateZoneCommonPSet(exporterIFC, file, element);
-                            }
-                        }
+                    ZoneInfo zoneInfo = ExporterCacheManager.ZoneInfoCache.Find(zoneName);
+                    if (zoneInfo == null)
+                    {
+                        IFCAnyHandle zoneCommonPropertySetHandle = CreateZoneCommonPSet(exporterIFC, file, element);
+                        zoneInfo = new ZoneInfo(zoneObjectType, zoneDescription, roomHandle, classificationHandles, energyAnalysisPSetHnd, zoneCommonPropertySetHandle);
+                        ExporterCacheManager.ZoneInfoCache.Register(zoneName, zoneInfo);
                     }
+                    else
+                    {
+                        // if description and object type were empty, overwrite.
+                        if (!String.IsNullOrEmpty(zoneObjectType) && String.IsNullOrEmpty(zoneInfo.ObjectType))
+                            zoneInfo.ObjectType = zoneObjectType;
+                        if (!String.IsNullOrEmpty(zoneDescription) && String.IsNullOrEmpty(zoneInfo.Description))
+                            zoneInfo.Description = zoneDescription;
+
+                        zoneInfo.RoomHandles.Add(roomHandle);
+                        foreach (KeyValuePair<string, IFCAnyHandle> classificationReference in classificationHandles)
+                        {
+                            if (!zoneInfo.ClassificationReferences[classificationReference.Key].HasValue)
+                                zoneInfo.ClassificationReferences[classificationReference.Key] = classificationReference.Value;
+                            else
+                            {
+                                // Delete redundant IfcClassificationReference from file.
+                                classificationReference.Value.Delete();
+                            }
+                        }
+
+                        if (IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.EnergyAnalysisProperySetHandle))
+                            zoneInfo.EnergyAnalysisProperySetHandle = energyAnalysisPSetHnd;
+                        else if (energyAnalysisPSetHnd.HasValue)
+                            energyAnalysisPSetHnd.Delete();
+
+                        if (IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.ZoneCommonProperySetHandle))
+                            zoneInfo.ZoneCommonProperySetHandle = CreateZoneCommonPSet(exporterIFC, file, element);
+                    }
+                }
+            }
         }
     }
 }

@@ -27,9 +27,6 @@ using BIM.IFC.Toolkit;
 
 namespace BIM.IFC.Utility
 {
-    using IFCDoorStyleOperation = Autodesk.Revit.DB.IFC.IFCDoorStyleOperation;
-    using IFCWindowStyleOperation = Autodesk.Revit.DB.IFC.IFCWindowStyleOperation;
-
     /// <summary>
     /// Provides static methods for door and window related manipulations.
     /// </summary>
@@ -44,33 +41,33 @@ namespace BIM.IFC.Utility
         /// <returns>
         /// The string represents the door panel operation.
         /// </returns>
-        public static IFCDoorPanelOperation GetPanelOperationFromDoorStyleOperation(IFCDoorStyleOperation ifcDoorStyleOperationType)
+        public static IFCDoorPanelOperation GetPanelOperationFromDoorStyleOperation(Autodesk.Revit.DB.IFC.IFCDoorStyleOperation ifcDoorStyleOperationType)
         {
             switch (ifcDoorStyleOperationType)
             {
-                case IFCDoorStyleOperation.SingleSwingLeft:
-                case IFCDoorStyleOperation.SingleSwingRight:
-                case IFCDoorStyleOperation.DoubleDoorSingleSwing:
-                case IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeLeft:
-                case IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeRight:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.SingleSwingLeft:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.SingleSwingRight:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorSingleSwing:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeLeft:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorSingleSwingOppositeRight:
                     return IFCDoorPanelOperation.Swinging;
-                case IFCDoorStyleOperation.DoubleSwingLeft:
-                case IFCDoorStyleOperation.DoubleSwingRight:
-                case IFCDoorStyleOperation.DoubleDoorDoubleSwing:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleSwingLeft:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleSwingRight:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorDoubleSwing:
                     return IFCDoorPanelOperation.Double_Acting;
-                case IFCDoorStyleOperation.SlidingToLeft:
-                case IFCDoorStyleOperation.SlidingToRight:
-                case IFCDoorStyleOperation.DoubleDoorSliding:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.SlidingToLeft:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.SlidingToRight:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorSliding:
                     return IFCDoorPanelOperation.Sliding;
-                case IFCDoorStyleOperation.FoldingToLeft:
-                case IFCDoorStyleOperation.FoldingToRight:
-                case IFCDoorStyleOperation.DoubleDoorFolding:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.FoldingToLeft:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.FoldingToRight:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.DoubleDoorFolding:
                     return IFCDoorPanelOperation.Folding;
-                case IFCDoorStyleOperation.Revolving:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.Revolving:
                     return IFCDoorPanelOperation.Revolving;
-                case IFCDoorStyleOperation.RollingUp:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.RollingUp:
                     return IFCDoorPanelOperation.RollingUp;
-                case IFCDoorStyleOperation.UserDefined:
+                case Autodesk.Revit.DB.IFC.IFCDoorStyleOperation.UserDefined:
                     return IFCDoorPanelOperation.UserDefined;
                 default:
                     return IFCDoorPanelOperation.NotDefined;
@@ -137,13 +134,13 @@ namespace BIM.IFC.Utility
                 panelPositionList.Add(panelPosition != null ? (IFCDoorPanelPosition)panelPosition : IFCDoorPanelPosition.NotDefined);
 
                 double value1 = 0.0, value2 = 0.0;
-                bool foundDepth = ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, panelDepthCurrString, out value1);
+                bool foundDepth = (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, panelDepthCurrString, out value1) != null);
                 if (!foundDepth && (panelNumber == 1))
-                    foundDepth = ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "PanelDepth", out value1);
+                    foundDepth = (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "PanelDepth", out value1) != null);
 
-                bool foundWidth = ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, panelWidthCurrString, out value2);
+                bool foundWidth = (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, panelWidthCurrString, out value2) != null);
                 if (!foundWidth && (panelNumber == 1))
-                    foundWidth = ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "PanelWidth", out value2);
+                    foundWidth = (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "PanelWidth", out value2) != null);
 
                 if (foundDepth && foundWidth)
                 {
@@ -212,52 +209,44 @@ namespace BIM.IFC.Utility
             double scale = exporterIFC.LinearScale;
 
             // both of these must be defined, or not defined - if only one is defined, we ignore the values.
-            if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "LiningDepth", out value1))
+            if ((ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "LiningDepth", out value1) != null) &&
+                (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "LiningThickness", out value2) != null))
             {
-                if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "LiningThickness", out value2))
-                {
-                    liningDepthOpt = value1 * scale;
-                    liningThicknessOpt = value2 * scale;
-                }
+                liningDepthOpt = value1 * scale;
+                liningThicknessOpt = value2 * scale;
             }
 
-            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "LiningOffset", out value1))
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "LiningOffset", out value1) != null)
                 liningOffsetOpt = value1 * scale;
 
             // both of these must be defined, or not defined - if only one is defined, we ignore the values.
-            if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "ThresholdDepth", out value1))
+            if ((ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "ThresholdDepth", out value1) != null) &&
+                (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "ThresholdThickness", out value2) != null))
             {
-                if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "ThresholdThickness", out value2))
-                {
-                    thresholdDepthOpt = value1 * scale;
-                    thresholdThicknessOpt = value2 * scale;
-                }
+                thresholdDepthOpt = value1 * scale;
+                thresholdThicknessOpt = value2 * scale;
             }
 
-            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "ThreshholdOffset", out value1))
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "ThreshholdOffset", out value1) != null)
                 liningOffsetOpt = value1 * scale;
 
             // both of these must be defined, or not defined - if only one is defined, we ignore the values.
-            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "TransomOffset", out value1))
+            if ((ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "TransomOffset", out value1) != null) &&
+                (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "TransomThickness", out value2) != null))
             {
-                if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "TransomThickness", out value2))
-                {
-                    transomOffsetOpt = value1 * scale;
-                    transomThicknessOpt = value2 * scale;
-                }
+                transomOffsetOpt = value1 * scale;
+                transomThicknessOpt = value2 * scale;
             }
 
             // both of these must be defined, or not defined - if only one is defined, we ignore the values.
-            if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "CasingDepth", out value1))
+            if ((ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "CasingDepth", out value1) != null) &&
+                (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "CasingThickness", out value2) != null))
             {
-                if (ParameterUtil.GetPositiveDoubleValueFromElementOrSymbol(familyInstance, "CasingThickness", out value2))
-                {
-                    casingDepthOpt = value1 * scale;
-                    casingThicknessOpt = value2 * scale;
-                }
+                casingDepthOpt = value1 * scale;
+                casingThicknessOpt = value2 * scale;
             }
 
-            string doorLiningGUID = ExporterIFCUtils.CreateSubElementGUID(familyInstance, (int) IFCDoorSubElements.DoorLining);
+            string doorLiningGUID = ExporterIFCUtils.CreateSubElementGUID(familyInstance, (int)IFCDoorSubElements.DoorLining);
             string doorLiningName = NamingUtil.GetIFCName(familyInstance);
             return IFCInstanceExporter.CreateDoorLiningProperties(file, doorLiningGUID, ownerHistory,
                doorLiningName, null, liningDepthOpt, liningThicknessOpt, thresholdDepthOpt, thresholdThicknessOpt,
@@ -289,7 +278,7 @@ namespace BIM.IFC.Utility
                 currPanelName = "PanelPosition" + number.ToString();
 
             string value = "";
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, currPanelName, out value))
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, currPanelName, out value) == null)
                 value = typeName;
 
             if (value == "")
@@ -372,7 +361,7 @@ namespace BIM.IFC.Utility
         public static IFCDoorStyleConstruction GetDoorStyleConstruction(Element element)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "Construction", out value))
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Construction", out value) == null)
                 ParameterUtil.GetStringValueFromElementOrSymbol(element, BuiltInParameter.DOOR_CONSTRUCTION_TYPE, false, out value);
 
             if (String.IsNullOrEmpty(value))
@@ -399,7 +388,7 @@ namespace BIM.IFC.Utility
 
             return IFCDoorStyleConstruction.UserDefined;
         }
-    
+
         /// <summary>
         /// Gets window style construction.
         /// </summary>
@@ -408,7 +397,7 @@ namespace BIM.IFC.Utility
         public static IFCWindowStyleConstruction GetIFCWindowStyleConstruction(Element element)
         {
             string value;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "Construction", out value))
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "Construction", out value) == null)
                 ParameterUtil.GetStringValueFromElementOrSymbol(element, BuiltInParameter.WINDOW_CONSTRUCTION_TYPE, false, out value);
 
             if (String.IsNullOrWhiteSpace(value))
@@ -425,7 +414,7 @@ namespace BIM.IFC.Utility
                 return IFCWindowStyleConstruction.Aluminium_Wood;
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "Plastic"))
                 return IFCWindowStyleConstruction.Plastic;
-            
+
             //else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(value, "OtherConstruction"))
             return IFCWindowStyleConstruction.Other_Construction;
         }
@@ -450,7 +439,7 @@ namespace BIM.IFC.Utility
             string currPanelName = "PanelOperation" + number.ToString();
 
             string value;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, currPanelName, out value))
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, currPanelName, out value) == null)
                 value = initialValue;
 
             if (value == "")
@@ -505,7 +494,7 @@ namespace BIM.IFC.Utility
             string currPanelName = "PanelPosition" + number.ToString();
 
             string value;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, currPanelName, out value))
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, currPanelName, out value) == null)
                 value = initialValue;
 
             if (value == "")
@@ -560,29 +549,29 @@ namespace BIM.IFC.Utility
             double scale = exporterIFC.LinearScale;
 
             // both of these must be defined (or not defined)
-            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "LiningDepth", out value1) &&
-               ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "LiningThickness", out value2))
+            if ((ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "LiningDepth", out value1) != null) &&
+                (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "LiningThickness", out value2) != null))
             {
                 liningDepthOpt = value1 * scale;
                 liningThicknessOpt = value2 * scale;
             }
 
-            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "TransomThickness", out value1))
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "TransomThickness", out value1) != null)
                 transomThicknessOpt = value1 * scale;
 
-            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FirstTransomOffset", out value1))
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FirstTransomOffset", out value1) != null)
                 firstTransomOffsetOpt = value1 * scale;
 
-            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "SecondTransomOffset", out value1))
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "SecondTransomOffset", out value1) != null)
                 secondTransomOffsetOpt = value1 * scale;
 
-            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "MullionThickness", out value1))
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "MullionThickness", out value1) != null)
                 mullionThicknessOpt = value1 * scale;
 
-            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FirstMullionOffset", out value1))
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FirstMullionOffset", out value1) != null)
                 firstMullionOffsetOpt = value1 * scale;
 
-            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "SecondMullionOffset", out value1))
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "SecondMullionOffset", out value1) != null)
                 secondMullionOffsetOpt = value1 * scale;
 
             string windowLiningGUID = GUIDUtil.CreateGUID();
@@ -634,10 +623,10 @@ namespace BIM.IFC.Utility
                 double? frameThickness = null;
 
                 double value1, value2;
-                if ((ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, frameDepthCurrString, out value1) ||
-                    ((panelNumber == 1) && (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FrameDepth", out value1)))) &&
-                   (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, frameThicknessCurrString, out value2) ||
-                    ((panelNumber == 1) && (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FrameThickness", out value2)))))
+                if (((ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, frameDepthCurrString, out value1) != null) ||
+                    ((panelNumber == 1) && (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FrameDepth", out value1) != null))) &&
+                   ((ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, frameThicknessCurrString, out value2) != null) ||
+                    ((panelNumber == 1) && (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "FrameThickness", out value2) != null))))
                 {
                     frameDepth = value1 * lengthScale;
                     frameThickness = value2 * lengthScale;

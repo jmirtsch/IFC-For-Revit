@@ -97,7 +97,7 @@ namespace BIM.IFC.Utility
                 return newShapeRepresentation;
 
             string ifcCADLayer = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IFCCadLayer", out ifcCADLayer) || string.IsNullOrWhiteSpace(ifcCADLayer))
+            if ((ParameterUtil.GetStringValueFromElementOrSymbol(element, "IFCCadLayer", out ifcCADLayer) == null) || string.IsNullOrWhiteSpace(ifcCADLayer))
                 ifcCADLayer = ExporterStateManager.GetCurrentCADLayerOverride();
 
             // We are using the DWG export layer table to correctly map category to DWG layer for the 
@@ -398,7 +398,7 @@ namespace BIM.IFC.Utility
         public static IFCAnyHandle CreatePlanMappedItemRep(ExporterIFC exporterIFC, Element element, ElementId categoryId,
             IFCAnyHandle contextOfItems, HashSet<IFCAnyHandle> bodyItems)
         {
-            string identifierOpt = "Annotation";	// this is by IFC2x2+ convention
+            string identifierOpt = "FootPrint";	// this is by IFC2x2+ convention
             string repTypeOpt = "MappedRepresentation";  // this is by IFC2x2+ convention
             IFCAnyHandle bodyRepresentation = CreateShapeRepresentation(exporterIFC, element, categoryId,
                 contextOfItems, identifierOpt, repTypeOpt, bodyItems);

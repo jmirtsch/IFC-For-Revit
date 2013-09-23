@@ -128,7 +128,7 @@ namespace BIM.IFC.Exporter
                         {
                             if (matId != ElementId.InvalidElementId)
                             {
-                                CategoryUtil.CreateMaterialAssociation(element.Document, exporterIFC, footing, matId);
+                                CategoryUtil.CreateMaterialAssociation(exporterIFC, footing, matId);
                             }
                         }
 
@@ -178,10 +178,8 @@ namespace BIM.IFC.Exporter
         public static Toolkit.IFCFootingType GetIFCFootingType(Element element, string typeName)
         {
             string value = null;
-            if (!ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value))
-            {
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
                 value = typeName;
-            }
 
             return GetIFCFootingType(value);
         }

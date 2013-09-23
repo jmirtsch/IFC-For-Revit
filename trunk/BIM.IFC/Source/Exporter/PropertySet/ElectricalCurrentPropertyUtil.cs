@@ -109,7 +109,7 @@ namespace BIM.IFC.Exporter.PropertySet
         public static IFCAnyHandle CreateElectricalCurrentMeasurePropertyFromElementOrSymbol(IFCFile file, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             double propertyValue;
-            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue))
+            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
             {
                 return CreateElectricalCurrentMeasurePropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
             }

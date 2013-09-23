@@ -140,6 +140,10 @@ namespace BIM.IFC.Exporter
                                 {
                                     ProxyElementExporter.Export(exporterIFC, subElem, geomElem, productWrapper);
                                 }
+                                else if (subElem is Wall)
+                                {
+                                    WallExporter.ExportWall(exporterIFC, subElem, geomElem, productWrapper);
+                                }
                             }
                             catch (Exception ex)
                             {
@@ -254,6 +258,7 @@ namespace BIM.IFC.Exporter
             List<Type> curtainWallSubElementTypes = new List<Type>();
             curtainWallSubElementTypes.Add(typeof(FamilyInstance));
             curtainWallSubElementTypes.Add(typeof(CurtainGridLine));
+            curtainWallSubElementTypes.Add(typeof(Wall));
 
             ElementMulticlassFilter multiclassFilter = new ElementMulticlassFilter(curtainWallSubElementTypes, true);
             collector.WherePasses(multiclassFilter);
@@ -354,6 +359,16 @@ namespace BIM.IFC.Exporter
         }
 
         /// <summary>
+        /// Returns all of the curtain panels for a CurtainGrid.
+        /// </summary>
+        /// <param name="curtainGrid">The CurtainGrid element.</param>
+        /// <returns>The element ids of the active curtain panels.</returns>
+        public static ICollection<ElementId> GetVisiblePanelsForGrid(CurtainGrid curtainGrid)
+        {
+            return curtainGrid.GetPanelIds();
+        }
+
+        /// <summary>
         /// Export non-legacy Curtain Walls and Roofs.
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
@@ -371,7 +386,7 @@ namespace BIM.IFC.Exporter
             HashSet<ElementId> allSubElements = new HashSet<ElementId>();
             foreach (CurtainGrid grid in gridSet)
             {
-                allSubElements.UnionWith(grid.GetPanelIds());
+                allSubElements.UnionWith(GetVisiblePanelsForGrid(grid));
                 allSubElements.UnionWith(grid.GetMullionIds());
             }
 
@@ -401,7 +416,7 @@ namespace BIM.IFC.Exporter
             HashSet<ElementId> allSubElements = new HashSet<ElementId>();
             foreach (CurtainGrid grid in gridSet)
             {
-                allSubElements.UnionWith(grid.GetPanelIds());
+                allSubElements.UnionWith(GetVisiblePanelsForGrid(grid));
                 allSubElements.UnionWith(grid.GetMullionIds());
             }
 
@@ -482,6 +497,7 @@ namespace BIM.IFC.Exporter
                 CurtainGrid curtainGrid = wall.CurtainGrid;
                 if (curtainGrid != null)
                 {
+                    // The point of this code is to potentially throw an exception. If it does, we have a legacy curtain wall.
                     curtainGrid.GetPanelIds();
                 }
                 else

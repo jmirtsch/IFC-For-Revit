@@ -72,19 +72,15 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
                 else
                     return false;
 
-                if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, temperatureName, out m_Temperature))
-                {
+                if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, temperatureName, out m_Temperature) != null)
                     return true;
-                }
-                else
+
+                double maxValue = 0, minValue = 0;
+                if ((ParameterUtil.GetDoubleValueFromElementOrSymbol(element, temperatureNameMax, out maxValue) != null) &&
+                    (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, temperatureNameMin, out minValue) != null))
                 {
-                    double maxValue = 0, minValue = 0;
-                    if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, temperatureNameMax, out maxValue) &&
-                        ParameterUtil.GetDoubleValueFromElementOrSymbol(element, temperatureNameMin, out minValue))
-                    {
-                        m_Temperature = (maxValue + minValue) / 2.0;
-                        return true;
-                    }
+                    m_Temperature = (maxValue + minValue) / 2.0;
+                    return true;
                 }
             }
 

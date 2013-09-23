@@ -126,6 +126,31 @@ working on expanding and eventually removing this limit, and we will be tracking
 
 <div class="versionset">
 
+<div class="version">2.14.0.0</div><div class="versioninfo-bullet">
+General:
+
+<li>Minor cleanup to remove extraneous arguments from some functions.
+<li>Remove some obsolete code for old IFCDoorStyleOperation and IFCWIndowStyleOperation.
+
+<p>New Functionality:
+
+<li>Add support for Force properties (Newtons).
+
+<p>Bug Fixes:
+
+<li>Correct flow direction calculation for some connector domains, that would abort export of connector information.
+<li>Export Authorization field in header as a null string ('$') instead of an empty string if it is not set.
+<li>Export correct values for IfcDoor operation.
+<li>Export internal ElementId Revit properties as IfcLabel, not IfcText.
+<li>Export respects visibility settings of curtain panels if exporting elements in the current view.
+<li>Fix export of some schedules with non-exportable fields that would prevent export with exporting of schedules as property sets on.
+<li>Fix some caching issues with some parameter values.
+<li>Protect against abort of export when trying to export some invalid systems in the Revit file.
+<li>Set 2D representations of families to "FootPrint" representation, not "Annotation".
+<li>Use IfcMaterial, not IfcMaterialList, if there is only 1 material in the list.
+<li>Use IfcMaterialList, not IfcMaterialLayerUsage, for more BRep-based host objects.
+</div>
+
 <div class="version">2.13.0</div><div class="versioninfo-bullet">General:
 
 <li>Initialize GUIDOptions so that GUIDUtil.CreateGUID(element) can be used outside of the exporter code.

@@ -224,7 +224,7 @@ namespace BIM.IFC.Exporter
 
                         productWrapper.AddElement(sheet, fabricSheet, placementSetter.GetLevelInfo(), ecData, true);
 
-                        CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, fabricSheet, materialId);
+                        CategoryUtil.CreateMaterialAssociation(exporterIFC, fabricSheet, materialId);
                     }
                 }
                 tr.Commit();

@@ -72,7 +72,7 @@ namespace BIM.IFC.Exporter.PropertySet.Calculators
         public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
         {
             ElementId rebarShapeId;
-            if (!ParameterUtil.GetElementIdValueFromElement(element, BuiltInParameter.REBAR_SHAPE, out rebarShapeId))
+            if (ParameterUtil.GetElementIdValueFromElement(element, BuiltInParameter.REBAR_SHAPE, out rebarShapeId) == null)
                 return false;
 
             Element rebarShape = element.Document.GetElement(rebarShapeId);

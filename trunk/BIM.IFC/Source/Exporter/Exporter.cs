@@ -1358,12 +1358,20 @@ namespace BIM.IFC.Exporter
                                 entries.Value.Add(memberHandle);
                         }
 
-                        ElementSet members = systemElem.Elements;
-                        foreach (Element member in members)
+                        // The Elements property below can throw an InvalidOperationException in some cases, which could
+                        // crash the export.  Protect against this without having too generic a try/catch block.
+                        try
                         {
-                            IFCAnyHandle memberHandle = ExporterCacheManager.MEPCache.Find(member.Id);
-                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(memberHandle))
-                                entries.Value.Add(memberHandle);
+                            ElementSet members = systemElem.Elements;
+                            foreach (Element member in members)
+                            {
+                                IFCAnyHandle memberHandle = ExporterCacheManager.MEPCache.Find(member.Id);
+                                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(memberHandle))
+                                    entries.Value.Add(memberHandle);
+                            }
+                        }
+                        catch
+                        {
                         }
 
                         if (entries.Value.Count == 0)
@@ -1485,6 +1493,9 @@ namespace BIM.IFC.Exporter
                     organization.Add(String.Empty);
 
                 string versionInfos = document.Application.VersionBuild + " - " + ExporterCacheManager.ExportOptionsCache.ExporterVersion + " - " + ExporterCacheManager.ExportOptionsCache.ExporterUIVersion;
+
+                if (fHItem.Authorization == null)
+                    fHItem.Authorization = String.Empty;
 
                 IFCInstanceExporter.CreateFileName(file, projectNumber, author, organization, document.Application.VersionName,
                     versionInfos, fHItem.Authorization);
@@ -1889,6 +1900,12 @@ namespace BIM.IFC.Exporter
             return postalAddress;
         }
 
+        private IFCAnyHandle CreateSIUnit(IFCFile file, IFCUnit ifcUnitType, IFCSIUnitName unitName, IFCSIPrefix? prefix)
+        {
+            IFCAnyHandle siUnit = IFCInstanceExporter.CreateSIUnit(file, ifcUnitType, prefix, unitName);
+            return siUnit;
+        }
+
         /// <summary>
         /// Creates the IfcUnitAssignment.
         /// </summary>
@@ -2058,12 +2075,7 @@ namespace BIM.IFC.Exporter
             // Mass
             IFCAnyHandle massSIUnit = null;
             {
-                IFCUnit unitType = IFCUnit.MassUnit;
-                IFCSIPrefix prefix = IFCSIPrefix.Kilo;
-                IFCSIUnitName unitName = IFCSIUnitName.Gram;
-
-                massSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, prefix, unitName);
-
+                massSIUnit = CreateSIUnit(file, IFCUnit.MassUnit, IFCSIUnitName.Gram, IFCSIPrefix.Kilo);
                 // If we are exporting to GSA standard, we will override kg with pound below.
                 if (!exportToCOBIE)
                     unitSet.Add(massSIUnit);      // created above, so unique.
@@ -2072,29 +2084,20 @@ namespace BIM.IFC.Exporter
             // Time -- support seconds only.
             IFCAnyHandle timeSIUnit = null;
             {
-                IFCUnit unitType = IFCUnit.TimeUnit;
-                IFCSIUnitName unitName = IFCSIUnitName.Second;
-
-                timeSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+                timeSIUnit = CreateSIUnit(file, IFCUnit.TimeUnit, IFCSIUnitName.Second, null);
                 unitSet.Add(timeSIUnit);      // created above, so unique.
             }
 
             // Frequency = support Hertz only.
             {
-                IFCUnit unitType = IFCUnit.FrequencyUnit;
-                IFCSIUnitName unitName = IFCSIUnitName.Hertz;
-
-                IFCAnyHandle frequencySIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+                IFCAnyHandle frequencySIUnit = CreateSIUnit(file, IFCUnit.FrequencyUnit, IFCSIUnitName.Hertz, null);
                 unitSet.Add(frequencySIUnit);      // created above, so unique.
             }
 
             // Temperature -- support Kelvin only.
             IFCAnyHandle temperatureSIUnit = null;
             {
-                IFCUnit unitType = IFCUnit.ThermoDynamicTemperatureUnit;
-                IFCSIUnitName unitName = IFCSIUnitName.Kelvin;
-
-                temperatureSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+                temperatureSIUnit = CreateSIUnit(file, IFCUnit.ThermoDynamicTemperatureUnit, IFCSIUnitName.Kelvin, null);
                 unitSet.Add(temperatureSIUnit);      // created above, so unique.
             }
 
@@ -2123,29 +2126,25 @@ namespace BIM.IFC.Exporter
 
             // Electrical current - support metric ampere only.
             {
-                IFCUnit unitType = IFCUnit.ElectricCurrentUnit;
-                IFCSIUnitName unitName = IFCSIUnitName.Ampere;
-
-                IFCAnyHandle currentSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+                IFCAnyHandle currentSIUnit = CreateSIUnit(file, IFCUnit.ElectricCurrentUnit, IFCSIUnitName.Ampere, null);
                 unitSet.Add(currentSIUnit);      // created above, so unique.
             }
 
             // Electrical voltage - support metric volt only.
             {
-                IFCUnit unitType = IFCUnit.ElectricVoltageUnit;
-                IFCSIUnitName unitName = IFCSIUnitName.Volt;
-
-                IFCAnyHandle voltageSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+                IFCAnyHandle voltageSIUnit = CreateSIUnit(file, IFCUnit.ElectricVoltageUnit, IFCSIUnitName.Volt, null);
                 unitSet.Add(voltageSIUnit);      // created above, so unique.
             }
-            
             // Power - support metric watt only.
             {
-                IFCUnit unitType = IFCUnit.PowerUnit;
-                IFCSIUnitName unitName = IFCSIUnitName.Watt;
+                IFCAnyHandle voltageSIUnit = CreateSIUnit(file, IFCUnit.PowerUnit, IFCSIUnitName.Watt, null);
+                unitSet.Add(voltageSIUnit);      // created above, so unique.
+            }
 
-                IFCAnyHandle powerSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
-                unitSet.Add(powerSIUnit);      // created above, so unique.
+            // Force - support newtons (N) only.
+            {
+                IFCAnyHandle forceSIUnit = CreateSIUnit(file, IFCUnit.ForceUnit, IFCSIUnitName.Newton, null);
+                unitSet.Add(forceSIUnit);      // created above, so unique.
             }
 
             // GSA only units.

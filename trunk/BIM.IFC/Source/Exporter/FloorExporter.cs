@@ -271,29 +271,27 @@ namespace BIM.IFC.Exporter
 
                     if (!exportParts)
                     {
-                        if (floorElement is HostObject && nonBrepSlabHnds.Count > 0)
+                        if (floorElement is HostObject)
                         {
-                            HostObjectExporter.ExportHostObjectMaterials(exporterIFC, floorElement as HostObject, nonBrepSlabHnds,
-                                geometryElement, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3);
-                        }
-
-                        if (floorElement is HostObject && brepSlabHnds.Count > 0)
-                        {
-                            IList<ElementId> matIds = HostObjectExporter.GetMaterialIds(floorElement as HostObject);
-                            Document doc = floorElement.Document;
-                            foreach (IFCAnyHandle slabHnd in brepSlabHnds)
+                            HostObject hostObject = floorElement as HostObject;
+                            if (nonBrepSlabHnds.Count > 0)
                             {
-                                CategoryUtil.CreateMaterialAssociations(doc, exporterIFC, slabHnd, matIds);
+                                HostObjectExporter.ExportHostObjectMaterials(exporterIFC, hostObject, nonBrepSlabHnds,
+                                    geometryElement, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3, false);
+                            }
+                            if (brepSlabHnds.Count > 0)
+                            {
+                                HostObjectExporter.ExportHostObjectMaterials(exporterIFC, hostObject, brepSlabHnds,
+                                    geometryElement, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3, true);
                             }
                         }
-
-                        if (floorElement is FamilyInstance && slabHnds.Count > 0)
+                        else if (floorElement is FamilyInstance && slabHnds.Count > 0)
                         {
                             ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, floorElement);
                             Document doc = floorElement.Document;
                             foreach (IFCAnyHandle slabHnd in slabHnds)
                             {
-                                CategoryUtil.CreateMaterialAssociation(doc, exporterIFC, slabHnd, matId);
+                                CategoryUtil.CreateMaterialAssociation(exporterIFC, slabHnd, matId);
                             }
                         }
                     }
