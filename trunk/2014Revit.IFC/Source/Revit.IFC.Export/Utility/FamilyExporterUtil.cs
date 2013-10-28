@@ -197,7 +197,7 @@ namespace Revit.IFC.Export.Exporter
         /// </returns>
         public static bool IsFurnishingElementSubType(IFCExportType exportType)
         {
-            return (exportType >= IFCExportType.IfcFurnitureType &&
+            return (exportType >= IFCExportType.IfcFurnishingElement &&
                exportType <= IFCExportType.IfcSystemFurnitureElementType);
         }
 

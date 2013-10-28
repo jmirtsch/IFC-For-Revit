@@ -1732,39 +1732,42 @@ namespace Revit.IFC.Export.Exporter
                     }
 
                     bool exportSucceeded = (exportAsBRep.Count == 0) && (tryToExportAsExtrusion || tryToExportAsSweptSolid) && (hasExtrusions || hasSweptSolids);
-                    if (exportSucceeded)
+                    if (exportSucceeded || canExportSolidModelRep)
                     {
                         int sz = bodyItems.Count();
                         for (int ii = 0; ii < sz; ii++)
                             BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document, bodyItems[ii], materialIdsForExtrusions[ii]);
 
-                        HashSet<IFCAnyHandle> bodyItemSet = new HashSet<IFCAnyHandle>();
-                        bodyItemSet.UnionWith(bodyItems);
-                        if (hasExtrusions && !hasSweptSolids)
+                        if (exportSucceeded)
                         {
-                            bodyData.RepresentationHnd =
-                                RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
-                            bodyData.ShapeRepresentationType = ShapeRepresentationType.SweptSolid;
-                        }
-                        else if (hasSweptSolids && !hasExtrusions)
-                        {
-                            bodyData.RepresentationHnd =
-                                RepresentationUtil.CreateAdvancedSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
-                            bodyData.ShapeRepresentationType = ShapeRepresentationType.AdvancedSweptSolid;
-                        }
-                        else
-                        {
-                            bodyData.RepresentationHnd =
-                                RepresentationUtil.CreateSolidModelRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet);
-                            bodyData.ShapeRepresentationType = ShapeRepresentationType.SolidModel;
-                        }
-                        
-                        // TODO: include BRep, CSG, Clipping
+                            HashSet<IFCAnyHandle> bodyItemSet = new HashSet<IFCAnyHandle>();
+                            bodyItemSet.UnionWith(bodyItems);
+                            if (hasExtrusions && !hasSweptSolids)
+                            {
+                                bodyData.RepresentationHnd =
+                                    RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
+                                bodyData.ShapeRepresentationType = ShapeRepresentationType.SweptSolid;
+                            }
+                            else if (hasSweptSolids && !hasExtrusions)
+                            {
+                                bodyData.RepresentationHnd =
+                                    RepresentationUtil.CreateAdvancedSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
+                                bodyData.ShapeRepresentationType = ShapeRepresentationType.AdvancedSweptSolid;
+                            }
+                            else
+                            {
+                                bodyData.RepresentationHnd =
+                                    RepresentationUtil.CreateSolidModelRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet);
+                                bodyData.ShapeRepresentationType = ShapeRepresentationType.SolidModel;
+                            }
 
-                        XYZ lpOrig = ((bodyData != null) && (bodyData.OffsetTransform != null)) ? bodyData.OffsetTransform.Origin : new XYZ();
-                        transformSetter.CreateLocalPlacementFromOffset(exporterIFC, bbox, exportBodyParams, lpOrig, unscaledTrfOrig);
-                        tr.Commit();
-                        return bodyData;
+                            // TODO: include BRep, CSG, Clipping
+
+                            XYZ lpOrig = ((bodyData != null) && (bodyData.OffsetTransform != null)) ? bodyData.OffsetTransform.Origin : new XYZ();
+                            transformSetter.CreateLocalPlacementFromOffset(exporterIFC, bbox, exportBodyParams, lpOrig, unscaledTrfOrig);
+                            tr.Commit();
+                            return bodyData;
+                        }
                     }
 
                     // If we are going to export a solid model, keep the created items.

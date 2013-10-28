@@ -76,7 +76,8 @@ namespace Revit.IFC.Export.Exporter
                                 continue;
                             alreadyVisited.Add(subElem.Id);
 
-                            if (!ElementFilteringUtil.CanExportElement(exporterIFC, subElem))
+                            // Respect element visibility settings.
+                            if (!ElementFilteringUtil.CanExportElement(exporterIFC, subElem, false))
                                 continue;
 
                             GeometryElement geomElem = subElem.get_Geometry(geomOptions);
