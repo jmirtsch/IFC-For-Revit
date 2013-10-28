@@ -362,7 +362,7 @@ namespace Revit.IFC.Export.Exporter
                             if (filterView != null && !ElementFilteringUtil.IsElementVisible(spatialElement))
                                 continue;
 
-                            if (!ElementFilteringUtil.ShouldElementBeExported(exporterIFC, spatialElement))
+                            if (!ElementFilteringUtil.ShouldElementBeExported(exporterIFC, spatialElement, false))
                                 continue;
 
                             Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
@@ -1135,6 +1135,7 @@ namespace Revit.IFC.Export.Exporter
             double designIlluminance = 0.0;
             if (ParameterUtil.GetDoubleValueFromElement(element, null, "Design Illuminance", out designIlluminance) != null)
             {
+                double scaledValue = UnitUtil.ScaleIlluminance(designIlluminance);
                 IFCData paramVal = Revit.IFC.Export.Toolkit.IFCDataUtil.CreateAsReal(designIlluminance);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "DesignIlluminance", null, paramVal,
                     ExporterCacheManager.UnitsCache["LUX"]);

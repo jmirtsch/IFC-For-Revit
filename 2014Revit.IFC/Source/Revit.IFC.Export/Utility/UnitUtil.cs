@@ -45,16 +45,6 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
-        /// Converts a length in Revit internal units to IFC units.
-        /// </summary>
-        /// <param name="unscaledLength">The length in Revit internal units.</param>
-        /// <returns>The length in IFC units.</returns>
-        static public double ScaleLength(double unscaledLength)
-        {
-            return ExporterCacheManager.UnitsCache.Scale(UnitType.UT_Length, unscaledLength);
-        }
-
-        /// <summary>
         /// Converts a position in Revit internal units to IFC units.
         /// </summary>
         /// <param name="unscaledUV">The position in Revit internal units.</param>
@@ -75,13 +65,34 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
+        /// Converts an unscaled value in Revit internal units to IFC units, given the unit type.
+        /// </summary>
+        /// <param name="unitType">The unit Type.</param>
+        /// <param name="unscaledValue">The value in Revit internal units.</param>
+        /// <returns>The value in IFC units.</returns>
+        static public double ScaleDouble(UnitType unitType, double unscaledValue)
+        {
+            return ExporterCacheManager.UnitsCache.Scale(unitType, unscaledValue);
+        }
+
+        /// <summary>
+        /// Converts a length in Revit internal units to IFC units.
+        /// </summary>
+        /// <param name="unscaledLength">The length in Revit internal units.</param>
+        /// <returns>The length in IFC units.</returns>
+        static public double ScaleLength(double unscaledLength)
+        {
+            return ScaleDouble(UnitType.UT_Length, unscaledLength);
+        }
+
+        /// <summary>
         /// Converts a force value in Revit internal units to IFC units.
         /// </summary>
         /// <param name="unscaledForce">The force value in Revit internal units.</param>
         /// <returns>The force in IFC units.</returns>
         static public double ScaleForce(double unscaledForce)
         {
-            return ExporterCacheManager.UnitsCache.Scale(UnitType.UT_Force, unscaledForce);
+            return ScaleDouble(UnitType.UT_Force, unscaledForce);
         }
 
         /// <summary>
@@ -91,7 +102,7 @@ namespace Revit.IFC.Export.Utility
         /// <returns>The power in IFC units.</returns>
         static public double ScalePower(double unscaledPower)
         {
-            return ExporterCacheManager.UnitsCache.Scale(UnitType.UT_HVAC_Power, unscaledPower);
+            return ScaleDouble(UnitType.UT_HVAC_Power, unscaledPower);
         }
 
         /// <summary>
@@ -101,7 +112,7 @@ namespace Revit.IFC.Export.Utility
         /// <returns>The area in IFC units.</returns>
         static public double ScaleArea(double unscaledArea)
         {
-            return ExporterCacheManager.UnitsCache.Scale(UnitType.UT_Area, unscaledArea);
+            return ScaleDouble(UnitType.UT_Area, unscaledArea);
         }
 
         /// <summary>
@@ -111,7 +122,7 @@ namespace Revit.IFC.Export.Utility
         /// <returns>The volume in IFC units.</returns>
         static public double ScaleVolume(double unscaledVolume)
         {
-            return ExporterCacheManager.UnitsCache.Scale(UnitType.UT_Volume, unscaledVolume);
+            return ScaleDouble(UnitType.UT_Volume, unscaledVolume);
         }
 
         /// <summary>
@@ -121,7 +132,27 @@ namespace Revit.IFC.Export.Utility
         /// <returns>The volumetric flow rate in IFC units.</returns>
         static public double ScaleVolumetricFlowRate(double unscaledVolumetricFlowRate)
         {
-            return ExporterCacheManager.UnitsCache.Scale(UnitType.UT_HVAC_Airflow, unscaledVolumetricFlowRate);
+            return ScaleDouble(UnitType.UT_HVAC_Airflow, unscaledVolumetricFlowRate);
+        }
+
+        /// <summary>
+        /// Converts a LuminousFlux in Revit internal units to IFC units.
+        /// </summary>
+        /// <param name="unscaledLuminousFlux">The luminous flux in Revit internal units.</param>
+        /// <returns>The luminous flux in IFC units.</returns>
+        static public double ScaleLuminousFlux(double unscaledLuminousFlux)
+        {
+            return ScaleDouble(UnitType.UT_Electrical_Luminous_Flux, unscaledLuminousFlux);
+        }
+
+        /// <summary>
+        /// Converts a LuminousIntensity in Revit internal units to IFC units.
+        /// </summary>
+        /// <param name="unscaledIntensityFlux">The luminous intensity in Revit internal units.</param>
+        /// <returns>The luminous intensity in IFC units.</returns>
+        static public double ScaleLuminousIntensity(double unscaledLuminousIntensity)
+        {
+            return ScaleDouble(UnitType.UT_Electrical_Luminous_Intensity, unscaledLuminousIntensity);
         }
 
         /// <summary>
@@ -131,7 +162,7 @@ namespace Revit.IFC.Export.Utility
         /// <returns>The angle in Revit display units.</returns>
         static public double ScaleAngle(double unscaledAngle)
         {
-            return ExporterCacheManager.UnitsCache.Scale(UnitType.UT_Angle, unscaledAngle);
+            return ScaleDouble(UnitType.UT_Angle, unscaledAngle);
         }
 
         // <summary>
@@ -141,9 +172,19 @@ namespace Revit.IFC.Export.Utility
         /// <returns>The electrical current in Revit display units.</returns>
         static public double ScaleElectricalCurrent(double unscaledCurrent)
         {
-            return ExporterCacheManager.UnitsCache.Scale(UnitType.UT_Electrical_Current, unscaledCurrent);
+            return ScaleDouble(UnitType.UT_Electrical_Current, unscaledCurrent);
         }
 
+        // <summary>
+        /// Converts an electrical illuminance in Revit internal units to Revit display units.
+        /// </summary>
+        /// <param name="unscaledVoltage">The elecrical illuminance in Revit internal units.</param>
+        /// <returns>The electrical illuminance in Revit display units.</returns>
+        static public double ScaleIlluminance(double unscaledIlluminance)
+        {
+            return ScaleDouble(UnitType.UT_Electrical_Illuminance, unscaledIlluminance);
+        }
+        
         // <summary>
         /// Converts an electrical voltage in Revit internal units to Revit display units.
         /// </summary>
@@ -151,7 +192,7 @@ namespace Revit.IFC.Export.Utility
         /// <returns>The electrical current in Revit display units.</returns>
         static public double ScaleElectricalVoltage(double unscaledVoltage)
         {
-            return ExporterCacheManager.UnitsCache.Scale(UnitType.UT_Electrical_Potential, unscaledVoltage);
+            return ScaleDouble(UnitType.UT_Electrical_Potential, unscaledVoltage);
         }
         
         /// <summary>

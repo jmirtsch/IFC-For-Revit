@@ -33,7 +33,8 @@ namespace Revit.IFC.Export.Utility
     /// </summary>
     public class UnitsCache : Dictionary<string, IFCAnyHandle>
     {
-        Dictionary<UnitType, KeyValuePair<IFCAnyHandle, double>> m_UnitConversionTable = new Dictionary<UnitType, KeyValuePair<IFCAnyHandle, double>>();
+        Dictionary<UnitType, Tuple<IFCAnyHandle, double, double>> m_UnitConversionTable = 
+            new Dictionary<UnitType, Tuple<IFCAnyHandle, double, double>>();
 
         /// <summary>
         /// Convert from Revit internal units to Revit display units.
@@ -43,8 +44,9 @@ namespace Revit.IFC.Export.Utility
         /// <returns>The value in Revit display units.</returns>
         public double Scale(UnitType unitType, double unscaledValue)
         {
-            if (m_UnitConversionTable.ContainsKey(unitType))
-                return unscaledValue * m_UnitConversionTable[unitType].Value;
+            Tuple<IFCAnyHandle, double, double> scale;
+            if (m_UnitConversionTable.TryGetValue(unitType, out scale))
+                return unscaledValue * scale.Item2 + scale.Item3;
             return unscaledValue;
         }
 
@@ -54,10 +56,12 @@ namespace Revit.IFC.Export.Utility
         /// <param name="unitType">The unit type.</param>
         /// <param name="unscaledValue">The value in Revit display units.</param>
         /// <returns>The value in Revit internal units.</returns>
+        /// <remarks>Ignores the offset component.</remarks>
         public XYZ Unscale(UnitType unitType, XYZ scaledValue)
         {
-            if (m_UnitConversionTable.ContainsKey(unitType))
-                return scaledValue / m_UnitConversionTable[unitType].Value;
+            Tuple<IFCAnyHandle, double, double> scale;
+            if (m_UnitConversionTable.TryGetValue(unitType, out scale))
+                return scaledValue / scale.Item2;
             return scaledValue;
         }
 
@@ -69,8 +73,9 @@ namespace Revit.IFC.Export.Utility
         /// <returns>The value in Revit internal units.</returns>
         public double Unscale(UnitType unitType, double scaledValue)
         {
-            if (m_UnitConversionTable.ContainsKey(unitType))
-                return scaledValue / m_UnitConversionTable[unitType].Value;
+            Tuple<IFCAnyHandle, double, double> scale;
+            if (m_UnitConversionTable.TryGetValue(unitType, out scale))
+                return (scaledValue - scale.Item3) / scale.Item2;
             return scaledValue;
         }
 
@@ -80,10 +85,12 @@ namespace Revit.IFC.Export.Utility
         /// <param name="unitType">The unit type.</param>
         /// <param name="unscaledValue">The value in Revit internal units.</param>
         /// <returns>The value in Revit display units.</returns>
+        /// <remarks>Ignores the offset component.</remarks>
         public UV Scale(UnitType unitType, UV unscaledValue)
         {
-            if (m_UnitConversionTable.ContainsKey(unitType))
-                return unscaledValue * m_UnitConversionTable[unitType].Value;
+            Tuple<IFCAnyHandle, double, double> scale;
+            if (m_UnitConversionTable.TryGetValue(unitType, out scale))
+                return unscaledValue * scale.Item2;
             return unscaledValue;
         }
 
@@ -93,10 +100,12 @@ namespace Revit.IFC.Export.Utility
         /// <param name="unitType">The unit type.</param>
         /// <param name="unscaledValue">The value in Revit internal units.</param>
         /// <returns>The value in Revit display units.</returns>
+        /// <remarks>Ignores the offset component.</remarks>
         public XYZ Scale(UnitType unitType, XYZ unscaledValue)
         {
-            if (m_UnitConversionTable.ContainsKey(unitType))
-                return unscaledValue * m_UnitConversionTable[unitType].Value;
+            Tuple<IFCAnyHandle, double, double> scale;
+            if (m_UnitConversionTable.TryGetValue(unitType, out scale))
+                return unscaledValue * scale.Item2;
             return unscaledValue;
         }
         
@@ -106,9 +115,9 @@ namespace Revit.IFC.Export.Utility
         /// <param name="unitType">The unit type.</param>
         /// <param name="unitHandle">The IFCUnit handle.</param>
         /// <param name="scale">The scaling factor.</param>
-        public void AddUnit(UnitType unitType, IFCAnyHandle unitHandle, double scale)
+        public void AddUnit(UnitType unitType, IFCAnyHandle unitHandle, double scale, double offset)
         {
-            m_UnitConversionTable[unitType] = new KeyValuePair<IFCAnyHandle, double>(unitHandle, scale);
+            m_UnitConversionTable[unitType] = new Tuple<IFCAnyHandle, double, double>(unitHandle, scale, offset);
         }
     }
 }
