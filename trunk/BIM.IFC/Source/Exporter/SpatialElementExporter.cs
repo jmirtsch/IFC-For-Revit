@@ -362,7 +362,7 @@ namespace BIM.IFC.Exporter
                             if (!ElementFilteringUtil.IsElementVisible(spatialElement))
                                 continue;
 
-                            if (!ElementFilteringUtil.ShouldElementBeExported(exporterIFC, spatialElement))
+                            if (!ElementFilteringUtil.ShouldElementBeExported(exporterIFC, spatialElement, false))
                                 continue;
 
                             Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
@@ -1107,6 +1107,7 @@ namespace BIM.IFC.Exporter
             double designIlluminance = 0.0;
             if (ParameterUtil.GetDoubleValueFromElement(element, null, "Design Illuminance", out designIlluminance) != null)
             {
+                double scaledValue = designIlluminance / (0.3048 * 0.3048);
                 IFCData paramVal = BIM.IFC.Toolkit.IFCDataUtil.CreateAsReal(designIlluminance);
                 IFCAnyHandle propSingleValue = IFCInstanceExporter.CreatePropertySingleValue(file, "DesignIlluminance", null, paramVal,
                     ExporterCacheManager.UnitsCache["LUX"]);

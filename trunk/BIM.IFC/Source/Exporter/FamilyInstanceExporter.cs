@@ -1017,7 +1017,7 @@ namespace BIM.IFC.Exporter
                                     bool containedInSpace = (roomId != ElementId.InvalidElementId);
                                     wrapper.AddElement(familyInstance, instanceHandle, setter, extraParams, !containedInSpace);
                                     if (containedInSpace)
-                                        exporterIFC.RegisterSpatialElementHandle(roomId, instanceHandle);
+                                        exporterIFC.RelateSpatialElement(roomId, instanceHandle);
 
                                     break;
                                 }
@@ -1044,7 +1044,7 @@ namespace BIM.IFC.Exporter
                                             bool associateToLevel = containedInSpace ? false : !isChildInContainer;
                                             wrapper.AddElement(familyInstance, instanceHandle, setter, extraParams, associateToLevel);
                                             if (containedInSpace)
-                                                exporterIFC.RegisterSpatialElementHandle(roomId, instanceHandle);
+                                                exporterIFC.RelateSpatialElement(roomId, instanceHandle);
                                         }
                                         else if (IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
                                         {
@@ -1064,7 +1064,7 @@ namespace BIM.IFC.Exporter
                                         bool associateToLevel = containedInSpace ? false : !isChildInContainer;
                                         wrapper.AddElement(familyInstance, instanceHandle, setter, extraParams, associateToLevel);
                                         if (containedInSpace)
-                                            exporterIFC.RegisterSpatialElementHandle(roomId, instanceHandle);
+                                            exporterIFC.RelateSpatialElement(roomId, instanceHandle);
                                     }
 
                                     IFCAnyHandle placementToUse = localPlacement;

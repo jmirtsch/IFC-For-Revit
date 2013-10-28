@@ -597,8 +597,9 @@ namespace BIM.IFC.Utility
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The element.</param>
+        /// <param name="allowSeparateOpeningExport">True if IfcOpeningElement is allowed to be exported.</param>
         /// <returns>True if the element should be exported, false otherwise.</returns>
-        private static bool ShouldCategoryBeExported(ExporterIFC exporterIFC, Element element)
+        private static bool ShouldCategoryBeExported(ExporterIFC exporterIFC, Element element, bool allowSeparateOpeningExport)
         {
             IFCExportType exportType = IFCExportType.DontExport;
             ElementId categoryId;
@@ -618,11 +619,17 @@ namespace BIM.IFC.Utility
             bool foundName = string.Compare(ifcClassName, "Default", true) != 0;
             if (foundName)
                 exportType = GetExportTypeFromClassName(ifcClassName);
-            // We don't export openings directly, only via the element they are opening.
-            if (!foundName || (exportType != IFCExportType.DontExport && exportType != IFCExportType.ExportOpeningElement))
+            if (!foundName)
                 return true;
 
-            return false;
+            if (exportType == IFCExportType.DontExport)
+                return false;
+
+            // We don't export openings directly, only via the element they are opening, unless flag is set.
+            if (exportType == IFCExportType.ExportOpeningElement && !allowSeparateOpeningExport)
+                return false;
+
+            return true;
         }
 
         /// <summary>
@@ -630,13 +637,14 @@ namespace BIM.IFC.Utility
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The element.</param>
+        /// <param name="allowSeparateOpeningExport">True if IfcOpeningElement is allowed to be exported.</param>
         /// <returns>True if the element should be exported, false otherwise.</returns>
-        public static bool ShouldElementBeExported(ExporterIFC exporterIFC, Element element)
+        public static bool ShouldElementBeExported(ExporterIFC exporterIFC, Element element, bool allowSeparateOpeningExport)
         {
             if (ExporterStateManager.CanExportElementOverride())
                 return true;
 
-            if (!ShouldCategoryBeExported(exporterIFC, element))
+            if (!ShouldCategoryBeExported(exporterIFC, element, allowSeparateOpeningExport))
                 return false;
 
             string exportAsEntity = "IFCExportAs";
@@ -654,10 +662,11 @@ namespace BIM.IFC.Utility
         /// </summary>
         /// <param name="exporterIFC">The exporter class.</param>
         /// <param name="element">The current element to export.</param>
-        /// <returns>True if the element should be exported.</returns>
-        public static bool CanExportElement(ExporterIFC exporterIFC, Autodesk.Revit.DB.Element element)
+        /// <param name="allowSeparateOpeningExport">True if IfcOpeningElement is allowed to be exported.</param>
+        /// <returns>True if the element should be exported, false otherwise.</returns>
+        public static bool CanExportElement(ExporterIFC exporterIFC, Autodesk.Revit.DB.Element element, bool allowSeparateOpeningExport)
         {
-            if (!ElementFilteringUtil.ShouldElementBeExported(exporterIFC, element))
+            if (!ElementFilteringUtil.ShouldElementBeExported(exporterIFC, element, allowSeparateOpeningExport))
                 return false;
 
             // if we allow exporting parts as independent building elements, then prevent also exporting the host elements containing the parts.

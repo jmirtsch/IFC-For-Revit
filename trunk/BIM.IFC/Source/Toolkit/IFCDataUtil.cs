@@ -102,7 +102,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsReal(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcReal");
+            return CreateAsMeasure(value, "IfcReal");
         }
 
         /// <summary>
@@ -112,7 +112,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsRatioMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcRatioMeasure");
+            return CreateAsMeasure(value, "IfcRatioMeasure");
         }
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsNormalisedRatioMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcNormalisedRatioMeasure");
+            return CreateAsMeasure(value, "IfcNormalisedRatioMeasure");
         }
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsSpecularExponent(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcSpecularExponent");
+            return CreateAsMeasure(value, "IfcSpecularExponent");
         }
 
         /// <summary>
@@ -142,7 +142,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsPositiveRatioMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcPositiveRatioMeasure");
+            return CreateAsMeasure(value, "IfcPositiveRatioMeasure");
         }
 
         /// <summary>
@@ -152,7 +152,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsLengthMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcLengthMeasure");
+            return CreateAsMeasure(value, "IfcLengthMeasure");
         }
 
         /// <summary>
@@ -162,7 +162,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsVolumeMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcVolumeMeasure");
+            return CreateAsMeasure(value, "IfcVolumeMeasure");
         }
 
         /// <summary>
@@ -172,7 +172,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsPositiveLengthMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcPositiveLengthMeasure");
+            return CreateAsMeasure(value, "IfcPositiveLengthMeasure");
         }
 
         /// <summary>
@@ -182,7 +182,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsPositivePlaneAngleMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcPositivePlaneAngleMeasure");
+            return CreateAsMeasure(value, "IfcPositivePlaneAngleMeasure");
         }
         
         /// <summary>
@@ -192,7 +192,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsPlaneAngleMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcPlaneAngleMeasure");
+            return CreateAsMeasure(value, "IfcPlaneAngleMeasure");
         }
 
         /// <summary>
@@ -202,7 +202,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsAreaMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcAreaMeasure");
+            return CreateAsMeasure(value, "IfcAreaMeasure");
         }
 
         /// <summary>
@@ -216,7 +216,7 @@ namespace BIM.IFC.Toolkit
             if (MathUtil.IsAlmostZero(value - valueAsInt))
                 return IFCData.CreateIntegerOfType(valueAsInt, "IfcCountMeasure");
             else
-                return IFCData.CreateDoubleOfType(value, "IfcCountMeasure");
+                return CreateAsMeasure(value, "IfcCountMeasure");
         }
 
         /// <summary>
@@ -226,7 +226,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsParameterValue(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcParameterValue");
+            return CreateAsMeasure(value, "IfcParameterValue");
         }
 
         /// <summary>
@@ -236,7 +236,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsPowerMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcPowerMeasure");
+            return CreateAsMeasure(value, "IfcPowerMeasure");
         }
 
         /// <summary>
@@ -246,7 +246,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsFrequencyMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcFrequencyMeasure");
+            return CreateAsMeasure(value, "IfcFrequencyMeasure");
         }
 
         /// <summary>
@@ -256,7 +256,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsElectricalCurrentMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcElectricCurrentMeasure");
+            return CreateAsMeasure(value, "IfcElectricCurrentMeasure");
         }
 
         /// <summary>
@@ -266,7 +266,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsElectricalVoltageMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcElectricVoltageMeasure");
+            return CreateAsMeasure(value, "IfcElectricVoltageMeasure");
         }
         
         /// <summary>
@@ -276,7 +276,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsThermodynamicTemperatureMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcThermodynamicTemperatureMeasure");
+            return CreateAsMeasure(value, "IfcThermodynamicTemperatureMeasure");
         }
 
         /// <summary>
@@ -286,7 +286,7 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsThermalTransmittanceMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcThermalTransmittanceMeasure");
+            return CreateAsMeasure(value, "IfcThermalTransmittanceMeasure");
         }
 
         /// <summary>
@@ -296,9 +296,39 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsVolumetricFlowRateMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcVolumetricFlowRateMeasure");
+            return CreateAsMeasure(value, "IfcVolumetricFlowRateMeasure");
         }
 
+        /// <summary>
+        /// Creates an IFCData object as IfcIlluminanceMeasure.
+        /// </summary>
+        /// <param name="value">The double value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsIlluminanceMeasure(double value)
+        {
+            return CreateAsMeasure(value, "IfcIlluminanceMeasure");
+        }
+
+        /// <summary>
+        /// Creates an IFCData object as IfcLuminousFluxMeasure.
+        /// </summary>
+        /// <param name="value">The double value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsLuminousFluxMeasure(double value)
+        {
+            return CreateAsMeasure(value, "IfcLuminousFluxMeasure");
+        }
+
+        /// <summary>
+        /// Creates an IFCData object as IfcLuminousIntensityMeasure.
+        /// </summary>
+        /// <param name="value">The double value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsLuminousIntensityMeasure(double value)
+        {
+            return CreateAsMeasure(value, "IfcLuminousIntensityMeasure");
+        }
+        
         /// <summary>
         /// Creates an IFCData object as IfcForceMeasure.
         /// </summary>
@@ -306,7 +336,18 @@ namespace BIM.IFC.Toolkit
         /// <returns>The IFCData object.</returns>
         public static IFCData CreateAsForceMeasure(double value)
         {
-            return IFCData.CreateDoubleOfType(value, "IfcForceMeasure");
+            return CreateAsMeasure(value, "IfcForceMeasure");
+        }
+
+        /// <summary>
+        /// Creates an IFCData object as an IfcMeasure of the right type.
+        /// </summary>
+        /// <param name="value">The double value.</param>
+        /// <param name="type">The type of IfcMeasure (e.g. IfcForceMeasure).</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsMeasure(double value, string type)
+        {
+            return IFCData.CreateDoubleOfType(value, type);
         }
     }
 }

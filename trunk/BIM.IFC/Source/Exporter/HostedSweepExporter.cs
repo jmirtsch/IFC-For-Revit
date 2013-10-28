@@ -125,7 +125,7 @@ namespace BIM.IFC.Exporter
                         productWrapper.AddElement(element, elemHnd, setter.GetLevelInfo(), ecData, !containedInSpace);
 
                         if (containedInSpace)
-                            exporterIFC.RegisterSpatialElementHandle(roomId, elemHnd);
+                            exporterIFC.RelateSpatialElement(roomId, elemHnd);
 
                         OpeningUtil.CreateOpeningsIfNecessary(elemHnd, element, ecData, null,
                             exporterIFC, localPlacementToUse, setter, productWrapper);
