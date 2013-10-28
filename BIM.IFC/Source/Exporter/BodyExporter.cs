@@ -1562,12 +1562,12 @@ namespace BIM.IFC.Exporter
         /// <param name="exportBodyParams">The extrusion creation data.</param>
         /// <returns>The BodyData containing the handle, offset and material ids.</returns>
         public static BodyData ExportBody(ExporterIFC exporterIFC,
-            Element element,
+            Element element, 
             ElementId categoryId,
             ElementId overrideMaterialId,
             IList<GeometryObject> geometryList,
             BodyExporterOptions options,
-            IFCExtrusionCreationData exportBodyParams)
+            IFCExtrusionCreationData exportBodyParams) 
         {
             BodyData bodyData = new BodyData();
             if (geometryList.Count == 0)
@@ -1590,7 +1590,7 @@ namespace BIM.IFC.Exporter
             foreach (GeometryObject geomObject in geometryList)
             {
                 if (allFaces && !(geomObject is Face))
-                    allFaces = false;
+                        allFaces = false;
                 break;
             }
 
@@ -1796,12 +1796,14 @@ namespace BIM.IFC.Exporter
                     }
 
                     bool exportSucceeded = (exportAsBRep.Count == 0) && (tryToExportAsExtrusion || tryToExportAsSweptSolid) && (hasExtrusions || hasSweptSolids);
-                    if (exportSucceeded)
+                    if (exportSucceeded || canExportSolidModelRep)
                     {
                         int sz = bodyItems.Count();
                         for (int ii = 0; ii < sz; ii++)
                             BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document, bodyItems[ii], materialIdsForExtrusions[ii]);
 
+                        if (exportSucceeded)
+                        {
                         if (hasExtrusions && !hasSweptSolids)
                         {
                             bodyData.RepresentationHnd =
@@ -1820,10 +1822,11 @@ namespace BIM.IFC.Exporter
                                 RepresentationUtil.CreateSolidModelRep(exporterIFC, element, categoryId, contextOfItems, bodyItems);
                             bodyData.ShapeRepresentationType = ShapeRepresentationType.SolidModel;
                         }
-
+                        
                         // TODO: include BRep, CSG, Clipping
                         tr.Commit();
                         return bodyData;
+                    }
                     }
 
                     // If we are going to export a solid model, keep the created items.

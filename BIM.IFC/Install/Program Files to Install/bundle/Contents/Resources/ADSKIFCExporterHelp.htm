@@ -126,6 +126,26 @@ working on expanding and eventually removing this limit, and we will be tracking
 
 <div class="versionset">
 
+<div class="version">2.15.0.0</div><div class="versioninfo-bullet">
+
+<p>New Functionality:
+
+<li>Create IfcTelecomAddress containing the primary e-mail address of the user if it is set via the alternate UI.
+<li>Major improvements on exporting correct values for parameters, including:
+<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Continuing cleanup of code to make adding new parameters easier.
+<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Limited support for currency, based on supported values in Revit.  Some shared currencies (e.g., dollar, krona) may not always have the right locale set.
+<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Improve scaling for parameter values on export to respect offset values, primarily for temperature.
+<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Support for Celsius in addition to Kelvin.
+<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Support for electrical illuminance, luminous flux, luminous intensity, luminous efficacy, and pressure.
+<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Separate units for color temperature vs. thermodynamic temperature.
+
+<p>Bug Fixes:
+
+<li>Export styled items for extrusions if exporting solid models via the alternate UI.
+<li>Fix regression where items that should have been contained in an IfcSpace were no longer attached to either the IfcSpace or the IfcBuildingStorey.
+<li>Improved control over exporting reveals and wall sweeps.
+</div>
+
 <div class="version">2.14.0.0</div><div class="versioninfo-bullet">
 General:
 

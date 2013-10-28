@@ -196,7 +196,7 @@ namespace BIM.IFC.Exporter
         /// </returns>
         public static bool IsFurnishingElementSubType(IFCExportType exportType)
         {
-            return (exportType >= IFCExportType.ExportFurnitureType &&
+            return (exportType >= IFCExportType.ExportFurnishingElement &&
                exportType <= IFCExportType.ExportSystemFurnitureElementType);
         }
 
@@ -378,7 +378,7 @@ namespace BIM.IFC.Exporter
                 bool associateToLevel = containedInSpace ? false : !isChildInContainer;
                 wrapper.AddElement(familyInstance, instanceHandle, setter, extraParams, associateToLevel);
                 if (containedInSpace)
-                    exporterIFC.RegisterSpatialElementHandle(roomId, instanceHandle);
+                    exporterIFC.RelateSpatialElement(roomId, instanceHandle);
             }
             return instanceHandle;
         }

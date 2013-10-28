@@ -76,7 +76,7 @@ namespace BIM.IFC.Exporter
                             alreadyVisited.Add(subElem.Id);
 
                             // Respect element visibility settings.
-                            if (!ElementFilteringUtil.CanExportElement(exporterIFC, subElem) || !ElementFilteringUtil.IsElementVisible(subElem))
+                            if (!ElementFilteringUtil.CanExportElement(exporterIFC, subElem, false) || !ElementFilteringUtil.IsElementVisible(subElem))
                                 continue;
 
                             GeometryElement geomElem = subElem.get_Geometry(geomOptions);

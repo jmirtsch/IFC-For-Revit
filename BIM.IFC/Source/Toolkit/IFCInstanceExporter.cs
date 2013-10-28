@@ -2835,6 +2835,35 @@ namespace BIM.IFC.Toolkit
         }
 
         /// <summary>
+        /// Creates an IfcPostalAddress, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="purpose">Identifies the logical location of the address.</param>
+        /// <param name="description">Text that relates the nature of the address.</param>
+        /// <param name="userDefinedPurpose">Allows for specification of user specific purpose of the address.</param>
+        /// <param name="telephoneNumbers">An optional list of telephone numbers.</param>
+        /// <param name="facsimileNumbers">An optional list of fax numbers.</param>
+        /// <param name="pagerNumber">An optional pager number.</param>
+        /// <param name="electronicMailAddresses">An optional list of e-mail addresses.</param>
+        /// <param name="WWWHomePageURL">An optional URL.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateTelecomAddress(IFCFile file, IFCAddressType? purpose, string description,
+            string userDefinedPurpose, IList<string> telephoneNumbers, IList<string> facsimileNumbers,
+            string pagerNumber, IList<string> electronicMailAddresses, string WWWHomePageURL)
+        {
+            ValidateAddress(purpose, description, userDefinedPurpose);
+
+            IFCAnyHandle telecomAddress = CreateInstance(file, IFCEntityType.IfcTelecomAddress);
+            IFCAnyHandleUtil.SetAttribute(telecomAddress, "TelephoneNumbers", telephoneNumbers);
+            IFCAnyHandleUtil.SetAttribute(telecomAddress, "FacsimileNumbers", facsimileNumbers);
+            IFCAnyHandleUtil.SetAttribute(telecomAddress, "PagerNumber", pagerNumber);
+            IFCAnyHandleUtil.SetAttribute(telecomAddress, "ElectronicMailAddresses", electronicMailAddresses);
+            IFCAnyHandleUtil.SetAttribute(telecomAddress, "WWWHomePageURL", WWWHomePageURL);
+            SetAddress(telecomAddress, purpose, description, userDefinedPurpose);
+            return telecomAddress;
+        }
+        
+        /// <summary>
         /// Creates a handle representing an IfcSIUnit and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -2935,6 +2964,19 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandleUtil.SetAttribute(measureWithUnit, "ValueComponent", valueComponent);
             IFCAnyHandleUtil.SetAttribute(measureWithUnit, "UnitComponent", unitComponent);
             return measureWithUnit;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcMonetaryUnit and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="currencyType">The type of the currency, as supported by IFC.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateMonetaryUnit(IFCFile file, IFCCurrencyType currencyType)
+        {
+            IFCAnyHandle monetaryUnit = CreateInstance(file, IFCEntityType.IfcMonetaryUnit);
+            IFCAnyHandleUtil.SetAttribute(monetaryUnit, "Currency", currencyType);
+            return monetaryUnit;
         }
 
         /// <summary>

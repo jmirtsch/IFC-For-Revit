@@ -50,6 +50,28 @@ namespace BIM.IFC.Exporter.PropertySet
             }
         }
 
+        protected static IFCAnyHandle CreateCommonProperty(IFCFile file, string propertyName, IFCData valueData, PropertyValueType valueType, string unitTypeKey)
+        {
+            switch (valueType)
+            {
+                case PropertyValueType.EnumeratedValue:
+                    {
+                        IList<IFCData> valueList = new List<IFCData>();
+                        valueList.Add(valueData);
+                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+                    }
+                case PropertyValueType.SingleValue:
+                    {
+                        if (unitTypeKey != null)
+                            return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, valueData, ExporterCacheManager.UnitsCache[unitTypeKey]);
+                        else
+                            return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, valueData, null);
+                    }
+                default:
+                    throw new InvalidOperationException("Missing case!");
+            }
+        }
+
         /// <summary>
         /// Create a label property.
         /// </summary>
@@ -87,20 +109,9 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateTextProperty(IFCFile file, string propertyName, string value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsText(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+            IFCData textData = IFCDataUtil.CreateAsText(value);
+            return CreateCommonProperty(file, propertyName, textData, valueType, null);
                     }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsText(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
-            }
-        }
 
         /// <summary>
         /// Create a text property, using the cached value if possible.
@@ -267,58 +278,25 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Create an identifier property.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="propertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="value">
-        /// The value of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateIdentifierProperty(IFCFile file, string propertyName, string value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsIdentifier(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+            IFCData idData = IFCDataUtil.CreateAsIdentifier(value);
+            return CreateCommonProperty(file, propertyName, idData, valueType, null);
                     }
-                case PropertyValueType.SingleValue:
-                    {
-                        return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsIdentifier(value), null);
-                    }
-                default:
-                    throw new InvalidOperationException("Missing case!");
-            }
-        }
 
         /// <summary>
         /// Create an identifier property.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="propertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="value">
-        /// The value of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateIdentifierPropertyFromCache(IFCFile file, string propertyName, string value, PropertyValueType valueType)
         {
             StringPropertyInfoCache stringInfoCache = ExporterCacheManager.PropertyInfoCache.IdentifierCache;
@@ -335,72 +313,30 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Create a boolean property.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="propertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="value">
-        /// The value of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateBooleanProperty(IFCFile file, string propertyName, bool value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsBoolean(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+            IFCData boolData = IFCDataUtil.CreateAsBoolean(value);
+            return CreateCommonProperty(file, propertyName, boolData, valueType, null);
                     }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsBoolean(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
-            }
-        }
 
         /// <summary>
         /// Create a logical property.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="propertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="value">
-        /// The value of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateLogicalProperty(IFCFile file, string propertyName, IFCLogical value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsLogical(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
-                    }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsLogical(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
+            IFCData logicalData = IFCDataUtil.CreateAsLogical(value);
+            return CreateCommonProperty(file, propertyName, logicalData, valueType, null);
             }
-        }
 
         /// <summary>
         /// Create a boolean property or gets one from cache.
@@ -445,37 +381,16 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Create an integer property.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="propertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="value">
-        /// The value of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateIntegerProperty(IFCFile file, string propertyName, int value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsInteger(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+            IFCData intData = IFCDataUtil.CreateAsInteger(value);
+            return CreateCommonProperty(file, propertyName, intData, valueType, null);
                     }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsInteger(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
-            }
-        }
 
         /// <summary>
         /// Create an integer property or gets one from cache.
@@ -523,7 +438,7 @@ namespace BIM.IFC.Exporter.PropertySet
                double lengthInHalfInches = Math.Floor(value * multiplier + 0.5);
                if (lengthInHalfInches > 0 && lengthInHalfInches <= 240 && MathUtil.IsAlmostZero(value * multiplier - lengthInHalfInches))
                    return lengthInHalfInches / multiplier;
-            }
+                }
             else
             {
                 double multiplier = (304.8 / scale) / 50;
@@ -532,7 +447,7 @@ namespace BIM.IFC.Exporter.PropertySet
                 {
                 }
             }
-
+            
             return null;
         }
 
@@ -569,37 +484,16 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Create a real property.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="propertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="value">
-        /// The value of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateRealProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsReal(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
-                    }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsReal(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
+            IFCData realData = IFCDataUtil.CreateAsReal(value);
+            return CreateCommonProperty(file, propertyName, realData, valueType, null);
             }
-        }
 
         /// <summary>Create a real property, using a cached value if possible.</summary>
         /// <param name="file">The IFC file.</param>
@@ -780,56 +674,24 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateVolumeMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsVolumeMeasure(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+            IFCData volumeData = IFCDataUtil.CreateAsVolumeMeasure(value);
+            return CreateCommonProperty(file, propertyName, volumeData, valueType, null);
                     }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsVolumeMeasure(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
-            }
-        }
 
         /// <summary>
         /// Create a positive length measure property.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="propertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="value">
-        /// The value of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreatePositiveLengthMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
             if (value > MathUtil.Eps())
             {
-                switch (valueType)
-                {
-                    case PropertyValueType.EnumeratedValue:
-                        {
-                            IList<IFCData> valueList = new List<IFCData>();
-                            valueList.Add(IFCDataUtil.CreateAsPositiveLengthMeasure(value));
-                            return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
-                        }
-                    case PropertyValueType.SingleValue:
-                        return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsPositiveLengthMeasure(value), null);
-                    default:
-                        throw new InvalidOperationException("Missing case!");
-                }
+                IFCData posLengthData = IFCDataUtil.CreateAsPositiveLengthMeasure(value);
+                return CreateCommonProperty(file, propertyName, posLengthData, valueType, null);
             }
             return null;
         }
@@ -841,20 +703,7 @@ namespace BIM.IFC.Exporter.PropertySet
                 return null;
 
             IFCData ratioData = positiveOnly ? IFCDataUtil.CreateAsPositiveRatioMeasure(value) : IFCDataUtil.CreateAsRatioMeasure(value);
-            
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(ratioData);
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
-                    }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, ratioData, null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
-            }
+            return CreateCommonProperty(file, propertyName, ratioData, valueType, null);  
         }
 
         /// <summary>
@@ -886,56 +735,25 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Create a label property.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="propertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="value">
-        /// The value of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreatePlaneAngleMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsPlaneAngleMeasure(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
-                    }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsPlaneAngleMeasure(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
-            }
+            IFCData planeAngleData = IFCDataUtil.CreateAsPlaneAngleMeasure(value);
+            return CreateCommonProperty(file, propertyName, planeAngleData, valueType, null);
         }
 
         /// <summary>
         /// Create a label property, or retrieve from cache.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="propertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="value">
-        /// The value of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created or cached property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created or cached property handle.</returns>
         public static IFCAnyHandle CreatePlaneAngleMeasurePropertyFromCache(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
             // We have a partial cache here - we will only cache multiples of 15 degrees.
@@ -969,37 +787,16 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Create a area measure property.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="propertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="value">
-        /// The value of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateAreaMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsAreaMeasure(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+            IFCData areaData = IFCDataUtil.CreateAsAreaMeasure(value);
+            return CreateCommonProperty(file, propertyName, areaData, valueType, null);
                     }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsAreaMeasure(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
-            }
-        }
 
         /// <summary>Create a count measure property.</summary>
         /// <param name="file">The IFC file.</param>
@@ -1009,20 +806,9 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateCountMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsCountMeasure(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+            IFCData countData = IFCDataUtil.CreateAsCountMeasure(value);
+            return CreateCommonProperty(file, propertyName, countData, valueType, null);
                     }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsCountMeasure(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
-            }
-        }
 
         /// <summary>Create a ThermodynamicTemperature property.</summary>
         /// <param name="file">The IFC file.</param>
@@ -1032,20 +818,9 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateThermodynamicTemperatureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsThermodynamicTemperatureMeasure(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
-                    }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsThermodynamicTemperatureMeasure(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
+            IFCData thermodynamicTemperatureMeasureData = IFCDataUtil.CreateAsThermodynamicTemperatureMeasure(value);
+            return CreateCommonProperty(file, propertyName, thermodynamicTemperatureMeasureData, valueType, null);
             }
-        }
 
         /// <summary>Create a ClassificationReference property.</summary>
         /// <param name="file">The IFC file.</param>
@@ -1058,6 +833,42 @@ namespace BIM.IFC.Exporter.PropertySet
             return IFCInstanceExporter.CreatePropertyReferenceValue(file, propertyName, null, null, classificationReferenceHandle);
         }
 
+        /// <summary>Create an IlluminanceMeasure property.</summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateIlluminanceProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+        {
+            IFCData illuminanceData = IFCDataUtil.CreateAsIlluminanceMeasure(value);
+            return CreateCommonProperty(file, propertyName, illuminanceData, valueType, null);
+        }
+
+        /// <summary>Create a LuminousFluxMeasure property.</summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateLuminousFluxProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+            {
+            IFCData luminousFluxData = IFCDataUtil.CreateAsLuminousFluxMeasure(value);
+            return CreateCommonProperty(file, propertyName, luminousFluxData, valueType, null);
+        }
+
+        /// <summary>Create a LuminousIntensityMeasure property.</summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateLuminousIntensityProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+                    {
+            IFCData luminousIntensityData = IFCDataUtil.CreateAsLuminousIntensityMeasure(value);
+            return CreateCommonProperty(file, propertyName, luminousIntensityData, valueType, null);
+                    }
+        
         /// <summary>Create a ForceMeasure property.</summary>
         /// <param name="file">The IFC file.</param>
         /// <param name="propertyName">The name of the property.</param>
@@ -1066,20 +877,9 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateForceProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsForceMeasure(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
-                    }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsForceMeasure(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
+            IFCData forceData = IFCDataUtil.CreateAsForceMeasure(value);
+            return CreateCommonProperty(file, propertyName, forceData, valueType, null);
             }
-        }
 
         /// <summary>Create a PowerMeasure property.</summary>
         /// <param name="file">The IFC file.</param>
@@ -1089,19 +889,8 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreatePowerProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsPowerMeasure(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
-                    }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsPowerMeasure(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
-            }
+            IFCData powerData = IFCDataUtil.CreateAsPowerMeasure(value);
+            return CreateCommonProperty(file, propertyName, powerData, valueType, null);
         }
 
         /// <summary>Create a ThermalTransmittance property.</summary>
@@ -1112,20 +901,9 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateThermalTransmittanceProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsThermalTransmittanceMeasure(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+            IFCData thermalTransmittanceData = IFCDataUtil.CreateAsThermalTransmittanceMeasure(value);
+            return CreateCommonProperty(file, propertyName, thermalTransmittanceData, valueType, null);
                     }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsThermalTransmittanceMeasure(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
-            }
-        }
 
         /// <summary>Create a VolumetricFlowRate property.</summary>
         /// <param name="file">The IFC file.</param>
@@ -1135,20 +913,9 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateVolumetricFlowRateMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsVolumetricFlowRateMeasure(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+            IFCData volumetricFlowRateData = IFCDataUtil.CreateAsVolumetricFlowRateMeasure(value);
+            return CreateCommonProperty(file, propertyName, volumetricFlowRateData, valueType, null); 
                     }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsVolumetricFlowRateMeasure(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
-            }
-        }
 
         /// <summary>
         /// Create a VolumetricFlowRate measure property from the element's parameter.
@@ -1289,6 +1056,31 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Create a generic measure property from the element's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="measureType">The IfcMeasure type of the property.</param>
+        /// <param name="unitType">The unit type of the property.</param>
+        /// <param name="valueType">The property value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        private static IFCAnyHandle CreateDoublePropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, string ifcPropertyName, string measureType, UnitType unitType, PropertyValueType valueType)
+        {
+            double propertyValue;
+            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
+            {
+                double scale = 0.3048;
+                double scaledPropertyValue = propertyValue * scale;
+                return CreateForceProperty(file, ifcPropertyName, scaledPropertyValue, valueType);
+            }
+            return null;
+        }
+        
+        /// <summary>
         /// Create a Force measure property from the element's parameter.
         /// </summary>
         /// <param name="file">The IFC file.</param>
@@ -1301,14 +1093,8 @@ namespace BIM.IFC.Exporter.PropertySet
         public static IFCAnyHandle CreateForcePropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
             string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
-            double propertyValue;
-            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
-            {
-                double scale = 0.3048;
-                double scaledPropertyValue = propertyValue * scale;
-                return CreateForceProperty(file, ifcPropertyName, scaledPropertyValue, valueType);
-            }
-            return null;
+            return CreateDoublePropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName, 
+                "IfcForceMeasure", UnitType.UT_Force, valueType);
         }
         
         /// <summary>
@@ -1325,7 +1111,8 @@ namespace BIM.IFC.Exporter.PropertySet
             string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             double propertyValue;
-            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
+            Parameter powerParam = ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue);
+            if (powerParam != null)
             {
                 double scale = 0.3048;
                 double scaledpropertyValue = propertyValue * scale * scale;
@@ -1565,24 +1352,12 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Create an identifier property from the element's parameter.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="elem">
-        /// The Element.
-        /// </param>
-        /// <param name="revitParameterName">
-        /// The name of the parameter.
-        /// </param>
-        /// <param name="ifcPropertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateIdentifierPropertyFromElement(IFCFile file, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             if (elem == null)
@@ -1598,27 +1373,13 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Create an identifier property from the element's or type's parameter.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="elem">
-        /// The Element.
-        /// </param>
-        /// <param name="revitParameterName">
-        /// The name of the parameter.
-        /// </param>
-        /// <param name="revitBuiltInParam">
-        /// The built in parameter.
-        /// </param>
-        /// <param name="ifcPropertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="revitBuiltInParam">The built in parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateIdentifierPropertyFromElementOrSymbol(IFCFile file, Element elem, string revitParameterName,
            BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
         {
@@ -1676,24 +1437,12 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Create a logical property from the element's or type's parameter.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="elem">
-        /// The Element.
-        /// </param>
-        /// <param name="revitParameterName">
-        /// The name of the parameter.
-        /// </param>
-        /// <param name="ifcPropertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateLogicalPropertyFromElementOrSymbol(IFCFile file, Element elem,
            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
@@ -1719,24 +1468,12 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Create an integer property from the element's or type's parameter.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="elem">
-        /// The Element.
-        /// </param>
-        /// <param name="revitParameterName">
-        /// The name of the parameter.
-        /// </param>
-        /// <param name="ifcPropertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateIntegerPropertyFromElementOrSymbol(IFCFile file, Element elem,
            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
@@ -1800,10 +1537,10 @@ namespace BIM.IFC.Exporter.PropertySet
 
             if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
                 return CreateLengthMeasurePropertyFromCache(file, scale, ifcPropertyName, propertyValue, valueType);
-            
+
             if ((builtInParameterName != null) && (ParameterUtil.GetDoubleValueFromElement(elem, null, builtInParameterName, out propertyValue) != null))
                 return CreateLengthMeasurePropertyFromCache(file, scale, ifcPropertyName, propertyValue, valueType);
-            
+
             return null;
         }
         
@@ -1961,24 +1698,12 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Create a plane angle measure property from the element's or type's parameter.
         /// </summary>
-        /// <param name="file">
-        /// The IFC file.
-        /// </param>
-        /// <param name="elem">
-        /// The Element.
-        /// </param>
-        /// <param name="revitParameterName">
-        /// The name of the parameter.
-        /// </param>
-        /// <param name="ifcPropertyName">
-        /// The name of the property.
-        /// </param>
-        /// <param name="valueType">
-        /// The value type of the property.
-        /// </param>
-        /// <returns>
-        /// The created property handle.
-        /// </returns>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreatePlaneAngleMeasurePropertyFromElementOrSymbol(IFCFile file, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             double propertyValue;
@@ -2258,15 +1983,9 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Creates property sets for Revit groups and parameters, if export options is set.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC.
-        /// </param>
-        /// <param name="element">
-        /// The Element.
-        /// </param>
-        /// <param name="elementSets">
-        /// The collection of IFCAnyHandles to relate properties to.
-        /// </param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="element">The Element.</param>
+        /// <param name="elementSets">The collection of IFCAnyHandles to relate properties to.</param>
         public static void CreateInternalRevitPropertySets(ExporterIFC exporterIFC, Element element, ICollection<IFCAnyHandle> elementSets)
         {
             if (exporterIFC == null || element == null ||
@@ -2280,6 +1999,7 @@ namespace BIM.IFC.Exporter.PropertySet
             IFCFile file = exporterIFC.GetFile();
 
             double lengthScale = exporterIFC.LinearScale;
+            double scale = 0.3048;
             double angleScale = 180.0 / Math.PI;
 
             ElementId typeId = element.GetTypeId();
@@ -2381,6 +2101,22 @@ namespace BIM.IFC.Exporter.PropertySet
                                     // IFCUnit for each one.
                                     switch (parameterDefinition.ParameterType)
                                     {
+                                        case ParameterType.Angle:
+                                            {
+                                                propertyHandle = CreatePlaneAngleMeasurePropertyFromCache(file, parameterCaption, value * angleScale, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.Area:
+                                        case ParameterType.HVACCrossSection:
+                                        case ParameterType.ReinforcementArea:
+                                        case ParameterType.SectionArea:
+                                        case ParameterType.SurfaceArea:
+                                            {
+                                                double scaledValue = value * lengthScale * lengthScale;
+                                                propertyHandle = CreateAreaMeasureProperty(file, parameterCaption,
+                                                    scaledValue, PropertyValueType.SingleValue);
+                                                break;
+                                            }
                                         case ParameterType.BarDiameter:
                                         case ParameterType.CrackWidth:
                                         case ParameterType.DisplacementDeflection:
@@ -2405,61 +2141,43 @@ namespace BIM.IFC.Exporter.PropertySet
                                                 	value * lengthScale, PropertyValueType.SingleValue);
                                                 break;
                                             }
-                                        case ParameterType.Angle:
+                                        case ParameterType.ColorTemperature:
                                             {
-                                                propertyHandle = CreatePlaneAngleMeasurePropertyFromCache(file, parameterCaption,
-	                                                value * angleScale, PropertyValueType.SingleValue);
+                                                IFCData colorTemperatureData = IFCDataUtil.CreateAsMeasure(value, "IfcReal");
+                                                propertyHandle = CreateCommonProperty(file, parameterCaption, colorTemperatureData, 
+                                                    PropertyValueType.SingleValue, "COLORTEMPERATURE");
                                                 break;
                                             }
-                                        case ParameterType.Area:
-                                        case ParameterType.HVACCrossSection:
-                                        case ParameterType.ReinforcementArea:
-                                        case ParameterType.SectionArea:
-                                        case ParameterType.SurfaceArea:
+                                        case ParameterType.Currency:
                                             {
-                                                propertyHandle = CreateAreaMeasureProperty(file, parameterCaption,
-	                                                value * lengthScale * lengthScale, PropertyValueType.SingleValue);
+                                                IFCData currencyData = ExporterCacheManager.UnitsCache.ContainsKey("CURRENCY") ? 
+                                                    IFCDataUtil.CreateAsMeasure(value, "IfcMonetaryMeasure") :
+                                                    IFCDataUtil.CreateAsMeasure(value, "IfcReal");
+                                                propertyHandle = CreateCommonProperty(file, parameterCaption, currencyData,
+                                                    PropertyValueType.SingleValue, null);
                                                 break;
                                             }
-                                        case ParameterType.PipingVolume:
-                                        case ParameterType.ReinforcementVolume:
-                                        case ParameterType.SectionModulus:
-                                        case ParameterType.Volume:
-                                            {
-                                                propertyHandle = CreateVolumeMeasureProperty(file, parameterCaption,
-	                                                value * lengthScale * lengthScale * lengthScale, PropertyValueType.SingleValue);
-                                                break;
-                                            }
-                                        case ParameterType.HVACAirflow:
-                                        case ParameterType.PipingFlow:
-                                            {
-                                            // We do not have a separate VolumetricFlow scaling; we use the volume scaling.
-                                            double scaledValue = value * lengthScale * lengthScale * lengthScale;
-                                                propertyHandle = CreateVolumetricFlowRateMeasureProperty(file, parameterCaption,
-                                                    scaledValue, PropertyValueType.SingleValue);
-                                                break;
-                                            }
+                                        case ParameterType.ElectricalApparentPower:
+                                        case ParameterType.ElectricalPower:
+                                        case ParameterType.ElectricalWattage:
                                         case ParameterType.HVACPower:
                                             {
-                                                double scale = 0.3048;
-                                                double scaledValue = value * scale * scale;
                                                 propertyHandle = CreatePowerProperty(file, parameterCaption,
-                                                    scaledValue, PropertyValueType.SingleValue);
+	                                                value * scale * scale, PropertyValueType.SingleValue);
                                                 break;
                                             }
                                         case ParameterType.ElectricalCurrent:
                                             {
-                                                double scaledValue = value;
                                                 propertyHandle = ElectricalCurrentPropertyUtil.CreateElectricalCurrentMeasureProperty(file, parameterCaption,
-                                                    scaledValue, PropertyValueType.SingleValue);
+                                                    value * scale * scale, PropertyValueType.SingleValue);
                                                 break;
                                             }
-                                        case ParameterType.ElectricalPotential:
+                                        case ParameterType.ElectricalEfficacy:
                                             {
-                                                double scale = 0.3048;
-                                                double scaledValue = value * scale * scale;
-                                                propertyHandle = ElectricalVoltagePropertyUtil.CreateElectricalVoltageMeasureProperty(file, parameterCaption,
-                                                    scaledValue, PropertyValueType.SingleValue);
+                                                double scaledValue = value / (scale * scale);
+                                                IFCData colorTemperatureData = IFCDataUtil.CreateAsMeasure(scaledValue, "IfcReal");
+                                                propertyHandle = CreateCommonProperty(file, parameterCaption, colorTemperatureData,
+                                                    PropertyValueType.SingleValue, "LUMINOUSEFFICACY");
                                                 break;
                                             }
                                         case ParameterType.ElectricalFrequency:
@@ -2468,11 +2186,72 @@ namespace BIM.IFC.Exporter.PropertySet
                                                     value, PropertyValueType.SingleValue);
                                                 break;
                                             }
+                                        case ParameterType.ElectricalIlluminance:
+                                            {
+                                                double scaledValue = value / (scale * scale);
+                                                IFCData electricalIlluminanceData = IFCDataUtil.CreateAsMeasure(scaledValue, "IfcElectricalIlluminanceMeasure");
+                                                propertyHandle = CreateCommonProperty(file, parameterCaption, electricalIlluminanceData,
+                                                    PropertyValueType.SingleValue, null);
+                                                break;
+                                            }
+                                        case ParameterType.ElectricalLuminousFlux:
+                                            {
+                                                propertyHandle = CreateLuminousFluxProperty(file, parameterCaption, value, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.ElectricalLuminousIntensity:
+                                            {
+                                                propertyHandle = CreateLuminousIntensityProperty(file, parameterCaption, value, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.ElectricalPotential:
+                                            {
+                                                double scaledValue = value * scale * scale;
+                                                propertyHandle = ElectricalVoltagePropertyUtil.CreateElectricalVoltageMeasureProperty(file, parameterCaption,
+                                                    scaledValue, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.ElectricalTemperature:
+                                        case ParameterType.HVACTemperature:
+                                        case ParameterType.PipingTemperature:
+                                            {
+                                                IFCData temperatureData = IFCDataUtil.CreateAsMeasure(value, "IfcThermalTransmittanceMeasure");
+                                                propertyHandle = CreateCommonProperty(file, parameterCaption, temperatureData,
+                                                    PropertyValueType.SingleValue, null);
+                                                break;
+                                            }
                                         case ParameterType.Force:
                                             {
-                                                double scale = 0.3048;
                                                 double scaledValue = value * scale;
                                                 propertyHandle = CreateForceProperty(file, parameterCaption,
+                                                    scaledValue, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.HVACAirflow:
+                                        case ParameterType.PipingFlow:
+                                            {
+                                                double scaledValue = value * scale * scale * scale;
+                                                propertyHandle = CreateVolumetricFlowRateMeasureProperty(file, parameterCaption,
+                                                    scaledValue, PropertyValueType.SingleValue);
+                                                break;
+                                            }
+                                        case ParameterType.HVACPressure:
+                                        case ParameterType.PipingPressure:
+                                        case ParameterType.Stress:
+                                            {
+                                                double scaledValue = value / scale;
+                                                IFCData pressureData = IFCDataUtil.CreateAsMeasure(scaledValue, "IfcPressureMeasure");
+                                                propertyHandle = CreateCommonProperty(file, parameterCaption, pressureData,
+                                                    PropertyValueType.SingleValue, null);
+                                                break;
+                                            }
+                                        case ParameterType.PipingVolume:
+                                        case ParameterType.ReinforcementVolume:
+                                        case ParameterType.SectionModulus:
+                                        case ParameterType.Volume:
+                                            {
+                                                double scaledValue = value * lengthScale * lengthScale * lengthScale;
+                                                propertyHandle = CreateVolumeMeasureProperty(file, parameterCaption,
                                                     scaledValue, PropertyValueType.SingleValue);
                                                 break;
                                             }

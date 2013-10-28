@@ -337,7 +337,7 @@ namespace BIM.IFC.Exporter
         /// <returns>True if the element should be exported.</returns>
         protected virtual bool CanExportElement(ExporterIFC exporterIFC, Autodesk.Revit.DB.Element element)
         {
-            return ElementFilteringUtil.CanExportElement(exporterIFC, element);
+            return ElementFilteringUtil.CanExportElement(exporterIFC, element, false);
         }
 
         /// <summary>
@@ -1701,8 +1701,17 @@ namespace BIM.IFC.Exporter
             NamingUtil.ParseName(author, out familyName, out givenName, out middleNames, out prefixTitles, out suffixTitles);
 
             IFCFile file = exporterIFC.GetFile();
+
+            IFCAnyHandle telecomAddress = GetTelecomAddressFromExtStorage(file, doc);
+            IList<IFCAnyHandle> telecomAddresses = null;
+            if (telecomAddress != null)
+            {
+                telecomAddresses = new List<IFCAnyHandle>();
+                telecomAddresses.Add(telecomAddress);
+            }
+
             IFCAnyHandle person = IFCInstanceExporter.CreatePerson(file, null, familyName, givenName, middleNames,
-                prefixTitles, suffixTitles, null, null);
+                prefixTitles, suffixTitles, null, telecomAddresses);
 
             string organizationName = String.Empty;
             string organizationDescription = String.Empty;
@@ -1763,6 +1772,22 @@ namespace BIM.IFC.Exporter
             }
         }
 
+        private IFCAnyHandle GetTelecomAddressFromExtStorage(IFCFile file, Document document)
+        {
+            IFCFileHeader fHeader = new IFCFileHeader();
+            IFCFileHeaderItem fHItem = null;
+
+            fHeader.GetSavedFileHeader(document, out fHItem);
+            if (!String.IsNullOrEmpty(fHItem.AuthorEmail))
+            {
+                IList<string> electronicMailAddress = new List<string>();
+                electronicMailAddress.Add(fHItem.AuthorEmail);
+                return IFCInstanceExporter.CreateTelecomAddress(file, null, null, null, null, null, null, electronicMailAddress, null);
+            }
+
+            return null;
+        }
+        
         /// <summary>
         /// Create IFC Address from the saved data obtained by the UI and saved in the extensible storage
         /// </summary>
@@ -1808,11 +1833,9 @@ namespace BIM.IFC.Exporter
                    savedAddressItem.Country);
 
                 return postalAddress;
-
             }
 
             return null;
-
         }
 
         /// <summary>
@@ -1985,7 +2008,7 @@ namespace BIM.IFC.Exporter
                                 lenConvName = "INCH";
                                 areaConvName = "SQUARE INCH";
                                 volConvName = "CUBIC INCH";
-                        }
+                            }
                         }
                         factor = 0.0254;
                         partialScaleFactor = 12.0;
@@ -2025,19 +2048,19 @@ namespace BIM.IFC.Exporter
                         //Invalid display unit system -- assuming imperial
                         scaleFactor = ExporterIFCUtils.ConvertUnits(doc, 1.0, DisplayUnitType.DUT_DECIMAL_FEET);
                         break;
-                        }
+                }
                 exporterIFC.LinearScale = scaleFactor;
 
                 IFCAnyHandle lenSiUnit = IFCInstanceExporter.CreateSIUnit(file, lenUnitType, prefix, lenUnitName);
-                if(prefix == null)
+                if (prefix == null)
                     lenSIBaseUnit = lenSiUnit;
-                            else
+                else
                     lenSIBaseUnit = IFCInstanceExporter.CreateSIUnit(file, lenUnitType, null, lenUnitName);
                 IFCAnyHandle areaSiUnit = IFCInstanceExporter.CreateSIUnit(file, areaUnitType, prefix, areaUnitName);
                 IFCAnyHandle volSiUnit = IFCInstanceExporter.CreateSIUnit(file, volUnitType, prefix, volUnitName);
 
                 if (conversionBased)
-                        {
+                {
                     IFCAnyHandle lenDims = IFCInstanceExporter.CreateDimensionalExponents(file, 1, 0, 0, 0, 0, 0, 0); // length
                     IFCAnyHandle lenConvFactor = IFCInstanceExporter.CreateMeasureWithUnit(file, Toolkit.IFCDataUtil.CreateAsRatioMeasure(factor), lenSiUnit);
                     lenSiUnit = IFCInstanceExporter.CreateConversionBasedUnit(file, lenDims, lenUnitType, lenConvName, lenConvFactor);
@@ -2094,18 +2117,24 @@ namespace BIM.IFC.Exporter
                 unitSet.Add(frequencySIUnit);      // created above, so unique.
             }
 
-            // Temperature -- support Kelvin only.
-            IFCAnyHandle temperatureSIUnit = null;
+            // Temperature
+            IFCAnyHandle tempBaseSIUnit = null;
             {
-                temperatureSIUnit = CreateSIUnit(file, IFCUnit.ThermoDynamicTemperatureUnit, IFCSIUnitName.Kelvin, null);
-                unitSet.Add(temperatureSIUnit);      // created above, so unique.
+                // Base SI unit for temperature.
+                tempBaseSIUnit = CreateSIUnit(file, IFCUnit.ThermoDynamicTemperatureUnit, IFCSIUnitName.Kelvin, null);
+                unitSet.Add(tempBaseSIUnit);      // created above, so unique.
+
+                // Color temperature.
+                // We don't add the color temperature to the unit set; it will be explicitly used.
+                IFCAnyHandle colorTempSIUnit = tempBaseSIUnit;
+                ExporterCacheManager.UnitsCache["COLORTEMPERATURE"] = colorTempSIUnit;
             }
 
             // Thermal transmittance - support metric W/(m^2 * K) = kg/(K * s^3) only.
             {
                 ICollection<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
                 elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, massSIUnit, 1));
-                elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, temperatureSIUnit, -1));
+                elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, tempBaseSIUnit, -1));
                 elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, timeSIUnit, -3));
 
                 IFCAnyHandle thermalTransmittanceUnit = IFCInstanceExporter.CreateDerivedUnit(file, elements,
@@ -2147,6 +2176,119 @@ namespace BIM.IFC.Exporter
                 unitSet.Add(forceSIUnit);      // created above, so unique.
             }
 
+            // Illuminance
+            {
+                IFCSIPrefix? prefix = null;
+                IFCAnyHandle luxSIUnit = CreateSIUnit(file, IFCUnit.IlluminanceUnit, IFCSIUnitName.Lux, prefix);
+                unitSet.Add(luxSIUnit);      // created above, so unique.
+                ExporterCacheManager.UnitsCache["LUX"] = luxSIUnit;
+            }
+
+            // Luminous Flux
+            IFCAnyHandle lumenSIUnit = null;
+            {
+                IFCSIPrefix? prefix = null;
+                lumenSIUnit = CreateSIUnit(file, IFCUnit.LuminousFluxUnit, IFCSIUnitName.Lumen, prefix);
+                unitSet.Add(lumenSIUnit);      // created above, so unique.
+            }
+
+            // Luminous Intensity
+            {
+                IFCSIPrefix? prefix = null;
+                IFCAnyHandle candelaSIUnit = CreateSIUnit(file, IFCUnit.LuminousIntensityUnit, IFCSIUnitName.Candela, prefix);
+                unitSet.Add(candelaSIUnit);      // created above, so unique.
+            }
+
+            // Luminous Efficacy - support lm/W only.
+            {
+                ISet<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
+                elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, massSIUnit, -1));
+                elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, lenSIBaseUnit, -2));
+                elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, timeSIUnit, 3));
+                elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, lumenSIUnit, 1));
+
+                IFCAnyHandle luminousEfficacyUnit = IFCInstanceExporter.CreateDerivedUnit(file, elements,
+                    IFCDerivedUnitEnum.UserDefined, "Luminous Efficacy");
+
+                ExporterCacheManager.UnitsCache["LUMINOUSEFFICACY"] = luminousEfficacyUnit;
+            }
+
+            // Currency
+            {
+                IFCCurrencyType? currencyType = null;
+
+                // Some of these are guesses, since multiple currencies may use the same symbol, but no detail is given on which currency
+                // is being used.
+                FormatOptions currencyFormatOptions = doc.ProjectUnit.get_FormatOptions(UnitType.UT_Currency);
+                UnitSymbolType ust = currencyFormatOptions.Unitsymbol;
+                switch (ust)
+                {
+                    case UnitSymbolType.UST_DOLLAR:
+                        currencyType = IFCCurrencyType.USD;
+                        break;
+                    case UnitSymbolType.UST_EURO_PREFIX:
+                    case UnitSymbolType.UST_EURO_SUFFIX:
+                        currencyType = IFCCurrencyType.EUR;
+                        break;
+                    case UnitSymbolType.UST_POUND:
+                        currencyType = IFCCurrencyType.GBP;
+                        break;
+                    case UnitSymbolType.UST_CHINESE_HONG_KONG_SAR:
+                        currencyType = IFCCurrencyType.HKD;
+                        break;
+                    case UnitSymbolType.UST_KRONER:
+                        currencyType = IFCCurrencyType.NOK;
+                        break;
+                    case UnitSymbolType.UST_SHEQEL:
+                        currencyType = IFCCurrencyType.ILS;
+                        break;
+                    case UnitSymbolType.UST_YEN:
+                        currencyType = IFCCurrencyType.JPY;
+                        break;
+                    case UnitSymbolType.UST_WON:
+                        currencyType = IFCCurrencyType.KRW;
+                        break;
+                    case UnitSymbolType.UST_BAHT:
+                        currencyType = IFCCurrencyType.THB;
+                        break;
+                    case UnitSymbolType.UST_DONG:
+                        currencyType = IFCCurrencyType.VND;
+                        break;
+                }
+
+                if (currencyType.HasValue)
+                {
+                    IFCAnyHandle currencyUnit = IFCInstanceExporter.CreateMonetaryUnit(file, currencyType.Value);
+                    unitSet.Add(currencyUnit);      // created above, so unique.
+                    // We will cache the currency, f we create it.  If we don't, we'll export currencies as numbers.
+                    ExporterCacheManager.UnitsCache["CURRENCY"] = currencyUnit;
+                }
+            }
+
+            // Pressure - support Pascal, kPa and MPa.
+            {
+                IFCSIPrefix? prefix = null;
+                FormatOptions pressureFormatOptions = doc.ProjectUnit.get_FormatOptions(UnitType.UT_HVAC_Pressure);
+                DisplayUnitType dut = pressureFormatOptions.Units;
+                switch (dut)
+                {
+                    case DisplayUnitType.DUT_PASCALS:
+                        break;
+                    case DisplayUnitType.DUT_KILOPASCALS:
+                        prefix = IFCSIPrefix.Kilo;
+                        break;
+                    case DisplayUnitType.DUT_MEGAPASCALS:
+                        prefix = IFCSIPrefix.Mega;
+                        break;
+                    default:
+                        dut = DisplayUnitType.DUT_PASCALS;
+                        break;
+                }
+
+                IFCAnyHandle pressureSIUnit = CreateSIUnit(file, IFCUnit.PressureUnit, IFCSIUnitName.Pascal, prefix);
+                unitSet.Add(pressureSIUnit);      // created above, so unique.
+            }
+
             // GSA only units.
             if (exportToCOBIE)
             {
@@ -2160,16 +2302,6 @@ namespace BIM.IFC.Exporter
                     IFCAnyHandle convFactor = IFCInstanceExporter.CreateMeasureWithUnit(file, Toolkit.IFCDataUtil.CreateAsRatioMeasure(factor), massSIUnit);
                     IFCAnyHandle massUnit = IFCInstanceExporter.CreateConversionBasedUnit(file, dims, unitType, convName, convFactor);
                     unitSet.Add(massUnit);      // created above, so unique.
-                }
-
-                // Illuminance
-                {
-                    IFCUnit unitType = IFCUnit.IlluminanceUnit;
-                    IFCSIUnitName unitName = IFCSIUnitName.Lux;
-
-                    IFCAnyHandle luxSIUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
-                    unitSet.Add(luxSIUnit);      // created above, so unique.
-                    ExporterCacheManager.UnitsCache["LUX"] = luxSIUnit;
                 }
 
                 // Air Changes per Hour

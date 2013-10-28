@@ -41,19 +41,8 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateFrequencyProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsFrequencyMeasure(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
-                    }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsFrequencyMeasure(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
-            }
+            IFCData frequencyData = IFCDataUtil.CreateAsFrequencyMeasure(value);
+            return CreateCommonProperty(file, propertyName, frequencyData, valueType, null);
         }
 
         /// <summary>
