@@ -851,7 +851,7 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <param name="value">The value of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateLuminousFluxProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+        public static IFCAnyHandle CreateLuminousFluxMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
             {
             IFCData luminousFluxData = IFCDataUtil.CreateAsLuminousFluxMeasure(value);
             return CreateCommonProperty(file, propertyName, luminousFluxData, valueType, null);
@@ -941,6 +941,78 @@ namespace BIM.IFC.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Create a Color Temperature measure property from the element's parameter.  This will be an IfcReal with a custom unit.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.  Also, the backup name of the parameter.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateColorTemperaturePropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        {
+            double propertyValue;
+            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
+            {
+                IFCData colorTemperatureData = IFCDataUtil.CreateAsMeasure(propertyValue, "IfcReal");
+                return CreateCommonProperty(file, ifcPropertyName, colorTemperatureData,
+                    PropertyValueType.SingleValue, "COLORTEMPERATURE");
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Create an electrical efficacy custom measure property from the element's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.  Also, the backup name of the parameter.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateElectricalEfficacyPropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        {
+            double propertyValue;
+            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
+            {
+                double scale = 0.3048;
+                double scaledValue = propertyValue / (scale * scale);
+                IFCData electricalEfficacyData = IFCDataUtil.CreateAsMeasure(scaledValue, "IfcReal");
+                return CreateCommonProperty(file, ifcPropertyName, electricalEfficacyData,
+                    PropertyValueType.SingleValue, "LUMINOUSEFFICACY");
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Create a currency measure property from the element's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.  Also, the backup name of the parameter.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateCurrencyPropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        {
+            double propertyValue;
+            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
+            {
+                IFCData currencyData = ExporterCacheManager.UnitsCache.ContainsKey("CURRENCY") ?
+                    IFCDataUtil.CreateAsMeasure(propertyValue, "IfcMonetaryMeasure") :
+                    IFCDataUtil.CreateAsMeasure(propertyValue, "IfcReal");
+                return CreateCommonProperty(file, ifcPropertyName, currencyData, PropertyValueType.SingleValue, null);
+            }
+            return null;
+        }
+        
+        /// <summary>
         /// Create a ThermodynamicTemperature measure property from the element's parameter.
         /// </summary>
         /// <param name="file">The IFC file.</param>
@@ -959,6 +1031,114 @@ namespace BIM.IFC.Exporter.PropertySet
             if (ParameterUtil.GetDoubleValueFromElement(elem, null, ifcPropertyName, out propertyValue) != null)
                 return CreateThermodynamicTemperaturePropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
             return null;
+        }
+
+        /// <summary>
+        /// Create a color temperature property from the element's or type's parameter.  This will be an IfcReal with a special temperature unit.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="revitBuiltInParam">The built in parameter to use, if revitParameterName isn't found.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateColorTemperaturePropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
+        {
+            IFCAnyHandle propHnd = CreateColorTemperaturePropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName, valueType);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                return propHnd;
+
+            if (revitBuiltInParam != BuiltInParameter.INVALID)
+            {
+                string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
+                propHnd = CreateColorTemperaturePropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName, valueType);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                    return propHnd;
+            }
+
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateColorTemperaturePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+            else
+                return null;
+        }
+
+        /// <summary>
+        /// Create an electrical efficacy custom property from the element's or type's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="revitBuiltInParam">The built in parameter to use, if revitParameterName isn't found.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateElectricalEfficacyPropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
+        {
+            IFCAnyHandle propHnd = CreateElectricalEfficacyPropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName, valueType);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                return propHnd;
+
+            if (revitBuiltInParam != BuiltInParameter.INVALID)
+            {
+                string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
+                propHnd = CreateElectricalEfficacyPropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName, valueType);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                    return propHnd;
+            }
+
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateElectricalEfficacyPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+            else
+                return null;
+        }
+
+        /// <summary>
+        /// Create a currency property from the element's or type's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="revitBuiltInParam">The built in parameter to use, if revitParameterName isn't found.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateCurrencyPropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
+        {
+            IFCAnyHandle propHnd = CreateCurrencyPropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName, valueType);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                return propHnd;
+
+            if (revitBuiltInParam != BuiltInParameter.INVALID)
+            {
+                string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
+                propHnd = CreateCurrencyPropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName, valueType);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                    return propHnd;
+            }
+
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateCurrencyPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+            else
+                return null;
         }
 
         /// <summary>
@@ -1120,7 +1300,75 @@ namespace BIM.IFC.Exporter.PropertySet
             }
             return null;
         }
-        
+
+        /// <summary>
+        /// Create a Luminous flux measure property from the element's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateLuminousFluxMeasurePropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        {
+            return CreateDoublePropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName,
+                "IfcLuminousFluxMeasure", UnitType.UT_Electrical_Luminous_Flux, valueType);
+        }
+
+        /// <summary>
+        /// Create a Luminous intensity measure property from the element's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateLuminousIntensityMeasurePropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        {
+            return CreateDoublePropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName,
+                "IfcLuminousIntensityMeasure", UnitType.UT_Electrical_Luminous_Intensity, valueType);
+        }
+
+        /// <summary>
+        /// Create a illuminance measure property from the element's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateIlluminanceMeasurePropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        {
+            return CreateDoublePropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName,
+                "IfcIlluminanceMeasure", UnitType.UT_Electrical_Illuminance, valueType);
+        }
+
+        /// <summary>
+        /// Create a pressure measure property from the element's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreatePressurePropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        {
+            return CreateDoublePropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName,
+                "IfcPressureMeasure", UnitType.UT_HVAC_Pressure, valueType);
+        }
+
         /// <summary>
         /// Create a ThermalTransmittance measure property from the element's parameter.
         /// </summary>
@@ -1250,6 +1498,150 @@ namespace BIM.IFC.Exporter.PropertySet
                 return null;
         }
 
+        /// <summary>
+        /// Create a Luminous flux measure property from the element's or type's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="revitBuiltInParam">The built in parameter to use, if revitParameterName isn't found.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateLuminousFluxMeasurePropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
+        {
+            IFCAnyHandle propHnd = CreateLuminousFluxMeasurePropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName, valueType);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                return propHnd;
+
+            if (revitBuiltInParam != BuiltInParameter.INVALID)
+            {
+                string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
+                propHnd = CreateLuminousFluxMeasurePropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName, valueType);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                    return propHnd;
+            }
+
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateLuminousFluxMeasurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+            else
+                return null;
+        }
+
+        /// <summary>
+        /// Create a Luminous intensity measure property from the element's or type's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="revitBuiltInParam">The built in parameter to use, if revitParameterName isn't found.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateLuminousIntensityPropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
+        {
+            IFCAnyHandle propHnd = CreateLuminousIntensityMeasurePropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName, valueType);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                return propHnd;
+
+            if (revitBuiltInParam != BuiltInParameter.INVALID)
+            {
+                string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
+                propHnd = CreateLuminousIntensityMeasurePropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName, valueType);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                    return propHnd;
+            }
+
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateLuminousIntensityPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+            else
+                return null;
+        }
+
+        /// <summary>
+        /// Create an illuminance measure property from the element's or type's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="revitBuiltInParam">The built in parameter to use, if revitParameterName isn't found.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateIlluminancePropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
+        {
+            IFCAnyHandle propHnd = CreateIlluminanceMeasurePropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName, valueType);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                return propHnd;
+
+            if (revitBuiltInParam != BuiltInParameter.INVALID)
+            {
+                string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
+                propHnd = CreateIlluminanceMeasurePropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName, valueType);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                    return propHnd;
+            }
+
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreateIlluminancePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+            else
+                return null;
+        }
+        
+        /// <summary>
+        /// Create a pressure measure property from the element's or type's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="revitBuiltInParam">The built in parameter to use, if revitParameterName isn't found.</param>
+        /// <param name="ifcPropertyName">The name of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreatePressurePropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
+            string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
+        {
+            IFCAnyHandle propHnd = CreatePressurePropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName, valueType);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                return propHnd;
+
+            if (revitBuiltInParam != BuiltInParameter.INVALID)
+            {
+                string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
+                propHnd = CreatePressurePropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName, valueType);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                    return propHnd;
+            }
+
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType != null)
+                return CreatePressurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+            else
+                return null;
+        }
+        
         /// <summary>
         /// Create a ThermalTransmittance measure property from the element's or type's parameter.
         /// </summary>
@@ -2175,8 +2567,8 @@ namespace BIM.IFC.Exporter.PropertySet
                                         case ParameterType.ElectricalEfficacy:
                                             {
                                                 double scaledValue = value / (scale * scale);
-                                                IFCData colorTemperatureData = IFCDataUtil.CreateAsMeasure(scaledValue, "IfcReal");
-                                                propertyHandle = CreateCommonProperty(file, parameterCaption, colorTemperatureData,
+                                                IFCData electricalEfficacyData = IFCDataUtil.CreateAsMeasure(scaledValue, "IfcReal");
+                                                propertyHandle = CreateCommonProperty(file, parameterCaption, electricalEfficacyData,
                                                     PropertyValueType.SingleValue, "LUMINOUSEFFICACY");
                                                 break;
                                             }
@@ -2196,7 +2588,8 @@ namespace BIM.IFC.Exporter.PropertySet
                                             }
                                         case ParameterType.ElectricalLuminousFlux:
                                             {
-                                                propertyHandle = CreateLuminousFluxProperty(file, parameterCaption, value, PropertyValueType.SingleValue);
+                                                propertyHandle = CreateLuminousFluxMeasureProperty(file, parameterCaption,
+                                                    value, PropertyValueType.SingleValue);
                                                 break;
                                             }
                                         case ParameterType.ElectricalLuminousIntensity:
