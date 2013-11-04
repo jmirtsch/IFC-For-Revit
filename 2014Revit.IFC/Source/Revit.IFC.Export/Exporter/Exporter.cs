@@ -728,11 +728,7 @@ namespace Revit.IFC.Export.Exporter
                     if (element.GroupId != ElementId.InvalidElementId)
                         ExporterCacheManager.GroupCache.RegisterElements(element.GroupId, productWrapper);
 
-                    if (ExporterCacheManager.ExportOptionsCache.GUIDOptions.StoreIFCGUID ||
-                        ExporterCacheManager.ExportOptionsCache.GUIDOptions.Use2009BuildingStoreyGUIDs && (element is Level))
-                        st.Commit();
-                    else
-                        st.RollBack();
+                    st.RollBack();
                 }
             }
             finally
@@ -1486,6 +1482,24 @@ namespace Revit.IFC.Export.Exporter
                     }
                 }
 
+                // Potentially modify elements with GUID values.
+                if (ExporterCacheManager.GUIDsToStoreCache.Count > 0)
+                {
+                    using (SubTransaction st = new SubTransaction(document))
+                    {
+                        st.Start();
+                        foreach (KeyValuePair<KeyValuePair<Element, BuiltInParameter>, string> elementAndGUID in ExporterCacheManager.GUIDsToStoreCache)
+                        {
+                            if (elementAndGUID.Key.Key == null || elementAndGUID.Key.Value == BuiltInParameter.INVALID || elementAndGUID.Value == null)
+                                continue;
+
+                            ParameterUtil.SetStringParameter(elementAndGUID.Key.Key, elementAndGUID.Key.Value, elementAndGUID.Value);
+                        }
+                        st.Commit();
+                    }
+                }
+
+                // Allow native code to remove some unused handles, assign presentation map information and clear internal caches.
                 ExporterIFCUtils.EndExportInternal(exporterIFC);
 
                 //create header
