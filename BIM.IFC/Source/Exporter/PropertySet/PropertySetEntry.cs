@@ -107,7 +107,7 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// A length value.
         /// </summary>
-        Length, // NOTE: This is currently only used for Revit internal properties, and doesn't have all support routines written.
+        Length,
         /// <summary>
         /// A ratio value.
         /// </summary>
@@ -151,7 +151,39 @@ namespace BIM.IFC.Exporter.PropertySet
         /// <summary>
         /// Volume
         /// </summary>
-        Volume
+        Volume,
+        /// <summary>
+        /// Luminous Flux
+        /// </summary>
+        LuminousFlux,
+        /// <summary>
+        /// Force
+        /// </summary>
+        Force,
+        /// <summary>
+        /// Pressure
+        /// </summary>
+        Pressure,
+        /// <summary>
+        /// Color temperature, distinguished from thermodyamic temperature
+        /// </summary>
+        ColorTemperature,
+        /// <summary>
+        /// Currency
+        /// </summary>
+        Currency,
+        /// <summary>
+        /// Electrical Efficacy
+        /// </summary>
+        ElectricalEfficacy,
+        /// <summary>
+        /// Luminous Intensity
+        /// </summary>
+        LuminousIntensity,
+        /// <summary>
+        /// Illuminance
+        /// </summary>
+        Illuminance
     }
 
     /// <summary>
@@ -634,22 +666,55 @@ namespace BIM.IFC.Exporter.PropertySet
                         bool assigned = true;
                         switch (parameterDefinition.ParameterType)
                         {
-                            case ParameterType.Length:
-                                pse.PropertyType = PropertyType.Length;
-                                break;
                             case ParameterType.Angle:
                                 pse.PropertyType = PropertyType.PlaneAngle;
                                 break;
                             case ParameterType.Area:
+                            case ParameterType.HVACCrossSection:
+                            case ParameterType.ReinforcementArea:
+                            case ParameterType.SectionArea:
+                            case ParameterType.SurfaceArea:
                                 pse.PropertyType = PropertyType.Area;
                                 break;
-                            case ParameterType.Volume:
-                                pse.PropertyType = PropertyType.Volume;
+                            case ParameterType.BarDiameter:
+                            case ParameterType.CrackWidth:
+                            case ParameterType.DisplacementDeflection:
+                            case ParameterType.ElectricalCableTraySize:
+                            case ParameterType.ElectricalConduitSize:
+                            case ParameterType.Length:
+                            case ParameterType.HVACDuctInsulationThickness:
+                            case ParameterType.HVACDuctLiningThickness:
+                            case ParameterType.HVACDuctSize:
+                            case ParameterType.HVACRoughness:
+                            case ParameterType.PipeInsulationThickness:
+                            case ParameterType.PipeSize:
+                            case ParameterType.PipingRoughness:
+                            case ParameterType.ReinforcementCover:
+                            case ParameterType.ReinforcementLength:
+                            case ParameterType.ReinforcementSpacing:
+                            case ParameterType.SectionDimension:
+                            case ParameterType.SectionProperty:
+                            case ParameterType.WireSize:
+                                pse.PropertyType = PropertyType.Length;
                                 break;
-                            case ParameterType.HVACAirflow:
-                            case ParameterType.PipingFlow:
-                                pse.PropertyType = PropertyType.VolumetricFlowRate;
+                            case ParameterType.ColorTemperature:
+                                pse.PropertyType = PropertyType.ColorTemperature;
                                 break;
+                            case ParameterType.Currency:
+                                pse.PropertyType = PropertyType.Currency;
+                                break;
+                            case ParameterType.ElectricalEfficacy:
+                                pse.PropertyType = PropertyType.ElectricalEfficacy;
+                                break;
+                            case ParameterType.ElectricalLuminousIntensity:
+                                pse.PropertyType = PropertyType.LuminousIntensity;
+                                break;
+                            case ParameterType.ElectricalIlluminance:
+                                pse.PropertyType = PropertyType.Illuminance;
+                                break;
+                            case ParameterType.ElectricalApparentPower:
+                            case ParameterType.ElectricalPower:
+                            case ParameterType.ElectricalWattage:
                             case ParameterType.HVACPower:
                                 pse.PropertyType = PropertyType.Power;
                                 break;
@@ -661,6 +726,32 @@ namespace BIM.IFC.Exporter.PropertySet
                                 break;
                             case ParameterType.ElectricalFrequency:
                                 pse.PropertyType = PropertyType.Frequency;
+                                break;
+                            case ParameterType.ElectricalLuminousFlux:
+                                pse.PropertyType = PropertyType.LuminousFlux;
+                                break;
+                            case ParameterType.ElectricalTemperature:
+                            case ParameterType.HVACTemperature:
+                            case ParameterType.PipingTemperature:
+                                pse.PropertyType = PropertyType.ThermodynamicTemperature;
+                                break;
+                            case ParameterType.Force:
+                                pse.PropertyType = PropertyType.Force;
+                                break;
+                            case ParameterType.HVACAirflow:
+                            case ParameterType.PipingFlow:
+                                pse.PropertyType = PropertyType.VolumetricFlowRate;
+                                break;
+                            case ParameterType.HVACPressure:
+                            case ParameterType.PipingPressure:
+                            case ParameterType.Stress:
+                                pse.PropertyType = PropertyType.Pressure;
+                                break;
+                            case ParameterType.PipingVolume:
+                            case ParameterType.ReinforcementVolume:
+                            case ParameterType.SectionModulus:
+                            case ParameterType.Volume:
+                                pse.PropertyType = PropertyType.Volume;
                                 break;
                             default:
                                 assigned = false;
@@ -838,6 +929,54 @@ namespace BIM.IFC.Exporter.PropertySet
                 case PropertyType.ElectricalVoltage:
                     {
                         propHnd = ElectricalVoltagePropertyUtil.CreateElectricalVoltageMeasurePropertyFromElementOrSymbol(file, element, revitParamNameToUse, ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.LuminousFlux:
+                    {
+                        propHnd = PropertyUtil.CreateLuminousFluxMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                            builtInParameter, ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.Force:
+                    {
+                        propHnd = FrequencyPropertyUtil.CreateForcePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                            ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.Pressure:
+                    {
+                        propHnd = FrequencyPropertyUtil.CreatePressurePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                            ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.ColorTemperature:
+                    {
+                        propHnd = PropertyUtil.CreateColorTemperaturePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                            ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.Currency:
+                    {
+                        propHnd = PropertyUtil.CreateCurrencyPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                            ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.ElectricalEfficacy:
+                    {
+                        propHnd = PropertyUtil.CreateElectricalEfficacyPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                            ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.LuminousIntensity:
+                    {
+                        propHnd = PropertyUtil.CreateLuminousIntensityPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                            ifcPropertyName, valueType);
+                        break;
+                    }
+                case PropertyType.Illuminance:
+                    {
+                        propHnd = PropertyUtil.CreateIlluminancePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                            ifcPropertyName, valueType);
                         break;
                     }
                 case PropertyType.Power:
