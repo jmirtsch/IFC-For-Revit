@@ -119,6 +119,11 @@ namespace Revit.IFC.Export.Utility
         static HashSet<string> m_GUIDCache;
 
         /// <summary>
+        /// The GUIDs to store at the end of export.
+        /// </summary>
+        static Dictionary<KeyValuePair<Element, BuiltInParameter>, string> m_GUIDsToStoreCache;
+
+        /// <summary>
         /// The HandleToElementCache cache.
         /// This maps an IFC handle to the Element that created it.
         /// This is used to identify which element should be used for properties, for elements (e.g. Stairs) that contain other elements.
@@ -437,6 +442,19 @@ namespace Revit.IFC.Export.Utility
                 if (m_GUIDCache == null)
                     m_GUIDCache = new HashSet<string>();
                 return m_GUIDCache;
+            }
+        }
+
+        /// <summary>
+        /// The GUIDs to store in elements at the end of export, if the option to store GUIDs has been selected.
+        /// </summary>
+        public static IDictionary<KeyValuePair<Element, BuiltInParameter>, string> GUIDsToStoreCache
+        {
+            get
+            {
+                if (m_GUIDsToStoreCache == null)
+                    m_GUIDsToStoreCache = new Dictionary<KeyValuePair<Element, BuiltInParameter>, string>();
+                return m_GUIDsToStoreCache;
             }
         }
 
@@ -1188,6 +1206,7 @@ namespace Revit.IFC.Export.Utility
             m_GroupCache = null;
             m_GroupElementGeometryCache = null;
             m_GUIDCache = null;
+            m_GUIDsToStoreCache = null;
             m_HandleToElementCache = null;
             m_HostObjectsLevelIndex = null;
             m_HostPartsCache = null;
