@@ -31,7 +31,12 @@ namespace Revit.IFC.Export.Utility
     /// </summary>
     public class DoorWindowDelayedOpeningCreatorCache
     {
-        Dictionary<ElementId, DoorWindowDelayedOpeningCreator> m_DelayedOpeningCreators = new Dictionary<ElementId, DoorWindowDelayedOpeningCreator>();
+        // An opening associated with an insert may cut more than one host if the host has been split by level.  Ensure that we create all of the appropriate openings.
+        // The ElementId of the main dictionary key is the insert id; the ElementId of the internal dictionary key is the base level id.
+        // If we ae not splitting by level, we ignore the level id.
+        // TODO: we should split the openings so that they are "trimmed" by the extents of the host element.
+        Dictionary<ElementId, Dictionary<ElementId, DoorWindowDelayedOpeningCreator>> m_DelayedOpeningCreators =
+            new Dictionary<ElementId, Dictionary<ElementId, DoorWindowDelayedOpeningCreator>>();
 
         /// <summary>
         /// Adds a new DoorWindowDelayedOpeningCreator.
@@ -42,8 +47,17 @@ namespace Revit.IFC.Export.Utility
             if (creator == null)
                 return;
 
+            Dictionary<ElementId, DoorWindowDelayedOpeningCreator> existingOpenings = null;
+            if (!m_DelayedOpeningCreators.TryGetValue(creator.InsertId, out existingOpenings))
+            {
+                existingOpenings = new Dictionary<ElementId, DoorWindowDelayedOpeningCreator>();
+                m_DelayedOpeningCreators[creator.InsertId] = existingOpenings;
+            }
+
+            ElementId levelIdToUse = ExporterCacheManager.ExportOptionsCache.WallAndColumnSplitting ? creator.LevelId : ElementId.InvalidElementId;
+
             DoorWindowDelayedOpeningCreator oldCreator = null;
-            if (m_DelayedOpeningCreators.TryGetValue(creator.InsertId, out oldCreator))
+            if (existingOpenings.TryGetValue(levelIdToUse, out oldCreator))
             {
                 // from DoorWindowInfo has higher priority
                 if (oldCreator.CreatedFromDoorWindowInfo)
@@ -59,11 +73,11 @@ namespace Revit.IFC.Export.Utility
                     {
                         creator.CopyGeometry(oldCreator);
                     }
-                    m_DelayedOpeningCreators[creator.InsertId] = creator;
+                    existingOpenings[levelIdToUse] = creator;
                 }
             }
             else
-                m_DelayedOpeningCreators[creator.InsertId] = creator;
+                existingOpenings[levelIdToUse] = creator;
         }
 
         /// <summary>
@@ -73,9 +87,12 @@ namespace Revit.IFC.Export.Utility
         /// <param name="doc">The document.</param>
         public void ExecuteCreators(ExporterIFC exporterIFC, Document doc)
         {
-            foreach (DoorWindowDelayedOpeningCreator creator in m_DelayedOpeningCreators.Values)
+            foreach (Dictionary<ElementId, DoorWindowDelayedOpeningCreator> creators in m_DelayedOpeningCreators.Values)
             {
-                creator.Execute(exporterIFC, doc);
+                foreach (DoorWindowDelayedOpeningCreator creator in creators.Values)
+                {
+                    creator.Execute(exporterIFC, doc);
+                }
             }
         }
     }

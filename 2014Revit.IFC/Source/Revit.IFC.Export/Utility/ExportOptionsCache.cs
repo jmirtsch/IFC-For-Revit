@@ -42,12 +42,48 @@ namespace Revit.IFC.Export.Utility
         private ExportOptionsCache()
         { }
 
+        private static ElementId ParseElementId(String singleElementValue)
+        {
+            int elementIdAsInt;
+            if (Int32.TryParse(singleElementValue, out elementIdAsInt))
+            {
+                return new ElementId(elementIdAsInt);
+            }
+            else
+            {
+                // Error - the option supplied could not be mapped to int.
+                // TODO: consider logging this error later and handling results better.
+                throw new Exception("String did not map to a usable element id");
+            }
+        }
+
+        private static IList<ElementId> ParseElementIds(String elementsToExportValue)
+        {
+            String[] elements = elementsToExportValue.Split(';');
+            List<ElementId> ids = new List<ElementId>();
+            foreach (String element in elements)
+            {
+                int elementIdAsInt;
+                if (Int32.TryParse(element, out elementIdAsInt))
+                {
+                    ids.Add(new ElementId(elementIdAsInt));
+                }
+                else
+                {
+                    // Error - the option supplied could not be mapped to int.
+                    // TODO: consider logging this error later and handling results better.
+                    throw new Exception("Substring " + element + " did not map to a usable element id");
+                }
+            }
+            return ids;
+        }
+        
         /// <summary>
         /// Creates a new export options cache from the data in the ExporterIFC passed from Revit.
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC handle passed during export.</param>
         /// <returns>The new cache.</returns>
-        public static ExportOptionsCache Create(ExporterIFC exporterIFC, Autodesk.Revit.DB.View filterView)
+        public static ExportOptionsCache Create(ExporterIFC exporterIFC, Document document, Autodesk.Revit.DB.View filterView)
         {
             IDictionary<String, String> options = exporterIFC.GetOptions();
 
@@ -111,38 +147,15 @@ namespace Revit.IFC.Export.Utility
             String elementsToExportValue;
             if (options.TryGetValue("SingleElement", out singleElementValue))
             {
-                int elementIdAsInt;
-                if (Int32.TryParse(singleElementValue, out elementIdAsInt))
-                {
-                    List<ElementId> ids = new List<ElementId>();
-                    ids.Add(new ElementId(elementIdAsInt));
-                    cache.ElementsForExport = ids;
-                }
-                else
-                {
-                    // Error - the option supplied could not be mapped to int.
-                    // TODO: consider logging this error later and handling results better.
-                    throw new Exception("Option 'SingleElement' did not map to a usable element id");
-                }
+                ElementId elementId = ParseElementId(singleElementValue);
+                
+                List<ElementId> ids = new List<ElementId>();
+                ids.Add(elementId);
+                cache.ElementsForExport = ids;
             }
             else if (options.TryGetValue("ElementsForExport", out elementsToExportValue))
             {
-                String[] elements = elementsToExportValue.Split(';');
-                List<ElementId> ids = new List<ElementId>();
-                foreach (String element in elements)
-                {
-                    int elementIdAsInt;
-                    if (Int32.TryParse(element, out elementIdAsInt))
-                    {
-                        ids.Add(new ElementId(elementIdAsInt));
-                    }
-                    else
-                    {
-                        // Error - the option supplied could not be mapped to int.
-                        // TODO: consider logging this error later and handling results better.
-                        throw new Exception("Option 'ElementsForExport' substring " + element + " did not map to a usable element id");
-                    }
-                }
+                IList<ElementId> ids = ParseElementIds(elementsToExportValue);
                 cache.ElementsForExport = ids;
             }
             else
@@ -173,6 +186,27 @@ namespace Revit.IFC.Export.Utility
             /// Allow exporting a mix of extrusions and BReps as a solid model, if possible.
             bool? canExportSolidModelRep = GetNamedBooleanOption(options, "ExportSolidModelRep");
             cache.CanExportSolidModelRep = canExportSolidModelRep != null ? canExportSolidModelRep.Value : false;
+
+            // Set the phase we are exporting
+            cache.ActivePhase = ElementId.InvalidElementId;
+            
+            String activePhaseElementValue;
+            if (options.TryGetValue("ActivePhase", out activePhaseElementValue))
+                cache.ActivePhase = ParseElementId(activePhaseElementValue);
+
+            if ((cache.ActivePhase == ElementId.InvalidElementId) && (cache.FilterViewForExport != null))
+            {
+                Parameter currPhase = cache.FilterViewForExport.get_Parameter(BuiltInParameter.VIEW_PHASE);
+                if (currPhase != null)
+                    cache.ActivePhase = currPhase.AsElementId();
+            }
+
+            if (cache.ActivePhase == ElementId.InvalidElementId)
+            {
+                PhaseArray phaseArray = document.Phases;
+                Phase lastPhase = phaseArray.get_Item(phaseArray.Size - 1);
+                cache.ActivePhase = lastPhase.Id;
+            }
 
             // "FileType" - note - setting is not respected yet
             ParseFileType(options, cache);
@@ -510,7 +544,7 @@ namespace Revit.IFC.Export.Utility
         /// A collection of elements from which to export (before filtering is applied).  If empty, all elements in the document
         /// are used as the initial set of elements before filtering is applied.
         /// </summary>
-        public List<ElementId> ElementsForExport
+        public IList<ElementId> ElementsForExport
         {
             get;
             set;
@@ -591,5 +625,14 @@ namespace Revit.IFC.Export.Utility
         /// Allow exporting a mix of extrusions and BReps as a solid model, if possible.
         /// </summary>
         public bool CanExportSolidModelRep { get; set; }
+
+        /// <summary>
+        /// Specifies which phase to export.  May be expanded to phases.
+        /// </summary>
+        public ElementId ActivePhase
+        {
+            get;
+            protected set;
+        }
     }
 }

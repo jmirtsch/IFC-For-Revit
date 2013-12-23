@@ -320,8 +320,10 @@ namespace Revit.IFC.Export.Utility
         /// <param name="scaledHostWidth">The scaled host width.</param>
         /// <param name="hostId">The host id.</param>
         /// <param name="hostHnd">The host handle.</param>
+        /// <param name="levelId">The base level id.</param>
         /// <returns>The creator.</returns>
-        public static DoorWindowDelayedOpeningCreator Create(ExporterIFC exporterIFC, IFCOpeningData openingData, double scaledHostWidth, ElementId hostId, IFCAnyHandle hostHnd)
+        public static DoorWindowDelayedOpeningCreator Create(ExporterIFC exporterIFC, IFCOpeningData openingData, double scaledHostWidth, 
+            ElementId hostId, IFCAnyHandle hostHnd, ElementId levelId)
         {
             DoorWindowDelayedOpeningCreator creator = new DoorWindowDelayedOpeningCreator();
             creator.InsertId = openingData.OpeningElementId;
@@ -332,6 +334,8 @@ namespace Revit.IFC.Export.Utility
             creator.IsRecess = openingData.IsRecess;
             creator.CreatedFromDoorWindowInfo = false;
             creator.ScaledHostWidth = scaledHostWidth;
+            creator.LevelId = levelId;
+                
             if ((creator.ExtrusionData != null && creator.ExtrusionData.Count > 0) || (creator.Solids != null && creator.Solids.Count >0))
                 creator.HasValidGeometry = true;
             return creator;

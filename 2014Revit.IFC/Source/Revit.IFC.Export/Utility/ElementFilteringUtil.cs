@@ -1238,22 +1238,8 @@ namespace Revit.IFC.Export.Utility
             phaseStatuses.Add(ElementOnPhaseStatus.Existing);
             phaseStatuses.Add(ElementOnPhaseStatus.New);
 
-            PhaseArray phaseArray = document.Phases;
-
-            ElementId phaseId = ElementId.InvalidElementId;
+            ElementId phaseId = ExporterCacheManager.ExportOptionsCache.ActivePhase;
             Element filterView = ExporterCacheManager.ExportOptionsCache.FilterViewForExport;
-
-            if (filterView != null)
-            {
-                Parameter currPhase = filterView.get_Parameter(BuiltInParameter.VIEW_PHASE);
-                if (currPhase != null)
-                    phaseId = currPhase.AsElementId();
-            }
-            if (phaseId == ElementId.InvalidElementId)
-            {
-                Phase lastPhase = phaseArray.get_Item(phaseArray.Size - 1);
-                phaseId = lastPhase.Id;
-            }
 
             return new ElementPhaseStatusFilter(phaseId, phaseStatuses);
         }

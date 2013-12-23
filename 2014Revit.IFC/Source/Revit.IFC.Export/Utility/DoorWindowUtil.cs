@@ -858,79 +858,6 @@ namespace Revit.IFC.Export.Utility
             return curveLoopBounds;
         }
 
-        private static IFCAnyHandle CopyOpeningHandle(ExporterIFC exporterIFC, Element elem, ElementId catId, IFCAnyHandle origOpeningHnd)
-        {
-            IFCFile file = exporterIFC.GetFile();
-
-            IFCAnyHandle origLocalPlacement = IFCAnyHandleUtil.GetObjectPlacement(origOpeningHnd);
-            IFCAnyHandle newLocalPlacement = ExporterUtil.CopyLocalPlacement(file, origLocalPlacement);
-            IFCAnyHandle oldRepresentation = IFCAnyHandleUtil.GetRepresentation(origOpeningHnd);
-            IFCAnyHandle newProdRep = ExporterUtil.CopyProductDefinitionShape(exporterIFC, elem, catId, oldRepresentation);
-
-            IFCAnyHandle copyOwnerHistory = IFCAnyHandleUtil.GetInstanceAttribute(origOpeningHnd, "OwnerHistory");
-            string copyName = IFCAnyHandleUtil.GetStringAttribute(origOpeningHnd, "Name");
-            string copyDescription = IFCAnyHandleUtil.GetStringAttribute(origOpeningHnd, "Description");
-            string copyObjectType = IFCAnyHandleUtil.GetStringAttribute(origOpeningHnd, "ObjectType");
-            string copyElemId = IFCAnyHandleUtil.GetStringAttribute(origOpeningHnd, "Tag");
-
-            return IFCInstanceExporter.CreateOpeningElement(file, GUIDUtil.CreateGUID(), copyOwnerHistory, copyName, copyDescription, copyObjectType,
-                newLocalPlacement, newProdRep, copyElemId);
-        }
-
-        private static void CopyOpeningForSplitHosts(ExporterIFC exporterIFC, IFCAnyHandle hostObjHnd, IFCAnyHandle openingHnd, ElementId hostId,
-            double openingZNonScaled, double openingHeight)
-        {
-            double eps = MathUtil.Eps();
-            if (!ExporterCacheManager.ExportOptionsCache.WallAndColumnSplitting || (openingHeight <= eps))
-                return;
-
-            ICollection<int> usedHosts = new HashSet<int>();
-            usedHosts.Add(hostObjHnd.StepId);
-
-            double openingTop = openingZNonScaled + openingHeight;
-
-            IDictionary<ElementId, IFCLevelInfo> storeys = exporterIFC.GetLevelInfos();
-            foreach (KeyValuePair<ElementId, IFCLevelInfo> storey in storeys)
-            {
-                IFCLevelInfo levelInfo = storey.Value;
-                double startHeight = levelInfo.Elevation - eps;
-                double height = levelInfo.DistanceToNextLevel;
-                bool useHeight = !MathUtil.IsAlmostZero(height);
-                double endHeight = startHeight + height - eps;
-
-                bool useThisLevel = false;
-
-                if (!useHeight)
-                {
-                    if (openingTop > startHeight + eps)
-                        useThisLevel = true;
-                }
-                else
-                {
-                    if ((openingZNonScaled < endHeight - eps) && (openingTop > startHeight + eps))
-                        useThisLevel = true;
-                }
-
-                if (useThisLevel)
-                {
-                    IFCAnyHandle currHostObjHnd = DoorWindowUtil.GetHndForHostAndLevel(exporterIFC, hostId, storey.Key);
-                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(currHostObjHnd) && !usedHosts.Contains(currHostObjHnd.StepId))
-                    {
-                        usedHosts.Add(currHostObjHnd.StepId);
-
-                        Element hostElem = ExporterCacheManager.Document.GetElement(hostId);
-                        ElementId catId = CategoryUtil.GetSafeCategoryId(hostElem);
-
-                        IFCFile file = exporterIFC.GetFile();
-                        IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                        string voidGuid = GUIDUtil.CreateGUID();
-                        IFCAnyHandle openingElementHnd = CopyOpeningHandle(exporterIFC, hostElem, catId, openingHnd);
-                        IFCInstanceExporter.CreateRelVoidsElement(file, voidGuid, ownerHistory, null, null, currHostObjHnd, openingElementHnd);
-                    }
-                }
-            }
-        }
-
         /// <summary>
         /// Create the opening associated to an already created door or window.
         /// </summary>
@@ -943,7 +870,7 @@ namespace Revit.IFC.Export.Utility
         /// <param name="cutLoop">The 2D outline representing the opening geometry.</param>
         /// <param name="cutDir">The direction of the extrusion representing the opening geometry.</param>
         /// <param name="origUnscaledDepth">The width of the host object that the opening is cutting.</param>
-        /// <param name="posHingeSide">Tue if the 2D outline is on the plane containing the hinge.</param>
+        /// <param name="posHingeSide">True if the 2D outline is on the plane containing the hinge.</param>
         /// <param name="isRecess">True if the IfcOpeningElement should represent a recess.</param>
         /// <returns>The class containing information about the opening.</returns>
         static public DoorWindowOpeningInfo CreateOpeningForDoorWindow(ExporterIFC exporterIFC, Document doc,
@@ -1142,9 +1069,6 @@ namespace Revit.IFC.Export.Utility
                     PropertyUtil.CreateOpeningQuantities(exporterIFC, openingHnd, extraParams);
                 }
             }
-
-            // we may need to create copies of the opening if we have split the original wall.
-            CopyOpeningForSplitHosts(exporterIFC, hostObjHnd, openingHnd, hostId, openingZNonScaled, openingHeight);
 
             return DoorWindowOpeningInfo.Create(openingHnd, openingPlacement, openingHeight, openingWidth);
         }
