@@ -43,8 +43,6 @@ namespace BIM.IFC.Export.UI
     /// </summary>
     public partial class IFCAssignment : Window
     {
-        private Document m_document = null;
-
         private string[] purposeList = { "OFFICE", "SITE", "HOME", "DISTRIBUTIONPOINT", "USERDEFINED" };
         private IFCAddress m_newAddress = new IFCAddress();
         private IFCFileHeader m_newFileHeader = new IFCFileHeader();
@@ -53,17 +51,17 @@ namespace BIM.IFC.Export.UI
         private IFCFileHeaderItem m_newFileHeaderItem = new IFCFileHeaderItem();
         private IFCFileHeaderItem m_savedFileHeaderItem = new IFCFileHeaderItem();
         private IFCClassification m_newClassification = new IFCClassification();
-        private List<IFCClassification> m_newClassificationList = new List<IFCClassification>();
+        private IList<IFCClassification> m_newClassificationList = new List<IFCClassification>();
         private IFCClassification m_savedClassification = new IFCClassification();
-        private IFCClassificationMgr m_newClassificationMgr = new IFCClassificationMgr();
+        private IFCClassificationMgr m_newClassificationMgr = null;
 
         /// <summary>
         /// initialization of IFCAssignemt class
         /// </summary>
         /// <param name="document"></param>
-        public IFCAssignment(Document document)
+        public IFCAssignment()
         {
-            m_document = document;
+            m_newClassificationMgr = new IFCClassificationMgr(IFCCommandOverrideApplication.TheDocument);
             InitializeComponent();
         }
 
@@ -116,12 +114,12 @@ namespace BIM.IFC.Export.UI
 
             if (m_newAddressItem.isUnchanged(m_savedAddressItem) == false)
             {
-                m_newAddress.UpdateAddress(m_document, m_newAddressItem);
+                m_newAddress.UpdateAddress(IFCCommandOverrideApplication.TheDocument, m_newAddressItem);
             }
 
             if (m_newFileHeaderItem.isUnchanged(m_savedFileHeaderItem) == false)
             {
-                m_newFileHeader.UpdateFileHeader(m_document, m_newFileHeaderItem);
+                m_newFileHeader.UpdateFileHeader(IFCCommandOverrideApplication.TheDocument, m_newFileHeaderItem);
             }
 
             if (m_newAddressItem.UpdateProjectInformation == true)
@@ -184,24 +182,33 @@ namespace BIM.IFC.Export.UI
                         geographicMapLocation = m_newAddressItem.Country;
                 };
 
-                Transaction transaction = new Transaction(m_document, "Update Project Address");
+                Transaction transaction = new Transaction(IFCCommandOverrideApplication.TheDocument, "Update Project Address");
                 transaction.Start();
 
-                ProjectInfo projectInfo = m_document.ProjectInformation;
+                ProjectInfo projectInfo = IFCCommandOverrideApplication.TheDocument.ProjectInformation;
                 projectInfo.Address = address;    // set project address information using the IFC Address Information when requested
 
                 if (String.IsNullOrEmpty(geographicMapLocation) == false)
-                    m_document.ActiveProjectLocation.SiteLocation.PlaceName = geographicMapLocation;    // Update also Revit Site location on the Map using City, State and Country when they are not null
+                    IFCCommandOverrideApplication.TheDocument.ActiveProjectLocation.SiteLocation.PlaceName = geographicMapLocation;    // Update also Revit Site location on the Map using City, State and Country when they are not null
 
                 transaction.Commit();
             }
 
-            // Update Classification if it has changed or the mandatory fields are filled. If mandatory fields are not filled (we are not supposed to arrive here in this case!) we will ignore the classification
-            if (m_newClassification.IsUnchanged(m_savedClassification) == false && m_newClassification.IsMandatoryEmpty() == false)
+            // Update Classification if it has changed or the mandatory fields are filled. If mandatory fields are not filled we will ignore the classification.
+            if (!m_newClassification.IsUnchanged(m_savedClassification))
             {
-                m_newClassificationMgr.UpdateClassification(m_document, m_newClassification);
+                if (m_newClassification.AreMandatoryFieldsFilled())
+                {
+                    m_newClassificationMgr.UpdateClassification(IFCCommandOverrideApplication.TheDocument, m_newClassification);
+                }
+                else if (!m_newClassification.IsClassificationEmpty())
+                {
+                    m_newClassification.ClassificationTabMsg = "Mandatory fields Name, Source or Publisher, and Edition cannot be empty.";
+                    return;
+                }
             }
 
+            m_newClassification.ClassificationTabMsg = null;
             Close();
         }
 
@@ -263,17 +270,19 @@ namespace BIM.IFC.Export.UI
                     if (String.Compare(tItemRemoved.Header.ToString(), "Classification") == 0 && tItemAdded != tItemRemoved)  // avoid loop when we force the Tab back to the same one
                     {
                         // Current tab item is Classification Tab
-                        if (m_newClassification.IsMandatoryEmpty() == false) // we will skip the mandatory field check when all are empty (i.e. user does not intend to create any Classification)
+                        if (!m_newClassification.IsClassificationEmpty()) // we will skip the mandatory field check when all fields are empty (i.e. user does not intend to create any Classification)
                         {
-                            if (m_newClassification.AreMandatoryFieldsFilled() == false)
+                            if (!m_newClassification.AreMandatoryFieldsFilled())
                             {
-                                m_newClassification.ClassificationTabMsg = "Mandatory fields Name, Source or Publisher, and Edition cannot be NULL!";
+                                m_newClassification.ClassificationTabMsg = "Mandatory fields Name, Source or Publisher, and Edition cannot be empty.";
                                 AssignmenttabControl.SelectedItem = tItemRemoved;  // Force the tab to return to Classification
                                 return false;
                             }
                             else
                                 m_newClassification.ClassificationTabMsg = null;        // reset the message
                         }
+                        else
+                            m_newClassification.ClassificationTabMsg = null;        // reset the message
                     }
                 }
             }
@@ -287,7 +296,7 @@ namespace BIM.IFC.Export.UI
         /// <param name="e"></param>
         private void AddressTab_Initialized(object sender, EventArgs e)
         {
-            bool hasSavedItem = m_newAddress.GetSavedAddress(m_document, out m_newAddressItem);
+            bool hasSavedItem = m_newAddress.GetSavedAddress(IFCCommandOverrideApplication.TheDocument, out m_newAddressItem);
             if (hasSavedItem == true)
             {
                 //keep a copy of the original saved items for checking for any value changed later on
@@ -296,7 +305,7 @@ namespace BIM.IFC.Export.UI
             }
             else
             {
-                string projLocation = m_document.SiteLocation.PlaceName;
+                string projLocation = IFCCommandOverrideApplication.TheDocument.SiteLocation.PlaceName;
                 if (projLocation != null)
                 {
                     // if the formatted Address is empty and there is location set for the site (project) in Revit, take it and assign it by default to AddressLine1.
@@ -312,7 +321,7 @@ namespace BIM.IFC.Export.UI
         /// <param name="e"></param>
         private void FileHeaderTab_Initialized(object sender, EventArgs e)
         {
-            bool hasSavedItem = m_newFileHeader.GetSavedFileHeader(m_document, out m_newFileHeaderItem);
+            bool hasSavedItem = m_newFileHeader.GetSavedFileHeader(IFCCommandOverrideApplication.TheDocument, out m_newFileHeaderItem);
             if (hasSavedItem == true)
             {
                 m_savedFileHeaderItem = m_newFileHeaderItem.Clone();
@@ -324,8 +333,8 @@ namespace BIM.IFC.Export.UI
             m_newFileHeaderItem.FileSchema = null;
 
             // Application Name and Number are fixed for the software release and will not change, therefore they are always forced set here
-            m_newFileHeaderItem.ApplicationName = m_document.Application.VersionName;
-            m_newFileHeaderItem.VersionNumber = m_document.Application.VersionBuild;
+            m_newFileHeaderItem.ApplicationName = IFCCommandOverrideApplication.TheDocument.Application.VersionName;
+            m_newFileHeaderItem.VersionNumber = IFCCommandOverrideApplication.TheDocument.Application.VersionBuild;
 
         }
 
@@ -351,21 +360,20 @@ namespace BIM.IFC.Export.UI
         /// <param name="e"></param>
         private void ClassificationTab_Initialized(object sender, EventArgs e)
         {
-            bool hasSavedItem = m_newClassificationMgr.GetSavedClassification(m_document, out m_newClassificationList);
+            bool hasSavedItem = m_newClassificationMgr.GetSavedClassifications(IFCCommandOverrideApplication.TheDocument, null, out m_newClassificationList);
             m_newClassification = m_newClassificationList[0];                        // Set the default first Classification item to the first member of the List
 
             if (hasSavedItem == true)
             {
-                 m_savedClassification = m_newClassification.Clone();
+                m_savedClassification = m_newClassification.Clone();
             }
 
             if (m_newClassification.ClassificationEditionDate <= DateTime.MinValue || m_newClassification.ClassificationEditionDate >= DateTime.MaxValue)
             {
-                 DateTime today = DateTime.Now;
+                DateTime today = DateTime.Now;
                 m_newClassification.ClassificationEditionDate = today;
             }
         }
-
     }
 }
 

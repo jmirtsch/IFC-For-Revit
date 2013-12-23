@@ -197,13 +197,13 @@
   <data name="ExportBoundingBox" xml:space="preserve">
     <value>Export bounding box</value>
   </data>
-   <data name="ExportSolidModelRep" xml:space="preserve">
+  <data name="ExportSolidModelRep" xml:space="preserve">
     <value>Export solid models when possible</value>
   </data>
-   <data name="ExportSchedulesAsPsets" xml:space="preserve">
+  <data name="ExportSchedulesAsPsets" xml:space="preserve">
     <value>Export schedules as property sets</value>
   </data>
-   <data name="IncludeIfcSiteElevation" xml:space="preserve">
+  <data name="IncludeIfcSiteElevation" xml:space="preserve">
     <value>Include IFCSITE elevation in the site local placement origin</value>
   </data>
   <data name="UseCoarseTessellation" xml:space="preserve">
@@ -236,13 +236,19 @@
   <data name="PropertySetsSchedulesPlusRevit" xml:space="preserve">
     <value>Internal Revit, Schedules</value>
   </data>
-   <data name="PropertySetsSchedulesPlusIFC" xml:space="preserve">
+  <data name="PropertySetsSchedulesPlusIFC" xml:space="preserve">
     <value>IFC Common, Schedules</value>
   </data>
-   <data name="PropertySetsSchedulesPlusRevitPlusIFC" xml:space="preserve">
+  <data name="PropertySetsSchedulesPlusRevitPlusIFC" xml:space="preserve">
     <value>Internal Revit, IFC Common, Schedules</value>
   </data>
-   <data name="PropertySetsUnrecognized" xml:space="preserve">
+  <data name="PropertySetsUnrecognized" xml:space="preserve">
     <value>Unrecognized property sets</value>
+  </data>
+  <data name="ActivePhase" xml:space="preserve">
+    <value>Phase to export</value>
+  </data>
+  <data name="Default" xml:space="preserve">
+    <value>Default ({0})</value>
   </data>
 </root>
