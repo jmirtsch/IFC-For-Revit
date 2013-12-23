@@ -59,10 +59,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             }
 
             IFCAnyHandle classification;
-            if (!ExporterCacheManager.ClassificationCache.TryGetValue(uniformatKeyString, out classification))
+            if (!ExporterCacheManager.ClassificationCache.ClassificationHandles.TryGetValue(uniformatKeyString, out classification))
             {
                 classification = IFCInstanceExporter.CreateClassification(file, "http://www.csiorg.net/uniformat", "1998", null, uniformatKeyString);
-                ExporterCacheManager.ClassificationCache.Add(uniformatKeyString, classification);
+                ExporterCacheManager.ClassificationCache.ClassificationHandles.Add(uniformatKeyString, classification);
             }
 
             if (!String.IsNullOrEmpty(uniformatCode))
@@ -71,70 +71,98 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         }
 
         /// <summary>
-        /// 
+        /// Create IfcClassification references from hardwired or custom classification code fields.
         /// </summary>
-        /// <param name="exporterIFC"></param>
-        /// <param name="file"></param>
-        /// <param name="element"></param>
-        /// <param name="elemHnd"></param>
-        /// <param name="location"></param>
-        public static void CreateClassification(ExporterIFC exporterIFC, IFCFile file, Element element, IFCAnyHandle elemHnd, string location)
+        /// <param name="exporterIFC">The exporterIFC class.</param>
+        /// <param name="file">The IFC file class.</param>
+        /// <param name="element">The element to export.</param>
+        /// <param name="elemHnd">The corresponding IFC entity handle.</param>
+        /// <returns>True if a classification or classification reference is created.</returns>
+        public static bool CreateClassification(ExporterIFC exporterIFC, IFCFile file, Element element, IFCAnyHandle elemHnd)
         {
+            bool createdClassification = false;
+
             string paramClassificationCode = "";
+            string baseClassificationCodeFieldName = "ClassificationCode";
+            IList<string> customClassificationCodeNames = new List<string>();
+
             string classificationName = null;
             string classificationCode = null;
             string classificationDescription = null;
-            // For now the support is fixed to 10 predefined classification code parameter names (to support limitation of schedule key that supports only one category per schedule key and needs one parameter for each)
-            int noClassCodeParam = 10;
-            string [] classCodeParamName = {"ClassificationCode", "ClassificationCode(2)", "ClassificationCode(3)", "ClassificationCode(4)", "ClassificationCode(5)",
-                                           "ClassificationCode(6)", "ClassificationCode(7)", "ClassificationCode(8)", "ClassificationCode(9)", "ClassificationCode(10)"}; 
-            int ret = 0;
 
-            for (int n = 0; n < noClassCodeParam; n++)
+            int customPass = 0;
+            int standardPass = 1;
+            int numCustomCodes = ExporterCacheManager.ClassificationCache.CustomClassificationCodeNames.Count;
+            
+            while (true)
             {
-                // Create A classification, if it is not set.
-                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, classCodeParamName[n], out paramClassificationCode) != null)
+                // Create a classification, if it is not set.
+                string classificationCodeFieldName = null;
+                if (customPass < numCustomCodes)
                 {
-                    ret = parseClassificationCode(paramClassificationCode, out classificationName, out classificationCode, out classificationDescription);
+                    classificationCodeFieldName = ExporterCacheManager.ClassificationCache.CustomClassificationCodeNames[customPass];
+                    customPass++;
+                }
+                else
+                {
+                    classificationCodeFieldName = baseClassificationCodeFieldName;
+                    if (standardPass > 1)
+                        classificationCodeFieldName += "(" + standardPass + ")";
+                    standardPass++;
+                }
 
-                    if (string.IsNullOrEmpty(classificationName))
+                if (ParameterUtil.GetStringValueFromElementOrSymbol(element, classificationCodeFieldName, out paramClassificationCode) == null)
+                    break;
+
+                parseClassificationCode(paramClassificationCode, out classificationName, out classificationCode, out classificationDescription);
+
+                if (string.IsNullOrEmpty(classificationName))
+                {
+                    if (!ExporterCacheManager.ClassificationCache.FieldNameToClassificationNames.TryGetValue(classificationCodeFieldName, out classificationName))
                         classificationName = "Default Classification";
+                }
 
-                    IFCAnyHandle classification;
-                    if (!ExporterCacheManager.ClassificationCache.TryGetValue(classificationName, out classification))
+                IFCAnyHandle classification;
+                if (!ExporterCacheManager.ClassificationCache.ClassificationHandles.TryGetValue(classificationName, out classification))
+                {
+                    IFCClassification savedClassification = new IFCClassification();
+                    if (ExporterCacheManager.ClassificationCache.ClassificationsByName.TryGetValue(classificationName, out savedClassification))
                     {
-                        IFCClassificationMgr savedClassificationFromUI = new IFCClassificationMgr();
-                        IFCClassification savedClassification = new IFCClassification();
-
-                        if (savedClassificationFromUI.GetSavedClassificationByName(element.Document, classificationName, out savedClassification))
+                        if (savedClassification.ClassificationEditionDate == null)
                         {
-                            if (savedClassification.ClassificationEditionDate == null)
-                            {
-                                IFCAnyHandle editionDate = IFCInstanceExporter.CreateCalendarDate(file, savedClassification.ClassificationEditionDate.Day, savedClassification.ClassificationEditionDate.Month, savedClassification.ClassificationEditionDate.Year);
+                            IFCAnyHandle editionDate = IFCInstanceExporter.CreateCalendarDate(file, savedClassification.ClassificationEditionDate.Day, savedClassification.ClassificationEditionDate.Month, savedClassification.ClassificationEditionDate.Year);
 
-                                classification = IFCInstanceExporter.CreateClassification(file, savedClassification.ClassificationSource, savedClassification.ClassificationEdition,
-                                    editionDate, savedClassification.ClassificationName);
-                            }
-                            else
-                                classification = IFCInstanceExporter.CreateClassification(file, savedClassification.ClassificationSource, savedClassification.ClassificationEdition,
-                                    null, savedClassification.ClassificationName);
+                            classification = IFCInstanceExporter.CreateClassification(file, savedClassification.ClassificationSource, savedClassification.ClassificationEdition,
+                                editionDate, savedClassification.ClassificationName);
                         }
                         else
-                            classification = IFCInstanceExporter.CreateClassification(file, "", "", null, classificationName);
+                        {
+                            classification = IFCInstanceExporter.CreateClassification(file, savedClassification.ClassificationSource, savedClassification.ClassificationEdition,
+                                null, savedClassification.ClassificationName);
+                        }
 
-                        ExporterCacheManager.ClassificationCache.Add(classificationName, classification);
                         if (!String.IsNullOrEmpty(savedClassification.ClassificationLocation))
                             ExporterCacheManager.ClassificationLocationCache.Add(classificationName, savedClassification.ClassificationLocation);
                     }
-
-                    if (String.IsNullOrEmpty(location))
+                    else
                     {
-                        ExporterCacheManager.ClassificationLocationCache.TryGetValue(classificationName, out location);
+                        classification = IFCInstanceExporter.CreateClassification(file, "", "", null, classificationName);
                     }
-                    if (!String.IsNullOrEmpty(classificationCode)) 
-                        InsertClassificationReference(exporterIFC, file, element, elemHnd, classificationName, classificationCode, classificationDescription, location);
+
+                    ExporterCacheManager.ClassificationCache.ClassificationHandles.Add(classificationName, classification);
+                    createdClassification = true;
+                }
+
+                string location = null;
+                ExporterCacheManager.ClassificationLocationCache.TryGetValue(classificationName, out location);
+                if (!String.IsNullOrEmpty(classificationCode))
+                {
+                    InsertClassificationReference(exporterIFC, file, element, elemHnd, classificationName, classificationCode, classificationDescription, location);
+                    createdClassification = true;
                 }
             }
+
+            return createdClassification;
         }
 
         /// <summary>
@@ -183,26 +211,26 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             return noCodepart;
         }
 
-/// <summary>
-        /// 
+        /// <summary>
+        /// Inserts a new classification reference in the ClassificationCache.
         /// </summary>
-        /// <param name="exporterIFC"></param>
-        /// <param name="file"></param>
-        /// <param name="element"></param>
-        /// <param name="elemHnd"></param>
-        /// <param name="classificationKeyString"></param>
-        /// <param name="classificationCode"></param>
-        /// <param name="classificationDescription"></param>
-        /// <param name="location"></param>
+        /// <param name="exporterIFC">The exporterIFC class.</param>
+        /// <param name="file">The IFC file class.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="elemHnd">The corresponding IFC entity handle.</param>
+        /// <param name="classificationKeyString">The classification name.</param>
+        /// <param name="classificationCode">The classification code.</param>
+        /// <param name="classificationDescription">The classification description.</param>
+        /// <param name="location">The location of the classification.</param>
         public static void InsertClassificationReference(ExporterIFC exporterIFC, IFCFile file, Element element, IFCAnyHandle elemHnd, string classificationKeyString, string classificationCode, string classificationDescription, string location)
         {
             IFCAnyHandle classification;
 
             // Check whether Classification is already defined before
-            if (!ExporterCacheManager.ClassificationCache.TryGetValue(classificationKeyString, out classification))
+            if (!ExporterCacheManager.ClassificationCache.ClassificationHandles.TryGetValue(classificationKeyString, out classification))
             {
                 classification = IFCInstanceExporter.CreateClassification(file, "", "", null, classificationKeyString);
-                ExporterCacheManager.ClassificationCache.Add(classificationKeyString, classification);
+                ExporterCacheManager.ClassificationCache.ClassificationHandles.Add(classificationKeyString, classification);
             }
 
             IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,

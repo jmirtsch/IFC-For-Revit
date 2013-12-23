@@ -760,10 +760,10 @@ namespace Revit.IFC.Export.Exporter
                 ParameterUtil.GetStringValueFromElement(spatialElement.Id, "OmniClass Title", out itemName);
 
                 IFCAnyHandle classification;
-                if (!ExporterCacheManager.ClassificationCache.TryGetValue("OmniClass", out classification))
+                if (!ExporterCacheManager.ClassificationCache.ClassificationHandles.TryGetValue("OmniClass", out classification))
                 {
                     classification = IFCInstanceExporter.CreateClassification(file, "http://www.omniclass.org", "v 1.0", null, "OmniClass");
-                    ExporterCacheManager.ClassificationCache.Add("OmniClass", classification);
+                    ExporterCacheManager.ClassificationCache.ClassificationHandles.Add("OmniClass", classification);
                 }
 
                 IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,

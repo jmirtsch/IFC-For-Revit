@@ -787,7 +787,7 @@ namespace Revit.IFC.Export.Exporter
         private void BeginExport(ExporterIFC exporterIFC, Document document, Autodesk.Revit.DB.View filterView)
         {
             // cache options
-            ExportOptionsCache exportOptionsCache = ExportOptionsCache.Create(exporterIFC, filterView);
+            ExportOptionsCache exportOptionsCache = ExportOptionsCache.Create(exporterIFC, document, filterView);
             ExporterCacheManager.ExportOptionsCache = exportOptionsCache;
 
             // Set language.
@@ -1642,12 +1642,12 @@ namespace Revit.IFC.Export.Exporter
             string pathName = document.PathName;
             if (!String.IsNullOrEmpty(pathName))
             {
-                if (document.IsWorkshared && ModelPathUtils.IsValidUserVisibleFullServerPath(pathName))
-                {
-                   //This is just a temporary fix for SPR#226541, currently it's unable to get the FileInfo of a server based file stored at server.
-                   //Should server based file stored at server support this functionality and how to support will be tracked by SPR#226761. 
-                   return 0;
-                }
+               if (document.IsWorkshared && ModelPathUtils.IsValidUserVisibleFullServerPath(pathName))
+               {
+                  //This is just a temporary fix for SPR#226541, currently it's unable to get the FileInfo of a server based file stored at server.
+                  //Should server based file stored at server support this functionality and how to support will be tracked by SPR#226761. 
+                  return 0;
+               }
                 FileInfo fileInfo = new FileInfo(pathName);
                 DateTime creationTimeUtc = fileInfo.CreationTimeUtc;
                 // The IfcTimeStamp is measured in seconds since 1/1/1970.  As such, we divide by 10,000,000 (100-ns ticks in a second)

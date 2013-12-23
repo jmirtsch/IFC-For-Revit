@@ -233,7 +233,8 @@ namespace Revit.IFC.Export.Utility
                 bool isDoorOrWindowOpening = IsDoorOrWindowOpening(exporterIFC, openingElem, element);
                 if (isDoorOrWindowOpening)
                 {
-                    DoorWindowDelayedOpeningCreator delayedCreator = DoorWindowDelayedOpeningCreator.Create(exporterIFC, openingData, scaledWidth, element.Id, parentHandle);
+                    DoorWindowDelayedOpeningCreator delayedCreator = 
+                        DoorWindowDelayedOpeningCreator.Create(exporterIFC, openingData, scaledWidth, element.Id, parentHandle, setter.LevelId);
                     if (delayedCreator != null)
                     {
                         ExporterCacheManager.DoorWindowDelayedOpeningCreatorCache.Add(delayedCreator);

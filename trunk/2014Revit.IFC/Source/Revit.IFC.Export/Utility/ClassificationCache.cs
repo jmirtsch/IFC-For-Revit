@@ -21,7 +21,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Revit.IFC.Common.Extensions;
 using Revit.IFC.Export.Exporter;
 using Revit.IFC.Export.Toolkit;
 
@@ -30,7 +32,93 @@ namespace Revit.IFC.Export.Utility
     /// <summary>
     /// Used to keep a cache of the created IfcClassifications.
     /// </summary>
-    public class ClassificationCache : Dictionary<string, IFCAnyHandle>
+    public class ClassificationCache
     {
+        private IDictionary<string, IFCAnyHandle> m_ClassificationHandles = null;
+        
+        /// <summary>
+        /// The map of classification names to the IfcClassification handles.
+        /// </summary>
+        public IDictionary<string, IFCAnyHandle> ClassificationHandles
+        {
+            get 
+            {
+                if (m_ClassificationHandles == null)
+                    m_ClassificationHandles = new Dictionary<string, IFCAnyHandle>();
+                return m_ClassificationHandles; 
+            }
+        }
+
+        private IDictionary<string, IFCClassification> m_ClassificationsByName = null;
+        
+        /// <summary>
+        /// The list of defined classifications, sorted by name.
+        /// </summary>
+        public IDictionary<string, IFCClassification> ClassificationsByName
+        {
+            get 
+            {
+                if (m_ClassificationsByName == null)
+                    m_ClassificationsByName = new Dictionary<string, IFCClassification>();
+                return m_ClassificationsByName; 
+            }
+        }
+
+        private IList<string> m_CustomClassificationCodeNames = null;
+        
+        /// <summary>
+        /// The names of the shared parameters used to defined custom classifications.
+        /// </summary>
+        public IList<string> CustomClassificationCodeNames
+        {
+            get 
+            {
+                if (m_CustomClassificationCodeNames == null)
+                    m_CustomClassificationCodeNames = new List<string>();
+                return m_CustomClassificationCodeNames; 
+            }
+        }
+
+        private IDictionary<string, string> m_FieldNameToClassificationNames = null;
+        
+        /// <summary>
+        /// The map of shared parameter field name to the corresponding classification name.
+        /// </summary>
+        public IDictionary<string, string> FieldNameToClassificationNames
+        {
+            get 
+            {
+                if (m_FieldNameToClassificationNames == null)
+                    m_FieldNameToClassificationNames = new Dictionary<string, string>();
+                return m_FieldNameToClassificationNames; 
+            }
+        }
+
+        /// <summary>
+        /// Create a new ClassificationCache.
+        /// </summary>
+        /// <param name="doc">The document.</param>
+        public ClassificationCache(Document doc)
+        {
+            IFCClassificationMgr savedClassificationFromUI = new IFCClassificationMgr(doc);
+
+            // The UI currently supports only one, but future UIs may support a list.
+            IList<IFCClassification> classifications;
+            if (savedClassificationFromUI.GetSavedClassifications(doc, null, out classifications))
+            {
+                foreach (IFCClassification classification in classifications)
+                {
+                    bool classificationHasName = !string.IsNullOrWhiteSpace(classification.ClassificationName);
+                    if (classificationHasName)
+                        ClassificationsByName[classification.ClassificationName] = classification;
+                    if (!string.IsNullOrWhiteSpace(classification.ClassificationFieldName))
+                    {
+                        CustomClassificationCodeNames.Add(classification.ClassificationFieldName);
+                        if (classificationHasName)
+                            FieldNameToClassificationNames[classification.ClassificationFieldName] = classification.ClassificationName;
+                    }
+                }
+            }
+        }
     }
 }

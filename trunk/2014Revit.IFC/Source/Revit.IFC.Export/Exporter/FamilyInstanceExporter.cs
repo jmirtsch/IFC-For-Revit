@@ -545,7 +545,7 @@ namespace Revit.IFC.Export.Exporter
                             typeInfo.ScaledOuterPerimeter = extraParams.ScaledOuterPerimeter;
                         }
 
-                        ClassificationUtil.CreateClassification(exporterIFC, file, originalFamilySymbol, typeStyle, "");        // Create other generic classification from ClassificationCode(s)
+                        ClassificationUtil.CreateClassification(exporterIFC, file, originalFamilySymbol, typeStyle);        // Create other generic classification from ClassificationCode(s)
                         ClassificationUtil.CreateUniformatClassification(exporterIFC, file, originalFamilySymbol, typeStyle);
                     }
                 }

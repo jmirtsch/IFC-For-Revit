@@ -920,7 +920,7 @@ namespace Revit.IFC.Export.Utility
             get
             {
                 if (m_ClassificationCache == null)
-                    m_ClassificationCache = new ClassificationCache();
+                    m_ClassificationCache = new ClassificationCache(ExporterCacheManager.Document);
                 return m_ClassificationCache;
             }
             set { m_ClassificationCache = value; }

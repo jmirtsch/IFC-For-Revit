@@ -2657,10 +2657,15 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="relatingActor">The actor.</param>
         /// <param name="actingRole">The role of the actor.</param>
         /// <returns>The handle.</returns>
+        /// <remarks>Note that this has been obsoleted in IFC4, and replaced by IfcRelAssignsToActor.</remarks>
         public static IFCAnyHandle CreateRelOccupiesSpaces(IFCFile file, string guid, IFCAnyHandle ownerHistory,
             string name, string description, HashSet<IFCAnyHandle> relatedObjects, IFCObjectType? relatedObjectsType,
             IFCAnyHandle relatingActor, IFCAnyHandle actingRole)
         {
+            if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+                return CreateRelAssignsToActor(file, guid, ownerHistory, name, description, 
+                    relatedObjects, relatedObjectsType, relatingActor, actingRole);
+               
             ValidateRelAssignsToActor(guid, ownerHistory, name, description, relatedObjects, relatedObjectsType,
                 relatingActor, actingRole);
 
