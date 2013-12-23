@@ -1073,7 +1073,7 @@ namespace BIM.IFC.Utility
                 {
                     // No need to check the subtype since Classification can be assigned to IfcRoot
                     // if (IFCAnyHandleUtil.IsSubTypeOf(prodHnd, IFCEntityType.IfcElement))
-                    ClassificationUtil.CreateClassification(exporterIFC, file, element, prodHnd, "");
+                    ClassificationUtil.CreateClassification(exporterIFC, file, element, prodHnd);
                 }
                 transaction.Commit();
             }
@@ -1091,8 +1091,7 @@ namespace BIM.IFC.Utility
             if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities && !(ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE))
                 ExportElementQuantities(exporterIFC, element, productWrapper);
             ExportElementClassifications(exporterIFC, element, productWrapper);                     // Exporting ClassificationCode from IFC parameter 
-            if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
-                ExportElementUniformatClassifications(exporterIFC, element, productWrapper);
+            ExportElementUniformatClassifications(exporterIFC, element, productWrapper);            // Default classification, if filled out.
         }
 
         /// <summary>

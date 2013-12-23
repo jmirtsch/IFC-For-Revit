@@ -483,7 +483,7 @@ namespace BIM.IFC.Utility
                         if (inst != null)
                         {
                             GeometryElement instanceSymbol = inst.GetSymbolGeometry();
-                            if (instanceSymbol != null)
+                            if (instanceSymbol != null && instanceSymbol.Count() != 0)
                             {
                                 Transform instanceTransform = localTrf.Multiply(inst.Transform);
                                 CollectSolidMeshGeometry(instanceSymbol, instanceTransform, solidMeshCapsule);
