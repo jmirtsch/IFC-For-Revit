@@ -59,6 +59,7 @@
       <DependentUpon>IFCAssignmentUI.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="IFCPhaseAttributes.cs" />
     <Compile Include="IFCPropertySets.cs" />
     <Compile Include="IFCRenameExportSetup.xaml.cs">
       <DependentUpon>IFCRenameExportSetup.xaml</DependentUpon>

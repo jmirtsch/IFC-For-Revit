@@ -79,8 +79,7 @@ namespace BIM.IFC.Export.UI
         /// <summary>
         /// Adds the saved configuration from document to the map.
         /// </summary>
-        /// <param name="document">The document storing the saved configuration.</param>
-        public void AddSavedConfigurations(Document document)
+        public void AddSavedConfigurations()
         {
             try
             {
@@ -95,7 +94,7 @@ namespace BIM.IFC.Export.UI
 
                 if (m_mapSchema != null)
                 {
-                    foreach (DataStorage storedSetup in GetSavedConfigurations(document, m_mapSchema))
+                    foreach (DataStorage storedSetup in GetSavedConfigurations(m_mapSchema))
                     {
                         Entity configEntity = storedSetup.GetEntity(m_mapSchema);
                         IDictionary<string, string> configMap = configEntity.Get<IDictionary<string, string>>(s_configMapField);
@@ -108,6 +107,8 @@ namespace BIM.IFC.Export.UI
                             configuration.IFCFileType = (IFCFileFormat)Enum.Parse(typeof(IFCFileFormat), configMap[s_setupFileFormat]);
                         if (configMap.ContainsKey(s_setupSpaceBoundaries))
                             configuration.SpaceBoundaries = int.Parse(configMap[s_setupSpaceBoundaries]);
+                        if (configMap.ContainsKey(s_setupActivePhase))
+                            configuration.ActivePhaseId = new ElementId(int.Parse(configMap[s_setupActivePhase]));
                         if (configMap.ContainsKey(s_setupQTO))
                             configuration.ExportBaseQuantities = bool.Parse(configMap[s_setupQTO]);
                         if (configMap.ContainsKey(s_setupCurrentView))
@@ -147,7 +148,7 @@ namespace BIM.IFC.Export.UI
                 // find the config in old schema.
                 if (m_schema != null)
                 {
-                    foreach (DataStorage storedSetup in GetSavedConfigurations(document, m_schema))
+                    foreach (DataStorage storedSetup in GetSavedConfigurations(m_schema))
                     {
                         Entity configEntity = storedSetup.GetEntity(m_schema);
                         IFCExportConfiguration configuration = IFCExportConfiguration.CreateDefaultConfiguration();
@@ -186,6 +187,9 @@ namespace BIM.IFC.Export.UI
                         Field fieldStoreIFCGUID = m_schema.GetField(s_setupStoreIFCGUID);
                         if (fieldStoreIFCGUID != null)
                             configuration.StoreIFCGUID = configEntity.Get<bool>(s_setupStoreIFCGUID);
+                        Field fieldActivePhase = m_schema.GetField(s_setupActivePhase);
+                        if (fieldActivePhase != null)
+                            configuration.ActivePhaseId = new ElementId(int.Parse(configEntity.Get<string>(s_setupActivePhase)));
 
                         Add(configuration);
                     }
@@ -221,12 +225,12 @@ namespace BIM.IFC.Export.UI
         private const String s_setupIncludeSiteElevation = "IncludeSiteElevation";
         private const String s_setupUseCoarseTessellation = "UseCoarseTessellation";
         private const String s_setupStoreIFCGUID = "StoreIFCGUID";
-
+        private const String s_setupActivePhase = "ActivePhase";
+        
         /// <summary>
         /// Updates the setups to save into the document.
         /// </summary>
-        /// <param name="document">The document storing the saved configuration.</param>
-        public void UpdateSavedConfigurations(Document document)
+        public void UpdateSavedConfigurations()
         {
             // delete the old schema and the DataStorage.
             if (m_schema == null)
@@ -235,10 +239,10 @@ namespace BIM.IFC.Export.UI
             }
             if (m_schema != null)
             {
-                IList<DataStorage> oldSavedConfigurations = GetSavedConfigurations(document, m_schema);
+                IList<DataStorage> oldSavedConfigurations = GetSavedConfigurations(m_schema);
                 if (oldSavedConfigurations.Count > 0)
                 {
-                    Transaction deleteTransaction = new Transaction(document, "Delete old IFC export setups");
+                    Transaction deleteTransaction = new Transaction(IFCCommandOverrideApplication.TheDocument, "Delete old IFC export setups");
                     try
                     {
                         deleteTransaction.Start();
@@ -247,7 +251,7 @@ namespace BIM.IFC.Export.UI
                         {
                             dataStorageToDelete.Add(dataStorage.Id);
                         }
-                        document.Delete(dataStorageToDelete);
+                        IFCCommandOverrideApplication.TheDocument.Delete(dataStorageToDelete);
                         deleteTransaction.Commit();
                     }
                     catch (System.Exception)
@@ -295,11 +299,11 @@ namespace BIM.IFC.Export.UI
            }
 
            // Overwrite all saved configs with the new list
-           Transaction transaction = new Transaction(document, "Update IFC export setups");
+           Transaction transaction = new Transaction(IFCCommandOverrideApplication.TheDocument, "Update IFC export setups");
            try
            {
                transaction.Start();
-               IList<DataStorage> savedConfigurations = GetSavedConfigurations(document, m_mapSchema);
+               IList<DataStorage> savedConfigurations = GetSavedConfigurations(m_mapSchema);
                int savedConfigurationCount = savedConfigurations.Count<DataStorage>();
                int savedConfigurationIndex = 0;
                foreach (IFCExportConfiguration configuration in setupsToSave)
@@ -307,7 +311,7 @@ namespace BIM.IFC.Export.UI
                    DataStorage configStorage;
                    if (savedConfigurationIndex >= savedConfigurationCount)
                    {
-                       configStorage = DataStorage.Create(document);
+                       configStorage = DataStorage.Create(IFCCommandOverrideApplication.TheDocument);
                    }
                    else
                    {
@@ -337,6 +341,7 @@ namespace BIM.IFC.Export.UI
                    mapData.Add(s_setupIncludeSiteElevation, configuration.IncludeSiteElevation.ToString());
                    mapData.Add(s_setupUseCoarseTessellation, configuration.UseCoarseTessellation.ToString());
                    mapData.Add(s_setupStoreIFCGUID, configuration.StoreIFCGUID.ToString());
+                   mapData.Add(s_setupActivePhase, configuration.ActivePhaseId.ToString());
                    mapEntity.Set<IDictionary<string, String>>(s_configMapField, mapData);
 
                    configStorage.SetEntity(mapEntity);
@@ -349,7 +354,7 @@ namespace BIM.IFC.Export.UI
                    elementsToDelete.Add(configStorage.Id);
                }
                if (elementsToDelete.Count > 0)
-                   document.Delete(elementsToDelete);
+                   IFCCommandOverrideApplication.TheDocument.Delete(elementsToDelete);
 
                transaction.Commit();
            }
@@ -363,11 +368,10 @@ namespace BIM.IFC.Export.UI
         /// <summary>
         /// Gets the saved setups from the document.
         /// </summary>
-        /// <param name="document">The document storing the saved configuration.</param>
         /// <returns>The saved configurations.</returns>
-        private IList<DataStorage> GetSavedConfigurations(Document document, Schema schema)
+        private IList<DataStorage> GetSavedConfigurations(Schema schema)
         {
-            FilteredElementCollector collector = new FilteredElementCollector(document);
+            FilteredElementCollector collector = new FilteredElementCollector(IFCCommandOverrideApplication.TheDocument);
             collector.OfClass(typeof(DataStorage));
             Func<DataStorage, bool> hasTargetData = ds => (ds.GetEntity(schema) != null && ds.GetEntity(schema).IsValid());
 

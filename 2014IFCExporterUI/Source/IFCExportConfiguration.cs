@@ -55,6 +55,11 @@ namespace BIM.IFC.Export.UI
         public int SpaceBoundaries { get; set; }
 
         /// <summary>
+        /// The phase of the document to export.
+        /// </summary>
+        public ElementId ActivePhaseId { get; set; }
+
+        /// <summary>
         /// Whether or not to include base quantities for model elements in the export data. 
         /// Base quantities are generated from model geometry to reflect actual physical quantity values, independent of measurement rules or methods.
         /// </summary>
@@ -185,6 +190,7 @@ namespace BIM.IFC.Export.UI
             this.IFCVersion = IFCVersion.IFC2x3CV2;
             this.IFCFileType = IFCFileFormat.Ifc;
             this.SpaceBoundaries = 0;
+            this.ActivePhaseId = ElementId.InvalidElementId;
             this.ExportBaseQuantities = false;
             this.SplitWallsAndColumns = false;
             this.VisibleElementsOfCurrentView = false;
@@ -246,7 +252,8 @@ namespace BIM.IFC.Export.UI
             configuration.UseCoarseTessellation = true;
             configuration.StoreIFCGUID = false;
             configuration.m_isBuiltIn = true;
-            configuration.m_isInSession = false; 
+            configuration.m_isInSession = false;
+            configuration.ActivePhaseId = ElementId.InvalidElementId;
             return configuration;
         }
 
@@ -282,6 +289,7 @@ namespace BIM.IFC.Export.UI
             this.StoreIFCGUID = other.StoreIFCGUID;
             this.m_isBuiltIn = other.m_isBuiltIn;
             this.m_isInSession = other.m_isInSession;
+            this.ActivePhaseId = other.ActivePhaseId;
         }
 
         /// <summary>
@@ -319,6 +327,7 @@ namespace BIM.IFC.Export.UI
             this.ExportSchedulesAsPsets = other.ExportSchedulesAsPsets;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
             this.UseCoarseTessellation = other.UseCoarseTessellation;
+            this.ActivePhaseId = other.ActivePhaseId;
             this.m_isBuiltIn = false;
             this.m_isInSession = false;
         }
@@ -379,6 +388,7 @@ namespace BIM.IFC.Export.UI
             options.AddOption("IncludeSiteElevation", IncludeSiteElevation.ToString());
             options.AddOption("UseCoarseTessellation", UseCoarseTessellation.ToString());
             options.AddOption("StoreIFCGUID", StoreIFCGUID.ToString());
+            options.AddOption("ActivePhase", ActivePhaseId.ToString());
 
             options.AddOption("FileType", IFCFileType.ToString());
             string uiVersion = IFCUISettings.GetAssemblyVersion();
@@ -417,6 +427,9 @@ namespace BIM.IFC.Export.UI
 
                 IFCSpaceBoundariesAttributes spaceBoundaryAttributes = new IFCSpaceBoundariesAttributes(SpaceBoundaries);
                 builder.AppendLine(GetDescriptionLine(Resources.SpaceBoundaries, spaceBoundaryAttributes.ToString()));
+
+                IFCPhaseAttributes phaseAttributes = new IFCPhaseAttributes(ActivePhaseId);
+                builder.AppendLine(GetDescriptionLine(Resources.ActivePhase, phaseAttributes.ToString()));
 
                 IFCExportedPropertySets exportedPropertySets = new IFCExportedPropertySets(ExportInternalRevitPropertySets, ExportIFCCommonPropertySets, ExportSchedulesAsPsets);
                 builder.AppendLine(GetDescriptionLine(Resources.PropertySets, exportedPropertySets.ToString()));

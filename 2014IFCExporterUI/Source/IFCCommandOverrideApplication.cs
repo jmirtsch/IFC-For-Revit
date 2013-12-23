@@ -74,6 +74,15 @@ namespace BIM.IFC.Export.UI
         public static bool PotentiallyUpdatedConfigurations { get; set; }
 
         /// <summary>
+        /// The active document for this export.
+        /// </summary>
+        public static Document TheDocument
+        {
+            get;
+            protected set;
+        }
+
+        /// <summary>
         /// The last successful export location
         /// </summary>
         private String m_mruExportPath = null;
@@ -97,10 +106,12 @@ namespace BIM.IFC.Export.UI
                 UIDocument uiDoc = uiApp.ActiveUIDocument;
                 Document doc = uiDoc.Document;
 
+                TheDocument = doc;
+
                 IFCExportConfigurationsMap configurationsMap = new IFCExportConfigurationsMap();
                 configurationsMap.Add(IFCExportConfiguration.GetInSession());
                 configurationsMap.AddBuiltInConfigurations();
-                configurationsMap.AddSavedConfigurations(doc);
+                configurationsMap.AddSavedConfigurations();
 
                 String mruSelection = null;
                 if (m_mruConfiguration != null && configurationsMap.HasName(m_mruConfiguration))
@@ -211,7 +222,7 @@ namespace BIM.IFC.Export.UI
                     if (PotentiallyUpdatedConfigurations)
                     {
                         configurationsMap = mainWindow.GetModifiedConfigurations();
-                        configurationsMap.UpdateSavedConfigurations(doc);
+                        configurationsMap.UpdateSavedConfigurations();
                     }
 
                     // Remember last selected configuration
