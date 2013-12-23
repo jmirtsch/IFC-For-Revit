@@ -33,6 +33,7 @@ using System.Windows.Shapes;
 
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Autodesk.Revit.UI;
 
 namespace BIM.IFC.Export.UI
 {
@@ -134,6 +135,40 @@ namespace BIM.IFC.Export.UI
                 IFCSpaceBoundariesAttributes item = new IFCSpaceBoundariesAttributes(level);
                 comboboxSpaceBoundaries.Items.Add(item);
             }
+
+            PhaseArray phaseArray = IFCCommandOverrideApplication.TheDocument.Phases;
+            comboboxActivePhase.Items.Add(new IFCPhaseAttributes(ElementId.InvalidElementId));  // Default.
+            foreach (Phase phase in phaseArray)
+            {
+                comboboxActivePhase.Items.Add(new IFCPhaseAttributes(phase.Id));
+            }
+        }
+
+        private void UpdatePhaseAttributes(IFCExportConfiguration configuration)
+        {
+            if (configuration.VisibleElementsOfCurrentView)
+            {
+                UIDocument uiDoc = new UIDocument(IFCCommandOverrideApplication.TheDocument);
+                Parameter currPhase = uiDoc.ActiveView.get_Parameter(BuiltInParameter.VIEW_PHASE);
+                if (currPhase != null)
+                    configuration.ActivePhaseId = currPhase.AsElementId();
+                else
+                    configuration.ActivePhaseId = ElementId.InvalidElementId;
+            }
+
+            if (!IFCPhaseAttributes.Validate(configuration.ActivePhaseId))
+                configuration.ActivePhaseId = ElementId.InvalidElementId;
+            
+            foreach (IFCPhaseAttributes attribute in comboboxActivePhase.Items.Cast<IFCPhaseAttributes>())
+            {
+                if (configuration.ActivePhaseId == attribute.PhaseId)
+                {
+                    comboboxActivePhase.SelectedItem = attribute;
+                    break;
+                }
+            }
+
+            comboboxActivePhase.IsEnabled = !configuration.VisibleElementsOfCurrentView;
         }
 
         /// <summary>
@@ -147,20 +182,29 @@ namespace BIM.IFC.Export.UI
                 if (attribute.Version == configuration.IFCVersion)
                 {
                     comboboxIfcType.SelectedItem = attribute;
+                    break;
                 }
             }
 
             foreach (IFCFileFormatAttributes format in comboboxFileType.Items.Cast<IFCFileFormatAttributes>())
             {
                 if (configuration.IFCFileType == format.FileType)
+                {
                     comboboxFileType.SelectedItem = format;
+                    break;
+                }
             }
 
             foreach (IFCSpaceBoundariesAttributes attribute in comboboxSpaceBoundaries.Items.Cast<IFCSpaceBoundariesAttributes>())
             {
                 if (configuration.SpaceBoundaries == attribute.Level)
+                {
                     comboboxSpaceBoundaries.SelectedItem = attribute;
+                    break;
+                }
             }
+
+            UpdatePhaseAttributes(configuration);
 
             checkboxExportBaseQuantities.IsChecked = configuration.ExportBaseQuantities;
             checkboxSplitWalls.IsChecked = configuration.SplitWallsAndColumns;
@@ -195,12 +239,14 @@ namespace BIM.IFC.Export.UI
                                                                 checkboxIncludeIfcSiteElevation,
                                                                 checkboxUseCoarseTessellation,
                                                                 checkboxStoreIFCGUID,
-                                                                checkboxExportSchedulesAsPsets
+                                                                checkboxExportSchedulesAsPsets,
+                                                                comboboxActivePhase
                                                                 };
             foreach (UIElement element in configurationElements)
             {
                 element.IsEnabled = !configuration.IsBuiltIn;
             }
+            comboboxActivePhase.IsEnabled = comboboxActivePhase.IsEnabled && !configuration.VisibleElementsOfCurrentView;
         }
 
         /// <summary>
@@ -515,6 +561,11 @@ namespace BIM.IFC.Export.UI
                 {
                     configuration.ExportPartsAsBuildingElements = false;
                     checkBoxExportPartsAsBuildingElements.IsChecked = false;
+                    comboboxActivePhase.IsEnabled = true;
+                }
+                else
+                {
+                    UpdatePhaseAttributes(configuration);
                 }
             }
         }
@@ -594,6 +645,21 @@ namespace BIM.IFC.Export.UI
             }
         }
 
+        /// <summary>
+        /// Updates the configuration ActivePhase when the active phase changed in the combobox.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments that contains the event data.</param>
+        private void comboboxActivePhase_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            IFCPhaseAttributes attributes = (IFCPhaseAttributes)comboboxActivePhase.SelectedItem;
+            IFCExportConfiguration configuration = GetSelectedConfiguration();
+            if (configuration != null)
+            {
+                configuration.ActivePhaseId = attributes.PhaseId;
+            }
+        }
+        
         /// <summary>
         /// Saves the window bounds when close the window.
         /// </summary>

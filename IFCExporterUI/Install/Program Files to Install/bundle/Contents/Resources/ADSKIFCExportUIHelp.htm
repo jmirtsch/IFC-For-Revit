@@ -96,6 +96,7 @@ The alternate interface is loaded when users access the Export functionality usi
 <li>1st level – the room/space boundaries are included but are not optimized to split elements with respect to spaces on the opposite side of the boundary</li>
 <li>2nd level – the room/space boundaries are included and are split with respect to spaces on the opposite side of the boundary</li>
 </menu>
+<p><strong>Phase to export</strong>: Selects the phase of the document to export, defaulting to the last phase of the document.  If "Export only elements visible in view" is selected, the phase of the view will be used and this option greyed out.</p>
 <p><strong>Export base quantities</strong>: Whether or not to include base quantities for model elements in the export data.  Base quantities are generated from model geometry to reflect actual physical quantity values, independent of measurement rules or methods.</p>
 <p><strong>Split walls and columns by Level</strong>: Whether or not to split walls and columns by building stories</p>
 <p><strong>Export internal Revit property sets</strong>: True to include the Revit-specific property sets based on parameter groups.  False to exclude them.</p>
@@ -174,6 +175,13 @@ The source code for this application is available on open source, at the SourceF
 <h2 id="VersionHistory" name="VersionHistory">Version History</h2>
 
 <div class="versionset">
+<div class="version">1.16.0</div><div class="versioninfo-bullet">
+New Functionality:
+<li>Add "Classification Field Name" to Classification tab in Assignments.  This allows a user to specify the name of one field that will serve as a classification.</li>
+<li>Add "Phase to Export" UI to allow user to choose which phase to export.  This field is grayed out if exporting the current view.</li><br />
+Bugs:
+<li>Fix "Duplicate" button in the export setup dialog to respond to left-clicking.</li>
+</div>
 <div class="version">1.13.0</div><div class="versioninfo-bullet">
 New Functionality:
 <li>Add UI version number to title of the IFC Export dialog box.
