@@ -104,6 +104,21 @@ namespace Revit.IFC.Common.Extensions
         }
 
         /// <summary>
+        /// The (optional) Classification field name, to override "ClassificationCode".
+        /// </summary>
+        private string m_ClassificationFieldName;
+        public string ClassificationFieldName
+        {
+            get { return m_ClassificationFieldName; }
+            set
+            {
+                m_ClassificationFieldName = value;
+                // Call OnPropertyChanged whenever the property is updated
+                OnPropertyChanged("ClassificationFieldNameTextBox");
+            }
+        }
+
+        /// <summary>
         /// This property is only used for the UI message. It will not be stored in the schema
         /// </summary>
         private string classificationTabMsg;
@@ -129,38 +144,50 @@ namespace Revit.IFC.Common.Extensions
                 && string.Compare(this.ClassificationSource, classificationToCheck.ClassificationSource) == 0
                 && string.Compare(this.ClassificationEdition, classificationToCheck.ClassificationEdition) == 0
                 && this.ClassificationEditionDate.Equals(classificationToCheck.ClassificationEditionDate)
-                && string.Compare(this.ClassificationLocation, classificationToCheck.ClassificationLocation) == 0)
+                && string.Compare(this.ClassificationLocation, classificationToCheck.ClassificationLocation) == 0
+                && string.Compare(this.ClassificationFieldName, classificationToCheck.ClassificationFieldName) == 0)
                     return true;      
 
             return false;
         }
 
         /// <summary>
-        /// Check mandatory fields are filled in
+        /// Checks if any field in the classificaiton has been filled.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>True if it is empty, false otherwise.</returns>
+        /// <remarks>The date field isn't checked, as it will always have some value.</remarks>
+        public bool IsClassificationEmpty()
+        {
+            return (string.IsNullOrEmpty(ClassificationName)
+                && string.IsNullOrEmpty(ClassificationSource)
+                && string.IsNullOrEmpty(ClassificationEdition)
+                && string.IsNullOrEmpty(ClassificationLocation)
+                && string.IsNullOrEmpty(ClassificationFieldName));                
+        }
+
+        /// <summary>
+        /// Checks if any of the mandatory fields are filled in.
+        /// </summary>
+        /// <returns>True if they are, false otherwise.</returns>
         public bool AreMandatoryFieldsFilled()
         {
-            if (string.IsNullOrEmpty(this.ClassificationName)
-                || string.IsNullOrEmpty(this.ClassificationSource)
-                || string.IsNullOrEmpty(this.ClassificationEdition))
+            if (string.IsNullOrEmpty(ClassificationName)
+                || string.IsNullOrEmpty(ClassificationSource)
+                || string.IsNullOrEmpty(ClassificationEdition))
                 return false;
             else
                 return true;
         }
 
         /// <summary>
-        /// Determine that the 3 mandatory fields are empty
+        /// Checks if none of the mandatory fields are filled in.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>True is none of the fields are fillesd out, false otherwise.</returns>
         public bool IsMandatoryEmpty()
         {
-            if (string.IsNullOrEmpty(this.ClassificationName)
-                && string.IsNullOrEmpty(this.ClassificationSource)
-                && string.IsNullOrEmpty(this.ClassificationEdition))
-                return true;
-            else
-                return false;
+            return (string.IsNullOrEmpty(ClassificationName)
+                && string.IsNullOrEmpty(ClassificationSource)
+                && string.IsNullOrEmpty(ClassificationEdition));
         }
 
         /// <summary>
@@ -200,7 +227,7 @@ namespace Revit.IFC.Common.Extensions
             this.ClassificationEdition = other.ClassificationEdition;
             this.ClassificationEditionDate = other.ClassificationEditionDate;
             this.ClassificationLocation = other.ClassificationLocation;
+            this.ClassificationFieldName = other.ClassificationFieldName;
         }
-
     }
 }
