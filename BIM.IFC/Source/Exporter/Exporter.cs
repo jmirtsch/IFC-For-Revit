@@ -731,7 +731,7 @@ namespace BIM.IFC.Exporter
         private void BeginExport(ExporterIFC exporterIFC, Document document, Autodesk.Revit.DB.View filterView)
         {
             // cache options
-            ExportOptionsCache exportOptionsCache = ExportOptionsCache.Create(exporterIFC, filterView);
+            ExportOptionsCache exportOptionsCache = ExportOptionsCache.Create(exporterIFC, document, filterView);
             ExporterCacheManager.ExportOptionsCache = exportOptionsCache;
 
             // Set language.
