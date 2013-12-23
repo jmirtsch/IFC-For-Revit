@@ -61,6 +61,24 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Phase to export.
+        /// </summary>
+        internal static string ActivePhase {
+            get {
+                return ResourceManager.GetString("ActivePhase", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Default ({0}).
+        /// </summary>
+        internal static string DefaultPhase {
+            get {
+                return ResourceManager.GetString("Default", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Export base quantities.
         /// </summary>
         internal static string ExportBaseQuantities {

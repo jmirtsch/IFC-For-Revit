@@ -43,8 +43,6 @@ namespace BIM.IFC.Export.UI
         // The list of available configurations
         IFCExportConfigurationsMap m_configMap;
 
-        private Document m_document = null;
-
         /// <summary>
         /// The dialog result.
         /// </summary>
@@ -63,8 +61,7 @@ namespace BIM.IFC.Export.UI
         public IFCExport(Document doc, IFCExportConfigurationsMap configurationsMap, String selectedConfigName)
         {
             m_configMap = configurationsMap;
-            m_document = doc;
-
+        
             InitializeComponent();
 
             RestorePreviousWindow();
@@ -232,9 +229,12 @@ namespace BIM.IFC.Export.UI
         private void currentSelectedSetup_SelectionChanged(object sender, SelectionChangedEventArgs args)
         {
             IFCExportConfiguration selectedConfig = GetSelectedConfiguration();
-
+            
             if (selectedConfig != null)
             {
+                if (!IFCPhaseAttributes.Validate(selectedConfig.ActivePhaseId))
+                    selectedConfig.ActivePhaseId = ElementId.InvalidElementId;
+            
                 // change description
                 textBoxSetupDescription.Text = selectedConfig.Description;  
             }  
@@ -258,7 +258,7 @@ namespace BIM.IFC.Export.UI
         /// <param name="e">Event arguments that contains the event data.</param>
         private void buttonAssignment_Click(object sender, RoutedEventArgs e)
         {
-            IFCAssignment assignmentWindow = new IFCAssignment(m_document);
+            IFCAssignment assignmentWindow = new IFCAssignment();
             assignmentWindow.ShowDialog();
         }
     }
