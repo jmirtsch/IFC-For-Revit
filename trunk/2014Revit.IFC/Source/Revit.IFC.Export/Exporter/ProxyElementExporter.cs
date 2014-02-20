@@ -86,7 +86,7 @@ namespace Revit.IFC.Export.Exporter
                         string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
                         buildingElementProxy = IFCInstanceExporter.CreateBuildingElementProxy(file, guid,
-                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag, "Element");
+                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag, null);
 
                         productWrapper.AddElement(element, buildingElementProxy, placementSetter.LevelInfo, ecData, true);
                     }

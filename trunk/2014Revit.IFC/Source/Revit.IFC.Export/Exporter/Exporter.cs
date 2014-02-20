@@ -25,6 +25,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Xml;
 using Autodesk.Revit;
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
@@ -463,7 +464,7 @@ namespace Revit.IFC.Export.Exporter
         /// <returns>True for MEP type of elements.</returns>
         private bool IsMEPType(ExporterIFC exporterIFC, Element element, IFCExportType exportType)
         {
-            return ElementFilteringUtil.IsMEPType(exportType);
+            return (ElementFilteringUtil.IsMEPType(exportType) || ElementFilteringUtil.ProxyForMEPType(element, exportType));
         }
 
         /// <summary>
@@ -474,7 +475,7 @@ namespace Revit.IFC.Export.Exporter
         private bool ExportAsProxy(Element element, IFCExportType exportType)
         {
             // FaceWall should be exported as IfcWall.
-            return ((element is FaceWall) || (element is ModelText) || (exportType == IFCExportType.IfcBuildingElementProxy));
+            return ((element is FaceWall) || (element is ModelText) || (exportType == IFCExportType.IfcBuildingElementProxy) || (exportType == IFCExportType.IfcBuildingElementProxyType));
         }
 
         /// <summary>
@@ -961,6 +962,9 @@ namespace Revit.IFC.Export.Exporter
                         levelName, objectType, description, placement,
                         null, longName, Toolkit.IFCElementComposition.Element, elevation);
 
+                    // Create classification reference when level has classification filed name assigned to it
+                    ClassificationUtil.CreateClassification(exporterIFC, file, level, buildingStorey);
+
                     if (prevBuildingStorey == null)
                     {
                         foreach (Level baseLevel in unassignedBaseLevels)
@@ -1278,8 +1282,11 @@ namespace Revit.IFC.Export.Exporter
 
                             // NOTE: Definition of RelConnectsPathElements has the connection information reversed
                             // with respect to the order of the paths.
+                            string connectionName = IFCAnyHandleUtil.GetStringAttribute(wallElementHandle, "GlobalId") + "|" 
+                                                        + IFCAnyHandleUtil.GetStringAttribute(otherElementHandle, "GlobalId");
+                            string connectionType = "Structural";   // Assigned as Description
                             IFCInstanceExporter.CreateRelConnectsPathElements(file, GUIDUtil.CreateGUID(), ownerHistory,
-                                null, null, wallConnectionData.ConnectionGeometry, wallElementHandle, otherElementHandle, relatingPriorities,
+                                connectionName, connectionType, wallConnectionData.ConnectionGeometry, wallElementHandle, otherElementHandle, relatingPriorities,
                                 relatedPriorities, wallConnectionData.SecondConnectionType, wallConnectionData.FirstConnectionType);
                         }
                     }
@@ -1382,6 +1389,9 @@ namespace Revit.IFC.Export.Exporter
                         string systemGUID = GUIDUtil.CreateGUID(systemElem);
                         IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file, systemGUID,
                             ownerHistory, name, desc, objectType);
+
+                        // Create classification reference when System has classification filed name assigned to it
+                        ClassificationUtil.CreateClassification(exporterIFC, file, systemElem, systemHandle);
                         
                         productWrapper.AddSystem(systemElem, systemHandle);
 
@@ -1441,6 +1451,9 @@ namespace Revit.IFC.Export.Exporter
                         string systemGUID = GUIDUtil.CreateGUID(systemElem);
                         IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file,
                             systemGUID, ownerHistory, name, desc, objectType);
+
+                        // Create classification reference when System has classification filed name assigned to it
+                        ClassificationUtil.CreateClassification(exporterIFC, file, systemElem, systemHandle);
 
                         productWrapper.AddSystem(systemElem, systemHandle);
 
@@ -1520,12 +1533,12 @@ namespace Revit.IFC.Export.Exporter
                 else
                 {
                     string currentLine;
-                    if (String.Compare(exportOptionsCache.SelectedConfigName, "FMHandOverView") == 0)
+                    if (ExporterUtil.IsFMHandoverView())
                     {
                         currentLine = string.Format("ViewDefinition [{0}{1}{2}{3}]",
                            coordinationView,
                            exportOptionsCache.ExportBaseQuantities ? ", QuantityTakeOffAddOnView" : "",
-                           ", ", exportOptionsCache.SelectedConfigName);
+                           ", ", "FMHandOverView");
                     }
                     else
                     {
@@ -1756,6 +1769,110 @@ namespace Revit.IFC.Export.Exporter
             return repContexts;
         }
 
+        private void GetCOBieContactInfo(IFCFile file, Document doc)
+        {
+            if (String.Compare(ExporterCacheManager.ExportOptionsCache.SelectedConfigName, "IFC2x3 Extended FM Handover View") == 0)
+            {
+                string CObieContactXML = Path.GetDirectoryName(doc.PathName) + @"\" + Path.GetFileNameWithoutExtension(doc.PathName) + @"_COBieContact.xml";
+                string category = null, company = null, department = null, organizationCode = null, contactFirstName = null, contactFamilyName = null,
+                    postalBox = null, town = null, stateRegion = null, postalCode = null, country = null;
+
+                try
+                {
+                    using (XmlReader reader = XmlReader.Create(CObieContactXML))
+                    {
+                        IList<string> eMailAddressList = new List<string>();
+                        IList<string> telNoList = new List<string>();
+                        IList<string> addressLines = new List<string>();
+
+                        while (reader.Read())
+                        {
+                            if (reader.IsStartElement())
+                            {
+                                while (reader.Read())
+                                {
+                                    switch (reader.Name)
+                                    {
+                                        case "Email":
+                                            eMailAddressList.Add(reader.ReadString());
+                                            break;
+                                        case "Classification":
+                                            category = reader.ReadString();
+                                            break;
+                                        case "Company":
+                                            company = reader.ReadString();
+                                            break;
+                                        case "Phone":
+                                            telNoList.Add(reader.ReadString());
+                                            break;
+                                        case "Department":
+                                            department = reader.ReadString();
+                                            break;
+                                        case "OrganizationCode":
+                                            organizationCode = reader.ReadString();
+                                            break;
+                                        case "FirstName":
+                                            contactFirstName = reader.ReadString();
+                                            break;
+                                        case "LastName":
+                                            contactFamilyName = reader.ReadString();
+                                            break;
+                                        case "Street":
+                                            addressLines.Add(reader.ReadString());
+                                            break;
+                                        case "POBox":
+                                            postalBox = reader.ReadString();
+                                            break;
+                                        case "Town":
+                                            town = reader.ReadString();
+                                            break;
+                                        case "State":
+                                            stateRegion = reader.ReadString();
+                                            break;
+                                        case "Zip":
+                                            category = reader.ReadString();
+                                            break;
+                                        case "Country":
+                                            country = reader.ReadString();
+                                            break;
+                                        case "Contact":
+                                            if (reader.IsStartElement()) break;     // Do nothing at the start tag, process when it is the end
+                                            CreateContact(file, category, company, department, organizationCode, contactFirstName,
+                                                contactFamilyName, postalBox, town, stateRegion, postalCode, country,
+                                                eMailAddressList, telNoList, addressLines);
+                                            // reset variables
+                                            {
+                                                category = null;
+                                                company = null;
+                                                department = null;
+                                                organizationCode = null;
+                                                contactFirstName = null;
+                                                contactFamilyName = null;
+                                                postalBox = null;
+                                                town = null;
+                                                stateRegion = null;
+                                                postalCode = null;
+                                                country = null;
+                                                eMailAddressList.Clear();
+                                                telNoList.Clear();
+                                                addressLines.Clear();
+                                            }
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    // Can't find the XML file, ignore the whole process and continue
+                }
+            }
+        }
+
         /// <summary>
         /// Creates the IfcProject.
         /// </summary>
@@ -1829,6 +1946,9 @@ namespace Revit.IFC.Export.Exporter
 
             exporterIFC.SetOwnerHistoryHandle(ownerHistory);
 
+            // Getting contact information from Revit extensible storage that COBie extension tool creates
+            GetCOBieContactInfo(file, doc);
+
             IFCAnyHandle units = CreateDefaultUnits(exporterIFC, doc);
             HashSet<IFCAnyHandle> repContexts = CreateContextInformation(exporterIFC, doc);
 
@@ -1861,6 +1981,26 @@ namespace Revit.IFC.Export.Exporter
                 IFCAnyHandle architectActor = IFCInstanceExporter.CreateActor(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, null, person);
                 IFCInstanceExporter.CreateRelAssignsToActor(file, GUIDUtil.CreateGUID(), ownerHistory, "Project Architect", null, projectHandles, null, architectActor, null);
             }
+        }
+
+        private void CreateContact(IFCFile file, string category, string company, string department, string organizationCode, string contactFirstName, 
+            string contactFamilyName, string postalBox, string town, string stateRegion, string postalCode, string country,
+            IList<string> eMailAddressList, IList<string> telNoList, IList<string> addressLines)
+        {
+            IFCAnyHandle contactTelecomAddress = IFCInstanceExporter.CreateTelecomAddress(file, null, null, null, telNoList, null, null, eMailAddressList, null);
+            IFCAnyHandle contactPostalAddress = IFCInstanceExporter.CreatePostalAddress(file, null, null, null, department, addressLines, postalBox, town, stateRegion,
+                    postalCode, country);
+            IList<IFCAnyHandle> contactAddresses = new List<IFCAnyHandle>();
+            contactAddresses.Add(contactTelecomAddress);
+            contactAddresses.Add(contactPostalAddress);
+            IFCAnyHandle contactPerson = IFCInstanceExporter.CreatePerson(file, null, contactFamilyName, contactFirstName, null,
+                null, null, null, contactAddresses);
+            IFCAnyHandle contactOrganization = IFCInstanceExporter.CreateOrganization(file, organizationCode, company, null,
+                null, null);
+            IFCAnyHandle actorRole = IFCInstanceExporter.CreateActorRole(file, "UserDefined", category, null);
+            IList<IFCAnyHandle> actorRoles = new List<IFCAnyHandle>();
+            actorRoles.Add(actorRole);
+            IFCAnyHandle contactEntry = IFCInstanceExporter.CreatePersonAndOrganization(file, contactPerson, contactOrganization, actorRoles);
         }
 
         private IFCAnyHandle GetTelecomAddressFromExtStorage(IFCFile file, Document document)

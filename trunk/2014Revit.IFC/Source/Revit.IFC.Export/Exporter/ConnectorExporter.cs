@@ -229,11 +229,14 @@ namespace Revit.IFC.Export.Exporter
                 IFCFlowDirection flowDir = (isBiDirectional) ? IFCFlowDirection.SourceAndSink : IFCFlowDirection.Sink;
 
                 IFCAnyHandle localPlacement = CreateLocalPlacementForConnector(exporterIFC, connector, inElementIFCHandle, flowDir);
-                portIn = IFCInstanceExporter.CreateDistributionPort(ifcFile, guid, ownerHistory, null, null, null, localPlacement, null, flowDir);
+                string portName = "InPort_" + inElement.Id;
+                string portType = "Flow";   // Assigned as Port.Description
+                portIn = IFCInstanceExporter.CreateDistributionPort(ifcFile, guid, ownerHistory, portName, portType, null, localPlacement, null, flowDir);
 
                 // Attach the port to the element
                 guid = GUIDUtil.CreateGUID();
-                IFCAnyHandle connectorIn = IFCInstanceExporter.CreateRelConnectsPortToElement(ifcFile, guid, ownerHistory, null, null, portIn, inElementIFCHandle);
+                string connectionName = inElement.Id + "|" + guid;
+                IFCAnyHandle connectorIn = IFCInstanceExporter.CreateRelConnectsPortToElement(ifcFile, guid, ownerHistory, connectionName, portType, portIn, inElementIFCHandle);
             }
 
             // ----------------------- Out Port----------------------
@@ -242,11 +245,14 @@ namespace Revit.IFC.Export.Exporter
                 IFCFlowDirection flowDir = (isBiDirectional) ? IFCFlowDirection.SourceAndSink : IFCFlowDirection.Source;
 
                 IFCAnyHandle localPlacement = CreateLocalPlacementForConnector(exporterIFC, connected, outElementIFCHandle, flowDir);
-                portOut = IFCInstanceExporter.CreateDistributionPort(ifcFile, guid, ownerHistory, null, null, null, localPlacement, null, flowDir);
+                string portName = "OutPort_" + outElement.Id;
+                string portType = "Flow";   // Assigned as Port.Description
+                portOut = IFCInstanceExporter.CreateDistributionPort(ifcFile, guid, ownerHistory, portName, portType, null, localPlacement, null, flowDir);
 
                 // Attach the port to the element
                 guid = GUIDUtil.CreateGUID();
-                IFCAnyHandle connectorOut = IFCInstanceExporter.CreateRelConnectsPortToElement(ifcFile, guid, ownerHistory, null, null, portOut, outElementIFCHandle);
+                string connectionName = outElement.Id + "|" + guid;
+                IFCAnyHandle connectorOut = IFCInstanceExporter.CreateRelConnectsPortToElement(ifcFile, guid, ownerHistory, connectionName, portType, portOut, outElementIFCHandle);
             }
 
             //  ----------------------- Out Port -> In Port ----------------------
@@ -255,7 +261,9 @@ namespace Revit.IFC.Export.Exporter
                 Element elemToUse = (inElement.Id.IntegerValue < outElement.Id.IntegerValue) ? inElement : outElement;
                 string guid = GUIDUtil.CreateGUID();
                 IFCAnyHandle realizingElement = null;
-                IFCInstanceExporter.CreateRelConnectsPorts(ifcFile, guid, ownerHistory, null, null, portIn, portOut, realizingElement);
+                string connectionName = IFCAnyHandleUtil.GetStringAttribute(portIn, "GlobalId") + "|" + IFCAnyHandleUtil.GetStringAttribute(portOut, "GlobalId");
+                string connectionType = "Flow";   // Assigned as Description
+                IFCInstanceExporter.CreateRelConnectsPorts(ifcFile, guid, ownerHistory, connectionName, connectionType, portIn, portOut, realizingElement);
                 AddConnectionInternal(inElement.Id, outElement.Id);
             }
 

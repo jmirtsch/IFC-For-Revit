@@ -1790,6 +1790,12 @@ namespace Revit.IFC.Export.Toolkit
         NotDefined
     }
 
+    public enum IFCBuildingElementProxyType
+    {
+        UserDefined,
+        NotDefined
+    }
+
     /// <summary>
     /// Defines the PSetElementShading::ShadingDeviceType possible values.
     /// </summary>

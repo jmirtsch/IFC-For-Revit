@@ -1436,6 +1436,7 @@ namespace Revit.IFC.Export.Exporter
             string basePropZoneName = "ZoneName";
             string basePropZoneObjectType = "ZoneObjectType";
             string basePropZoneDescription = "ZoneDescription";
+            string basePropZoneClassificationCode = "ZoneClassificationCode";
 
             // While a room may contain multiple zones, only one can have the extra parameters.  We will allow the first zone encountered
             // to be defined by them. If we require defining multiple zones in one room, then the code below should be modified to modify the 
@@ -1444,23 +1445,27 @@ namespace Revit.IFC.Export.Exporter
 
             while (++val < 1000)   // prevent infinite loop.
             {
-                string propZoneName, propZoneObjectType, propZoneDescription;
+                string propZoneName, propZoneObjectType, propZoneDescription, propZoneClassificationCode;
                 if (val == 1)
                 {
                     propZoneName = basePropZoneName;
                     propZoneObjectType = basePropZoneObjectType;
                     propZoneDescription = basePropZoneDescription;
+                    propZoneClassificationCode = basePropZoneClassificationCode;
                 }
                 else
                 {
                     propZoneName = basePropZoneName + " " + val;
                     propZoneObjectType = basePropZoneObjectType + " " + val;
                     propZoneDescription = basePropZoneDescription + " " + val;
+                    propZoneClassificationCode = basePropZoneClassificationCode + " " + val;
                 }
 
                 string zoneName;
                 string zoneObjectType;
                 string zoneDescription;
+                string zoneClassificationCode;
+                IFCAnyHandle zoneClassificationReference;
 
                 if (ParameterUtil.GetOptionalStringValueFromElementOrSymbol(element, propZoneName, out zoneName) == null)
                     break;
@@ -1468,13 +1473,26 @@ namespace Revit.IFC.Export.Exporter
                 // If we have an empty zone name, but the value exists, keep looking to make sure there aren't valid values later.
                 if (!String.IsNullOrEmpty(zoneName))
                 {
+                    Dictionary<string, IFCAnyHandle> classificationHandles = new Dictionary<string, IFCAnyHandle>();
+
                     ParameterUtil.GetStringValueFromElementOrSymbol(element, propZoneObjectType, out zoneObjectType);
 
                     ParameterUtil.GetStringValueFromElementOrSymbol(element, propZoneDescription, out zoneDescription);
 
+                    ParameterUtil.GetStringValueFromElementOrSymbol(element, propZoneClassificationCode, out zoneClassificationCode);
+                    string classificationName, classificationCode, classificationDescription;
+
+                    if (!String.IsNullOrEmpty(zoneClassificationCode))
+                    {
+                        ClassificationUtil.parseClassificationCode(zoneClassificationCode, propZoneClassificationCode, out classificationName, out classificationCode, out classificationDescription);
+                        string location = null;
+                        ExporterCacheManager.ClassificationLocationCache.TryGetValue(classificationName, out location);
+                        zoneClassificationReference = ClassificationUtil.CreateClassificationReference(file, classificationName, classificationCode, classificationDescription, location);
+                        classificationHandles.Add(classificationName, zoneClassificationReference);
+                    }
+
                     IFCAnyHandle roomHandle = productWrapper.GetElementOfType(IFCEntityType.IfcSpace);
 
-                    Dictionary<string, IFCAnyHandle> classificationHandles = new Dictionary<string, IFCAnyHandle>();
                     IFCAnyHandle energyAnalysisPSetHnd = null;
 
                     if (exportToCOBIE && !exportedExtraZoneInformation)

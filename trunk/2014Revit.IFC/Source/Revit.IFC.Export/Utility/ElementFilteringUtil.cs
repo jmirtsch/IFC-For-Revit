@@ -56,6 +56,10 @@ namespace Revit.IFC.Export.Utility
         /// </summary>
         IfcBuildingElementProxy,
         /// <summary>
+        /// Building element proxy type.
+        /// </summary>
+        IfcBuildingElementProxyType,
+        /// <summary>
         /// Building storey.
         /// </summary>
         IfcBuildingStorey,
@@ -99,6 +103,10 @@ namespace Revit.IFC.Export.Utility
         /// Railing.
         /// </summary>
         IfcRailing,
+        /// <summary>
+        /// Railing type.
+        /// </summary>
+        IfcRailingType,
         /// <summary>
         /// Ramp.
         /// </summary>
@@ -784,8 +792,8 @@ namespace Revit.IFC.Export.Utility
                     return IFCExportType.IfcBeam;
                 else if (String.Compare(ifcClassName, "IfcBuildingElementPart", true) == 0)
                     return IFCExportType.IfcBuildingElementPart;
-                else if (String.Compare(ifcClassName, "IfcBuildingElementProxy", true) == 0)
-                    return IFCExportType.IfcBuildingElementProxy;
+                else if (IsEqualToTypeName(ifcClassName, ("IfcBuildingElementProxy")))
+                    return IFCExportType.IfcBuildingElementProxyType;
                 else if (String.Compare(ifcClassName, "IfcBuildingStorey", true) == 0)
                     return IFCExportType.IfcBuildingStorey;  // Only to be used for exporting level information!
                 else if (IsEqualToTypeName(ifcClassName, ("IfcColumn")))
@@ -818,8 +826,8 @@ namespace Revit.IFC.Export.Utility
                 }
                 else if (String.Compare(ifcClassName, "IfcPlate", true) == 0)
                     return IFCExportType.IfcPlateType;
-                else if (String.Compare(ifcClassName, "IfcRailing", true) == 0)
-                    return IFCExportType.IfcRailing;
+                else if (IsEqualToTypeName(ifcClassName, ("IfcRailing")))
+                    return IFCExportType.IfcRailingType;
                 else if (String.Compare(ifcClassName, "IfcRamp", true) == 0)
                     return IFCExportType.IfcRamp;
                 else if (String.Compare(ifcClassName, "IfcRoof", true) == 0)
@@ -1024,7 +1032,7 @@ namespace Revit.IFC.Export.Utility
                 // This used to throw an exception, but this could abort export if the user enters a bad IFC class name
                 // in the ExportLayerOptions table.  In the future, we should log this.
                 //throw new Exception("IFC: Unknown IFC type in getExportTypeFromClassName: " + ifcClassName);
-                return IFCExportType.IfcBuildingElementProxy;
+                return IFCExportType.IfcBuildingElementProxyType;
             }
 
             return IFCExportType.DontExport;
@@ -1064,7 +1072,7 @@ namespace Revit.IFC.Export.Utility
             else if (categoryId == new ElementId(BuiltInCategory.OST_IOSModelGroups))
                 return IFCExportType.IfcGroup;
             else if (categoryId == new ElementId(BuiltInCategory.OST_Mass))
-                return IFCExportType.IfcBuildingElementProxy;
+                return IFCExportType.IfcBuildingElementProxyType;
             else if (categoryId == new ElementId(BuiltInCategory.OST_CurtainWallMullions))
             {
                 ifcEnumType = "MULLION";
@@ -1297,6 +1305,38 @@ namespace Revit.IFC.Export.Utility
         public static bool IsMEPType(IFCExportType exportType)
         {
             return (exportType >= IFCExportType.IfcDistributionElement && exportType <= IFCExportType.IfcWasteTerminalType);
+        }
+
+        /// <summary>
+        /// Check if an element assigned to IfcBuildingElementProxy is of MEP Type (by checking its connectors) to enable IfcBuildingElementProxy to take part
+        /// in the System component and connectivity
+        /// </summary>
+        /// <param name="element">The element</param>
+        /// <param name="exportType">IFC Export Type to check: only for IfcBuildingElementProxy or IfcBuildingElementProxyType</param>
+        /// <returns></returns>
+        public static bool ProxyForMEPType(Element element, IFCExportType exportType)
+        {
+            if ((exportType == IFCExportType.IfcBuildingElementProxy) || (exportType == IFCExportType.IfcBuildingElementProxyType))
+            {
+                try
+                {
+                    if (element is FamilyInstance)
+                    {
+                        MEPModel m = ((FamilyInstance)element).MEPModel;
+                        if (m != null && m.ConnectorManager != null)
+                        {
+                            return true;
+                        }
+                    }
+                    else
+                        return false;
+                }
+                catch
+                {
+                }
+            }
+
+            return false;
         }
     }
 }

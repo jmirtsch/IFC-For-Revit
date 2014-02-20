@@ -147,7 +147,8 @@ namespace Revit.IFC.Export.Exporter
                         string ifcEnumType;
                         IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
 
-                        if (exportType == IFCExportType.IfcBuildingElementProxy)
+                        if (exportType == IFCExportType.IfcBuildingElementProxy ||
+                            exportType == IFCExportType.IfcBuildingElementProxyType)
                         {
                             if (rebarGeometry != null)
                             {

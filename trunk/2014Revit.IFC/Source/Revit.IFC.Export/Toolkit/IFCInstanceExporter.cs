@@ -4292,6 +4292,14 @@ namespace Revit.IFC.Export.Toolkit
                 // check existence of the entity in IFC2x-
                 if (Enum.TryParse(typeEntityToCreate.ToString(), true, out IFC2xValidTypeEnum))
                 {
+                    // Special IFC2x2 checks to avoid creating a completely new enum.
+                    if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
+                    {
+                        // Not supported: IfcBuildingElementProxyType in IFC2x2.
+                        if (typeEntityToCreate == IFCEntityType.IfcBuildingElementProxyType)
+                            return null;
+                    }
+
                     IFCAnyHandle genericMEPType = CreateInstance(file, typeEntityToCreate);
 
                     IFCAnyHandleUtil.SetAttribute(genericMEPType, "PredefinedType", predefinedType, true);
@@ -8060,6 +8068,35 @@ namespace Revit.IFC.Export.Toolkit
             IFCAnyHandle actorHandle = CreateInstance(file, IFCEntityType.IfcActor);
             SetActor(actorHandle, guid, ownerHistory, name, description, objectType, theActor);
             return actorHandle;
+        }
+
+        /// <summary>
+        /// Create a handle representing IfcActorRole and assign it to the file
+        /// </summary>
+        /// <param name="file">the file</param>
+        /// <param name="roleStr">Role enum in string format</param>
+        /// <param name="userDefinedRole">string for User Defined Role</param>
+        /// <param name="description">description</param>
+        /// <returns></returns>
+        public static IFCAnyHandle CreateActorRole(IFCFile file, string roleStr, string userDefinedRole, string description)
+        {
+
+            IFCAnyHandle actorRole = CreateInstance(file, IFCEntityType.IfcActorRole);
+            if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+            {
+                Revit.IFC.Export.Toolkit.IFC4.IFCRole roleEnum;
+                if (!Enum.TryParse(roleStr, out roleEnum)) roleEnum = Revit.IFC.Export.Toolkit.IFC4.IFCRole.USERDEFINED;
+                IFCAnyHandleUtil.SetAttribute(actorRole, "Role", roleEnum);
+            }
+            else
+            {
+                Revit.IFC.Export.Toolkit.IFCRoleEnum roleEnum;
+                if (!Enum.TryParse(roleStr, out roleEnum)) roleEnum = Revit.IFC.Export.Toolkit.IFCRoleEnum.UserDefined;
+                IFCAnyHandleUtil.SetAttribute(actorRole, "Role", roleEnum);
+            }
+            IFCAnyHandleUtil.SetAttribute(actorRole, "UserDefinedRole", userDefinedRole);
+            IFCAnyHandleUtil.SetAttribute(actorRole, "Description", description);
+            return actorRole;
         }
 
         /// Creates an IfcGrid and assigns it to the file.
