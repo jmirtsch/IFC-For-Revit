@@ -117,7 +117,7 @@ namespace BIM.IFC.Exporter
                                         {
                                             if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.ExportPlateType) ||
                                                (exportType == IFCExportType.ExportMemberType))
-                                                exportType = IFCExportType.ExportBuildingElementProxy;
+                                                exportType = IFCExportType.ExportBuildingElementProxyType;
                                         }
                                         else
                                         {
@@ -342,7 +342,7 @@ namespace BIM.IFC.Exporter
                     ICollection<IFCAnyHandle> relatedElementIds = curtainWallSubWrapper.GetAllObjects();
                     if (relatedElementIds.Count > 0)
                     {
-                        string guid = ExporterIFCUtils.CreateSubElementGUID(element, (int)IFCCurtainWallSubElements.RelAggregates);
+                        string guid = GUIDUtil.CreateSubElementGUID(element, (int)IFCCurtainWallSubElements.RelAggregates);
                         HashSet<IFCAnyHandle> relatedElementIdSet = new HashSet<IFCAnyHandle>(relatedElementIds);
                         IFCInstanceExporter.CreateRelAggregates(file, guid, ownerHistory, null, null, elemHnd, relatedElementIdSet);
                     }

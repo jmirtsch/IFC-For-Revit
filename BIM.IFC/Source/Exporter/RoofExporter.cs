@@ -96,7 +96,7 @@ namespace BIM.IFC.Exporter
 
                         if (exportSlab)
                         {
-                            string slabGUID = ExporterIFCUtils.CreateSubElementGUID(roof, (int)IFCRoofSubElements.RoofSlabStart);
+                            string slabGUID = GUIDUtil.CreateSubElementGUID(roof, (int)IFCRoofSubElements.RoofSlabStart);
                             string slabName = roofName + ":1";
                             IFCAnyHandle slabLocalPlacementHnd = ExporterUtil.CopyLocalPlacement(file, localPlacement);
 

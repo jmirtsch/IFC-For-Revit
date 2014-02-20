@@ -85,7 +85,7 @@ namespace BIM.IFC.Exporter
                         string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
                         buildingElementProxy = IFCInstanceExporter.CreateBuildingElementProxy(file, guid,
-                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag, Toolkit.IFCElementComposition.Element);
+                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag, null);
 
                         productWrapper.AddElement(element, buildingElementProxy, placementSetter.GetLevelInfo(), ecData, true);
                     }

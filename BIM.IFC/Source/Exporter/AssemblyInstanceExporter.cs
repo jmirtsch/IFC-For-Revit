@@ -84,6 +84,9 @@ namespace BIM.IFC.Exporter
                     assemblyInstanceHnd = IFCInstanceExporter.CreateSystem(file, guid,
                         ownerHistory, name, description, objectType);
 
+                    // Create classification reference when System has classification filed name assigned to it
+                    ClassificationUtil.CreateClassification(exporterIFC, file, element, assemblyInstanceHnd);
+
                     HashSet<IFCAnyHandle> relatedBuildings = new HashSet<IFCAnyHandle>();
                     relatedBuildings.Add(ExporterCacheManager.BuildingHandle);
 

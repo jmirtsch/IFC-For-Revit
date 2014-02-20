@@ -122,7 +122,7 @@ namespace BIM.IFC.Exporter
 
                 tr.Commit();
                 }
-        }
+                }
 
         /// <summary>
         /// A R2013 hotfix to fix the IfcDoor opening height of specific cases where an IfcOpening in a wall contains arcs in its profile.
@@ -458,6 +458,14 @@ namespace BIM.IFC.Exporter
                                    paramTakesPrecedence, sizeable);
                             break;
                         }
+                    case IFCExportType.ExportSpace:
+                        {
+                            typeStyle = IFCInstanceExporter.CreateSpaceType(file, guid, ownerHistory, gentypeName,
+                               gentypeDescription, gentypeApplicableOccurrence, propertySets, repMapList, symbolTag,
+                               gentypeElementType);
+
+                            break;
+                        }
                     case IFCExportType.ExportSystemFurnitureElementType:
                         {
                             typeStyle = IFCInstanceExporter.CreateSystemFurnitureElementType(file, guid, ownerHistory, gentypeName,
@@ -487,14 +495,21 @@ namespace BIM.IFC.Exporter
                             break;
                         }
                     case IFCExportType.ExportBuildingElementProxy:
-                    default:
+                    case IFCExportType.ExportBuildingElementProxyType:
                         {
-                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap2dHnd))
-                                typeInfo.Map2DHandle = repMap2dHnd;
-                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap3dHnd))
-                                typeInfo.Map3DHandle = repMap3dHnd;
+                            typeStyle = IFCInstanceExporter.CreateBuildingElementProxyType(file, guid, ownerHistory, gentypeName,
+                                gentypeDescription, gentypeApplicableOccurrence, propertySets, repMapList, symbolTag,
+                                gentypeElementType, FamilyExporterUtil.GetBuildingElementProxyType(familyInstance, ifcEnumType));
                             break;
                         }
+                }
+
+                if (IFCAnyHandleUtil.IsNullOrHasNoValue(typeStyle))
+                {
+                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap2dHnd))
+                        typeInfo.Map2DHandle = repMap2dHnd;
+                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap3dHnd))
+                        typeInfo.Map3DHandle = repMap3dHnd;
                 }
             }
 
@@ -749,7 +764,7 @@ namespace BIM.IFC.Exporter
                             typeInfo.ScaledOuterPerimeter = extraParams.ScaledOuterPerimeter;
                         }
 
-                        ClassificationUtil.CreateClassification(exporterIFC, file, originalFamilySymbol, typeStyle);        // Create other generic classification from ClassificationCode(s)
+                        ClassificationUtil.CreateClassification(exporterIFC, file, familySymbol, typeStyle);        // Create other generic classification from ClassificationCode(s)
                         ClassificationUtil.CreateUniformatClassification(exporterIFC, file, originalFamilySymbol, typeStyle);
                     }
                 }
@@ -876,7 +891,7 @@ namespace BIM.IFC.Exporter
                         if (exportParts)
                             PartExporter.ExportHostPart(exporterIFC, familyInstance, instanceHandle, familyProductWrapper, setter, setter.GetPlacement(), overrideLevelId);
 
-                        if (ElementFilteringUtil.IsMEPType(exportType))
+                        if (ElementFilteringUtil.IsMEPType(exportType) || ElementFilteringUtil.ProxyForMEPType(familyInstance, exportType))
                         {
                             ExporterCacheManager.MEPCache.Register(familyInstance, instanceHandle);
                             // For ducts and pipes, check later if there is an associated duct or pipe.
@@ -1021,17 +1036,20 @@ namespace BIM.IFC.Exporter
 
                                     break;
                                 }
-                            case IFCExportType.ExportBuildingElementProxy:
+                            //case IFCExportType.ExportBuildingElementProxy:
+                            //case IFCExportType.ExportBuildingElementProxyType:
                             default:
                                 {
-                                    bool isBuildingElementProxy = (exportType == IFCExportType.ExportBuildingElementProxy);
+                                    if (IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
+                                    {
+                                        bool isBuildingElementProxy =
+                                            ((exportType == IFCExportType.ExportBuildingElementProxy) ||
+                                            (exportType == IFCExportType.ExportBuildingElementProxyType));
 
-                                    IFCAnyHandle localPlacementToUse;
+                                        IFCAnyHandle localPlacementToUse = null;
                                     ElementId roomId = setter.UpdateRoomRelativeCoordinates(familyInstance, out localPlacementToUse);
 
-                                    if (!isBuildingElementProxy)
-                                    {
-                                        if (FamilyExporterUtil.IsDistributionControlElementSubType(exportType))
+                                        if (!isBuildingElementProxy && FamilyExporterUtil.IsDistributionControlElementSubType(exportType))
                                         {
                                             string ifcelementType = null;
                                             ParameterUtil.GetStringValueFromElement(familyInstance.Id, "IfcElementType", out ifcelementType);
@@ -1039,26 +1057,13 @@ namespace BIM.IFC.Exporter
                                             instanceHandle = IFCInstanceExporter.CreateDistributionControlElement(file, instanceGUID,
                                                ownerHistory, instanceName, instanceDescription, instanceObjectType,
                                                localPlacementToUse, repHnd, instanceTag, ifcelementType);
-
-                                            bool containedInSpace = (roomId != ElementId.InvalidElementId);
-                                            bool associateToLevel = containedInSpace ? false : !isChildInContainer;
-                                            wrapper.AddElement(familyInstance, instanceHandle, setter, extraParams, associateToLevel);
-                                            if (containedInSpace)
-                                                exporterIFC.RelateSpatialElement(roomId, instanceHandle);
                                         }
-                                        else if (IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
+                                        else 
                                         {
-                                            isBuildingElementProxy = true;
-                                        }
-                                    }
-
-                                    if (isBuildingElementProxy)
-                                    {
-                                        Toolkit.IFCElementComposition proxyType = Toolkit.IFCElementComposition.Element;
-
                                         instanceHandle = IFCInstanceExporter.CreateBuildingElementProxy(file, instanceGUID,
                                            ownerHistory, instanceName, instanceDescription, instanceObjectType,
-                                           localPlacementToUse, repHnd, instanceTag, proxyType);
+                                           localPlacementToUse, repHnd, instanceTag, null);
+                                        }
 
                                         bool containedInSpace = (roomId != ElementId.InvalidElementId);
                                         bool associateToLevel = containedInSpace ? false : !isChildInContainer;
@@ -1154,6 +1159,7 @@ namespace BIM.IFC.Exporter
                     BeamExporter.ExportBeam(exporterIFC, element, geometryElement, productWrapper);
                     return true;
                 case IFCExportType.ExportBuildingElementProxy:
+                case IFCExportType.ExportBuildingElementProxyType:
                     {
                         Element type = element.Document.GetElement(element.GetTypeId());
                         string objectType = NamingUtil.GetObjectTypeOverride(element, (type != null) ? type.Name : "");
@@ -1181,11 +1187,16 @@ namespace BIM.IFC.Exporter
                     RampExporter.ExportRamp(exporterIFC, ifcEnumTypeString, element, geometryElement, 1, productWrapper);
                     return true;
                 case IFCExportType.ExportRailing:
+                case IFCExportType.ExportRailingType:
                     if (ExporterCacheManager.RailingCache.Contains(element.Id))
                     {
                         // Don't export this object if it is part of a parent railing.
                         if (!ExporterCacheManager.RailingSubElementCache.Contains(element.Id))
-                            RailingExporter.ExportRailing(exporterIFC, element, geometryElement, ifcEnumTypeString, productWrapper);
+                        {
+                            // RailingExporter.ExportRailing(exporterIFC, element, geometryElement, ifcEnumTypeString, productWrapper);
+                            // Allow railing code to create instance and type.
+                            return false;
+                        }
                     }
                     else
                     {

@@ -1449,7 +1449,7 @@ namespace BIM.IFC.Toolkit
             ValidateElementType(guid, ownerHistory, name, description, applicableOccurrence, propertySets, representationMaps, elementTag, elementType);
 
             IFCAnyHandle footingType = CreateInstance(file, IFCEntityType.IfcTypeObject);
-            SetTypeObject(footingType, guid, ownerHistory, name, description, applicableOccurrence, propertySets);
+                SetTypeObject(footingType, guid, ownerHistory, name, description, applicableOccurrence, propertySets);
 
             return footingType;
         }
@@ -1905,7 +1905,7 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandle representation, string elementTag, string steelGrade)
         {
             SetElement(reinforcingElement, guid, ownerHistory, name, description, objectType, objectPlacement, representation, elementTag);
-            IFCAnyHandleUtil.SetAttribute(reinforcingElement, "SteelGrade", steelGrade);
+                IFCAnyHandleUtil.SetAttribute(reinforcingElement, "SteelGrade", steelGrade);
         }
 
         private static void ValidSurfaceStyleShading(IFCAnyHandle surfaceColour)
@@ -2208,10 +2208,37 @@ namespace BIM.IFC.Toolkit
             ValidateSpatialStructureElement(guid, ownerHistory, name, description, objectType, objectPlacement, representation, longName, compositionType);
 
             IFCAnyHandle space = CreateInstance(file, IFCEntityType.IfcSpace);
-            IFCAnyHandleUtil.SetAttribute(space, "InteriorOrExteriorSpace", internalOrExternal);
+                IFCAnyHandleUtil.SetAttribute(space, "InteriorOrExteriorSpace", internalOrExternal);
             IFCAnyHandleUtil.SetAttribute(space, "ElevationWithFlooring", elevation);
             SetSpatialStructureElement(space, guid, ownerHistory, name, description, objectType, objectPlacement, representation, longName, compositionType);
             return space;
+        }
+
+        /// <summary>
+        /// Creates an IfcSpaceType, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="applicableOccurrence">The attribute optionally defines the data type of the occurrence object.</param>
+        /// <param name="propertySets">The property set(s) associated with the type.</param>
+        /// <param name="representationMaps">The mapped geometries associated with the type.</param>
+        /// <param name="elementTag">The tag that represents the entity.</param>
+        /// <param name="elementType">The type name.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateSpaceType(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
+            string description, string applicableOccurrence, HashSet<IFCAnyHandle> propertySets,
+            IList<IFCAnyHandle> representationMaps, string elementTag, string elementType)
+        {
+            ValidateElementType(guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+
+            IFCAnyHandle spaceType = CreateInstance(file, IFCEntityType.IfcSpaceType);
+            SetElementType(spaceType, guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+            return spaceType;
         }
 
         /// <summary>
@@ -3746,6 +3773,10 @@ namespace BIM.IFC.Toolkit
             return plate;
         }
 
+        #endregion
+
+        #region MEPObjects
+
         /// <summary>
         /// Creates an IfcActuatorType, and assigns it to the file.
         /// </summary>
@@ -4294,7 +4325,7 @@ namespace BIM.IFC.Toolkit
                 representationMaps, elementTag, elementType);
             return discreteAccessoryType;
         }
-        
+
         /// <summary>
         /// Creates an IfcDistributionChamberElementType, and assigns it to the file.
         /// </summary>
@@ -4958,6 +4989,64 @@ namespace BIM.IFC.Toolkit
             return junctionBoxType;
         }
 
+        /// <summary>
+        /// Creates an IfcBuildingElementProxyType, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="applicableOccurrence">The attribute optionally defines the data type of the occurrence object.</param>
+        /// <param name="propertySets">The property set(s) associated with the type.</param>
+        /// <param name="representationMaps">The mapped geometries associated with the type.</param>
+        /// <param name="elementTag">The tag that represents the entity.</param>
+        /// <param name="elementType">The type name.</param>
+        /// <param name="predefinedType">The predefined types.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateBuildingElementProxyType(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
+            string description, string applicableOccurrence, HashSet<IFCAnyHandle> propertySets,
+            IList<IFCAnyHandle> representationMaps, string elementTag, string elementType, IFCBuildingElementProxyType predefinedType)
+        {
+            ValidateElementType(guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+
+            IFCAnyHandle buildingElementProxyType = CreateInstance(file, IFCEntityType.IfcBuildingElementProxyType);
+            IFCAnyHandleUtil.SetAttribute(buildingElementProxyType, "PredefinedType", predefinedType);
+            SetElementType(buildingElementProxyType, guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+            return buildingElementProxyType;
+        }
+
+        /// <summary>
+        /// Creates an IfcRailingType, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="applicableOccurrence">The attribute optionally defines the data type of the occurrence object.</param>
+        /// <param name="propertySets">The property set(s) associated with the type.</param>
+        /// <param name="representationMaps">The mapped geometries associated with the type.</param>
+        /// <param name="elementTag">The tag that represents the entity.</param>
+        /// <param name="elementType">The type name.</param>
+        /// <param name="predefinedType">The predefined types.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateRailingType(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
+            string description, string applicableOccurrence, HashSet<IFCAnyHandle> propertySets,
+            IList<IFCAnyHandle> representationMaps, string elementTag, string elementType, IFCRailingType predefinedType)
+        {
+            ValidateElementType(guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+
+            IFCAnyHandle railingType = CreateInstance(file, IFCEntityType.IfcRailingType);
+            IFCAnyHandleUtil.SetAttribute(railingType, "PredefinedType", predefinedType);
+            SetElementType(railingType, guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+            return railingType;
+        }
+        
         /// <summary>
         /// Creates an IfcLampType, and assigns it to the file.
         /// </summary>
@@ -5890,7 +5979,7 @@ namespace BIM.IFC.Toolkit
             ValidateElement(guid, ownerHistory, name, description, objectType, objectPlacement, representation, elementTag);
 
             IFCAnyHandle distributionControlElement = CreateInstance(file, IFCEntityType.IfcDistributionControlElement);
-            IFCAnyHandleUtil.SetAttribute(distributionControlElement, "ControlElementId", controlElementId);
+		IFCAnyHandleUtil.SetAttribute(distributionControlElement, "ControlElementId", controlElementId);
             SetElement(distributionControlElement, guid, ownerHistory, name, description, objectType, objectPlacement, representation, elementTag);
             return distributionControlElement;
         }
@@ -6189,7 +6278,7 @@ namespace BIM.IFC.Toolkit
             SetTypeProduct(windowStyle, guid, ownerHistory, name, description, applicableOccurrence, propertySets, representationMaps, elementTag);
             return windowStyle;
         }
-
+        
         /// <summary>
         /// Creates an IfcFacetedBrep and assigns it to the file.
         /// </summary>
@@ -6399,9 +6488,9 @@ namespace BIM.IFC.Toolkit
         /// <param name="styles">A set of presentation styles that are assigned to styled items.</param>
         /// <returns>The handle.</returns>
         public static IFCAnyHandle CreatePresentationStyleAssignment(IFCFile file, ICollection<IFCAnyHandle> styles)
-        {
-            IFCAnyHandleUtil.ValidateSubTypeOf(styles, false, IFCEntityType.IfcCurveStyle, IFCEntityType.IfcSymbolStyle,
-                IFCEntityType.IfcFillAreaStyle, IFCEntityType.IfcTextStyle, IFCEntityType.IfcSurfaceStyle);
+            {
+                IFCAnyHandleUtil.ValidateSubTypeOf(styles, false, IFCEntityType.IfcCurveStyle, IFCEntityType.IfcSymbolStyle,
+                    IFCEntityType.IfcFillAreaStyle, IFCEntityType.IfcTextStyle, IFCEntityType.IfcSurfaceStyle);
 
             IFCAnyHandle presentationStyleAssignment = CreateInstance(file, IFCEntityType.IfcPresentationStyleAssignment);
             IFCAnyHandleUtil.SetAttribute(presentationStyleAssignment, "Styles", styles);
@@ -6851,8 +6940,8 @@ namespace BIM.IFC.Toolkit
 
             IFCAnyHandle transportElement = CreateInstance(file, IFCEntityType.IfcTransportElement);
             IFCAnyHandleUtil.SetAttribute(transportElement, "OperationType", operationType);
-            IFCAnyHandleUtil.SetAttribute(transportElement, "CapacityByWeight", capacityByWeight);
-            IFCAnyHandleUtil.SetAttribute(transportElement, "CapacityByNumber", capacityByNumber);
+                IFCAnyHandleUtil.SetAttribute(transportElement, "CapacityByWeight", capacityByWeight);
+                IFCAnyHandleUtil.SetAttribute(transportElement, "CapacityByNumber", capacityByNumber);
             SetElement(transportElement, guid, ownerHistory, name, description, objectType, objectPlacement, representation, elementTag);
             return transportElement;
         }
@@ -7054,7 +7143,7 @@ namespace BIM.IFC.Toolkit
         {
             ValidateRelAssociates(globalId, ownerHistory, name, description, relatedObjects);
 
-            IFCAnyHandleUtil.ValidateSubTypeOf(relatingClassification, false, IFCEntityType.IfcClassificationNotation, IFCEntityType.IfcClassificationReference);
+                IFCAnyHandleUtil.ValidateSubTypeOf(relatingClassification, false, IFCEntityType.IfcClassificationNotation, IFCEntityType.IfcClassificationReference);
 
             IFCAnyHandle relAssociatesClassification = CreateInstance(file, IFCEntityType.IfcRelAssociatesClassification);
             SetRelAssociates(relAssociatesClassification, globalId, ownerHistory, name, description, relatedObjects);
@@ -7547,6 +7636,26 @@ namespace BIM.IFC.Toolkit
             IFCAnyHandle actorHandle = CreateInstance(file, IFCEntityType.IfcActor);
             SetActor(actorHandle, guid, ownerHistory, name, description, objectType, theActor);
             return actorHandle;
+        }
+
+        /// <summary>
+        /// Create a handle representing IfcActorRole and assign it to the file
+        /// </summary>
+        /// <param name="file">the file</param>
+        /// <param name="roleStr">Role enum in string format</param>
+        /// <param name="userDefinedRole">string for User Defined Role</param>
+        /// <param name="description">description</param>
+        /// <returns></returns>
+        public static IFCAnyHandle CreateActorRole(IFCFile file, string roleStr, string userDefinedRole, string description)
+        {
+
+            IFCAnyHandle actorRole = CreateInstance(file, IFCEntityType.IfcActorRole);
+            BIM.IFC.Toolkit.IFCRoleEnum roleEnum;
+            if (!Enum.TryParse(roleStr, out roleEnum)) roleEnum = BIM.IFC.Toolkit.IFCRoleEnum.UserDefined;
+            IFCAnyHandleUtil.SetAttribute(actorRole, "Role", roleEnum);
+            IFCAnyHandleUtil.SetAttribute(actorRole, "UserDefinedRole", userDefinedRole);
+            IFCAnyHandleUtil.SetAttribute(actorRole, "Description", description);
+            return actorRole;
         }
 
         /// Creates an IfcGrid and assigns it to the file.

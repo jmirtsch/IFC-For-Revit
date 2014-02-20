@@ -365,7 +365,7 @@ namespace BIM.IFC.Exporter
                                     break;
                                 default:
                                     ifcPart = IFCInstanceExporter.CreateBuildingElementProxy(file, partGUID, ownerHistory, partName, partDescription, 
-                                        partObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, partTag, IFCElementComposition.Element);
+                                        partObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, partTag, null);
                                     break;
                             }
                         }

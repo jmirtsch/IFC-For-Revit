@@ -149,11 +149,11 @@ namespace BIM.IFC.Exporter
                         // We will use the category of the element to set a default value for the covering.
                         if (string.IsNullOrEmpty(ifcEnumType))
 						{
-	                        if (categoryId == new ElementId(BuiltInCategory.OST_Ceilings))
+                        if (categoryId == new ElementId(BuiltInCategory.OST_Ceilings))
     	                        ifcEnumType = "CEILING";
-        	                else if (categoryId == new ElementId(BuiltInCategory.OST_Floors))
+                        else if (categoryId == new ElementId(BuiltInCategory.OST_Floors))
             	                ifcEnumType = "FLOORING";
-                	        else if (categoryId == new ElementId(BuiltInCategory.OST_Roofs))
+                        else if (categoryId == new ElementId(BuiltInCategory.OST_Roofs))
                     	        ifcEnumType = "ROOFING";
 						}
 
@@ -175,10 +175,7 @@ namespace BIM.IFC.Exporter
                         bool containInSpace = false;
                         IFCAnyHandle localPlacementToUse = setter.GetPlacement();
 
-                        // Assign ceiling to room/IfcSpace if it is bounding a single Room for FMHandOver view only
-                        ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
-                        if (String.Compare(exportOptionsCache.SelectedConfigName, "FMHandOverView") == 0)
-                        {
+                        // Ceiling containment in Space is generally required and not specific to any view
                             if (ExporterCacheManager.CeilingSpaceRelCache.ContainsKey(element.Id))
                             {
                                 IList<ElementId> roomlist = ExporterCacheManager.CeilingSpaceRelCache[element.Id];
@@ -200,7 +197,6 @@ namespace BIM.IFC.Exporter
                                     containInSpace = true;
                                 }
                             }
-                        }
 
                         // if not contained in Space, assign it to default containment in Level
                         if (!containInSpace)

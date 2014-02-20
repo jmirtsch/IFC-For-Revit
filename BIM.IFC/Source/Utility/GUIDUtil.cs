@@ -113,7 +113,11 @@ namespace BIM.IFC.Utility
                     return paramValue;
             }
 
-            string guid = ExporterIFCUtils.CreateProjectLevelGUID(document, guidType);
+            // CreateProjectLevelGUID will throw an exception if the is no Project Information, which indicates
+            // some sort of error in the document.  Don't bother trying to create a consistent GUID in this case.
+            // This is fixed in 2014+.
+            string guid = (projectInfo != null) ? ExporterIFCUtils.CreateProjectLevelGUID(document, guidType) : CreateGUID();
+
             if ((projectInfo != null) && ExporterCacheManager.ExportOptionsCache.GUIDOptions.StoreIFCGUID)
             {
                 BuiltInParameter parameterId = BuiltInParameter.INVALID;

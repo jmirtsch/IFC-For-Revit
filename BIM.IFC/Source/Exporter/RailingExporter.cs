@@ -61,7 +61,7 @@ namespace BIM.IFC.Exporter
         /// <param name="typeName">
         /// The type name.
         /// </param>
-        private static Toolkit.IFCRailingType GetIFCRailingType(Element element, string typeName)
+        public static Toolkit.IFCRailingType GetIFCRailingType(Element element, string typeName)
         {
             string value = null;
             if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)

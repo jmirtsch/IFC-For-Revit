@@ -61,6 +61,14 @@ namespace BIM.IFC.Exporter
                     propertySetsToExport += InitCustomPropertySets;
             }
 
+            if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportUserDefinedPsets)
+            {
+                if (propertySetsToExport == null)
+                    propertySetsToExport = InitUserDefinedPropertySets;
+                else
+                    propertySetsToExport += InitUserDefinedPropertySets;
+            }
+
             if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
             {
                 if (propertySetsToExport == null)
@@ -103,6 +111,72 @@ namespace BIM.IFC.Exporter
         }
 
         // Properties
+
+        /// <summary>
+        /// Initialize user-defined property sets (from external file ParameterMappingTable.txt)
+        /// </summary>
+        /// <param name="propertySets">List of Psets</param>
+        /// <param name="fileVersion">file version - (not used)</param>
+        private static void InitUserDefinedPropertySets(IList<IList<PropertySetDescription>> propertySets, IFCVersion fileVersion)
+        {
+            Document document = ExporterCacheManager.Document;
+            IList<PropertySetDescription> userDefinedPropertySets = new List<PropertySetDescription>();
+
+            // get the Pset definitions (using the same file as PropertyMap)
+            IList<PropertySetDef> userDefinedPsetDefs = new List<PropertySetDef>();
+            userDefinedPsetDefs = PropertyMap.LoadUserDefinedPset();
+
+            // Loop through each definition and add the Pset entries into Cache
+            foreach (PropertySetDef psetDef in userDefinedPsetDefs)
+            {
+                // Add Propertyset entry
+                PropertySetDescription userDefinedPropetySet = new PropertySetDescription();
+                userDefinedPropetySet.Name = psetDef.propertySetName;
+                foreach (string elem in psetDef.applicableElements)
+                {
+                    IFCEntityType ifcEntity;
+                    if (Enum.TryParse(elem, out ifcEntity))
+                        userDefinedPropetySet.EntityTypes.Add(ifcEntity);
+                }
+                foreach (PropertyDef prop in psetDef.propertyDefs)
+                {
+                    PropertyType dataType;
+                    PropertySetEntry pSE;
+
+                    if (!Enum.TryParse(prop.propertyDataType, out dataType))
+                        dataType = PropertyType.Text;           // force default to Text/string if the type does not match with any correct datatype
+
+                    // Currently we will support only basic datatypes: Text, Integer, Real, Boolean
+                    switch (dataType)
+                    {
+                        case PropertyType.Integer:
+                            pSE = PropertySetEntry.CreateInteger(prop.propertyName);
+                            break;
+                        case PropertyType.Real:
+                            pSE = PropertySetEntry.CreateReal(prop.propertyName);
+                            break;
+                        case PropertyType.Boolean:
+                            pSE = PropertySetEntry.CreateBoolean(prop.propertyName);
+                            break;
+                        case PropertyType.Text:
+                            pSE = PropertySetEntry.CreateText(prop.propertyName);
+                            break;
+                        default:
+                            pSE = PropertySetEntry.CreateText(prop.propertyName);
+                            break;
+                    }
+
+                    if (string.Compare(prop.propertyName, prop.revitParameterName) != 0)
+                    {
+                        pSE.RevitParameterName = prop.revitParameterName;
+                    }
+                    userDefinedPropetySet.AddEntry(pSE);
+                }
+                userDefinedPropertySets.Add(userDefinedPropetySet);
+            }
+
+            propertySets.Add(userDefinedPropertySets);
+        }
 
         /// <summary>
         /// Initializes custom property sets from schedules.
@@ -286,8 +360,8 @@ namespace BIM.IFC.Exporter
             InitPropertySetSwitchingDeviceTypeToggleSwitch(commonPropertySets);
             InitPropertySetZoneCommon(commonPropertySets, fileVersion);
 
-            // Energy Analysis property sets.
-            InitPropertySetElementShading(commonPropertySets);
+                // Energy Analysis property sets.
+                InitPropertySetElementShading(commonPropertySets);
 
             // Misc. property sets
             InitPropertySetManufacturerTypeInformation(commonPropertySets);
@@ -362,7 +436,7 @@ namespace BIM.IFC.Exporter
             propertySetWallCommon.AddEntry(PropertySetEntryUtil.CreateSurfaceSpreadOfFlameEntry());
             propertySetWallCommon.AddEntry(PropertySetEntryUtil.CreateCombustibleEntry());
             propertySetWallCommon.AddEntry(PropertySetEntryUtil.CreateCompartmentationEntry());
-            
+
             commonPropertySets.Add(propertySetWallCommon);
         }
 
@@ -432,9 +506,9 @@ namespace BIM.IFC.Exporter
             ifcPSE.PropertyCalculator = CoveringFinishCalculator.Instance;
             propertySetCoveringCommon.AddEntry(ifcPSE);
 
-            ifcPSE = PropertySetEntry.CreatePositiveLength("TotalThickness");
-            ifcPSE.RevitBuiltInParameter = BuiltInParameter.CEILING_THICKNESS;
-            propertySetCoveringCommon.AddEntry(ifcPSE);
+                ifcPSE = PropertySetEntry.CreatePositiveLength("TotalThickness");
+                ifcPSE.RevitBuiltInParameter = BuiltInParameter.CEILING_THICKNESS;
+                propertySetCoveringCommon.AddEntry(ifcPSE);
 
             commonPropertySets.Add(propertySetCoveringCommon);
         }
@@ -611,7 +685,7 @@ namespace BIM.IFC.Exporter
             propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateLabel("IP_Code"));
             propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("InsulationStandardClass",
                 PropertyType.Label, typeof(PSetElectricalDeviceCommon_InsulationStandardClass)));
-            propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateIdentifier("PhaseReference"));
+                propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateIdentifier("PhaseReference"));
 
             commonPropertySets.Add(propertySetElectricalDeviceCommon);
         }
@@ -1208,8 +1282,8 @@ namespace BIM.IFC.Exporter
 
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateIdentifier("BuildingID"));
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateBoolean("IsPermanentID"));
-            propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("MainFireUse"));
-            propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("AncillaryFireUse"));
+                propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("MainFireUse"));
+                propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("AncillaryFireUse"));
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateBoolean("SprinklerProtection"));
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateBoolean("SprinklerProtectionAutomatic"));
             propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateLabel("OccupancyType"));
@@ -1283,7 +1357,7 @@ namespace BIM.IFC.Exporter
             propertySetSiteCommon.AddEntry(ifcPSE);
 
             ifcPSE = PropertySetEntry.CreateArea("TotalArea");
-            propertySetSiteCommon.AddEntry(ifcPSE);
+                propertySetSiteCommon.AddEntry(ifcPSE);
 
             commonPropertySets.Add(propertySetSiteCommon);
         }
@@ -1416,10 +1490,10 @@ namespace BIM.IFC.Exporter
 
             propertySetSpaceFireSafetyRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-            propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("MainFireUse"));
-            propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("AncillaryFireUse"));
+                propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("MainFireUse"));
+                propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("AncillaryFireUse"));
             propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("FireRiskFactor"));
-            propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("FireHazardFactor"));
+                propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateLabel("FireHazardFactor"));
             propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateBoolean("FlammableStorage"));
             propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateBoolean("FireExit"));
             propertySetSpaceFireSafetyRequirements.AddEntry(PropertySetEntry.CreateBoolean("SprinklerProtection"));
@@ -1486,7 +1560,7 @@ namespace BIM.IFC.Exporter
                 propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureWinterMax"));
                 propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureWinterMin"));
             }
-
+            
             commonPropertySets.Add(propertySetSpaceThermalRequirements);
         }
 
@@ -1605,7 +1679,7 @@ namespace BIM.IFC.Exporter
         private static void InitPropertySetProvisionForVoid(IList<PropertySetDescription> commonPropertySets)
         {
             PropertySetDescription propertySetProvisionForVoid= new PropertySetDescription();
-            propertySetProvisionForVoid.Name = "Pset_ProvisionForVoid";
+                propertySetProvisionForVoid.Name = "Pset_ProvisionForVoid";
             propertySetProvisionForVoid.EntityTypes.Add(IFCEntityType.IfcBuildingElementProxy);
             propertySetProvisionForVoid.ObjectType = "ProvisionForVoid";
 
@@ -1734,7 +1808,7 @@ namespace BIM.IFC.Exporter
             propertySetToiletPan.AddEntry(PropertySetEntry.CreateEnumeratedValue("PanMounting", PropertyType.Label,
                 typeof(PsetSanitaryTerminalTypeToiletPan_SanitaryMounting)));
             //propertySetToiletPan.AddEntry(PropertySetEntry.CreateMaterial("PanMaterial"));
-            propertySetToiletPan.AddEntry(PropertySetEntry.CreateText("PanColor"));
+                propertySetToiletPan.AddEntry(PropertySetEntry.CreateText("PanColor"));
             propertySetToiletPan.AddEntry(PropertySetEntry.CreatePositiveLength("SpilloverLevel"));
             propertySetToiletPan.AddEntry(PropertySetEntry.CreatePositiveLength("NominalLength"));
             propertySetToiletPan.AddEntry(PropertySetEntry.CreatePositiveLength("NominalWidth"));
@@ -1804,8 +1878,8 @@ namespace BIM.IFC.Exporter
                 PropertyType.Label, typeof(PsetSwitchingDeviceTypeToggleSwitch_SwitchUsage)));
             propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateEnumeratedValue("SwitchActivation",
                 PropertyType.Label, typeof(PsetSwitchingDeviceTypeToggleSwitch_SwitchActivation)));
-            propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateBoolean("IsIlluminated"));
-            propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateLabel("Legend"));
+                propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateBoolean("IsIlluminated"));
+                propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateLabel("Legend"));
 
             commonPropertySets.Add(propertySetSwitchingDeviceTypeToggleSwitch);
         }
@@ -2126,7 +2200,7 @@ namespace BIM.IFC.Exporter
             ifcBaseQuantity.AddEntry(ifcQE);
 
             ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
-            if (String.Compare(exportOptionsCache.SelectedConfigName, "FMHandOverView") != 0)   // FMHandOver view exclude NetArea, GrossArea, NetVolume and GrossVolumne
+            if (!ExporterUtil.IsFMHandoverView())   // FMHandOver view exclude NetArea, GrossArea, NetVolume and GrossVolumne
             {
                 ifcQE = new QuantityEntry("NetFloorArea");
                 ifcQE.QuantityType = QuantityType.Area;
@@ -2223,7 +2297,7 @@ namespace BIM.IFC.Exporter
             ifcBaseQuantity.AddEntry(ifcQE);
 
             ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
-            if (String.Compare(exportOptionsCache.SelectedConfigName, "FMHandOverView") != 0)   // FMHandOver view exclude GrossVolumne, FinishFloorHeight
+            if (!ExporterUtil.IsFMHandoverView())   // FMHandOver view exclude GrossVolumne, FinishFloorHeight
             {
                 ifcQE = new QuantityEntry("GrossVolume");
                 ifcQE.MethodOfMeasurement = "volume measured in geometry";
@@ -2438,5 +2512,7 @@ namespace BIM.IFC.Exporter
 
             cobieQuantities.Add(ifcCOBIEQuantity);
         }
+
+
     }
 }

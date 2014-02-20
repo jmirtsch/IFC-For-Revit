@@ -246,7 +246,7 @@ namespace BIM.IFC.Utility
                 casingThicknessOpt = value2 * scale;
             }
 
-            string doorLiningGUID = ExporterIFCUtils.CreateSubElementGUID(familyInstance, (int)IFCDoorSubElements.DoorLining);
+            string doorLiningGUID = GUIDUtil.CreateSubElementGUID(familyInstance, (int)IFCDoorSubElements.DoorLining);
             string doorLiningName = NamingUtil.GetIFCName(familyInstance);
             return IFCInstanceExporter.CreateDoorLiningProperties(file, doorLiningGUID, ownerHistory,
                doorLiningName, null, liningDepthOpt, liningThicknessOpt, thresholdDepthOpt, thresholdThicknessOpt,
