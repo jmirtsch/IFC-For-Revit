@@ -725,15 +725,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:IFC Export UI for Autodesk Revit 2014"
-        "ProductCode" = "8:{F6F5D495-B450-4959-A2CC-18415F128C47}"
-        "PackageCode" = "8:{6F91D8B4-18C3-487F-8863-4BC329EA70B2}"
+        "ProductCode" = "8:{33AC53AE-F143-4F7A-8AA8-C0522453F4E9}"
+        "PackageCode" = "8:{71220028-CC9E-48FE-9928-4726CF67BFB1}"
         "UpgradeCode" = "8:{5DE97805-1D15-43B6-BBFD-A9238E20EE86}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:2.8.0"
+        "ProductVersion" = "8:2.9.0"
         "Manufacturer" = "8:Revit IFC export alternate UI"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -1306,7 +1306,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_0BAA4D8E34C7406E9640FBDBDCDD888A"
             {
-            "SourcePath" = "8:..\\..\\..\\..\\..\\Intermediate\\Debugx64\\IFCExporterUI\\IFCExportUIOverride.dll"
+            "SourcePath" = "8:..\\..\\..\\..\\..\\Intermediate\\Releasex64\\IFCExporterUI\\IFCExportUIOverride.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_C1E5272C0F814A53BA7DB8E77FD46EA7"
@@ -1334,7 +1334,7 @@
             }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_2ED7256D103048EB8509B56FD3883772"
             {
-            "SourcePath" = "8:..\\..\\..\\..\\..\\Intermediate\\Debugx64\\BIM.IFC.Common\\BIM.IFC.Common.dll"
+            "SourcePath" = "8:..\\..\\..\\..\\..\\Intermediate\\Releasex64\\BIM.IFC.Common\\BIM.IFC.Common.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_C1E5272C0F814A53BA7DB8E77FD46EA7"
