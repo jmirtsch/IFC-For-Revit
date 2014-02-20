@@ -46,9 +46,10 @@ namespace BIM.IFC.Export.UI
         /// <param name="exportInternalRevit">if true, internal Revit parameter groups are exported.</param>
         /// <param name="exportIFCCommon">if true, IFC Common property sets are exported.</param>
         /// <param name="exportSchedules">if true, schedules are exported.</param>
-        public IFCExportedPropertySets(bool exportInternalRevit, bool exportIFCCommon, bool exportSchedules)
+        /// <param name="exportSchedules">if true, user defined property sets are exported.</param>
+        public IFCExportedPropertySets(bool exportInternalRevit, bool exportIFCCommon, bool exportSchedules, bool exportUserDefined)
         {
-            ExportedPropertySets = ((exportInternalRevit) ? 1 : 0) + ((exportIFCCommon) ? 2 : 0) + ((exportSchedules) ? 4 : 0);
+            ExportedPropertySets = ((exportInternalRevit) ? 1 : 0) + ((exportIFCCommon) ? 2 : 0) + ((exportSchedules) ? 4 : 0) + ((exportUserDefined) ? 8 : 0);
         }
 
         /// <summary>
@@ -75,6 +76,22 @@ namespace BIM.IFC.Export.UI
                     return Resources.PropertySetsSchedulesPlusIFC;
                 case 7:
                     return Resources.PropertySetsSchedulesPlusRevitPlusIFC;
+                case 8:
+                    return Resources.PropertySetsUserDefined;
+                case 9:
+                    return Resources.PropertySetsInternalRevitPlusUserDefined;
+                case 10:
+                    return Resources.PropertySetsIFCCommonPlusUserDefined;
+                case 11:
+                    return Resources.PropertySetsRevitPlusIFCPlusUserDefined;
+                case 12:
+                    return Resources.PropertySetsSchedulesPlusUserDefined;
+                case 13:
+                    return Resources.PropertySetsSchedulesPlusRevitPlusUserDefined;
+                case 14:
+                    return Resources.PropertySetsSchedulesPlusIFCPlusUserDefined;
+                case 15:
+                    return Resources.PropertySetsSchedulesPlusRevitPlusIFCPlusUserDefined;
                 default:
                     return Resources.PropertySetsUnrecognized;
             }

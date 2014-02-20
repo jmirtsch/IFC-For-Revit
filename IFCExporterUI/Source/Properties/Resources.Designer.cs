@@ -72,9 +72,18 @@ namespace BIM.IFC.Export.UI.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Default ({0}).
         /// </summary>
-        internal static string DefaultPhase {
+        internal static string Default {
             get {
                 return ResourceManager.GetString("Default", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Default Phase to export.
+        /// </summary>
+        internal static string DefaultPhase {
+            get {
+                return ResourceManager.GetString("DefaultPhase", resourceCulture);
             }
         }
         
@@ -147,6 +156,15 @@ namespace BIM.IFC.Export.UI.Properties {
         internal static string ExportSolidModelRep {
             get {
                 return ResourceManager.GetString("ExportSolidModelRep", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Export user-defined property sets.
+        /// </summary>
+        internal static string ExportUserDefinedPsets {
+            get {
+                return ResourceManager.GetString("ExportUserDefinedPsets", resourceCulture);
             }
         }
         
@@ -286,11 +304,29 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to IFC Common, User Defined.
+        /// </summary>
+        internal static string PropertySetsIFCCommonPlusUserDefined {
+            get {
+                return ResourceManager.GetString("PropertySetsIFCCommonPlusUserDefined", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Internal Revit only.
         /// </summary>
         internal static string PropertySetsInternalRevit {
             get {
                 return ResourceManager.GetString("PropertySetsInternalRevit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Revit, User Defined.
+        /// </summary>
+        internal static string PropertySetsInternalRevitPlusUserDefined {
+            get {
+                return ResourceManager.GetString("PropertySetsInternalRevitPlusUserDefined", resourceCulture);
             }
         }
         
@@ -313,6 +349,15 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Internal Revit, IFC Common, User Defined.
+        /// </summary>
+        internal static string PropertySetsRevitPlusIFCPlusUserDefined {
+            get {
+                return ResourceManager.GetString("PropertySetsRevitPlusIFCPlusUserDefined", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Schedules only.
         /// </summary>
         internal static string PropertySetsSchedules {
@@ -327,6 +372,15 @@ namespace BIM.IFC.Export.UI.Properties {
         internal static string PropertySetsSchedulesPlusIFC {
             get {
                 return ResourceManager.GetString("PropertySetsSchedulesPlusIFC", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to IFC Common, Schedules, User Defined.
+        /// </summary>
+        internal static string PropertySetsSchedulesPlusIFCPlusUserDefined {
+            get {
+                return ResourceManager.GetString("PropertySetsSchedulesPlusIFCPlusUserDefined", resourceCulture);
             }
         }
         
@@ -349,11 +403,47 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Internal Revit, IFC Common, Schedules, User Defined.
+        /// </summary>
+        internal static string PropertySetsSchedulesPlusRevitPlusIFCPlusUserDefined {
+            get {
+                return ResourceManager.GetString("PropertySetsSchedulesPlusRevitPlusIFCPlusUserDefined", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Internal Revit, Schedules, User Defined.
+        /// </summary>
+        internal static string PropertySetsSchedulesPlusRevitPlusUserDefined {
+            get {
+                return ResourceManager.GetString("PropertySetsSchedulesPlusRevitPlusUserDefined", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Schedules, User Defined.
+        /// </summary>
+        internal static string PropertySetsSchedulesPlusUserDefined {
+            get {
+                return ResourceManager.GetString("PropertySetsSchedulesPlusUserDefined", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unrecognized property sets.
         /// </summary>
         internal static string PropertySetsUnrecognized {
             get {
                 return ResourceManager.GetString("PropertySetsUnrecognized", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to User Defined only.
+        /// </summary>
+        internal static string PropertySetsUserDefined {
+            get {
+                return ResourceManager.GetString("PropertySetsUserDefined", resourceCulture);
             }
         }
         
