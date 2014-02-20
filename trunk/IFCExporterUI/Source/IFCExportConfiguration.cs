@@ -125,6 +125,12 @@ namespace BIM.IFC.Export.UI
         public bool ExportSchedulesAsPsets { get; set; }
 
         /// <summary>
+        /// True to allow user defined property sets to be exported
+        /// False to ignore them
+        /// </summary>
+        public bool ExportUserDefinedPsets { get; set; }
+
+        /// <summary>
         /// True to export bounding box.
         /// False to exclude them.
         /// </summary>
@@ -203,6 +209,7 @@ namespace BIM.IFC.Export.UI
             this.ExportBoundingBox = false;
             this.ExportSolidModelRep = false;
             this.ExportSchedulesAsPsets = false;
+            this.ExportUserDefinedPsets = false;
             this.IncludeSiteElevation = false;
             this.UseCoarseTessellation = true;
             this.StoreIFCGUID = false;
@@ -219,35 +226,40 @@ namespace BIM.IFC.Export.UI
         /// <param name="exportBaseQuantities">The ExportBaseQuantities.</param>
         /// <param name="splitWalls">The SplitWallsAndColumns.</param>
         /// <param name="internalSets">The ExportInternalRevitPropertySets.</param>
+        /// <param name="schedulesAsPSets">The ExportSchedulesAsPsets.</param>
+        /// <param name="userDefinedPSets">The ExportUserDefinedPsets.</param>
         /// <param name="PlanElems2D">The Export2DElements.</param>
         /// <param name="exportBoundingBox">The exportBoundingBox.</param>
         /// <returns>The builtIn configuration.</returns>
-        public static IFCExportConfiguration CreateBuiltInConfiguration(string name, 
-                                   IFCVersion ifcVersion, 
+        public static IFCExportConfiguration CreateBuiltInConfiguration(string name,
+                                   IFCVersion ifcVersion,
                                    int spaceBoundaries,
                                    bool exportBaseQuantities,
                                    bool splitWalls,
                                    bool internalSets,
+                                   bool schedulesAsPSets,
+                                   bool userDefinedPSets,
                                    bool PlanElems2D,
                                    bool exportBoundingBox)
         {
             IFCExportConfiguration configuration = new IFCExportConfiguration();
-            configuration.Name = name; 
-            configuration.IFCVersion = ifcVersion; 
-            configuration.IFCFileType = IFCFileFormat.Ifc; 
+            configuration.Name = name;
+            configuration.IFCVersion = ifcVersion;
+            configuration.IFCFileType = IFCFileFormat.Ifc;
             configuration.SpaceBoundaries = spaceBoundaries;
-            configuration.ExportBaseQuantities = exportBaseQuantities;                    
+            configuration.ExportBaseQuantities = exportBaseQuantities;
             configuration.SplitWallsAndColumns = splitWalls;
             configuration.ExportInternalRevitPropertySets = internalSets;
             configuration.ExportIFCCommonPropertySets = true;
             configuration.Export2DElements = PlanElems2D;
-            configuration.VisibleElementsOfCurrentView = false;   
+            configuration.VisibleElementsOfCurrentView = false;
             configuration.Use2DRoomBoundaryForVolume = false;
             configuration.UseFamilyAndTypeNameForReference = false;
             configuration.ExportPartsAsBuildingElements = false;
             configuration.ExportBoundingBox = exportBoundingBox;
             configuration.ExportSolidModelRep = false;
-            configuration.ExportSchedulesAsPsets = false;
+            configuration.ExportSchedulesAsPsets = schedulesAsPSets;
+            configuration.ExportUserDefinedPsets = userDefinedPSets;
             configuration.IncludeSiteElevation = false;
             configuration.UseCoarseTessellation = true;
             configuration.StoreIFCGUID = false;
@@ -284,6 +296,7 @@ namespace BIM.IFC.Export.UI
             this.ExportBoundingBox = other.ExportBoundingBox;
             this.ExportSolidModelRep = other.ExportSolidModelRep;
             this.ExportSchedulesAsPsets = other.ExportSchedulesAsPsets;
+            this.ExportUserDefinedPsets = other.ExportUserDefinedPsets;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
             this.UseCoarseTessellation = other.UseCoarseTessellation;
             this.StoreIFCGUID = other.StoreIFCGUID;
@@ -325,6 +338,7 @@ namespace BIM.IFC.Export.UI
             this.ExportBoundingBox = other.ExportBoundingBox;
             this.ExportSolidModelRep = other.ExportSolidModelRep;
             this.ExportSchedulesAsPsets = other.ExportSchedulesAsPsets;
+            this.ExportUserDefinedPsets = other.ExportUserDefinedPsets;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
             this.UseCoarseTessellation = other.UseCoarseTessellation;
             this.ActivePhaseId = other.ActivePhaseId;
@@ -385,6 +399,7 @@ namespace BIM.IFC.Export.UI
             options.AddOption("ExportBoundingBox", ExportBoundingBox.ToString());
             options.AddOption("ExportSolidModelRep", ExportSolidModelRep.ToString());
             options.AddOption("ExportSchedulesAsPsets", ExportSchedulesAsPsets.ToString());
+            options.AddOption("ExportUserDefinedPsets", ExportUserDefinedPsets.ToString());
             options.AddOption("IncludeSiteElevation", IncludeSiteElevation.ToString());
             options.AddOption("UseCoarseTessellation", UseCoarseTessellation.ToString());
             options.AddOption("StoreIFCGUID", StoreIFCGUID.ToString());
@@ -431,7 +446,8 @@ namespace BIM.IFC.Export.UI
                 IFCPhaseAttributes phaseAttributes = new IFCPhaseAttributes(ActivePhaseId);
                 builder.AppendLine(GetDescriptionLine(Resources.ActivePhase, phaseAttributes.ToString()));
 
-                IFCExportedPropertySets exportedPropertySets = new IFCExportedPropertySets(ExportInternalRevitPropertySets, ExportIFCCommonPropertySets, ExportSchedulesAsPsets);
+                IFCExportedPropertySets exportedPropertySets = 
+                    new IFCExportedPropertySets(ExportInternalRevitPropertySets, ExportIFCCommonPropertySets, ExportSchedulesAsPsets, ExportUserDefinedPsets);
                 builder.AppendLine(GetDescriptionLine(Resources.PropertySets, exportedPropertySets.ToString()));
 
                 // Sort by "do" and "don't"
