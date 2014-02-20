@@ -573,7 +573,7 @@ namespace BIM.IFC.Exporter
                             return;
                         }
 
-                        string containedStairGuid = ExporterIFCUtils.CreateSubElementGUID(stair, (int)IFCStairSubElements.ContainedStair);
+                        string containedStairGuid = GUIDUtil.CreateSubElementGUID(stair, (int)IFCStairSubElements.ContainedStair);
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                         string stairName = NamingUtil.GetNameOverride(stair, NamingUtil.GetIFCName(stair));
                         string stairDescription = NamingUtil.GetDescriptionOverride(stair, null);

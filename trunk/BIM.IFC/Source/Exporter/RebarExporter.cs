@@ -148,7 +148,7 @@ namespace BIM.IFC.Exporter
                         string ifcEnumType;
                         IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
 
-                            if (exportType == IFCExportType.ExportBuildingElementProxy)
+                        if ((exportType == IFCExportType.ExportBuildingElementProxy) || (exportType == IFCExportType.ExportBuildingElementProxyType))
                         {
                             if (rebarGeometry != null)
                             {

@@ -1790,6 +1790,12 @@ namespace BIM.IFC.Toolkit
         NotDefined
     }
 
+    public enum IFCBuildingElementProxyType
+    {
+        UserDefined,
+        NotDefined
+    }
+
     /// <summary>
     /// IFC entity types.
     /// </summary>

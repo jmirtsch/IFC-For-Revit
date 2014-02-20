@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.DB.Electrical;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.DB.Structure;
@@ -55,6 +56,10 @@ namespace BIM.IFC.Utility
         /// Building element proxy.
         /// </summary>
         ExportBuildingElementProxy,
+        /// <summary>
+        /// Building element proxy type.
+        /// </summary>
+        ExportBuildingElementProxyType,
         /// <summary>
         /// Building storey.
         /// </summary>
@@ -99,6 +104,10 @@ namespace BIM.IFC.Utility
         /// Railing.
         /// </summary>
         ExportRailing,
+        /// <summary>
+        /// Railing type.
+        /// </summary>
+        ExportRailingType,
         /// <summary>
         /// Ramp.
         /// </summary>
@@ -540,7 +549,8 @@ namespace BIM.IFC.Utility
             // Design options
             filters.Add(GetDesignOptionFilter());
 
-            // Phases
+            // Phases: only for non-spatial elements.  For spatial elements, we will do a check afterwards.
+            if (!forSpatialElements)
             filters.Add(GetPhaseStatusFilter(document));
 
             return new LogicalAndFilter(filters);
@@ -725,258 +735,258 @@ namespace BIM.IFC.Utility
         {
             if (ifcClassName.StartsWith("Ifc", true, null))
             {
-            if (String.Compare(ifcClassName, "IfcAnnotation", true) == 0)
-            {
-                // Used to mark curves, text, and filled regions for export.
+                if (String.Compare(ifcClassName, "IfcAnnotation", true) == 0)
+                {
+                    // Used to mark curves, text, and filled regions for export.
                 return IFCExportType.ExportAnnotation;
-            }
-            else if (String.Compare(ifcClassName, "IfcAssembly", true) == 0)
+                }
+                else if (String.Compare(ifcClassName, "IfcAssembly", true) == 0)
                 return IFCExportType.ExportAssembly;
-            else if (String.Compare(ifcClassName, "IfcBeam", true) == 0)
+                else if (String.Compare(ifcClassName, "IfcBeam", true) == 0)
                 return IFCExportType.ExportBeam;
-            else if (String.Compare(ifcClassName, "IfcBuildingElementPart", true) == 0)
+                else if (String.Compare(ifcClassName, "IfcBuildingElementPart", true) == 0)
                 return IFCExportType.ExportBuildingElementPart;
-            else if (String.Compare(ifcClassName, "IfcBuildingElementProxy", true) == 0)
-                return IFCExportType.ExportBuildingElementProxy;
-            else if (String.Compare(ifcClassName, "IfcBuildingStorey", true) == 0)
+                else if (IsEqualToTypeName(ifcClassName, ("IfcBuildingElementProxy")))
+                    return IFCExportType.ExportBuildingElementProxyType;
+                else if (String.Compare(ifcClassName, "IfcBuildingStorey", true) == 0)
                 return IFCExportType.ExportBuildingStorey;  // Only to be used for exporting level information!
-            else if (IsEqualToTypeName(ifcClassName, ("IfcColumn")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcColumn")))
                 return IFCExportType.ExportColumnType;
-            else if (String.Compare(ifcClassName, "IfcCovering", true) == 0)
+                else if (String.Compare(ifcClassName, "IfcCovering", true) == 0)
                 return IFCExportType.ExportCovering;
-            else if (String.Compare(ifcClassName, "IfcCurtainWall", true) == 0)
+                else if (String.Compare(ifcClassName, "IfcCurtainWall", true) == 0)
                 return IFCExportType.ExportCurtainWall;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcDoor")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcDoor")))
                 return IFCExportType.ExportDoorType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcElementAssembly")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcElementAssembly")))
                 return IFCExportType.ExportElementAssembly;
-            else if (String.Compare(ifcClassName, "IfcFloor", true) == 0)
-            {
-                // IfcFloor is not a real type, but is being kept for backwards compatibility as a typo.
+                else if (String.Compare(ifcClassName, "IfcFloor", true) == 0)
+                {
+                    // IfcFloor is not a real type, but is being kept for backwards compatibility as a typo.
                 return IFCExportType.ExportSlab;
-            }
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFooting")))
+                }
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFooting")))
                 return IFCExportType.ExportFooting;
-            else if (String.Compare(ifcClassName, "IfcGrid", true) == 0)
+                else if (String.Compare(ifcClassName, "IfcGrid", true) == 0)
                 return IFCExportType.ExportGrid;
-            else if (String.Compare(ifcClassName, "IfcGroup", true) == 0)
+                else if (String.Compare(ifcClassName, "IfcGroup", true) == 0)
                 return IFCExportType.ExportGroup;
-            else if (String.Compare(ifcClassName, "IfcMember", true) == 0)
+                else if (String.Compare(ifcClassName, "IfcMember", true) == 0)
                 return IFCExportType.ExportMemberType;
-            else if (String.Compare(ifcClassName, "IfcOpeningElement", true) == 0)
-            {
-                // Used to mark reveals for export.
+                else if (String.Compare(ifcClassName, "IfcOpeningElement", true) == 0)
+                {
+                    // Used to mark reveals for export.
                 return IFCExportType.ExportOpeningElement;
-            }
-            else if (String.Compare(ifcClassName, "IfcPlate", true) == 0)
+                }
+                else if (String.Compare(ifcClassName, "IfcPlate", true) == 0)
                 return IFCExportType.ExportPlateType;
-            else if (String.Compare(ifcClassName, "IfcRailing", true) == 0)
-                return IFCExportType.ExportRailing;
-            else if (String.Compare(ifcClassName, "IfcRamp", true) == 0)
+                else if (IsEqualToTypeName(ifcClassName, ("IfcRailing")))
+                    return IFCExportType.ExportRailing;
+                else if (String.Compare(ifcClassName, "IfcRamp", true) == 0)
                 return IFCExportType.ExportRamp;
-            else if (String.Compare(ifcClassName, "IfcRoof", true) == 0)
+                else if (String.Compare(ifcClassName, "IfcRoof", true) == 0)
                 return IFCExportType.ExportRoof;
-            else if (String.Compare(ifcClassName, "IfcSite", true) == 0)
+                else if (String.Compare(ifcClassName, "IfcSite", true) == 0)
                 return IFCExportType.ExportSite;
-            else if (String.Compare(ifcClassName, "IfcSlab", true) == 0)
+                else if (String.Compare(ifcClassName, "IfcSlab", true) == 0)
                 return IFCExportType.ExportSlab;
-            else if (String.Compare(ifcClassName, "IfcSpace", true) == 0)
-            {
-                // Not a real type; used to mark rooms for export.
+                else if (String.Compare(ifcClassName, "IfcSpace", true) == 0)
+                {
+                    // Not a real type; used to mark rooms for export.
                 return IFCExportType.ExportSpace;
-            }
-            else if (String.Compare(ifcClassName, "IfcStair", true) == 0)
+                }
+                else if (String.Compare(ifcClassName, "IfcStair", true) == 0)
                 return IFCExportType.ExportStair;
-            else if (String.Compare(ifcClassName, "IfcSystem", true) == 0)
+                else if (String.Compare(ifcClassName, "IfcSystem", true) == 0)
                 return IFCExportType.ExportSystem;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcTransportElement")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcTransportElement")))
                 return IFCExportType.ExportTransportElementType;
-            else if ((String.Compare(ifcClassName, "IfcWall", true) == 0) ||
-                     (String.Compare(ifcClassName, "IfcWallStandardCase", true) == 0))
+                else if ((String.Compare(ifcClassName, "IfcWall", true) == 0) ||
+                         (String.Compare(ifcClassName, "IfcWallStandardCase", true) == 0))
                 return IFCExportType.ExportWall;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcWindow")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcWindow")))
                 return IFCExportType.ExportWindowType;
-            // furnishing type(s) to be exported as geometry, not mapped item
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFurnishingElement")))
+                // furnishing type(s) to be exported as geometry, not mapped item
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFurnishingElement")))
                 return IFCExportType.ExportFurnishingElement;
-            // furnishing types to be exported as mapped item
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFurniture")))
+                // furnishing types to be exported as mapped item
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFurniture")))
                 return IFCExportType.ExportFurnitureType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcSystemFurnitureElement")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcSystemFurnitureElement")))
                 return IFCExportType.ExportSystemFurnitureElementType;
-            // distribution types to be exported as geometry, not mapped item
-            else if (IsEqualToTypeName(ifcClassName, ("IfcDistributionElement")))
+                // distribution types to be exported as geometry, not mapped item
+                else if (IsEqualToTypeName(ifcClassName, ("IfcDistributionElement")))
                 return IFCExportType.ExportDistributionElement;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcDistributionControlElement")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcDistributionControlElement")))
                 return IFCExportType.ExportDistributionControlElement;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcDistributionFlowElement")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcDistributionFlowElement")))
                 return IFCExportType.ExportDistributionFlowElement;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcEnergyConversionDevice")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcEnergyConversionDevice")))
                 return IFCExportType.ExportEnergyConversionDevice;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowFitting")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowFitting")))
                 return IFCExportType.ExportFlowFitting;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowMovingDevice")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowMovingDevice")))
                 return IFCExportType.ExportFlowMovingDevice;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowSegment")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowSegment")))
                 return IFCExportType.ExportFlowSegment;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowSegmentStorageDevice")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowSegmentStorageDevice")))
                 return IFCExportType.ExportFlowStorageDevice;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowTerminal")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowTerminal")))
                 return IFCExportType.ExportFlowTerminal;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowTreatmentDevice")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowTreatmentDevice")))
                 return IFCExportType.ExportFlowTreatmentDevice;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowController")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowController")))
                 return IFCExportType.ExportFlowController;
-            // distribution types to be exported as mapped item
-            else if (IsEqualToTypeName(ifcClassName, ("IfcActuator")))
+                // distribution types to be exported as mapped item
+                else if (IsEqualToTypeName(ifcClassName, ("IfcActuator")))
                 return IFCExportType.ExportActuatorType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcAirTerminalBox")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcAirTerminalBox")))
                 return IFCExportType.ExportAirTerminalBoxType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcAirTerminal")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcAirTerminal")))
                 return IFCExportType.ExportAirTerminalType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcAirToAirHeatRecovery")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcAirToAirHeatRecovery")))
                 return IFCExportType.ExportAirToAirHeatRecoveryType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcAlarm")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcAlarm")))
                 return IFCExportType.ExportAlarmType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcBoiler")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcBoiler")))
                 return IFCExportType.ExportBoilerType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcCableCarrierFitting")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcCableCarrierFitting")))
                 return IFCExportType.ExportCableCarrierFittingType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcCableCarrierSegment")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcCableCarrierSegment")))
                 return IFCExportType.ExportCableCarrierSegmentType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcCableSegment")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcCableSegment")))
                 return IFCExportType.ExportCableSegmentType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcChiller")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcChiller")))
                 return IFCExportType.ExportChillerType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcCoil")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcCoil")))
                 return IFCExportType.ExportCoilType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcCompressor")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcCompressor")))
                 return IFCExportType.ExportCompressorType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcCondenser")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcCondenser")))
                 return IFCExportType.ExportCondenserType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcController")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcController")))
                 return IFCExportType.ExportControllerType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcCooledBeam")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcCooledBeam")))
                 return IFCExportType.ExportCooledBeamType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcCoolingTower")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcCoolingTower")))
                 return IFCExportType.ExportCoolingTowerType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcDamper")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcDamper")))
                 return IFCExportType.ExportDamperType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcDiscreteAccessory")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcDiscreteAccessory")))
                 return IFCExportType.ExportDiscreteAccessoryType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcDistributionChamberElement")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcDistributionChamberElement")))
                 return IFCExportType.ExportDistributionChamberElementType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcDuctFitting")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcDuctFitting")))
                 return IFCExportType.ExportDuctFittingType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcDuctSegment")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcDuctSegment")))
                 return IFCExportType.ExportDuctSegmentType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcDuctSilencer")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcDuctSilencer")))
                 return IFCExportType.ExportDuctSilencerType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcElectricAppliance")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcElectricAppliance")))
                 return IFCExportType.ExportElectricApplianceType;
-            //else if (IsEqualToTypeName(ifcClassName, ("IfcElectricDistributionPoint")))
-            //return IFCExportType.ExportElectricDistributionPointType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcElectricFlowStorageDevice")))
+                //else if (IsEqualToTypeName(ifcClassName, ("IfcElectricDistributionPoint")))
+                //return IFCExportType.ExportElectricDistributionPointType;
+                else if (IsEqualToTypeName(ifcClassName, ("IfcElectricFlowStorageDevice")))
                 return IFCExportType.ExportElectricFlowStorageDeviceType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcElectricGenerator")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcElectricGenerator")))
                 return IFCExportType.ExportElectricGeneratorType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcElectricHeater")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcElectricHeater")))
                 return IFCExportType.ExportElectricHeaterType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcElectricMotor")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcElectricMotor")))
                 return IFCExportType.ExportElectricMotorType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcElectricTimeControl")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcElectricTimeControl")))
                 return IFCExportType.ExportElectricTimeControlType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcEnergyConversionDevice")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcEnergyConversionDevice")))
                 return IFCExportType.ExportEnergyConversionDevice;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcEvaporativeCooler")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcEvaporativeCooler")))
                 return IFCExportType.ExportEvaporativeCoolerType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcEvaporator")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcEvaporator")))
                 return IFCExportType.ExportEvaporatorType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFastener")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFastener")))
                 return IFCExportType.ExportFastenerType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFan")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFan")))
                 return IFCExportType.ExportFanType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFilter")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFilter")))
                 return IFCExportType.ExportFilterType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFireSuppressionTerminal")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFireSuppressionTerminal")))
                 return IFCExportType.ExportFireSuppressionTerminalType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowController")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowController")))
                 return IFCExportType.ExportFlowController;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowFitting")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowFitting")))
                 return IFCExportType.ExportFlowFitting;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowInstrument")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowInstrument")))
                 return IFCExportType.ExportFlowInstrumentType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowMeter")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowMeter")))
                 return IFCExportType.ExportFlowMeterType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowMovingDevice")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowMovingDevice")))
                 return IFCExportType.ExportFlowMovingDevice;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowSegment")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowSegment")))
                 return IFCExportType.ExportFlowSegment;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowStorageDevice")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowStorageDevice")))
                 return IFCExportType.ExportFlowStorageDevice;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowTerminal")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowTerminal")))
                 return IFCExportType.ExportFlowTerminal;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcFlowTreatmentDevice")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcFlowTreatmentDevice")))
                 return IFCExportType.ExportFlowTreatmentDevice;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcGasTerminal")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcGasTerminal")))
                 return IFCExportType.ExportGasTerminalType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcHeatExchanger")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcHeatExchanger")))
                 return IFCExportType.ExportHeatExchangerType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcHumidifier")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcHumidifier")))
                 return IFCExportType.ExportHumidifierType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcJunctionBox")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcJunctionBox")))
                 return IFCExportType.ExportJunctionBoxType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcLamp")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcLamp")))
                 return IFCExportType.ExportLampType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcLightFixture")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcLightFixture")))
                 return IFCExportType.ExportLightFixtureType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcMechanicalFastener")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcMechanicalFastener")))
                 return IFCExportType.ExportMechanicalFastenerType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcMotorConnection")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcMotorConnection")))
                 return IFCExportType.ExportMotorConnectionType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcOutlet")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcOutlet")))
                 return IFCExportType.ExportOutletType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcPile")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcPile")))
                 return IFCExportType.ExportPile;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcPipeFitting")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcPipeFitting")))
                 return IFCExportType.ExportPipeFittingType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcPipeSegment")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcPipeSegment")))
                 return IFCExportType.ExportPipeSegmentType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcProtectiveDevice")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcProtectiveDevice")))
                 return IFCExportType.ExportProtectiveDeviceType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcPump")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcPump")))
                 return IFCExportType.ExportPumpType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcReinforcingBar")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcReinforcingBar")))
                 return IFCExportType.ExportReinforcingBar;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcReinforcingMesh")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcReinforcingMesh")))
                 return IFCExportType.ExportReinforcingMesh;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcSanitaryTerminal")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcSanitaryTerminal")))
                 return IFCExportType.ExportSanitaryTerminalType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcSensor")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcSensor")))
                 return IFCExportType.ExportSensorType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcSpaceHeater")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcSpaceHeater")))
                 return IFCExportType.ExportSpaceHeaterType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcStackTerminal")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcStackTerminal")))
                 return IFCExportType.ExportStackTerminalType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcSwitchingDevice")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcSwitchingDevice")))
                 return IFCExportType.ExportSwitchingDeviceType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcTank")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcTank")))
                 return IFCExportType.ExportTankType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcTransformer")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcTransformer")))
                 return IFCExportType.ExportTransformerType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcTubeBundle")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcTubeBundle")))
                 return IFCExportType.ExportTubeBundleType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcUnitaryEquipment")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcUnitaryEquipment")))
                 return IFCExportType.ExportUnitaryEquipmentType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcValve")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcValve")))
                 return IFCExportType.ExportValveType;
-            else if (IsEqualToTypeName(ifcClassName, ("IfcWasteTerminal")))
+                else if (IsEqualToTypeName(ifcClassName, ("IfcWasteTerminal")))
                 return IFCExportType.ExportWasteTerminalType;
 
                 // This used to throw an exception, but this could abort export if the user enters a bad IFC class name
                 // in the ExportLayerOptions table.  In the future, we should log this.
                 //throw new Exception("IFC: Unknown IFC type in getExportTypeFromClassName: " + ifcClassName);
-                return IFCExportType.ExportBuildingElementProxy;
+                return IFCExportType.ExportBuildingElementProxyType;
             }
 
             return IFCExportType.DontExport;
@@ -1016,7 +1026,7 @@ namespace BIM.IFC.Utility
             else if (categoryId == new ElementId(BuiltInCategory.OST_IOSModelGroups))
                 return IFCExportType.ExportGroup;
             else if (categoryId == new ElementId(BuiltInCategory.OST_Mass))
-                return IFCExportType.ExportBuildingElementProxy;
+                return IFCExportType.ExportBuildingElementProxyType;
             else if (categoryId == new ElementId(BuiltInCategory.OST_CurtainWallMullions))
             {
                 ifcEnumType = "MULLION";
@@ -1179,19 +1189,39 @@ namespace BIM.IFC.Utility
         }
 
         /// <summary>
+        /// Checks if the room is in an invalid phase.
+        /// </summary>
+        /// <param name="element">The element, which may or may not be a room element.</param>
+        /// <returns>True if the element is in the room, has a phase set, which is different from the active phase.</returns>
+        public static bool IsRoomInInvalidPhase(Element element)
+        {
+            if (element is Room)
+            {
+                Parameter phaseParameter = element.get_Parameter(BuiltInParameter.ROOM_PHASE);
+                if (phaseParameter != null)
+                {
+                    ElementId phaseId = phaseParameter.AsElementId();
+                    if (phaseId != ElementId.InvalidElementId && phaseId != ExporterCacheManager.ExportOptionsCache.ActivePhase)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Gets element filter that match certain phases. 
         /// </summary>
         /// <param name="document">The Revit document.</param>
         /// <returns>The element filter.</returns>
         private static ElementFilter GetPhaseStatusFilter(Document document)
         {
+            ElementId phaseId = ExporterCacheManager.ExportOptionsCache.ActivePhase;
+
             List<ElementOnPhaseStatus> phaseStatuses = new List<ElementOnPhaseStatus>();
             phaseStatuses.Add(ElementOnPhaseStatus.None);  //include "none" because we might want to export phaseless elements.
             phaseStatuses.Add(ElementOnPhaseStatus.Existing);
             phaseStatuses.Add(ElementOnPhaseStatus.New);
-
-            ElementId phaseId = ExporterCacheManager.ExportOptionsCache.ActivePhase;
-            Element filterView = ExporterCacheManager.ExportOptionsCache.FilterViewForExport;
 
             return new ElementPhaseStatusFilter(phaseId, phaseStatuses);
         }
@@ -1252,6 +1282,38 @@ namespace BIM.IFC.Utility
         public static bool IsMEPType(IFCExportType exportType)
         {
             return (exportType >= IFCExportType.ExportDistributionElement && exportType <= IFCExportType.ExportWasteTerminalType);
+        }
+
+        /// <summary>
+        /// Check if an element assigned to IfcBuildingElementProxy is of MEP Type (by checking its connectors) to enable IfcBuildingElementProxy to take part
+        /// in the System component and connectivity
+        /// </summary>
+        /// <param name="element">The element</param>
+        /// <param name="exportType">IFC Export Type to check: only for IfcBuildingElementProxy or IfcBuildingElementProxyType</param>
+        /// <returns></returns>
+        public static bool ProxyForMEPType(Element element, IFCExportType exportType)
+        {
+            if ((exportType == IFCExportType.ExportBuildingElementProxy) || (exportType == IFCExportType.ExportBuildingElementProxyType))
+            {
+                try
+                {
+                    if (element is FamilyInstance)
+                    {
+                        MEPModel m = ((FamilyInstance)element).MEPModel;
+                        if (m != null && m.ConnectorManager != null)
+                        {
+                            return true;
+                        }
+                    }
+                    else
+                        return false;
+                }
+                catch
+                {
+                }
+            }
+
+            return false;
         }
     }
 }

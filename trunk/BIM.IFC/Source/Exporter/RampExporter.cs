@@ -350,7 +350,7 @@ namespace BIM.IFC.Exporter
                             return;
                         }
 
-                        string containedRampGuid = ExporterIFCUtils.CreateSubElementGUID(ramp, (int)IFCRampSubElements.ContainedRamp);
+                        string containedRampGuid = GUIDUtil.CreateSubElementGUID(ramp, (int)IFCRampSubElements.ContainedRamp);
                         IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
                         string rampName = NamingUtil.GetNameOverride(ramp, NamingUtil.GetIFCName(ramp));
                         string rampDescription = NamingUtil.GetDescriptionOverride(ramp, null);

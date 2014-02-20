@@ -124,7 +124,15 @@ namespace BIM.IFC.Exporter
             }
             else
             {
-                CurveLoop newLoop = CurveLoop.CreateViaThicken(curve, wallElement.Width, XYZ.BasisZ);
+                CurveLoop newLoop = null;
+                try
+                {
+                    newLoop = CurveLoop.CreateViaThicken(curve, wallElement.Width, XYZ.BasisZ);
+                }
+                catch
+                {
+                }
+
                 if (newLoop == null)
                     return null;
 

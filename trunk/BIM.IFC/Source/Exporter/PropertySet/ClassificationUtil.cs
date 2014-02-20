@@ -112,9 +112,9 @@ namespace BIM.IFC.Exporter.PropertySet
                 if (ParameterUtil.GetStringValueFromElementOrSymbol(element, classificationCodeFieldName, out paramClassificationCode) == null)
                     break;
 
-                parseClassificationCode(paramClassificationCode, out classificationName, out classificationCode, out classificationDescription);
+                ParseClassificationCode(paramClassificationCode, classificationCodeFieldName, out classificationName, out classificationCode, out classificationDescription);
 
-                    if (string.IsNullOrEmpty(classificationName))
+                if (string.IsNullOrEmpty(classificationName))
                 {
                     if (!ExporterCacheManager.ClassificationCache.FieldNameToClassificationNames.TryGetValue(classificationCodeFieldName, out classificationName))
                         classificationName = "Default Classification";
@@ -166,11 +166,12 @@ namespace BIM.IFC.Exporter.PropertySet
         /// 
         /// </summary>
         /// <param name="paramClassificationCode"></param>
-        /// <param name="classificationName"></param>
+        /// <param name="classificationCodeFieldName">ClassificationCode parameter name to check whether there is assignment in the UI</param>
+        /// <param name="classificationName">the classificationName alwayws return something, default will be: "Default Classification"</param>
         /// <param name="classificationCode"></param>
         /// <param name="classificationDescription"></param>
         /// <returns></returns>
-        private static int parseClassificationCode(string paramClassificationCode, out string classificationName, out string classificationCode, out string classificationDescription)
+        public static int ParseClassificationCode(string paramClassificationCode, string classificationCodeFieldName, out string classificationName, out string classificationCode, out string classificationDescription)
         {
             // Processing the following format: [<classification name>] <classification code> | <classification description>
             // Partial format will also be supported as long as it follows: (following existing OmniClass style for COBIe, using :)
@@ -195,6 +196,7 @@ namespace BIM.IFC.Exporter.PropertySet
                 classificationName = splitResult1[0].Trim();
                 noCodepart++;
             }
+
             splitResult1 = splitResult1[splitResult1.Length - 1].Split(new Char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
             classificationCode = splitResult1[0].Trim();
             noCodepart++;
@@ -203,6 +205,13 @@ namespace BIM.IFC.Exporter.PropertySet
             {
                 classificationDescription = splitResult1[1].Trim();
                 noCodepart++;
+            }
+
+            if (String.IsNullOrEmpty(classificationName))
+            {
+                // No Classification Name specified, look for Classification Name assignment from the cache (from UI)
+                if (!ExporterCacheManager.ClassificationCache.FieldNameToClassificationNames.TryGetValue(classificationCodeFieldName, out classificationName))
+                    classificationName = "Default Classification";
             }
 
             return noCodepart;
@@ -239,6 +248,32 @@ namespace BIM.IFC.Exporter.PropertySet
             IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
                exporterIFC.GetOwnerHistoryHandle(), classificationKeyString+" Classification", "", relatedObjects, classificationReference);
 
+        }
+
+        /// <summary>
+        /// Create classification reference (IfcClassificationReference) entity, and add new classification to cache (if it is new classification)
+        /// </summary>
+        /// <param name="file">The IFC file class.</param>
+        /// <param name="classificationKeyString">The classification name.</param>
+        /// <param name="classificationCode">The classification code.</param>
+        /// <param name="classificationDescription">The classification description.</param>
+        /// <param name="location">The location of the classification.</param>
+        /// <returns></returns>
+        public static IFCAnyHandle CreateClassificationReference(IFCFile file, string classificationKeyString, string classificationCode, string classificationDescription, string location)
+        {
+            IFCAnyHandle classification;
+
+            // Check whether Classification is already defined before
+            if (!ExporterCacheManager.ClassificationCache.ClassificationHandles.TryGetValue(classificationKeyString, out classification))
+            {
+                classification = IFCInstanceExporter.CreateClassification(file, "", "", null, classificationKeyString);
+                ExporterCacheManager.ClassificationCache.ClassificationHandles.Add(classificationKeyString, classification);
+            }
+
+            IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
+               location, classificationCode, classificationDescription, classification);
+
+            return classificationReference;
         }
     }
 }

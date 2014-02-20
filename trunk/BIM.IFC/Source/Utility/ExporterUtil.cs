@@ -685,15 +685,56 @@ namespace BIM.IFC.Utility
             return ifcClassName;
         }
 
-        private static string GetIFCClassNameOrTypeFromSpecialEntry(ExporterIFC exporterIFC, Element element, ElementId categoryId, bool getClassName)
+        private static string GetIFCClassNameOrTypeForMass(ExporterIFC exporterIFC, Element element, ElementId categoryId, bool getClassName)
         {
-            if (categoryId != new ElementId(BuiltInCategory.OST_Walls))
+            Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
+            GeometryElement geomElem = element.get_Geometry(geomOptions);
+            if (geomElem == null)
                 return null;
             
-            if (!(element is Wall))
+            SolidMeshGeometryInfo solidMeshCapsule = GeometryUtil.GetSplitSolidMeshGeometry(geomElem);
+            IList<Solid> solids = solidMeshCapsule.GetSolids();
+            IList<Mesh> meshes = solidMeshCapsule.GetMeshes();
+
+            ElementId overrideCatId = ElementId.InvalidElementId;
+            bool initOverrideCatId = false;
+
+            Document doc = element.Document;
+
+            foreach (Solid solid in solids)
+            {
+                if (!ProcessObjectForGStyle(doc, solid, ref overrideCatId, ref initOverrideCatId))
                 return null;
+            }
                 
-            WallType wallType = (element as Wall).WallType;
+            foreach (Mesh mesh in meshes)
+            {
+                if (!ProcessObjectForGStyle(doc, mesh, ref overrideCatId, ref initOverrideCatId))
+                    return null;
+            }
+
+            if (getClassName)
+                return GetIFCClassNameFromExportTable(exporterIFC, overrideCatId);
+            else
+            {
+                // At the moment, we don't have the right API to get the type from a categoryId instead of from an element from the category table.  As such, we are
+                // going to hardwire this.  The only one that matters is OST_MassFloor.
+                if (overrideCatId == new ElementId(BuiltInCategory.OST_MassFloor))
+                {
+                    string className = GetIFCClassNameFromExportTable(exporterIFC, overrideCatId);
+                    if (string.Compare(className, "IfcSlab", true) == 0)
+                        return "FLOOR";
+                    if (string.Compare(className, "IfcCovering", true) == 0)
+                        return "FLOORING";
+                }
+
+                return null; // GetIFCTypeFromExportTable(exporterIFC, overrideCatId);
+            }
+        }
+
+        private static string GetIFCClassNameOrTypeForWalls(ExporterIFC exporterIFC, Wall wall, ElementId categoryId, bool getClassName)
+        {
+            WallType wallType = wall.WallType;
             if (wallType == null)
                 return null;
                     
@@ -701,9 +742,59 @@ namespace BIM.IFC.Utility
             if (ParameterUtil.GetIntValueFromElement(wallType, BuiltInParameter.FUNCTION_PARAM, out wallFunction) != null)
             {
                 if (getClassName)
-                    return GetIFCClassNameFromExportTable(exporterIFC, element, categoryId, wallFunction);
+                    return GetIFCClassNameFromExportTable(exporterIFC, wall, categoryId, wallFunction);
                 else
-                    return GetIFCTypeFromExportTable(exporterIFC, element, categoryId, wallFunction);
+                    return GetIFCTypeFromExportTable(exporterIFC, wall, categoryId, wallFunction);
+            }
+
+            return null;
+        }
+
+        private static bool ProcessObjectForGStyle(Document doc, GeometryObject geomObj, ref ElementId overrideCatId, ref bool initOverrideCatId)
+        {
+            GraphicsStyle gStyle = doc.GetElement(geomObj.GraphicsStyleId) as GraphicsStyle;
+            if (gStyle == null)
+                return true;
+
+            if (gStyle.GraphicsStyleCategory == null)
+                return true;
+
+            ElementId currCatId = gStyle.GraphicsStyleCategory.Id;
+            if (currCatId == ElementId.InvalidElementId)
+                return true;
+
+            if (!initOverrideCatId)
+            {
+                initOverrideCatId = true;
+                overrideCatId = currCatId;
+                return true;
+            }
+
+            if (currCatId != overrideCatId)
+            {
+                overrideCatId = ElementId.InvalidElementId;
+                return false;
+            }
+
+            return true;
+        }
+
+        private static string GetIFCClassNameOrTypeFromSpecialEntry(ExporterIFC exporterIFC, Element element, ElementId categoryId, bool getClassName)
+        {
+            if (element == null)
+                return null;
+
+            // We do special checks for Wall and Massing categories.
+            // For walls, we check if it is an interior or exterior wall.
+            // For massing, we check the geometry.  If it is all in the same sub-category, we use that instead.
+            if (categoryId == new ElementId(BuiltInCategory.OST_Walls))
+            {
+                if (element is Wall)
+                    return GetIFCClassNameOrTypeForWalls(exporterIFC, element as Wall, categoryId, getClassName);
+            }
+            else if (categoryId == new ElementId(BuiltInCategory.OST_Mass))
+            {
+                return GetIFCClassNameOrTypeForMass(exporterIFC, element, categoryId, getClassName);
             }
 
             return null;
@@ -1157,7 +1248,7 @@ namespace BIM.IFC.Utility
 
             // if not set, fall back on symbol functions.
             // allow override of IfcBuildingElementProxy.
-            if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.ExportBuildingElementProxy))
+            if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.ExportBuildingElementProxy) || (exportType == IFCExportType.ExportBuildingElementProxyType))
             {
                 // TODO: add isColumn.
                 //if (familySymbol.IsColumn())
@@ -1183,6 +1274,16 @@ namespace BIM.IFC.Utility
             }
 
             return exportType;
+        }
+
+        /// <summary>
+        /// Returns true if we are exporting one of the two FM Handover Views, basic or extended.
+        /// </summary>
+        /// <returns>True if we are exporting one of the two FM Handover Views, basic or extended, false otherwise.</returns>
+        public static bool IsFMHandoverView()
+        {
+            return ((String.Compare(ExporterCacheManager.ExportOptionsCache.SelectedConfigName, "IFC2x3 Basic FM Handover View") == 0)
+            || (String.Compare(ExporterCacheManager.ExportOptionsCache.SelectedConfigName, "IFC2x3 Extended FM Handover View") == 0));
         }
 
         /// <summary>

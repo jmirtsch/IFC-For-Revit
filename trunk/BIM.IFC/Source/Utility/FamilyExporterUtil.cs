@@ -316,6 +316,25 @@ namespace BIM.IFC.Exporter
                            nominalDiameter, nominalLength);
                         break;
                     }
+                case IFCExportType.ExportRailingType:
+                    {
+                        string strEnumType;
+                        IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, familyInstance, out strEnumType);
+                        instanceHandle = IFCInstanceExporter.CreateRailing(file, instanceGUID, ownerHistory, instanceName, instanceDescription,
+                                instanceObjectType, localPlacementToUse, productRepresentation, instanceTag,
+                                RailingExporter.GetIFCRailingType(familyInstance, strEnumType));
+                        break;
+                    }
+                case IFCExportType.ExportSpace:
+                    {
+                        string instanceLongName = NamingUtil.GetLongNameOverride(familyInstance, NamingUtil.GetLongNameOverride(familyInstance, instanceName));
+                        IFCInternalOrExternal internalOrExternal = CategoryUtil.IsElementExternal(familyInstance) ? IFCInternalOrExternal.External : IFCInternalOrExternal.Internal;
+
+                        instanceHandle = IFCInstanceExporter.CreateSpace(file, instanceGUID, ownerHistory, instanceName, instanceDescription,
+                            instanceObjectType, localPlacementToUse, productRepresentation, instanceLongName, IFCElementComposition.Element,
+                            internalOrExternal, null);
+                        break;
+                    }
                 default:
                     {
                         if ((type == IFCExportType.ExportFurnishingElement) || IsFurnishingElementSubType(type))
@@ -354,19 +373,24 @@ namespace BIM.IFC.Exporter
                                instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
                         }
                         else if ((type == IFCExportType.ExportFlowTreatmentDevice) || IsFlowTreatmentDeviceSubType(type))
-                            {
+                        {
                             instanceHandle = IFCInstanceExporter.CreateFlowTreatmentDevice(file, instanceGUID, ownerHistory,
                                    instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
                             }
                         else if ((type == IFCExportType.ExportFlowController) || IsFlowControllerSubType(type))
-                        {
+                            {
                             instanceHandle = IFCInstanceExporter.CreateFlowController(file, instanceGUID, ownerHistory,
-                               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
-                        }
+                                   instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
+                            }
                         else if ((type == IFCExportType.ExportDistributionFlowElement) || IsDistributionFlowElementSubType(type))
                         {
                             instanceHandle = IFCInstanceExporter.CreateDistributionFlowElement(file, instanceGUID, ownerHistory,
                                instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
+                        }
+                        else if ((type == IFCExportType.ExportBuildingElementProxy) || (type == IFCExportType.ExportBuildingElementProxyType))
+                        {
+                            instanceHandle = IFCInstanceExporter.CreateBuildingElementProxy(file, instanceGUID, ownerHistory,
+                                   instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag, null);
                         }
                         break;
                     }
@@ -434,7 +458,7 @@ namespace BIM.IFC.Exporter
                         break;
                     }
             }
-
+            
             
             IFCAnyHandle typeHandle = ExportGenericTypeBase(file, type, ifcEnumType, guid, ownerHistory, name, description, applicableOccurrence,
                null, representationMapList, elemIdToUse, instanceElementType, instance, symbol);
@@ -502,6 +526,11 @@ namespace BIM.IFC.Exporter
                     return IFCInstanceExporter.CreateBoilerType(file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetBoilerType(instance, ifcEnumType));
+                case IFCExportType.ExportBuildingElementProxy:
+                case IFCExportType.ExportBuildingElementProxyType:
+                    return IFCInstanceExporter.CreateBuildingElementProxyType(file, guid, ownerHistory, name,
+                        description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                        typeName, GetBuildingElementProxyType(instance, ifcEnumType));
                 case IFCExportType.ExportCableCarrierFittingType:
                     return IFCInstanceExporter.CreateCableCarrierFittingType(file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
@@ -649,7 +678,7 @@ namespace BIM.IFC.Exporter
                 case IFCExportType.ExportLampType:
                     return IFCInstanceExporter.CreateLampType(file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
-                       typeName, GetLampType(instance, ifcEnumType));
+                            typeName, GetLampType(instance, ifcEnumType));
                 case IFCExportType.ExportLightFixtureType:
                     return IFCInstanceExporter.CreateLightFixtureType(file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
@@ -690,6 +719,10 @@ namespace BIM.IFC.Exporter
                     return IFCInstanceExporter.CreatePumpType(file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
                        typeName, GetPumpType(instance, ifcEnumType));
+                case IFCExportType.ExportRailingType:
+                    return IFCInstanceExporter.CreateRailingType(file, guid, ownerHistory, name,
+                        description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                        typeName, RailingExporter.GetIFCRailingType(instance, ifcEnumType));
                 case IFCExportType.ExportSanitaryTerminalType:
                     return IFCInstanceExporter.CreateSanitaryTerminalType(file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
@@ -760,7 +793,9 @@ namespace BIM.IFC.Exporter
                 IsFlowStorageDeviceSubType(exportType) ||
                 IsFlowTerminalSubType(exportType) ||
                 IsFlowTreatmentDeviceSubType(exportType) ||
-                IsFlowControllerSubType(exportType));
+                IsFlowControllerSubType(exportType) ||
+                exportType == IFCExportType.ExportBuildingElementProxy ||
+                exportType == IFCExportType.ExportBuildingElementProxyType );
         }
 
         private static IFCActuatorType GetActuatorType(Element element, string ifcEnumType)
@@ -2021,6 +2056,24 @@ namespace BIM.IFC.Exporter
                 return IFCPumpType.VerticalTurbine;
 
             return IFCPumpType.UserDefined;
+        }
+
+        /// <summary>
+        /// Get the IFCBuildingElementProxyType from the element.
+        /// </summary>
+        /// <param name="element">The element.</param>
+        /// <param name="ifcEnumType">The default string value for the typ.</param>
+        /// <returns>The IFCBuildingElementProxyType.</returns>
+        public static IFCBuildingElementProxyType GetBuildingElementProxyType(Element element, string ifcEnumType)
+        {
+            string value = null;
+            if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
+                value = ifcEnumType;
+
+            if (String.IsNullOrEmpty(value))
+                return IFCBuildingElementProxyType.NotDefined;
+
+            return IFCBuildingElementProxyType.UserDefined;
         }
 
         private static IFCSanitaryTerminalType GetSanitaryTerminalType(Element element, string ifcEnumType)

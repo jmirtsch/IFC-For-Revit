@@ -23,6 +23,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Xml;
 using Autodesk.Revit;
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
@@ -183,6 +184,8 @@ namespace BIM.IFC.Exporter
             foreach (Element element in spatialElementCollector)
             {
                 if ((element == null) || (exportedSpaces != null && exportedSpaces.Contains(element.Id)))
+                    continue;
+                if (ElementFilteringUtil.IsRoomInInvalidPhase(element))
                     continue;
                 ExportElement(exporterIFC, element);
             }
@@ -408,7 +411,7 @@ namespace BIM.IFC.Exporter
         /// <returns>True for MEP type of elements.</returns>
         private bool IsMEPType(ExporterIFC exporterIFC, Element element, IFCExportType exportType)
         {
-            return ElementFilteringUtil.IsMEPType(exportType);
+            return (ElementFilteringUtil.IsMEPType(exportType) || ElementFilteringUtil.ProxyForMEPType(element, exportType));
         }
 
         /// <summary>
@@ -419,7 +422,7 @@ namespace BIM.IFC.Exporter
         private bool ExportAsProxy(Element element, IFCExportType exportType)
         {
             // FaceWall should be exported as IfcWall.
-            return ((element is FaceWall) || (element is ModelText) || (exportType == IFCExportType.ExportBuildingElementProxy));
+            return ((element is FaceWall) || (element is ModelText) || (exportType == IFCExportType.ExportBuildingElementProxy) || (exportType == IFCExportType.ExportBuildingElementProxyType));
         }
 
         /// <summary>
@@ -678,7 +681,7 @@ namespace BIM.IFC.Exporter
                         ExporterCacheManager.ExportOptionsCache.GUIDOptions.Use2009BuildingStoreyGUIDs && (element is Level))
                         st.Commit();
                     else
-                        st.RollBack();
+                    st.RollBack();
                 }
             }
             finally
@@ -906,6 +909,9 @@ namespace BIM.IFC.Exporter
                         levelName, objectType, description, placement,
                         null, longName, Toolkit.IFCElementComposition.Element, elevation);
 
+                    // Create classification reference when level has classification filed name assigned to it
+                    ClassificationUtil.CreateClassification(exporterIFC, file, level, buildingStorey);
+
                     if (prevBuildingStorey == null)
                     {
                         foreach (Level baseLevel in unassignedBaseLevels)
@@ -1015,7 +1021,7 @@ namespace BIM.IFC.Exporter
                             continue;
 
                         Element elem = document.GetElement(stairRamp.Key);
-                        string guid = ExporterIFCUtils.CreateSubElementGUID(elem, (int)IFCStairSubElements.ContainmentRelation);
+                        string guid = GUIDUtil.CreateSubElementGUID(elem, (int)IFCStairSubElements.ContainmentRelation);
                         if (locallyUsedGUIDs.Contains(guid))
                             guid = ExporterIFCUtils.CreateGUID();
                         else
@@ -1043,7 +1049,7 @@ namespace BIM.IFC.Exporter
                     if (assemblyInstanceHandle != null && elementHandles != null && elementHandles.Count != 0)
                     {
                         Element assemblyInstance = document.GetElement(assemblyInfoEntry.Key);
-                        string guid = ExporterIFCUtils.CreateSubElementGUID(assemblyInstance, (int)IFCAssemblyInstanceSubElements.RelContainedInSpatialStructure);
+                        string guid = GUIDUtil.CreateSubElementGUID(assemblyInstance, (int)IFCAssemblyInstanceSubElements.RelContainedInSpatialStructure);
 
                         if (IFCAnyHandleUtil.IsSubTypeOf(assemblyInstanceHandle, IFCEntityType.IfcSystem))
                         {
@@ -1093,14 +1099,14 @@ namespace BIM.IFC.Exporter
                 {
                     HashSet<IFCAnyHandle> relatedElementSet = new HashSet<IFCAnyHandle>(relatedElements);
                     IFCInstanceExporter.CreateRelContainedInSpatialStructure(file,
-                        ExporterIFCUtils.CreateSubElementGUID(projectInfo, (int)IFCBuildingSubElements.RelContainedInSpatialStructure),
+                        GUIDUtil.CreateSubElementGUID(projectInfo, (int)IFCBuildingSubElements.RelContainedInSpatialStructure),
                         ownerHistory, null, null, relatedElementSet, buildingHnd);
                 }
 
                 ICollection<IFCAnyHandle> relatedProducts = exporterIFC.GetRelatedProducts();
                 if (relatedProducts.Count > 0)
                 {
-                    string guid = ExporterIFCUtils.CreateSubElementGUID(projectInfo, (int)IFCBuildingSubElements.RelAggregatesProducts);
+                    string guid = GUIDUtil.CreateSubElementGUID(projectInfo, (int)IFCBuildingSubElements.RelAggregatesProducts);
                     ExporterCacheManager.ContainmentCache.SetGUIDForRelation(buildingHnd, guid);
                     ExporterCacheManager.ContainmentCache.AddRelations(buildingHnd, relatedProducts);
                 }
@@ -1223,8 +1229,11 @@ namespace BIM.IFC.Exporter
 
                             // NOTE: Definition of RelConnectsPathElements has the connection information reversed
                             // with respect to the order of the paths.
+                            string connectionName = IFCAnyHandleUtil.GetStringAttribute(wallElementHandle, "GlobalId") + "|" 
+                                                        + IFCAnyHandleUtil.GetStringAttribute(otherElementHandle, "GlobalId");
+                            string connectionType = "Structural";   // Assigned as Description
                             IFCInstanceExporter.CreateRelConnectsPathElements(file, GUIDUtil.CreateGUID(), ownerHistory,
-                                null, null, wallConnectionData.ConnectionGeometry, wallElementHandle, otherElementHandle, relatingPriorities,
+                                connectionName, connectionType, wallConnectionData.ConnectionGeometry, wallElementHandle, otherElementHandle, relatingPriorities,
                                 relatedPriorities, wallConnectionData.SecondConnectionType, wallConnectionData.FirstConnectionType);
                         }
                     }
@@ -1328,6 +1337,9 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file, systemGUID,
                             ownerHistory, name, desc, objectType);
                         
+                        // Create classification reference when System has classification filed name assigned to it
+                        ClassificationUtil.CreateClassification(exporterIFC, file, systemElem, systemHandle);
+                        
                         productWrapper.AddSystem(systemElem, systemHandle);
 
                         IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
@@ -1387,6 +1399,9 @@ namespace BIM.IFC.Exporter
                         IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file,
                             systemGUID, ownerHistory, name, desc, objectType);
 
+                        // Create classification reference when System has classification filed name assigned to it
+                        ClassificationUtil.CreateClassification(exporterIFC, file, systemElem, systemHandle);
+
                         productWrapper.AddSystem(systemElem, systemHandle);
 
                         IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
@@ -1435,12 +1450,12 @@ namespace BIM.IFC.Exporter
                 else
                 {
                     string currentLine;
-                    if (String.Compare(exportOptionsCache.SelectedConfigName, "FMHandOverView") == 0)
+                    if (ExporterUtil.IsFMHandoverView())
                     {
                         currentLine = string.Format("ViewDefinition [{0}{1}{2}{3}]",
                            coordinationView,
                            exportOptionsCache.ExportBaseQuantities ? ", QuantityTakeOffAddOnView" : "",
-                           ", ", exportOptionsCache.SelectedConfigName);
+                           ", ", "FMHandOverView");
                     }
                     else
                     {
@@ -1453,9 +1468,9 @@ namespace BIM.IFC.Exporter
                   
                 }
 
-                string projectNumber = projectInfo.Number;
-                string projectName = projectInfo.Name;
-                string projectStatus = projectInfo.Status;
+                string projectNumber = projectInfo != null ? projectInfo.Number : null;
+                string projectName = projectInfo != null ? projectInfo.Name : null;
+                string projectStatus = projectInfo != null ? projectInfo.Status : null;
 
                 if (projectNumber == null)
                     projectNumber = string.Empty;
@@ -1557,6 +1572,19 @@ namespace BIM.IFC.Exporter
             string pathName = document.PathName;
             if (!String.IsNullOrEmpty(pathName))
             {
+                if (document.IsWorkshared)
+                {
+                    // A central model will return itself as a central model.
+                    ModelPath centralModelPath = document.GetWorksharingCentralModelPath();
+                    // If the ModelPath is actually a file path, then the model is not server based.
+                    bool isAFilePath = centralModelPath is FilePath;
+                    if (!isAFilePath)
+                    {
+                        //This is just a temporary fix for SPR#226541, currently it's unable to get the FileInfo of a server based file stored at server.
+                        //Should server based file stored at server support this functionality and how to support will be tracked by SPR#226761.
+                        return 0;
+                    }
+                }
                 FileInfo fileInfo = new FileInfo(pathName);
                 DateTime creationTimeUtc = fileInfo.CreationTimeUtc;
                 // The IfcTimeStamp is measured in seconds since 1/1/1970.  As such, we divide by 10,000,000 (100-ns ticks in a second)
@@ -1665,6 +1693,110 @@ namespace BIM.IFC.Exporter
             return repContexts;
         }
 
+        private void GetCOBieContactInfo(IFCFile file, Document doc)
+        {
+            if (String.Compare(ExporterCacheManager.ExportOptionsCache.SelectedConfigName, "IFC2x3 Extended FM Handover View") == 0)
+            {
+                string CObieContactXML = Path.GetDirectoryName(doc.PathName) + @"\" + Path.GetFileNameWithoutExtension(doc.PathName) + @"_COBieContact.xml";
+                string category = null, company = null, department = null, organizationCode = null, contactFirstName = null, contactFamilyName = null,
+                    postalBox = null, town = null, stateRegion = null, postalCode = null, country = null;
+
+                try
+                {
+                    using (XmlReader reader = XmlReader.Create(CObieContactXML))
+                    {
+                        IList<string> eMailAddressList = new List<string>();
+                        IList<string> telNoList = new List<string>();
+                        IList<string> addressLines = new List<string>();
+
+                        while (reader.Read())
+                        {
+                            if (reader.IsStartElement())
+                            {
+                                while (reader.Read())
+                                {
+                                    switch (reader.Name)
+                                    {
+                                        case "Email":
+                                            eMailAddressList.Add(reader.ReadString());
+                                            break;
+                                        case "Classification":
+                                            category = reader.ReadString();
+                                            break;
+                                        case "Company":
+                                            company = reader.ReadString();
+                                            break;
+                                        case "Phone":
+                                            telNoList.Add(reader.ReadString());
+                                            break;
+                                        case "Department":
+                                            department = reader.ReadString();
+                                            break;
+                                        case "OrganizationCode":
+                                            organizationCode = reader.ReadString();
+                                            break;
+                                        case "FirstName":
+                                            contactFirstName = reader.ReadString();
+                                            break;
+                                        case "LastName":
+                                            contactFamilyName = reader.ReadString();
+                                            break;
+                                        case "Street":
+                                            addressLines.Add(reader.ReadString());
+                                            break;
+                                        case "POBox":
+                                            postalBox = reader.ReadString();
+                                            break;
+                                        case "Town":
+                                            town = reader.ReadString();
+                                            break;
+                                        case "State":
+                                            stateRegion = reader.ReadString();
+                                            break;
+                                        case "Zip":
+                                            category = reader.ReadString();
+                                            break;
+                                        case "Country":
+                                            country = reader.ReadString();
+                                            break;
+                                        case "Contact":
+                                            if (reader.IsStartElement()) break;     // Do nothing at the start tag, process when it is the end
+                                            CreateContact(file, category, company, department, organizationCode, contactFirstName,
+                                                contactFamilyName, postalBox, town, stateRegion, postalCode, country,
+                                                eMailAddressList, telNoList, addressLines);
+                                            // reset variables
+                                            {
+                                                category = null;
+                                                company = null;
+                                                department = null;
+                                                organizationCode = null;
+                                                contactFirstName = null;
+                                                contactFamilyName = null;
+                                                postalBox = null;
+                                                town = null;
+                                                stateRegion = null;
+                                                postalCode = null;
+                                                country = null;
+                                                eMailAddressList.Clear();
+                                                telNoList.Clear();
+                                                addressLines.Clear();
+                                            }
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    // Can't find the XML file, ignore the whole process and continue
+                }
+            }
+        }
+
         /// <summary>
         /// Creates the IfcProject.
         /// </summary>
@@ -1738,6 +1870,9 @@ namespace BIM.IFC.Exporter
 
             exporterIFC.SetOwnerHistoryHandle(ownerHistory);
 
+            // Getting contact information from Revit extensible storage that COBie extension tool creates
+            GetCOBieContactInfo(file, doc);
+
             IFCAnyHandle units = CreateDefaultUnits(exporterIFC, doc);
             HashSet<IFCAnyHandle> repContexts = CreateContextInformation(exporterIFC, doc);
 
@@ -1772,6 +1907,26 @@ namespace BIM.IFC.Exporter
             }
         }
 
+        private void CreateContact(IFCFile file, string category, string company, string department, string organizationCode, string contactFirstName, 
+            string contactFamilyName, string postalBox, string town, string stateRegion, string postalCode, string country,
+            IList<string> eMailAddressList, IList<string> telNoList, IList<string> addressLines)
+        {
+            IFCAnyHandle contactTelecomAddress = IFCInstanceExporter.CreateTelecomAddress(file, null, null, null, telNoList, null, null, eMailAddressList, null);
+            IFCAnyHandle contactPostalAddress = IFCInstanceExporter.CreatePostalAddress(file, null, null, null, department, addressLines, postalBox, town, stateRegion,
+                    postalCode, country);
+            IList<IFCAnyHandle> contactAddresses = new List<IFCAnyHandle>();
+            contactAddresses.Add(contactTelecomAddress);
+            contactAddresses.Add(contactPostalAddress);
+            IFCAnyHandle contactPerson = IFCInstanceExporter.CreatePerson(file, null, contactFamilyName, contactFirstName, null,
+                null, null, null, contactAddresses);
+            IFCAnyHandle contactOrganization = IFCInstanceExporter.CreateOrganization(file, organizationCode, company, null,
+                null, null);
+            IFCAnyHandle actorRole = IFCInstanceExporter.CreateActorRole(file, "UserDefined", category, null);
+            IList<IFCAnyHandle> actorRoles = new List<IFCAnyHandle>();
+            actorRoles.Add(actorRole);
+            IFCAnyHandle contactEntry = IFCInstanceExporter.CreatePersonAndOrganization(file, contactPerson, contactOrganization, actorRoles);
+        }
+
         private IFCAnyHandle GetTelecomAddressFromExtStorage(IFCFile file, Document document)
         {
             IFCFileHeader fHeader = new IFCFileHeader();
@@ -1794,12 +1949,12 @@ namespace BIM.IFC.Exporter
         /// <param name="file"></param>
         /// <param name="document"></param>
         /// <returns>The handle of IFC file.</returns>
-        private IFCAnyHandle CreateIFCAddressFromExtStorage (IFCFile file, Document document)
+        private IFCAnyHandle CreateIFCAddressFromExtStorage(IFCFile file, Document document)
         {
             IFCAddress savedAddress = new IFCAddress();
             IFCAddressItem savedAddressItem;
 
-            if ( savedAddress.GetSavedAddress(document, out savedAddressItem) == true)
+            if (savedAddress.GetSavedAddress(document, out savedAddressItem) == true)
             {
                 IFCAnyHandle postalAddress;
                 
@@ -2008,7 +2163,7 @@ namespace BIM.IFC.Exporter
                                 lenConvName = "INCH";
                                 areaConvName = "SQUARE INCH";
                                 volConvName = "CUBIC INCH";
-                            }
+                        }
                         }
                         factor = 0.0254;
                         partialScaleFactor = 12.0;
@@ -2048,19 +2203,19 @@ namespace BIM.IFC.Exporter
                         //Invalid display unit system -- assuming imperial
                         scaleFactor = ExporterIFCUtils.ConvertUnits(doc, 1.0, DisplayUnitType.DUT_DECIMAL_FEET);
                         break;
-                }
+                        }
                 exporterIFC.LinearScale = scaleFactor;
 
                 IFCAnyHandle lenSiUnit = IFCInstanceExporter.CreateSIUnit(file, lenUnitType, prefix, lenUnitName);
                 if (prefix == null)
                     lenSIBaseUnit = lenSiUnit;
-                else
+                            else
                     lenSIBaseUnit = IFCInstanceExporter.CreateSIUnit(file, lenUnitType, null, lenUnitName);
                 IFCAnyHandle areaSiUnit = IFCInstanceExporter.CreateSIUnit(file, areaUnitType, prefix, areaUnitName);
                 IFCAnyHandle volSiUnit = IFCInstanceExporter.CreateSIUnit(file, volUnitType, prefix, volUnitName);
 
                 if (conversionBased)
-                {
+                        {
                     IFCAnyHandle lenDims = IFCInstanceExporter.CreateDimensionalExponents(file, 1, 0, 0, 0, 0, 0, 0); // length
                     IFCAnyHandle lenConvFactor = IFCInstanceExporter.CreateMeasureWithUnit(file, Toolkit.IFCDataUtil.CreateAsRatioMeasure(factor), lenSiUnit);
                     lenSiUnit = IFCInstanceExporter.CreateConversionBasedUnit(file, lenDims, lenUnitType, lenConvName, lenConvFactor);
@@ -2080,7 +2235,7 @@ namespace BIM.IFC.Exporter
             }
 
             // Plane angle unit -- support degrees only.
-            {
+                {
                 IFCUnit unitType = IFCUnit.PlaneAngleUnit;
                 IFCSIUnitName unitName = IFCSIUnitName.Radian;
 
@@ -2519,7 +2674,7 @@ namespace BIM.IFC.Exporter
                 {
                     HashSet<IFCAnyHandle> buildingProducts = RemoveContainedHandlesFromSet(relatedProducts);
                     IFCAnyHandle buildingStorey = levelInfo.GetBuildingStorey();
-                    string guid = ExporterIFCUtils.CreateSubElementGUID(level, (int)IFCBuildingStoreySubElements.RelAggregates);
+                    string guid = GUIDUtil.CreateSubElementGUID(level, (int)IFCBuildingStoreySubElements.RelAggregates);
                     ExporterCacheManager.ContainmentCache.SetGUIDForRelation(buildingStorey, guid);
                     ExporterCacheManager.ContainmentCache.AddRelations(buildingStorey, buildingProducts);
                 }
@@ -2535,7 +2690,7 @@ namespace BIM.IFC.Exporter
             {
                 IFCAnyHandle buildingHnd = ExporterCacheManager.BuildingHandle;
                 ProjectInfo projectInfo = document.ProjectInformation;
-                string guid = ExporterIFCUtils.CreateSubElementGUID(projectInfo, (int)IFCBuildingSubElements.RelAggregatesBuildingStoreys);
+                string guid = GUIDUtil.CreateSubElementGUID(projectInfo, (int)IFCBuildingSubElements.RelAggregatesBuildingStoreys);
                 ExporterCacheManager.ContainmentCache.SetGUIDForRelation(buildingHnd, guid);
                 ExporterCacheManager.ContainmentCache.AddRelations(buildingHnd, buildingStoreys);
             }

@@ -198,9 +198,14 @@ namespace BIM.IFC.Utility
 
             // Roofs are always external
             ElementId categoryId = element.Category.Id;
-            if (categoryId == new ElementId(BuiltInCategory.OST_Roofs))
+            if (categoryId == new ElementId(BuiltInCategory.OST_Roofs) ||
+                categoryId == new ElementId(BuiltInCategory.OST_MassExteriorWall))
                 return true;
 
+            // Mass interior walls are always internal
+            if (categoryId == new ElementId(BuiltInCategory.OST_MassInteriorWall))
+                return false;
+            
             // Wall types have the function parameter 
             if (element is Wall)
             {

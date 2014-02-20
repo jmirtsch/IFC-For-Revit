@@ -113,9 +113,15 @@ namespace BIM.IFC.Utility
                         ClassificationsByName[classification.ClassificationName] = classification;
                     if (!string.IsNullOrWhiteSpace(classification.ClassificationFieldName))
                     {
-                        CustomClassificationCodeNames.Add(classification.ClassificationFieldName);
-                        if (classificationHasName)
-                            FieldNameToClassificationNames[classification.ClassificationFieldName] = classification.ClassificationName;
+                        string[] splitResult = classification.ClassificationFieldName.Split(new Char[] { ',', ';', '\t', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        for (int i=0; i<splitResult.Length; i++)
+                        {
+                            // found [<Classification Field Names>]
+                            string classificationFieldName = splitResult[i].Trim();
+                            CustomClassificationCodeNames.Add(classificationFieldName);
+                            if (classificationHasName)
+                                FieldNameToClassificationNames[classificationFieldName] = classification.ClassificationName;
+                        }
                     }
                 }
             }
