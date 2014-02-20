@@ -75,6 +75,14 @@ namespace Revit.IFC.Export.Exporter
                     propertySetsToExport += InitCustomPropertySets;
             }
 
+            if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportUserDefinedPsets)
+            {
+                if (propertySetsToExport == null)
+                    propertySetsToExport = InitUserDefinedPropertySets;
+                else
+                    propertySetsToExport += InitUserDefinedPropertySets;
+            }
+
             if (ExportSchema == IFCVersion.IFCCOBIE)
             {
                 if (propertySetsToExport == null)
@@ -119,6 +127,72 @@ namespace Revit.IFC.Export.Exporter
         }
 
         // Properties
+
+        /// <summary>
+        /// Initialize user-defined property sets (from external file ParameterMappingTable.txt)
+        /// </summary>
+        /// <param name="propertySets">List of Psets</param>
+        /// <param name="fileVersion">file version - (not used)</param>
+        private static void InitUserDefinedPropertySets(IList<IList<PropertySetDescription>> propertySets, IFCVersion fileVersion)
+        {
+            Document document = ExporterCacheManager.Document;
+            IList<PropertySetDescription> userDefinedPropertySets = new List<PropertySetDescription>();
+
+            // get the Pset definitions (using the same file as PropertyMap)
+            IList<PropertySetDef> userDefinedPsetDefs = new List<PropertySetDef>();
+            userDefinedPsetDefs = PropertyMap.LoadUserDefinedPset();
+
+            // Loop through each definition and add the Pset entries into Cache
+            foreach (PropertySetDef psetDef in userDefinedPsetDefs)
+            {
+                // Add Propertyset entry
+                PropertySetDescription userDefinedPropetySet = new PropertySetDescription();
+                userDefinedPropetySet.Name = psetDef.propertySetName;
+                foreach (string elem in psetDef.applicableElements)
+                {
+                    Common.Enums.IFCEntityType ifcEntity;
+                    if (Enum.TryParse(elem, out ifcEntity))
+                        userDefinedPropetySet.EntityTypes.Add(ifcEntity);
+                }
+                foreach (PropertyDef prop in psetDef.propertyDefs)
+                {
+                    PropertyType dataType;
+                    PropertySetEntry pSE;
+
+                    if (!Enum.TryParse(prop.propertyDataType, out dataType))
+                        dataType = PropertyType.Text;           // force default to Text/string if the type does not match with any correct datatype
+
+                    // Currently we will support only basic datatypes: Text, Integer, Real, Boolean
+                    switch (dataType)
+                    {
+                        case PropertyType.Integer:
+                            pSE = PropertySetEntry.CreateInteger(prop.propertyName);
+                            break;
+                        case PropertyType.Real:
+                            pSE = PropertySetEntry.CreateReal(prop.propertyName);
+                            break;
+                        case PropertyType.Boolean:
+                            pSE = PropertySetEntry.CreateBoolean(prop.propertyName);
+                            break;
+                        case PropertyType.Text:
+                            pSE = PropertySetEntry.CreateText(prop.propertyName);
+                            break;
+                        default:
+                            pSE = PropertySetEntry.CreateText(prop.propertyName);
+                            break;
+                    }
+
+                    if (string.Compare(prop.propertyName, prop.revitParameterName) != 0)
+                    {
+                        pSE.RevitParameterName = prop.revitParameterName;
+                    }
+                    userDefinedPropetySet.AddEntry(pSE);
+                }
+                userDefinedPropertySets.Add(userDefinedPropetySet);
+            }
+
+            propertySets.Add(userDefinedPropertySets);
+        }
 
         /// <summary>
         /// Initializes custom property sets from schedules.
@@ -2410,7 +2484,7 @@ namespace Revit.IFC.Export.Exporter
             ifcBaseQuantity.AddEntry(ifcQE);
 
             ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
-            if (String.Compare(exportOptionsCache.SelectedConfigName, "FMHandOverView") != 0)   // FMHandOver view exclude NetArea, GrossArea, NetVolume and GrossVolumne
+            if (!ExporterUtil.IsFMHandoverView())   // FMHandOver view exclude NetArea, GrossArea, NetVolume and GrossVolumne
             {
                 ifcQE = new QuantityEntry("NetFloorArea");
                 ifcQE.QuantityType = QuantityType.Area;
@@ -2507,7 +2581,7 @@ namespace Revit.IFC.Export.Exporter
             ifcBaseQuantity.AddEntry(ifcQE);
 
             ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
-            if (String.Compare(exportOptionsCache.SelectedConfigName, "FMHandOverView") != 0)   // FMHandOver view exclude GrossVolumne, FinishFloorHeight
+            if (!ExporterUtil.IsFMHandoverView())   // FMHandOver view exclude GrossVolumne, FinishFloorHeight
             {
                 ifcQE = new QuantityEntry("GrossVolume");
                 ifcQE.MethodOfMeasurement = "volume measured in geometry";
@@ -2722,5 +2796,7 @@ namespace Revit.IFC.Export.Exporter
 
             cobieQuantities.Add(ifcCOBIEQuantity);
         }
+
+
     }
 }

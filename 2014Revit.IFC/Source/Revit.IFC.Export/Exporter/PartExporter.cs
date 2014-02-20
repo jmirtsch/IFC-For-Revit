@@ -374,7 +374,7 @@ namespace Revit.IFC.Export.Exporter
                                     break;
                                 default:
                                     ifcPart = IFCInstanceExporter.CreateBuildingElementProxy(file, partGUID, ownerHistory, partName, partDescription, 
-                                        partObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, partTag, "Element");
+                                        partObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, partTag, null);
                                     break;
                             }
                         }

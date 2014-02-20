@@ -118,7 +118,7 @@ namespace Revit.IFC.Export.Exporter
                                         {
                                             if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.IfcPlateType) ||
                                                (exportType == IFCExportType.IfcMemberType))
-                                                exportType = IFCExportType.IfcBuildingElementProxy;
+                                                exportType = IFCExportType.IfcBuildingElementProxyType;
                                         }
                                         else
                                         {

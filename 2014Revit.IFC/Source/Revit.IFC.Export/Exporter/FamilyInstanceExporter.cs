@@ -291,14 +291,24 @@ namespace Revit.IFC.Export.Exporter
                             break;
                         }
                     case IFCExportType.IfcBuildingElementProxy:
-                    default:
+                    case IFCExportType.IfcBuildingElementProxyType:
                         {
-                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap2dHnd))
-                                typeInfo.Map2DHandle = repMap2dHnd;
-                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap3dHnd))
-                                typeInfo.Map3DHandle = repMap3dHnd;
+                            Revit.IFC.Common.Enums.IFCEntityType IFCTypeEntity;
+                            if (!Enum.TryParse(ifcEnumType, out IFCTypeEntity))
+                                break;    // The export type is unknown IFC type entity
+                            typeStyle = IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, gentypeName,
+                                gentypeDescription, gentypeApplicableOccurrence, propertySets, repMapList, symbolTag,
+                                gentypeElementType, FamilyExporterUtil.GetPreDefinedType<Toolkit.IFCBuildingElementProxyType>(familyInstance, ifcEnumType).ToString());
                             break;
                         }
+                }
+
+                if (IFCAnyHandleUtil.IsNullOrHasNoValue(typeStyle))
+                {
+                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap2dHnd))
+                        typeInfo.Map2DHandle = repMap2dHnd;
+                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap3dHnd))
+                        typeInfo.Map3DHandle = repMap3dHnd;
                 }
             }
 
@@ -545,7 +555,7 @@ namespace Revit.IFC.Export.Exporter
                             typeInfo.ScaledOuterPerimeter = extraParams.ScaledOuterPerimeter;
                         }
 
-                        ClassificationUtil.CreateClassification(exporterIFC, file, originalFamilySymbol, typeStyle);        // Create other generic classification from ClassificationCode(s)
+                        ClassificationUtil.CreateClassification(exporterIFC, file, familySymbol, typeStyle);        // Create other generic classification from ClassificationCode(s)
                         ClassificationUtil.CreateUniformatClassification(exporterIFC, file, originalFamilySymbol, typeStyle);
                     }
                 }
@@ -678,7 +688,7 @@ namespace Revit.IFC.Export.Exporter
                         if (exportParts)
                             PartExporter.ExportHostPart(exporterIFC, familyInstance, instanceHandle, familyProductWrapper, setter, setter.LocalPlacement, overrideLevelId);
 
-                        if (ElementFilteringUtil.IsMEPType(exportType))
+                        if (ElementFilteringUtil.IsMEPType(exportType) || ElementFilteringUtil.ProxyForMEPType(familyInstance, exportType))
                         {
                             ExporterCacheManager.MEPCache.Register(familyInstance, instanceHandle);
                             // For ducts and pipes, check later if there is an associated duct or pipe.
@@ -815,17 +825,20 @@ namespace Revit.IFC.Export.Exporter
 
                                     break;
                                 }
-                            case IFCExportType.IfcBuildingElementProxy:
+                            //case IFCExportType.IfcBuildingElementProxy:
+                            //case IFCExportType.IfcBuildingElementProxyType:
                             default:
                                 {
-                                    bool isBuildingElementProxy = (exportType == IFCExportType.IfcBuildingElementProxy);
-
-                                    IFCAnyHandle localPlacementToUse;
-                                    ElementId roomId = setter.UpdateRoomRelativeCoordinates(familyInstance, out localPlacementToUse);
-
-                                    if (!isBuildingElementProxy)
+                                    if (IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
                                     {
-                                        if (FamilyExporterUtil.IsDistributionControlElementSubType(exportType))
+                                        bool isBuildingElementProxy =
+                                            ((exportType == IFCExportType.IfcBuildingElementProxy) ||
+                                            (exportType == IFCExportType.IfcBuildingElementProxyType));
+
+                                        IFCAnyHandle localPlacementToUse = null;
+                                        ElementId roomId = setter.UpdateRoomRelativeCoordinates(familyInstance, out localPlacementToUse);
+
+                                        if (!isBuildingElementProxy && FamilyExporterUtil.IsDistributionControlElementSubType(exportType))
                                         {
                                             string ifcelementType = null;
                                             ParameterUtil.GetStringValueFromElement(familyInstance.Id, "IfcElementType", out ifcelementType);
@@ -833,26 +846,13 @@ namespace Revit.IFC.Export.Exporter
                                             instanceHandle = IFCInstanceExporter.CreateDistributionControlElement(file, instanceGUID,
                                                ownerHistory, instanceName, instanceDescription, instanceObjectType,
                                                localPlacementToUse, repHnd, instanceTag, ifcelementType);
-
-                                            bool containedInSpace = (roomId != ElementId.InvalidElementId);
-                                            bool associateToLevel = containedInSpace ? false : !isChildInContainer;
-                                            wrapper.AddElement(familyInstance, instanceHandle, setter, extraParams, associateToLevel);
-                                            if (containedInSpace)
-                                                ExporterCacheManager.SpaceInfoCache.RelateToSpace(roomId, instanceHandle);
                                         }
-                                        else if (IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
+                                        else 
                                         {
-                                            isBuildingElementProxy = true;
+                                            instanceHandle = IFCInstanceExporter.CreateBuildingElementProxy(file, instanceGUID,
+                                               ownerHistory, instanceName, instanceDescription, instanceObjectType,
+                                               localPlacementToUse, repHnd, instanceTag, null);
                                         }
-                                    }
-
-                                    if (isBuildingElementProxy)
-                                    {
-                                        string proxyType = "Element";
-
-                                        instanceHandle = IFCInstanceExporter.CreateBuildingElementProxy(file, instanceGUID,
-                                           ownerHistory, instanceName, instanceDescription, instanceObjectType,
-                                           localPlacementToUse, repHnd, instanceTag, proxyType);
 
                                         bool containedInSpace = (roomId != ElementId.InvalidElementId);
                                         bool associateToLevel = containedInSpace ? false : !isChildInContainer;
@@ -934,6 +934,7 @@ namespace Revit.IFC.Export.Exporter
                     BeamExporter.ExportBeam(exporterIFC, element, geometryElement, productWrapper);
                     return true;
                 case IFCExportType.IfcBuildingElementProxy:
+                case IFCExportType.IfcBuildingElementProxyType:
                     {
                         Element type = element.Document.GetElement(element.GetTypeId());
                         string objectType = NamingUtil.GetObjectTypeOverride(element, (type != null) ? type.Name : "");
@@ -961,11 +962,16 @@ namespace Revit.IFC.Export.Exporter
                     RampExporter.ExportRamp(exporterIFC, ifcEnumTypeString, element, geometryElement, 1, productWrapper);
                     return true;
                 case IFCExportType.IfcRailing:
+                case IFCExportType.IfcRailingType:
                     if (ExporterCacheManager.RailingCache.Contains(element.Id))
                     {
                         // Don't export this object if it is part of a parent railing.
                         if (!ExporterCacheManager.RailingSubElementCache.Contains(element.Id))
-                            RailingExporter.ExportRailing(exporterIFC, element, geometryElement, ifcEnumTypeString, productWrapper);
+                        {
+                            // RailingExporter.ExportRailing(exporterIFC, element, geometryElement, ifcEnumTypeString, productWrapper);
+                            // Allow railing code to create instance and type.
+                            return false;
+                        }
                     }
                     else
                     {

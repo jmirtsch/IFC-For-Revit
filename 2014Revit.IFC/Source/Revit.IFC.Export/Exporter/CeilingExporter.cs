@@ -134,30 +134,26 @@ namespace Revit.IFC.Export.Exporter
                         bool containInSpace = false;
                         IFCAnyHandle localPlacementToUse = setter.LocalPlacement;
 
-                        // Assign ceiling to room/IfcSpace if it is bounding a single Room for FMHandOver view only
-                        ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
-                        if (String.Compare(exportOptionsCache.SelectedConfigName, "FMHandOverView") == 0)
+                        // Ceiling containment in Space is generally required and not specific to any view
+                        if (ExporterCacheManager.CeilingSpaceRelCache.ContainsKey(element.Id))
                         {
-                            if (ExporterCacheManager.CeilingSpaceRelCache.ContainsKey(element.Id))
+                            IList<ElementId> roomlist = ExporterCacheManager.CeilingSpaceRelCache[element.Id];
+
+                            // Process Ceiling to be contained in a Space only when it is exactly bounding one Space
+                            if (roomlist.Count == 1)
                             {
-                                IList<ElementId> roomlist = ExporterCacheManager.CeilingSpaceRelCache[element.Id];
+                                productWrapper.AddElement(element, covering, setter, null, false);
 
-                                // Process Ceiling to be contained in a Space only when it is exactly bounding one Space
-                                if (roomlist.Count == 1)
-                                {
-                                    productWrapper.AddElement(element, covering, setter, null, false);
+                                // Modify the Ceiling placement to be relative to the Space that it bounds 
+                                IFCAnyHandle roomPlacement = IFCAnyHandleUtil.GetObjectPlacement(ExporterCacheManager.SpaceInfoCache.FindSpaceHandle(roomlist[0]));
+                                Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(roomPlacement, localPlacementToUse);
+                                Transform inverseTrf = relTrf.Inverse;
+                                IFCAnyHandle relLocalPlacement = ExporterUtil.CreateAxis2Placement3D(file, inverseTrf.Origin, inverseTrf.BasisZ, inverseTrf.BasisX);
+                                IFCAnyHandleUtil.SetAttribute(localPlacementToUse, "PlacementRelTo", roomPlacement);
+                                GeometryUtil.SetRelativePlacement(localPlacementToUse, relLocalPlacement);
 
-                                    // Modify the Ceiling placement to be relative to the Space that it bounds 
-                                    IFCAnyHandle roomPlacement = IFCAnyHandleUtil.GetObjectPlacement(ExporterCacheManager.SpaceInfoCache.FindSpaceHandle(roomlist[0]));
-                                    Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(roomPlacement, localPlacementToUse);
-                                    Transform inverseTrf = relTrf.Inverse;
-                                    IFCAnyHandle relLocalPlacement = ExporterUtil.CreateAxis2Placement3D(file, inverseTrf.Origin, inverseTrf.BasisZ, inverseTrf.BasisX);
-                                    IFCAnyHandleUtil.SetAttribute(localPlacementToUse, "PlacementRelTo", roomPlacement);
-                                    GeometryUtil.SetRelativePlacement(localPlacementToUse, relLocalPlacement);
-
-                                    ExporterCacheManager.SpaceInfoCache.RelateToSpace(roomlist[0], covering);
-                                    containInSpace = true;
-                                }
+                                ExporterCacheManager.SpaceInfoCache.RelateToSpace(roomlist[0], covering);
+                                containInSpace = true;
                             }
                         }
 

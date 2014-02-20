@@ -106,6 +106,30 @@ namespace Revit.IFC.Export.Utility
                 return false;
             }
         }
+
+        /// <summary>
+        /// Override for the ExportUserDefinedPsets value from UI or API options.
+        /// </summary>
+        public bool? ExportUserDefinedPsetsOverride
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Whether or not to export User Defined Pset as defined in the ParameterMap.txt
+        /// </summary>
+        public bool ExportUserDefinedPsets
+        {
+            get
+            {
+                // if the option is set by alternate UI, return the setting in UI.
+                if (ExportUserDefinedPsetsOverride != null)
+                    return (bool)ExportUserDefinedPsetsOverride;
+                // otherwise return false by default.
+                return false;
+            }
+        }
         
         /// <summary>
         /// Private default constructor.
@@ -135,6 +159,9 @@ namespace Revit.IFC.Export.Utility
 
             // "ExportSchedulesAsPsets" override
             propertySetOptions.ExportSchedulesAsPsetsOverride = ExportOptionsCache.GetNamedBooleanOption(options, "ExportSchedulesAsPsets");
+            
+            // "ExportUserDefinedPsets" override
+            propertySetOptions.ExportUserDefinedPsetsOverride = ExportOptionsCache.GetNamedBooleanOption(options, "ExportUserDefinedPsets");
             
             return propertySetOptions;
         }

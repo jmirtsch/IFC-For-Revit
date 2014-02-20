@@ -44,7 +44,7 @@ namespace Revit.IFC.Export.Utility
             if (msg.Contains("Error in allocating memory"))
             {
                 FailureMessage fm = new FailureMessage(BuiltInFailures.ExportFailures.IFCFatalToolkitExportError);
-                document.PostFailure(fm); 
+                document.PostFailure(fm);
                 return true;
             }
             return false;
@@ -80,7 +80,7 @@ namespace Revit.IFC.Export.Utility
                     return false;
             }
         }
-        
+
         public static void UpdateBuildingPlacement(IFCAnyHandle buildingHnd, IFCAnyHandle siteHnd)
         {
             IFCAnyHandle buildingPlacement = IFCAnyHandleUtil.GetObjectPlacement(buildingHnd);
@@ -603,9 +603,9 @@ namespace Revit.IFC.Export.Utility
                 IFCAnyHandle repHnd = origReps[ii];
                 if (IFCAnyHandleUtil.IsTypeOf(repHnd, IFCEntityType.IfcShapeRepresentation))
                 {
-                    IFCAnyHandle newRepHnd = RepresentationUtil.CreateShapeRepresentation(exporterIFC, element, catId, 
+                    IFCAnyHandle newRepHnd = RepresentationUtil.CreateShapeRepresentation(exporterIFC, element, catId,
                         IFCAnyHandleUtil.GetContextOfItems(repHnd),
-                        IFCAnyHandleUtil.GetRepresentationIdentifier(repHnd), IFCAnyHandleUtil.GetRepresentationType(repHnd), 
+                        IFCAnyHandleUtil.GetRepresentationIdentifier(repHnd), IFCAnyHandleUtil.GetRepresentationType(repHnd),
                         IFCAnyHandleUtil.GetItems(repHnd));
                     newReps.Add(newRepHnd);
                 }
@@ -631,7 +631,7 @@ namespace Revit.IFC.Export.Utility
         /// <returns>
         /// The handle.
         /// </returns>
-        public static IFCAnyHandle CopyProductDefinitionShape(ExporterIFC exporterIFC, 
+        public static IFCAnyHandle CopyProductDefinitionShape(ExporterIFC exporterIFC,
             Element elem,
             ElementId catId,
             IFCAnyHandle origProductDefinitionShape)
@@ -704,14 +704,14 @@ namespace Revit.IFC.Export.Utility
         {
             if (categoryId != new ElementId(BuiltInCategory.OST_Walls))
                 return null;
-            
+
             if (!(element is Wall))
                 return null;
-                
+
             WallType wallType = (element as Wall).WallType;
             if (wallType == null)
                 return null;
-                    
+
             int wallFunction;
             if (ParameterUtil.GetIntValueFromElement(wallType, BuiltInParameter.FUNCTION_PARAM, out wallFunction) != null)
             {
@@ -934,7 +934,7 @@ namespace Revit.IFC.Export.Utility
                         if (currDesc.ViewScheduleId != ElementId.InvalidElementId)
                             if (!ExporterCacheManager.ViewScheduleElementCache[currDesc.ViewScheduleId].Contains(elementToUse.Id))
                                 continue;
-                            
+
                         Tuple<Element, Element, string> propertySetKey = new Tuple<Element, Element, string>(elementToUse, elemTypeToUse, currDesc.Name);
                         IFCAnyHandle propertySet = null;
                         if ((ifcParams != null) || (!createdPropertySets.TryGetValue(propertySetKey, out propertySet)))
@@ -1172,7 +1172,7 @@ namespace Revit.IFC.Export.Utility
 
             // if not set, fall back on symbol functions.
             // allow override of IfcBuildingElementProxy.
-            if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.IfcBuildingElementProxy))
+            if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.IfcBuildingElementProxy) || (exportType == IFCExportType.IfcBuildingElementProxyType))
             {
                 // TODO: add isColumn.
                 //if (familySymbol.IsColumn())
@@ -1198,6 +1198,16 @@ namespace Revit.IFC.Export.Utility
             }
 
             return exportType;
+        }
+
+        /// <summary>
+        /// Returns true if we are exporting one of the two FM Handover Views, basic or extended.
+        /// </summary>
+        /// <returns>True if we are exporting one of the two FM Handover Views, basic or extended, false otherwise.</returns>
+        public static bool IsFMHandoverView()
+        {
+            return ((String.Compare(ExporterCacheManager.ExportOptionsCache.SelectedConfigName, "IFC2x3 Basic FM Handover View") == 0)
+            || (String.Compare(ExporterCacheManager.ExportOptionsCache.SelectedConfigName, "IFC2x3 Extended FM Handover View") == 0));
         }
     }
 }

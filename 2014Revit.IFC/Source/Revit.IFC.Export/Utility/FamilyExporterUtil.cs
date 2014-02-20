@@ -320,6 +320,24 @@ namespace Revit.IFC.Export.Exporter
                            nominalDiameter, nominalLength);
                         break;
                     }
+                case IFCExportType.IfcRailingType:
+                    {
+                        string strEnumType;
+                        IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, familyInstance, out strEnumType);
+                        if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+                        {
+                            instanceHandle = IFCInstanceExporter.CreateRailing(file, instanceGUID, ownerHistory, instanceName, instanceDescription,
+                                instanceObjectType, localPlacementToUse, productRepresentation, instanceTag,
+                                GetPreDefinedType<Toolkit.IFC4.IFCRailingType>(familyInstance, strEnumType).ToString());
+                        }
+                        else
+                        {
+                            instanceHandle = IFCInstanceExporter.CreateRailing(file, instanceGUID, ownerHistory, instanceName, instanceDescription,
+                                instanceObjectType, localPlacementToUse, productRepresentation, instanceTag,
+                                GetPreDefinedType<Toolkit.IFCRailingType>(familyInstance, strEnumType).ToString());
+                        }
+                        break;
+                    }
                 default:
                     {
                         if (ExporterCacheManager.ExportOptionsCache.ExportAs4 &&
@@ -347,7 +365,8 @@ namespace Revit.IFC.Export.Exporter
                                     (type == IFCExportType.IfcFlowTerminal) || IsFlowTerminalSubType(type) ||
                                     (type == IFCExportType.IfcFlowTreatmentDevice) || IsFlowTreatmentDeviceSubType(type) ||
                                     (type == IFCExportType.IfcFlowController) || IsFlowControllerSubType(type) ||
-                                    (type == IFCExportType.IfcDistributionFlowElement) || IsDistributionFlowElementSubType(type) )
+                                    (type == IFCExportType.IfcDistributionFlowElement) || IsDistributionFlowElementSubType(type) ||
+                                    (type == IFCExportType.IfcBuildingElementProxy) || (type == IFCExportType.IfcBuildingElementProxyType) )
                         {
                             string exportEntityStr = type.ToString();
                             Common.Enums.IFCEntityType exportEntity;
@@ -772,6 +791,15 @@ namespace Revit.IFC.Export.Exporter
                         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
                             typeName, GetPreDefinedType<Toolkit.IFC4.IFCTransportElementType>(instance, ifcEnumType).ToString());
+                    case IFCExportType.IfcRailingType:
+                        return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            typeName, GetPreDefinedType<Toolkit.IFC4.IFCRailingType>(instance, ifcEnumType).ToString());
+                    case IFCExportType.IfcBuildingElementProxy:
+                    case IFCExportType.IfcBuildingElementProxyType:
+                        return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            typeName, GetPreDefinedType<Toolkit.IFC4.IFCBuildingElementProxyType>(instance, ifcEnumType).ToString());
                     default:
                         return null;
                 }
@@ -1042,6 +1070,15 @@ namespace Revit.IFC.Export.Exporter
                         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
                             typeName, GetPreDefinedType<Toolkit.IFCTransportElementType>(instance, ifcEnumType).ToString());
+                    case IFCExportType.IfcRailingType:
+                        return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            typeName, GetPreDefinedType<Toolkit.IFCRailingType>(instance, ifcEnumType).ToString());
+                    case IFCExportType.IfcBuildingElementProxy:
+                    case IFCExportType.IfcBuildingElementProxyType:
+                        return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
+                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                            typeName, GetPreDefinedType<Toolkit.IFCBuildingElementProxyType>(instance, ifcEnumType).ToString());
                     default:
                         return null;
                 }
@@ -1065,7 +1102,9 @@ namespace Revit.IFC.Export.Exporter
                 IsFlowStorageDeviceSubType(exportType) ||
                 IsFlowTerminalSubType(exportType) ||
                 IsFlowTreatmentDeviceSubType(exportType) ||
-                IsFlowControllerSubType(exportType));
+                IsFlowControllerSubType(exportType) ||
+                exportType == IFCExportType.IfcBuildingElementProxy ||
+                exportType == IFCExportType.IfcBuildingElementProxyType );
         }
 
 //        #region MEP Type's PreDefinedType
