@@ -1,0 +1,134 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/TR/REC-html40" xml:lang="en" dir="ltr" class="js">
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=utf-8">
+<title>Revit Exchange - Revit IFC Help</title>
+</head>
+
+<style> 
+html, body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, hr, pre, code, form, fieldset, legend, input, textarea, blockquote, table, th, td {
+  padding: 0;
+  margin: 0;
+}
+a{color:#1F5397;text-decoration:none}
+body {font-family:"Arial", "Helvetica", "sans-serif";font-size:12.0px;margin:15px}
+p {font-size:12.0px;line-height:16px;padding:0px;margin:5px 0px 5px 0px}
+ol {font-size:12.0px;line-height:16px;padding:0px;margin:5px 0px 5px 20px}
+h1 {font-size:22.0px;height="26px"}
+.separator-line {border-bottom;border-bottom-width:1px;border-bottom-style:solid;border-bottom-color:#C3C3C3}
+h2 {font-size:16.0px;line-height:18px;height:16px;margin-bottom:3px;margin-top:15px}
+h3 {font-size:14.0px;line-height:16px;height:14px;margin-bottom:3px;margin-top:15px}
+#plugin-icon{float:left;width:94px;height:94px}
+#plugin-name{margin-left:94px}
+#plugin-description{margin-left:94px;margin-top:3px;margin-bottom:40px}
+#navigation{margin-bottom:10px;clear:both}
+.nav-link-spacer {margin:0px 5px 0px 5px}
+.command {margin-top:5px;margin-bottom:3px}
+.command.icon {float:left;width:34px;height:34px}
+.command.name {font-weight:bold;padding-top:4px;margin:0px 0px 0px 34px}
+.command.description {margin:0px 0px 0px 34px}
+.versionset {margin-bottom:5px}
+.version {float:left;width:50px}
+.versioninfo-bullet {margin-left:50px}
+.screenshots {}
+.clearboth {clear:both}
+.thumbnail {float:left; width:207px;margin: 0px 20px 0px 0px}
+.caption { font-weight:bold}
+ table.MsoNormalTable
+	{font-size:10.0pt;
+	font-family:"Calibri","sans-serif";
+	}
+ li.MsoNormal
+	{margin-top:0in;
+	margin-right:0in;
+	margin-bottom:10.0pt;
+	margin-left:0in;
+	line-height:115%;
+	font-size:11.0pt;
+	font-family:"Calibri","sans-serif";
+	}
+</style>
+<body>
+<div id="heading">
+	<div id="plugin-icon"><img width=85 height=85 id="Rectangle 3" src="IFCExporter.png"></div>
+	<div id="plugin-name"><h1 class="separator-line">Revit IFC 2015</h1></div>
+	<p id="plugin-description">
+	This application seamlessly replaces the built-in IFC capabilities of Revit 2015.  It contains enhancements to functionality and defect fixes provided by Autodesk and Open Source contributors that did not appear in the initial shipping version.
+    </p>
+</div>
+
+<div id="navigation">Getting Started<span class="nav-link-spacer">|</span><a href="#Install">Install/Uninstall</a><span class="nav-link-spacer">|</span><a href="#AdditionalInfo">Additional Information</a><span class="nav-link-spacer">|</span><a href="#Contact">Contact</a><span class="nav-link-spacer">|</span><a class="navigation-link" href="#VersionHistory">Version History</a></p>
+
+<h2 id="GettingStarted" name="GettingStarted">Getting Started</h2>
+<div class="command">
+	<div class="command icon"><img width=32 height=32 src="IFCExporter_32.png" alt=Icon></div>
+	<div class="command name">Revit IFC</div>
+	<div class="command description">
+    <p> 
+    Revit IFC 2015 contains up-to-date improvements on the default IFC capabilities of Revit contributed by Autodesk and our Open 
+    Source contributors.  While this app is not necessary for IFC support, it is recommended that users that depend on the quality of their IFC 
+    download this app and keep it up-to-date, as new enhancements and defect fixes are added,  For more information on IFC, 
+    please visit the <a href="http://buildingsmart.com/standards/ifc" target=_blank>buildingSMART website</a> or the Revit wiki.
+    </p>
+	</div>
+</div>
+<div class="command">
+</div>
+<h3>Usage</h3>
+<p>
+This application seamlessly replaces the built-in IFC mechanism and so the users do not have to perform any additional
+steps while importing or exporting their models to IFC format using Revit UI.</p>
+
+<h2 id="Install" name="Install">Installation and Uninstallation</h2>
+<p>
+The installer that ran when you downloaded this plug-in from Revit Exchange 
+  has already installed the plug-in. You will need to restart Revit to activate 
+  the plug-in.
+</p>
+<p>
+To uninstall this plug-in, exit Revit if you are currently running it, 
+  simply rerun the installer by downloading it again 
+  from Exchange, and select the 'Uninstall' button, or you can uninstall it from 
+  'Control Panel\Programs\Programs and Features' (Windows 7) or Add/Remove 
+  Programs (Windows XP), just as you would uninstall any other application from 
+  your system.
+  </p>
+  
+<h2 id="AdditionalInfo" name="AdditionalInfo">Additional Information</h2>
+<p>
+The source code for this application is available on open source, at the SourceForge project :
+<a href="http://sourceforge.net/p/ifcexporter/home/Home/" target=_blank>http://sourceforge.net/p/ifcexporter/home/Home/</a></p>
+<p>This application is a good complement to the IFC Exporter UI client app, 
+also available on the Exchange store.  However, it is not required to get the latest version of that application when 
+installing this application.  Nor is it required to use this alternate UI when getting the latest IFC.</p>
+<h3>Known Issues</h3>
+<p>The third party toolkit we use to write out IFC files has a limit on the maximum size of IFC file it can create.  
+While there is no absolute metric for this, in practice it is about 250MB.  The toolkit provider is aware of these issues and is 
+working on expanding and eventually removing this limit, and we will be tracking their progress on this issue.</p>
+<h2 id="Contact" name="Contact">Contact</h2>
+  <p>Autodesk. Please visit us at: <a href="http://www.autodesk.com/" target=_blank>http://www.autodesk.com/</a></p>
+  <p>Autodesk, Inc., is a leader in 3D design, engineering and entertainment software. Customers across the manufacturing, architecture, 
+  building, construction, and media and entertainment industries—including the last 16 Academy Award winners for Best Visual Effects—use 
+  Autodesk software to design, visualize, and simulate their ideas before they’re ever built or created. From blockbuster visual effects 
+  and buildings that create their own energy to electric cars and the batteries that power them, the work of our 3D software customers is everywhere you look.</p>
+  <p>Through our apps for iPhone, iPad, iPod, and Android, we’re also making design technology accessible to professional designers as well as 
+  amateur designers, homeowners, students, and casual creators. Whether it’s a kid looking to build a new contraption, a seasoned pro sketching out 
+  a great new idea, or someone who just wants to amp up their creative output, we’re taking technology originally built for movie studios, automakers, 
+  and architectural firms, and making it available to anyone who wants to create and share their ideas with the world. </p>
+  <p>Since its introduction of AutoCAD software in 1982, Autodesk continues to develop the broadest portfolio of state-of-the-art 3D software for global markets.</p>
+<h3>Support Information</h3>
+<p>Autodesk Services & Support Center: <a href="http://usa.autodesk.com/support/" target=_blank>http://usa.autodesk.com/support/</a></p>
+<p>Login to subscription customer: <a href="http://www.autodesk.com/subscriptionlogin" target= _blank>http://www.autodesk.com/subscriptionlogin</a></p>
+<p>To learn more about subscription: <a href="http://www.autodesk.com/subscription" target=_blank>http://www.autodesk.com/subscription</a></p>
+<p>or if you have an inquiry specific to this add-in, send us an e-mail to: <a href="mailto:Revit.apps@autodesk.com">Revit.apps@autodesk.com</a></p>
+<h2 id="VersionHistory" name="VersionHistory">Version History</h2>
+
+<div class="versionset">
+
+</div>
+<div class="version">15.0.2.0</div><div class="versioninfo-bullet">First Open Source Release</div>
+<p>Changed version number to reflect Revit version for importer, exporter, and alternate UI.<p>
+<div class="version">1.0.0.0</div><div class="versioninfo-bullet">Initial Revit 2015 Version</div>
+</div>
+</body>
+</html>
