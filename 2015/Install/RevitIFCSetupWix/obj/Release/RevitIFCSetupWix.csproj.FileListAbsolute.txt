@@ -1,0 +1,7 @@
+E:\Revit\2015\dev\RevitAdditions\Source\Addons\Revit.IFC\Install\RevitIFCSetupWix\bin\Release\RevitIFCSetupWix.dll
+E:\Revit\2015\dev\RevitAdditions\Source\Addons\Revit.IFC\Install\RevitIFCSetupWix\bin\Release\RevitIFCSetupWix.pdb
+E:\Revit\2015\dev\RevitAdditions\Source\Addons\Revit.IFC\Install\RevitIFCSetupWix\obj\Release\RevitIFCSetupWix.csprojResolveAssemblyReference.cache
+E:\Revit\2015\dev\RevitAdditions\Source\Addons\Revit.IFC\Install\RevitIFCSetupWix\obj\Release\RevitIFCSetupWix.dll
+E:\Revit\2015\dev\RevitAdditions\Source\Addons\Revit.IFC\Install\RevitIFCSetupWix\obj\Release\RevitIFCSetupWix.pdb
+E:\Revit\2015\dev\RevitAdditions\Source\Addons\Revit.IFC\Install\RevitIFCSetupWix\bin\Release\IFCExportUIOverride.dll
+E:\Revit\2015\dev\RevitAdditions\Source\Addons\Revit.IFC\Install\RevitIFCSetupWix\bin\Release\IFCExportUIOverride.pdb

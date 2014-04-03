@@ -1,0 +1,317 @@
+﻿//
+// Revit IFC Import library: this library works with Autodesk(R) Revit(R) to import IFC files.
+// Copyright (C) 2013  Autodesk, Inc.
+// 
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+//
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.IFC;
+using Revit.IFC.Common.Enums;
+using Revit.IFC.Common.Utility;
+using Revit.IFC.Import.Enums;
+using Revit.IFC.Import.Geometry;
+using Revit.IFC.Import.Utility;
+
+namespace Revit.IFC.Import.Data
+{
+    /// <summary>
+    /// Represents an IfcProduct.
+    /// </summary>
+    public abstract class IFCProduct : IFCObject
+    {
+        protected int m_TypeId = 0;
+
+        protected IFCLocation m_ObjectLocation = null;
+
+        protected IFCProductRepresentation m_ProductRepresentation = null;
+
+        // List of objects created in Create().  May be split off at some point.
+
+        private IList<IFCSolidInfo> m_Solids = null;
+
+        private IList<IFCSolidInfo> m_Voids = null;
+
+        private IList<Curve> m_FootprintCurves = null;
+        
+        /// <summary>
+        /// The list of solids created for the associated element.
+        /// </summary>
+        public IList<IFCSolidInfo> Solids
+        {
+            get
+            {
+                if (m_Solids == null)
+                    m_Solids = new List<IFCSolidInfo>();
+                return m_Solids;
+            }
+        }
+
+        /// <summary>
+        /// The list of voids created for the associated element.
+        /// </summary>
+        public IList<IFCSolidInfo> Voids
+        {
+            get
+            {
+                if (m_Voids == null)
+                    m_Voids = new List<IFCSolidInfo>();
+                return m_Voids;
+            }
+        }
+
+        /// <summary>
+        /// The list of curves created for the associated element, for use in plan views.
+        /// </summary>
+        public IList<Curve> FootprintCurves
+        {
+            get
+            {
+                if (m_FootprintCurves == null)
+                    m_FootprintCurves = new List<Curve>();
+                return m_FootprintCurves;
+            }
+        }
+
+        /// <summary>
+        /// The one product representation of the product.
+        /// </summary>
+        public IFCProductRepresentation ProductRepresentation
+        {
+            get { return m_ProductRepresentation; }
+            protected set { m_ProductRepresentation = value; }
+        }
+
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
+        protected IFCProduct()
+        {
+
+        }
+
+        /// <summary>
+        /// Processes IfcProduct attributes.
+        /// </summary>
+        /// <param name="ifcProduct">The IfcProduct handle.</param>
+        protected override void Process(IFCAnyHandle ifcProduct)
+        {
+            base.Process(ifcProduct);
+
+            ProcessObjectPlacement(ifcProduct);
+
+            IFCAnyHandle ifcProductRepresentation = IFCImportHandleUtil.GetOptionalInstanceAttribute(ifcProduct, "Representation");
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ifcProductRepresentation))
+                ProductRepresentation = IFCProductRepresentation.ProcessIFCProductRepresentation(ifcProductRepresentation);
+        }
+
+        /// <summary>
+        /// Creates or populates Revit elements based on the information contained in this class.
+        /// </summary>
+        /// <param name="doc">The document.</param>
+        protected override void Create(Document doc)
+        {
+            Transform lcs = (m_ObjectLocation != null) ? m_ObjectLocation.TotalTransform : Transform.Identity;
+
+            if (ProductRepresentation != null)
+            {
+                if (ProductRepresentation.IsValid())
+                {
+                    using (IFCImportShapeEditScope shapeEditScope = IFCImportShapeEditScope.Create(doc, this))
+                    {
+                        shapeEditScope.GraphicsStyleId = m_GraphicsStyleId;
+                        shapeEditScope.CategoryId = m_CategoryId;
+
+                        // The name can be added as well. but it is usually less useful than 'oid'
+                        string myId = GlobalId.ToString(); // + "(" + Name.ToString() + ")";
+
+                        ProductRepresentation.CreateProductRepresentation(shapeEditScope, lcs, lcs, myId);
+
+                        int numSolids = Solids.Count;
+                        int numVoids = Voids.Count;
+                        if ((numSolids > 0) && (numVoids > 0))
+                        {
+                            // Attempt to cut each solid with each void.
+                            for (int solidIdx = 0; solidIdx < numSolids; solidIdx++)
+                            {
+                                if (!(Solids[solidIdx].GeometryObject is Solid))
+                                {
+                                    // LOG: ERROR: Can't cut polymesh.
+                                    continue;
+                                }
+
+                                for (int voidIdx = 0; voidIdx < numVoids; voidIdx++)
+                                {
+                                    if (!(Voids[solidIdx].GeometryObject is Solid))
+                                    {
+                                        // LOG: ERROR: Can't cut solid with polymesh.
+                                        continue;
+                                    }
+
+                                    Solids[solidIdx].GeometryObject =
+                                        IFCGeometryUtil.ExecuteSafeBooleanOperation(Solids[solidIdx].Id, Voids[voidIdx].Id,
+                                            Solids[solidIdx].GeometryObject as Solid, Voids[voidIdx].GeometryObject as Solid,
+                                            BooleanOperationsType.Difference);
+                                    if ((Solids[solidIdx].GeometryObject as Solid).Faces.IsEmpty)
+                                    {
+                                        Solids.RemoveAt(solidIdx);
+                                        solidIdx--;
+                                        numSolids--;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        bool addedCurves = shapeEditScope.AddPlanViewCurves(FootprintCurves, Id);
+
+                        if (numSolids > 0 || addedCurves)
+                        {
+                            string guid = GlobalId.ToString();
+                            DirectShape shape = Importer.TheCache.UseElementByGUID<DirectShape>(doc, guid);
+
+                            if (shape == null)
+                                shape = DirectShape.CreateElement(doc, m_CategoryId, Importer.ImportAppGUID(), guid);
+
+                            List<GeometryObject> directShapeGeometries = new List<GeometryObject>();
+                            foreach (IFCSolidInfo geometryObject in Solids)
+                            {
+                                // We need to check if the solid created is good enough for DirectShape.  If not, warn and use a fallback Mesh.
+                                GeometryObject currObject = geometryObject.GeometryObject;
+                                if (currObject is Solid)
+                                {
+                                    Solid solid = currObject as Solid;
+                                    if (!shape.IsValidGeometry(solid))
+                                    {
+                                        IFCImportFile.TheLog.LogWarning(Id, "Couldn't create valid solid, reverting to mesh.", false);
+                                        directShapeGeometries.AddRange(IFCGeometryUtil.CreateMeshesFromSolid(solid));
+                                        currObject = null;
+                                    }
+                                }
+
+                                if (currObject != null)
+                                    directShapeGeometries.Add(currObject);
+                            }
+
+                            // We will use the first IfcTypeObject id, if it exists.  In general, there should be 0 or 1.
+                            ElementId typeId = ElementId.InvalidElementId;
+                            foreach (IFCTypeObject typeObject in TypeObjects)
+                            {
+                                if (typeObject.IsValidForCreation && typeObject.CreatedElementId != ElementId.InvalidElementId)
+                                {
+                                    typeId = typeObject.CreatedElementId;
+                                    break;
+                                }
+                            }
+
+                            shape.SetShape(directShapeGeometries);
+                            shapeEditScope.SetPlanViewRep(shape);
+
+                            if (typeId != ElementId.InvalidElementId)
+                                shape.SetTypeId(typeId);
+
+                            m_CreatedElementId = shape.Id;
+                        }
+                    }
+                }
+                else
+                    IFCImportFile.TheLog.LogWarning(Id, "There is no valid geometry for this " + EntityType.ToString() + "; entity will not be built.", false);
+            }
+
+            base.Create(doc);
+        }
+
+        /// <summary>
+        /// Cleans out the IFCEntity to save memory.
+        /// </summary>
+        public override void CleanEntity()
+        {
+            base.CleanEntity();
+
+            m_ObjectLocation = null;
+
+            m_ProductRepresentation = null;
+
+            m_Solids = null;
+
+            m_Voids = null;
+        }
+
+        /// <summary>
+        /// Processes object placement of the product.
+        /// </summary>
+        /// <param name="ifcProduct">The IfcProduct handle.</param>
+        protected void ProcessObjectPlacement(IFCAnyHandle ifcProduct)
+        {
+            IFCAnyHandle objectPlacement = IFCAnyHandleUtil.GetInstanceAttribute(ifcProduct, "ObjectPlacement");
+
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(objectPlacement))
+                m_ObjectLocation = IFCLocation.ProcessIFCObjectPlacement(objectPlacement);
+        }
+
+        public int TypeId
+        {
+            get { return m_TypeId; }
+        }
+
+        public IFCLocation ObjectLocation
+        {
+            get { return m_ObjectLocation; }
+        }
+
+        /// <summary>
+        /// Processes an IfcProduct object.
+        /// </summary>
+        /// <param name="ifcProduct">The IfcProduct handle.</param>
+        /// <returns>The IFCProduct object.</returns>
+        public static IFCProduct ProcessIFCProduct(IFCAnyHandle ifcProduct)
+        {
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcProduct))
+            {
+                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcProduct);
+                return null;
+            }
+
+            try
+            {
+                IFCEntity cachedProduct;
+                if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcProduct.StepId, out cachedProduct))
+                    return (cachedProduct as IFCProduct);
+
+                if (IFCAnyHandleUtil.IsSubTypeOf(ifcProduct, IFCEntityType.IfcSpatialStructureElement))
+                {
+                    return IFCSpatialStructureElement.ProcessIFCSpatialStructureElement(ifcProduct);
+                }
+                else if (IFCAnyHandleUtil.IsSubTypeOf(ifcProduct, IFCEntityType.IfcElement))
+                {
+                    return IFCElement.ProcessIFCElement(ifcProduct);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message != "Don't Import")
+                    IFCImportFile.TheLog.LogError(ifcProduct.StepId, ex.Message, false);
+                return null;
+            }
+
+            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcProduct, IFCEntityType.IfcProduct, false);
+            return null;
+        }
+    }
+}

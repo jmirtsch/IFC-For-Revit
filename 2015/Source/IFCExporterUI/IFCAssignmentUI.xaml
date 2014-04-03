@@ -1,0 +1,91 @@
+﻿<Window x:Class="BIM.IFC.Export.UI.IFCAssignment"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="IFC Assignments" Loaded="Window_Loaded" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" d:DesignHeight="555" d:DesignWidth="570" SizeToContent="WidthAndHeight" HorizontalAlignment="Stretch" Margin="10,5,5,10" >
+    <Grid Height="520" Name="grid1" Width="551">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="461*" />
+            <RowDefinition Height="59*" />
+        </Grid.RowDefinitions>
+        <TabControl Height="436" HorizontalAlignment="Stretch" Margin="0,12,0,0" Name="AssignmenttabControl" VerticalAlignment="Stretch" Width="536" SelectionChanged="AssignmenttabControl_SelectionChanged">
+            <TabItem Header="File Header" Name="FileHeaderTab" Initialized="FileHeaderTab_Initialized"  >
+                <Grid Width="522">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="104*" />
+                        <ColumnDefinition Width="418*" />
+                    </Grid.ColumnDefinitions>
+                    <Label Content="File Description" Height="28" HorizontalAlignment="Left" Margin="16,17,0,0" Name="labelFileDescription" VerticalAlignment="Top" Grid.ColumnSpan="2" />
+                    <TextBox Text="{Binding Path=FileDescription, UpdateSourceTrigger=PropertyChanged, TargetNullValue=[...value is set according to export option]}" Height="23" HorizontalAlignment="Stretch" Margin="83,19,35,0" Name="FileDescriptionTextBox" VerticalAlignment="Top" Width="300" IsReadOnly="True" Grid.Column="1" Background="#FFE8E8E8" FontStyle="Italic" Opacity="0.7" />
+                    <Label Content="Source File Name" Height="28" HorizontalAlignment="Left" Margin="16,46,0,0" Name="labelSourceFileName" VerticalAlignment="Top" Grid.ColumnSpan="2" />
+                    <TextBox Text="{Binding Path=SourceFileName, UpdateSourceTrigger=PropertyChanged, TargetNullValue=[...value will be set on export]}" Height="23" HorizontalAlignment="Stretch" Margin="83,48,35,0" Name="SourceFileNameTextBox" VerticalAlignment="Top" Width="300" IsReadOnly="True" Grid.Column="1" Background="#FFE8E8E8" FontStyle="Italic" Opacity="0.7" />
+                    <Label Content="Author's Name" Height="28" HorizontalAlignment="Left" Margin="16,75,0,0" Name="labelAuthorFirstName" VerticalAlignment="Top" Grid.ColumnSpan="2" />
+                    <TextBox Text="{Binding Path=AuthorName, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="83,77,35,0" Name="AuthorNameTextBox" VerticalAlignment="Top" Width="300" Grid.Column="1" />
+                    <Label Content="Author's e-mail" Height="28" HorizontalAlignment="Left" Margin="16,104,0,0" Name="labelAuthorLastName" VerticalAlignment="Top" Grid.ColumnSpan="2" />
+                    <TextBox Text="{Binding Path=AuthorEmail, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="83,106,35,0" Name="AuthorEmailTextBox" VerticalAlignment="Top" Width="300" Grid.Column="1" />
+                    <Label Content="Organization" Height="28" HorizontalAlignment="Left" Margin="16,133,0,0" Name="labelOrganization" VerticalAlignment="Top" />
+                    <TextBox Text="{Binding Path=Organization, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="83,135,35,0" Name="OrganizationTextBox" VerticalAlignment="Top" Width="300" Grid.Column="1" />
+                    <Label Content="Authorization" Height="28" HorizontalAlignment="Left" Margin="16,162,0,0" Name="labelAuthorization" VerticalAlignment="Top" />
+                    <TextBox Text="{Binding Path=Authorization, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="83,164,35,0" Name="AuthorizationTextBox" VerticalAlignment="Top" Width="300" Grid.Column="1" />
+                    <Label Content="Application Name" Height="28" HorizontalAlignment="Left" Margin="16,191,0,0" Name="labelApplicationName" VerticalAlignment="Top" Grid.ColumnSpan="2" />
+                    <TextBox Text="{Binding Path=ApplicationName, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="83,193,35,0" Name="ApplicationNameTextBox" VerticalAlignment="Top" Width="300" IsReadOnly="True" Grid.Column="1" Background="#FFE8E8E8" Opacity="0.7" />
+                    <Label Content="Version Number" Height="28" HorizontalAlignment="Left" Margin="16,220,0,0" Name="labelVersionNumber" VerticalAlignment="Top" Grid.ColumnSpan="2" />
+                    <TextBox Text="{Binding Path=VersionNumber, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="83,222,35,0" Name="VersionNumberTextBox" VerticalAlignment="Top" Width="300" IsReadOnly="True" Grid.Column="1" Background="#FFE8E8E8" Opacity="0.7" />
+                    <Label Content="File Schema" Height="28" HorizontalAlignment="Left" Margin="16,249,0,0" Name="labelLocation" VerticalAlignment="Top" />
+                    <TextBox Text="{Binding Path=FileSchema, UpdateSourceTrigger=PropertyChanged, TargetNullValue=[...value is set according to export option]}" Height="23" HorizontalAlignment="Stretch" Margin="83,251,35,0" Name="FileSchemaTextBox" VerticalAlignment="Top" Width="300" Grid.Column="1" IsReadOnly="True" Background="#FFE8E8E8" FontStyle="Italic" Opacity="0.7" />
+                </Grid>
+            </TabItem>
+            <TabItem Header="Address" Name="AddressTab" Initialized="AddressTab_Initialized">
+                <Grid Height="396">
+                    <Label Content="Purpose" Height="28" HorizontalAlignment="Left" Margin="16,10,0,0" Name="labelPurpose" VerticalAlignment="Top" />
+                    <Label Content="Description" Height="28" HorizontalAlignment="Left" Margin="16,39,0,0" Name="labelDescription" VerticalAlignment="Top" />
+                    <TextBox Text="{Binding Path=Description, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="182,39,30,0" Name="DescriptionTextBox" VerticalAlignment="Top" Width="300" />
+                    <Label Content="User Defined Purpose" Height="28" HorizontalAlignment="Left" Margin="16,68,0,0" Name="labelUserDefinedPurpose" VerticalAlignment="Top" />
+                    <TextBox Text="{Binding Path=UserDefinedPurpose, UpdateSourceTrigger=PropertyChanged}" LostFocus="UserDefinedPurposeTextBox_LostFocus" Height="23" HorizontalAlignment="Stretch" Margin="182,68,30,0" Name="UserDefinedPurposeTextBox" VerticalAlignment="Top" Width="300" ToolTip="Entering value here will reset Purpose to &quot;USERDEFINED&quot;" />
+                    <Label Content="Address Line 1" Height="28" HorizontalAlignment="Left" Margin="16,97,0,0" Name="labelAddressLine1" VerticalAlignment="Top" />
+                    <TextBox Text="{Binding Path=AddressLine1, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="182,0,30,275" Name="AddressLine1TextBox" VerticalAlignment="Bottom" Width="300" />
+                    <Label Content="Address Line 2" Height="28" HorizontalAlignment="Left" Margin="16,126,0,0" Name="labelAddressLine2" VerticalAlignment="Top" />
+                    <TextBox Text="{Binding Path=AddressLine2, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="182,126,30,0" Name="AddressLine2TextBox" VerticalAlignment="Top" Width="300" />
+                    <Label Content="P.O. Box" Height="28" HorizontalAlignment="Left" Margin="16,155,0,0" Name="labelPOBox" VerticalAlignment="Top" />
+                    <TextBox Text="{Binding Path=POBox, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="182,155,30,0" Name="POBoxTextBox" VerticalAlignment="Top" Width="300" />
+                    <Label Content="City" Height="28" HorizontalAlignment="Left" Margin="16,184,0,0" Name="labelCity" VerticalAlignment="Top" />
+                    <TextBox Text="{Binding Path=TownOrCity, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="182,184,30,0" Name="CityTextBox" VerticalAlignment="Top" Width="300" />
+                    <Label Content="State" Height="28" HorizontalAlignment="Left" Margin="16,213,0,0" Name="labelState" VerticalAlignment="Top" />
+                    <TextBox Text="{Binding Path=RegionOrState, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="182,213,30,0" Name="StateTextBox" VerticalAlignment="Top" Width="300" />
+                    <Label Content="Postal Code" Height="28" HorizontalAlignment="Left" Margin="16,242,0,0" Name="labelPostalCode" VerticalAlignment="Top" />
+                    <TextBox Text="{Binding Path=PostalCode, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="182,242,30,0" Name="PostalCodeTextBox" VerticalAlignment="Top" Width="300" />
+                    <Label Content="Country" Height="28" HorizontalAlignment="Left" Margin="16,271,0,0" Name="labelCountry" VerticalAlignment="Top" />
+                    <TextBox Text="{Binding Path=Country, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="182,271,30,0" Name="CountryTextBox" VerticalAlignment="Top" Width="300" />
+                    <Label Content="Internal Location" Height="28" HorizontalAlignment="Left" Margin="16,300,0,0" Name="labelInternalLocation" VerticalAlignment="Top" />
+                    <TextBox Text="{Binding Path=InternalLocation, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="182,302,30,0" Name="InternalLocationTextBox" VerticalAlignment="Top" Width="300" />
+                    <ComboBox  ItemsSource="{Binding}" Height="23" HorizontalAlignment="Stretch" Margin="182,10,30,0" Name="PurposeComboBox" VerticalAlignment="Top" Width="300" SelectionChanged="PurposeComboBox_SelectionChanged" Initialized="PurposeComboBox_Initialized" />
+                    <StackPanel Height="33" HorizontalAlignment="Left" Margin="6,357,0,0" Name="stackPanel4" VerticalAlignment="Top" Width="514" >
+                        <CheckBox Content="Update Project Information" Height="16" Name="UpdateProjInfocheckBox" Width="491" Margin="0,10,0,0" Checked="UpdateProjInfocheckBox_Checked" Unchecked="UpdateProjInfocheckBox_Unchecked"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Classification" Name="ClassificationTab" Initialized="ClassificationTab_Initialized"  >
+                <Grid>
+                    <Label Content="Name" Height="28" HorizontalAlignment="Left" Margin="16,10,0,0" Name="ClassificationName" VerticalAlignment="Top" Foreground="#FFF80A0A" />
+                    <TextBox Text="{Binding Path=ClassificationName, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="182,10,30,0" Name="ClassificationNameTextBox" VerticalAlignment="Top" Width="300" HorizontalContentAlignment="Stretch" ToolTip="Name of the Classification System" />
+                    <Label Content="Source (Publisher)" Height="28" HorizontalAlignment="Left" Margin="16,39,0,0" Name="SourceOrPublisher" VerticalAlignment="Top" Foreground="#FFF80606" />
+                    <TextBox Text="{Binding Path=ClassificationSource, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="182,39,30,0" Name="ClassificationSourceTextBox" VerticalAlignment="Top" Width="300" HorizontalContentAlignment="Stretch" ToolTip="Source or publisher of the Classification System" />
+                    <Label Content="Edition" Height="28" HorizontalAlignment="Left" Margin="16,68,0,0" Name="Edition" VerticalAlignment="Top" IsEnabled="True" Foreground="#FFFF0D0D" />
+                    <TextBox Text="{Binding Path=ClassificationEdition, UpdateSourceTrigger=PropertyChanged}" Height="23" HorizontalAlignment="Stretch" Margin="182,68,30,0" Name="ClassificationEditionTextBox" VerticalAlignment="Top" Width="300" HorizontalContentAlignment="Stretch" ToolTip="Edition number of the Classification system" />
+                    <Label Content="Edition Date" Height="35" HorizontalAlignment="Left" Margin="16,96,0,0" Name="EditionDate" VerticalAlignment="Top" RenderTransformOrigin="0.441,0.466" />
+                    <DatePicker SelectedDate="{Binding Path=ClassificationEditionDate}" Height="25" HorizontalAlignment="Left" Margin="191,96,0,0" Name="datePicker1" VerticalAlignment="Top" Width="115" />
+                    <Label Content="Documentation location" Height="28" HorizontalAlignment="Left" Margin="16,132,0,0" Name="location" VerticalAlignment="Top" />
+                    <TextBox Text="{Binding Path=ClassificationLocation, UpdateSourceTrigger=PropertyChanged}" Height="28" HorizontalAlignment="Right" Margin="0,132,39,0" Name="ClassificationLocationtextBox" VerticalAlignment="Top" Width="300" ToolTip="Location of the documentation (usually URL)"/>
+                    <TextBlock Text="{Binding Path=ClassificationTabMsg, UpdateSourceTrigger=PropertyChanged}" Height="70" HorizontalAlignment="Stretch" Margin="16,317,37,0" Name="MessageTextBlock" VerticalAlignment="Top" FontWeight="Bold" FontStyle="Italic" FontFamily="Calibri" TextWrapping="Wrap" FontSize="14" TextAlignment="Center" Foreground="#FFF91010" />
+                    <Label Content="Classification Field Name" Height="28" HorizontalAlignment="Left" Margin="16,165,0,0" x:Name="location_Copy" VerticalAlignment="Top" Width="148" />
+                    <TextBox Text="{Binding Path=ClassificationFieldName, UpdateSourceTrigger=PropertyChanged}" Height="28" HorizontalAlignment="Right" Margin="0,165,39,0" x:Name="ClassificationFieldNameTextBox" VerticalAlignment="Top" Width="300" ToolTip="The optional alternate shared parameter name for this classification (default: ClassificationCode)"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
+        <StackPanel Grid.Row="1" Height="36" HorizontalAlignment="Left" Margin="375,10,0,0" Name="stackPanel1" VerticalAlignment="Top" Width="83" Orientation="Horizontal">
+            <Button Content="OK" Height="22" Name="buttonOK" Width="75" Click="buttonOK_Click"/>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Height="36" HorizontalAlignment="Left" Margin="464,10,0,0" Name="stackPanel2" VerticalAlignment="Top" Width="87" Orientation="Horizontal">
+            <Button Content="Cancel" Height="22" Name="buttonCancel" Width="75" Click="bottonCancel_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
