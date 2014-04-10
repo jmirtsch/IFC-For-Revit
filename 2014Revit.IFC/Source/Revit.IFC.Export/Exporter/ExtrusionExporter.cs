@@ -1010,6 +1010,8 @@ namespace Revit.IFC.Export.Exporter
         {
             public IFCAnyHandle Handle = null;
             public ExtrusionAnalyzer Analyzer = null;
+            public IList<IFCAnyHandle> BaseExtrusions = new List<IFCAnyHandle>();
+            public ShapeRepresentationType ShapeRepresentationType = ShapeRepresentationType.Undefined;
         }
 
 
@@ -1030,13 +1032,13 @@ namespace Revit.IFC.Export.Exporter
                     bool hasClippingResult = false;
                     bool hasBooleanResult = false;
                     ElementId materialId = ElementId.InvalidElementId;
-                    retVal = CreateExtrsionWithClippingAndOpening(exporterIFC, element, catId, solid, plane, projDir, range,
+                    HandleAndAnalyzer currRetVal = CreateExtrusionWithClippingAndOpening(exporterIFC, element, catId, solid, plane, projDir, range,
                         out completelyClipped, out hasClippingResult, out hasBooleanResult, out materialId);
 
-                    if (retVal != null && retVal.Handle != null)
+                    if (currRetVal != null && currRetVal.Handle != null)
                     {
                         materialIds.Add(materialId);
-                        IFCAnyHandle repHandle = retVal.Handle;
+                        IFCAnyHandle repHandle = currRetVal.Handle;
                         if (hasBooleanResult) // if both have boolean and clipping result, use boolean one.
                             extrusionBooleanBodyItems.Add(repHandle);
                         else if (hasClippingResult)
@@ -1054,6 +1056,10 @@ namespace Revit.IFC.Export.Exporter
                         ExporterCacheManager.PresentationStyleAssignmentCache.RemoveInvalidHandles(materialIds);
                         return retVal;
                     }
+
+                    // currRetVal will only have one extrusion.  Use the analyzer from the "last" extrusion.  Should only really be used for one extrusion.
+                    retVal.Analyzer = currRetVal.Analyzer;
+                    retVal.BaseExtrusions.Add(currRetVal.BaseExtrusions[0]);
                 }
 
                 IFCAnyHandle contextOfItemsBody = exporterIFC.Get3DContextHandle("Body");
@@ -1062,16 +1068,19 @@ namespace Revit.IFC.Export.Exporter
                 {
                     retVal.Handle = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, catId, contextOfItemsBody,
                         extrusionBodyItems, null);
+                    retVal.ShapeRepresentationType = ShapeRepresentationType.SweptSolid;
                 }
                 else if (extrusionClippingBodyItems.Count > 0 && (extrusionBodyItems.Count == 0 && extrusionBooleanBodyItems.Count == 0))
                 {
                     retVal.Handle = RepresentationUtil.CreateClippingRep(exporterIFC, element, catId, contextOfItemsBody,
                         extrusionClippingBodyItems);
+                    retVal.ShapeRepresentationType = ShapeRepresentationType.Clipping;
                 }
                 else if (extrusionBooleanBodyItems.Count > 0 && (extrusionBodyItems.Count == 0 && extrusionClippingBodyItems.Count == 0))
                 {
                     retVal.Handle = RepresentationUtil.CreateCSGRep(exporterIFC, element, catId, contextOfItemsBody,
                         extrusionBooleanBodyItems);
+                    retVal.ShapeRepresentationType = ShapeRepresentationType.CSG;
                 }
                 else
                 {
@@ -1097,15 +1106,17 @@ namespace Revit.IFC.Export.Exporter
 
                     extrusionBodyItems.Clear();
                     extrusionBodyItems.Add(finalBodyItemHnd);
+
                     retVal.Handle = RepresentationUtil.CreateCSGRep(exporterIFC, element, catId, contextOfItemsBody,
                         extrusionBodyItems);
+                    retVal.ShapeRepresentationType = ShapeRepresentationType.CSG;
                 }
                 tr.Commit();
                 return retVal;
             }
         }
 
-        private static HandleAndAnalyzer CreateExtrsionWithClippingAndOpening(ExporterIFC exporterIFC, Element element, 
+        private static HandleAndAnalyzer CreateExtrusionWithClippingAndOpening(ExporterIFC exporterIFC, Element element, 
             ElementId catId, Solid solid, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped,
             out bool hasClippingResult, out bool hasBooleanResult, out ElementId materialId)
         {
@@ -1184,6 +1195,8 @@ namespace Revit.IFC.Export.Exporter
                         extrusionBoundaryLoops, extrusionBasePlane, projDir, scaledExtrusionDepth);
                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionBodyItemHnd))
                     {
+                        retVal.BaseExtrusions.Add(extrusionBodyItemHnd);
+
                         finalExtrusionBodyItemHnd = extrusionBodyItemHnd;
                         IDictionary<ElementId, ICollection<ICollection<Face>>> elementCutouts =
                             GeometryUtil.GetCuttingElementFaces(element, elementAnalyzer);
@@ -1317,21 +1330,23 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="range">The upper and lower limits of the extrusion, in the projection direction.</param>
         /// <param name="completelyClipped">Returns true if the extrusion is completely outside the range.</param>
         /// <returns>The extrusion handle.</returns>
-        public static HandleAndData CreateExtrusionWithClippingAndProperties(ExporterIFC exporterIFC, 
+        public static HandleAndData CreateExtrusionWithClippingAndProperties(ExporterIFC exporterIFC,
             Element element, ElementId catId, Solid solid, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped)
         {
             IList<Solid> solids = new List<Solid>();
             solids.Add(solid);
+
             HashSet<ElementId> materialIds = null;
             HandleAndAnalyzer handleAndAnalyzer = CreateExtrusionWithClippingBase(exporterIFC, element, catId,
                 solids, plane, projDir, range, out completelyClipped, out materialIds);
 
             HandleAndData ret = new HandleAndData();
             ret.Handle = handleAndAnalyzer.Handle;
+            ret.BaseExtrusions = handleAndAnalyzer.BaseExtrusions;
+            ret.ShapeRepresentationType = handleAndAnalyzer.ShapeRepresentationType;
+            ret.MaterialIds = materialIds;
             if (handleAndAnalyzer.Analyzer != null)
-            {
                 ret.Data = GetExtrusionCreationDataFromAnalyzer(exporterIFC, projDir, handleAndAnalyzer.Analyzer);
-            }
 
             return ret;
         }

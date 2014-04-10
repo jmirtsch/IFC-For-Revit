@@ -596,8 +596,9 @@ namespace Revit.IFC.Export.Utility
             // Design options
             filters.Add(GetDesignOptionFilter());
 
-            // Phases
-            filters.Add(GetPhaseStatusFilter(document));
+            // Phases: only for non-spatial elements.  For spatial elements, we will do a check afterwards.
+            if (!forSpatialElements)
+                filters.Add(GetPhaseStatusFilter(document));
 
             return new LogicalAndFilter(filters);
         }
@@ -1235,6 +1236,27 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
+        /// Checks if the room is in an invalid phase.
+        /// </summary>
+        /// <param name="element">The element, which may or may not be a room element.</param>
+        /// <returns>True if the element is in the room, has a phase set, which is different from the active phase.</returns>
+        public static bool IsRoomInInvalidPhase(Element element)
+        {
+            if (element is Autodesk.Revit.DB.Architecture.Room)
+            {
+                Parameter phaseParameter = element.get_Parameter(BuiltInParameter.ROOM_PHASE);
+                if (phaseParameter != null)
+                {
+                    ElementId phaseId = phaseParameter.AsElementId();
+                    if (phaseId != ElementId.InvalidElementId && phaseId != ExporterCacheManager.ExportOptionsCache.ActivePhaseId)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Gets element filter that match certain phases. 
         /// </summary>
         /// <param name="document">The Revit document.</param>
@@ -1246,7 +1268,7 @@ namespace Revit.IFC.Export.Utility
             phaseStatuses.Add(ElementOnPhaseStatus.Existing);
             phaseStatuses.Add(ElementOnPhaseStatus.New);
 
-            ElementId phaseId = ExporterCacheManager.ExportOptionsCache.ActivePhase;
+            ElementId phaseId = ExporterCacheManager.ExportOptionsCache.ActivePhaseId;
             Element filterView = ExporterCacheManager.ExportOptionsCache.FilterViewForExport;
 
             return new ElementPhaseStatusFilter(phaseId, phaseStatuses);

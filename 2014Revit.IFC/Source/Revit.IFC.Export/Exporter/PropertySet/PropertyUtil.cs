@@ -2468,7 +2468,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             ParameterUtil.GetDoubleValueFromElement(wallElement, BuiltInParameter.HOST_AREA_COMPUTED, out area);
             if (!MathUtil.IsAlmostZero(area))
             {
-                area = UnitUtil.ScaleLength(area);
+                area = UnitUtil.ScaleArea(area);
                 IFCAnyHandle quantityHnd = IFCInstanceExporter.CreateQuantityArea(file, "GrossSideArea", null, null, area);
                 quantityHnds.Add(quantityHnd);
             }
@@ -2483,7 +2483,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             ParameterUtil.GetDoubleValueFromElement(wallElement, BuiltInParameter.HOST_VOLUME_COMPUTED, out volume);
             if (!MathUtil.IsAlmostZero(volume))
             {
-                volume = UnitUtil.ScaleLength(volume);
+                volume = UnitUtil.ScaleVolume(volume);
                 IFCAnyHandle quantityHnd = IFCInstanceExporter.CreateQuantityVolume(file, "GrossVolume", null, null, volume);
                 quantityHnds.Add(quantityHnd);
             }

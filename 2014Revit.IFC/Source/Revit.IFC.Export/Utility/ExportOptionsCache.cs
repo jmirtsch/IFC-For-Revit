@@ -188,24 +188,29 @@ namespace Revit.IFC.Export.Utility
             cache.CanExportSolidModelRep = canExportSolidModelRep != null ? canExportSolidModelRep.Value : false;
 
             // Set the phase we are exporting
-            cache.ActivePhase = ElementId.InvalidElementId;
+            cache.ActivePhaseId = ElementId.InvalidElementId;
             
             String activePhaseElementValue;
             if (options.TryGetValue("ActivePhase", out activePhaseElementValue))
-                cache.ActivePhase = ParseElementId(activePhaseElementValue);
+                cache.ActivePhaseId = ParseElementId(activePhaseElementValue);
 
-            if ((cache.ActivePhase == ElementId.InvalidElementId) && (cache.FilterViewForExport != null))
+            if ((cache.ActivePhaseId == ElementId.InvalidElementId) && (cache.FilterViewForExport != null))
             {
                 Parameter currPhase = cache.FilterViewForExport.get_Parameter(BuiltInParameter.VIEW_PHASE);
                 if (currPhase != null)
-                    cache.ActivePhase = currPhase.AsElementId();
+                    cache.ActivePhaseId = currPhase.AsElementId();
             }
 
-            if (cache.ActivePhase == ElementId.InvalidElementId)
+            if (cache.ActivePhaseId == ElementId.InvalidElementId)
             {
                 PhaseArray phaseArray = document.Phases;
                 Phase lastPhase = phaseArray.get_Item(phaseArray.Size - 1);
-                cache.ActivePhase = lastPhase.Id;
+                cache.ActivePhaseId = lastPhase.Id;
+                cache.ActivePhaseElement = lastPhase;
+            }
+            else
+            {
+                cache.ActivePhaseElement = document.GetElement(cache.ActivePhaseId) as Phase;
             }
 
             // "FileType" - note - setting is not respected yet
@@ -627,9 +632,18 @@ namespace Revit.IFC.Export.Utility
         public bool CanExportSolidModelRep { get; set; }
 
         /// <summary>
-        /// Specifies which phase to export.  May be expanded to phases.
+        /// Specifies which phase id to export.  May be expanded to phases.
         /// </summary>
-        public ElementId ActivePhase
+        public ElementId ActivePhaseId
+        {
+            get;
+            protected set;
+        }
+
+        /// <summary>
+        /// The phase element corresponding to the phase id.
+        /// </summary>
+        public Phase ActivePhaseElement
         {
             get;
             protected set;

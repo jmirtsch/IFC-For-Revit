@@ -178,9 +178,30 @@ namespace Revit.IFC.Export.Toolkit
             if (famInst == null)
                 return ElementId.InvalidElementId;
 
-            Element roomOrSpace = ExporterCacheManager.SpaceInfoCache.ContainsRooms ? famInst.Room : null;
+            Element roomOrSpace = null;
             if (roomOrSpace == null)
-                roomOrSpace = ExporterCacheManager.SpaceInfoCache.ContainsSpaces ? famInst.Space : null;
+            {
+                try
+                {
+                    roomOrSpace = ExporterCacheManager.SpaceInfoCache.ContainsRooms ? famInst.get_Room(ExporterCacheManager.ExportOptionsCache.ActivePhaseElement) : null;
+                }
+                catch
+                {
+                    roomOrSpace = null;
+                }
+            }
+
+            if (roomOrSpace == null)
+            {
+                try
+                {
+                    roomOrSpace = ExporterCacheManager.SpaceInfoCache.ContainsSpaces ? famInst.get_Space(ExporterCacheManager.ExportOptionsCache.ActivePhaseElement) : null;
+                }
+                catch
+                {
+                    roomOrSpace = null;
+                }
+            }
 
             if (roomOrSpace == null || roomOrSpace.Location == null)
                 return ElementId.InvalidElementId;

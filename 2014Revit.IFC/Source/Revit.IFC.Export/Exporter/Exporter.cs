@@ -240,6 +240,8 @@ namespace Revit.IFC.Export.Exporter
             {
                 if ((element == null) || (exportedSpaces != null && exportedSpaces.Contains(element.Id)))
                     continue;
+                if (ElementFilteringUtil.IsRoomInInvalidPhase(element))
+                    continue;
                 ExportElement(exporterIFC, element);
             }
         }
