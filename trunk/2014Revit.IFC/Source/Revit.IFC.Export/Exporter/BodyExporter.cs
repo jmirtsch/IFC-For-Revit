@@ -1552,146 +1552,208 @@ namespace Revit.IFC.Export.Exporter
                 // need to transform, but not scale, this point to make it the new origin.
                 using (TransformSetter transformSetter = TransformSetter.Create())
                 {
-                    if (options.AllowOffsetTransform && exportBodyParams!= null)
+                    int numItems = geometryList.Count;
+                    bool tryExtrusionAnalyzer = tryToExportAsExtrusion && (options.ExtrusionLocalCoordinateSystem != null) && (numItems == 1) && (geometryList[0] is Solid);
+
+                    if (options.AllowOffsetTransform && !tryExtrusionAnalyzer && exportBodyParams != null)
                         bodyData.OffsetTransform = transformSetter.InitializeFromBoundingBox(exporterIFC, bbox, exportBodyParams, out unscaledTrfOrig);
 
+                    // If we passed in an ExtrusionLocalCoordinateSystem, and we have 1 Solid, we will try to create an extrusion using the ExtrusionAnalyzer.
+                    // If we succeed, we will skip the rest of the routine, otherwise we will try with the backup extrusion method.
+                    // This doesn't yet create fallback information for solid models that are hybrid extrusions and BReps.
                     if (tryToExportAsExtrusion)
                     {
-                        // Check to see if we have Geometries or GFaces.
-                        // We will have the specific all GFaces case and then the generic case.
-                        IList<Face> faces = null;
-
-                        if (allFaces)
+                        if (tryExtrusionAnalyzer)
                         {
-                            faces = new List<Face>();
-                            foreach (GeometryObject geometryObject in geometryList)
+                            using (IFCTransaction extrusionTransaction = new IFCTransaction(file))
                             {
-                                faces.Add(geometryObject as Face);
+                                Plane extrusionPlane = new Plane(options.ExtrusionLocalCoordinateSystem.BasisY,
+                                        options.ExtrusionLocalCoordinateSystem.BasisZ,
+                                        options.ExtrusionLocalCoordinateSystem.Origin);
+                                XYZ extrusionDirection = options.ExtrusionLocalCoordinateSystem.BasisX;
+
+                                bool completelyClipped;
+                                HandleAndData extrusionData = ExtrusionExporter.CreateExtrusionWithClippingAndProperties(exporterIFC, element,
+                                    CategoryUtil.GetSafeCategoryId(element), geometryList[0] as Solid, extrusionPlane,
+                                    extrusionDirection, null, out completelyClipped);
+                                if (!completelyClipped && !IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionData.Handle) && extrusionData.BaseExtrusions != null && extrusionData.BaseExtrusions.Count == 1)
+                                {
+                                    HashSet<ElementId> materialIds = extrusionData.MaterialIds;
+
+                                    // We skip setting and getting the material id from the exporter as unnecessary.
+                                    ElementId matIdFromGeom = (materialIds != null && materialIds.Count > 0) ? materialIds.First() : ElementId.InvalidElementId;
+                                    ElementId matId = (overrideMaterialId != ElementId.InvalidElementId) ? overrideMaterialId : matIdFromGeom;
+
+                                    bodyItems.Add(extrusionData.BaseExtrusions[0]);
+                                    materialIdsForExtrusions.Add(matId);
+                                    if (matId != ElementId.InvalidElementId)
+                                        bodyData.AddMaterial(matId);
+                                    bodyData.RepresentationHnd = extrusionData.Handle;
+                                    bodyData.ShapeRepresentationType = extrusionData.ShapeRepresentationType;
+
+                                    if (exportBodyParams != null && extrusionData.Data != null)
+                                    {
+                                        exportBodyParams.Slope = extrusionData.Data.Slope;
+                                        exportBodyParams.ScaledLength = extrusionData.Data.ScaledLength;
+                                        exportBodyParams.ExtrusionDirection = extrusionData.Data.ExtrusionDirection;
+
+                                        exportBodyParams.ScaledHeight = extrusionData.Data.ScaledHeight;
+                                        exportBodyParams.ScaledWidth = extrusionData.Data.ScaledWidth;
+
+                                        exportBodyParams.ScaledArea = extrusionData.Data.ScaledArea;
+                                        exportBodyParams.ScaledInnerPerimeter = extrusionData.Data.ScaledInnerPerimeter;
+                                        exportBodyParams.ScaledOuterPerimeter = extrusionData.Data.ScaledOuterPerimeter;
+                                    }
+
+                                    hasExtrusions = true;
+                                    extrusionTransaction.Commit();
+                                }
+                                else
+                                {
+                                    extrusionTransaction.RollBack();
+                                }
                             }
                         }
 
-                        int numExtrusionsToCreate = allFaces ? 1 : geometryList.Count;
-
-                        IList<IList<IFCExtrusionData>> extrusionLists = new List<IList<IFCExtrusionData>>();
-                        for (int ii = 0; ii < numExtrusionsToCreate && tryToExportAsExtrusion; ii++)
+                        // Only try if ExtrusionAnalyzer wasn't called, or failed.
+                        if (!hasExtrusions)
                         {
-                            IList<IFCExtrusionData> extrusionList = new List<IFCExtrusionData>();
-
-                            IFCExtrusionAxes axesToExtrudeIn = exportBodyParams != null ? exportBodyParams.PossibleExtrusionAxes : IFCExtrusionAxes.TryDefault;
-                            XYZ directionToExtrudeIn = XYZ.Zero;
-                            if (exportBodyParams != null && exportBodyParams.HasCustomAxis)
-                                directionToExtrudeIn = exportBodyParams.CustomAxis;
-
-                            double lengthScale = UnitUtil.ScaleLengthForRevitAPI();
-                            IFCExtrusionCalculatorOptions extrusionOptions =
-                               new IFCExtrusionCalculatorOptions(exporterIFC, axesToExtrudeIn, directionToExtrudeIn, lengthScale);
+                            // Check to see if we have Geometries or GFaces.
+                            // We will have the specific all GFaces case and then the generic case.
+                            IList<Face> faces = null;
 
                             if (allFaces)
-                                extrusionList = IFCExtrusionCalculatorUtils.CalculateExtrusionData(extrusionOptions, faces);
-                            else
-                                extrusionList = IFCExtrusionCalculatorUtils.CalculateExtrusionData(extrusionOptions, geometryList[ii]);
-
-                            if (extrusionList.Count == 0)
                             {
-                                if (tryToExportAsSweptSolid)
-                                    exportAsSweptSolid.Add(ii);
-                                else if (!canExportSolidModelRep)
+                                faces = new List<Face>();
+                                foreach (GeometryObject geometryObject in geometryList)
                                 {
-                                    tryToExportAsExtrusion = false;
-                                    break;
+                                    faces.Add(geometryObject as Face);
                                 }
+                            }
+
+                            int numExtrusionsToCreate = allFaces ? 1 : geometryList.Count;
+
+                            IList<IList<IFCExtrusionData>> extrusionLists = new List<IList<IFCExtrusionData>>();
+                            for (int ii = 0; ii < numExtrusionsToCreate && tryToExportAsExtrusion; ii++)
+                            {
+                                IList<IFCExtrusionData> extrusionList = new List<IFCExtrusionData>();
+
+                                IFCExtrusionAxes axesToExtrudeIn = exportBodyParams != null ? exportBodyParams.PossibleExtrusionAxes : IFCExtrusionAxes.TryDefault;
+                                XYZ directionToExtrudeIn = XYZ.Zero;
+                                if (exportBodyParams != null && exportBodyParams.HasCustomAxis)
+                                    directionToExtrudeIn = exportBodyParams.CustomAxis;
+
+                                double lengthScale = UnitUtil.ScaleLengthForRevitAPI();
+                                IFCExtrusionCalculatorOptions extrusionOptions =
+                                   new IFCExtrusionCalculatorOptions(exporterIFC, axesToExtrudeIn, directionToExtrudeIn, lengthScale);
+
+                                if (allFaces)
+                                    extrusionList = IFCExtrusionCalculatorUtils.CalculateExtrusionData(extrusionOptions, faces);
                                 else
-                                    exportAsBRep.Add(ii);
-                            }
-                            else
-                            {
-                                extrusionLists.Add(extrusionList);
-                                exportAsExtrusion.Add(ii);
-                            }
-                        }
+                                    extrusionList = IFCExtrusionCalculatorUtils.CalculateExtrusionData(extrusionOptions, geometryList[ii]);
 
-                        int numCreatedExtrusions = extrusionLists.Count;
-                        for (int ii = 0; ii < numCreatedExtrusions && tryToExportAsExtrusion; ii++)
-                        {
-                            int geomIndex = exportAsExtrusion[ii];
-
-                            ElementId matId = SetBestMaterialIdInExporter(geometryList[geomIndex], element, overrideMaterialId, exporterIFC);
-                            if (matId != ElementId.InvalidElementId)
-                                bodyData.AddMaterial(matId);
-
-                            if (exportBodyParams != null && exportBodyParams.AreInnerRegionsOpenings)
-                            {
-                                IList<CurveLoop> curveLoops = extrusionLists[ii][0].GetLoops();
-                                XYZ extrudedDirection = extrusionLists[ii][0].ExtrusionDirection;
-
-                                int numLoops = curveLoops.Count;
-                                for (int jj = numLoops - 1; jj > 0; jj--)
+                                if (extrusionList.Count == 0)
                                 {
-                                    ExtrusionExporter.AddOpeningData(exportBodyParams, extrusionLists[ii][0], curveLoops[jj]);
-                                    extrusionLists[ii][0].RemoveLoopAt(jj);
-                                }
-                            }
-
-                            bool exportedAsExtrusion = false;
-                            IFCExtrusionBasis whichBasis = extrusionLists[ii][0].ExtrusionBasis;
-                            if (whichBasis >= 0)
-                            {
-                                IFCAnyHandle extrusionHandle = ExtrusionExporter.CreateExtrudedSolidFromExtrusionData(exporterIFC, element, extrusionLists[ii][0]);
-                                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionHandle))
-                                {
-                                    bodyItems.Add(extrusionHandle);
-                                    materialIdsForExtrusions.Add(exporterIFC.GetMaterialIdForCurrentExportState());
-
-                                    IList<CurveLoop> curveLoops = extrusionLists[ii][0].GetLoops();
-                                    XYZ extrusionDirection = extrusionLists[ii][0].ExtrusionDirection;
-
-                                    if (exportBodyParams != null)
+                                    if (tryToExportAsSweptSolid)
+                                        exportAsSweptSolid.Add(ii);
+                                    else if (!canExportSolidModelRep)
                                     {
-                                        exportBodyParams.Slope = GeometryUtil.GetSimpleExtrusionSlope(extrusionDirection, whichBasis);
-                                        exportBodyParams.ScaledLength = extrusionLists[ii][0].ScaledExtrusionLength;
-                                        exportBodyParams.ExtrusionDirection = extrusionDirection;
-                                        for (int kk = 1; kk < extrusionLists[ii].Count; kk++)
-                                        {
-                                            ExtrusionExporter.AddOpeningData(exportBodyParams, extrusionLists[ii][kk]);
-                                        }
-
-                                        Plane plane = null;
-                                        double height = 0.0, width = 0.0;
-                                        if (ExtrusionExporter.ComputeHeightWidthOfCurveLoop(curveLoops[0], plane, out height, out width))
-                                        {
-                                            exportBodyParams.ScaledHeight = UnitUtil.ScaleLength(height);
-                                            exportBodyParams.ScaledWidth = UnitUtil.ScaleLength(width);
-                                        }
-
-                                        double area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoops);
-                                        if (area > 0.0)
-                                        {
-                                            exportBodyParams.ScaledArea = UnitUtil.ScaleArea(area);
-                                        }
-
-                                        double innerPerimeter = ExtrusionExporter.ComputeInnerPerimeterOfCurveLoops(curveLoops);
-                                        double outerPerimeter = ExtrusionExporter.ComputeOuterPerimeterOfCurveLoops(curveLoops);
-                                        if (innerPerimeter > 0.0)
-                                            exportBodyParams.ScaledInnerPerimeter = UnitUtil.ScaleLength(innerPerimeter);
-                                        if (outerPerimeter > 0.0)
-                                            exportBodyParams.ScaledOuterPerimeter = UnitUtil.ScaleLength(outerPerimeter);
+                                        tryToExportAsExtrusion = false;
+                                        break;
                                     }
-                                    exportedAsExtrusion = true;
-                                    hasExtrusions = true;
+                                    else
+                                        exportAsBRep.Add(ii);
+                                }
+                                else
+                                {
+                                    extrusionLists.Add(extrusionList);
+                                    exportAsExtrusion.Add(ii);
                                 }
                             }
 
-                            if (!exportedAsExtrusion)
+                            int numCreatedExtrusions = extrusionLists.Count;
+                            for (int ii = 0; ii < numCreatedExtrusions && tryToExportAsExtrusion; ii++)
                             {
-                                if (tryToExportAsSweptSolid)
-                                    exportAsSweptSolid.Add(ii);
-                                else if (!canExportSolidModelRep)
+                                int geomIndex = exportAsExtrusion[ii];
+
+                                ElementId matId = SetBestMaterialIdInExporter(geometryList[geomIndex], element, overrideMaterialId, exporterIFC);
+                                if (matId != ElementId.InvalidElementId)
+                                    bodyData.AddMaterial(matId);
+
+                                if (exportBodyParams != null && exportBodyParams.AreInnerRegionsOpenings)
                                 {
-                                    tryToExportAsExtrusion = false;
-                                    break;
+                                    IList<CurveLoop> curveLoops = extrusionLists[ii][0].GetLoops();
+                                    XYZ extrudedDirection = extrusionLists[ii][0].ExtrusionDirection;
+
+                                    int numLoops = curveLoops.Count;
+                                    for (int jj = numLoops - 1; jj > 0; jj--)
+                                    {
+                                        ExtrusionExporter.AddOpeningData(exportBodyParams, extrusionLists[ii][0], curveLoops[jj]);
+                                        extrusionLists[ii][0].RemoveLoopAt(jj);
+                                    }
                                 }
-                                else
-                                    exportAsBRep.Add(ii);
+
+                                bool exportedAsExtrusion = false;
+                                IFCExtrusionBasis whichBasis = extrusionLists[ii][0].ExtrusionBasis;
+                                if (whichBasis >= 0)
+                                {
+                                    IFCAnyHandle extrusionHandle = ExtrusionExporter.CreateExtrudedSolidFromExtrusionData(exporterIFC, element, extrusionLists[ii][0]);
+                                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionHandle))
+                                    {
+                                        bodyItems.Add(extrusionHandle);
+                                        materialIdsForExtrusions.Add(exporterIFC.GetMaterialIdForCurrentExportState());
+
+                                        IList<CurveLoop> curveLoops = extrusionLists[ii][0].GetLoops();
+                                        XYZ extrusionDirection = extrusionLists[ii][0].ExtrusionDirection;
+
+                                        if (exportBodyParams != null)
+                                        {
+                                            exportBodyParams.Slope = GeometryUtil.GetSimpleExtrusionSlope(extrusionDirection, whichBasis);
+                                            exportBodyParams.ScaledLength = extrusionLists[ii][0].ScaledExtrusionLength;
+                                            exportBodyParams.ExtrusionDirection = extrusionDirection;
+                                            for (int kk = 1; kk < extrusionLists[ii].Count; kk++)
+                                            {
+                                                ExtrusionExporter.AddOpeningData(exportBodyParams, extrusionLists[ii][kk]);
+                                            }
+
+                                            Plane plane = null;
+                                            double height = 0.0, width = 0.0;
+                                            if (ExtrusionExporter.ComputeHeightWidthOfCurveLoop(curveLoops[0], plane, out height, out width))
+                                            {
+                                                exportBodyParams.ScaledHeight = UnitUtil.ScaleLength(height);
+                                                exportBodyParams.ScaledWidth = UnitUtil.ScaleLength(width);
+                                            }
+
+                                            double area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoops);
+                                            if (area > 0.0)
+                                            {
+                                                exportBodyParams.ScaledArea = UnitUtil.ScaleArea(area);
+                                            }
+
+                                            double innerPerimeter = ExtrusionExporter.ComputeInnerPerimeterOfCurveLoops(curveLoops);
+                                            double outerPerimeter = ExtrusionExporter.ComputeOuterPerimeterOfCurveLoops(curveLoops);
+                                            if (innerPerimeter > 0.0)
+                                                exportBodyParams.ScaledInnerPerimeter = UnitUtil.ScaleLength(innerPerimeter);
+                                            if (outerPerimeter > 0.0)
+                                                exportBodyParams.ScaledOuterPerimeter = UnitUtil.ScaleLength(outerPerimeter);
+                                        }
+                                        exportedAsExtrusion = true;
+                                        hasExtrusions = true;
+                                    }
+                                }
+
+                                if (!exportedAsExtrusion)
+                                {
+                                    if (tryToExportAsSweptSolid)
+                                        exportAsSweptSolid.Add(ii);
+                                    else if (!canExportSolidModelRep)
+                                    {
+                                        tryToExportAsExtrusion = false;
+                                        break;
+                                    }
+                                    else
+                                        exportAsBRep.Add(ii);
+                                }
                             }
                         }
                     }
@@ -1740,25 +1802,28 @@ namespace Revit.IFC.Export.Exporter
 
                         if (exportSucceeded)
                         {
-                            HashSet<IFCAnyHandle> bodyItemSet = new HashSet<IFCAnyHandle>();
-                            bodyItemSet.UnionWith(bodyItems);
-                            if (hasExtrusions && !hasSweptSolids)
+                            if (bodyData.RepresentationHnd == null)
                             {
-                                bodyData.RepresentationHnd =
-                                    RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
-                                bodyData.ShapeRepresentationType = ShapeRepresentationType.SweptSolid;
-                            }
-                            else if (hasSweptSolids && !hasExtrusions)
-                            {
-                                bodyData.RepresentationHnd =
-                                    RepresentationUtil.CreateAdvancedSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
-                                bodyData.ShapeRepresentationType = ShapeRepresentationType.AdvancedSweptSolid;
-                            }
-                            else
-                            {
-                                bodyData.RepresentationHnd =
-                                    RepresentationUtil.CreateSolidModelRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet);
-                                bodyData.ShapeRepresentationType = ShapeRepresentationType.SolidModel;
+                                HashSet<IFCAnyHandle> bodyItemSet = new HashSet<IFCAnyHandle>();
+                                bodyItemSet.UnionWith(bodyItems);
+                                if (hasExtrusions && !hasSweptSolids)
+                                {
+                                    bodyData.RepresentationHnd =
+                                        RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
+                                    bodyData.ShapeRepresentationType = ShapeRepresentationType.SweptSolid;
+                                }
+                                else if (hasSweptSolids && !hasExtrusions)
+                                {
+                                    bodyData.RepresentationHnd =
+                                        RepresentationUtil.CreateAdvancedSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
+                                    bodyData.ShapeRepresentationType = ShapeRepresentationType.AdvancedSweptSolid;
+                                }
+                                else
+                                {
+                                    bodyData.RepresentationHnd =
+                                        RepresentationUtil.CreateSolidModelRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet);
+                                    bodyData.ShapeRepresentationType = ShapeRepresentationType.SolidModel;
+                                }
                             }
 
                             // TODO: include BRep, CSG, Clipping

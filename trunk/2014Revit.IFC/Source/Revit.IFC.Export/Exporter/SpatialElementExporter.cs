@@ -365,6 +365,9 @@ namespace Revit.IFC.Export.Exporter
                             if (!ElementFilteringUtil.ShouldElementBeExported(exporterIFC, spatialElement, false))
                                 continue;
 
+                            if (ElementFilteringUtil.IsRoomInInvalidPhase(spatialElement))
+                                continue;
+                            
                             Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
                             View ownerView = spatialElement.Document.GetElement(spatialElement.OwnerViewId) as View;
                             if (ownerView != null)

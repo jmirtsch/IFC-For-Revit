@@ -51,7 +51,15 @@ namespace Revit.IFC.Export.Exporter
         /// <summary>
         /// Solid model.
         /// </summary>
-        SolidModel
+        SolidModel,
+        /// <summary>
+        /// CSG representation.
+        /// </summary>
+        CSG,
+        /// <summary>
+        /// Clipping representation.
+        /// </summary>
+        Clipping
     }
 
     /// <summary>

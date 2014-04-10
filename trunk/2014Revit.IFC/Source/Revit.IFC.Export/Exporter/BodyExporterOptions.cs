@@ -44,6 +44,11 @@ namespace Revit.IFC.Export.Exporter
         private bool m_TryToExportAsExtrusion = false;
 
         /// <summary>
+        /// A local coordinate system that, if supplied, allows use of ExtrusionAnalyzer to try to generate extrusion.
+        /// </summary>
+        private Transform m_ExtrusionLocalCoordinateSystem = null;
+
+        /// <summary>
         /// Try to export the solids as swept solids, if possible.
         /// </summary>
         private bool m_TryToExportAsSweptSolid = false;
@@ -86,6 +91,7 @@ namespace Revit.IFC.Export.Exporter
         public BodyExporterOptions(BodyExporterOptions options) 
         {
             TryToExportAsExtrusion = options.TryToExportAsExtrusion;
+            ExtrusionLocalCoordinateSystem = options.ExtrusionLocalCoordinateSystem;
             TryToExportAsSweptSolid = options.TryToExportAsSweptSolid;
             AllowOffsetTransform = options.AllowOffsetTransform;
             UseMappedGeometriesIfPossible = options.UseMappedGeometriesIfPossible;
@@ -112,6 +118,15 @@ namespace Revit.IFC.Export.Exporter
         {
             get { return m_TryToExportAsExtrusion; }
             set { m_TryToExportAsExtrusion = value; }
+        }
+
+        /// <summary>
+        /// A local coordinate system that, if supplied, allows use of ExtrusionAnalyzer to try to generate extrusion.
+        /// </summary>
+        public Transform ExtrusionLocalCoordinateSystem
+        {
+            get { return m_ExtrusionLocalCoordinateSystem; }
+            set { m_ExtrusionLocalCoordinateSystem = value; }
         }
 
         /// <summary>

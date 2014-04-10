@@ -66,7 +66,7 @@ namespace Revit.IFC.Export.Exporter
                 using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
                 {
                     IFCAnyHandle mullionPlacement = mullionSetter.LocalPlacement;
-
+                    
                     Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(localPlacement, mullionPlacement);
                     Transform inverseTrf = relTrf.Inverse;
 
@@ -75,9 +75,31 @@ namespace Revit.IFC.Export.Exporter
 
                     extraParams.SetLocalPlacement(mullionLocalPlacement);
 
+                    Transform extrusionLCS = null;
+                    // Add a custom direction for trying to create an extrusion based on the base curve of the mullion, if it is a line and not an arc.
+                    Curve baseCurve = mullion.LocationCurve;
+                    if ((baseCurve != null) && (baseCurve is Line))
+                    {
+                        // We won't use curveBounds and origin yet; just need the axis for now.
+                        IFCRange curveBounds;
+                        XYZ origin, mullionDirection;
+                        GeometryUtil.GetAxisAndRangeFromCurve(baseCurve, out curveBounds, out mullionDirection, out origin);
+
+                        // approx 1.0/sqrt(2.0)
+                        XYZ planeY = (Math.Abs(mullionDirection.Z) < 0.707) ? XYZ.BasisZ.CrossProduct(mullionDirection) : XYZ.BasisX.CrossProduct(mullionDirection);
+                        planeY.Normalize();
+
+                        XYZ projDir = mullionDirection.CrossProduct(planeY);
+
+                        extrusionLCS = Transform.Identity;
+                        extrusionLCS.BasisX = mullionDirection; extrusionLCS.BasisY = planeY; extrusionLCS.BasisZ = projDir; extrusionLCS.Origin = origin;
+                    }
+
                     ElementId catId = CategoryUtil.GetSafeCategoryId(mullion);
 
                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+                    bodyExporterOptions.ExtrusionLocalCoordinateSystem = extrusionLCS;
+
                     IFCAnyHandle repHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, mullion, catId,
                         geometryElement, bodyExporterOptions, null, extraParams, true);
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))

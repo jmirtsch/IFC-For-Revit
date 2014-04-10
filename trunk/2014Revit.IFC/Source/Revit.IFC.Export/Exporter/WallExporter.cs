@@ -35,7 +35,7 @@ namespace Revit.IFC.Export.Exporter
     /// </summary>
     class WallExporter
     {
-        private static IFCAnyHandle FallbackTryToCreateAsExtrusion(ExporterIFC exporterIFC, Wall wallElement, SolidMeshGeometryInfo smCapsule, double baseWallElevation,
+        private static IFCAnyHandle FallbackTryToCreateAsExtrusion(ExporterIFC exporterIFC, Wall wallElement, IList<Solid> solids, IList<Mesh> meshes, double baseWallElevation,
             ElementId catId, Curve curve, Plane plane, double depth, IFCRange zSpan, IFCRange range, PlacementSetter setter,
             out IList<IFCExtrusionData> cutPairOpenings, out bool isCompletelyClipped, out double scaledFootprintArea, out double scaledLength)
         {
@@ -44,7 +44,9 @@ namespace Revit.IFC.Export.Exporter
             IFCAnyHandle bodyRep;
             isCompletelyClipped = false;
             scaledFootprintArea = 0;
-            scaledLength = curve != null ? UnitUtil.ScaleLength(curve.Length) : 0;
+
+            double unscaledLength = curve != null ? curve.Length : 0;
+            scaledLength = UnitUtil.ScaleLength(unscaledLength);
 
             XYZ localOrig = plane.Origin;
 
@@ -80,11 +82,9 @@ namespace Revit.IFC.Export.Exporter
                                 // we need more information.  Is there something to export?  If so, we'll
                                 // ignore the extrusion.  Otherwise, we will fail.
 
-                                if (smCapsule.SolidsCount() == 0 && smCapsule.MeshesCount() == 0)
-                                {
+                                if (solids.Count == 0 && meshes.Count == 0)
                                     continue;
                                 }
-                            }
                             else
                             {
                                 cantHandle = true;
@@ -118,6 +118,7 @@ namespace Revit.IFC.Export.Exporter
             IList<CurveLoop> boundaryLoops = new List<CurveLoop>();
 
             bool alwaysThickenCurve = IsWallBaseRectangular(wallElement, curve);
+            double unscaledWidth = wallElement.Width;
 
             if (!alwaysThickenCurve)
             {
@@ -127,7 +128,15 @@ namespace Revit.IFC.Export.Exporter
             }
             else
             {
-                CurveLoop newLoop = CurveLoop.CreateViaThicken(curve, wallElement.Width, XYZ.BasisZ);
+                CurveLoop newLoop = null;
+                try
+                {
+                    newLoop = CurveLoop.CreateViaThicken(curve, unscaledWidth, XYZ.BasisZ);
+                }
+                catch
+                {
+                }
+
                 if (newLoop == null)
                     return null;
 
@@ -136,7 +145,15 @@ namespace Revit.IFC.Export.Exporter
                 boundaryLoops.Add(newLoop);
             }
 
-            scaledFootprintArea = ExporterIFCUtils.ComputeAreaOfCurveLoops(boundaryLoops);
+            double unscaledFootprintArea = ExporterIFCUtils.ComputeAreaOfCurveLoops(boundaryLoops);
+            scaledFootprintArea = UnitUtil.ScaleArea(unscaledFootprintArea);
+            // We are going to do a little sanity check here.  If the scaledFootprintArea is significantly less than the width * length of the wall footprint,
+            // we probably calculated the area wrong, and will abort.
+            // We want the scaledFootprintArea to be at least (80% of approximateBaseArea - 2 * side wall area).  The "side wall area" is an approximate value that takes into
+            // account potential wall joins.  This prevents us from throwing away small walls because of joins.  We'll allow 1' per side for this.
+            double approximateUnscaledBaseArea = unscaledWidth * unscaledLength;
+            if (unscaledFootprintArea < (approximateUnscaledBaseArea * .8 - 2 * unscaledWidth))
+                return null;
 
             // origin gets scaled later.
             XYZ setterOffset = new XYZ(0, 0, setter.Offset + (localOrig[2] - baseWallElevation));
@@ -171,30 +188,30 @@ namespace Revit.IFC.Export.Exporter
             return bodyRep;
         }
 
+        // Get a list of solids and meshes, but only if we haven't already done so.
+        private static void GetSolidsAndMeshes(GeometryElement geometryElement, IFCRange range, ref IList<Solid> solids, ref IList<Mesh> meshes)
+        {
+            if (solids.Count > 0 || meshes.Count > 0)
+                return;
+
+            SolidMeshGeometryInfo solidMeshInfo =
+                (range == null) ? GeometryUtil.GetSplitSolidMeshGeometry(geometryElement) :
+                    GeometryUtil.GetSplitClippedSolidMeshGeometry(geometryElement, range);
+
+            solids = solidMeshInfo.GetSolids();
+            meshes = solidMeshInfo.GetMeshes();
+        }
+
         /// <summary>
         /// Main implementation to export walls.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="origWrapper">
-        /// The ProductWrapper.
-        /// </param>
-        /// <param name="overrideLevelId">
-        /// The level id.
-        /// </param>
-        /// <param name="range">
-        /// The range to be exported for the element.
-        /// </param>
-        /// <returns>
-        /// The exported wall handle.
-        /// </returns>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="origWrapper">The ProductWrapper.</param>
+        /// <param name="overrideLevelId">The level id.</param>
+        /// <param name="range">The range to be exported for the element.</param>
+        /// <returns>The exported wall handle.</returns>
         public static IFCAnyHandle ExportWallBase(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement,
            ProductWrapper origWrapper, ElementId overrideLevelId, IFCRange range)
         {
@@ -399,17 +416,16 @@ namespace Revit.IFC.Export.Exporter
 
                         if (!exportParts && wallElement != null && exportingAxis && curve != null)
                         {
-                            SolidMeshGeometryInfo solidMeshInfo =
-                                (range == null) ? GeometryUtil.GetSplitSolidMeshGeometry(geometryElement) :
-                                    GeometryUtil.GetSplitClippedSolidMeshGeometry(geometryElement, range);
-
-                            solids = solidMeshInfo.GetSolids();
-                            meshes = solidMeshInfo.GetMeshes();
+                            GetSolidsAndMeshes(geometryElement, range, ref solids, ref meshes);
                             if (solids.Count == 0 && meshes.Count == 0)
                                 return null;
 
+                            // The native routines below don't necessarily do a good job if we have more than one solid.  We will revert to a normal
+                            //if (solids.Count == 1 && meshes.Count == 0)
+                            {
+                                // The routine below tries to create an extrusion with clippings based on a wall that is only one solid.  It isn't yet correct
                             bool useNewCode = false;
-                            if (useNewCode && solids.Count == 1 && meshes.Count == 0)
+                                if (useNewCode)
                             {
                                 bool completelyClipped;
                                 bodyRep = ExtrusionExporter.CreateExtrusionWithClipping(exporterIFC, wallElement, catId, solids[0],
@@ -434,7 +450,7 @@ namespace Revit.IFC.Export.Exporter
                             {
                                 // Fallback - use native routines to try to export wall.
                                 bool isCompletelyClipped;
-                                bodyRep = FallbackTryToCreateAsExtrusion(exporterIFC, wallElement, solidMeshInfo, baseWallElevation,
+                                    bodyRep = FallbackTryToCreateAsExtrusion(exporterIFC, wallElement, solids, meshes, baseWallElevation,
                                     catId, curve, plane, depth, zSpan, range, setter,
                                     out cutPairOpenings, out isCompletelyClipped, out scaledFootprintArea, out scaledLength);
                                 if (isCompletelyClipped)
@@ -443,6 +459,7 @@ namespace Revit.IFC.Export.Exporter
                                     exportedAsWallWithAxis = true;
                             }
                         }
+                        }
 
                         using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
                         {
@@ -450,23 +467,12 @@ namespace Revit.IFC.Export.Exporter
 
                             if (!exportedAsWallWithAxis)
                             {
-                                SolidMeshGeometryInfo solidMeshCapsule = null;
-
                                 if (wallElement != null || faceWall != null)
                                 {
-                                    if (validRange)
-                                    {
-                                        solidMeshCapsule = GeometryUtil.GetSplitClippedSolidMeshGeometry(geometryElement, range);
-                                    }
-                                    else
-                                    {
-                                        solidMeshCapsule = GeometryUtil.GetSplitSolidMeshGeometry(geometryElement);
-                                    }
-                                    if (solidMeshCapsule.SolidsCount() == 0 && solidMeshCapsule.MeshesCount() == 0)
-                                    {
+                                    GetSolidsAndMeshes(geometryElement, range, ref solids, ref meshes);
+                                    if (solids.Count == 0 && meshes.Count == 0)
                                         return null;
                                     }
-                                }
                                 else
                                 {
                                     GeometryElement geomElemToUse = GetGeometryFromInplaceWall(famInstWallElem);
@@ -482,11 +488,11 @@ namespace Revit.IFC.Export.Exporter
                                     Transform trf = Transform.Identity;
                                     if (geomElemToUse != geometryElement)
                                         trf = famInstWallElem.GetTransform();
-                                    solidMeshCapsule = GeometryUtil.GetSplitSolidMeshGeometry(geomElemToUse, trf);
-                                }
 
+                                    SolidMeshGeometryInfo solidMeshCapsule = GeometryUtil.GetSplitSolidMeshGeometry(geomElemToUse, trf);
                                 solids = solidMeshCapsule.GetSolids();
                                 meshes = solidMeshCapsule.GetMeshes();
+                                }
 
                                 extraParams.PossibleExtrusionAxes = IFCExtrusionAxes.TryZ;   // only allow vertical extrusions!
                                 extraParams.AreInnerRegionsOpenings = true;

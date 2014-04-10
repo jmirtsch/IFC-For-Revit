@@ -38,8 +38,23 @@ namespace Revit.IFC.Export.Exporter
         public IFCAnyHandle Handle = null;
 
         /// <summary>
+        /// The type of shape representation created.
+        /// </summary>
+        public ShapeRepresentationType ShapeRepresentationType = ShapeRepresentationType.Undefined;
+
+        /// <summary>
         /// The extra parameters for the extrusion.
         /// </summary>
         public IFCExtrusionCreationData Data = null;
+
+        /// <summary>
+        /// The material ids for the extrusion.
+        /// </summary>
+        public HashSet<ElementId> MaterialIds = null;
+
+        /// <summary>
+        /// The handles that represent the base extrusions inside the final shape representation.
+        /// </summary>
+        public IList<IFCAnyHandle> BaseExtrusions = null;
     }
 }
