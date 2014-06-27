@@ -53,7 +53,6 @@ namespace BIM.IFC.Export.UI
         private IFCClassification m_newClassification = new IFCClassification();
         private IList<IFCClassification> m_newClassificationList = new List<IFCClassification>();
         private IFCClassification m_savedClassification = new IFCClassification();
-        private IFCClassificationMgr m_newClassificationMgr = null;
 
         /// <summary>
         /// initialization of IFCAssignemt class
@@ -61,7 +60,6 @@ namespace BIM.IFC.Export.UI
         /// <param name="document"></param>
         public IFCAssignment()
         {
-            m_newClassificationMgr = new IFCClassificationMgr(IFCCommandOverrideApplication.TheDocument);
             InitializeComponent();
         }
 
@@ -199,7 +197,7 @@ namespace BIM.IFC.Export.UI
             {
                 if (m_newClassification.AreMandatoryFieldsFilled())
                 {
-                    m_newClassificationMgr.UpdateClassification(IFCCommandOverrideApplication.TheDocument, m_newClassification);
+                    IFCClassificationMgr.UpdateClassification(IFCCommandOverrideApplication.TheDocument, m_newClassification);
                 }
                 else if (!m_newClassification.IsClassificationEmpty())
                 {
@@ -360,7 +358,7 @@ namespace BIM.IFC.Export.UI
         /// <param name="e"></param>
         private void ClassificationTab_Initialized(object sender, EventArgs e)
         {
-            bool hasSavedItem = m_newClassificationMgr.GetSavedClassifications(IFCCommandOverrideApplication.TheDocument, null, out m_newClassificationList);
+            bool hasSavedItem = IFCClassificationMgr.GetSavedClassifications(IFCCommandOverrideApplication.TheDocument, null, out m_newClassificationList);
             m_newClassification = m_newClassificationList[0];                        // Set the default first Classification item to the first member of the List
 
             if (hasSavedItem == true)
