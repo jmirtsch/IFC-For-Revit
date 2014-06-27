@@ -723,12 +723,34 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         }
 
         private static IFCAnyHandle CreateRatioMeasurePropertyCommon(IFCFile file, string propertyName, double value, PropertyValueType valueType,
-            bool positiveOnly)
+            PropertyType propertyType)
         {
-            if (positiveOnly && (value <= MathUtil.Eps()))
-                return null;
+            IFCData ratioData = null;
+            switch (propertyType)
+            {
+                case PropertyType.PositiveRatio:
+                    {
+                        if (value <= MathUtil.Eps())
+                            return null;
+            
+                        ratioData = IFCDataUtil.CreateAsPositiveRatioMeasure(value);
+                        break;
+                    }
+                case PropertyType.NormalisedRatio:
+                    {
+                        if (value < -MathUtil.Eps() || value > 1.0 + MathUtil.Eps())
+                            return null;
+                        
+                        ratioData = IFCDataUtil.CreateAsNormalisedRatioMeasure(value);
+                        break;
+                    }
+                default:
+                    {
+                        ratioData = IFCDataUtil.CreateAsRatioMeasure(value);
+                        break;
+                    }
+            }
 
-            IFCData ratioData = positiveOnly ? IFCDataUtil.CreateAsPositiveRatioMeasure(value) : IFCDataUtil.CreateAsRatioMeasure(value);
             return CreateCommonProperty(file, propertyName, ratioData, valueType, null);  
         }
 
@@ -742,9 +764,22 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreateRatioMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
-            return CreateRatioMeasurePropertyCommon(file, propertyName, value, valueType, false);
+            return CreateRatioMeasurePropertyCommon(file, propertyName, value, valueType, PropertyType.Ratio);
         }
-        
+
+        /// <summary>
+        /// Create a normalised ratio measure property.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateNormalisedRatioMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+        {
+            return CreateRatioMeasurePropertyCommon(file, propertyName, value, valueType, PropertyType.NormalisedRatio);
+        }
+
         /// <summary>
         /// Create a positive ratio measure property.
         /// </summary>
@@ -755,7 +790,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <returns>The created property handle.</returns>
         public static IFCAnyHandle CreatePositiveRatioMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
         {
-            return CreateRatioMeasurePropertyCommon(file, propertyName, value, valueType, true);
+            return CreateRatioMeasurePropertyCommon(file, propertyName, value, valueType, PropertyType.PositiveRatio);
         }
 
         /// <summary>
@@ -2077,7 +2112,36 @@ namespace Revit.IFC.Export.Exporter.PropertySet
 
             return CreateRatioPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, ifcPropertyName, valueType);
         }
-        
+
+        /// <summary>
+        /// Create a normalised ratio property from the element's or type's parameter.
+        /// </summary>
+        /// <param name="file">The IFC file.</param>
+        /// <param name="exporterIFC">The ExporterIFC.</param>
+        /// <param name="elem">The Element.</param>
+        /// <param name="revitParameterName">The name of the parameter.</param>
+        /// <param name="ifcPropertyName">The name of the property.  Also, the backup name of the parameter.</param>
+        /// <param name="valueType">The value type of the property.</param>
+        /// <returns>The created property handle.</returns>
+        public static IFCAnyHandle CreateNormalisedRatioPropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
+           string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        {
+            double propertyValue;
+            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
+                return CreateNormalisedRatioMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
+            if (ParameterUtil.GetDoubleValueFromElement(elem, null, ifcPropertyName, out propertyValue) != null)
+                return CreateNormalisedRatioMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
+
+            // For Symbol
+            Document document = elem.Document;
+            ElementId typeId = elem.GetTypeId();
+            Element elemType = document.GetElement(typeId);
+            if (elemType == null)
+                return null;
+
+            return CreateNormalisedRatioPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, ifcPropertyName, valueType);
+        }
+
         /// <summary>
         /// Create a positive ratio property from the element's or type's parameter.
         /// </summary>

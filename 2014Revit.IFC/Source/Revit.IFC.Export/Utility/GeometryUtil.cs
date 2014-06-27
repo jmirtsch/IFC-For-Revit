@@ -490,8 +490,19 @@ namespace Revit.IFC.Export.Utility
             foreach (GeometryObject geomObj in currGeomElem)
             {
                 Solid solid = geomObj as Solid;
-                if (solid != null && solid.Faces.Size > 0 && solid.Volume > 0.0)
+                if (solid != null && solid.Faces.Size > 0)
                 {
+                    try
+                    {
+                        if (solid.Volume <= MathUtil.Eps())
+                            continue;
+                    }
+                    catch
+                    {
+                        // solid.Volume can throw an exception.  In this case, we don't really care;
+                        // there is geometry there, and we will export it best we can.
+                    }
+                    
                     solidMeshCapsule.AddSolid(solid);
                 }
                 else

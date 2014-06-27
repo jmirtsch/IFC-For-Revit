@@ -199,9 +199,14 @@ namespace Revit.IFC.Export.Utility
 
             // Roofs are always external
             ElementId categoryId = element.Category.Id;
-            if (categoryId == new ElementId(BuiltInCategory.OST_Roofs))
+            if (categoryId == new ElementId(BuiltInCategory.OST_Roofs) ||
+                categoryId == new ElementId(BuiltInCategory.OST_MassExteriorWall))
                 return true;
 
+            // Mass interior walls are always internal
+            if (categoryId == new ElementId(BuiltInCategory.OST_MassInteriorWall))
+                return false;
+            
             // Wall types have the function parameter 
             if (element is Wall)
             {
@@ -372,7 +377,8 @@ namespace Revit.IFC.Export.Utility
                         {
                             styles.Add(matStyleHnd);
 
-                            if (fillPatternId != ElementId.InvalidElementId && !ExporterCacheManager.ExportOptionsCache.ExportAsCoordinationView2)
+                            bool supportCutStyles = !ExporterCacheManager.ExportOptionsCache.ExportAsCoordinationView2;
+                            if (fillPatternId != ElementId.InvalidElementId && supportCutStyles)
                             {
                                 IFCAnyHandle cutStyleHnd = exporterIFC.GetOrCreateFillPattern(fillPatternId, color, planScale);
                                 if (cutStyleHnd.HasValue)

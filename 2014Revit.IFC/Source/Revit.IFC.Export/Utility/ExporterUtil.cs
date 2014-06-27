@@ -34,6 +34,53 @@ namespace Revit.IFC.Export.Utility
     /// </summary>
     public class ExporterUtil
     {
+        private static ProjectPosition GetSafeProjectPosition(Document doc)
+        {
+            ProjectLocation projLoc = doc.ActiveProjectLocation;
+            try
+            {
+                return projLoc.get_ProjectPosition(XYZ.Zero);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the angle associated with the project position for a particular document.
+        /// </summary>
+        /// <param name="doc">The document.</param>
+        /// <param name="angle">The angle, or 0.0 if it can't be generated.</param>
+        /// <returns>True if the angle is found, false if it can't be determined.</returns>
+        public static bool GetSafeProjectPositionAngle(Document doc, out double angle)
+        {
+            angle = 0.0;
+            ProjectPosition projPos = GetSafeProjectPosition(doc);
+            if (projPos == null)
+                return false;
+
+            angle = projPos.Angle;
+            return true;
+        }
+
+        /// <summary>
+        /// Gets the elevation associated with the project position for a particular document. 
+        /// </summary>
+        /// <param name="doc">The document.</param>
+        /// <param name="elevation">The elevation, or 0.0 if it can't be generated.</param>
+        /// <returns>True if the elevation is found, false if it can't be determined.</returns>
+        public static bool GetSafeProjectPositionElevation(Document doc, out double elevation)
+        {
+            elevation = 0.0;
+            ProjectPosition projPos = GetSafeProjectPosition(doc);
+            if (projPos == null)
+                return false;
+
+            elevation = projPos.Elevation;
+            return true;
+        }
+        
         /// <summary>
         /// Determines if the Exception is local to the element, or if export should be aborted.
         /// </summary>
@@ -81,13 +128,29 @@ namespace Revit.IFC.Export.Utility
             }
         }
 
-        public static void UpdateBuildingPlacement(IFCAnyHandle buildingHnd, IFCAnyHandle siteHnd)
+        /// <summary>
+        /// Update the IfcBuilding placement to be relative to the IfcSite.
+        /// </summary>
+        /// <param name="buildingHnd">The IfcBuilding handle.</param>
+        /// <param name="siteHnd">The IfcSite handle.</param>
+        public static void UpdateBuildingRelToPlacement(IFCAnyHandle buildingHnd, IFCAnyHandle siteHnd)
         {
             IFCAnyHandle buildingPlacement = IFCAnyHandleUtil.GetObjectPlacement(buildingHnd);
             IFCAnyHandle relPlacement = IFCAnyHandleUtil.GetObjectPlacement(siteHnd);
             GeometryUtil.SetPlacementRelTo(buildingPlacement, relPlacement);
         }
 
+        /// <summary>
+        /// Update the IfcBuilding placement to have a new local coordinate system (IfcAxis2Placement3D).
+        /// </summary>
+        /// <param name="buildingHnd">The IfcBuilding handle.</param>
+        /// <param name="axisPlacementHnd">The IfcAxis2Placement3D handle.</param>
+        public static void UpdateBuildingRelativePlacement(IFCAnyHandle buildingHnd, IFCAnyHandle axisPlacementHnd)
+        {
+            IFCAnyHandle buildingPlacement = IFCAnyHandleUtil.GetObjectPlacement(buildingHnd);
+            GeometryUtil.SetRelativePlacement(buildingPlacement, axisPlacementHnd);
+        }
+        
         /// <summary>
         /// Relates one object to another. 
         /// </summary>
@@ -700,15 +763,56 @@ namespace Revit.IFC.Export.Utility
             return ifcClassName;
         }
 
-        private static string GetIFCClassNameOrTypeFromSpecialEntry(ExporterIFC exporterIFC, Element element, ElementId categoryId, bool getClassName)
+        private static string GetIFCClassNameOrTypeForMass(ExporterIFC exporterIFC, Element element, ElementId categoryId, bool getClassName)
         {
-            if (categoryId != new ElementId(BuiltInCategory.OST_Walls))
+            Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
+            GeometryElement geomElem = element.get_Geometry(geomOptions);
+            if (geomElem == null)
                 return null;
 
-            if (!(element is Wall))
-                return null;
+            SolidMeshGeometryInfo solidMeshCapsule = GeometryUtil.GetSplitSolidMeshGeometry(geomElem);
+            IList<Solid> solids = solidMeshCapsule.GetSolids();
+            IList<Mesh> meshes = solidMeshCapsule.GetMeshes();
 
-            WallType wallType = (element as Wall).WallType;
+            ElementId overrideCatId = ElementId.InvalidElementId;
+            bool initOverrideCatId = false;
+
+            Document doc = element.Document;
+
+            foreach (Solid solid in solids)
+            {
+                if (!ProcessObjectForGStyle(doc, solid, ref overrideCatId, ref initOverrideCatId))
+                return null;
+            }
+
+            foreach (Mesh mesh in meshes)
+            {
+                if (!ProcessObjectForGStyle(doc, mesh, ref overrideCatId, ref initOverrideCatId))
+                    return null;
+            }
+
+            if (getClassName)
+                return GetIFCClassNameFromExportTable(exporterIFC, overrideCatId);
+            else
+            {
+                // At the moment, we don't have the right API to get the type from a categoryId instead of from an element from the category table.  As such, we are
+                // going to hardwire this.  The only one that matters is OST_MassFloor.
+                if (overrideCatId == new ElementId(BuiltInCategory.OST_MassFloor))
+                {
+                    string className = GetIFCClassNameFromExportTable(exporterIFC, overrideCatId);
+                    if (string.Compare(className, "IfcSlab", true) == 0)
+                        return "FLOOR";
+                    if (string.Compare(className, "IfcCovering", true) == 0)
+                        return "FLOORING";
+                }
+
+                return null; // GetIFCTypeFromExportTable(exporterIFC, overrideCatId);
+            }
+        }
+
+        private static string GetIFCClassNameOrTypeForWalls(ExporterIFC exporterIFC, Wall wall, ElementId categoryId, bool getClassName)
+        {
+            WallType wallType = wall.WallType;
             if (wallType == null)
                 return null;
 
@@ -716,9 +820,59 @@ namespace Revit.IFC.Export.Utility
             if (ParameterUtil.GetIntValueFromElement(wallType, BuiltInParameter.FUNCTION_PARAM, out wallFunction) != null)
             {
                 if (getClassName)
-                    return GetIFCClassNameFromExportTable(exporterIFC, element, categoryId, wallFunction);
+                    return GetIFCClassNameFromExportTable(exporterIFC, wall, categoryId, wallFunction);
                 else
-                    return GetIFCTypeFromExportTable(exporterIFC, element, categoryId, wallFunction);
+                    return GetIFCTypeFromExportTable(exporterIFC, wall, categoryId, wallFunction);
+            }
+
+            return null;
+        }
+
+        private static bool ProcessObjectForGStyle(Document doc, GeometryObject geomObj, ref ElementId overrideCatId, ref bool initOverrideCatId)
+        {
+            GraphicsStyle gStyle = doc.GetElement(geomObj.GraphicsStyleId) as GraphicsStyle;
+            if (gStyle == null)
+                return true;
+
+            if (gStyle.GraphicsStyleCategory == null)
+                return true;
+
+            ElementId currCatId = gStyle.GraphicsStyleCategory.Id;
+            if (currCatId == ElementId.InvalidElementId)
+                return true;
+
+            if (!initOverrideCatId)
+            {
+                initOverrideCatId = true;
+                overrideCatId = currCatId;
+                return true;
+            }
+
+            if (currCatId != overrideCatId)
+            {
+                overrideCatId = ElementId.InvalidElementId;
+                return false;
+            }
+
+            return true;
+        }
+
+        private static string GetIFCClassNameOrTypeFromSpecialEntry(ExporterIFC exporterIFC, Element element, ElementId categoryId, bool getClassName)
+        {
+            if (element == null)
+                return null;
+
+            // We do special checks for Wall and Massing categories.
+            // For walls, we check if it is an interior or exterior wall.
+            // For massing, we check the geometry.  If it is all in the same sub-category, we use that instead.
+            if (categoryId == new ElementId(BuiltInCategory.OST_Walls))
+            {
+                if (element is Wall)
+                    return GetIFCClassNameOrTypeForWalls(exporterIFC, element as Wall, categoryId, getClassName);
+            }
+            else if (categoryId == new ElementId(BuiltInCategory.OST_Mass))
+            {
+                return GetIFCClassNameOrTypeForMass(exporterIFC, element, categoryId, getClassName);
             }
 
             return null;

@@ -51,7 +51,7 @@ namespace Revit.IFC.Export.Exporter
         /// <summary>
         /// Try to export the solids as swept solids, if possible.
         /// </summary>
-        private bool m_TryToExportAsSweptSolid = false;
+        private bool m_TryToExportAsSweptSolid = true;
 
         /// <summary>
         /// Allow an offset transform for the body.  Set this to false if BodyData is not processed on return.

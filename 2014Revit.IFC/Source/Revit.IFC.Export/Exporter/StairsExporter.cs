@@ -343,7 +343,7 @@ namespace Revit.IFC.Export.Exporter
                 // We are going to avoid internal scaling routines, and instead scale in .NET.
                 double newOffsetUnscaled = 0.0;
                 IFCLevelInfo currLevelInfo =
-                    placementSetter.GetOffsetLevelInfoAndHandle(heightNonScaled * (ii+1), 1.0, out newLevelHnd, out newOffsetUnscaled);
+                    placementSetter.GetOffsetLevelInfoAndHandle(heightNonScaled * (ii + 1), 1.0, stair.Document, out newLevelHnd, out newOffsetUnscaled);
                 double newOffsetScaled = UnitUtil.ScaleLength(newOffsetUnscaled); 
                 
                 levelInfos.Add(currLevelInfo);
@@ -969,7 +969,7 @@ namespace Revit.IFC.Export.Exporter
                                 // We are going to avoid internal scaling routines, and instead scale in .NET.
                                 double newOffsetUnscaled = 0.0;
                                 IFCLevelInfo currLevelInfo =
-                                    placementSetter.GetOffsetLevelInfoAndHandle(stairHeight * ii, 1.0, out newLevelHnd, out newOffsetUnscaled);
+                                    placementSetter.GetOffsetLevelInfoAndHandle(stairHeight * ii, 1.0, legacyStair.Document, out newLevelHnd, out newOffsetUnscaled);
                                 double newOffsetScaled = UnitUtil.ScaleLength(newOffsetUnscaled); 
                 
                                 localLevelInfoForFlights.Add(currLevelInfo);

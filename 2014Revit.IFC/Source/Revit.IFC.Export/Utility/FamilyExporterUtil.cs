@@ -338,6 +338,16 @@ namespace Revit.IFC.Export.Exporter
                         }
                         break;
                     }
+                case IFCExportType.IfcSpace:
+                    {
+                        string instanceLongName = NamingUtil.GetLongNameOverride(familyInstance, NamingUtil.GetLongNameOverride(familyInstance, instanceName));
+                        IFCInternalOrExternal internalOrExternal = CategoryUtil.IsElementExternal(familyInstance) ? IFCInternalOrExternal.External : IFCInternalOrExternal.Internal;
+
+                        instanceHandle = IFCInstanceExporter.CreateSpace(file, instanceGUID, ownerHistory, instanceName, instanceDescription,
+                            instanceObjectType, localPlacementToUse, productRepresentation, instanceLongName, IFCElementComposition.Element,
+                            internalOrExternal, null);
+                        break;
+                    }
                 default:
                     {
                         if (ExporterCacheManager.ExportOptionsCache.ExportAs4 &&

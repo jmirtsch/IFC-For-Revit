@@ -91,7 +91,24 @@ namespace Revit.IFC.Export.Toolkit
                 
             Parameter levelParameter = null;
             if (elem is FamilyInstance)
-                levelParameter = elem.get_Parameter(BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM);
+            {
+                // If this is a nested family, check the top-level instance for the level parameter information.
+                Element elemToCheck = (elem as FamilyInstance).SuperComponent;
+                if (elemToCheck == null)
+                    elemToCheck = elem;
+
+                // There are two Family-related parameters: INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM and INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM.
+                // We prioritize INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM over INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM.
+                levelParameter = elemToCheck.get_Parameter(BuiltInParameter.INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM);
+                if (levelParameter != null && levelParameter.StorageType == StorageType.ElementId)
+                {
+                    ElementId levelId = levelParameter.AsElementId();
+                    if (levelId != ElementId.InvalidElementId)
+                        return levelId;
+                }
+
+                levelParameter = elemToCheck.get_Parameter(BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM);
+            }
             else if (elem is Truss)
                 levelParameter = elem.get_Parameter(BuiltInParameter.TRUSS_ELEMENT_REFERENCE_LEVEL_PARAM);
             else if (elem is Stairs || StairsExporter.IsLegacyStairs(elem))
@@ -226,7 +243,7 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="pPlacementHnd">The handle to the new local placement.</param>
         /// <param name="pScaledOffsetFromNewLevel">The scaled offset from the new level.</param>
         /// <returns>The level info.</returns>
-        public IFCLevelInfo GetOffsetLevelInfoAndHandle(double offset, double scale, out IFCAnyHandle placementHnd, out double scaledOffsetFromNewLevel)
+        public IFCLevelInfo GetOffsetLevelInfoAndHandle(double offset, double scale, Document document, out IFCAnyHandle placementHnd, out double scaledOffsetFromNewLevel)
         {
             placementHnd = null;
             scaledOffsetFromNewLevel = 0;
@@ -236,6 +253,15 @@ namespace Revit.IFC.Export.Toolkit
             IDictionary<ElementId, IFCLevelInfo> levelInfos = m_ExporterIFC.GetLevelInfos();
             foreach (KeyValuePair<ElementId, IFCLevelInfo> levelInfoPair in levelInfos)
             {
+                // the cache contains levels from all the exported documents
+                // if the export is performed for a linked document, filter the levels that are not from this document
+                if (ExporterCacheManager.ExportOptionsCache.ExportingLink)
+                {
+                    Element levelElem = document.GetElement(levelInfoPair.Key);
+                    if (levelElem == null || !(levelElem is Level))
+                        continue;
+                }
+
                 IFCLevelInfo levelInfo = levelInfoPair.Value;
                 double startHeight = levelInfo.Elevation;
 
@@ -367,6 +393,15 @@ namespace Revit.IFC.Export.Toolkit
                     double leveExtension = 10.0 / (12.0 * 2.54);
                     foreach (KeyValuePair<ElementId, IFCLevelInfo> levelInfoPair in levelInfos)
                     {
+                        // the cache contains levels from all the exported documents
+                        // if the export is performed for a linked document, filter the levels that are not from this document
+                        if (ExporterCacheManager.ExportOptionsCache.ExportingLink)
+                        {
+                            Element levelElem = doc.GetElement(levelInfoPair.Key);
+                            if (levelElem == null || !(levelElem is Level))
+                                continue;
+                        }
+
                         IFCLevelInfo levelInfo = levelInfoPair.Value;
                         double startHeight = levelInfo.Elevation - leveExtension;
                         double height = levelInfo.DistanceToNextLevel;
@@ -392,7 +427,22 @@ namespace Revit.IFC.Export.Toolkit
 
             m_LevelInfo = exporterIFC.GetLevelInfo(newLevelId);
             if (m_LevelInfo == null)
-                m_LevelInfo = levelInfos.Values.First<IFCLevelInfo>();
+            {
+                foreach (KeyValuePair<ElementId, IFCLevelInfo> levelInfoPair in levelInfos)
+                {
+                    // the cache contains levels from all the exported documents
+                    // if the export is performed for a linked document, filter the levels that are not from this document
+                    if (ExporterCacheManager.ExportOptionsCache.ExportingLink)
+                    {
+                        Element levelElem = doc.GetElement(levelInfoPair.Key);
+                        if (levelElem == null || !(levelElem is Level))
+                            continue;
+                    }
+                    m_LevelInfo = levelInfoPair.Value;
+                    break;
+                }
+                //m_LevelInfo = levelInfos.Values.First<IFCLevelInfo>();
+            }
 
             double elevation = m_LevelInfo.Elevation;
             IFCAnyHandle levelPlacement = m_LevelInfo.GetLocalPlacement();
