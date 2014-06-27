@@ -377,7 +377,8 @@ namespace Revit.IFC.Export.Utility
                         {
                             styles.Add(matStyleHnd);
 
-                            if (fillPatternId != ElementId.InvalidElementId && !ExporterCacheManager.ExportOptionsCache.ExportAsCoordinationView2)
+                            bool supportCutStyles = !ExporterCacheManager.ExportOptionsCache.ExportAsCoordinationView2;
+                            if (fillPatternId != ElementId.InvalidElementId && supportCutStyles)
                             {
                                 IFCAnyHandle cutStyleHnd = exporterIFC.GetOrCreateFillPattern(fillPatternId, color, planScale);
                                 if (cutStyleHnd.HasValue)

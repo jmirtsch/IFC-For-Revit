@@ -648,7 +648,7 @@ namespace Revit.IFC.Export.Exporter
                 IList<IList<IFCAnyHandle>> edgeArrayVertices = new List<IList<IFCAnyHandle>>();
 
                 int outerEdgeArrayIndex = 0;
-                double maxArea = 0.0;                
+                double maxArea = 0.0;
                 XYZ faceNormal = (face as PlanarFace).Normal;
 
                 foreach (EdgeArray edgeArray in edgeArrayArray)
@@ -1063,6 +1063,54 @@ namespace Revit.IFC.Export.Exporter
             return facets;
         }
 
+        /// <summary>
+        /// Create an IfcFace with one outer loop whose vertices are defined by the vertices array.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="vertices">The vertices.</param>
+        /// <returns>An IfcFace handle.</returns>
+        public static IFCAnyHandle CreateFaceFromVertexList(IFCFile file, IList<IFCAnyHandle> vertices)
+        {
+            IFCAnyHandle faceOuterLoop = IFCInstanceExporter.CreatePolyLoop(file, vertices);
+            IFCAnyHandle faceOuterBound = IFCInstanceExporter.CreateFaceOuterBound(file, faceOuterLoop, true);
+            HashSet<IFCAnyHandle> faceBounds = new HashSet<IFCAnyHandle>();
+            faceBounds.Add(faceOuterBound);
+            return IFCInstanceExporter.CreateFace(file, faceBounds);
+        }
+
+        private static bool ExportPlanarFacetsIfPossible(IFCFile file, TriangulatedShellComponent component, IList<IFCAnyHandle> vertexHandles, HashSet<IFCAnyHandle> currentFaceSet)
+        {
+            IList<LinkedList<int>> facets = null;
+            try
+            {
+                facets = ConvertTrianglesToPlanarFacets(component);
+            }
+            catch
+            {
+                return false;
+            }
+
+            if (facets == null)
+                return false;
+
+            foreach (LinkedList<int> facet in facets)
+            {
+                IList<IFCAnyHandle> vertices = new List<IFCAnyHandle>();
+                int numVertices = facet.Count;
+                if (numVertices < 3)
+                    continue;
+                foreach (int vertexIndex in facet)
+                {
+                    vertices.Add(vertexHandles[vertexIndex]);
+                }
+
+                IFCAnyHandle face = CreateFaceFromVertexList(file, vertices);
+                currentFaceSet.Add(face);
+            }
+
+            return true;
+        }
+
         private static bool ExportBodyAsSolid(ExporterIFC exporterIFC, Element element, BodyExporterOptions options,
             IList<HashSet<IFCAnyHandle>> currentFaceHashSetList, GeometryObject geomObject)
         {
@@ -1084,6 +1132,8 @@ namespace Revit.IFC.Export.Exporter
 
                     TriangulatedSolidOrShell solidFacetation =
                         SolidUtils.TessellateSolidOrShell(solid, tessellationControls);
+
+                    // Only handle one solid or shell.
                     if (solidFacetation.ShellComponentCount == 1)
                     {
                         TriangulatedShellComponent component = solidFacetation.GetShellComponent(0);
@@ -1103,30 +1153,9 @@ namespace Revit.IFC.Export.Exporter
                                 vertexHandles.Add(vertexHandle);
                             }
 
-                            try
+                            if (!ExportPlanarFacetsIfPossible(file, component, vertexHandles, currentFaceSet))
                             {
-                                IList<LinkedList<int>> facets = ConvertTrianglesToPlanarFacets(component);
-                                foreach (LinkedList<int> facet in facets)
-                                {
-                                    IList<IFCAnyHandle> vertices = new List<IFCAnyHandle>();
-                                    int numVertices = facet.Count;
-                                    if (numVertices < 3)
-                                        continue;
-                                    foreach (int vertexIndex in facet)
-                                    {
-                                        vertices.Add(vertexHandles[vertexIndex]);
-                                    }
-
-                                    IFCAnyHandle faceOuterLoop = IFCInstanceExporter.CreatePolyLoop(file, vertices);
-                                    IFCAnyHandle faceOuterBound = IFCInstanceExporter.CreateFaceOuterBound(file, faceOuterLoop, true);
-                                    HashSet<IFCAnyHandle> faceBounds = new HashSet<IFCAnyHandle>();
-                                    faceBounds.Add(faceOuterBound);
-                                    IFCAnyHandle face = IFCInstanceExporter.CreateFace(file, faceBounds);
-                                    currentFaceSet.Add(face);
-                                }
-                            }
-                            catch
-                            {
+                                // Export all of the triangles instead.
                                 for (int ii = 0; ii < numberOfTriangles; ii++)
                                 {
                                     TriangleInShellComponent triangle = component.GetTriangle(ii);
@@ -1134,19 +1163,14 @@ namespace Revit.IFC.Export.Exporter
                                     vertices.Add(vertexHandles[triangle.VertexIndex0]);
                                     vertices.Add(vertexHandles[triangle.VertexIndex1]);
                                     vertices.Add(vertexHandles[triangle.VertexIndex2]);
-                                    IFCAnyHandle faceOuterLoop = IFCInstanceExporter.CreatePolyLoop(file, vertices);
-                                    IFCAnyHandle faceOuterBound = IFCInstanceExporter.CreateFaceOuterBound(file, faceOuterLoop, true);
-                                    HashSet<IFCAnyHandle> faceBounds = new HashSet<IFCAnyHandle>();
-                                    faceBounds.Add(faceOuterBound);
-                                    IFCAnyHandle face = IFCInstanceExporter.CreateFace(file, faceBounds);
+
+                                    IFCAnyHandle face = CreateFaceFromVertexList(file, vertices);
                                     currentFaceSet.Add(face);
                                 }
                             }
-                            finally
-                            {
-                                currentFaceHashSetList.Add(currentFaceSet);
-                                exportedAsSolid = true;
-                            }
+
+                            currentFaceHashSetList.Add(currentFaceSet);
+                            exportedAsSolid = true;
                         }
                     }
                 }
@@ -1163,7 +1187,7 @@ namespace Revit.IFC.Export.Exporter
         // NOTE: the useMappedGeometriesIfPossible and useGroupsIfPossible options are experimental and do not yet work well.
         // In shipped code, these are always false, and should be kept false until API support routines are proved to be reliable.
         private static BodyData ExportBodyAsBRep(ExporterIFC exporterIFC, IList<GeometryObject> splitGeometryList, 
-            IList<int> exportAsBRep, IList<IFCAnyHandle> bodyItems,
+            IList<KeyValuePair<int, SimpleSweptSolidAnalyzer>> exportAsBRep, IList<IFCAnyHandle> bodyItems,
             Element element, ElementId categoryId, ElementId overrideMaterialId, IFCAnyHandle contextOfItems, double eps, 
             BodyExporterOptions options, BodyData bodyDataIn)
         {
@@ -1214,20 +1238,51 @@ namespace Revit.IFC.Export.Exporter
             
             for (int index = 0; index < numGeoms; index++)
             {
-                GeometryObject geomObject = selectiveBRepExport ? splitGeometryList[exportAsBRep[index]] : splitGeometryList[index];
+                int brepIndex = selectiveBRepExport ? exportAsBRep[index].Key : index;
+                SimpleSweptSolidAnalyzer currAnalyzer = selectiveBRepExport ? exportAsBRep[index].Value : null;
+
+                GeometryObject geomObject = selectiveBRepExport ? splitGeometryList[brepIndex] : splitGeometryList[index];
+                
+                // A simple test to see if the geometry is a valid solid.  This will save a lot of time in CanCreateClosedShell later.
+                if (exportAsBReps && (geomObject is Solid))
+                try
+                {
+                    // We don't care what the value is here.  What we care about is whether or not it can be calculated.  If it can't be calculated,
+                    // it is probably not a valid solid.
+                    double volume = (geomObject as Solid).Volume;
+
+                    // Current code should already prevent 0 volume solids from coming here, but may as well play it safe.
+                    if (volume <= MathUtil.Eps())
+                        exportAsBReps = false;
+                }
+                catch
+                {
+                    exportAsBReps = false;
+                }
+
                 startIndexForObject.Add(currentFaceHashSetList.Count);
 
                 ElementId materialId = SetBestMaterialIdInExporter(geomObject, element, overrideMaterialId, exporterIFC);
                 materialIds.Add(materialId);
                 bodyData.AddMaterial(materialId);
 
-                bool exportedAsSolid = false;
-                if (exportAsBReps || isCoarse)
+                bool alreadyExported = false;
+
+                if (exportAsBReps && (currAnalyzer != null))
                 {
-                    exportedAsSolid = ExportBodyAsSolid(exporterIFC, element, options, currentFaceHashSetList, geomObject);
+                    SweptSolidExporter sweptSolidExporter = SweptSolidExporter.Create(exporterIFC, element, currAnalyzer);
+                    HashSet<IFCAnyHandle> facetHnds = (sweptSolidExporter != null) ? sweptSolidExporter.Facets : null;
+                    if (facetHnds != null && facetHnds.Count != 0)
+                    {
+                        currentFaceHashSetList.Add(facetHnds);
+                        alreadyExported = true;
+                    }
                 }
-               
-                if (!exportedAsSolid)
+
+                if (!alreadyExported && (exportAsBReps || isCoarse))
+                    alreadyExported = ExportBodyAsSolid(exporterIFC, element, options, currentFaceHashSetList, geomObject);
+                
+                if (!alreadyExported)
                 {
                     IFCGeometryInfo faceListInfo = IFCGeometryInfo.CreateFaceGeometryInfo(eps, isCoarse);
                     ExporterIFCUtils.CollectGeometryInfo(exporterIFC, faceListInfo, geomObject, XYZ.Zero, false);
@@ -1259,15 +1314,17 @@ namespace Revit.IFC.Export.Exporter
                                     }
                                     numExtrusions = 0;
                                     numGeoms = splitGeometryList.Count;
-                                    int brepIndex = 0;
+                                    int currBRepIndex = 0;
                                     for (int fixIndex = 0; fixIndex < numGeoms; fixIndex++)
                                     {
-                                        if ((brepIndex < numBRepsToExport) && (exportAsBRep[brepIndex] == fixIndex))
+                                        bool outOfRange = (currBRepIndex >= numBRepsToExport);
+                                        if (!outOfRange && (exportAsBRep[currBRepIndex].Key == fixIndex))
                                         {
-                                            brepIndex++;
+                                            currBRepIndex++;
                                             continue;
                                         }
-                                        exportAsBRep.Add(fixIndex);
+                                        SimpleSweptSolidAnalyzer fixAnalyzer = outOfRange ? null : exportAsBRep[currBRepIndex].Value;
+                                        exportAsBRep.Add(new KeyValuePair<int, SimpleSweptSolidAnalyzer>(fixIndex, fixAnalyzer));
                                     }
                                     numBRepsToExport = exportAsBRep.Count;
                                 }
@@ -1518,9 +1575,18 @@ namespace Revit.IFC.Export.Exporter
             bool tryToExportAsExtrusion = options.TryToExportAsExtrusion;
             bool canExportSolidModelRep = tryToExportAsExtrusion && ExporterCacheManager.ExportOptionsCache.CanExportSolidModelRep;
             
-            // This will default to false for now in all cases, as swept solids are not included in CV2.0.
-            bool tryToExportAsSweptSolid = options.TryToExportAsSweptSolid;
-            
+            bool useCoarseTessellation = ExporterCacheManager.ExportOptionsCache.UseCoarseTessellation;
+            bool allowAdvancedBReps = ExporterCacheManager.ExportOptionsCache.ExportAs4;
+
+            // We will try to export as a swept solid if the option is set, and we are either exporting to a schema that allows it,
+            // or we are using a coarse tessellation, in which case we will export the swept solid as an optimzed BRep.
+            bool tryToExportAsSweptSolid = options.TryToExportAsSweptSolid && (allowAdvancedBReps || useCoarseTessellation);
+
+            // We will allow exporting swept solids as BReps if we are not exporting to IFC4, and we allow coarse representations of BReps.
+            // In the future, we may allow more control here.
+            // Note that we disable IFC4 because in IFC4, we will export it as a true swept solid instead.
+            bool tryToExportAsSweptSolidAsBRep = tryToExportAsSweptSolid && useCoarseTessellation && !allowAdvancedBReps;
+
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle contextOfItems = exporterIFC.Get3DContextHandle("Body");
 
@@ -1537,12 +1603,15 @@ namespace Revit.IFC.Export.Exporter
             IList<IFCAnyHandle> bodyItems = new List<IFCAnyHandle>();
             IList<ElementId> materialIdsForExtrusions = new List<ElementId>();
 
-            IList<int> exportAsBRep = new List<int>();
+            // This is a list of geometries that can be exported using the coarse facetation of the SweptSolidExporter.
+            IList<KeyValuePair<int, SimpleSweptSolidAnalyzer>> exportAsBRep = new List<KeyValuePair<int, SimpleSweptSolidAnalyzer>>();
+            
             IList<int> exportAsSweptSolid = new List<int>();
             IList<int> exportAsExtrusion = new List<int>();
 
             bool hasExtrusions = false;
             bool hasSweptSolids = false;
+            bool hasSweptSolidsAsBReps = false;
 
             BoundingBoxXYZ bbox = GeometryUtil.GetBBoxOfGeometries(geometryList);
             XYZ unscaledTrfOrig = new XYZ();
@@ -1554,8 +1623,9 @@ namespace Revit.IFC.Export.Exporter
                 {
                     int numItems = geometryList.Count;
                     bool tryExtrusionAnalyzer = tryToExportAsExtrusion && (options.ExtrusionLocalCoordinateSystem != null) && (numItems == 1) && (geometryList[0] is Solid);
+                    bool supportOffsetTransform = !(tryExtrusionAnalyzer || tryToExportAsSweptSolidAsBRep);
 
-                    if (options.AllowOffsetTransform && !tryExtrusionAnalyzer && exportBodyParams != null)
+                    if (options.AllowOffsetTransform && supportOffsetTransform && exportBodyParams != null)
                         bodyData.OffsetTransform = transformSetter.InitializeFromBoundingBox(exporterIFC, bbox, exportBodyParams, out unscaledTrfOrig);
 
                     // If we passed in an ExtrusionLocalCoordinateSystem, and we have 1 Solid, we will try to create an extrusion using the ExtrusionAnalyzer.
@@ -1631,38 +1701,47 @@ namespace Revit.IFC.Export.Exporter
                                 }
                             }
 
+                            // Options used if we try to export extrusions.
+                            IFCExtrusionAxes axesToExtrudeIn = exportBodyParams != null ? exportBodyParams.PossibleExtrusionAxes : IFCExtrusionAxes.TryDefault;
+                            XYZ directionToExtrudeIn = XYZ.Zero;
+                            if (exportBodyParams != null && exportBodyParams.HasCustomAxis)
+                                directionToExtrudeIn = exportBodyParams.CustomAxis;
+
+                            double lengthScale = UnitUtil.ScaleLengthForRevitAPI();
+                            IFCExtrusionCalculatorOptions extrusionOptions =
+                               new IFCExtrusionCalculatorOptions(exporterIFC, axesToExtrudeIn, directionToExtrudeIn, lengthScale);
+
                             int numExtrusionsToCreate = allFaces ? 1 : geometryList.Count;
 
                             IList<IList<IFCExtrusionData>> extrusionLists = new List<IList<IFCExtrusionData>>();
-                            for (int ii = 0; ii < numExtrusionsToCreate && tryToExportAsExtrusion; ii++)
+                            for (int ii = 0; ii < numExtrusionsToCreate; ii++)
                             {
                                 IList<IFCExtrusionData> extrusionList = new List<IFCExtrusionData>();
 
-                                IFCExtrusionAxes axesToExtrudeIn = exportBodyParams != null ? exportBodyParams.PossibleExtrusionAxes : IFCExtrusionAxes.TryDefault;
-                                XYZ directionToExtrudeIn = XYZ.Zero;
-                                if (exportBodyParams != null && exportBodyParams.HasCustomAxis)
-                                    directionToExtrudeIn = exportBodyParams.CustomAxis;
-
-                                double lengthScale = UnitUtil.ScaleLengthForRevitAPI();
-                                IFCExtrusionCalculatorOptions extrusionOptions =
-                                   new IFCExtrusionCalculatorOptions(exporterIFC, axesToExtrudeIn, directionToExtrudeIn, lengthScale);
-
-                                if (allFaces)
-                                    extrusionList = IFCExtrusionCalculatorUtils.CalculateExtrusionData(extrusionOptions, faces);
-                                else
-                                    extrusionList = IFCExtrusionCalculatorUtils.CalculateExtrusionData(extrusionOptions, geometryList[ii]);
+                                if (tryToExportAsExtrusion)
+                                {
+                                    if (allFaces)
+                                        extrusionList = IFCExtrusionCalculatorUtils.CalculateExtrusionData(extrusionOptions, faces);
+                                    else
+                                        extrusionList = IFCExtrusionCalculatorUtils.CalculateExtrusionData(extrusionOptions, geometryList[ii]);
+                                }
 
                                 if (extrusionList.Count == 0)
                                 {
+                                    // If we are trying to create swept solids, we will keep going, but we won't try to create more extrusions unless we are also exporting a solid model.
                                     if (tryToExportAsSweptSolid)
+                                    {
+                                        if (!canExportSolidModelRep) 
+                                            tryToExportAsExtrusion = false; 
                                         exportAsSweptSolid.Add(ii);
+                                    }
                                     else if (!canExportSolidModelRep)
                                     {
                                         tryToExportAsExtrusion = false;
                                         break;
                                     }
                                     else
-                                        exportAsBRep.Add(ii);
+                                        exportAsBRep.Add(new KeyValuePair<int, SimpleSweptSolidAnalyzer>(ii, null));
                                 }
                                 else
                                 {
@@ -1752,7 +1831,7 @@ namespace Revit.IFC.Export.Exporter
                                         break;
                                     }
                                     else
-                                        exportAsBRep.Add(ii);
+                                        exportAsBRep.Add(new KeyValuePair<int, SimpleSweptSolidAnalyzer>(ii, null));
                                 }
                             }
                         }
@@ -1766,30 +1845,42 @@ namespace Revit.IFC.Export.Exporter
                             bool exported = false;
                             int geomIndex = exportAsSweptSolid[ii];
                             Solid solid = geometryList[geomIndex] as Solid;
+                            SimpleSweptSolidAnalyzer simpleSweptSolidAnalyzer = null;
                             // TODO: allFaces to SweptSolid
                             if (solid != null)
                             {
-                                // TODO: other types of Axes
-                                XYZ normal = new XYZ(0, 0, 1);
-                                SweptSolidExporter sweptSolidExporter = SweptSolidExporter.Create(exporterIFC, element, solid, normal);
-                                if (sweptSolidExporter != null)
+                                // TODO: give normal hint below if we have an idea.
+                                simpleSweptSolidAnalyzer = SweptSolidExporter.CanExportAsSweptSolid(exporterIFC, solid, null);
+                                
+                                // If we are exporting as a BRep, we will keep the analyzer for later, if it isn't null.
+                                if (simpleSweptSolidAnalyzer != null)
                                 {
-                                    IFCAnyHandle sweptHandle = sweptSolidExporter.RepresentationItem;
-                                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(sweptHandle))
+                                    if (!tryToExportAsSweptSolidAsBRep)
                                     {
-                                        bodyItems.Add(sweptHandle);
-                                        materialIdsForExtrusions.Add(exporterIFC.GetMaterialIdForCurrentExportState());
-                                        exported = true;
-                                        if (sweptSolidExporter.IsExtrusion)
-                                            hasExtrusions = true;
+                                        SweptSolidExporter sweptSolidExporter = SweptSolidExporter.Create(exporterIFC, element, simpleSweptSolidAnalyzer);
+                                        IFCAnyHandle sweptHandle = (sweptSolidExporter != null) ? sweptSolidExporter.RepresentationItem : null;
+                                        
+                                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(sweptHandle))
+                                        {
+                                            bodyItems.Add(sweptHandle);
+                                            materialIdsForExtrusions.Add(exporterIFC.GetMaterialIdForCurrentExportState());
+                                            exported = true;
+                                            if (sweptSolidExporter.IsExtrusion)
+                                                hasExtrusions = true;
+                                            else
+                                                hasSweptSolids = true;
+                                        }
                                         else
-                                            hasSweptSolids = true;
+                                            simpleSweptSolidAnalyzer = null;    // Didn't work for some reason.
                                     }
                                 }
                             }
 
                             if (!exported)
-                                exportAsBRep.Add(ii);
+                            {
+                                exportAsBRep.Add(new KeyValuePair<int, SimpleSweptSolidAnalyzer>(geomIndex, simpleSweptSolidAnalyzer));
+                                hasSweptSolidsAsBReps |= (simpleSweptSolidAnalyzer != null);
+                            }
                         }
                     }
 
@@ -1852,14 +1943,34 @@ namespace Revit.IFC.Export.Exporter
                 }
 
                 if (exportAsExtrusion.Count == 0)
-                    exportAsBRep.Clear();
+                {
+                    // We used to clear exportAsBRep, but we need the SimpleSweptSolidAnalyzer information, so we will fill out the rest.
+                    int numGeoms = geometryList.Count;
+                    IList<KeyValuePair<int, SimpleSweptSolidAnalyzer>> newExportAsBRep = new List<KeyValuePair<int, SimpleSweptSolidAnalyzer>>(numGeoms);
+                    int exportAsBRepCount = exportAsBRep.Count;
+                    int currIndex = 0;
+                    for (int ii = 0; ii < numGeoms; ii++)
+                    {
+                        if ((currIndex < exportAsBRepCount) && (ii == exportAsBRep[currIndex].Key))
+                        {
+                            newExportAsBRep.Add(exportAsBRep[currIndex]);
+                            currIndex++;
+                        }
+                        else
+                            newExportAsBRep.Add(new KeyValuePair<int, SimpleSweptSolidAnalyzer>(ii, null));
+                    }
+                    exportAsBRep = newExportAsBRep;
+                }
             }
 
             using (IFCTransaction tr = new IFCTransaction(file))
             {
                 using (TransformSetter transformSetter = TransformSetter.Create())
                 {
-                    if (options.AllowOffsetTransform)
+                    // Need to do extra work to support offset transforms if we are using the sweep analyzer.
+                    bool supportOffsetTransform = !hasSweptSolidsAsBReps;
+
+                    if (options.AllowOffsetTransform && supportOffsetTransform)
                         bodyData.OffsetTransform = transformSetter.InitializeFromBoundingBox(exporterIFC, bbox, exportBodyParams, out unscaledTrfOrig);
 
                     BodyData brepBodyData = 

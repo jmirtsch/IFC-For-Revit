@@ -59,6 +59,10 @@ namespace Revit.IFC.Import.Utility
         // We will use this flag to try to check HasAssignments, but if it throws once, we will change the argument to false.
         private bool m_AllowUseHasAssignments = true;
 
+        // The standard IFC2x3 EXP file has an error in it that the LayerAssignments INVERSE attribute is not properly set.
+        // We will use this flag to try to check HasAssignments, but if it throws once, we will change the argument to false.
+        private bool m_AllowUseLayerAssignments = true;
+
         // NOTE: This is a copy from Revit.IFC.Export.Utility.  The intention is to move this to Revit.IFC.Common, but not until
         // after R2014 initial integration, to reduce the number of changes before FCS.
         
@@ -159,6 +163,7 @@ namespace Revit.IFC.Import.Utility
 
         /// <summary>
         /// If true, process the HasAssignments INVERSE attribute.  If false, ignore.
+        /// This is necessary because the default IFC2x3_TC1 EXPRESS schema file is (incorrectly) missing this inverse attribute.
         /// </summary>
         public bool AllowUseHasAssignments
         {
@@ -166,6 +171,16 @@ namespace Revit.IFC.Import.Utility
             set { m_AllowUseHasAssignments = value; }
         }
 
+        /// <summary>
+        /// If true, process the LayerAssignments INVERSE attribute.  If false, ignore.
+        /// This is necessary because the default IFC2x3_TC1 EXPRESS schema file is (incorrectly) missing this inverse attribute.
+        /// </summary>
+        public bool AllowUseLayerAssignments
+        {
+            get { return m_AllowUseLayerAssignments; }
+            set { m_AllowUseLayerAssignments = value; }
+        }
+        
         /// <summary>
         /// If this value is false, then, if we find an already created Revit file corresponding to the IFC file,
         /// and it is up-to-date (that is, the saved timestamp and file size on the RVT file are the same as on the IFC file),

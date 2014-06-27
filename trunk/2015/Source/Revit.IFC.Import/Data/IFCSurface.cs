@@ -71,6 +71,8 @@ namespace Revit.IFC.Import.Data
 
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcSurface, IFCEntityType.IfcElementarySurface))
                 return IFCElementarySurface.ProcessIFCElementarySurface(ifcSurface);
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcSurface, IFCEntityType.IfcSweptSurface))
+                return IFCSweptSurface.ProcessIFCSweptSurface(ifcSurface);
 
             IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcSurface, IFCEntityType.IfcSurface, true);
             return null;

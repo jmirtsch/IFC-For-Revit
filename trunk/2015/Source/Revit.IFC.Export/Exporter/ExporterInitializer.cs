@@ -326,6 +326,8 @@ namespace Revit.IFC.Export.Exporter
             InitPropertySetCoveringCommon(commonPropertySets);
             InitPropertySetCurtainWallCommon(commonPropertySets);
             InitPropertySetDoorCommon(commonPropertySets);
+            InitPropertySetDoorWindowGlazingType(commonPropertySets);
+            InitPropertySetDoorWindowShadingType(commonPropertySets);
             InitPropertySetLevelCommon(commonPropertySets);
             InitPropertySetRailingCommon(commonPropertySets);
             InitPropertySetRampCommon(commonPropertySets);
@@ -608,6 +610,82 @@ namespace Revit.IFC.Export.Exporter
             commonPropertySets.Add(propertySetDoorCommon);
         }
 
+        /// <summary>
+        /// Initializes a common door/window property set (Pset_DoorWindowGlazingType).
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetDoorWindowGlazingType(IList<PropertySetDescription> commonPropertySets)
+        {
+            //property set Pset_DoorWindowGlazingType
+            PropertySetDescription propertySetDoorWindowGlazingType = new PropertySetDescription();
+            propertySetDoorWindowGlazingType.Name = "Pset_DoorWindowGlazingType";
+            propertySetDoorWindowGlazingType.SubElementIndex = (int)IFCCommonPSets.PSetDoorWindowGlazingType;
+
+            propertySetDoorWindowGlazingType.EntityTypes.Add(IFCEntityType.IfcDoor);
+            propertySetDoorWindowGlazingType.EntityTypes.Add(IFCEntityType.IfcWindow);
+
+            propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateCount("GlassLayers"));
+            propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreatePositiveLength("GlassThickness1"));
+            propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreatePositiveLength("GlassThickness2"));
+            propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreatePositiveLength("GlassThickness3"));
+            propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateLabel("FillGas"));
+            propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateLabel("GlassColor"));
+            propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateBoolean("IsTempered"));
+            propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateBoolean("IsLaminated"));
+            propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateBoolean("IsCoated"));
+            propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateBoolean("IsWired"));
+
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateNormalisedRatio("VisibleLightReflectance"));
+                propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateNormalisedRatio("VisibleLightTransmittance"));
+                propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateNormalisedRatio("SolarAbsorption"));
+                propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateNormalisedRatio("SolarReflectance"));
+                propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateNormalisedRatio("SolarTransmittance"));
+                propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateNormalisedRatio("SolarHeatGainTransmittance"));
+                propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateNormalisedRatio("ShadingCoefficient"));
+            }
+            else
+            {
+                propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreatePositiveRatio("Translucency"));
+                propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreatePositiveRatio("Reflectivity"));
+                propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreatePositiveRatio("BeamRadiationTransmittance"));
+                propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreatePositiveRatio("SolarHeatGainTransmittance"));
+            }
+
+            propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateThermalTransmittance("ThermalTransmittanceSummer"));
+            propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateThermalTransmittance("ThermalTransmittanceWinter"));
+
+            commonPropertySets.Add(propertySetDoorWindowGlazingType);
+        }
+
+        /// <summary>
+        /// Initializes a common door/window property set (Pset_DoorWindowShadingType)
+        /// </summary>
+        /// <param name="commonPropertySets">List to store property sets.</param>
+        private static void InitPropertySetDoorWindowShadingType(IList<PropertySetDescription> commonPropertySets)
+        {
+            //property set Pset_DoorWindowShadingType
+            PropertySetDescription propertySetDoorWindowShadingType = new PropertySetDescription();
+            propertySetDoorWindowShadingType.Name = "Pset_DoorWindowShadingType";
+            propertySetDoorWindowShadingType.SubElementIndex = (int)IFCCommonPSets.PsetDoorWindowShadingType;
+
+            propertySetDoorWindowShadingType.EntityTypes.Add(IFCEntityType.IfcDoor);
+            propertySetDoorWindowShadingType.EntityTypes.Add(IFCEntityType.IfcWindow);
+
+            if (ExportSchema == IFCVersion.IFC4)
+            {
+                // Note: This conflicts with the property of the same name in Pset_DoorWindowGlazingType.
+                propertySetDoorWindowShadingType.AddEntry(PropertySetEntry.CreateNormalisedRatio("ShadingCoefficient"));
+            }
+            
+            propertySetDoorWindowShadingType.AddEntry(PropertySetEntry.CreatePositiveRatio("ExternalShadingCoefficient"));
+            propertySetDoorWindowShadingType.AddEntry(PropertySetEntry.CreatePositiveRatio("InternalShadingCoefficient"));
+            propertySetDoorWindowShadingType.AddEntry(PropertySetEntry.CreatePositiveRatio("InsetShadingCoefficient"));
+
+            commonPropertySets.Add(propertySetDoorWindowShadingType);
+        }
+        
         /// <summary>
         /// Initializes common window property sets.
         /// </summary>

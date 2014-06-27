@@ -279,7 +279,7 @@ namespace Revit.IFC.Import.Data
                     // We aren't yet actually grouping the elements.  DirectShape doesn't support grouping, and
                     // the Group element doesn't support adding parameters.  For now, we will create a DirectShape that "forgets"
                     // the association, which is good enough for link.
-                    DirectShape directShape = DirectShape.CreateElement(doc, m_CategoryId, Importer.ImportAppGUID(), GlobalId);
+                    DirectShape directShape = IFCElementUtil.CreateElement(doc, m_CategoryId, Importer.ImportAppGUID(), GlobalId);
                     //Group group = doc.Create.NewGroup(subElementIds);
                     if (directShape != null)
                         CreatedElementId = directShape.Id;
@@ -335,21 +335,8 @@ namespace Revit.IFC.Import.Data
                 }
             }
 
-            // The default IFC2x3_TC1.exp file does not have this INVERSE attribute correctly set.  The try/catch block protects against that.
-            HashSet<IFCAnyHandle> hasAssignments = null;
-            if (IFCImportFile.TheFile.Options.AllowUseHasAssignments)
-            {
-                try
-                {
-                    hasAssignments = IFCAnyHandleUtil.GetAggregateInstanceAttribute
-                        <HashSet<IFCAnyHandle>>(ifcObjectDefinition, "HasAssignments");
-                }
-                catch
-                {
-                    IFCImportFile.TheFile.Options.AllowUseHasAssignments = false;
-                    hasAssignments = null;
-                }
-            }
+            // The default IFC2x3_TC1.exp file does not have this INVERSE attribute correctly set.  Encapsulate this function.
+            ISet<IFCAnyHandle> hasAssignments = IFCImportHandleUtil.GetHasAssignments(ifcObjectDefinition);
 
             if (hasAssignments != null)
             {
@@ -522,22 +509,25 @@ namespace Revit.IFC.Import.Data
             string revitName = GetName(null);
             if (!string.IsNullOrWhiteSpace(revitName))
             {
-                bool needOveride = (string.Compare(revitName, Name) != 0);
                 try
                 {
                     element.Name = revitName;
                 }
                 catch
                 {
-                    needOveride = true;
                 }
 
-                if (needOveride)
-                    IFCPropertySet.AddParameterString(doc, element, "NameOverride", Name, Id);
+                // 2015: Revit links don't show the name of a selected item inside the link.
+                // 2015: DirectShapes don't have a built-in "Name" parameter.
+                IFCPropertySet.AddParameterString(doc, element, "IfcName", Name, Id);
             }
         }
 
-  
+        private void SetDescription(Document doc, Element element)
+        {
+            IFCPropertySet.AddParameterString(doc, element, "IfcDesciption", Description, Id);
+        }
+
 
         /// <summary>
         /// Create property sets for a given element.
@@ -556,6 +546,9 @@ namespace Revit.IFC.Import.Data
 
                 // Set the element name.
                 SetName(doc, element);
+
+                // Set the element description.
+                SetDescription(doc, element);
 
                 // Set the element GUID.
                 bool elementIsType = (element is ElementType);
@@ -619,7 +612,7 @@ namespace Revit.IFC.Import.Data
         /// <returns>The primary element associated with the IFCObjectDefinition, or InvalidElementId if it failed.</returns>
         public static ElementId CreateElement(Document doc, IFCObjectDefinition objDef)
         {
-            // AE - IFC_DEBUG - good place to check 'objDef.GlobalId'
+            // This would be a good place to check 'objDef.GlobalId'.
 
             ElementId createdElementId = objDef.CreatedElementId;
             try

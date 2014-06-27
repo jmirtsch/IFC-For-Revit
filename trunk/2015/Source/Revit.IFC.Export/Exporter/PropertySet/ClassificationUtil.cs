@@ -102,6 +102,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             {
                     classificationCodeFieldName = ExporterCacheManager.ClassificationCache.CustomClassificationCodeNames[customPass];
                     customPass++;
+
+                    if (string.IsNullOrWhiteSpace(classificationCodeFieldName))
+                        continue;
                 }
                 else
                 {

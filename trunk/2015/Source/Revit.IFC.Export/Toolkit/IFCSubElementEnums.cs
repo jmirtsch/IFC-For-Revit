@@ -71,6 +71,8 @@ namespace Revit.IFC.Export.Toolkit
         PSetStairCommon = 3068,
         PSetWallCommon = 3069,
         PSetWindowCommon = 3070,
+        PSetDoorWindowGlazingType = 3071,
+        PsetDoorWindowShadingType = 3072,
     }
 
     // Curtain Walls can be created from a variety of elements, including Walls and Roofs.

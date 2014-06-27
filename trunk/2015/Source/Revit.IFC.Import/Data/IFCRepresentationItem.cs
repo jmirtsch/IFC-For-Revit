@@ -34,6 +34,8 @@ namespace Revit.IFC.Import.Data
     {
         private IFCStyledItem m_StyledByItem = null;
 
+        private IFCPresentationLayerAssignment m_LayerAssignment = null;
+
         /// <summary>
         /// The associated style of the representation item, if any.
         /// </summary>
@@ -44,15 +46,24 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
+        /// The associated layer assignment of the representation item, if any.
+        /// </summary>
+        public IFCPresentationLayerAssignment LayerAssignment
+        {
+            get { return m_LayerAssignment; }
+            protected set { m_LayerAssignment = value; }
+        }
+
+        /// <summary>
         /// Returns the associated material id, if any.
         /// </summary>
         /// <param name="scope">The containing creation scope.</param>
         /// <returns>The element id of the material, if any.</returns>
         public virtual ElementId GetMaterialElementId(IFCImportShapeEditScope scope)
         {
-            IFCStyledItem item = scope.GetCurrentStyledItem();
-            if (item != null)
-                return item.GetMaterialElementId(scope);
+            ElementId materialId = scope.GetCurrentMaterialId();
+            if (materialId != ElementId.InvalidElementId)
+                return materialId;
 
             if (scope.Creator != null)
             {
@@ -71,6 +82,8 @@ namespace Revit.IFC.Import.Data
         override protected void Process(IFCAnyHandle item)
         {
             base.Process(item);
+
+            LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(item);
 
             List<IFCAnyHandle> styledByItems = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(item, "StyledByItem");
             if (styledByItems != null && styledByItems.Count > 0)
@@ -103,6 +116,18 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
+        /// Deal with missing "LayerAssignments" in IFC2x3 EXP file.
+        /// </summary>
+        /// <param name="layerAssignment">The layer assignment to add to this representation.</param>
+        public void PostProcessLayerAssignment(IFCPresentationLayerAssignment layerAssignment)
+        {
+            if (LayerAssignment == null)
+                LayerAssignment = layerAssignment;
+            else
+                IFCImportDataUtil.CheckLayerAssignmentConsistency(LayerAssignment, layerAssignment, Id);
+        }
+
+        /// <summary>
         /// Create geometry for a particular representation item.
         /// </summary>
         /// <param name="shapeEditScope">The geometry creation scope.</param>
@@ -115,7 +140,10 @@ namespace Revit.IFC.Import.Data
             if (StyledByItem != null)
                 StyledByItem.Create(shapeEditScope);
 
-            using (IFCImportShapeEditScope.IFCStyledItemStack stack = new IFCImportShapeEditScope.IFCStyledItemStack(shapeEditScope, StyledByItem))
+            if (LayerAssignment != null)
+                LayerAssignment.Create(shapeEditScope);
+            
+            using (IFCImportShapeEditScope.IFCMaterialStack stack = new IFCImportShapeEditScope.IFCMaterialStack(shapeEditScope, StyledByItem, LayerAssignment))
             {
                 CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
             }

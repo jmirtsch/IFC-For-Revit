@@ -42,6 +42,70 @@ namespace Revit.IFC.Export.Utility
         private ExportOptionsCache()
         { }
 
+
+        /// <summary>
+        /// de-serialize vector passed from UI trough options 
+        /// </summary>
+        private static XYZ ParseXYZ(string value)
+        {
+            XYZ retVal = null;
+
+            //split string to components by removing seprator characters
+            string[] separator = new string[] { ",", "(", ")", " " };
+            string[] sList = new string[3] { "", "", "" };
+            sList = value.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+            //should remain only 3 values if everything is OK
+
+            try
+            {
+                double valX = double.Parse(sList[0]); //parsing values
+                double valY = double.Parse(sList[1]);
+                double valZ = double.Parse(sList[2]);
+                //if no exception then put it in return value
+                retVal = new XYZ(valX, valY, valZ);
+            }
+            catch (FormatException)
+            {
+
+            }
+            //return null if there is a problem or a value 
+            return retVal;
+        }
+
+        /// <summary>
+        /// de-serialize transform passed from UI trough options 
+        /// </summary>
+        private static Transform ParseTransform(string value)
+        {
+            Transform retVal = null;
+
+            try
+            {
+                //spit string by separator; it should remain 4 items
+                string[] separator = new string[] { ";" };
+                string[] sList = new string[4] { "", "", "", "" };
+
+                sList = value.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+                Transform tr = new Transform(Transform.Identity);
+                // parse each item in part
+                tr.Origin = ParseXYZ(sList[0]);
+                tr.BasisX = ParseXYZ(sList[1]);
+                tr.BasisY = ParseXYZ(sList[2]);
+                tr.BasisZ = ParseXYZ(sList[3]);
+                // verify if value was correctly parsed
+                if (tr.Origin != null && tr.BasisX != null &&
+                    tr.BasisY != null && tr.BasisZ != null)
+                    retVal = tr;
+            }
+            catch
+            {
+                retVal = null;
+            }
+
+            //return value
+            return retVal;
+        }
+
         private static ElementId ParseElementId(String singleElementValue)
         {
             int elementIdAsInt;
@@ -218,6 +282,42 @@ namespace Revit.IFC.Export.Utility
 
             cache.SelectedConfigName = GetNamedStringOption(options, "ConfigName");
 
+            bool? bExportLinks = GetNamedBooleanOption(options, "ExportingLinks");
+            cache.ExportingLink = (bExportLinks.HasValue && bExportLinks.Value == true);
+
+            if (cache.ExportingLink)
+            {
+                int? numInstances = GetNamedIntOption(options, "NumberOfExportedLinkInstances");
+                for (int ii = 0; ii < numInstances; ii++)
+                {
+                    string optionName = (ii == 0) ? "ExportLinkInstanceTransform" : "ExportLinkInstanceTransform" + (ii + 1).ToString();
+                    String aLinkInstanceTransform = GetNamedStringOption(options, optionName);
+
+                    Transform currTransform = null;
+                    if (!String.IsNullOrEmpty(aLinkInstanceTransform))
+                    {
+                        //reconstruct transform
+                        Transform tr = ParseTransform(aLinkInstanceTransform);
+                        //set to cache
+                        if (tr != null)
+                            currTransform = tr;
+                    }
+
+                    string fileName = null;
+
+                    if (ii > 0)
+                    {
+                        optionName = "ExportLinkInstanceFileName" + (ii + 1).ToString();
+                        fileName = GetNamedStringOption(options, optionName);
+                    }
+
+                    if (currTransform == null)
+                        cache.m_LinkInstanceInfos.Add(new Tuple<string, Transform>(fileName, Transform.Identity));
+                    else
+                        cache.m_LinkInstanceInfos.Add(new Tuple<string, Transform>(fileName, currTransform));
+                }
+            }
+
             return cache;
         }
 
@@ -238,6 +338,27 @@ namespace Revit.IFC.Export.Utility
                 
                 // TODO: consider logging this error later and handling results better.
                 throw new Exception("Option '" + optionName +"' could not be parsed to boolean");
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Utility for processing integer option from the options collection.
+        /// </summary>
+        /// <param name="options">The collection of named options for IFC export.</param>
+        /// <param name="optionName">The name of the target option.</param>
+        /// <returns>The value of the option, or null if the option is not set.</returns>
+        public static int? GetNamedIntOption(IDictionary<String, String> options, String optionName)
+        {
+            String optionString;
+            if (options.TryGetValue(optionName, out optionString))
+            {
+                int option;
+                if (int.TryParse(optionString, out option))
+                    return option;
+
+                // TODO: consider logging this error later and handling results better.
+                throw new Exception("Option '" + optionName + "' could not be parsed to int");
             }
             return null;
         }
@@ -647,6 +768,57 @@ namespace Revit.IFC.Export.Utility
         {
             get;
             protected set;
+        }
+
+        ///<summary>
+        /// The ExportingLink flag.
+        /// This stores the flag telling if the current export is for a linked document.
+        /// </summary>
+        public bool ExportingLink
+        {
+            get;
+            set;
+        }
+
+        private IList<Tuple<string, Transform>> m_LinkInstanceInfos = new List<Tuple<string, Transform>>();
+
+        /// <summary>
+        /// Get the number of RevitLinkInstance transforms for this export.
+        /// </summary>
+        /// <returns>The number of Revit Link Instance transforms for this export.</returns>
+        public int GetNumLinkInstanceInfos()
+        {
+            if (m_LinkInstanceInfos == null)
+                return 0;
+
+            return m_LinkInstanceInfos.Count;
+        }
+
+        /// <summary>
+        /// Gets the file name of the link corresponding to the given index.
+        /// </summary>
+        /// <param name="idx">The index</param>
+        /// <returns>The transform corresponding to the given index, or the Identity transform if out of range.</returns>
+        /// <remarks>Note that the file name for index 0 is not stored here, and returns null.</remarks>
+        public string GetLinkInstanceFileName(int idx)
+        {
+            if (idx < 1 || idx >= GetNumLinkInstanceInfos())
+                return null;
+
+            return m_LinkInstanceInfos[idx].Item1;
+        }
+        
+        /// <summary>
+        /// Gets the transform corresponding to the given index.
+        /// </summary>
+        /// <param name="idx">The index</param>
+        /// <returns>The transform corresponding to the given index, or the Identity transform if out of range.</returns>
+        public Transform GetLinkInstanceTransform(int idx)
+        {
+            if (idx < 0 || idx >= GetNumLinkInstanceInfos())
+                return Transform.Identity;
+
+            return m_LinkInstanceInfos[idx].Item2;
         }
     }
 }

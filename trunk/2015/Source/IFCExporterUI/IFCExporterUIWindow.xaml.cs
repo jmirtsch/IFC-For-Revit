@@ -219,6 +219,7 @@ namespace BIM.IFC.Export.UI
             checkboxExportSolidModelRep.IsChecked = configuration.ExportSolidModelRep;
             checkboxExportSchedulesAsPsets.IsChecked = configuration.ExportSchedulesAsPsets;
             checkboxExportUserDefinedPset.IsChecked = configuration.ExportUserDefinedPsets;
+            checkBoxExportLinkedFiles.IsChecked = configuration.ExportLinkedFiles;
             checkboxIncludeIfcSiteElevation.IsChecked = configuration.IncludeSiteElevation;
             checkboxUseCoarseTessellation.IsChecked = configuration.UseCoarseTessellation;
             checkboxStoreIFCGUID.IsChecked = configuration.StoreIFCGUID;
@@ -237,6 +238,7 @@ namespace BIM.IFC.Export.UI
                                                                 checkBoxFamilyAndTypeName,
                                                                 checkboxExportBoundingBox,
                                                                 checkboxExportSolidModelRep,
+                                                                checkBoxExportLinkedFiles,
                                                                 checkboxIncludeIfcSiteElevation,
                                                                 checkboxUseCoarseTessellation,
                                                                 checkboxStoreIFCGUID,
@@ -795,6 +797,21 @@ namespace BIM.IFC.Export.UI
             if (configuration != null)
             {
                 configuration.ExportUserDefinedPsets = GetCheckbuttonChecked(checkBox);
+            }
+        }
+
+        /// <summary>
+        /// Update checkbox for export linked files option
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments that contains the event data.</param>
+        private void checkBoxExportLinkedFiles_Checked(object sender, RoutedEventArgs e)
+        {
+            CheckBox checkBox = (CheckBox)sender;
+            IFCExportConfiguration configuration = GetSelectedConfiguration();
+            if (configuration != null)
+            {
+                configuration.ExportLinkedFiles = GetCheckbuttonChecked(checkBox);
             }
         }
     }

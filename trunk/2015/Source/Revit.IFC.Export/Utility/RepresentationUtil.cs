@@ -97,9 +97,17 @@ namespace Revit.IFC.Export.Utility
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(newShapeRepresentation))
                 return newShapeRepresentation;
 
+            // Search for old "IFCCadLayer" or new "IfcPresentationLayer".
             string ifcCADLayer = null;
-            if ((ParameterUtil.GetStringValueFromElementOrSymbol(element, "IFCCadLayer", out ifcCADLayer) == null) || string.IsNullOrWhiteSpace(ifcCADLayer))
-                ifcCADLayer = ExporterStateManager.GetCurrentCADLayerOverride();
+            if ((ParameterUtil.GetStringValueFromElementOrSymbol(element, "IFCCadLayer", out ifcCADLayer) == null) ||
+                string.IsNullOrWhiteSpace(ifcCADLayer))
+            {
+                if ((ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcPresentationLayer", out ifcCADLayer) == null) ||
+                    string.IsNullOrWhiteSpace(ifcCADLayer))
+                {
+                    ifcCADLayer = ExporterStateManager.GetCurrentCADLayerOverride();
+                }
+            }
 
             // We are using the DWG export layer table to correctly map category to DWG layer for the 
             // IfcPresentationLayerAsssignment, if it is not overridden.

@@ -281,4 +281,7 @@
   <data name="PropertySetsUserDefined" xml:space="preserve">
     <value>User Defined only</value>
   </data>
+  <data name="ExportLinkedFiles" xml:space="preserve">
+    <value>Export Linked Files as Separate IFCs</value>
+  </data>
 </root>

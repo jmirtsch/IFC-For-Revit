@@ -77,29 +77,40 @@ namespace Revit.IFC.Import.Data
         {
         }
 
-        private void GetTransformedCurveLoopsFromProfile(IFCProfile profile, Transform lcs, IList<CurveLoop> loops)
+        private IList<CurveLoop> GetTransformedCurveLoopsFromSimpleProfile(IFCSimpleProfile simpleSweptArea, Transform lcs)
+        {
+            IList<CurveLoop> loops = new List<CurveLoop>();
+
+            // It is legal for simpleSweptArea.Position to be null, for example for IfcArbitraryClosedProfileDef.
+            Transform sweptAreaPosition =
+                (simpleSweptArea.Position == null) ? lcs : lcs.Multiply(simpleSweptArea.Position);
+
+            CurveLoop currLoop = simpleSweptArea.OuterCurve;
+            if (currLoop == null || currLoop.Count() == 0)
+            {
+                IFCImportFile.TheLog.LogError(simpleSweptArea.Id, "No outer curve loop for profile, ignoring.", false);
+                return null;
+            }
+            loops.Add(IFCGeometryUtil.CreateTransformed(currLoop, sweptAreaPosition));
+
+            if (simpleSweptArea.InnerCurves != null)
+            {
+                foreach (CurveLoop innerCurveLoop in simpleSweptArea.InnerCurves)
+                    loops.Add(IFCGeometryUtil.CreateTransformed(innerCurveLoop, sweptAreaPosition));
+            }
+
+            return loops;
+        }
+        
+        private void GetTransformedCurveLoopsFromProfile(IFCProfile profile, Transform lcs, ISet<IList<CurveLoop>> loops)
         {
             if (profile is IFCSimpleProfile)
             {
                 IFCSimpleProfile simpleSweptArea = profile as IFCSimpleProfile;
 
-                // It is legal for simpleSweptArea.Position to be null, for example for IfcArbitraryClosedProfileDef.
-                Transform sweptAreaPosition =
-                    (simpleSweptArea.Position == null) ? lcs : lcs.Multiply(simpleSweptArea.Position);
-
-                CurveLoop currLoop = simpleSweptArea.OuterCurve;
-                if (currLoop == null || currLoop.Count() == 0)
-                {
-                    IFCImportFile.TheLog.LogError(profile.Id, "No outer curve loop for profile, ignoring.", false);
-                    return;
-                }
-                loops.Add(IFCGeometryUtil.CreateTransformed(currLoop, sweptAreaPosition));
-
-                if (simpleSweptArea.InnerCurves != null)
-                {
-                    foreach (CurveLoop innerCurveLoop in simpleSweptArea.InnerCurves)
-                        loops.Add(IFCGeometryUtil.CreateTransformed(innerCurveLoop, sweptAreaPosition));
-                }
+                IList<CurveLoop> currLoops = GetTransformedCurveLoopsFromSimpleProfile(simpleSweptArea, lcs);
+                if (currLoops != null && currLoops.Count > 0)
+                    loops.Add(currLoops);
             }
             else if (profile is IFCCompositeProfile)
             {
@@ -115,9 +126,15 @@ namespace Revit.IFC.Import.Data
             }
         }
 
-        protected IList<CurveLoop> GetTransformedCurveLoops(Transform lcs)
+        /// <summary>
+        /// Gathers a set of transformed curve loops.  Each member of the set has exactly one outer and zero of more inner loops.
+        /// </summary>
+        /// <param name="lcs">The transform.</param>
+        /// <returns>The set of list of curveloops representing logically disjoint profiles of exactly one outer and zero of more inner loops.</returns>
+        /// <remarks>We state "logically disjoint" because the code does not check the validity of the loops at this time.</remarks>
+        protected ISet<IList<CurveLoop>> GetTransformedCurveLoops(Transform lcs)
         {
-            IList<CurveLoop> loops = new List<CurveLoop>();
+            ISet<IList<CurveLoop>> loops = new HashSet<IList<CurveLoop>>();
             GetTransformedCurveLoopsFromProfile(SweptArea, lcs, loops);
             return loops;
         }

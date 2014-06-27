@@ -100,11 +100,9 @@ namespace Revit.IFC.Export.Utility
         /// <param name="doc">The document.</param>
         public ClassificationCache(Document doc)
         {
-            IFCClassificationMgr savedClassificationFromUI = new IFCClassificationMgr(doc);
-
             // The UI currently supports only one, but future UIs may support a list.
             IList<IFCClassification> classifications;
-            if (savedClassificationFromUI.GetSavedClassifications(doc, null, out classifications))
+            if (IFCClassificationMgr.GetSavedClassifications(doc, null, out classifications))
             {
                 foreach (IFCClassification classification in classifications)
                 {

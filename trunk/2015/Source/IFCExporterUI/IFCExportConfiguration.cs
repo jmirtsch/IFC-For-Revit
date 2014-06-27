@@ -152,6 +152,8 @@ namespace BIM.IFC.Export.UI
         /// </summary>
         public bool StoreIFCGUID { get; set; }
 
+        public bool ExportLinkedFiles { get; set; }
+
         private bool m_isBuiltIn = false;
         private bool m_isInSession = false;
         private static IFCExportConfiguration s_inSessionConfiguration = null;
@@ -192,29 +194,30 @@ namespace BIM.IFC.Export.UI
         /// </summary>
         private IFCExportConfiguration()
         {
-            this.Name = "<<Default>>";
-            this.IFCVersion = IFCVersion.IFC2x3CV2;
-            this.IFCFileType = IFCFileFormat.Ifc;
-            this.SpaceBoundaries = 0;
-            this.ActivePhaseId = ElementId.InvalidElementId;
-            this.ExportBaseQuantities = false;
-            this.SplitWallsAndColumns = false;
-            this.VisibleElementsOfCurrentView = false;
-            this.Use2DRoomBoundaryForVolume = false;
+            this.Name                             = "<<Default>>";
+            this.IFCVersion                       = IFCVersion.IFC2x3CV2;
+            this.IFCFileType                      = IFCFileFormat.Ifc;
+            this.SpaceBoundaries                  = 0;
+            this.ActivePhaseId                    = ElementId.InvalidElementId;
+            this.ExportBaseQuantities             = false;
+            this.SplitWallsAndColumns             = false;
+            this.VisibleElementsOfCurrentView     = false;
+            this.Use2DRoomBoundaryForVolume       = false;
             this.UseFamilyAndTypeNameForReference = false;
-            this.ExportInternalRevitPropertySets = false;
-            this.ExportIFCCommonPropertySets = true;
-            this.Export2DElements = false;
-            this.ExportPartsAsBuildingElements = false;
-            this.ExportBoundingBox = false;
-            this.ExportSolidModelRep = false;
-            this.ExportSchedulesAsPsets = false;
-            this.ExportUserDefinedPsets = false;
-            this.IncludeSiteElevation = false;
-            this.UseCoarseTessellation = true;
-            this.StoreIFCGUID = false;
-            this.m_isBuiltIn = false; 
-            this.m_isInSession = false;
+            this.ExportInternalRevitPropertySets  = false;
+            this.ExportIFCCommonPropertySets      = true;
+            this.Export2DElements                 = false;
+            this.ExportPartsAsBuildingElements    = false;
+            this.ExportBoundingBox                = false;
+            this.ExportSolidModelRep              = false;
+            this.ExportSchedulesAsPsets           = false;
+            this.ExportUserDefinedPsets           = false;
+            this.ExportLinkedFiles                = false;
+            this.IncludeSiteElevation             = false;
+            this.UseCoarseTessellation            = true;
+            this.StoreIFCGUID                     = false;
+            this.m_isBuiltIn                      = false; 
+            this.m_isInSession                    = false;
         }
 
         /// <summary>
@@ -240,7 +243,8 @@ namespace BIM.IFC.Export.UI
                                    bool schedulesAsPSets,
                                    bool userDefinedPSets,
                                    bool PlanElems2D,
-                                   bool exportBoundingBox)
+                                   bool exportBoundingBox,
+                                   bool exportLinkedFiles)
         {
             IFCExportConfiguration configuration = new IFCExportConfiguration();
             configuration.Name = name;
@@ -260,6 +264,7 @@ namespace BIM.IFC.Export.UI
             configuration.ExportSolidModelRep = false;
             configuration.ExportSchedulesAsPsets = schedulesAsPSets;
             configuration.ExportUserDefinedPsets = userDefinedPSets;
+            configuration.ExportLinkedFiles = exportLinkedFiles;
             configuration.IncludeSiteElevation = false;
             configuration.UseCoarseTessellation = true;
             configuration.StoreIFCGUID = false;
@@ -297,6 +302,7 @@ namespace BIM.IFC.Export.UI
             this.ExportSolidModelRep = other.ExportSolidModelRep;
             this.ExportSchedulesAsPsets = other.ExportSchedulesAsPsets;
             this.ExportUserDefinedPsets = other.ExportUserDefinedPsets;
+            this.ExportLinkedFiles = other.ExportLinkedFiles;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
             this.UseCoarseTessellation = other.UseCoarseTessellation;
             this.StoreIFCGUID = other.StoreIFCGUID;
@@ -339,6 +345,7 @@ namespace BIM.IFC.Export.UI
             this.ExportSolidModelRep = other.ExportSolidModelRep;
             this.ExportSchedulesAsPsets = other.ExportSchedulesAsPsets;
             this.ExportUserDefinedPsets = other.ExportUserDefinedPsets;
+            this.ExportLinkedFiles = other.ExportLinkedFiles;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
             this.UseCoarseTessellation = other.UseCoarseTessellation;
             this.ActivePhaseId = other.ActivePhaseId;
@@ -395,11 +402,13 @@ namespace BIM.IFC.Export.UI
             options.AddOption("ExportAnnotations", Export2DElements.ToString());
             options.AddOption("Use2DRoomBoundaryForVolume",Use2DRoomBoundaryForVolume.ToString());
             options.AddOption("UseFamilyAndTypeNameForReference",UseFamilyAndTypeNameForReference.ToString());
+            options.AddOption("ExportVisibleElementsInView", VisibleElementsOfCurrentView.ToString());
             options.AddOption("ExportPartsAsBuildingElements", ExportPartsAsBuildingElements.ToString());
             options.AddOption("ExportBoundingBox", ExportBoundingBox.ToString());
             options.AddOption("ExportSolidModelRep", ExportSolidModelRep.ToString());
             options.AddOption("ExportSchedulesAsPsets", ExportSchedulesAsPsets.ToString());
             options.AddOption("ExportUserDefinedPsets", ExportUserDefinedPsets.ToString());
+            options.AddOption("ExportLinkedFiles", ExportLinkedFiles.ToString());
             options.AddOption("IncludeSiteElevation", IncludeSiteElevation.ToString());
             options.AddOption("UseCoarseTessellation", UseCoarseTessellation.ToString());
             options.AddOption("StoreIFCGUID", StoreIFCGUID.ToString());
@@ -460,6 +469,7 @@ namespace BIM.IFC.Export.UI
                     ConditionalAddLine(builder, Resources.ExportPlanViewElements, Export2DElements, valueToMatch);
 
                     ConditionalAddLine(builder, Resources.ExportVisibleElementsInView, VisibleElementsOfCurrentView, valueToMatch);
+                    ConditionalAddLine(builder, Resources.ExportLinkedFiles, ExportLinkedFiles, valueToMatch);
                     ConditionalAddLine(builder, Resources.ExportPartsAsBuildingElements, ExportPartsAsBuildingElements, valueToMatch);
                     ConditionalAddLine(builder, Resources.ExportBoundingBox, ExportBoundingBox, valueToMatch);
                     ConditionalAddLine(builder, Resources.ExportSolidModelRep, ExportBoundingBox, valueToMatch);

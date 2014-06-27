@@ -138,8 +138,8 @@ namespace Revit.IFC.Import.Data
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
         /// <param name="forceSolid">True if we require a Solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        /// <returns>The created geometry.</returns>
-        protected override GeometryObject CreateGeometryInternal(
+        /// <returns>Zero or more created geometries.</returns>
+        protected override IList<GeometryObject> CreateGeometryInternal(
               IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
         {
             Transform sweptDiskPosition = (lcs == null) ? Transform.Identity : lcs;
@@ -189,7 +189,11 @@ namespace Revit.IFC.Import.Data
             SolidOptions solidOptions = new SolidOptions(GetMaterialElementId(shapeEditScope), shapeEditScope.GraphicsStyleId);
             Solid sweptDiskSolid = GeometryCreationUtilities.CreateSweptGeometry(trimmedDirectrixInLCS, 0, startParam, profileCurveLoops,
                 solidOptions);
-            return sweptDiskSolid;
+
+            IList<GeometryObject> myObjs = new List<GeometryObject>();
+            if (sweptDiskSolid != null)
+                myObjs.Add(sweptDiskSolid);
+            return myObjs;
         }
 
         /// <summary>
@@ -204,9 +208,14 @@ namespace Revit.IFC.Import.Data
         {
             base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
 
-            GeometryObject sweptDiskGeometry = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
-            if (sweptDiskGeometry != null)
-                shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, sweptDiskGeometry));
+            IList<GeometryObject> sweptDiskGeometries = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            if (sweptDiskGeometries != null)
+            {
+                foreach (GeometryObject sweptDiskGeometry in sweptDiskGeometries)
+                {
+                    shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, sweptDiskGeometry));
+                }
+            }
         }
 
         protected IFCSweptDiskSolid(IFCAnyHandle solid)

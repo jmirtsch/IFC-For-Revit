@@ -117,7 +117,11 @@ namespace Revit.IFC.Import.Data
                 newScaledLcs = scaledLcs.Multiply(mappingTransform);
             
             // Pass in newLCS = null, use newLCS for instance.
-            if ((newLcs != null && newLcs.IsConformal) && (newScaledLcs != null && newScaledLcs.IsConformal) && isUnitScale)
+            bool canCreateType = (newLcs != null && newLcs.IsConformal) &&
+                (newScaledLcs != null && newScaledLcs.IsConformal) &&
+                isUnitScale;
+
+            if (canCreateType)
             {
                 MappingSource.CreateShape(shapeEditScope, null, null, guid);
                 IList<GeometryObject> instances = DirectShape.CreateGeometryInstance(shapeEditScope.Document, MappingSource.Id.ToString(), newLcs);

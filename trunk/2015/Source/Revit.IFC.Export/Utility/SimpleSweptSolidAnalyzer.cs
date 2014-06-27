@@ -79,11 +79,11 @@ namespace Revit.IFC.Export.Utility
         /// Creates a SimpleSweptSolidAnalyzer and computes the swept solid.
         /// </summary>
         /// <param name="solid">The solid geometry.</param>
-        /// <param name="normal">The normal of the reference plane that a path might lie on.</param>
+        /// <param name="normal">The normal of the reference plane that a path might lie on.  If it is null, try to guess based on the geometry.</param>
         /// <returns>The analyzer.</returns>
         public static SimpleSweptSolidAnalyzer Create(Solid solid, XYZ normal)
         {
-            if (solid == null || normal == null)
+            if (solid == null)
                 throw new ArgumentNullException();
 
             ICollection<Face> faces = new List<Face>();
@@ -98,14 +98,28 @@ namespace Revit.IFC.Export.Utility
         /// Creates a SimpleSweptSolidAnalyzer and computes the swept solid.
         /// </summary>
         /// <param name="faces">The faces of a solid.</param>
-        /// <param name="normal">The normal of the reference plane that a path might lie on.</param>
+        /// <param name="normal">The normal of the reference plane that a path might lie on.  If it is null, try to guess based on the geometry.</param>
         /// <returns>The analyzer.</returns>
+        /// <remarks>This is a simple analyzer, and is not intended to be general - it works in some simple, real-world cases.</remarks>
         public static SimpleSweptSolidAnalyzer Create(ICollection<Face> faces, XYZ normal)
         {
             if (faces == null || faces.Count < 3)
                 throw new ArgumentException("Invalid faces.", "faces");
+            
             if (normal == null)
-                throw new ArgumentNullException("normal");
+            {
+                foreach (Face face in faces)
+                {
+                    if (face is RevolvedFace)
+                    {
+                        XYZ faceNormal = (face as RevolvedFace).Axis;
+                        if (normal == null)
+                            normal = faceNormal;
+                        else if (!MathUtil.VectorsAreParallel(normal, faceNormal))
+                            throw new InvalidOperationException("Couldn't calculate swept solid normal.");
+                    }
+                }
+            }
 
             // find potential profile faces, their normal vectors must be orthogonal to the input normal
             List<PlanarFace> potentialSweepEndFaces = new List<PlanarFace>();

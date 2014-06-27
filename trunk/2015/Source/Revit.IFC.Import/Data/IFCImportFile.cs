@@ -59,7 +59,7 @@ namespace Revit.IFC.Import.Data
 
         static string m_OverrideSchemaFileName = null;
 
-        IFCFile m_IfcFile;
+        IFCFile m_IfcFile = null;
 
         IFCProject m_IFCProject;
 
@@ -130,7 +130,7 @@ namespace Revit.IFC.Import.Data
                 importer.SetFile(ifcFile);
 
                 //If there is more than one project, we will be ignoring all but the first one.
-                IList<IFCAnyHandle> projects = IFCAnyHandleUtil.GetInstances(ifcFile, IFCEntityType.IfcProject, false);
+                IList<IFCAnyHandle> projects = ifcFile.GetInstances(IFCAnyHandleUtil.GetIFCEntityTypeName(IFCEntityType.IfcProject), false);
                 if (projects.Count == 0)
                     throw new InvalidOperationException("Failed to import IFC to Revit.");
 
@@ -311,7 +311,7 @@ namespace Revit.IFC.Import.Data
                     InitializeOpenTransaction("Open IFC Reference File");
 
                     //If there is more than one project, we will be ignoring all but the first one.
-                    IList<IFCAnyHandle> projects = IFCAnyHandleUtil.GetInstances(IFCImportFile.TheFile.m_IfcFile, IFCEntityType.IfcProject, false);
+                    IList<IFCAnyHandle> projects = IFCImportFile.TheFile.GetInstances(IFCEntityType.IfcProject, false);
                     if (projects.Count == 0)
                     {
                         Log.LogError(-1, "There were no IfcProjects found in the file.  Aborting import.", false);
@@ -336,7 +336,6 @@ namespace Revit.IFC.Import.Data
         {
             m_sIFCImportFile = new IFCImportFile();
             bool success = TheFile.Process(ifcFilePath, options, doc);
-
             if (success)
             {
                 // Store the original levels in the template file for Open IFC.  On export, we will delete these levels if we created any.
@@ -377,6 +376,11 @@ namespace Revit.IFC.Import.Data
                         Importer.TheCache.CreatedMaterials.Add(material.Name, info);
                     }
                 }
+            }
+            else
+            {
+                // Close up the log file, set m_sIFCImportFile to null.
+                TheFile.Close();
             }
 
             return m_sIFCImportFile;
@@ -486,7 +490,8 @@ namespace Revit.IFC.Import.Data
                 // Don't expect this to fail.
                 try
                 {
-                    doc.Delete(otherElementsToDelete);
+                    if (otherElementsToDelete.Count > 0)
+                        doc.Delete(otherElementsToDelete);
                 }
                 catch (Exception ex)
                 {
@@ -496,7 +501,8 @@ namespace Revit.IFC.Import.Data
                 IFCGeometryUtil.DeleteSolidValidator();
 
                 // This might fail.
-                doc.Delete(typesToDelete);
+                if (typesToDelete.Count > 0)
+                    doc.Delete(typesToDelete);
 
                 UpdateDocumentFileMetrics(doc, fileName);
             }
@@ -582,19 +588,27 @@ namespace Revit.IFC.Import.Data
                 Transaction linkTransaction = new Transaction(originalDocument);
                 linkTransaction.Start(Resources.IFCLinkFile);
 
-                if (revitLinkTypeId == ElementId.InvalidElementId)
+                try
                 {
-                    RevitLinkOptions options = new RevitLinkOptions(true);
-                    RevitLinkLoadResult loadResult = RevitLinkType.CreateFromIFC(originalDocument, baseFileName, fileName, false, options);
-                    if ((loadResult != null) && (loadResult.ElementId != ElementId.InvalidElementId))
-                        revitLinkTypeId = loadResult.ElementId;
+                    if (revitLinkTypeId == ElementId.InvalidElementId)
+                    {
+                        RevitLinkOptions options = new RevitLinkOptions(true);
+                        RevitLinkLoadResult loadResult = RevitLinkType.CreateFromIFC(originalDocument, baseFileName, fileName, false, options);
+                        if ((loadResult != null) && (loadResult.ElementId != ElementId.InvalidElementId))
+                            revitLinkTypeId = loadResult.ElementId;
+                    }
+
+                    if (revitLinkTypeId != ElementId.InvalidElementId)
+                        RevitLinkInstance.Create(originalDocument, revitLinkTypeId);
+
+                    Importer.PostDelayedLinkErrors(originalDocument);
+                    linkTransaction.Commit();
                 }
-
-                if (revitLinkTypeId != ElementId.InvalidElementId)
-                    RevitLinkInstance.Create(originalDocument, revitLinkTypeId);
-
-                Importer.PostDelayedLinkErrors(originalDocument);
-                linkTransaction.Commit();
+                catch (Exception ex)
+                {
+                    linkTransaction.RollBack();
+                    throw ex;
+                }
             }
             else // reload from
             {
@@ -755,11 +769,27 @@ namespace Revit.IFC.Import.Data
                 }
             }
 
+            // This checks to see if we have an unsupported IFC2X3_RC1 file.
+            if (string.IsNullOrEmpty(schemaName))
+            {
+                using (XmlReader reader = XmlReader.Create(new StreamReader(path)))
+                {
+                    reader.ReadToFollowing("ex:iso_10303_28");
+                    reader.MoveToAttribute("xmlns:ifc");
+                    int ifcLoc = reader.Value.IndexOf("IFC");
+                    if (ifcLoc >= 0)
+                        schemaName = reader.Value.Substring(ifcLoc);
+                }
+            }
+
             if (!string.IsNullOrEmpty(schemaName))
             {
                 IFCFileModelOptions modelOptions = GetIFCFileModelOptions(schemaName, out schemaVersion);
                 file = IFCFile.Create(modelOptions);
             }
+
+            if (file == null)
+                throw new InvalidOperationException("Can't determine XML file schema.");
 
             return file;
         }
@@ -827,7 +857,7 @@ namespace Revit.IFC.Import.Data
                 schemaVersion = IFCSchemaVersion.IFC4;
             }
             else
-                throw new ArgumentException("Invalid schema name");
+                throw new ArgumentException("Invalid or unsupported schema: " + schemaName);
 
             return modelOptions;
         }
@@ -892,6 +922,17 @@ namespace Revit.IFC.Import.Data
             }
 
             return fullZipToPath;
+        }
+
+        /// <summary>
+        /// Gets instances of an entity type from an IFC file.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <param name="includeSubTypes">True to retrieve instances of sub types.</param>
+        /// <returns>The instance handles.</returns>
+        public IList<IFCAnyHandle> GetInstances(IFCEntityType type, bool includeSubTypes)
+        {
+            return m_IfcFile.GetInstances(IFCAnyHandleUtil.GetIFCEntityTypeName(type), includeSubTypes);
         }
     }
 }

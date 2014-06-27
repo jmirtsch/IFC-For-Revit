@@ -41,35 +41,138 @@ namespace Revit.IFC.Import.Utility
 
         private IFCProduct m_Creator = null;
 
+        private IFCRepresentation m_ContainingRepresentation = null;
+
         private ElementId m_GraphicsStyleId = ElementId.InvalidElementId;
 
         private ElementId m_CategoryId = ElementId.InvalidElementId;
 
         /// <summary>
-        /// A stack of created styles.  The "current" style should generally be used.
+        /// The names of the associated IfcPresentationLayerWithStyles
         /// </summary>
-        private IList<IFCStyledItem> m_StyledItemList = null;
+        private ISet<string> m_PresentationLayerNames = null;
 
-        private IList<IFCStyledItem> StyledItemList
+        /// <summary>
+        /// A stack of material element id from IFCStyledItems and IFCPresentationLayerWithStyles.  The "current" material id should generally be used.
+        /// </summary>
+        private IList<ElementId> m_MaterialIdList = null;
+
+        private IList<ElementId> MaterialIdList
         {
             get
             {
-                if (m_StyledItemList == null)
-                    m_StyledItemList = new List<IFCStyledItem>();
-                return m_StyledItemList;
+                if (m_MaterialIdList == null)
+                    m_MaterialIdList = new List<ElementId>();
+                return m_MaterialIdList;
             }
         }
 
-        private void PushStyledItem(IFCStyledItem item)
+        private void PushMaterialId(ElementId materialId)
         {
-            StyledItemList.Add(item);
+            MaterialIdList.Add(materialId);
         }
 
-        private void PopStyledItem()
+        private void PopMaterialId()
         {
-            int count = StyledItemList.Count;
+            int count = MaterialIdList.Count;
             if (count > 0)
-                StyledItemList.RemoveAt(count - 1);
+                MaterialIdList.RemoveAt(count - 1);
+        }
+
+        /// <summary>
+        /// The material id associated with the representation item currently being processed.
+        /// </summary>
+        /// <returns></returns>
+        public ElementId GetCurrentMaterialId()
+        {
+            int count = MaterialIdList.Count;
+            if (count == 0)
+                return ElementId.InvalidElementId;
+            return MaterialIdList[count - 1];
+        }
+
+        /// <summary>
+        /// A class to responsibly set - and unset - ContainingRepresentation.  
+        /// Intended to be used with the "using" keyword.
+        /// </summary>
+        public class IFCContainingRepresentationSetter : IDisposable
+        {
+            private IFCImportShapeEditScope m_Scope = null;
+            private IFCRepresentation m_OldRepresentation = null;
+
+            /// <summary>
+            /// The constructor.
+            /// </summary>
+            /// <param name="scope">The associated shape edit scope.</param>
+            /// <param name="item">The current styled item.</param>
+            public IFCContainingRepresentationSetter(IFCImportShapeEditScope scope, IFCRepresentation containingRepresentation)
+            {
+                if (scope != null)
+                {
+                    m_Scope = scope;
+                    m_OldRepresentation = scope.ContainingRepresentation;
+                    scope.ContainingRepresentation = containingRepresentation;
+                }
+            }
+
+            #region IDisposable Members
+
+            public void Dispose()
+            {
+                if (m_Scope != null)
+                    m_Scope.ContainingRepresentation = m_OldRepresentation;
+            }
+
+            #endregion
+        }
+
+        /// <summary>
+        /// The class containing all of the IfcStyledItems currently active.
+        /// </summary>
+        public class IFCMaterialStack : IDisposable
+        {
+            private IFCImportShapeEditScope m_Scope = null;
+            private ElementId m_MaterialElementId = ElementId.InvalidElementId;
+            
+            /// <summary>
+            /// The constructor.
+            /// </summary>
+            /// <param name="scope">The associated shape edit scope.</param>
+            /// <param name="item">The current styled item.</param>
+            public IFCMaterialStack(IFCImportShapeEditScope scope, IFCStyledItem styledItem, IFCPresentationLayerAssignment layerAssignment)
+            {
+                m_Scope = scope;
+                if (styledItem != null)
+                    m_MaterialElementId = styledItem.GetMaterialElementId(scope);
+                else if (layerAssignment != null)
+                    m_MaterialElementId = layerAssignment.GetMaterialElementId(scope);
+
+                if (m_MaterialElementId  != ElementId.InvalidElementId)
+                    m_Scope.PushMaterialId(m_MaterialElementId);
+            }
+
+            #region IDisposable Members
+
+            public void Dispose()
+            {
+                if (m_MaterialElementId != ElementId.InvalidElementId)
+                    m_Scope.PopMaterialId();
+            }
+
+            #endregion
+        }
+
+        /// <summary>
+        /// The names of the presentation layers created in this scope.
+        /// </summary>
+        public ISet<string> PresentationLayerNames
+        {
+            get
+            {
+                if (m_PresentationLayerNames == null)
+                    m_PresentationLayerNames = new SortedSet<string>();
+                return m_PresentationLayerNames;
+            }
         }
 
         /// <summary>
@@ -86,52 +189,8 @@ namespace Revit.IFC.Import.Utility
         /// </summary>
         public ElementId CategoryId
         {
-           get { return m_CategoryId; }
-           set { m_CategoryId = value; }
-        }
-
-        /// <summary>
-        /// The IfcStyledItem associated with the representation item currently being processed.
-        /// </summary>
-        /// <returns></returns>
-        public IFCStyledItem GetCurrentStyledItem()
-        {
-            int count = StyledItemList.Count;
-            if (count == 0)
-                return null;
-            return StyledItemList[count - 1];
-        }
-
-        /// <summary>
-        /// The class containing all of the IfcStyledItems currently active.
-        /// </summary>
-        public class IFCStyledItemStack : IDisposable
-        {
-            private IFCImportShapeEditScope m_Scope = null;
-            private IFCStyledItem m_Item = null;
-
-            /// <summary>
-            /// The constructor.
-            /// </summary>
-            /// <param name="scope">The associated shape edit scope.</param>
-            /// <param name="item">The current styled item.</param>
-            public IFCStyledItemStack(IFCImportShapeEditScope scope, IFCStyledItem item)
-            {
-                m_Scope = scope;
-                m_Item = item;
-                if (m_Item != null)
-                    m_Scope.PushStyledItem(m_Item);
-            }
-
-            #region IDisposable Members
-
-            public void Dispose()
-            {
-                if (m_Item != null) 
-                    m_Scope.PopStyledItem();
-            }
-
-            #endregion
+            get { return m_CategoryId; }
+            set { m_CategoryId = value; }
         }
 
         /// <summary>
@@ -150,6 +209,15 @@ namespace Revit.IFC.Import.Utility
         {
             get { return m_Creator; }
             protected set { m_Creator = value; }
+        }
+
+        /// <summary>
+        /// The IFCRepresentation that contains the currently processed IFC entity.
+        /// </summary>
+        public IFCRepresentation ContainingRepresentation
+        {
+            get { return m_ContainingRepresentation; }
+            protected set { m_ContainingRepresentation = value; }
         }
 
         // store all curves for 2D plan representation.  
@@ -392,6 +460,25 @@ namespace Revit.IFC.Import.Utility
                         m_ViewShapeBuilder.AddCurve(curve);
                     else
                     {
+                        // We will move the origin to Z=0 if necessary, since the VSB requires all curves to be in the Z=0 plane.
+                        IntersectionResult result = curve.Project(XYZ.Zero);
+                        if (result != null && result.XYZPoint != null && !MathUtil.IsAlmostZero(result.XYZPoint.Z))
+                        {
+                            try
+                            {
+                                Transform offsetTransform = Transform.CreateTranslation(-result.XYZPoint.Z * XYZ.BasisZ);
+                                Curve projectedCurve = curve.CreateTransformed(offsetTransform);
+                                if (projectedCurve != null && m_ViewShapeBuilder.ValidateCurve(projectedCurve))
+                                {
+                                    m_ViewShapeBuilder.AddCurve(projectedCurve);
+                                    continue;
+                                }
+                            }
+                            catch
+                            {
+                            }
+                        }
+
                         IFCImportFile.TheLog.LogError(id, "Invalid curve in FootPrint representation, ignoring.", false);
                         numCurves--;
                     }

@@ -83,6 +83,8 @@
     <Compile Include="Data\IFCPhysicalSimpleQuantity.cs" />
     <Compile Include="Data\IFCPlane.cs" />
     <Compile Include="Data\IFCPolyLoop.cs" />
+    <Compile Include="Data\IFCPresentationLayerAssignment.cs" />
+    <Compile Include="Data\IFCPresentationLayerWithStyle.cs" />
     <Compile Include="Data\IFCPresentationStyle.cs" />
     <Compile Include="Data\IFCPresentationStyleAssignment.cs" />
     <Compile Include="Data\IFCProduct.cs" />
@@ -102,10 +104,12 @@
     <Compile Include="Data\IFCStyledItem.cs" />
     <Compile Include="Data\IFCSurface.cs" />
     <Compile Include="Data\IFCSurfaceCurveSweptAreaSolid.cs" />
+    <Compile Include="Data\IFCSurfaceOfLinearExtrusion.cs" />
     <Compile Include="Data\IFCSurfaceStyle.cs" />
     <Compile Include="Data\IFCSurfaceStyleShading.cs" />
     <Compile Include="Data\IFCSweptAreaSolid.cs" />
     <Compile Include="Data\IFCSweptDiskSolid.cs" />
+    <Compile Include="Data\IFCSweptSurface.cs" />
     <Compile Include="Data\IFCTypeObject.cs" />
     <Compile Include="Data\IFCTypeProduct.cs" />
     <Compile Include="Data\IFCUnit.cs" />
@@ -138,6 +142,7 @@
     <Compile Include="Utility\IFCElementUtil.cs" />
     <Compile Include="Utility\IFCGUIDUtil.cs" />
     <Compile Include="Utility\IFCImportCache.cs" />
+    <Compile Include="Utility\IFCImportDataUtil.cs" />
     <Compile Include="Utility\IFCImportHandleUtil.cs" />
     <Compile Include="Utility\IFCImportLog.cs" />
     <Compile Include="Utility\IFCImportOptions.cs" />

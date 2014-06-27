@@ -116,10 +116,10 @@ namespace Revit.IFC.Import.Data
         /// <param name="forceSolid">True if we require a Solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         /// <returns>The created geometry.</returns>
-        protected override GeometryObject CreateGeometryInternal(
+        protected override IList<GeometryObject> CreateGeometryInternal(
               IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
         {
-            Transform sweptCurvePosition = (lcs == null) ? Transform.Identity : lcs;
+            Transform objectPosition = (lcs == null) ? Position : lcs.Multiply(Position);
 
             CurveLoop baseProfileCurve = Directrix.GetCurveLoop();
             if (baseProfileCurve == null)
@@ -129,7 +129,7 @@ namespace Revit.IFC.Import.Data
             if (trimmedDirectrix == null)
                 return null;
 
-            CurveLoop trimmedDirectrixInLCS = IFCGeometryUtil.CreateTransformed(trimmedDirectrix, sweptCurvePosition);
+            CurveLoop trimmedDirectrixInLCS = IFCGeometryUtil.CreateTransformed(trimmedDirectrix, objectPosition);
 
             // Create the sweep.
             double startParam = 0.0; // If the directrix isn't bound, this arbitrary parameter will do.
@@ -142,23 +142,28 @@ namespace Revit.IFC.Import.Data
             if (originTrf == null)
                 return null;
 
-            Transform referenceSurfaceTransform = ReferenceSurface.GetTransformAtPoint(originTrf.Origin);
-            Transform localProfileTransform = Transform.CreateTranslation(originTrf.Origin);
-            localProfileTransform.BasisX = referenceSurfaceTransform.BasisZ;
-            localProfileTransform.BasisZ = originTrf.BasisX;
-            localProfileTransform.BasisY = localProfileTransform.BasisZ.CrossProduct(localProfileTransform.BasisX);
+            Transform referenceSurfaceLocalTransform = ReferenceSurface.GetTransformAtPoint(originTrf.Origin);
+            Transform referenceSurfaceTransform = objectPosition.Multiply(referenceSurfaceLocalTransform);
 
-            Transform profileCurveLoopsTransform = sweptCurvePosition.Multiply(localProfileTransform);
+            Transform profileCurveLoopsTransform = Transform.CreateTranslation(originTrf.Origin);
+            profileCurveLoopsTransform.BasisX = referenceSurfaceTransform.BasisZ;
+            profileCurveLoopsTransform.BasisZ = originTrf.BasisX.Normalize();
+            profileCurveLoopsTransform.BasisY = profileCurveLoopsTransform.BasisZ.CrossProduct(profileCurveLoopsTransform.BasisX);
 
-            IList<CurveLoop> profileCurveLoops = GetTransformedCurveLoops(profileCurveLoopsTransform);
+            ISet<IList<CurveLoop>> profileCurveLoops = GetTransformedCurveLoops(profileCurveLoopsTransform);
+            if (profileCurveLoops == null || profileCurveLoops.Count == 0)
+                return null;
 
-            if (profileCurveLoops != null && profileCurveLoops.Count != 0)
+            SolidOptions solidOptions = new SolidOptions(GetMaterialElementId(shapeEditScope), shapeEditScope.GraphicsStyleId);
+            IList<GeometryObject> myObjs = new List<GeometryObject>();
+            foreach (IList<CurveLoop> loops in profileCurveLoops)
             {
-                SolidOptions solidOptions = new SolidOptions(GetMaterialElementId(shapeEditScope), shapeEditScope.GraphicsStyleId);
-                return GeometryCreationUtilities.CreateSweptGeometry(trimmedDirectrixInLCS, 0, startParam, profileCurveLoops, solidOptions);
+                GeometryObject myObj = GeometryCreationUtilities.CreateSweptGeometry(trimmedDirectrixInLCS, 0, startParam, loops, solidOptions);
+                if (myObj != null)
+                    myObjs.Add(myObj);
             }
-            
-            return null;
+
+            return myObjs;
         }
 
         /// <summary>
@@ -173,9 +178,14 @@ namespace Revit.IFC.Import.Data
         {
             base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
 
-            GeometryObject sweptAreaGeometry = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
-            if (sweptAreaGeometry != null)
-                shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, sweptAreaGeometry));
+            IList<GeometryObject> sweptAreaGeometries = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            if (sweptAreaGeometries != null)
+            {
+                foreach (GeometryObject sweptAreaGeometry in sweptAreaGeometries)
+                {
+                    shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, sweptAreaGeometry));
+                }
+            }
         }
 
         protected IFCSurfaceCurveSweptAreaSolid(IFCAnyHandle solid)

@@ -44,7 +44,7 @@ namespace Revit.IFC.Import.Data
         {
         }
 
-        protected override GeometryObject CreateGeometryInternal(
+        protected override IList<GeometryObject> CreateGeometryInternal(
            IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
         {
             if (BooleanResult != null)
@@ -64,9 +64,14 @@ namespace Revit.IFC.Import.Data
         {
             base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
 
-            GeometryObject csgGeometry = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
-            if (csgGeometry != null)
-                shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, csgGeometry));
+            IList<GeometryObject> csgGeometries = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            if (csgGeometries != null)
+            {
+                foreach (GeometryObject csgGeometry in csgGeometries)
+                {
+                    shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, csgGeometry));
+                }
+            }
         }
         
         override protected void Process(IFCAnyHandle solid)

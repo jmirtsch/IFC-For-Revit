@@ -1172,7 +1172,7 @@ namespace Revit.IFC.Export.Utility
                 return m_PropertyMapCache;
             }
         }
-        
+
         /// <summary>
         /// Clear all caches contained in this manager.
         /// </summary>

@@ -49,6 +49,8 @@ namespace Revit.IFC.Import.Data
         private IList<IFCSolidInfo> m_Voids = null;
 
         private IList<Curve> m_FootprintCurves = null;
+
+        private ISet<string> m_PresentationLayerNames = null;
         
         /// <summary>
         /// The list of solids created for the associated element.
@@ -90,6 +92,19 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
+        /// The names of the presentation layers associated with the representations and representation items.
+        /// </summary>
+        public ISet<string> PresentationLayerNames
+        {
+            get
+            {
+                if (m_PresentationLayerNames == null)
+                    m_PresentationLayerNames = new SortedSet<string>();
+                return m_PresentationLayerNames;
+            }
+        }
+
+        /// <summary>
         /// The one product representation of the product.
         /// </summary>
         public IFCProductRepresentation ProductRepresentation
@@ -119,6 +134,35 @@ namespace Revit.IFC.Import.Data
             IFCAnyHandle ifcProductRepresentation = IFCImportHandleUtil.GetOptionalInstanceAttribute(ifcProduct, "Representation");
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ifcProductRepresentation))
                 ProductRepresentation = IFCProductRepresentation.ProcessIFCProductRepresentation(ifcProductRepresentation);
+        }
+
+        /// <summary>
+        /// Creates or populates Revit element params based on the information contained in this class.
+        /// </summary>
+        /// <param name="doc">The document.</param>
+        /// <param name="element">The element.</param>
+        protected override void CreateParametersInternal(Document doc, Element element)
+        {
+            base.CreateParametersInternal(doc, element);
+
+            if (element != null)
+            {
+                // Set "IfcPresentationLayer" parameter.
+                string ifcPresentationLayer = null;
+                foreach (string currLayer in PresentationLayerNames)
+                {
+                    if (string.IsNullOrWhiteSpace(currLayer))
+                        continue;
+
+                    if (ifcPresentationLayer == null)
+                        ifcPresentationLayer = currLayer;
+                    else
+                        ifcPresentationLayer += "; " + currLayer;
+                }
+
+                if (ifcPresentationLayer != null)
+                    IFCPropertySet.AddParameterString(doc, element, "IfcPresentationLayer", ifcPresentationLayer, Id);
+            }
         }
 
         /// <summary>
@@ -187,8 +231,8 @@ namespace Revit.IFC.Import.Data
                             DirectShape shape = Importer.TheCache.UseElementByGUID<DirectShape>(doc, guid);
 
                             if (shape == null)
-                                shape = DirectShape.CreateElement(doc, m_CategoryId, Importer.ImportAppGUID(), guid);
-
+                                shape = IFCElementUtil.CreateElement(doc, m_CategoryId, Importer.ImportAppGUID(), guid);
+                  
                             List<GeometryObject> directShapeGeometries = new List<GeometryObject>();
                             foreach (IFCSolidInfo geometryObject in Solids)
                             {
@@ -226,6 +270,7 @@ namespace Revit.IFC.Import.Data
                             if (typeId != ElementId.InvalidElementId)
                                 shape.SetTypeId(typeId);
 
+                            PresentationLayerNames.UnionWith(shapeEditScope.PresentationLayerNames);
                             m_CreatedElementId = shape.Id;
                         }
                     }

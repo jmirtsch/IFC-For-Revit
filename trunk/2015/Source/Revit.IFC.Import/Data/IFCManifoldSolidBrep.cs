@@ -72,22 +72,29 @@ namespace Revit.IFC.Import.Data
         /// <param name="forceSolid">True if we require a Solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         /// <returns>The created geometry.</returns>
-        protected override GeometryObject CreateGeometryInternal(
+        protected override IList<GeometryObject> CreateGeometryInternal(
            IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
         {
+            IList<GeometryObject> geomObjs = null;
+
             shapeEditScope.StartCollectingFaceSet();
             Outer.CreateShape(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
             if (forceSolid)
-               return shapeEditScope.CreateClosedSolid(guid);
+            {
+                geomObjs = new List<GeometryObject>();
+                GeometryObject geomObj = shapeEditScope.CreateClosedSolid(guid);
+                if (geomObj != null)
+                    geomObjs.Add(geomObj);
+            }
+            else
+            {
+                geomObjs = shapeEditScope.CreateSolidOrMesh(guid);
+            }
 
-            // A temporal placeholder. CreateGeometryInternal() should return IList instead
-            // and the callers should learn how to use it.
-
-            IList<GeometryObject> geomObjs = shapeEditScope.CreateSolidOrMesh(guid);
             if (geomObjs == null || geomObjs.Count == 0)
                return null;
 
-            return geomObjs[0];
+            return geomObjs;
         }
         
         override protected void Process(IFCAnyHandle ifcManifoldSolidBrep)
@@ -136,9 +143,14 @@ namespace Revit.IFC.Import.Data
             {
                 try
                 {
-                    GeometryObject solid = CreateGeometry(shapeEditScope, scaledLcs, lcs, forceSolid, guid);
-                    if (solid != null)
-                        shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, solid));
+                    IList<GeometryObject> solids = CreateGeometry(shapeEditScope, scaledLcs, lcs, forceSolid, guid);
+                    if (solids != null)
+                    {
+                        foreach (GeometryObject solid in solids)
+                        {
+                            shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, solid));
+                        }
+                    }
                     else
                         IFCImportFile.TheLog.LogError(Outer.Id, "cannot create valid solid, ignoring.", false);
                 }

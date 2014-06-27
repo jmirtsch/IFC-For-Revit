@@ -169,7 +169,7 @@ namespace Revit.IFC.Export.Exporter
                 // We are going to avoid internal scaling routines, and instead scale in .NET.
                 double newOffsetUnscaled = 0.0;
                 IFCLevelInfo currLevelInfo =
-                    placementSetter.GetOffsetLevelInfoAndHandle(heightNonScaled * (ii + 1), 1.0, out newLevelHnd, out newOffsetUnscaled);
+                    placementSetter.GetOffsetLevelInfoAndHandle(heightNonScaled * (ii + 1), 1.0, ramp.Document, out newLevelHnd, out newOffsetUnscaled);
                 double newOffsetScaled = UnitUtil.ScaleLength(newOffsetUnscaled);
 
                 levelInfos.Add(currLevelInfo);
