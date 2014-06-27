@@ -31,9 +31,17 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    public abstract class IFCElementarySurface : IFCSurface
+    public abstract class IFCSweptSurface : IFCSurface
     {
+        IFCProfile m_Profile = null;
+
         Transform m_Position = null;
+
+        public IFCProfile SweptCurve
+        {
+            get { return m_Profile; }
+            protected set { m_Profile = value; }
+        }
 
         public Transform Position
         {
@@ -41,56 +49,47 @@ namespace Revit.IFC.Import.Data
             protected set { m_Position = value; }
         }
 
-        protected IFCElementarySurface()
+        protected IFCSweptSurface()
         {
-        }
-
-        /// <summary>
-        /// Get the local surface transform at a given point on the surface.
-        /// </summary>
-        /// <param name="pointOnSurface">The point.</param>
-        /// <returns>The transform.</returns>
-        public override Transform GetTransformAtPoint(XYZ pointOnSurface)
-        {
-            Transform position = new Transform(Position);
-            position.Origin = pointOnSurface;
-            return position;
         }
 
         override protected void Process(IFCAnyHandle ifcSurface)
         {
             base.Process(ifcSurface);
 
+            IFCAnyHandle sweptCurve = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcSurface, "SweptCurve", true);
+            SweptCurve = IFCProfile.ProcessIFCProfile(sweptCurve);
+
             IFCAnyHandle position = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcSurface, "Position", true);
             Position = IFCLocation.ProcessIFCAxis2Placement(position);
         }
 
-        protected IFCElementarySurface(IFCAnyHandle profileDef)
+        protected IFCSweptSurface(IFCAnyHandle sweptSurface)
         {
-            Process(profileDef);
+            Process(sweptSurface);
         }
 
         /// <summary>
-        /// Create an IFCElementarySurface object from a handle of type IfcElementarySurface.
+        /// Create an IFCSweptSurface object from a handle of type IfcSweptSurface.
         /// </summary>
-        /// <param name="ifcElementarySurface">The IFC handle.</param>
-        /// <returns>The IFCElementarySurface object.</returns>
-        public static IFCElementarySurface ProcessIFCElementarySurface(IFCAnyHandle ifcElementarySurface)
+        /// <param name="ifcSweptSurface">The IFC handle.</param>
+        /// <returns>The IFCSweptSurface object.</returns>
+        public static IFCSweptSurface ProcessIFCSweptSurface(IFCAnyHandle ifcSweptSurface)
         {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcElementarySurface))
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSweptSurface))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcElementarySurface);
+                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcSweptSurface);
                 return null;
             }
 
-            IFCEntity elementarySurface;
-            if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcElementarySurface.StepId, out elementarySurface))
-                return elementarySurface as IFCElementarySurface;
+            IFCEntity sweptSurface;
+            if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcSweptSurface.StepId, out sweptSurface))
+                return sweptSurface as IFCSweptSurface;
 
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcElementarySurface, IFCEntityType.IfcPlane))
-                return IFCPlane.ProcessIFCPlane(ifcElementarySurface);
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcSweptSurface, IFCEntityType.IfcSurfaceOfLinearExtrusion))
+                return IFCSurfaceOfLinearExtrusion.ProcessIFCSurfaceOfLinearExtrusion(ifcSweptSurface);
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcElementarySurface, IFCEntityType.IfcElementarySurface, true);
+            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcSweptSurface, IFCEntityType.IfcSweptSurface, true);
             return null;
         }
     }

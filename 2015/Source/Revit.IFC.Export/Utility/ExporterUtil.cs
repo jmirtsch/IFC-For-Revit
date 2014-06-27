@@ -34,6 +34,53 @@ namespace Revit.IFC.Export.Utility
     /// </summary>
     public class ExporterUtil
     {
+        private static ProjectPosition GetSafeProjectPosition(Document doc)
+        {
+            ProjectLocation projLoc = doc.ActiveProjectLocation;
+            try
+            {
+                return projLoc.get_ProjectPosition(XYZ.Zero);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the angle associated with the project position for a particular document.
+        /// </summary>
+        /// <param name="doc">The document.</param>
+        /// <param name="angle">The angle, or 0.0 if it can't be generated.</param>
+        /// <returns>True if the angle is found, false if it can't be determined.</returns>
+        public static bool GetSafeProjectPositionAngle(Document doc, out double angle)
+        {
+            angle = 0.0;
+            ProjectPosition projPos = GetSafeProjectPosition(doc);
+            if (projPos == null)
+                return false;
+
+            angle = projPos.Angle;
+            return true;
+        }
+
+        /// <summary>
+        /// Gets the elevation associated with the project position for a particular document. 
+        /// </summary>
+        /// <param name="doc">The document.</param>
+        /// <param name="elevation">The elevation, or 0.0 if it can't be generated.</param>
+        /// <returns>True if the elevation is found, false if it can't be determined.</returns>
+        public static bool GetSafeProjectPositionElevation(Document doc, out double elevation)
+        {
+            elevation = 0.0;
+            ProjectPosition projPos = GetSafeProjectPosition(doc);
+            if (projPos == null)
+                return false;
+
+            elevation = projPos.Elevation;
+            return true;
+        }
+        
         /// <summary>
         /// Determines if the Exception is local to the element, or if export should be aborted.
         /// </summary>
@@ -81,13 +128,29 @@ namespace Revit.IFC.Export.Utility
             }
         }
         
-        public static void UpdateBuildingPlacement(IFCAnyHandle buildingHnd, IFCAnyHandle siteHnd)
+        /// <summary>
+        /// Update the IfcBuilding placement to be relative to the IfcSite.
+        /// </summary>
+        /// <param name="buildingHnd">The IfcBuilding handle.</param>
+        /// <param name="siteHnd">The IfcSite handle.</param>
+        public static void UpdateBuildingRelToPlacement(IFCAnyHandle buildingHnd, IFCAnyHandle siteHnd)
         {
             IFCAnyHandle buildingPlacement = IFCAnyHandleUtil.GetObjectPlacement(buildingHnd);
             IFCAnyHandle relPlacement = IFCAnyHandleUtil.GetObjectPlacement(siteHnd);
             GeometryUtil.SetPlacementRelTo(buildingPlacement, relPlacement);
         }
 
+        /// <summary>
+        /// Update the IfcBuilding placement to have a new local coordinate system (IfcAxis2Placement3D).
+        /// </summary>
+        /// <param name="buildingHnd">The IfcBuilding handle.</param>
+        /// <param name="axisPlacementHnd">The IfcAxis2Placement3D handle.</param>
+        public static void UpdateBuildingRelativePlacement(IFCAnyHandle buildingHnd, IFCAnyHandle axisPlacementHnd)
+        {
+            IFCAnyHandle buildingPlacement = IFCAnyHandleUtil.GetObjectPlacement(buildingHnd);
+            GeometryUtil.SetRelativePlacement(buildingPlacement, axisPlacementHnd);
+        }
+        
         /// <summary>
         /// Relates one object to another. 
         /// </summary>

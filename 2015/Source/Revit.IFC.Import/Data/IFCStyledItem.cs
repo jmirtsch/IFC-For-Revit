@@ -92,18 +92,44 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
-        /// Does a top-level check to see if this styled item points to the same handles as another.
+        /// Does a top-level check to see if this styled item may be equivalent to another styled item.
         /// </summary>
-        /// <param name="other">The other styled item.</param>
-        /// <returns>True if they have the same handles, false otherwise.</returns>
-        public bool IsEquivalentTo(IFCStyledItem other)
+        /// <param name="otherEntity">The other styled item.</param>
+        /// <returns>False if they don't have the same handles, null otherwise.</returns>
+        public override bool? MaybeEquivalentTo(IFCEntity otherEntity)
         {
+            bool? maybeEquivalentTo = base.MaybeEquivalentTo(otherEntity);
+            if (maybeEquivalentTo.HasValue)
+                return maybeEquivalentTo.Value;
+
+            if (!(otherEntity is IFCStyledItem))
+                return false;
+
+            IFCStyledItem other = otherEntity as IFCStyledItem;
+
             if (!IFCRoot.Equals(Item, other.Item))
                 return false;
 
             if (!IFCRoot.Equals(Styles, other.Styles))
                 return false;
 
+            return null;
+        }
+
+        /// <summary>
+        /// Does a top-level check to see if this entity is equivalent to otherEntity.
+        /// </summary>
+        /// <param name="otherEntity">The other IFCEntity.</param>
+        /// <returns>True if they are equivalent, false if they aren't.</returns>
+        /// <remarks>This isn't intended to be an exhaustive check, and isn't implemented for all types.  This is intended
+        /// to make a final decision, and will err on the side of deciding that entities aren't equivalent.</remarks>
+        public override bool IsEquivalentTo(IFCEntity otherEntity)
+        {
+            bool? maybeEquivalentTo = MaybeEquivalentTo(otherEntity);
+            if (maybeEquivalentTo.HasValue)
+                return maybeEquivalentTo.Value;
+
+            // If it passes all of the Maybe tests and doesn't come back false, good enough.
             return true;
         }
 
@@ -168,11 +194,16 @@ namespace Revit.IFC.Import.Data
             try
             {
                 // If the styled item or the surface style has a name, use it.
-                string forcedName = null;
                 IFCSurfaceStyle surfaceStyle = GetSurfaceStyle();
-                if (surfaceStyle != null)
-                    forcedName = surfaceStyle.Name;
-                if (forcedName == null)
+                if (surfaceStyle == null)
+                {
+                    // We only handle surface styles at the moment; log file should already reflect any other unhandled styles.
+                    IsValidForCreation = true;
+                    return;
+                }
+
+                string forcedName = surfaceStyle.Name;
+                if (string.IsNullOrWhiteSpace(forcedName))
                     forcedName = Name;
                 
                 string suggestedName = null;
@@ -181,6 +212,7 @@ namespace Revit.IFC.Import.Data
                     IFCProduct creator = shapeEditScope.Creator;
                     suggestedName = creator.GetTheMaterialName();
                 }
+
                 m_CreatedElementId = surfaceStyle.Create(shapeEditScope.Document, forcedName, suggestedName, Id);
             }
             catch (Exception ex)

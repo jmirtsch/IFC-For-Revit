@@ -97,15 +97,15 @@ namespace Revit.IFC.Import.Data
         }
         
         /// <summary>
-        /// Return geometry for a particular representation item.
+        /// Create geometry for an IfcHalfSpaceSolid.
         /// </summary>
         /// <param name="shapeEditScope">The shape edit scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
         /// <param name="forceSolid">True if we require a Solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        /// <returns>The created Solid.</returns>
-        protected virtual GeometryObject CreateGeometryInternal(
+        /// <returns>A list containing one geometry for the IfcHalfSpaceSolid.</returns>
+        protected virtual IList<GeometryObject> CreateGeometryInternal(
               IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
         {
             IFCPlane ifcPlane = BaseSurface as IFCPlane;
@@ -158,7 +158,9 @@ namespace Revit.IFC.Import.Data
                 baseSolid = IFCGeometryUtil.ExecuteSafeBooleanOperation(Id, BaseBoundingCurve.Id, baseSolid, boundingSolid, BooleanOperationsType.Intersect);
             }
 
-            return baseSolid;
+            IList<GeometryObject> returnList = new List<GeometryObject>();
+            returnList.Add(baseSolid);
+            return returnList;
         }
 
         /// <summary>
@@ -169,8 +171,8 @@ namespace Revit.IFC.Import.Data
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
         /// <param name="forceSolid">True if we force the return value to be a solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        /// <returns>The created geometry.</returns>
-        public GeometryObject CreateGeometry(
+        /// <returns>The created geometries.</returns>
+        public IList<GeometryObject> CreateGeometry(
               IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
         {
             // A HalfSpaceSolid must always be a Solid, regardless of input.

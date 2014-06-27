@@ -145,8 +145,10 @@ namespace Revit.IFC.Export.Exporter
                         }
 
                         IList<IList<BoundarySegment>> roomBoundaries = spatialElement.GetBoundarySegments(GetSpatialElementBoundaryOptions(spatialElement));
-                        double roomHeight = GetHeight(spatialElement, levelId, levelInfo);
-                        XYZ zDir = new XYZ(0, 0, 1);
+                        double scaledRoomHeight = GetScaledHeight(spatialElement, levelId, levelInfo);
+                        double unscaledHeight = UnitUtil.UnscaleLength(scaledRoomHeight);
+
+                        Plane xyPlane = new Plane(XYZ.BasisZ, XYZ.Zero);
 
                         foreach (IList<BoundarySegment> roomBoundaryList in roomBoundaries)
                         {
@@ -164,8 +166,8 @@ namespace Revit.IFC.Export.Exporter
                                     continue;
 
                                 //trimmedCurve.Visibility = Visibility.Visible; readonly
-                                IFCAnyHandle connectionGeometry = ExtrusionExporter.CreateExtrudedSurfaceFromCurve(
-                                   exporterIFC, trimmedCurve, zDir, roomHeight, baseHeightNonScaled);
+                                IFCAnyHandle connectionGeometry = ExtrusionExporter.CreateConnectionSurfaceGeometry(
+                                   exporterIFC, trimmedCurve, xyPlane, scaledRoomHeight, baseHeightNonScaled);
 
                                 IFCPhysicalOrVirtual physOrVirt = IFCPhysicalOrVirtual.Physical;
                                 if (boundingElement is CurveElement)
@@ -218,10 +220,10 @@ namespace Revit.IFC.Export.Exporter
                                         // make sure that the insert is on this level.
                                         if (instBBox.Max.Z < instOrig.Z)
                                             continue;
-                                        if (instBBox.Min.Z > instOrig.Z + roomHeight)
+                                        if (instBBox.Min.Z > instOrig.Z + unscaledHeight)
                                             continue;
 
-                                        double insHeight = Math.Min(instBBox.Max.Z, instOrig.Z + roomHeight) - Math.Max(instOrig.Z, instBBox.Min.Z);
+                                        double insHeight = Math.Min(instBBox.Max.Z, instOrig.Z + unscaledHeight) - Math.Max(instOrig.Z, instBBox.Min.Z);
                                         if (insHeight < (1.0 / (12.0 * 16.0)))
                                             continue;
 
@@ -295,7 +297,7 @@ namespace Revit.IFC.Export.Exporter
                                                             parameters[1] < origEndParams[1] ? parameters[1] : origEndParams[1]);
 
                                         double insHeightScaled = UnitUtil.ScaleLength(insHeight);
-                                        IFCAnyHandle insConnectionGeom = ExtrusionExporter.CreateExtrudedSurfaceFromCurve(exporterIFC, instCurve, zDir,
+                                        IFCAnyHandle insConnectionGeom = ExtrusionExporter.CreateConnectionSurfaceGeometry(exporterIFC, instCurve, xyPlane,
                                            insHeightScaled, baseHeightNonScaled);
 
                                         SpaceBoundary instBoundary = new SpaceBoundary(spatialElement.Id, elemId, setter.LevelId, !IFCAnyHandleUtil.IsNullOrHasNoValue(insConnectionGeom) ? insConnectionGeom : null, physOrVirt,
@@ -620,19 +622,13 @@ namespace Revit.IFC.Export.Exporter
         /// <summary>
         /// Gets the height of a spatial element.
         /// </summary>
-        /// <param name="spatialElement">
-        /// The spatial element.
-        /// </param>
-        /// <param name="scale">
-        /// The scale value.
-        /// </param>
-        /// <param name="levelInfo">
-        /// The level info.
-        /// </param>
+        /// <param name="spatialElement">The spatial element.</param>
+        /// <param name="levelId">The level id.</param>
+        /// <param name="levelInfo">The level info.</param>
         /// <returns>
-        /// The height.
+        /// The height, scaled in IFC units.
         /// </returns>
-        static double GetHeight(SpatialElement spatialElement, ElementId levelId, IFCLevelInfo levelInfo)
+        static double GetScaledHeight(SpatialElement spatialElement, ElementId levelId, IFCLevelInfo levelInfo)
         {
             Document document = spatialElement.Document;
             bool isArea = spatialElement is Area;
@@ -670,7 +666,7 @@ namespace Revit.IFC.Export.Exporter
                 roomHeight = UnitUtil.ScaleLength(levelHeight);
             }
 
-            // For area spaces, we assign a dummy height (1'), as we are not allowed to export IfcSpaces without a volumetric representation.
+            // For area spaces, we assign a dummy height (1 unit), as we are not allowed to export IfcSpaces without a volumetric representation.
             if (MathUtil.IsAlmostZero(roomHeight) && spatialElement is Area)
             {
                 roomHeight = 1.0;
@@ -889,8 +885,8 @@ namespace Revit.IFC.Export.Exporter
             ElementType elemType = document.GetElement(spatialElement.GetTypeId()) as ElementType;
             IFCInternalOrExternal internalOrExternal = CategoryUtil.IsElementExternal(spatialElement) ? IFCInternalOrExternal.External : IFCInternalOrExternal.Internal;
 
-            double roomHeight = GetHeight(spatialElement, levelId, levelInfo);
-            if (roomHeight <= 0.0)
+            double scaledRoomHeight = GetScaledHeight(spatialElement, levelId, levelInfo);
+            if (scaledRoomHeight <= 0.0)
                 return false;
 
             double bottomOffset;
@@ -942,7 +938,7 @@ namespace Revit.IFC.Export.Exporter
                     }
                     else
                     {
-                        IFCAnyHandle shapeRep = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, curveLoops, plane, zDir, roomHeight);
+                        IFCAnyHandle shapeRep = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, curveLoops, plane, zDir, scaledRoomHeight);
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(shapeRep))
                             return false;
                         IFCAnyHandle styledItemHnd = BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document,
@@ -961,7 +957,7 @@ namespace Revit.IFC.Export.Exporter
                         repHnd = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
                     }
 
-                    extraParams.ScaledHeight = roomHeight;
+                    extraParams.ScaledHeight = scaledRoomHeight;
                     extraParams.ScaledArea = dArea;
 
                     spatialElementName = NamingUtil.GetNameOverride(spatialElement, name);

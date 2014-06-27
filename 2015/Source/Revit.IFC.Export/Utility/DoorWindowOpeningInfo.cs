@@ -34,8 +34,6 @@ namespace Revit.IFC.Export.Utility
     {
         IFCAnyHandle m_OpeningHnd = null;
 
-        IFCAnyHandle m_OpeningPlacement = null;
-
         double m_OpeningHeight = -1.0;
 
         double m_OpeningWidth = -1.0;
@@ -50,11 +48,10 @@ namespace Revit.IFC.Export.Utility
         /// <param name="height">The opening height.</param>
         /// <param name="width">The opening width.</param>
         /// <returns>The DoorWindowOpeningInfo class.</returns>
-        static public DoorWindowOpeningInfo Create(IFCAnyHandle hnd, IFCAnyHandle placement, double height, double width)
+        static public DoorWindowOpeningInfo Create(IFCAnyHandle hnd, double height, double width)
         {
             DoorWindowOpeningInfo doorWindowOpeningInfo = new DoorWindowOpeningInfo();
             doorWindowOpeningInfo.m_OpeningHnd = hnd;
-            doorWindowOpeningInfo.m_OpeningPlacement = placement;
             doorWindowOpeningInfo.m_OpeningHeight = height;
             doorWindowOpeningInfo.m_OpeningWidth = width;
             return doorWindowOpeningInfo;
@@ -64,11 +61,6 @@ namespace Revit.IFC.Export.Utility
         /// Access the opening handle.
         /// </summary>
         public IFCAnyHandle OpeningHnd { get { return m_OpeningHnd; } }
-
-        /// <summary>
-        /// Access the opening local placement.
-        /// </summary>
-        public IFCAnyHandle OpeningPlacement { get { return m_OpeningPlacement; } }
 
         /// <summary>
         /// Access the opening height.

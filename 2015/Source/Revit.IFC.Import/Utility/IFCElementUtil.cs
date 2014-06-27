@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Import.Data;
 using Revit.IFC.Common.Utility;
@@ -80,6 +81,20 @@ namespace Revit.IFC.Import.Utility
             }
 
             return hostedElements;
+        }
+
+        /// <summary>
+        /// Create a DirectShape.
+        /// </summary>
+        /// <param name="doc">The document.</param>
+        /// <param name="categoryId">The category of the DirectShape.</param>
+        /// <param name="appGUID">The GUID of the application creating the DirectShape.</param>
+        /// <param name="dataGUID">The GUID of the data creating the DirectShape.</param>
+        /// <returns>The DirectShape.</returns>
+        static public DirectShape CreateElement(Document doc, ElementId categoryId, string appGUID, string dataGUID)
+        {
+            DirectShape directShape = DirectShape.CreateElement(doc, categoryId, appGUID, dataGUID);
+            return directShape;
         }
     }
 }

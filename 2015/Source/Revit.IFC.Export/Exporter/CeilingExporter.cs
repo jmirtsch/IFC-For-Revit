@@ -61,18 +61,10 @@ namespace Revit.IFC.Export.Exporter
         /// <summary>
         /// Exports an element as IFC covering.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="element">
-        /// The element to be exported.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="element">The element to be exported.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
         public static void ExportCovering(ExporterIFC exporterIFC, Element element, GeometryElement geomElem, string ifcEnumType, ProductWrapper productWrapper)
         {
             bool exportParts = PartExporter.CanExportParts(element);

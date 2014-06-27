@@ -40,13 +40,38 @@ namespace Revit.IFC.Import.Utility
             // TODO: potentially parse Revit roundtrip names better.
             if (string.IsNullOrWhiteSpace(ifcName))
                 return null;
-            return ifcName.Replace(":", "-")
-                .Replace("{", "(")
-                .Replace("[", "(")
-                .Replace("<", "(")
-                .Replace("}", ")")
-                .Replace("]", ")")
-                .Replace(">", ")");
+            StringBuilder cleanName = new StringBuilder(ifcName);
+            cleanName.Replace(':', '-');
+            cleanName.Replace('{', '(');
+            cleanName.Replace('[', '(');
+            cleanName.Replace('<', '(');
+            cleanName.Replace('}', ')');
+            cleanName.Replace(']', ')');
+            cleanName.Replace('>', ')');
+            cleanName.Replace('|', '/');
+            cleanName.Replace(';', ',');
+            cleanName.Replace('?', '.');
+            cleanName.Replace('`', '\'');
+            cleanName.Replace('~', '-');
+
+            return cleanName.ToString();
         }
+
+        /// <summary>
+        /// Compares two strings for equality, including null strings.
+        /// </summary>
+        /// <param name="s1">The first string.</param>
+        /// <param name="s2">The second string.</param>
+        /// <returns>True if s1 == s2.</returns>
+        public static bool SafeStringsAreEqual(string s1, string s2)
+        {
+            if ((s1 == null) != (s2 == null))
+                return false;
+
+            if ((s1 != null) && (string.Compare(s1, s2) != 0))
+                return false;
+
+            return true;
+        }        
     }
 }

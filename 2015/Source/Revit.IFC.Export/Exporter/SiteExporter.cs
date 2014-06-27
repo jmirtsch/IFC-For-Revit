@@ -141,8 +141,7 @@ namespace Revit.IFC.Export.Exporter
                     double latitudeInDeg = projLocation.SiteLocation.Latitude * scaleToDegrees;
                     double longitudeInDeg = projLocation.SiteLocation.Longitude * scaleToDegrees;
 
-                    ProjectPosition projectPosition = projLocation.get_ProjectPosition(XYZ.Zero);
-                    unscaledElevation = projectPosition.Elevation;
+                    ExporterUtil.GetSafeProjectPositionAngle(doc, out unscaledElevation);
             
                     int latDeg = ((int)latitudeInDeg); latitudeInDeg -= latDeg; latitudeInDeg *= 60;
                     int latMin = ((int)latitudeInDeg); latitudeInDeg -= latMin; latitudeInDeg *= 60;

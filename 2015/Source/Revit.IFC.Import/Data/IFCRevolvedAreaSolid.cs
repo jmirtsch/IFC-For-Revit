@@ -118,32 +118,42 @@ namespace Revit.IFC.Import.Data
         /// <param name="lcs">Local coordinate system for the geometry.</param>
         /// <param name="forceSolid">True if we require a Solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        /// <returns>The created Solid.</returns>
-        protected override GeometryObject CreateGeometryInternal(
+        /// <returns>One or more created Solids.</returns>
+        protected override IList<GeometryObject> CreateGeometryInternal(
               IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
         {
             Transform origLCS = (lcs == null) ? Transform.Identity : lcs;
             Transform revolvePosition = (Position == null) ? origLCS : origLCS.Multiply(Position);
 
+            ISet<IList<CurveLoop>> disjointLoops = GetTransformedCurveLoops(revolvePosition);
+            if (disjointLoops == null || disjointLoops.Count() == 0)
+                return null;
+
             XYZ frameOrigin = revolvePosition.OfPoint(Axis.Origin);
             XYZ frameZVec = revolvePosition.OfVector(Axis.BasisZ);
-            XYZ frameXVec = null;
-
-            IList<CurveLoop> loops = GetTransformedCurveLoops(revolvePosition);
-            if (loops == null || loops.Count() == 0)
-                return null;
-            
-            frameXVec = GetValidXVectorFromLoop(loops[0], frameZVec, frameOrigin);
-            if (frameXVec == null)
-            {
-                IFCImportFile.TheLog.LogError(Id, "Couldn't generate valid frame for IfcRevolvedAreaSolid.", false);
-                return null;
-            }
-            XYZ frameYVec = frameZVec.CrossProduct(frameXVec);
-            Frame coordinateFrame = new Frame(frameOrigin, frameXVec, frameYVec, frameZVec);
-
             SolidOptions solidOptions = new SolidOptions(GetMaterialElementId(shapeEditScope), shapeEditScope.GraphicsStyleId);
-            return GeometryCreationUtilities.CreateRevolvedGeometry(coordinateFrame, loops, 0, Angle, solidOptions);
+            
+            IList<GeometryObject> myObjs = new List<GeometryObject>();
+
+            foreach (IList<CurveLoop> loops in disjointLoops)
+            {
+                XYZ frameXVec = null;
+
+                frameXVec = GetValidXVectorFromLoop(loops[0], frameZVec, frameOrigin);
+                if (frameXVec == null)
+                {
+                    IFCImportFile.TheLog.LogError(Id, "Couldn't generate valid frame for IfcRevolvedAreaSolid.", false);
+                    return null;
+                }
+                XYZ frameYVec = frameZVec.CrossProduct(frameXVec);
+                Frame coordinateFrame = new Frame(frameOrigin, frameXVec, frameYVec, frameZVec);
+
+                GeometryObject myObj = GeometryCreationUtilities.CreateRevolvedGeometry(coordinateFrame, loops, 0, Angle, solidOptions);
+                if (myObj != null)
+                    myObjs.Add(myObj);
+            }
+
+            return myObjs;
         }
 
         /// <summary>
@@ -158,9 +168,14 @@ namespace Revit.IFC.Import.Data
         {
             base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
 
-            GeometryObject revolvedGeometry = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
-            if (revolvedGeometry != null)
-                shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, revolvedGeometry));
+            IList<GeometryObject> revolvedGeometries = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            if (revolvedGeometries != null)
+            {
+                foreach (GeometryObject revolvedGeometry in revolvedGeometries)
+                {
+                    shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, revolvedGeometry));
+                }
+            }
         }
 
         protected IFCRevolvedAreaSolid(IFCAnyHandle solid)

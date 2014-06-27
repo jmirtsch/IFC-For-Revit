@@ -104,7 +104,7 @@ namespace Revit.IFC.Import.Data
             IList<XYZ> transformedVertexes = new List<XYZ>();
             foreach (XYZ vertex in loopVertexes)
             {
-              transformedVertexes.Add(lcs.OfPoint(vertex));
+                transformedVertexes.Add(scaledLcs.OfPoint(vertex));
             }
 
             shapeEditScope.AddLoopVertexes(transformedVertexes);

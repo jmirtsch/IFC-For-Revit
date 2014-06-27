@@ -128,6 +128,9 @@ namespace Revit.IFC.Import.Data
                     }
                 }
             }
+
+            // Special read of IfcPresentationLayerAssignment if the INVERSE flag isn't properly set in the EXPRESS file.
+            IFCPresentationLayerAssignment.ProcessAllLayerAssignments();
         }
 
         /// <summary>

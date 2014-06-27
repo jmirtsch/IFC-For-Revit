@@ -120,42 +120,55 @@ namespace Revit.IFC.Export.Exporter
                         functions.Add(MaterialFunctionAssignment.None);
                     }
 
-                    List<IFCAnyHandle> layers = new List<IFCAnyHandle>();
+                    // We can't create IfcMaterialLayers without creating an IfcMaterialLayerSet.  So we will simply collate here.
+                    IList<IFCAnyHandle> materialHnds = new List<IFCAnyHandle>();
+                    IList<int> widthIndices = new List<int>();
                     double thickestLayer = 0.0;
-                    for (int i = 0; i < matIds.Count; ++i)
+                    for (int ii = 0; ii < matIds.Count; ++ii)
                     {
                         // Require positive width for IFC2x3 and before, and non-negative width for IFC4.
-                        if (widths[i] < -MathUtil.Eps())
+                        if (widths[ii] < -MathUtil.Eps())
                             continue;
 
-                        bool almostZeroWidth = MathUtil.IsAlmostZero(widths[i]);
+                        bool almostZeroWidth = MathUtil.IsAlmostZero(widths[ii]);
                         if (ExporterCacheManager.ExportOptionsCache.FileVersion != IFCVersion.IFC4 && almostZeroWidth)
                             continue;
 
                         if (almostZeroWidth)
-                            widths[i] = 0.0;
+                            widths[ii] = 0.0;
 
-                        IFCAnyHandle materialHnd = CategoryUtil.GetOrCreateMaterialHandle(exporterIFC, matIds[i]);
-                        if (primaryMaterialHnd == null || (widths[i] > thickestLayer))
+                        IFCAnyHandle materialHnd = CategoryUtil.GetOrCreateMaterialHandle(exporterIFC, matIds[ii]);
+                        if (primaryMaterialHnd == null || (widths[ii] > thickestLayer))
                         {
                             primaryMaterialHnd = materialHnd;
-                            thickestLayer = widths[i];
+                            thickestLayer = widths[ii];
                         }
 
-                        double scaledWidth = UnitUtil.ScaleLength(widths[i]);
-                        IFCAnyHandle materialLayer = IFCInstanceExporter.CreateMaterialLayer(file, materialHnd, scaledWidth, null);
-                        layers.Add(materialLayer);
-                        if ((productWrapper != null) && (functions[i] == MaterialFunctionAssignment.Finish1 || functions[i] == MaterialFunctionAssignment.Finish2))
+                        widthIndices.Add(ii);
+                        materialHnds.Add(materialHnd);
+
+                        if ((productWrapper != null) && (functions[ii] == MaterialFunctionAssignment.Finish1 || functions[ii] == MaterialFunctionAssignment.Finish2))
                         {
                             productWrapper.AddFinishMaterial(materialHnd);
                         }
                     }
 
-                    if (layers.Count == 0)
+                    int numLayersToCreate = widthIndices.Count;
+                    if (numLayersToCreate == 0)
                         return false;
 
                     if (!containsBRepGeometry)
                     {
+                        IList<IFCAnyHandle> layers = new List<IFCAnyHandle>(numLayersToCreate);
+
+                        for (int ii = 0; ii < numLayersToCreate; ii++)
+                        {
+                            int widthIndex = widthIndices[ii];
+                            double scaledWidth = UnitUtil.ScaleLength(widths[widthIndex]);
+                            IFCAnyHandle materialLayer = IFCInstanceExporter.CreateMaterialLayer(file, materialHnds[ii], scaledWidth, null);
+                            layers.Add(materialLayer);
+                        }
+
                         string layerSetName = exporterIFC.GetFamilyName();
                         materialLayerSet = IFCInstanceExporter.CreateMaterialLayerSet(file, layers, layerSetName);
 
@@ -329,7 +342,7 @@ namespace Revit.IFC.Export.Exporter
                         {
                             matIds.Add(matId);
                         }
-                        else
+                        else if (baseMatId != ElementId.InvalidElementId)
                         {
                             matIds.Add(baseMatId);
                         }

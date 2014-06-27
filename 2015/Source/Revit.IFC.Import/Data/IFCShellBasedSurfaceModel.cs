@@ -63,7 +63,7 @@ namespace Revit.IFC.Import.Data
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         /// <returns>The created geometry.</returns>
         /// <remarks>As this doesn't inherit from IfcSolidModel, this is a non-virtual CreateSolid function.</remarks>
-        protected GeometryObject CreateGeometry(
+        protected IList<GeometryObject> CreateGeometry(
               IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
         {
             if (Shells.Count == 0)
@@ -74,17 +74,24 @@ namespace Revit.IFC.Import.Data
             foreach (IFCConnectedFaceSet faceSet in Shells)
                 faceSet.CreateShape(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
 
+            IList<GeometryObject> geomObjs = null;
+
             if (forceSolid)
-               return shapeEditScope.CreateClosedSolid(guid);
+            {
+                geomObjs = new List<GeometryObject>();
+                GeometryObject geomObj = shapeEditScope.CreateClosedSolid(guid);
+                if (geomObj != null)
+                    geomObjs.Add(geomObj);
+            }
+            else
+            {
+                geomObjs = shapeEditScope.CreateSolidOrMesh(guid);
+            }
 
-            // A temporal placeholder. CreateGeometry() should return IList instead
-            // and the callers should learn how to use it.
-
-            IList<GeometryObject> geomObjs = shapeEditScope.CreateSolidOrMesh(guid);
             if (geomObjs == null || geomObjs.Count == 0)
                return null;
 
-            return geomObjs[0];
+            return geomObjs;
         }
         
         override protected void Process(IFCAnyHandle ifcShellBasedSurfaceModel)
@@ -118,9 +125,14 @@ namespace Revit.IFC.Import.Data
             // Ignoring Inner shells for now.
             if (Shells.Count != 0)
             {
-               GeometryObject createdGeometry = CreateGeometry(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
-               if (createdGeometry != null)
-                    shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, createdGeometry));
+               IList<GeometryObject> createdGeometries = CreateGeometry(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+               if (createdGeometries != null)
+               {
+                   foreach (GeometryObject createdGeometry in createdGeometries)
+                   {
+                       shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, createdGeometry));
+                   }
+               }
             }
         }
 

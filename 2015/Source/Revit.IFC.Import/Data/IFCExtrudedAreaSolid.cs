@@ -99,10 +99,10 @@ namespace Revit.IFC.Import.Data
         /// <param name="lcs">Local coordinate system for the geometry.</param>
         /// <param name="forceSolid">True if we require a Solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        /// <returns>The created geometry.</returns>
+        /// <returns>One or more created geometries.</returns>
         /// <remarks>The scaledLcs is only partially supported in this routine; it allows scaling the depth of the extrusion,
         /// which is commonly found in ACA files.</remarks>
-        protected override GeometryObject CreateGeometryInternal(
+        protected override IList<GeometryObject> CreateGeometryInternal(
               IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
         {
             Transform origLCS = (lcs == null) ? Transform.Identity : lcs;
@@ -113,15 +113,19 @@ namespace Revit.IFC.Import.Data
 
             XYZ extrusionDirection = extrusionPosition.OfVector(Direction);
 
-            IList<CurveLoop> loops = GetTransformedCurveLoops(extrusionPosition);
+            ISet<IList<CurveLoop>> disjointLoops = GetTransformedCurveLoops(extrusionPosition);
+            if (disjointLoops == null || disjointLoops.Count() == 0)
+                return null;
 
-            GeometryObject myObj = null;
-            if (loops != null && loops.Count() != 0)
+            IList<GeometryObject> myObjs = new List<GeometryObject>();
+
+            foreach (IList<CurveLoop> loops in disjointLoops)
             {
                 SolidOptions solidOptions = new SolidOptions(GetMaterialElementId(shapeEditScope), shapeEditScope.GraphicsStyleId);
                 XYZ scaledDirection = scaledExtrusionPosition.OfVector(Direction);
                 double currDepth = Depth * scaledDirection.GetLength();
 
+                GeometryObject myObj = null;
                 try
                 {
                     myObj = GeometryCreationUtilities.CreateExtrusionGeometry(loops, extrusionDirection, currDepth, solidOptions);
@@ -137,9 +141,12 @@ namespace Revit.IFC.Import.Data
                       // will throw if mesh is not available
                    myObj = meshResult.GetMesh();
                 }
+
+                if (myObj != null)
+                    myObjs.Add(myObj);
             }
 
-            return myObj;
+            return myObjs;
         }
 
         /// <summary>
@@ -154,9 +161,14 @@ namespace Revit.IFC.Import.Data
         {
             base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
 
-            GeometryObject extrudedGeometry = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
-            if (extrudedGeometry != null)
-                shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, extrudedGeometry));
+            IList<GeometryObject> extrudedGeometries = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            if (extrudedGeometries != null)
+            {
+                foreach (GeometryObject extrudedGeometry in extrudedGeometries)
+                {
+                    shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, extrudedGeometry));
+                }
+            }
         }
 
         protected IFCExtrudedAreaSolid(IFCAnyHandle solid)

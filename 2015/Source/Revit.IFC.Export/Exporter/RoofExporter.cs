@@ -58,7 +58,10 @@ namespace Revit.IFC.Export.Exporter
                 {
                     using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                     {
-                        ecData.PossibleExtrusionAxes = IFCExtrusionAxes.TryZ;
+                        // If the roof is an in-place family, we will allow any arbitrary orientation.  While this may result in some
+                        // in-place "cubes" exporting with the wrong direction, it is unlikely that an in-place family would be
+                        // used for this reason in the first place.
+                        ecData.PossibleExtrusionAxes = (roof is FamilyInstance) ? IFCExtrusionAxes.TryXYZ : IFCExtrusionAxes.TryZ;
                         ecData.AreInnerRegionsOpenings = true;
                         ecData.SetLocalPlacement(placementSetter.LocalPlacement);
 

@@ -105,22 +105,28 @@ namespace Revit.IFC.Import.Data
         /// <param name="forceSolid">True if only solids are allowed as output.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         /// <returns>The created geometry.</returns>
-        public GeometryObject CreateGeometry(
+        public IList<GeometryObject> CreateGeometry(
               IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
         {
-            GeometryObject firstSolid = FirstOperand.CreateGeometry(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
-            if (firstSolid != null && !(firstSolid is Solid))
+            IList<GeometryObject> firstSolids = FirstOperand.CreateGeometry(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            if (firstSolids != null)
             {
-                IFCImportFile.TheLog.LogError((FirstOperand as IFCRepresentationItem).Id, "Can't perform Boolean operation on a Mesh.", false);
-                return firstSolid;
+                foreach (GeometryObject potentialSolid in firstSolids)
+                {
+                    if (!(potentialSolid is Solid))
+                    {
+                        IFCImportFile.TheLog.LogError((FirstOperand as IFCRepresentationItem).Id, "Can't perform Boolean operation on a Mesh.", false);
+                        return firstSolids;
+                    }
+                }
             }
                 
-            GeometryObject secondSolid = null;
+            IList<GeometryObject> secondSolids = null;
             if (SecondOperand != null)
             {
                 try
                 {
-                    secondSolid = SecondOperand.CreateGeometry(shapeEditScope, lcs, scaledLcs, true, guid);
+                    secondSolids = SecondOperand.CreateGeometry(shapeEditScope, lcs, scaledLcs, true, guid);
                 }
                 catch (Exception ex)
                 {
@@ -130,15 +136,15 @@ namespace Revit.IFC.Import.Data
                         IFCImportFile.TheLog.LogError((SecondOperand as IFCRepresentationItem).Id, ex.Message, false);
                     else
                         throw ex;
-                    secondSolid = null;
+                    secondSolids = null;
                 }
             }
 
-            GeometryObject resultSolid = null;
-            if (firstSolid == null)
-                resultSolid = secondSolid;
-            else if (secondSolid == null)
-                resultSolid = firstSolid;
+            IList<GeometryObject> resultSolids = null;
+            if (firstSolids == null)
+                resultSolids = secondSolids;
+            else if (secondSolids == null)
+                resultSolids = firstSolids;
             else
             {
                 BooleanOperationsType booleanOperationsType = BooleanOperationsType.Difference;
@@ -158,11 +164,25 @@ namespace Revit.IFC.Import.Data
                         break;
                 }
 
-                int secondId = (SecondOperand == null) ? -1 : (SecondOperand as IFCRepresentationItem).Id;
-                resultSolid = IFCGeometryUtil.ExecuteSafeBooleanOperation(Id, secondId, firstSolid as Solid, secondSolid as Solid, booleanOperationsType);
+                resultSolids = new List<GeometryObject>();
+                foreach (GeometryObject firstSolid in firstSolids)
+                {
+                    Solid resultSolid = (firstSolid as Solid);
+
+                    int secondId = (SecondOperand == null) ? -1 : (SecondOperand as IFCRepresentationItem).Id;
+                    foreach (GeometryObject secondSolid in secondSolids)
+                    {
+                        resultSolid = IFCGeometryUtil.ExecuteSafeBooleanOperation(Id, secondId, resultSolid, secondSolid as Solid, booleanOperationsType);
+                        if (resultSolid == null)
+                            break;
+                    }
+
+                    if (resultSolid != null)
+                        resultSolids.Add(resultSolid);
+                }
             }
 
-            return resultSolid;
+            return resultSolids;
         }
 
         /// <summary>
@@ -177,8 +197,14 @@ namespace Revit.IFC.Import.Data
         {
             base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
 
-            GeometryObject resultGeometry = CreateGeometry(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
-            shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, resultGeometry));
+            IList<GeometryObject> resultGeometries = CreateGeometry(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            if (resultGeometries != null)
+            {
+                foreach (GeometryObject resultGeometry in resultGeometries)
+                {
+                    shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, resultGeometry));
+                }
+            }
         }
 
         protected IFCBooleanResult(IFCAnyHandle item)

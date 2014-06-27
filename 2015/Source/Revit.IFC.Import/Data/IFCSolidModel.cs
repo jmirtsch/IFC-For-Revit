@@ -42,7 +42,7 @@ namespace Revit.IFC.Import.Data
             base.Process(ifcSolidModel);
         }
 
-        protected abstract GeometryObject CreateGeometryInternal(
+        protected abstract IList<GeometryObject> CreateGeometryInternal(
            IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid);
 
         /// <summary>
@@ -53,8 +53,8 @@ namespace Revit.IFC.Import.Data
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
         /// <param name="forceSolid">True if we require a Solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        /// <returns>The created geometry.</returns>
-        public GeometryObject CreateGeometry(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+        /// <returns>Zero or more created geometries.</returns>
+        public IList<GeometryObject> CreateGeometry(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
         {
             if (StyledByItem != null)
                 StyledByItem.Create(shapeEditScope);

@@ -598,7 +598,7 @@ namespace Revit.IFC.Export.Utility
             filters.Add(GetDesignOptionFilter());
 
             // Phases: only for non-spatial elements.  For spatial elements, we will do a check afterwards.
-            if (!forSpatialElements)
+            if (!forSpatialElements && !ExporterCacheManager.ExportOptionsCache.ExportingLink)
                 filters.Add(GetPhaseStatusFilter(document));
 
             return new LogicalAndFilter(filters);
@@ -1212,7 +1212,7 @@ namespace Revit.IFC.Export.Utility
                 excludedCategories.Add(BuiltInCategory.OST_Viewports);
                 excludedCategories.Add(BuiltInCategory.OST_Views);
                 excludedCategories.Add(BuiltInCategory.OST_IOS_GeoLocations);
-                excludedCategories.Add(BuiltInCategory.OST_RvtLinks);
+                //excludedCategories.Add(BuiltInCategory.OST_RvtLinks);
                 excludedCategories.Add(BuiltInCategory.OST_DecalElement);
                 //excludedCategories.Add(BuiltInCategory.OST_Parts);
                 excludedCategories.Add(BuiltInCategory.OST_DuctCurvesCenterLine);

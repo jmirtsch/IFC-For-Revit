@@ -47,6 +47,8 @@ namespace Revit.IFC.Import.Data
         // Special holder for "Box" representation type only.
         protected BoundingBoxXYZ m_BoundingBox = null;
 
+        protected IFCPresentationLayerAssignment m_LayerAssignment = null;
+
         /// <summary>
         /// The related IfcRepresentationContext.
         /// </summary>
@@ -97,6 +99,15 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
+        /// The associated layer assignment of the representation item, if any.
+        /// </summary>
+        public IFCPresentationLayerAssignment LayerAssignment
+        {
+            get { return m_LayerAssignment; }
+            protected set { m_LayerAssignment = value; }
+        }
+        
+        /// <summary>
         /// Default constructor.
         /// </summary>
         protected IFCRepresentation()
@@ -110,6 +121,15 @@ namespace Revit.IFC.Import.Data
             return ((string.Compare(Identifier, "FootPrint", true) == 0) ||
                 (string.Compare(Identifier, "Annotation", true) == 0) ||
                 (string.Compare(Identifier, "Plan", true) == 0));
+        }
+
+        /// <summary>
+        /// Determines if a representation is a 2D footprint.
+        /// </summary>
+        /// <returns>True if it is, false otherwise.</returns>
+        public bool IsFootprintRepresentation()
+        {
+            return IsFootprintRep(Identifier);
         }
 
         private bool NotAllowedInPlan(IFCAnyHandle item)
@@ -142,6 +162,8 @@ namespace Revit.IFC.Import.Data
 
             HashSet<IFCAnyHandle> items =
                 IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcRepresentation, "Items");
+
+            LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(ifcRepresentation);
 
             if (string.Compare(Identifier, "Box", true) == 0)
             {
@@ -198,6 +220,18 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
+        /// Deal with missing "LayerAssignments" in IFC2x3 EXP file.
+        /// </summary>
+        /// <param name="layerAssignment">The layer assignment to add to this representation.</param>
+        public void PostProcessLayerAssignment(IFCPresentationLayerAssignment layerAssignment)
+        {
+            if (LayerAssignment == null)
+                LayerAssignment = layerAssignment;
+            else
+                IFCImportDataUtil.CheckLayerAssignmentConsistency(LayerAssignment, layerAssignment, Id);
+        }
+
+        /// <summary>
         /// Default constructor.
         /// </summary>
         protected IFCRepresentation(IFCAnyHandle representation)
@@ -214,10 +248,19 @@ namespace Revit.IFC.Import.Data
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         public void CreateShape(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
+            if (LayerAssignment != null)
+                LayerAssignment.Create(shapeEditScope);
+
             // There is an assumption here that Process() weeded out any items that are invalid for this representation.
-            foreach (IFCRepresentationItem representationItem in RepresentationItems)
+            using (IFCImportShapeEditScope.IFCMaterialStack stack = new IFCImportShapeEditScope.IFCMaterialStack(shapeEditScope, null, LayerAssignment))
             {
-                representationItem.CreateShape(shapeEditScope, lcs, scaledLcs, false, guid);
+                using (IFCImportShapeEditScope.IFCContainingRepresentationSetter repSetter = new IFCImportShapeEditScope.IFCContainingRepresentationSetter(shapeEditScope, this))
+                {
+                    foreach (IFCRepresentationItem representationItem in RepresentationItems)
+                    {
+                        representationItem.CreateShape(shapeEditScope, lcs, scaledLcs, false, guid);
+                    }
+                }
             }
         }
 

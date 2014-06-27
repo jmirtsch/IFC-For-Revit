@@ -137,7 +137,7 @@ namespace Revit.IFC.Import.Utility
             string nospace2 = string2.Replace(" ", null).Replace("\'", null);
             return (string.Compare(nospace1, nospace2, true) == 0);
         }
-        
+
         private static bool IsColumnLoadBearing(IFCObjectDefinition entity)
         {
             if (entity == null)
@@ -600,8 +600,10 @@ namespace Revit.IFC.Import.Utility
             string typeShapeType = null;
             GetAssociatedTypeEntityInfo(entity, out typeEntityType, out typeShapeType);
 
+            // Use the IfcTypeObject shape type if the IfcElement shape type is either null, empty, white space, or not defined.
             string shapeType = entity.ShapeType;
-            if (string.IsNullOrWhiteSpace(shapeType) && !string.IsNullOrWhiteSpace(typeShapeType))
+            if ((string.IsNullOrWhiteSpace(shapeType) || (string.Compare(shapeType, "NOTDEFINED", true) == 0)) && 
+                !string.IsNullOrWhiteSpace(typeShapeType))
                 shapeType = typeShapeType;
 
             // Set "special" shape types 

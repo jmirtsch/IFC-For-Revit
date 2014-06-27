@@ -910,8 +910,7 @@ namespace Revit.IFC.Export.Exporter
 
                     if (doorWindowInfo != null)
                     {
-                        DoorWindowDelayedOpeningCreator delayedCreator = DoorWindowDelayedOpeningCreator.Create(exporterIFC, doorWindowInfo,
-                            instanceHandle, localPlacement, setter.LevelId);
+                        DoorWindowDelayedOpeningCreator delayedCreator = DoorWindowDelayedOpeningCreator.Create(exporterIFC, doorWindowInfo, instanceHandle, setter.LevelId);
                         if (delayedCreator != null)
                             ExporterCacheManager.DoorWindowDelayedOpeningCreatorCache.Add(delayedCreator);
                     }
@@ -990,13 +989,13 @@ namespace Revit.IFC.Export.Exporter
                     RoofExporter.ExportRoof(exporterIFC, ifcEnumTypeString, element, geometryElement, productWrapper);
                     return true;
                 case IFCExportType.IfcSlab:
-                    FloorExporter.ExportFloor(exporterIFC, element, geometryElement, ifcEnumTypeString, productWrapper, false);
+                    FloorExporter.ExportGenericSlab(exporterIFC, element, geometryElement, ifcEnumTypeString, productWrapper);
                     return true;
                 case IFCExportType.IfcStair:
                     StairsExporter.ExportStairAsSingleGeometry(exporterIFC, ifcEnumTypeString, element, geometryElement, 1, productWrapper);
                     return true;
                 case IFCExportType.IfcWall:
-                    WallExporter.ExportWall(exporterIFC, element, geometryElement, productWrapper);
+                    WallExporter.ExportWall(exporterIFC, element, null, geometryElement, productWrapper);
                     return true;
             }
             return false;

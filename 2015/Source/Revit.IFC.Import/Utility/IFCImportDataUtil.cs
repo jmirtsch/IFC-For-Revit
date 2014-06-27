@@ -25,27 +25,31 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Common.Utility;
 using Revit.IFC.Common.Enums;
-using Revit.IFC.Import.Enums;
-using Revit.IFC.Import.Geometry;
-using Revit.IFC.Import.Utility;
+using Revit.IFC.Import.Data;
 
-namespace Revit.IFC.Import.Data
+namespace Revit.IFC.Import.Utility
 {
     /// <summary>
-    /// Interface that contains shared functions for IfcBooleanOperand
+    /// Provides generic utility methods for IFC entities.
     /// </summary>
-    public interface IIFCBooleanOperand
+    public class IFCImportDataUtil
     {
         /// <summary>
-        /// Return geometry for a particular representation item.
+        /// Check if two IFCPresentationLayerAssignments are equivalent, and warn if they aren't/
         /// </summary>
-        /// <param name="shapeEditScope">The geometry creation scope.</param>
-        /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
-        /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">True if we require a Solid.</param>
-        /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        /// <returns>Zero or more created Solids.</returns>
-        IList<GeometryObject> CreateGeometry(
-              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid);
+        /// <param name="originalAssignment">The original layer assignment in this representation.</param>
+        /// <param name="layerAssignment">The layer assignment to add to this representation.</param>
+        /// <returns>True if the layer assignments are consistent; false otherwise.</returns>
+        static public bool CheckLayerAssignmentConsistency(IFCPresentationLayerAssignment originalAssignment, 
+            IFCPresentationLayerAssignment layerAssignment, int id)
+        {
+            if ((originalAssignment != null) && (!originalAssignment.IsEquivalentTo(layerAssignment)))
+            {
+                IFCImportFile.TheLog.LogWarning(id, "Multiple inconsistent layer assignment items found for this item; using first one.", false);
+                return false;
+            }
+
+            return true;
+        }
     }
 }

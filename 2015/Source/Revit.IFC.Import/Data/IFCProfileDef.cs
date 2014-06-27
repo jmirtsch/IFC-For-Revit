@@ -1089,6 +1089,16 @@ namespace Revit.IFC.Import.Data
 
             IFCCurve profileIFCCurve = IFCCurve.ProcessIFCCurve(curveHnd);
             CurveLoop profileCurveLoop = profileIFCCurve.CurveLoop;
+            if (profileCurveLoop == null)
+            {
+                Curve profileCurve = profileIFCCurve.Curve;
+                if (profileCurve != null)
+                {
+                    profileCurveLoop = new CurveLoop();
+                    profileCurveLoop.Append(profileCurve);
+                }
+            }
+
 
             if ((profileCurveLoop != null) && IFCAnyHandleUtil.IsSubTypeOf(profileDef, IFCEntityType.IfcCenterLineProfileDef))
             {

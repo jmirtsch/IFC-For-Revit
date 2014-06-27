@@ -222,8 +222,8 @@ namespace Revit.IFC.Export.Exporter
             }
             else
             {
-                spatialElementCollector = (filterView == null) ?
-                    new FilteredElementCollector(document) : new FilteredElementCollector(document, filterView.Id);
+                spatialElementCollector = (filterView == null || ExporterCacheManager.ExportOptionsCache.ExportingLink) ?
+                    new FilteredElementCollector(document) : new FilteredElementCollector(filterView.Document, filterView.Id);
             }
 
             ISet<ElementId> exportedSpaces = null;
@@ -256,8 +256,8 @@ namespace Revit.IFC.Export.Exporter
             }
             else
             {
-                otherElementCollector = (filterView == null) ?
-                    new FilteredElementCollector(document) : new FilteredElementCollector(document, filterView.Id);
+                otherElementCollector = (filterView == null || ExporterCacheManager.ExportOptionsCache.ExportingLink) ?
+                    new FilteredElementCollector(document) : new FilteredElementCollector(filterView.Document, filterView.Id);
             }
 
             ElementFilter nonSpatialElementFilter = ElementFilteringUtil.GetNonSpatialElementFilter(document, exporterIFC);
@@ -404,7 +404,21 @@ namespace Revit.IFC.Export.Exporter
         public virtual void ExportElement(ExporterIFC exporterIFC, Autodesk.Revit.DB.Element element)
         {
             if (!CanExportElement(exporterIFC, element))
+            {
+                if (element is RevitLinkInstance && !ExporterCacheManager.ExportOptionsCache.ExportingLink)
+                {
+                    IDictionary<String, String> options = exporterIFC.GetOptions();
+                    bool? bExportLinks = ExportOptionsCache.GetNamedBooleanOption(options, "ExportLinkedFiles");
+                    if (bExportLinks.HasValue && bExportLinks.Value == true)
+                    {
+                        bool bStoreIFCGUID = ExporterCacheManager.ExportOptionsCache.GUIDOptions.StoreIFCGUID;
+                        ExporterCacheManager.ExportOptionsCache.GUIDOptions.StoreIFCGUID = true;
+                        GUIDUtil.CreateGUID(element);
+                        ExporterCacheManager.ExportOptionsCache.GUIDOptions.StoreIFCGUID = bStoreIFCGUID;
+                    }
+                }
                 return;
+            }
 
             //WriteIFCExportedElements
             if (m_Writer != null)
@@ -516,7 +530,8 @@ namespace Revit.IFC.Export.Exporter
             {
                 exporterIFC.PushExportState(element, geomElem);
 
-                using (SubTransaction st = new SubTransaction(element.Document))
+                Autodesk.Revit.DB.Document doc = element.Document;
+                using (SubTransaction st = new SubTransaction(doc))
                 {
                     st.Start();
 
@@ -552,8 +567,8 @@ namespace Revit.IFC.Export.Exporter
                     else if (element is CeilingAndFloor || element is Floor)
                     {
                         // This covers both Floors and Building Pads.
-                        HostObject hostObject = element as HostObject;
-                        FloorExporter.Export(exporterIFC, hostObject, geomElem, productWrapper);
+                        CeilingAndFloor hostObject = element as CeilingAndFloor;
+                        FloorExporter.ExportCeilingAndFloorElement(exporterIFC, hostObject, geomElem, productWrapper);
                     }
                     else if (element is ContFooting)
                     {
@@ -600,7 +615,7 @@ namespace Revit.IFC.Export.Exporter
                     }
                     else if (element is FaceWall)
                     {
-                        WallExporter.ExportWall(exporterIFC, element, geomElem, productWrapper);
+                        WallExporter.ExportWall(exporterIFC, element, null, geomElem, productWrapper);
                     }
                     else if (element is FamilyInstance)
                     {
@@ -839,8 +854,16 @@ namespace Revit.IFC.Export.Exporter
                 CreateGlobalDirection(exporterIFC);
                 CreateGlobalDirection2D(exporterIFC);
 
-                // Start out relative to nothing, but replace with site later.
-                IFCAnyHandle relativePlacement = ExporterUtil.CreateAxis2Placement3D(file);
+                // Set relative transform depending on whether it is a linked transform or not.
+                IFCAnyHandle relativePlacement = null;
+                if (ExporterCacheManager.ExportOptionsCache.ExportingLink)
+                {
+                    Transform linkTrf = ExporterCacheManager.ExportOptionsCache.GetLinkInstanceTransform(0);
+                    relativePlacement = ExporterUtil.CreateAxis2Placement3D(file, linkTrf.Origin, linkTrf.BasisZ, linkTrf.BasisX);
+                }
+                else
+                    relativePlacement = ExporterUtil.CreateAxis2Placement3D(file);
+                
                 IFCAnyHandle buildingPlacement = IFCInstanceExporter.CreateLocalPlacement(file, null, relativePlacement);
 
                 CreateProject(exporterIFC, document, applicationHandle);
@@ -959,7 +982,7 @@ namespace Revit.IFC.Export.Exporter
                     string levelGUID = GUIDUtil.GetLevelGUID(level);
                     IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(file,
                         levelGUID, exporterIFC.GetOwnerHistoryHandle(),
-                        levelName, objectType, description, placement,
+                        levelName, description, objectType, placement,
                         null, longName, Toolkit.IFCElementComposition.Element, elevation);
 
                     // Create classification reference when level has classification filed name assigned to it
@@ -1181,7 +1204,7 @@ namespace Revit.IFC.Export.Exporter
                     // assoc. site to the building.
                     ExporterCacheManager.ContainmentCache.AddRelation(siteHandle, buildingHnd);
 
-                    ExporterUtil.UpdateBuildingPlacement(buildingHnd, siteHandle);
+                    ExporterUtil.UpdateBuildingRelToPlacement(buildingHnd, siteHandle);
                 }
                 else
                 {
@@ -1496,7 +1519,7 @@ namespace Revit.IFC.Export.Exporter
                 }
 
                 // Potentially modify elements with GUID values.
-                if (ExporterCacheManager.GUIDsToStoreCache.Count > 0)
+                if (ExporterCacheManager.GUIDsToStoreCache.Count > 0 && !ExporterCacheManager.ExportOptionsCache.ExportingLink)
                 {
                     using (SubTransaction st = new SubTransaction(document))
                     {
@@ -1608,6 +1631,21 @@ namespace Revit.IFC.Export.Exporter
                     writeOptions.XMLConfigFileName = Path.Combine(ExporterUtil.RevitProgramPath, "EDM\\ifcXMLconfiguration.xml");
                 }
                 file.Write(writeOptions);
+
+                // Reuse almost all of the information above to write out extra copies of the IFC file.
+                if (exportOptionsCache.ExportingLink)
+                {
+                    int numRevitLinkInstances = exportOptionsCache.GetNumLinkInstanceInfos();
+                    for (int ii = 1; ii < numRevitLinkInstances; ii++)
+                    {
+                        Transform linkTrf = ExporterCacheManager.ExportOptionsCache.GetLinkInstanceTransform(ii);
+                        IFCAnyHandle relativePlacement = ExporterUtil.CreateAxis2Placement3D(file, linkTrf.Origin, linkTrf.BasisZ, linkTrf.BasisX);
+                        ExporterUtil.UpdateBuildingRelativePlacement(buildingHnd, relativePlacement);
+
+                        writeOptions.FileName = exportOptionsCache.GetLinkInstanceFileName(ii);
+                        file.Write(writeOptions);
+                    }
+                }
             }
         }
 
@@ -1715,17 +1753,8 @@ namespace Revit.IFC.Export.Exporter
             IFCAnyHandle origin = ExporterIFCUtils.GetGlobal3DOriginHandle();
             IFCAnyHandle wcs = IFCInstanceExporter.CreateAxis2Placement3D(file, origin, null, null);
 
-            ProjectLocation projLoc = doc.ActiveProjectLocation;
-            double trueNorthAngleInRadians = 0.0;
-            try
-            {
-                ProjectPosition projPos = projLoc.get_ProjectPosition(XYZ.Zero);
-                trueNorthAngleInRadians = projPos.Angle;
-            }
-            catch (InternalException)
-            {
-                //fail to get true north, ignore
-            }
+            double trueNorthAngleInRadians;
+            ExporterUtil.GetSafeProjectPositionAngle(doc, out trueNorthAngleInRadians);
 
             // CoordinationView2.0 requires that we always export true north, even if it is the same as project north.
             IFCAnyHandle trueNorth = null;
@@ -2600,14 +2629,33 @@ namespace Revit.IFC.Export.Exporter
                 ExporterCacheManager.UnitsCache["LUMINOUSEFFICACY"] = luminousEfficacyUnit;
             }
 
-            // Currency
+            // Currency - disallowed for IC2x3 Coordination View 2.0.  If we find a currency, export it as a real.
+            if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
             {
-                IFCCurrencyType? currencyType = null;
-
-                // Some of these are guesses, since multiple currencies may use the same symbol, but no detail is given on which currency
-                // is being used.
                 FormatOptions currencyFormatOptions = doc.GetUnits().GetFormatOptions(UnitType.UT_Currency);
                 UnitSymbolType ust = currencyFormatOptions.UnitSymbol;
+
+                IFCAnyHandle currencyUnit = null;
+                
+                // Some of these are guesses for IFC2x3, since multiple currencies may use the same symbol, 
+                // but no detail is given on which currency is being used.  For IFC4, we just use the label.
+                if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+                {
+                    string currencyLabel = null; 
+                    try
+                    {
+                        currencyLabel = LabelUtils.GetLabelFor(ust);
+                        currencyUnit = IFCInstanceExporter.CreateMonetaryUnit4(file, currencyLabel);
+                    }
+                    catch
+                    {
+                        currencyUnit = null;
+                    }
+                }
+                else
+                {
+                IFCCurrencyType? currencyType = null;
+
                 switch (ust)
                 {
                     case UnitSymbolType.UST_DOLLAR:
@@ -2644,10 +2692,13 @@ namespace Revit.IFC.Export.Exporter
                 }
 
                 if (currencyType.HasValue)
+                        currencyUnit = IFCInstanceExporter.CreateMonetaryUnit2x3(file, currencyType.Value);
+                }
+
+                if (currencyUnit != null)
                 {
-                    IFCAnyHandle currencyUnit = IFCInstanceExporter.CreateMonetaryUnit(file, currencyType.Value);
                     unitSet.Add(currencyUnit);      // created above, so unique.
-                    // We will cache the currency, f we create it.  If we don't, we'll export currencies as numbers.
+                    // We will cache the currency, if we create it.  If we don't, we'll export currencies as numbers.
                     ExporterCacheManager.UnitsCache["CURRENCY"] = currencyUnit;
                 }
             }

@@ -35,21 +35,230 @@ namespace Revit.IFC.Export.Exporter
     /// </summary>
     class WallExporter
     {
-        private static IFCAnyHandle FallbackTryToCreateAsExtrusion(ExporterIFC exporterIFC, Wall wallElement, IList<Solid> solids, IList<Mesh> meshes, double baseWallElevation,
-            ElementId catId, Curve curve, Plane plane, double depth, IFCRange zSpan, IFCRange range, PlacementSetter setter,
-            out IList<IFCExtrusionData> cutPairOpenings, out bool isCompletelyClipped, out double scaledFootprintArea, out double scaledLength)
+        private static CurveLoop SafeCreateViaThicken(Curve axisCurve, double width)
         {
-            cutPairOpenings = new List<IFCExtrusionData>();
+            CurveLoop newLoop = null;
+            try
+            {
+                if (axisCurve.IsReadOnly)
+                    axisCurve = axisCurve.Clone();
+                newLoop = CurveLoop.CreateViaThicken(axisCurve, width, XYZ.BasisZ);
+            }
+            catch
+            {
+            }
 
-            IFCAnyHandle bodyRep;
+            if (newLoop == null)
+                return null;
+
+            if (!newLoop.IsCounterclockwise(XYZ.BasisZ))
+                newLoop = GeometryUtil.ReverseOrientation(newLoop);
+
+            return newLoop;
+        }
+
+        private static bool GetDifferenceFromWallJoins(Document doc, ElementId wallId, Solid baseSolid, IList<IList<IFCConnectedWallData>> connectedWalls)
+        {
+            Options options = GeometryUtil.GetIFCExportGeometryOptions();
+            foreach (IList<IFCConnectedWallData> wallDataList in connectedWalls)
+            {
+                foreach (IFCConnectedWallData wallData in wallDataList)
+                {
+                    ElementId otherWallId = wallData.ElementId;
+                    if (otherWallId == wallId)
+                        continue;
+
+                    Element otherElem = doc.GetElement(otherWallId);
+                    GeometryElement otherGeomElem = (otherElem != null) ? otherElem.get_Geometry(options) : null;
+                    if (otherGeomElem == null)
+                        continue;
+
+                    SolidMeshGeometryInfo solidMeshInfo = GeometryUtil.GetSplitSolidMeshGeometry(otherGeomElem);
+                    if (solidMeshInfo.GetMeshes().Count != 0)
+                        return false;
+
+                    IList<Solid> otherSolids = solidMeshInfo.GetSolids();
+                    foreach (Solid otherSolid in otherSolids)
+                    {
+                        try
+                        {
+                            BooleanOperationsUtils.ExecuteBooleanOperationModifyingOriginalSolid(baseSolid, otherSolid, BooleanOperationsType.Difference);
+                        }
+                        catch
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private static Solid CreateWallEndClippedWallGeometry(Wall wallElement, IList<IList<IFCConnectedWallData>> connectedWalls,
+            Curve baseCurve, double unscaledWidth, double scaledDepth)
+        {
+            CurveLoop newLoop = SafeCreateViaThicken(baseCurve, unscaledWidth);
+            if (newLoop == null)
+                return null;
+
+            IList<CurveLoop> boundaryLoops = new List<CurveLoop>();
+            boundaryLoops.Add(newLoop);
+
+            XYZ normal = XYZ.BasisZ;
+            SolidOptions solidOptions = new SolidOptions(ElementId.InvalidElementId, ElementId.InvalidElementId);
+            double unscaledDepth = UnitUtil.UnscaleLength(scaledDepth);
+            Solid baseSolid = GeometryCreationUtilities.CreateExtrusionGeometry(boundaryLoops, normal, scaledDepth, solidOptions);
+
+            if (!GetDifferenceFromWallJoins(wallElement.Document, wallElement.Id, baseSolid, connectedWalls))
+                return null;
+
+            return baseSolid;
+        }
+
+        private static Curve MaybeStretchBaseCurve(Curve baseCurve, Curve trimmedCurve)
+        {
+            // Only works for bound curves.
+            if (!baseCurve.IsBound || !trimmedCurve.IsBound)
+                return null;
+
+            // The original end parameters.
+            double baseCurveParam0 = baseCurve.GetEndParameter(0);
+            double baseCurveParam1 = baseCurve.GetEndParameter(1);
+
+            // The trimmed curve may actually extend beyond the base curve at one end - make sure we extend the base curve.
+            XYZ trimmedEndPt0 = trimmedCurve.GetEndPoint(0);
+            XYZ trimmedEndPt1 = trimmedCurve.GetEndPoint(1);
+
+            Curve axisCurve = baseCurve.Clone();
+            if (axisCurve == null)
+                return null;
+
+            // We need to make the curve unbound before we find the trimmed end parameters, because Project finds the closest point
+            // on the bounded curve, whereas we want to find the closest point on the unbounded curve.
+            axisCurve.MakeUnbound();
+
+            IntersectionResult result0 = axisCurve.Project(trimmedEndPt0);
+            IntersectionResult result1 = axisCurve.Project(trimmedEndPt1);
+
+            // One of the intersection points is not on the unbound curve - abort.
+            if (!MathUtil.IsAlmostZero(result0.Distance) || !MathUtil.IsAlmostZero(result1.Distance))
+                return null;
+
+            double projectedEndParam0 = result0.Parameter;
+            double projectedEndParam1 = result1.Parameter;
+
+            double minParam = baseCurveParam0;
+            double maxParam = baseCurveParam1;
+
+            // Check that the orientation is correct.
+            if (axisCurve.IsCyclic)
+            {
+                XYZ midTrimmedPtXYZ = (trimmedCurve.Evaluate(0.5, true));
+                IntersectionResult result2 = axisCurve.Project(midTrimmedPtXYZ);
+                if (!MathUtil.IsAlmostZero(result2.Distance))
+                    return null;
+
+                double projectedEndParamMid = (projectedEndParam0 + projectedEndParam1) / 2.0;
+                bool parametersAreNotFlipped = MathUtil.IsAlmostEqual(projectedEndParamMid, result2.Parameter);
+                bool trimmedCurveIsCCW = ((projectedEndParam0 < projectedEndParam1) == parametersAreNotFlipped);
+
+                if (!trimmedCurveIsCCW)
+                {
+                    double tmp = projectedEndParam0; projectedEndParam0 = projectedEndParam1; projectedEndParam1 = tmp;
+                }
+
+                // While this looks inefficient, in practice we expect to do each while loop 0 or 1 times.
+                double period = axisCurve.Period;
+                while (projectedEndParam0 > baseCurveParam1) projectedEndParam0 -= period;
+                while (projectedEndParam1 < baseCurveParam0) projectedEndParam1 += period;
+
+                minParam = Math.Min(minParam, projectedEndParam0);
+                maxParam = Math.Max(maxParam, projectedEndParam1);
+            }
+            else
+            {
+                minParam = Math.Min(minParam, Math.Min(projectedEndParam0, projectedEndParam1));
+                maxParam = Math.Max(maxParam, Math.Max(projectedEndParam0, projectedEndParam1));
+            }
+
+            axisCurve.MakeBound(minParam, maxParam);
+            return axisCurve;
+        }
+
+        private static IList<CurveLoop> GetBoundaryLoopsFromBaseCurve(Wall wallElement, 
+            IList<IList<IFCConnectedWallData>> connectedWalls,
+            Curve baseCurve,
+            Curve trimmedCurve,
+            double unscaledWidth,
+            double scaledDepth)
+        {
+            // If we don't have connected wall information, we can't clip them away.  Abort.
+            if (connectedWalls == null)
+                return null;
+
+            Curve axisCurve = MaybeStretchBaseCurve(baseCurve, trimmedCurve);
+            if (axisCurve == null)
+                return null;
+
+            // Create the extruded wall minus the wall joins.
+            Solid baseSolid = CreateWallEndClippedWallGeometry(wallElement, connectedWalls, axisCurve, unscaledWidth, scaledDepth);
+            if (baseSolid == null)
+                return null;
+
+            // Get the one face pointing in the -Z direction.  If there are multiple, abort.
+            IList<CurveLoop> boundaryLoops = new List<CurveLoop>();
+            foreach (Face potentialBaseFace in baseSolid.Faces)
+            {
+                if (potentialBaseFace is PlanarFace)
+                {
+                    PlanarFace planarFace = potentialBaseFace as PlanarFace;
+                    if (planarFace.Normal.IsAlmostEqualTo(-XYZ.BasisZ))
+                    {
+                        if (boundaryLoops.Count > 0)
+                            return null;
+                        boundaryLoops = planarFace.GetEdgesAsCurveLoops();
+                    }
+                }
+            }
+
+            return boundaryLoops;
+        }
+
+        private static IList<CurveLoop> GetBoundaryLoopsFromWall(ExporterIFC exporterIFC,
+            Wall wallElement,
+            bool alwaysThickenCurve,
+            Curve trimmedCurve,
+            double unscaledWidth)
+        {
+            IList<CurveLoop> boundaryLoops = new List<CurveLoop>();
+
+            if (!alwaysThickenCurve)
+            {
+                boundaryLoops = GetLoopsFromTopBottomFace(wallElement, exporterIFC);
+                if (boundaryLoops.Count == 0)
+                    return null;
+            }
+            else
+            {
+                CurveLoop newLoop = SafeCreateViaThicken(trimmedCurve, unscaledWidth);
+                if (newLoop == null)
+                    return null;
+
+                boundaryLoops.Add(newLoop);
+            }
+
+            return boundaryLoops;
+        }
+
+        private static bool WallHasGeometryToExport(Wall wallElement,
+            IList<Solid> solids,
+            IList<Mesh> meshes,
+            IFCRange range,
+            out bool isCompletelyClipped)
+        {
             isCompletelyClipped = false;
-            scaledFootprintArea = 0;
-
-            double unscaledLength = curve != null ? curve.Length : 0;
-            scaledLength = UnitUtil.ScaleLength(unscaledLength);
-
-            XYZ localOrig = plane.Origin;
-
+            
             bool hasExtrusion = HasElevationProfile(wallElement);
             if (hasExtrusion)
             {
@@ -60,12 +269,12 @@ namespace Revit.IFC.Export.Exporter
                 {
                     IList<IList<CurveLoop>> sortedLoops = ExporterIFCUtils.SortCurveLoops(loops);
                     if (sortedLoops.Count == 0)
-                        return null;
+                        return false;
 
                     // Current limitation: can't handle wall split into multiple disjointed pieces.
                     int numSortedLoops = sortedLoops.Count;
                     if (numSortedLoops > 1)
-                        return null;
+                        return false;
 
                     bool ignoreExtrusion = true;
                     bool cantHandle = false;
@@ -100,14 +309,52 @@ namespace Revit.IFC.Export.Exporter
                     if (!hasGeometry)
                     {
                         isCompletelyClipped = true;
-                        return null;
+                        return false;
                     }
 
                     if (cantHandle)
-                        return null;
+                        return false;
                 }
             }
 
+            return true;
+        }
+
+        private static IFCAnyHandle TryToCreateAsExtrusion(ExporterIFC exporterIFC, 
+            Wall wallElement, 
+            IList<IList<IFCConnectedWallData>> connectedWalls,
+            IList<Solid> solids,
+            IList<Mesh> meshes,
+            double baseWallElevation, 
+            ElementId catId, 
+            Curve baseCurve, 
+            Curve trimmedCurve, 
+            Plane plane, 
+            double scaledDepth, 
+            IFCRange zSpan, 
+            IFCRange range, 
+            PlacementSetter setter,
+            out IList<IFCExtrusionData> cutPairOpenings, 
+            out bool isCompletelyClipped, 
+            out double scaledFootprintArea, 
+            out double scaledLength)
+        {
+            cutPairOpenings = new List<IFCExtrusionData>();
+
+            IFCAnyHandle bodyRep;
+            scaledFootprintArea = 0;
+
+            double unscaledLength = trimmedCurve != null ? trimmedCurve.Length : 0;
+            scaledLength = UnitUtil.ScaleLength(unscaledLength);
+
+            XYZ localOrig = plane.Origin;
+
+            // Check to see if the wall has geometry given the specified range.
+            if (!WallHasGeometryToExport(wallElement, solids, meshes, range, out isCompletelyClipped))
+                return null;
+
+            // This is our major check here that goes into internal code.  If we have enough information to faithfully reproduce
+            // the wall as an extrusion with clippings and openings, we will continue.  Otherwise, export it as a BRep.
             if (!CanExportWallGeometryAsExtrusion(wallElement, range))
                 return null;
 
@@ -115,51 +362,39 @@ namespace Revit.IFC.Export.Exporter
             XYZ extrusionDir = GetWallHeightDirection(wallElement);
 
             // create extrusion boundary.
-            IList<CurveLoop> boundaryLoops = new List<CurveLoop>();
-
-            bool alwaysThickenCurve = IsWallBaseRectangular(wallElement, curve);
+            bool alwaysThickenCurve = IsWallBaseRectangular(wallElement, trimmedCurve);
+            
             double unscaledWidth = wallElement.Width;
+            IList<CurveLoop> boundaryLoops = GetBoundaryLoopsFromWall(exporterIFC, wallElement, alwaysThickenCurve, trimmedCurve, unscaledWidth);
+            if (boundaryLoops == null || boundaryLoops.Count == 0)
+                return null;
 
-            if (!alwaysThickenCurve)
-            {
-                boundaryLoops = GetLoopsFromTopBottomFace(wallElement, exporterIFC);
-                if (boundaryLoops.Count == 0)
-                    return null;
-            }
-            else
-            {
-                CurveLoop newLoop = null;
-                try
-                {
-                    newLoop = CurveLoop.CreateViaThicken(curve, unscaledWidth, XYZ.BasisZ);
-                }
-                catch
-                {
-                }
-
-                if (newLoop == null)
-                    return null;
-
-                if (!newLoop.IsCounterclockwise(XYZ.BasisZ))
-                    newLoop = GeometryUtil.ReverseOrientation(newLoop);
-                boundaryLoops.Add(newLoop);
-            }
-
+            double fullUnscaledLength = baseCurve.Length;
             double unscaledFootprintArea = ExporterIFCUtils.ComputeAreaOfCurveLoops(boundaryLoops);
             scaledFootprintArea = UnitUtil.ScaleArea(unscaledFootprintArea);
-            // We are going to do a little sanity check here.  If the scaledFootprintArea is significantly less than the width * length of the wall footprint,
-            // we probably calculated the area wrong, and will abort.
-            // We want the scaledFootprintArea to be at least (80% of approximateBaseArea - 2 * side wall area).  The "side wall area" is an approximate value that takes into
-            // account potential wall joins.  This prevents us from throwing away small walls because of joins.  We'll allow 1' per side for this.
-            double approximateUnscaledBaseArea = unscaledWidth * unscaledLength;
-            if (unscaledFootprintArea < (approximateUnscaledBaseArea * .8 - 2 * unscaledWidth))
-                return null;
+            // We are going to do a little sanity check here.  If the scaledFootprintArea is significantly less than the 
+            // width * length of the wall footprint, we probably calculated the area wrong, and will abort.
+            // This could occur because of a door or window that cuts a corner of the wall (i.e., has no wall material on one side).
+            // We want the scaledFootprintArea to be at least (95% of approximateBaseArea - 2 * side wall area).  
+            // The "side wall area" is an approximate value that takes into account potential wall joins.  
+            // This prevents us from doing extra work for many small walls because of joins.  We'll allow 1' (~30 cm) per side for this.
+            double approximateUnscaledBaseArea = unscaledWidth * fullUnscaledLength;
+            if (unscaledFootprintArea < (approximateUnscaledBaseArea * .95 - 2 * unscaledWidth))
+            {
+                // Can't handle the case where we don't have a simple extrusion to begin with.
+                if (!alwaysThickenCurve)
+                    return null;
+
+                boundaryLoops = GetBoundaryLoopsFromBaseCurve(wallElement, connectedWalls, baseCurve, trimmedCurve, unscaledWidth, scaledDepth);
+                if (boundaryLoops == null || boundaryLoops.Count == 0)
+                    return null;
+            }
 
             // origin gets scaled later.
             XYZ setterOffset = new XYZ(0, 0, setter.Offset + (localOrig[2] - baseWallElevation));
 
             IFCAnyHandle baseBodyItemHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, boundaryLoops, plane,
-                extrusionDir, depth);
+                extrusionDir, scaledDepth);
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(baseBodyItemHnd))
                 return null;
 
@@ -177,13 +412,9 @@ namespace Revit.IFC.Export.Exporter
 
             IFCAnyHandle contextOfItemsBody = exporterIFC.Get3DContextHandle("Body");
             if (baseBodyItemHnd.Id == bodyItemHnd.Id)
-            {
                 bodyRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, wallElement, catId, contextOfItemsBody, bodyItems, null);
-            }
             else
-            {
                 bodyRep = RepresentationUtil.CreateClippingRep(exporterIFC, wallElement, catId, contextOfItemsBody, bodyItems);
-            }
 
             return bodyRep;
         }
@@ -207,13 +438,14 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The element.</param>
+        /// <param name="connectedWalls">Information about walls joined to this wall.</param>
         /// <param name="geometryElement">The geometry element.</param>
         /// <param name="origWrapper">The ProductWrapper.</param>
         /// <param name="overrideLevelId">The level id.</param>
         /// <param name="range">The range to be exported for the element.</param>
         /// <returns>The exported wall handle.</returns>
-        public static IFCAnyHandle ExportWallBase(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement,
-           ProductWrapper origWrapper, ElementId overrideLevelId, IFCRange range)
+        public static IFCAnyHandle ExportWallBase(ExporterIFC exporterIFC, Element element, IList<IList<IFCConnectedWallData>> connectedWalls,
+            GeometryElement geometryElement, ProductWrapper origWrapper, ElementId overrideLevelId, IFCRange range)
         {
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction tr = new IFCTransaction(file))
@@ -277,7 +509,7 @@ namespace Revit.IFC.Export.Exporter
                     IFCAnyHandle bodyRep = null;
 
                     bool exportingAxis = false;
-                    Curve curve = null;
+                    Curve trimmedCurve = null;
 
                     bool exportedAsWallWithAxis = false;
                     bool exportedBodyDirectly = false;
@@ -294,11 +526,11 @@ namespace Revit.IFC.Export.Exporter
                     if (centerCurve != null)
                     {
                         Curve baseCurve = GetWallAxisAtBaseHeight(wallElement);
-                        curve = GetWallTrimmedCurve(wallElement, baseCurve);
+                        trimmedCurve = GetWallTrimmedCurve(wallElement, baseCurve);
 
                         IFCRange curveBounds;
                         XYZ oldOrig;
-                        GeometryUtil.GetAxisAndRangeFromCurve(curve, out curveBounds, out localXDir, out oldOrig);
+                        GeometryUtil.GetAxisAndRangeFromCurve(trimmedCurve, out curveBounds, out localXDir, out oldOrig);
 
                         localOrig = oldOrig;
                         if (baseCurve != null)
@@ -321,7 +553,7 @@ namespace Revit.IFC.Export.Exporter
                         if (!MathUtil.IsAlmostZero(dist))
                         {
                             XYZ moveVec = new XYZ(0, 0, dist);
-                            curve = GeometryUtil.MoveCurve(curve, moveVec);
+                            trimmedCurve = GeometryUtil.MoveCurve(trimmedCurve, moveVec);
                         }
                         localYDir = localZDir.CrossProduct(localXDir);
 
@@ -389,7 +621,7 @@ namespace Revit.IFC.Export.Exporter
                                 string representationTypeOpt = "Curve2D";  // IFC2x2 convention
 
                                 IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, plane, projDir, false);
-                                ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, curve, XYZ.Zero, true);
+                                ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, trimmedCurve, XYZ.Zero, true);
                                 IList<IFCAnyHandle> axisItems = info.GetCurves();
 
                                 if (axisItems.Count == 0)
@@ -414,51 +646,20 @@ namespace Revit.IFC.Export.Exporter
                         IList<Solid> solids = new List<Solid>();
                         IList<Mesh> meshes = new List<Mesh>();
 
-                        if (!exportParts && wallElement != null && exportingAxis && curve != null)
+                        if (!exportParts && wallElement != null && exportingAxis && trimmedCurve != null)
                         {
                             GetSolidsAndMeshes(geometryElement, range, ref solids, ref meshes);
                             if (solids.Count == 0 && meshes.Count == 0)
                                 return null;
 
-                            // The native routines below don't necessarily do a good job if we have more than one solid.  We will revert to a normal
-                            //if (solids.Count == 1 && meshes.Count == 0)
-                            {
-                                // The routine below tries to create an extrusion with clippings based on a wall that is only one solid.  It isn't yet correct
-                                bool useNewCode = false;
-                                if (useNewCode)
-                                {
-                                    bool completelyClipped;
-                                    bodyRep = ExtrusionExporter.CreateExtrusionWithClipping(exporterIFC, wallElement, catId, solids[0],
-                                        plane, projDir, range, out completelyClipped);
-
-                                    if (completelyClipped)
-                                        return null;
-
-                                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRep))
-                                    {
-                                        exportedAsWallWithAxis = true;
-                                        exportedBodyDirectly = true;
-                                    }
-                                    else
-                                    {
-                                        exportedAsWallWithAxis = false;
-                                        exportedBodyDirectly = false;
-                                    }
-                                }
-
-                                if (!exportedAsWallWithAxis)
-                                {
-                                    // Fallback - use native routines to try to export wall.
-                                    bool isCompletelyClipped;
-                                    bodyRep = FallbackTryToCreateAsExtrusion(exporterIFC, wallElement, solids, meshes, baseWallElevation,
-                                        catId, curve, plane, depth, zSpan, range, setter,
-                                        out cutPairOpenings, out isCompletelyClipped, out scaledFootprintArea, out scaledLength);
-                                    if (isCompletelyClipped)
-                                        return null;
-                                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRep))
-                                        exportedAsWallWithAxis = true;
-                                }
-                            }
+                            bool isCompletelyClipped;
+                            bodyRep = TryToCreateAsExtrusion(exporterIFC, wallElement, connectedWalls, solids, meshes, baseWallElevation,
+                                catId, centerCurve, trimmedCurve, plane, depth, zSpan, range, setter,
+                                out cutPairOpenings, out isCompletelyClipped, out scaledFootprintArea, out scaledLength);
+                            if (isCompletelyClipped)
+                                return null;
+                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRep))
+                                exportedAsWallWithAxis = true;
                         }
 
                         using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
@@ -730,9 +931,10 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The element.</param>
+        /// <param name="connectedWalls">Information about walls joined to this wall.</param>
         /// <param name="geometryElement">The geometry element.</param>
         /// <param name="productWrapper">The ProductWrapper.</param>
-        public static void ExportWall(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement,
+        public static void ExportWall(ExporterIFC exporterIFC, Element element, IList<IList<IFCConnectedWallData>> connectedWalls, GeometryElement geometryElement, 
            ProductWrapper productWrapper)
         {
             IList<IFCAnyHandle> createdWalls = new List<IFCAnyHandle>();
@@ -753,7 +955,7 @@ namespace Revit.IFC.Export.Exporter
                 int numPartsToExport = ranges.Count;
                 if (numPartsToExport == 0)
                 {
-                    IFCAnyHandle wallElemHnd = ExportWallBase(exporterIFC, element, geometryElement, productWrapper, ElementId.InvalidElementId, null);
+                    IFCAnyHandle wallElemHnd = ExportWallBase(exporterIFC, element, connectedWalls, geometryElement, productWrapper, ElementId.InvalidElementId, null);
                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(wallElemHnd))
                         createdWalls.Add(wallElemHnd);
                 }
@@ -762,14 +964,14 @@ namespace Revit.IFC.Export.Exporter
                     using (ExporterStateManager.RangeIndexSetter rangeSetter = new ExporterStateManager.RangeIndexSetter())
                     {
                         rangeSetter.IncreaseRangeIndex();
-                        IFCAnyHandle wallElemHnd = ExportWallBase(exporterIFC, element, geometryElement, productWrapper, levels[0], ranges[0]);
+                        IFCAnyHandle wallElemHnd = ExportWallBase(exporterIFC, element, connectedWalls, geometryElement, productWrapper, levels[0], ranges[0]);
                         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(wallElemHnd))
                             createdWalls.Add(wallElemHnd);
 
                         for (int ii = 1; ii < numPartsToExport; ii++)
                         {
                             rangeSetter.IncreaseRangeIndex();
-                            wallElemHnd = ExportWallBase(exporterIFC, element, geometryElement, productWrapper, levels[ii], ranges[ii]);
+                            wallElemHnd = ExportWallBase(exporterIFC, element, connectedWalls, geometryElement, productWrapper, levels[ii], ranges[ii]);
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(wallElemHnd))
                                 createdWalls.Add(wallElemHnd);
                         }
@@ -793,24 +995,16 @@ namespace Revit.IFC.Export.Exporter
             }
 
             if (createdWalls.Count == 0)
-                ExportWallBase(exporterIFC, element, geometryElement, productWrapper, ElementId.InvalidElementId, null);
+                ExportWallBase(exporterIFC, element, connectedWalls, geometryElement, productWrapper, ElementId.InvalidElementId, null);
         }
 
         /// <summary>
         /// Exports Walls.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="wallElement">
-        /// The wall element.
-        /// </param>
-        /// <param name="geometryElement">
-        /// The geometry element.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="wallElement">The wall element.</param>
+        /// <param name="geometryElement">The geometry element.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
         public static void Export(ExporterIFC exporterIFC, Wall wallElement, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
             // Don't export a wall if it is a panel of a curtain wall.  Note that this takes advantage of incorrect API functionality, so
@@ -839,20 +1033,21 @@ namespace Revit.IFC.Export.Exporter
                 if (wallTypeKind == WallKind.Stacked)
                     return;
 
+                IList<IList<IFCConnectedWallData>> connectedWalls = new List<IList<IFCConnectedWallData>>(2);
+                connectedWalls.Add(ExporterIFCUtils.GetConnectedWalls(wallElement, IFCConnectedWallDataLocation.Start));
+                connectedWalls.Add(ExporterIFCUtils.GetConnectedWalls(wallElement, IFCConnectedWallDataLocation.End));
+                
                 if (CurtainSystemExporter.IsCurtainSystem(wallElement))
                     CurtainSystemExporter.ExportWall(exporterIFC, wallElement, productWrapper);
                 else
                 {
                     // ExportWall may decide to export as an IfcFooting for some retaining and foundation walls.
-                    ExportWall(exporterIFC, wallElement, geometryElement, productWrapper);
+                    ExportWall(exporterIFC, wallElement, connectedWalls, geometryElement, productWrapper);
                 }
 
                 // create join information.
                 ElementId id = wallElement.Id;
 
-                IList<IList<IFCConnectedWallData>> connectedWalls = new List<IList<IFCConnectedWallData>>();
-                connectedWalls.Add(ExporterIFCUtils.GetConnectedWalls(wallElement, IFCConnectedWallDataLocation.Start));
-                connectedWalls.Add(ExporterIFCUtils.GetConnectedWalls(wallElement, IFCConnectedWallDataLocation.End));
                 for (int ii = 0; ii < 2; ii++)
                 {
                     int count = connectedWalls[ii].Count;

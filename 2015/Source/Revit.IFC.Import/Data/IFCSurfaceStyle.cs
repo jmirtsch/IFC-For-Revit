@@ -121,9 +121,9 @@ namespace Revit.IFC.Import.Data
         /// <param name="doc">The document.</param>
         /// <param name="forcedName">An optional name that sets the name of the material created, regardless of surface style name.</param>
         /// <param name="suggestedName">An optional name that suggests the name of the material created, if the surface style name is null.</param>
-        /// <param name="idOverride">The id of the parent item, used if nameOverride is used.</param>
+        /// <param name="idOverride">The id of the parent item, used if forcedName is used.</param>
         /// <returns>The material id.</returns>
-        /// <remarks>If nameOverride is not null, this will not store the created element id in this class.</remarks>
+        /// <remarks>If forcedName is not null, this will not store the created element id in this class.</remarks>
         public ElementId Create(Document doc, string forcedName, string suggestedName, int idOverride)
         {
             try
