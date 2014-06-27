@@ -67,14 +67,14 @@ namespace BIM.IFC.Export.UI
         {
             // These are the built-in configurations.  Provide a more extensible means of storage.
             // Order of construction: name, version, space boundaries, QTO, split walls, internal sets, 2d elems, boundingBox
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 Coordination View 2.0", IFCVersion.IFC2x3CV2, 0, false, false, false, false, false, false, false));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 Coordination View", IFCVersion.IFC2x3, 1, false, false, true, false, false, true, false));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 GSA Concept Design BIM 2010", IFCVersion.IFCCOBIE, 2, true, true, true, false, false, true, true));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 Basic FM Handover View", IFCVersion.IFC2x3, 1, true, true, false, false, false, true, false));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x2 Coordination View", IFCVersion.IFC2x2, 1, false, false, true, false, false, false, false));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x2 Singapore BCA e-Plan Check", IFCVersion.IFCBCA, 1, false, true, true, false, false, false, false));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC4 Basic Coordination View 2.0", IFCVersion.IFC4, 0, false, false, false, false, false, false, false));
-            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 Extended FM Handover View", IFCVersion.IFC2x3, 1, true, false, false, true, true, true, true));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 Coordination View 2.0", IFCVersion.IFC2x3CV2, 0, false, false, false, false, false, false, false, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 Coordination View", IFCVersion.IFC2x3, 1, false, false, true, false, false, true, false, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 GSA Concept Design BIM 2010", IFCVersion.IFCCOBIE, 2, true, true, true, false, false, true, true, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 Basic FM Handover View", IFCVersion.IFC2x3, 1, true, true, false, false, false, true, false, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x2 Coordination View", IFCVersion.IFC2x2, 1, false, false, true, false, false, false, false, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x2 Singapore BCA e-Plan Check", IFCVersion.IFCBCA, 1, false, true, true, false, false, false, false, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC4 Basic Coordination View 2.0", IFCVersion.IFC4, 0, false, false, false, false, false, false, false, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 Extended FM Handover View", IFCVersion.IFC2x3, 1, true, false, false, true, true, true, true, false));
         }
 
         /// <summary>
@@ -136,6 +136,8 @@ namespace BIM.IFC.Export.UI
                             configuration.ExportSchedulesAsPsets = bool.Parse(configMap[s_setupExportSchedulesAsPsets]);
                         if (configMap.ContainsKey(s_setupExportUserDefinedPsets))
                             configuration.ExportUserDefinedPsets = bool.Parse(configMap[s_setupExportUserDefinedPsets]);
+                        if (configMap.ContainsKey(s_setupExportLinkedFiles))
+                            configuration.ExportLinkedFiles = bool.Parse(configMap[s_setupExportLinkedFiles]);
                         if (configMap.ContainsKey(s_setupIncludeSiteElevation))
                             configuration.IncludeSiteElevation = bool.Parse(configMap[s_setupIncludeSiteElevation]);
                         if (configMap.ContainsKey(s_setupUseCoarseTessellation))
@@ -184,6 +186,9 @@ namespace BIM.IFC.Export.UI
                         Field fieldExportUserDefinedPsets = m_schema.GetField(s_setupExportUserDefinedPsets);
                         if (fieldExportUserDefinedPsets != null)
                             configuration.ExportUserDefinedPsets = configEntity.Get<bool>(s_setupExportUserDefinedPsets);
+                        Field fieldExportLinkedFiles = m_schema.GetField(s_setupExportLinkedFiles);
+                        if (fieldExportLinkedFiles != null)
+                            configuration.ExportLinkedFiles = configEntity.Get<bool>(s_setupExportLinkedFiles);
                         Field fieldIncludeSiteElevation = m_schema.GetField(s_setupIncludeSiteElevation);
                         if (fieldIncludeSiteElevation != null)
                             configuration.IncludeSiteElevation = configEntity.Get<bool>(s_setupIncludeSiteElevation);
@@ -229,6 +234,7 @@ namespace BIM.IFC.Export.UI
         private const String s_setupExportSolidModelRep = "ExportSolidModelRep";
         private const String s_setupExportSchedulesAsPsets = "ExportSchedulesAsPsets";
         private const string s_setupExportUserDefinedPsets = "ExportUserDefinedPsets";
+        private const string s_setupExportLinkedFiles = "ExportLinkedFiles";
         private const String s_setupIncludeSiteElevation = "IncludeSiteElevation";
         private const String s_setupUseCoarseTessellation = "UseCoarseTessellation";
         private const String s_setupStoreIFCGUID = "StoreIFCGUID";
@@ -346,6 +352,7 @@ namespace BIM.IFC.Export.UI
                    mapData.Add(s_setupExportSolidModelRep, configuration.ExportSolidModelRep.ToString());
                    mapData.Add(s_setupExportSchedulesAsPsets, configuration.ExportSchedulesAsPsets.ToString());
                    mapData.Add(s_setupExportUserDefinedPsets, configuration.ExportUserDefinedPsets.ToString());
+                   mapData.Add(s_setupExportLinkedFiles, configuration.ExportLinkedFiles.ToString());
                    mapData.Add(s_setupIncludeSiteElevation, configuration.IncludeSiteElevation.ToString());
                    mapData.Add(s_setupUseCoarseTessellation, configuration.UseCoarseTessellation.ToString());
                    mapData.Add(s_setupStoreIFCGUID, configuration.StoreIFCGUID.ToString());
