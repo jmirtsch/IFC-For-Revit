@@ -663,6 +663,113 @@ namespace Revit.IFC.Export.Exporter
             return (plane != null);
         }
 
+        private static IList<CurveLoop> CoarsenCurveLoops(IList<CurveLoop> origCurveLoops)
+        {
+            if (!ExporterCacheManager.ExportOptionsCache.UseCoarseTessellation)
+                return origCurveLoops;
+
+            IList<CurveLoop> modifiedLoops = new List<CurveLoop>();
+            foreach (CurveLoop curveLoop in origCurveLoops)
+            {
+                // We don't really know if the original CurveLoop is valid, so attempting to create a copy may result in exceptions.
+                // Protect against this for each individual loop.
+                try
+                {
+                    if (curveLoop.Count() <= 24)
+                    {
+                        modifiedLoops.Add(curveLoop);
+                        continue;
+                    }
+
+                    bool modified = false;
+                    XYZ lastFirstPt = null;
+                    Line lastLine = null;
+
+                    IList<Curve> newCurves = new List<Curve>();
+                    foreach (Curve curve in curveLoop)
+                    {
+                        // Set lastLine to be the first line in the loop, if it exists.
+                        // In addition, Revit may have legacy curve segments that are too short.  Don't process them.
+                        if (!(curve is Line))
+                        {
+                            // Break the polyline, if it existed.
+                            if (lastLine != null)
+                                newCurves.Add(lastLine);
+
+                            lastLine = null;
+                            lastFirstPt = null;
+                            newCurves.Add(curve);
+                            continue;
+                        }
+
+                        if (lastLine == null)
+                        {
+                            lastLine = curve as Line;
+                            lastFirstPt = lastLine.GetEndPoint(0);
+                            continue;
+                        }
+
+                        // If we are here, we have two lines in a row.  See if they are almost collinear.
+                        XYZ currLastPt = curve.GetEndPoint(1);
+
+                        Line combinedLine = null;
+
+                        // If the combined curve is too short, don't merge.
+                        if (currLastPt.DistanceTo(lastFirstPt) > ExporterCacheManager.Document.Application.ShortCurveTolerance)
+                        {
+                            combinedLine = Line.CreateBound(lastFirstPt, currLastPt);
+
+                            XYZ currMidPt = curve.GetEndPoint(0);
+                            IntersectionResult result = combinedLine.Project(currMidPt);
+
+                            // If the absolute distance is greater than 1", or 1% of either line length, use both.
+                            double dist = result.Distance;
+                            if ((dist > 1.0 / 12.0) || (dist / (lastLine.Length) > 0.01) || (dist / (curve.Length) > 0.01))
+                                combinedLine = null;
+                        }
+
+                        if (combinedLine == null)
+                        {
+                            newCurves.Add(lastLine);
+
+                            lastLine = curve as Line;
+                            lastFirstPt = lastLine.GetEndPoint(0);
+
+                            continue;
+                        }
+
+                        // The combined line is now the last line.
+                        lastLine = combinedLine;
+                        modified = true;
+                    }
+
+                    if (modified)
+                    {
+                        if (lastLine != null)
+                            newCurves.Add(lastLine);
+
+                        CurveLoop modifiedCurveLoop = new CurveLoop();
+                        foreach (Curve modifiedCurve in newCurves)
+                            modifiedCurveLoop.Append(modifiedCurve);
+
+                        modifiedLoops.Add(modifiedCurveLoop);
+                    }
+                    else
+                    {
+                        modifiedLoops.Add(curveLoop);
+                    }
+                }
+                catch
+                {
+                    // If we run into any trouble, use the original loop.  
+                    // TODO: this may end up failing in the ValidateCurves check that follows, so we may just skip entirely.
+                    modifiedLoops.Add(curveLoop);
+                }
+            }
+
+            return modifiedLoops;
+        }
+
         /// <summary>
         /// Creates an extruded solid from a collection of curve loops and a thickness.
         /// </summary>
@@ -699,8 +806,11 @@ namespace Revit.IFC.Export.Exporter
             if (MathUtil.IsAlmostZero(slantFactor))
                 return extrudedSolidHnd;
 
+            // Reduce the number of line segments in the curveloops from highly tessellated polylines, if applicable.
+            IList<CurveLoop> curveLoops = CoarsenCurveLoops(origCurveLoops);
+            
             // Check that curve loops are valid.
-            IList<CurveLoop> curveLoops = ExporterIFCUtils.ValidateCurveLoops(origCurveLoops, extrDirVec);
+            curveLoops = ExporterIFCUtils.ValidateCurveLoops(curveLoops, extrDirVec);
             if (curveLoops.Count == 0)
                 return extrudedSolidHnd;
 
@@ -1356,20 +1466,23 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC class.</param>
         /// <param name="baseCurve">The curve to be extruded.</param>
-        /// <param name="extrusionDir">The direction of the extrusion.</param>
+        /// <param name="extrusionPlane">The coordinate system of the extrusion, where the normal of the plane is the direction of the extrusion.</param>
         /// <param name="scaledExtrusionSize">The length of the extrusion, in IFC unit scale.</param>
         /// <param name="unscaledBaseHeight">The Z value of the base level for the surface, in Revit unit scale.</param>
+        /// <param name="sweptCurve">The handle of the created curve entity.</param>
         /// <returns>The extrusion handle.</returns>
         /// <remarks>Note that scaledExtrusionSize and unscaledBaseHeight are in potentially different scaling units.</remarks>
-        public static IFCAnyHandle CreateExtrudedSurfaceFromCurve(ExporterIFC exporterIFC, Curve baseCurve, XYZ extrusionDir,
-            double scaledExtrusionSize, double unscaledBaseHeight)
+        public static IFCAnyHandle CreateSurfaceOfLinearExtrusionFromCurve(ExporterIFC exporterIFC, Curve baseCurve, Plane extrusionPlane,
+            double scaledExtrusionSize, double unscaledBaseHeight, out IFCAnyHandle curveHandle)
         {
+            curveHandle = null;
+
             IFCFile file = exporterIFC.GetFile();
 
-            Plane plane = new Plane(extrusionDir,XYZ.Zero);
+            XYZ extrusionDir = extrusionPlane.Normal;
 
             // A list of IfcCurve entities.
-            IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, plane, extrusionDir, true);
+            IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, extrusionPlane, extrusionDir, true);
             ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, baseCurve, XYZ.Zero, true);
 
             IList<IFCAnyHandle> profileCurves = info.GetCurves();
@@ -1377,6 +1490,7 @@ namespace Revit.IFC.Export.Exporter
             if ((profileCurves.Count != 1) || (!IFCAnyHandleUtil.IsSubTypeOf(profileCurves[0], IFCEntityType.IfcBoundedCurve)))
                 return null;
 
+            curveHandle = profileCurves[0];
             IFCAnyHandle sweptCurve = IFCInstanceExporter.CreateArbitraryOpenProfileDef(file, IFCProfileType.Curve, null, profileCurves[0]);
 
             XYZ oCurveOrig = baseCurve.GetEndPoint(0);
@@ -1385,10 +1499,29 @@ namespace Revit.IFC.Export.Exporter
             IFCAnyHandle surfaceAxis = ExporterUtil.CreateAxis(file, orig, null, null);
             IFCAnyHandle direction = ExporterUtil.CreateDirection(file, extrusionDir);     // zDir
 
-            IFCAnyHandle surfOnRelatingElement = IFCInstanceExporter.CreateSurfaceOfLinearExtrusion(file, sweptCurve, surfaceAxis, direction, scaledExtrusionSize);
+            return IFCInstanceExporter.CreateSurfaceOfLinearExtrusion(file, sweptCurve, surfaceAxis, direction, scaledExtrusionSize);
+        }
 
-            IFCAnyHandle extrudedSurfFromCurveHnd = IFCInstanceExporter.CreateConnectionSurfaceGeometry(file, surfOnRelatingElement, null);
-            return extrudedSurfFromCurveHnd;
+        /// <summary>
+        /// Creates an IfcConnectionSurfaceGeometry given a base 2D curve, a direction and a length.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC class.</param>
+        /// <param name="baseCurve">The curve to be extruded.</param>
+        /// <param name="extrusionPlane">The plane of the baseCurve, where the normal of the plane is the direction of the extrusion.</param>
+        /// <param name="scaledExtrusionSize">The length of the extrusion, in IFC unit scale.</param>
+        /// <param name="unscaledBaseHeight">The Z value of the base level for the surface, in Revit unit scale.</param>
+        /// <returns>The extrusion handle.</returns>
+        /// <remarks>Note that scaledExtrusionSize and unscaledBaseHeight are in potentially different scaling units.</remarks>
+        public static IFCAnyHandle CreateConnectionSurfaceGeometry(ExporterIFC exporterIFC, Curve baseCurve, Plane extrusionPlane,
+            double scaledExtrusionSize, double unscaledBaseHeight)
+        {
+            IFCFile file = exporterIFC.GetFile();
+
+            IFCAnyHandle sweptCurve;
+            IFCAnyHandle surfOnRelatingElement = CreateSurfaceOfLinearExtrusionFromCurve(exporterIFC, baseCurve, extrusionPlane, 
+                scaledExtrusionSize, unscaledBaseHeight, out sweptCurve);
+
+            return IFCInstanceExporter.CreateConnectionSurfaceGeometry(file, surfOnRelatingElement, null);
         }
     }
 }

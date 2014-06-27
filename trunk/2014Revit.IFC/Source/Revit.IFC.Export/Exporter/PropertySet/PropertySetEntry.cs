@@ -185,7 +185,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <summary>
         /// Illuminance
         /// </summary>
-        Illuminance
+        Illuminance,
+        /// <summary>
+        /// Normalised Ratio
+        /// </summary>
+        NormalisedRatio
     }
 
     /// <summary>
@@ -522,6 +526,22 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         {
             PropertySetEntry pse = new PropertySetEntry(revitParameterName);
             pse.PropertyType = PropertyType.Ratio;
+            return pse;
+        }
+
+        /// <summary>
+        /// Creates an entry of type normalised ratio.
+        /// </summary>
+        /// <param name="revitParameterName">
+        /// Revit parameter name.
+        /// </param>
+        /// <returns>
+        /// The PropertySetEntry.
+        /// </returns>
+        public static PropertySetEntry CreateNormalisedRatio(string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = PropertyType.NormalisedRatio;
             return pse;
         }
         
@@ -874,6 +894,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                             builtInParameter, ifcPropertyName, valueType);
                         break;
                     }
+                case PropertyType.NormalisedRatio:
+                    {
+                        propHnd = PropertyUtil.CreateNormalisedRatioPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                            ifcPropertyName, valueType);
+                        break;
+                    }
                 case PropertyType.PositiveRatio:
                     {
                         propHnd = PropertyUtil.CreatePositiveRatioPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, 
@@ -1132,6 +1158,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                                 propHnd = PropertyUtil.CreatePositiveLengthMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(PropertyName), valueType);
                             else
                                 propHnd = PropertyUtil.CreatePositiveLengthMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                            break;
+                        }
+                    case PropertyType.NormalisedRatio:
+                        {
+                            propHnd = PropertyUtil.CreateNormalisedRatioMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                             break;
                         }
                     case PropertyType.PositiveRatio:

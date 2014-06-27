@@ -143,7 +143,7 @@ namespace Revit.IFC.Export.Exporter
                                 }
                                 else if (subElem is Wall)
                                 {
-                                    WallExporter.ExportWall(exporterIFC, subElem, geomElem, productWrapper);
+                                    WallExporter.ExportWall(exporterIFC, subElem, null, geomElem, productWrapper);
                                 }
                             }
                             catch (Exception ex)

@@ -43,7 +43,47 @@ namespace Revit.IFC.Export.Toolkit
             }
             return value;
         }
-        
+
+        /// <summary>
+        /// Get the IFC type from shared parameters, from a type name, or from a default value.
+        /// </summary>
+        /// <typeparam name="TEnum">The type of Enum.</typeparam>
+        /// <param name="element">The element.</param>
+        /// <param name="typeName">The type value.</param>
+        /// <param name="defaultValue">A default value that can be null.</param>
+        /// <returns>The found value.</returns>
+        public static string GetValidIFCType<TEnum>(Element element, string typeName, string defaultValue) where TEnum : struct
+        {
+            string value = null;
+            bool canUseTypeName = true;
+            if ((ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcExportType", out value) == null) && // change IFCType to consistent parameter of IfcExportType
+                (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null))  // support IFCType for legacy support
+            {
+                canUseTypeName = false;
+                value = typeName;
+            }
+
+            if (ValidateStrEnum<TEnum>(value) == "NotDefined" && value != "NotDefined")
+            {
+                if (canUseTypeName)
+                {
+                    value = typeName;
+                    if (ValidateStrEnum<TEnum>(value) == "NotDefined")
+                        value = null;
+                }
+                else
+                    value = null;
+            }
+
+            if (String.IsNullOrEmpty(value))
+            {
+                if (!String.IsNullOrEmpty(defaultValue))
+                    return defaultValue;
+                return "NotDefined";
+            }
+            return value;
+        }
+
         /// <summary>
         /// Validates that a string belongs to an Enum class.
         /// </summary>

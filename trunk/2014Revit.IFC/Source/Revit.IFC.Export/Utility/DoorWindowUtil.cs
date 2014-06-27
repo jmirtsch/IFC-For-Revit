@@ -878,7 +878,6 @@ namespace Revit.IFC.Export.Utility
             double origUnscaledDepth, bool posHingeSide, bool isRecess)
         {
             // calculate some values.
-            IFCAnyHandle openingPlacement = null;
             double openingHeight = -1.0;
             double openingWidth = -1.0;
             
@@ -1036,7 +1035,7 @@ namespace Revit.IFC.Export.Utility
             // care only about first loop.
             IFCFile file = exporterIFC.GetFile();
             XYZ scaledOrig = UnitUtil.ScaleLength(relOrig);
-            openingPlacement = ExporterUtil.CreateLocalPlacement(file, hostObjPlacementHnd, scaledOrig, relZ, relX);
+            IFCAnyHandle openingPlacement = ExporterUtil.CreateLocalPlacement(file, hostObjPlacementHnd, scaledOrig, relZ, relX);
 
             string openingObjectType = isRecess ? "Recess": "Opening";
             string origOpeningName = NamingUtil.GetIFCNamePlusIndex(doorWindowElement, 1);
@@ -1070,7 +1069,7 @@ namespace Revit.IFC.Export.Utility
                 }
             }
 
-            return DoorWindowOpeningInfo.Create(openingHnd, openingPlacement, openingHeight, openingWidth);
+            return DoorWindowOpeningInfo.Create(openingHnd, openingHeight, openingWidth);
         }
 
         /// <summary>
@@ -1105,8 +1104,9 @@ namespace Revit.IFC.Export.Utility
                     IFCAnyHandle openingHnd = OpeningUtil.CreateOpening(exporterIFC, hostObjHnd, hostElement, insertElement, openingGUID, solid, scaledHostWidth, 
                         isRecess, extrusionCreationData, null, null);
 
-                    return DoorWindowOpeningInfo.Create(openingHnd, extrusionCreationData.GetLocalPlacement(),
-                        UnitUtil.UnscaleLength(extrusionCreationData.ScaledHeight), UnitUtil.UnscaleLength(extrusionCreationData.ScaledWidth));
+                    double unscaledHeight = UnitUtil.UnscaleLength(extrusionCreationData.ScaledHeight);
+                    double unscaledWidth = UnitUtil.UnscaleLength(extrusionCreationData.ScaledWidth);
+                    return DoorWindowOpeningInfo.Create(openingHnd, unscaledHeight, unscaledWidth);
                 }
             }
         }

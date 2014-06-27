@@ -252,6 +252,14 @@ namespace Revit.IFC.Export.Exporter
                             }
                             break;
                         }
+                    case IFCExportType.IfcSpace:
+                        {
+                            typeStyle = IFCInstanceExporter.CreateSpaceType(file, guid, ownerHistory, gentypeName,
+                               gentypeDescription, gentypeApplicableOccurrence, propertySets, repMapList, symbolTag,
+                               gentypeElementType);
+
+                            break;
+                        }
                     case IFCExportType.IfcSystemFurnitureElementType:
                         {
                             typeStyle = IFCInstanceExporter.CreateSystemFurnitureElementType(file, guid, ownerHistory, gentypeName,
@@ -290,7 +298,6 @@ namespace Revit.IFC.Export.Exporter
                             }
                             break;
                         }
-                    case IFCExportType.IfcBuildingElementProxy:
                     case IFCExportType.IfcBuildingElementProxyType:
                         {
                             Revit.IFC.Common.Enums.IFCEntityType IFCTypeEntity;
@@ -304,11 +311,11 @@ namespace Revit.IFC.Export.Exporter
                 }
 
                 if (IFCAnyHandleUtil.IsNullOrHasNoValue(typeStyle))
-                {
-                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap2dHnd))
-                        typeInfo.Map2DHandle = repMap2dHnd;
-                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap3dHnd))
-                        typeInfo.Map3DHandle = repMap3dHnd;
+                        {
+                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap2dHnd))
+                                typeInfo.Map2DHandle = repMap2dHnd;
+                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap3dHnd))
+                                typeInfo.Map3DHandle = repMap3dHnd;
                 }
             }
 
@@ -836,10 +843,10 @@ namespace Revit.IFC.Export.Exporter
                                             (exportType == IFCExportType.IfcBuildingElementProxyType));
 
                                         IFCAnyHandle localPlacementToUse = null;
-                                        ElementId roomId = setter.UpdateRoomRelativeCoordinates(familyInstance, out localPlacementToUse);
+                                    ElementId roomId = setter.UpdateRoomRelativeCoordinates(familyInstance, out localPlacementToUse);
 
                                         if (!isBuildingElementProxy && FamilyExporterUtil.IsDistributionControlElementSubType(exportType))
-                                        {
+                                    {
                                             string ifcelementType = null;
                                             ParameterUtil.GetStringValueFromElement(familyInstance.Id, "IfcElementType", out ifcelementType);
 
@@ -848,10 +855,10 @@ namespace Revit.IFC.Export.Exporter
                                                localPlacementToUse, repHnd, instanceTag, ifcelementType);
                                         }
                                         else 
-                                        {
-                                            instanceHandle = IFCInstanceExporter.CreateBuildingElementProxy(file, instanceGUID,
-                                               ownerHistory, instanceName, instanceDescription, instanceObjectType,
-                                               localPlacementToUse, repHnd, instanceTag, null);
+                                    {
+                                        instanceHandle = IFCInstanceExporter.CreateBuildingElementProxy(file, instanceGUID,
+                                           ownerHistory, instanceName, instanceDescription, instanceObjectType,
+                                           localPlacementToUse, repHnd, instanceTag, null);
                                         }
 
                                         bool containedInSpace = (roomId != ElementId.InvalidElementId);
@@ -902,8 +909,7 @@ namespace Revit.IFC.Export.Exporter
 
                     if (doorWindowInfo != null)
                     {
-                        DoorWindowDelayedOpeningCreator delayedCreator = DoorWindowDelayedOpeningCreator.Create(exporterIFC, doorWindowInfo,
-                            instanceHandle, localPlacement, setter.LevelId);
+                        DoorWindowDelayedOpeningCreator delayedCreator = DoorWindowDelayedOpeningCreator.Create(exporterIFC, doorWindowInfo, instanceHandle, setter.LevelId);
                         if (delayedCreator != null)
                             ExporterCacheManager.DoorWindowDelayedOpeningCreatorCache.Add(delayedCreator);
                     }
@@ -982,13 +988,13 @@ namespace Revit.IFC.Export.Exporter
                     RoofExporter.ExportRoof(exporterIFC, ifcEnumTypeString, element, geometryElement, productWrapper);
                     return true;
                 case IFCExportType.IfcSlab:
-                    FloorExporter.ExportFloor(exporterIFC, element, geometryElement, ifcEnumTypeString, productWrapper, false);
+                    FloorExporter.ExportGenericSlab(exporterIFC, element, geometryElement, ifcEnumTypeString, productWrapper);
                     return true;
                 case IFCExportType.IfcStair:
                     StairsExporter.ExportStairAsSingleGeometry(exporterIFC, ifcEnumTypeString, element, geometryElement, 1, productWrapper);
                     return true;
                 case IFCExportType.IfcWall:
-                    WallExporter.ExportWall(exporterIFC, element, geometryElement, productWrapper);
+                    WallExporter.ExportWall(exporterIFC, element, null, geometryElement, productWrapper);
                     return true;
             }
             return false;

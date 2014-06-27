@@ -127,7 +127,7 @@ namespace Revit.IFC.Common.Utility
             }
             throw new ArgumentException("Invalid handle.", "handle");
         }
-        
+
         /// <summary>
         /// Validates if all the handles in the collection are the instances of the desired entity type.
         /// </summary>
@@ -409,7 +409,7 @@ namespace Revit.IFC.Common.Utility
                 handle.SetAttribute(name, values);
             }
         }
-        
+
         /// <summary>
         /// Sets double aggregate attribute for the handle.
         /// </summary>
@@ -693,7 +693,7 @@ namespace Revit.IFC.Common.Utility
             }
             return aggregateAttribute;
         }
-        
+
         /// <summary>
         /// Gets aggregate attribute double values from a handle.
         /// </summary>
@@ -817,7 +817,7 @@ namespace Revit.IFC.Common.Utility
 
             if (!handle.HasValue)
                 throw new ArgumentException("Invalid handle.");
-            
+
             IFCEntityType entityType = GetIFCEntityTypeFromName(handle.TypeName);
 
             return entityType;
@@ -1013,7 +1013,7 @@ namespace Revit.IFC.Common.Utility
 
             return null;
         }
-        
+
         /// <summary>
         /// Gets the location of an IfcPlacement.
         /// </summary>
@@ -1332,7 +1332,7 @@ namespace Revit.IFC.Common.Utility
 
             if (!IsSubTypeOf(productRepresentation, IFCEntityType.IfcProductRepresentation))
                 throw new ArgumentException("The operation is not valid for this handle.");
-            
+
             IFCAggregate representationsAggr = productRepresentation.GetAttribute("Representations").AsAggregate();
             if (representationsAggr == null)
             {
@@ -1396,7 +1396,7 @@ namespace Revit.IFC.Common.Utility
 
             return null;
         }
-        
+
         /// <summary>
         /// Gets representations of a product handle.
         /// </summary>
@@ -1499,18 +1499,6 @@ namespace Revit.IFC.Common.Utility
                 SetAttribute(project, "LongName", projectLongName);
                 SetAttribute(project, "Phase", projectStatus);
             }
-        }
-
-        /// <summary>
-        /// Gets instances of an entity type from an IFC file.
-        /// </summary>
-        /// <param name="file">The file.</param>
-        /// <param name="type">The type.</param>
-        /// <param name="includeSubTypes">True to retrieve instances of sub types.</param>
-        /// <returns>The instance handles.</returns>
-        public static IList<IFCAnyHandle> GetInstances(IFCFile file, IFCEntityType type, bool includeSubTypes)
-        {
-            return file.GetInstances(GetIFCEntityTypeName(IFCEntityType.IfcProject), includeSubTypes);
         }
     }
 }

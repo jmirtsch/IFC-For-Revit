@@ -79,7 +79,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
                 ISet<ElementId> matIds = HostObjectExporter.GetFinishMaterialIds(element as HostObject);
                 foreach (ElementId matId in matIds)
                 {
-                    m_Finish += element.Document.GetElement(matId).Name + ";";
+                    Element materialElem = element.Document.GetElement(matId);
+                    if (materialElem == null)
+                        continue;
+                    m_Finish += materialElem.Name + ";";
                 }
                 return !string.IsNullOrEmpty(m_Finish);
             }

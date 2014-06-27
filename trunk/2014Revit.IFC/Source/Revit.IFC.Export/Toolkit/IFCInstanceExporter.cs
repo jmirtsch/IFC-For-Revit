@@ -1679,6 +1679,21 @@ namespace Revit.IFC.Export.Toolkit
         }
 
         /// <summary>
+        /// Creates a handle representing an IfcOpenShell and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="faces">The collection of faces.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateOpenShell(IFCFile file, HashSet<IFCAnyHandle> faces)
+        {
+            ValidateConnectedFaceSet(faces);
+
+            IFCAnyHandle openShell = CreateInstance(file, IFCEntityType.IfcOpenShell);
+            SetConnectedFaceSet(openShell, faces);
+            return openShell;
+        }
+
+        /// <summary>
         /// Creates a handle representing an IfcFaceBasedSurfaceModel and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -2407,6 +2422,33 @@ namespace Revit.IFC.Export.Toolkit
             IFCAnyHandleUtil.SetAttribute(space, "ElevationWithFlooring", elevation);
             SetSpatialStructureElement(space, guid, ownerHistory, name, description, objectType, objectPlacement, representation, longName, compositionType);
             return space;
+        }
+
+        /// <summary>
+        /// Creates an IfcSpaceType, and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="applicableOccurrence">The attribute optionally defines the data type of the occurrence object.</param>
+        /// <param name="propertySets">The property set(s) associated with the type.</param>
+        /// <param name="representationMaps">The mapped geometries associated with the type.</param>
+        /// <param name="elementTag">The tag that represents the entity.</param>
+        /// <param name="elementType">The type name.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateSpaceType(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
+            string description, string applicableOccurrence, HashSet<IFCAnyHandle> propertySets,
+            IList<IFCAnyHandle> representationMaps, string elementTag, string elementType)
+        {
+            ValidateElementType(guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+
+            IFCAnyHandle spaceType = CreateInstance(file, IFCEntityType.IfcSpaceType);
+            SetElementType(spaceType, guid, ownerHistory, name, description, applicableOccurrence, propertySets,
+                representationMaps, elementTag, elementType);
+            return spaceType;
         }
 
         /// <summary>
@@ -3174,18 +3216,31 @@ namespace Revit.IFC.Export.Toolkit
         }
 
         /// <summary>
-        /// Creates a handle representing an IfcMonetaryUnit and assigns it to the file.
+        /// Creates a handle representing an IfcMonetaryUnit and assigns it to the file for IFC2x3 and before.
         /// </summary>
         /// <param name="file">The file.</param>
         /// <param name="currencyType">The type of the currency, as supported by IFC.</param>
         /// <returns>The handle.</returns>
-        public static IFCAnyHandle CreateMonetaryUnit(IFCFile file, IFCCurrencyType currencyType)
+        public static IFCAnyHandle CreateMonetaryUnit2x3(IFCFile file, IFCCurrencyType currencyType)
         {
             IFCAnyHandle monetaryUnit = CreateInstance(file, IFCEntityType.IfcMonetaryUnit);
             IFCAnyHandleUtil.SetAttribute(monetaryUnit, "Currency", currencyType);
             return monetaryUnit;
         }
 
+        /// <summary>
+        /// Creates a handle representing an IfcMonetaryUnit and assigns it to the file for IFC4 and beyond.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="currencyType">The type of the currency, as supported by IFC.</param>
+        /// <returns>The handle.</returns>
+        public static IFCAnyHandle CreateMonetaryUnit4(IFCFile file, string currencyType)
+        {
+            IFCAnyHandle monetaryUnit = CreateInstance(file, IFCEntityType.IfcMonetaryUnit);
+            IFCAnyHandleUtil.SetAttribute(monetaryUnit, "Currency", currencyType);
+            return monetaryUnit;
+        }
+        
         /// <summary>
         /// Creates a handle representing an IfcConversionBasedUnit and assigns it to the file.
         /// </summary>
@@ -5985,6 +6040,7 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="elementTag">The tag that represents the entity.</param>
         /// <param name="elementType">The type name.</param>
         /// <returns>The handle.</returns>
+        /// <remarks>Note that for CV2.0, this type is preferred over its sub-types. However, in IFC4 it is deprecated, and will be abstract in IFC5+.</remarks>
         public static IFCAnyHandle CreateFurnishingElementType(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
             string description, string applicableOccurrence, HashSet<IFCAnyHandle> propertySets,
             IList<IFCAnyHandle> representationMaps, string elementTag, string elementType)

@@ -168,7 +168,13 @@ namespace Revit.IFC.Export.Exporter
             if (String.Compare(newValue, "STRIPFOOTING", true) == 0)
                 return "STRIP_FOOTING";
 
-            return newValue;
+            if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+            {
+                if (String.Compare(newValue, "CAISSONFOUNDATION", true) == 0)
+                    return "CAISSON_FOUNDATION";
+            }
+
+            return "NOTDEFINED";
         }
 
     }

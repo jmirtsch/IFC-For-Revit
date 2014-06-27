@@ -76,11 +76,6 @@ namespace Revit.IFC.Export.Utility
         public IFCAnyHandle HostHnd { get; protected set; }
 
         /// <summary>
-        /// The placement of door or window.
-        /// </summary>
-        public IFCAnyHandle DoorWindowPlacement { get; protected set; }
-
-        /// <summary>
         /// The level id.
         /// </summary>
         public ElementId LevelId { get; protected set; }
@@ -114,7 +109,6 @@ namespace Revit.IFC.Export.Utility
             InsertId = orig.InsertId;
             DoorWindowHnd = orig.DoorWindowHnd;
             HostHnd = orig.HostHnd;
-            DoorWindowPlacement = orig.DoorWindowPlacement;
             LevelId = orig.LevelId;
             ExtrusionData = orig.ExtrusionData;
             Solids = orig.Solids;
@@ -133,7 +127,6 @@ namespace Revit.IFC.Export.Utility
             InsertId = ElementId.InvalidElementId;
             DoorWindowHnd = null;
             HostHnd = null;
-            DoorWindowPlacement = null;
             LevelId = ElementId.InvalidElementId;
             ExtrusionData = null;
             Solids = null;
@@ -206,7 +199,6 @@ namespace Revit.IFC.Export.Utility
                 IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
 
                 IFCAnyHandle openingHnd = openingInfo.OpeningHnd;
-                IFCAnyHandle openingPlacement = openingInfo.OpeningPlacement;
                 double openingHeight = openingInfo.OpeningHeight;
                 double openingWidth = openingInfo.OpeningWidth;
 
@@ -214,15 +206,18 @@ namespace Revit.IFC.Export.Utility
                 string relGUID = GUIDUtil.CreateGUID();
                 IFCInstanceExporter.CreateRelFillsElement(file, relGUID, ownerHistory, null, null, openingHnd, DoorWindowHnd);
 
-                IFCAnyHandle origObjectPlacement = IFCAnyHandleUtil.GetObjectPlacement(DoorWindowHnd);
+                IFCAnyHandle openingPlacement = IFCAnyHandleUtil.GetObjectPlacement(openingHnd);
+                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(openingPlacement))
+                {
+                    IFCAnyHandle origObjectPlacement = IFCAnyHandleUtil.GetObjectPlacement(DoorWindowHnd);
+                    Transform relTransform = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(origObjectPlacement, openingPlacement);
 
-                Transform relTransform = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(DoorWindowPlacement, openingPlacement);
+                    IFCAnyHandle newLocalPlacement = ExporterUtil.CreateLocalPlacement(file, openingPlacement,
+                        relTransform.Origin, relTransform.BasisZ, relTransform.BasisX);
 
-                IFCAnyHandle newLocalPlacement = ExporterUtil.CreateLocalPlacement(file, openingPlacement,
-                    relTransform.Origin, relTransform.BasisZ, relTransform.BasisX);
-
-                IFCAnyHandleUtil.SetAttribute(DoorWindowHnd, "ObjectPlacement", newLocalPlacement);
-                origObjectPlacement.Delete();
+                    IFCAnyHandleUtil.SetAttribute(DoorWindowHnd, "ObjectPlacement", newLocalPlacement);
+                    origObjectPlacement.Delete();
+                }
 
                 if (IFCAnyHandleUtil.IsTypeOf(DoorWindowHnd, IFCEntityType.IfcDoor) ||
                     IFCAnyHandleUtil.IsTypeOf(DoorWindowHnd, IFCEntityType.IfcWindow))
@@ -241,11 +236,9 @@ namespace Revit.IFC.Export.Utility
         /// <param name="exporterIFC">The exporter.</param>
         /// <param name="doorWindowInfo">The DoorWindowInfo.</param>
         /// <param name="instanceHandle">The instance handle.</param>
-        /// <param name="doorWindowPlacement">The placement of door or window</param>
         /// <param name="levelId">The level id.</param>
         /// <returns>The creator.</returns>
-        public static DoorWindowDelayedOpeningCreator Create(ExporterIFC exporterIFC, DoorWindowInfo doorWindowInfo, IFCAnyHandle instanceHandle,
-            IFCAnyHandle doorWindowPlacement, ElementId levelId)
+        public static DoorWindowDelayedOpeningCreator Create(ExporterIFC exporterIFC, DoorWindowInfo doorWindowInfo, IFCAnyHandle instanceHandle, ElementId levelId)
         {
             if (exporterIFC == null || doorWindowInfo == null)
                 return null;
@@ -265,7 +258,6 @@ namespace Revit.IFC.Export.Utility
                 doorWindowDelayedOpeningCreator.InsertId = instId;
                 doorWindowDelayedOpeningCreator.PosHingeSide = doorWindowInfo.PosHingeSide;
                 doorWindowDelayedOpeningCreator.DoorWindowHnd = instanceHandle;
-                doorWindowDelayedOpeningCreator.DoorWindowPlacement = doorWindowPlacement;
                 doorWindowDelayedOpeningCreator.LevelId = levelId;
                 doorWindowDelayedOpeningCreator.CreatedFromDoorWindowInfo = true;
 
