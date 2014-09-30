@@ -55,11 +55,11 @@ namespace Revit.IFC.Import.Data
         {
             base.Process(ifcRoot);
 
-            m_GlobalId = IFCImportHandleUtil.GetRequiredStringAttribute(ifcRoot, "GlobalId", false);
-            if (Importer.TheCache.CreatedGUIDs.Contains(m_GlobalId))
-                IFCImportFile.TheLog.LogWarning(Id, "Duplicate GUID: " + m_GlobalId, false);
+            GlobalId = IFCImportHandleUtil.GetRequiredStringAttribute(ifcRoot, "GlobalId", false);
+            if (Importer.TheCache.CreatedGUIDs.Contains(GlobalId))
+                IFCImportFile.TheLog.LogWarning(Id, "Duplicate GUID: " + GlobalId, false);
             else
-                Importer.TheCache.CreatedGUIDs.Add(m_GlobalId);
+                Importer.TheCache.CreatedGUIDs.Add(GlobalId);
 
             m_Name = IFCAnyHandleUtil.GetStringAttribute(ifcRoot, "Name");
             m_Description = IFCAnyHandleUtil.GetStringAttribute(ifcRoot, "Description");
@@ -80,7 +80,7 @@ namespace Revit.IFC.Import.Data
         /// </summary>
         public virtual void CleanEntity()
         {
-            m_GlobalId = null;
+            GlobalId = null;
             m_Name = null;
             m_Description = null;
             m_OwnerHistory = null;
@@ -92,6 +92,7 @@ namespace Revit.IFC.Import.Data
         public string GlobalId
         {
             get { return m_GlobalId; }
+            protected set { m_GlobalId = value; }
         }
 
         /// <summary>

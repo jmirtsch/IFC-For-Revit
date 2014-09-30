@@ -131,6 +131,11 @@ namespace BIM.IFC.Export.UI
         public bool ExportUserDefinedPsets { get; set; }
 
         /// <summary>
+        /// The name of the file containing the user defined property sets to be exported.
+        /// </summary>
+        public string ExportUserDefinedPsetsFileName { get; set; }
+
+        /// <summary>
         /// True to export bounding box.
         /// False to exclude them.
         /// </summary>
@@ -212,6 +217,7 @@ namespace BIM.IFC.Export.UI
             this.ExportSolidModelRep              = false;
             this.ExportSchedulesAsPsets           = false;
             this.ExportUserDefinedPsets           = false;
+            this.ExportUserDefinedPsetsFileName   = "";
             this.ExportLinkedFiles                = false;
             this.IncludeSiteElevation             = false;
             this.UseCoarseTessellation            = true;
@@ -227,12 +233,13 @@ namespace BIM.IFC.Export.UI
         /// <param name="ifcVersion">The IFCVersion.</param>
         /// <param name="spaceBoundaries">The space boundary level.</param>
         /// <param name="exportBaseQuantities">The ExportBaseQuantities.</param>
-        /// <param name="splitWalls">The SplitWallsAndColumns.</param>
-        /// <param name="internalSets">The ExportInternalRevitPropertySets.</param>
-        /// <param name="schedulesAsPSets">The ExportSchedulesAsPsets.</param>
-        /// <param name="userDefinedPSets">The ExportUserDefinedPsets.</param>
-        /// <param name="PlanElems2D">The Export2DElements.</param>
-        /// <param name="exportBoundingBox">The exportBoundingBox.</param>
+        /// <param name="splitWalls">The SplitWallsAndColumns option.</param>
+        /// <param name="internalSets">The ExportInternalRevitPropertySets option.</param>
+        /// <param name="schedulesAsPSets">The ExportSchedulesAsPsets option.</param>
+        /// <param name="userDefinedPSets">The ExportUserDefinedPsets option.</param>
+        /// <param name="PlanElems2D">The Export2DElements option.</param>
+        /// <param name="exportBoundingBox">The exportBoundingBox option.</param>
+        /// <param name="exportLinkedFiles">The exportLinkedFiles option.</param>
         /// <returns>The builtIn configuration.</returns>
         public static IFCExportConfiguration CreateBuiltInConfiguration(string name,
                                    IFCVersion ifcVersion,
@@ -264,6 +271,7 @@ namespace BIM.IFC.Export.UI
             configuration.ExportSolidModelRep = false;
             configuration.ExportSchedulesAsPsets = schedulesAsPSets;
             configuration.ExportUserDefinedPsets = userDefinedPSets;
+            configuration.ExportUserDefinedPsetsFileName = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"\" + name + @".txt";
             configuration.ExportLinkedFiles = exportLinkedFiles;
             configuration.IncludeSiteElevation = false;
             configuration.UseCoarseTessellation = true;
@@ -302,6 +310,7 @@ namespace BIM.IFC.Export.UI
             this.ExportSolidModelRep = other.ExportSolidModelRep;
             this.ExportSchedulesAsPsets = other.ExportSchedulesAsPsets;
             this.ExportUserDefinedPsets = other.ExportUserDefinedPsets;
+            this.ExportUserDefinedPsetsFileName = other.ExportUserDefinedPsetsFileName;
             this.ExportLinkedFiles = other.ExportLinkedFiles;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
             this.UseCoarseTessellation = other.UseCoarseTessellation;
@@ -345,6 +354,7 @@ namespace BIM.IFC.Export.UI
             this.ExportSolidModelRep = other.ExportSolidModelRep;
             this.ExportSchedulesAsPsets = other.ExportSchedulesAsPsets;
             this.ExportUserDefinedPsets = other.ExportUserDefinedPsets;
+            this.ExportUserDefinedPsetsFileName = other.ExportUserDefinedPsetsFileName;
             this.ExportLinkedFiles = other.ExportLinkedFiles;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
             this.UseCoarseTessellation = other.UseCoarseTessellation;
@@ -363,6 +373,7 @@ namespace BIM.IFC.Export.UI
             {
                 s_inSessionConfiguration = new IFCExportConfiguration();
                 s_inSessionConfiguration.Name = Resources.InSessionConfiguration;
+                s_inSessionConfiguration.ExportUserDefinedPsetsFileName = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"\DefaultUserDefinedParameterSets.txt";
                 s_inSessionConfiguration.m_isInSession = true;
             }
 
@@ -419,6 +430,7 @@ namespace BIM.IFC.Export.UI
             options.AddOption("AlternateUIVersion", uiVersion);
 
             options.AddOption("ConfigName", Name);      // Add config name into the option for use in the exporter
+            options.AddOption("ExportUserDefinedPsetsFileName", ExportUserDefinedPsetsFileName);
         }
 
         /// <summary>
@@ -459,6 +471,9 @@ namespace BIM.IFC.Export.UI
                     new IFCExportedPropertySets(ExportInternalRevitPropertySets, ExportIFCCommonPropertySets, ExportSchedulesAsPsets, ExportUserDefinedPsets);
                 builder.AppendLine(GetDescriptionLine(Resources.PropertySets, exportedPropertySets.ToString()));
 
+                if (ExportUserDefinedPsets)
+                    builder.AppendLine(GetDescriptionLine(Resources.ExportUserDefinedPsetsFileName, ExportUserDefinedPsetsFileName));
+
                 // Sort by "do" and "don't"
                 for (int pass = 0; pass < 2; pass++)
                 {
@@ -498,7 +513,7 @@ namespace BIM.IFC.Export.UI
                 if ((bool) value)
                     return String.Format("{0}", label);
                 else
-                    return String.Format("Don't {0}", label);
+                    return String.Format(Properties.Resources.Dont, label);
             }
             else
                 return String.Format("{0}: {1}", label, value.ToString());

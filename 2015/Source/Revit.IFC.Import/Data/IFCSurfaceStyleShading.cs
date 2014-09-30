@@ -54,12 +54,12 @@ namespace Revit.IFC.Import.Data
         private IFCColourRgb m_SpecularColour = null;
         private double? m_SpecularColourFactor = null;
 
+        // Only one of these two will be set.
         private double? m_SpecularExponent = null;
+        private double? m_SpecularRoughness = null;
         
         // TODO: handle.
 
-        //private double? m_SpecularRoughness = null;
-        
         //ReflectanceMethod   :   IfcReflectanceMethodEnum;  
  
         protected IFCSurfaceStyleShading()
@@ -183,9 +183,40 @@ namespace Revit.IFC.Import.Data
         /// </summary>
         public int? GetShininess()
         {
+            int shininess = 0;
+            string warning = null;
+
+            // Assumes that m_SpecularExponent or m_SpecularShininess is set.
+            // Validates that the value is in the range [0,128].
             if (m_SpecularExponent == null)
-                return null;
-            return (int)(m_SpecularExponent.Value);
+            {
+                if (m_SpecularRoughness == null)
+                    return null;
+
+                // m_SpecularRoughness is a real from [0,1] and is the reverse of our shininess.
+                shininess = (int)((1.0 - m_SpecularRoughness.Value) * 128 + 0.5);
+
+                if ((shininess < 0) || (shininess > 128)) 
+                    warning = "Specular Roughness of " + m_SpecularRoughness.Value +" is of out range, should be between 0 and 1.";
+            }
+            else
+            {
+                shininess = (int)(m_SpecularExponent.Value);
+
+                if ((shininess < 0) || (shininess > 128))
+                    warning = "Specular Exponent of " + m_SpecularExponent.Value + " is of out range, should be between 0 and 128.";
+            }
+
+
+            if (shininess < 0) 
+                shininess = 0;
+            else if (shininess > 128) 
+                shininess = 128;
+
+            if (warning != null)
+                IFCImportFile.TheLog.LogWarning(Id, warning, true);
+
+            return shininess;
         }
 
         override protected void Process(IFCAnyHandle item)
@@ -239,7 +270,7 @@ namespace Revit.IFC.Import.Data
                         if (string.Compare(simpleType, "IfcSpecularExponent", true) == 0)
                             m_SpecularExponent = specularHighlight.AsDouble();
                         else if (string.Compare(simpleType, "IfcSpecularRoughness", true) == 0)
-                            IFCImportFile.TheLog.LogError(item.StepId, "Specular roughness not handled, ignoring.", false);
+                            m_SpecularRoughness = specularHighlight.AsDouble();
                         else
                             IFCImportFile.TheLog.LogError(item.StepId, "Unknown type of specular highlight, ignoring.", false);
                     }

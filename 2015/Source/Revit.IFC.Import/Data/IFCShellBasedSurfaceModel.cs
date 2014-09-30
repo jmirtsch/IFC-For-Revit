@@ -59,12 +59,11 @@ namespace Revit.IFC.Import.Data
         /// <param name="shapeEditScope">The shape edit scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">True if we only allow solid output.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         /// <returns>The created geometry.</returns>
         /// <remarks>As this doesn't inherit from IfcSolidModel, this is a non-virtual CreateSolid function.</remarks>
         protected IList<GeometryObject> CreateGeometry(
-              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
             if (Shells.Count == 0)
                 return null;
@@ -72,21 +71,9 @@ namespace Revit.IFC.Import.Data
             shapeEditScope.StartCollectingFaceSet();
 
             foreach (IFCConnectedFaceSet faceSet in Shells)
-                faceSet.CreateShape(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+                faceSet.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
 
-            IList<GeometryObject> geomObjs = null;
-
-            if (forceSolid)
-            {
-                geomObjs = new List<GeometryObject>();
-                GeometryObject geomObj = shapeEditScope.CreateClosedSolid(guid);
-                if (geomObj != null)
-                    geomObjs.Add(geomObj);
-            }
-            else
-            {
-                geomObjs = shapeEditScope.CreateSolidOrMesh(guid);
-            }
+            IList<GeometryObject> geomObjs = shapeEditScope.CreateGeometry(guid);
 
             if (geomObjs == null || geomObjs.Count == 0)
                return null;
@@ -116,16 +103,15 @@ namespace Revit.IFC.Import.Data
         /// <param name="shapeEditScope">The geometry creation scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">True if we force the output to be a Solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
 
             // Ignoring Inner shells for now.
             if (Shells.Count != 0)
             {
-               IList<GeometryObject> createdGeometries = CreateGeometry(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+               IList<GeometryObject> createdGeometries = CreateGeometry(shapeEditScope, lcs, scaledLcs, guid);
                if (createdGeometries != null)
                {
                    foreach (GeometryObject createdGeometry in createdGeometries)

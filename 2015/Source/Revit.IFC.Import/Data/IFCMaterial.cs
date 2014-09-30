@@ -32,15 +32,13 @@ namespace Revit.IFC.Import.Data
     /// <summary>
     /// Class to represent materials in IFC files.
     /// </summary>
-    public class IFCMaterial : IFCEntity
+    public class IFCMaterial : IFCEntity, IIFCMaterialSelect
     {
         private string m_Name = null;
 
         private IFCProductRepresentation m_MaterialDefinitionRepresentation = null;
 
         private ElementId m_CreatedElementId = ElementId.InvalidElementId;
-
-        bool m_IsValidForCreation = true;
 
         /// <summary>
         /// The name of the material.
@@ -68,16 +66,6 @@ namespace Revit.IFC.Import.Data
             if (m_CreatedElementId == ElementId.InvalidElementId && IsValidForCreation)
                 Create(IFCImportFile.TheFile.Document);
             return m_CreatedElementId; 
-        }
-
-        /// <summary>
-        /// Returns if the entity can be successfully converted into a Revit element.
-        /// This prevents repeated attempts to create an element from an invalid entity.
-        /// </summary>
-        public bool IsValidForCreation
-        {
-            get { return m_IsValidForCreation; }
-            protected set { m_IsValidForCreation = value; }
         }
 
         protected IFCMaterial()
@@ -124,6 +112,16 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
+        /// Return the material list for this IFCMaterialSelect.
+        /// </summary>
+        public IList<IFCMaterial> GetMaterials()
+        {
+            IList<IFCMaterial> materials = new List<IFCMaterial>();
+            materials.Add(this);
+            return materials;
+        }
+
+        /// <summary>
         /// Create a Revit Material.
         /// </summary>
         /// <param name="doc">The document.</param>
@@ -151,20 +149,28 @@ namespace Revit.IFC.Import.Data
             if (materialElem == null)
                 return ElementId.InvalidElementId;
 
-            if (materialInfo.Color != null)
-                materialElem.Color = materialInfo.Color;
+            // We don't want an invalid value set below to prevent creating an element; log the message and move on.
+            try
+            {
+                if (materialInfo.Color != null)
+                    materialElem.Color = materialInfo.Color;
 
-            if (materialInfo.Transparency.HasValue)
-                materialElem.Transparency = materialInfo.Transparency.Value;
+                if (materialInfo.Transparency.HasValue)
+                    materialElem.Transparency = materialInfo.Transparency.Value;
 
-            if (materialInfo.Shininess.HasValue)
-                materialElem.Shininess = materialInfo.Shininess.Value;
+                if (materialInfo.Shininess.HasValue)
+                    materialElem.Shininess = materialInfo.Shininess.Value;
 
-            if (materialInfo.Smoothness.HasValue)
-                materialElem.Smoothness = materialInfo.Smoothness.Value;
+                if (materialInfo.Smoothness.HasValue)
+                    materialElem.Smoothness = materialInfo.Smoothness.Value;
+            }
+            catch (Exception ex)
+            {
+                IFCImportFile.TheLog.LogError(id, "Couldn't set some Material values: " + ex.Message, false);
+            }
 
             string comment = "Created Material: " + revitMaterialName + " with color: (" +
-                materialElem.Color.Red + ", " + materialElem.Color.Green + ", " + materialElem.Color.Blue + 
+                materialElem.Color.Red + ", " + materialElem.Color.Green + ", " + materialElem.Color.Blue +
                 ") transparency: " + materialElem.Transparency + " shininess: " + materialElem.Shininess +
                 " smoothness: " + materialElem.Smoothness;
             IFCImportFile.TheLog.LogComment(id, comment, false);

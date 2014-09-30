@@ -111,7 +111,7 @@ namespace Revit.IFC.Import.Data
         {
             // We may re-use the ActiveView Level and View, since we can't delete them.
             // We will consider that we "created" this level and view for creation metrics.
-            Level level = Importer.TheCache.UseElementByGUID<Level>(doc, GlobalId.ToString());
+            Level level = Importer.TheCache.UseElementByGUID<Level>(doc, GlobalId);
 
             bool reusedLevel = false;
             bool foundLevel = false;

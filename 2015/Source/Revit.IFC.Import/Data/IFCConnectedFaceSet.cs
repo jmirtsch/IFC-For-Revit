@@ -95,17 +95,16 @@ namespace Revit.IFC.Import.Data
         /// </summary>
         /// <param name="shapeEditScope">The geometry creation scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry.</param>
-        /// <param name="forceSolid">True if we require a solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
 
             foreach (IFCFace face in Faces)
             {
                 try
                 {
-                    face.CreateShape(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+                    face.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
                 }
                 catch (Exception ex)
                 {

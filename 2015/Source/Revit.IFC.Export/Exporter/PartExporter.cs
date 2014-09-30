@@ -644,8 +644,9 @@ namespace Revit.IFC.Export.Exporter
             double extension = LevelUtil.GetLevelExtension();
             ElementId theSplitLevelId = ElementId.InvalidElementId;
             BoundingBoxXYZ boundingBox = part.get_BoundingBox(null);
+            
             // The levels should have been sorted.
-            List<ElementId> levelIds = ExporterCacheManager.LevelInfoCache.LevelsByElevation;
+            IList<ElementId> levelIds = ExporterCacheManager.LevelInfoCache.BuildingStoreysByElevation;
             // Find the nearest bottom level.
             foreach (ElementId levelId in levelIds)
             {

@@ -38,8 +38,6 @@ namespace Revit.IFC.Import.Data
 
         private ElementId m_CreatedElementId = ElementId.InvalidElementId;
 
-        bool m_IsValidForCreation = true;
-
         /// <summary>
         /// Get the IFCSurfaceStyleShading, if it is set.
         /// </summary>
@@ -56,16 +54,6 @@ namespace Revit.IFC.Import.Data
         {
             get { return m_SurfaceSide; }
             protected set { m_SurfaceSide = value; }
-        }
-
-        /// <summary>
-        /// Returns if the entity can be successfully converted into a Revit element.
-        /// This prevents repeated attempts to create an element from an invalid entity.
-        /// </summary>
-        public bool IsValidForCreation
-        {
-            get { return m_IsValidForCreation; }
-            protected set { m_IsValidForCreation = value; }
         }
 
         protected IFCSurfaceStyle()

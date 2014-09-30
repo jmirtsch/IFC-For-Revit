@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Common.Utility;
@@ -81,33 +82,100 @@ namespace Revit.IFC.Import.Data
             IsOuter = (IFCAnyHandleUtil.IsSubTypeOf(ifcFaceBound, IFCEntityType.IfcFaceOuterBound));
         }
 
+        private string GenerateShortDistanceCommentString(double dist, double shortSegmentTolerance, int lastVertex, int currIdx, bool tryAsSolid)
+        {
+            string distAsString = UnitFormatUtils.Format(IFCImportFile.TheFile.Document.GetUnits(), UnitType.UT_Length, dist, true, false);
+            string shortDistAsString = UnitFormatUtils.Format(IFCImportFile.TheFile.Document.GetUnits(), UnitType.UT_Length, shortSegmentTolerance, true, false);
+            string warningString = "Distance between vertices " + lastVertex + " and " + currIdx +
+            " is " + distAsString + ", which is less than the minimum " + (tryAsSolid ? "Solid" : "Mesh") +
+            " distance of " + shortDistAsString + ", removing second point.";
+
+            return warningString;
+        }
+
         /// <summary>
         /// Create geometry for a particular representation item.
         /// </summary>
         /// <param name="shapeEditScope">The geometry creation scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">True if we require a solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
 
-            IList<XYZ> loopVertexes = Bound.LoopVertexes;
-            if (loopVertexes == null || loopVertexes.Count == 0)
-                throw new InvalidOperationException("#" + Id + ": missing loop vertexes, ignoring.");
+            IList<XYZ> loopVertices = Bound.LoopVertices;
+            int count = 0;
+            if (loopVertices == null || ((count = loopVertices.Count) == 0))
+                throw new InvalidOperationException("#" + Id + ": missing loop vertices, ignoring.");
+
+            if (count < 3)
+                throw new InvalidOperationException("#" + Id + ": too few loop vertices (" + count + "), ignoring.");
 
             if (!Orientation)
-                loopVertexes.Reverse();
+                loopVertices.Reverse();
 
             // Apply the transform
-            IList<XYZ> transformedVertexes = new List<XYZ>();
-            foreach (XYZ vertex in loopVertexes)
+            IList<XYZ> transformedVertices = new List<XYZ>();
+            foreach (XYZ vertex in loopVertices)
             {
-                transformedVertexes.Add(scaledLcs.OfPoint(vertex));
+                transformedVertices.Add(scaledLcs.OfPoint(vertex));
             }
 
-            shapeEditScope.AddLoopVertexes(transformedVertexes);
+            // The tolerance we use to determine if loop vertices are too close to one another is based on what type of data 
+            // we are trying to create.  If we are trying to create a Solid, then we must have vertices that are further apart than ShortCurveTolerance.
+            // If we are trying to cerate a Mesh, then the smaller VertexTolerance is acceptable.
+            double shortSegmentTolerance = shapeEditScope.TryToCreateSolid() ?
+                shapeEditScope.Document.Application.ShortCurveTolerance :
+                shapeEditScope.Document.Application.VertexTolerance;
+
+            // Check that the loop vertices don't contain points that are very close to one another;
+            // if so, throw the point away and hope that the TessellatedShapeBuilder can repair the result.
+            // Warn in this case.  If the entire boundary is bad, report an error and don't add the loop vertices.
+            IList<XYZ> validVertices = new List<XYZ>();
+            int lastVertex = 0;
+            for (int ii = 1; ii <= count; ii++)
+            {
+                int currIdx = (ii % count);
+
+                double dist = transformedVertices[lastVertex].DistanceTo(transformedVertices[currIdx]);
+                if (dist >= shortSegmentTolerance)
+                {
+                    validVertices.Add(transformedVertices[lastVertex]);
+                    lastVertex = currIdx;
+                }
+                else
+                {
+                    string warningString = GenerateShortDistanceCommentString(dist, shortSegmentTolerance, lastVertex, currIdx, shapeEditScope.TryToCreateSolid());
+                    IFCImportFile.TheLog.LogComment(Id, warningString, false);
+                }
+            }
+
+            // We are going to catch any exceptions if the loop is invalid.  
+            // We are going to hope that we can heal the parent object in the TessellatedShapeBuilder.
+            bool bPotentiallyAbortFace = false;
+
+            count = validVertices.Count;
+            if (validVertices.Count < 3)
+            {
+                IFCImportFile.TheLog.LogComment(Id, "Too few distinct loop vertices (" + count + "), ignoring.", false);
+                bPotentiallyAbortFace = true;
+            }
+            else
+            {
+                try
+                {
+                    shapeEditScope.AddLoopVertices(validVertices);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    IFCImportFile.TheLog.LogComment(Id, ex.Message, false);
+                    bPotentiallyAbortFace = true;
+                }
+            }
+
+            if (bPotentiallyAbortFace && IsOuter)
+                shapeEditScope.AbortCurrentFace();
         }
 
         protected IFCFaceBound(IFCAnyHandle ifcFaceBound)

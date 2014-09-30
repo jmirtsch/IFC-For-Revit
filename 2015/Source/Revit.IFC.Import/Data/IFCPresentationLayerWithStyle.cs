@@ -36,8 +36,6 @@ namespace Revit.IFC.Import.Data
 
         ElementId m_CreatedMaterialElementId = ElementId.InvalidElementId;
 
-        bool m_IsValidForCreation = true;
-
         /// <summary>
         /// Get the presentation styles for this IFCPresentationLayerWithStyle.
         /// </summary>
@@ -86,16 +84,6 @@ namespace Revit.IFC.Import.Data
         public override ElementId GetMaterialElementId(IFCImportShapeEditScope shapeEditScope)
         {
             return CreatedMaterialElementId;
-        }
-
-        /// <summary>
-        /// Returns if the entity can be successfully converted into a Revit element.
-        /// This prevents repeated attempts to create an element from an invalid entity.
-        /// </summary>
-        public bool IsValidForCreation
-        {
-            get { return m_IsValidForCreation; }
-            protected set { m_IsValidForCreation = value; }
         }
 
         override protected void Process(IFCAnyHandle item)

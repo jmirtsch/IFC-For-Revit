@@ -40,32 +40,28 @@ namespace Revit.IFC.Import.Data
 
         ICollection<IFCGroup> m_AssignmentGroups = null; //HasAssignments
 
-        bool m_IsValidForCreation = true;
-
         // Many sub-classes of IfcObjectDefinition have an Enum defining the type.
         // Store that information here.
         string m_ShapeType = null;
 
         protected ElementId m_CreatedElementId = ElementId.InvalidElementId;
 
-        protected ElementId m_CategoryId = ElementId.InvalidElementId;
+        private ElementId m_CategoryId = ElementId.InvalidElementId;
 
         protected ElementId m_GraphicsStyleId = ElementId.InvalidElementId;
 
-        private IList<IFCMaterial> m_Materials = null;
+        private IIFCMaterialSelect m_MaterialSelect = null;
 
         private IFCMaterial m_TheMaterial = null;
         private bool m_TheMaterialIsSet = false;
 
-        private bool m_DelayCleanEntity = false;
-
         /// <summary>
-        /// Delay cleaning the entity after CreateElement, used if we are gathering information from the entity.
+        /// The category id corresponding to the element created for this IFCObjectDefinition.
         /// </summary>
-        public bool DelayCleanEntity
+        public ElementId CategoryId
         {
-            get { return m_DelayCleanEntity; }
-            set { m_DelayCleanEntity = value; }
+            get { return m_CategoryId; }
+            protected set { m_CategoryId = value; }
         }
 
         /// <summary>
@@ -77,16 +73,28 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
+        /// The IFCMaterialSelect associated with the element.
+        /// </summary>
+        public IIFCMaterialSelect MaterialSelect
+        {
+            get { return m_MaterialSelect; }
+            protected set { m_MaterialSelect = value; }
+        }
+
+        /// <summary>
         /// The list of materials directly associated with the element.  There may be more at the type level.
         /// </summary>
-        public IList<IFCMaterial> Materials
+        /// <returns>A list, possibly empty, of materials directly associated with the element.</returns>
+        public IList<IFCMaterial> GetMaterials()
         {
-            get
-            {
-                if (m_Materials == null)
-                    m_Materials = new List<IFCMaterial>();
-                return m_Materials;
-            }
+            IList<IFCMaterial> materials = null;
+            if (MaterialSelect != null)
+                materials = MaterialSelect.GetMaterials();
+
+            if (materials == null)
+                return new List<IFCMaterial>();
+
+            return materials;
         }
 
         /// <summary>
@@ -97,27 +105,31 @@ namespace Revit.IFC.Import.Data
         {
             if (!m_TheMaterialIsSet)
             {
+                IList<IFCMaterial> materials = GetMaterials();
+
                 m_TheMaterialIsSet = true;
                 IFCMaterial theMaterial = null;
-                if (Materials.Count > 1)
+                if (materials.Count > 1)
                     return null;
 
-                if (Materials.Count == 1)
-                    theMaterial = Materials[0];
+                if (materials.Count == 1)
+                    theMaterial = materials[0];
 
                 if (this is IFCObject)
                 {
                     IFCObject asObject = this as IFCObject;
                     foreach (IFCTypeObject typeObject in asObject.TypeObjects)
                     {
-                        if (typeObject.Materials.Count > 1)
+                        IList<IFCMaterial> typeMaterials = typeObject.GetMaterials();
+
+                        if (typeMaterials.Count > 1)
                             return null;
 
-                        if (typeObject.Materials.Count == 1)
+                        if (typeMaterials.Count == 1)
                         {
-                            if (theMaterial != null && theMaterial.Id != typeObject.Materials[0].Id)
+                            if (theMaterial != null && theMaterial.Id != typeMaterials[0].Id)
                                 return null;
-                            theMaterial = typeObject.Materials[0];
+                            theMaterial = typeMaterials[0];
                         }
                     }
                 }
@@ -161,16 +173,6 @@ namespace Revit.IFC.Import.Data
         {
             get { return m_CreatedElementId; }
             protected set { m_CreatedElementId = value; }
-        }
-
-        /// <summary>
-        /// Returns if the entity can be successfully converted into a Revit element.
-        /// This prevents repeated attempts to create an element from an invalid entity.
-        /// </summary>
-        public bool IsValidForCreation
-        {
-            get { return m_IsValidForCreation; }
-            protected set { m_IsValidForCreation = value; }
         }
 
         /// <summary>
@@ -221,10 +223,8 @@ namespace Revit.IFC.Import.Data
         /// <param name="doc">The document.</param>
         protected override void Create(Document doc)
         {
-            foreach (IFCMaterial material in Materials)
-            {
-                material.Create(doc);
-            } 
+            if (MaterialSelect != null)
+                MaterialSelect.Create(doc);
             
             base.Create(doc);
 
@@ -244,7 +244,7 @@ namespace Revit.IFC.Import.Data
 
             m_ShapeType = null;
 
-            m_Materials = null;
+            m_MaterialSelect = null;
 
             m_TheMaterial = null;
         
@@ -279,7 +279,7 @@ namespace Revit.IFC.Import.Data
                     // We aren't yet actually grouping the elements.  DirectShape doesn't support grouping, and
                     // the Group element doesn't support adding parameters.  For now, we will create a DirectShape that "forgets"
                     // the association, which is good enough for link.
-                    DirectShape directShape = IFCElementUtil.CreateElement(doc, m_CategoryId, Importer.ImportAppGUID(), GlobalId);
+                    DirectShape directShape = IFCElementUtil.CreateElement(doc, CategoryId, Importer.ImportAppGUID(), GlobalId);
                     //Group group = doc.Create.NewGroup(subElementIds);
                     if (directShape != null)
                         CreatedElementId = directShape.Id;
@@ -327,9 +327,7 @@ namespace Revit.IFC.Import.Data
                 foreach (IFCAnyHandle hasAssociation in hasAssociations)
                 {
                     if (IFCAnyHandleUtil.IsSubTypeOf(hasAssociation, IFCEntityType.IfcRelAssociatesMaterial))
-                    {
                         ProcessIFCRelAssociatesMaterial(hasAssociation);
-                    }
                     else
                         IFCImportFile.TheLog.LogUnhandledSubTypeError(hasAssociation, IFCEntityType.IfcRelAssociates, false);
                 }
@@ -355,76 +353,27 @@ namespace Revit.IFC.Import.Data
         /// <param name="ifcRelAssociatesMaterial">The IfcRelAssociatesMaterial handle.</param>
         void ProcessIFCRelAssociatesMaterial(IFCAnyHandle ifcRelAssociatesMaterial)
         {
-            IFCAnyHandle materialSelect = IFCAnyHandleUtil.GetInstanceAttribute(ifcRelAssociatesMaterial, "RelatingMaterial");
+            IFCAnyHandle ifcMaterialSelect = IFCAnyHandleUtil.GetInstanceAttribute(ifcRelAssociatesMaterial, "RelatingMaterial");
 
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(materialSelect))
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialSelect))
             {
                 IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcRelAssociatesMaterial);
                 return;
             }
 
-            List<IFCAnyHandle> materialHandles = new List<IFCAnyHandle>();
-
-            // NOTE: this is only complete for the reference case.
-            if (IFCAnyHandleUtil.IsSubTypeOf(materialSelect, IFCEntityType.IfcMaterial))
-            {
-                materialHandles.Add(materialSelect);
-            }
-            else if (IFCAnyHandleUtil.IsSubTypeOf(materialSelect, IFCEntityType.IfcMaterialList))
-            {
-                materialHandles = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(materialSelect, "Materials");
-            }
+            // Deal with various types of IFCMaterialSelect.
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterial))
+                MaterialSelect = IFCMaterial.ProcessIFCMaterial(ifcMaterialSelect);
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialLayer))
+                MaterialSelect = IFCMaterialLayer.ProcessIFCMaterialLayer(ifcMaterialSelect);
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialLayerSet))
+                MaterialSelect = IFCMaterialLayerSet.ProcessIFCMaterialLayerSet(ifcMaterialSelect);
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialLayerSetUsage))
+                MaterialSelect = IFCMaterialLayerSetUsage.ProcessIFCMaterialLayerSetUsage(ifcMaterialSelect);
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialList))
+                MaterialSelect = IFCMaterialList.ProcessIFCMaterialList(ifcMaterialSelect);
             else
-            {
-                IFCAnyHandle materialSelectToUse = materialSelect;
-                List<IFCAnyHandle> materialLayers = new List<IFCAnyHandle>();
-
-                if (IFCAnyHandleUtil.IsSubTypeOf(materialSelect, IFCEntityType.IfcMaterialLayerSetUsage))
-                {
-                    materialSelectToUse = IFCImportHandleUtil.GetRequiredInstanceAttribute(materialSelect, "ForLayerSet", false);
-                }
-                else if (IFCAnyHandleUtil.IsSubTypeOf(materialSelect, IFCEntityType.IfcMaterialLayer))
-                {
-                    materialLayers.Add(materialSelect);
-                }
-
-                // The IfcMaterialLayerSet may come directly from the MaterialSelect, or indirectly from IfcMaterialLayerSetUsage.
-                if (IFCAnyHandleUtil.IsSubTypeOf(materialSelectToUse, IFCEntityType.IfcMaterialLayerSet))
-                    materialLayers = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(materialSelectToUse, "MaterialLayers");
-
-                if (materialLayers.Count == 0)
-                {
-                    IFCImportFile.TheLog.LogUnhandledSubTypeError(materialSelect, "MaterialSelect", false);
-                    return;
-                }
-
-                foreach (IFCAnyHandle materialLayer in materialLayers)
-                {
-                    IFCAnyHandle associatedMaterial = IFCImportHandleUtil.GetOptionalInstanceAttribute(materialLayer, "Material");
-                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(associatedMaterial))
-                        materialHandles.Add(associatedMaterial);
-                }
-            }
-
-            if (materialHandles == null || materialHandles.Count == 0)
-            {
-                IFCImportFile.TheLog.LogError(materialSelect.StepId, "Missing material handles.", false);
-                return;
-            }
-
-            foreach (IFCAnyHandle materialHandle in materialHandles)
-            {
-                try
-                {
-                    IFCMaterial material = IFCMaterial.ProcessIFCMaterial(materialHandle);
-                    if (material != null)
-                        Materials.Add(material);
-                }
-                catch (Exception ex)
-                {
-                    IFCImportFile.TheLog.LogError(materialHandle.StepId, ex.Message, false);
-                }
-            }
+                IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcMaterialSelect, "IfcMaterialSelect", false);
         }
 
         /// <summary>
@@ -504,6 +453,20 @@ namespace Revit.IFC.Import.Data
             return IFCNamingUtil.CleanIFCName(Name);
         }
 
+        // In general, we want every created element to have the Element.Name propery set.
+        // The list below corresponds of element types where the name is not set by the IFCObjectDefinition directly, 
+        // but instead by some other mechanism.
+        private bool CanSetRevitName(Element element)
+        {
+            // Grids have their name set by IFCGridAxis, which does not inherit from IfcObjectDefinition.
+            return (element != null && !(element is Grid));
+        }
+
+        /// <summary>
+        /// Set the Element.Name property if possible, and add an "IfcName" parameter to an element containing the original name of the generating entity. 
+        /// </summary>
+        /// <param name="doc">The document.</param>
+        /// <param name="element">The created element.</param>
         private void SetName(Document doc, Element element)
         {
             string revitName = GetName(null);
@@ -511,23 +474,62 @@ namespace Revit.IFC.Import.Data
             {
                 try
                 {
-                    element.Name = revitName;
+                    if (CanSetRevitName(element))
+                        element.Name = revitName;
                 }
                 catch
                 {
                 }
-
-                // 2015: Revit links don't show the name of a selected item inside the link.
-                // 2015: DirectShapes don't have a built-in "Name" parameter.
-                IFCPropertySet.AddParameterString(doc, element, "IfcName", Name, Id);
             }
+
+            string name = string.IsNullOrWhiteSpace(Name) ? "" : Name;
+            // 2015: Revit links don't show the name of a selected item inside the link.
+            // 2015: DirectShapes don't have a built-in "Name" parameter.
+            IFCPropertySet.AddParameterString(doc, element, "IfcName", Name, Id);
         }
 
+        /// <summary>
+        /// Add a parameter "IfcDescription" to an element containing the description of the generating entity. 
+        /// If the element has the built-in parameter ALL_MODEL_DESCRIPTION, populate that also.
+        /// </summary>
+        /// <param name="doc">The document.</param>
+        /// <param name="element">The created parameter.</param>
         private void SetDescription(Document doc, Element element)
         {
-            IFCPropertySet.AddParameterString(doc, element, "IfcDesciption", Description, Id);
+            // If the element has the built-in ALL_MODEL_DESCRIPTION parameter, populate that also.
+            // We will create/populate the parameter even if the description is empty or null.
+            string description = string.IsNullOrWhiteSpace(Description) ? "" : Description;
+            Parameter descriptionParameter = element.get_Parameter(BuiltInParameter.ALL_MODEL_DESCRIPTION);
+            if (descriptionParameter != null)
+                descriptionParameter.SetValueString(description);
+            IFCPropertySet.AddParameterString(doc, element, "IfcDescription", description, Id);
         }
 
+        /// <summary>
+        /// Add a parameter "IfcMaterial" to an element containing the name(s) of the materals of the generating entity. 
+        /// </summary>
+        /// <param name="doc">The document.</param>
+        /// <param name="element">The created parameter.</param>
+        /// <remarks>Note that this field contains the names of the materials, and as such is not parametric in any way.</remarks>
+        private void setMaterialParameter(Document doc, Element element)
+        {
+            IList<IFCMaterial> materials = GetMaterials();
+            string materialNames = null;
+            foreach (IFCMaterial material in materials)
+            {
+                string name = material.Name;
+                if (string.IsNullOrWhiteSpace(name))
+                    continue;
+
+                if (materialNames == null)
+                    materialNames = name;
+                else
+                    materialNames += ";" + name;
+            }
+
+            if (materialNames != null)
+                IFCPropertySet.AddParameterString(doc, element, "IfcMaterial", materialNames, Id);
+        }
 
         /// <summary>
         /// Create property sets for a given element.
@@ -543,12 +545,14 @@ namespace Revit.IFC.Import.Data
         {
             if (element != null)
             {
-
                 // Set the element name.
                 SetName(doc, element);
 
                 // Set the element description.
                 SetDescription(doc, element);
+
+                // The list of materials.
+                setMaterialParameter(doc, element);
 
                 // Set the element GUID.
                 bool elementIsType = (element is ElementType);
@@ -563,11 +567,6 @@ namespace Revit.IFC.Import.Data
                 string ifcExportAs = IFCCategoryUtil.GetCustomCategoryName(this);
                 if (!string.IsNullOrWhiteSpace(ifcExportAs))
                     IFCPropertySet.AddParameterString(doc, element, "IfcExportAs", ifcExportAs, Id);
-
-                // Set "Description" parameter.
-                string description = Description;
-                if (!string.IsNullOrWhiteSpace(description))
-                    IFCPropertySet.AddParameterString(doc, element, "IfcDescription", description, Id);
 
                 // Add property set-based parameters.
                 // We are going to create this "fake" parameter so that we can filter elements in schedules based on their property sets.
@@ -602,7 +601,8 @@ namespace Revit.IFC.Import.Data
         /// <remarks>May contain InvalidElementId; the caller is expected to remove it.</remarks>
         public virtual void GetCreatedElementIds(ISet<ElementId> createdElementIds)
         {
-            createdElementIds.Add(CreatedElementId);
+            if (CreatedElementId != ElementId.InvalidElementId)
+                createdElementIds.Add(CreatedElementId);
         }
 
         /// <summary>
@@ -620,7 +620,7 @@ namespace Revit.IFC.Import.Data
                 if ((createdElementId == ElementId.InvalidElementId) && objDef.IsValidForCreation)
                 {
                     ElementId gstyleId;
-                    objDef.m_CategoryId = IFCCategoryUtil.GetCategoryIdForEntity(doc, objDef, out gstyleId);
+                    objDef.CategoryId = IFCCategoryUtil.GetCategoryIdForEntity(doc, objDef, out gstyleId);
                     objDef.m_GraphicsStyleId = gstyleId;
 
                     if (objDef is IFCObject)
@@ -635,7 +635,7 @@ namespace Revit.IFC.Import.Data
                     createdElementId = objDef.CreatedElementId;
                     IFCImportFile.TheLog.AddCreatedEntity(doc, objDef);
 
-                    if (IFCImportFile.CleanEntitiesAfterCreate && !objDef.DelayCleanEntity)
+                    if (IFCImportFile.CleanEntitiesAfterCreate)
                         objDef.CleanEntity();
                 }
             }

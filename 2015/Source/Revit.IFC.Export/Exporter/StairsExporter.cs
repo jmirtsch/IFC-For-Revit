@@ -559,7 +559,7 @@ namespace Revit.IFC.Export.Exporter
                         ecData.SetLocalPlacement(placementSetter.LocalPlacement);
                         ecData.ReuseLocalPlacement = false;
 
-                        GeometryElement stairsGeom = GeometryUtil.GetOneLevelGeometryElement(geometryElement);
+                        GeometryElement stairsGeom = GeometryUtil.GetOneLevelGeometryElement(geometryElement, numFlights);
 
                         BodyData bodyData;
                         ElementId categoryId = CategoryUtil.GetSafeCategoryId(stair);

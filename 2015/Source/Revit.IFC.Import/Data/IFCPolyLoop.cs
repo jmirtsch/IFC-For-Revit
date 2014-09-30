@@ -46,6 +46,7 @@ namespace Revit.IFC.Import.Data
                     m_Polygon = new List<XYZ>();
                 return m_Polygon;
             }
+            protected set { m_Polygon = value; }
         }
 
         protected IFCPolyLoop()
@@ -58,10 +59,11 @@ namespace Revit.IFC.Import.Data
 
             List<IFCAnyHandle> ifcPolygon = 
                 IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcPolyLoop, "Polygon");
-            foreach (IFCAnyHandle ifcVertex in ifcPolygon)
-            {
-                Polygon.Add(IFCPoint.ProcessScaledLengthIFCCartesianPoint(ifcVertex));
-            }
+            
+            if (ifcPolygon == null)
+                return; // TODO: WARN
+
+            Polygon = IFCPoint.ProcessScaledLengthIFCCartesianPoints(ifcPolygon);
 
             int numVertices = Polygon.Count;
             if (numVertices > 1)
@@ -91,7 +93,7 @@ namespace Revit.IFC.Import.Data
             return IFCGeometryUtil.CreatePolyCurveLoop(polygon, null, Id, true);
         }
 
-        override protected IList<XYZ> GenerateLoopVertexes()
+        override protected IList<XYZ> GenerateLoopVertices()
         {
            return Polygon;
         }

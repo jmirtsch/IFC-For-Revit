@@ -35,14 +35,16 @@ namespace Revit.IFC.Import.Data
     /// </summary>
     public class IFCProject : IFCObject
     {
-        List<double> m_TrueNorthDirection = null;
+        private IList<double> m_TrueNorthDirection = null;
 
-        HashSet<IFCUnit> m_UnitsInContext = null;
+        private ISet<IFCUnit> m_UnitsInContext = null;
+
+        private IDictionary<string, IFCGridAxis> m_GridAxes = null;
 
         /// <summary>
         /// The true north direction of the project.
         /// </summary>
-        public List<double> TrueNorthDirection
+        public IList<double> TrueNorthDirection
         {
             get { return m_TrueNorthDirection; }
         }
@@ -50,7 +52,7 @@ namespace Revit.IFC.Import.Data
         /// <summary>
         /// The units in the project.
         /// </summary>
-        public HashSet<IFCUnit> UnitsInContext
+        public ISet<IFCUnit> UnitsInContext
         {
             get { return m_UnitsInContext; }
         }
@@ -134,6 +136,19 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
+        /// The list of grid axes in this IFCProject, sorted by Revit name.
+        /// </summary>
+        public IDictionary<string, IFCGridAxis> GridAxes
+        {
+            get
+            {
+                if (m_GridAxes == null)
+                    m_GridAxes = new Dictionary<string, IFCGridAxis>();
+                return m_GridAxes;
+            }
+        }
+
+        /// <summary>
         /// Creates or populates Revit elements based on the information contained in this class.
         /// </summary>
         /// <param name="doc">The document.</param>
@@ -158,6 +173,17 @@ namespace Revit.IFC.Import.Data
                 }
             }
             doc.SetUnits(documentUnits);
+
+            // We will randomize unused grid names so that they don't conflict with new entries with the same name.
+            // This is only for relink.
+            foreach (ElementId gridId in Importer.TheCache.GridNameToElementMap.Values)
+            {
+                Grid grid = doc.GetElement(gridId) as Grid;
+                if (grid == null)
+                    continue;
+
+                grid.Name = new Guid().ToString();
+            }
 
             base.Create(doc);
         }

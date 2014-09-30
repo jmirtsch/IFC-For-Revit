@@ -133,9 +133,8 @@ namespace Revit.IFC.Import.Data
         /// <param name="shapeEditScope">The geometry creation scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">True if we require a solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        public void CreateShape(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+        public void CreateShape(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
             if (StyledByItem != null)
                 StyledByItem.Create(shapeEditScope);
@@ -145,7 +144,7 @@ namespace Revit.IFC.Import.Data
             
             using (IFCImportShapeEditScope.IFCMaterialStack stack = new IFCImportShapeEditScope.IFCMaterialStack(shapeEditScope, StyledByItem, LayerAssignment))
             {
-                CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+                CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
             }
         }
 
@@ -154,9 +153,8 @@ namespace Revit.IFC.Import.Data
         /// </summary>
         /// <param name="shapeEditScope">The geometry creation scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry.</param>
-        /// <param name="forceSolid">True if we require a solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        virtual protected void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+        virtual protected void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
         }
 
@@ -173,6 +171,8 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcBooleanResult))
                 return IFCBooleanResult.ProcessIFCBooleanResult(ifcRepresentationItem);
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcConnectedFaceSet))
+                return IFCConnectedFaceSet.ProcessIFCConnectedFaceSet(ifcRepresentationItem);
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcCurve))
                 return IFCCurve.ProcessIFCCurve(ifcRepresentationItem);
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcFaceBasedSurfaceModel))

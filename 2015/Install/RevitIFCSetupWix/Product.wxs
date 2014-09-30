@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
    
-	<Product Id="B2BD2144-4491-4005-BE0A-7FFD3C186FE9" Name="Revit IFC 2015" Language="1033" Version="15.1.0.0" Manufacturer="Autodesk" UpgradeCode="D125CBE4-F927-41EE-869F-8A39845EFAEA">
+	<Product Id="32B28083-C8CA-482E-8940-2805016BF990" Name="Revit IFC 2015" Language="1033" Version="15.2.0.0" Manufacturer="Autodesk" UpgradeCode="D125CBE4-F927-41EE-869F-8A39845EFAEA">
 		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
 		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
@@ -16,10 +16,13 @@
       <WixVariable Id="WixUILicenseRtf" Value="$(var.ProjectDir)..\Program Files to Install\LICENSE.rtf"></WixVariable>
       <WixVariable Id="WixUIBannerBmp" Value="$(var.ProjectDir)..\Program Files to Install\Autodesk Logo.bmp" />
       <WixVariable Id="WixUIDialogBmp" Value="$(var.ProjectDir)..\Program Files to Install\Adsk_sidebar_501x314.jpg" />
-
-		<Feature Id="ProductFeature" Title="Revit IFC 2015" Level="1" ConfigurableDirectory='INSTALLDIR'>
+      <WixVariable Id="WixUIDefUserDefTxt" Value="$(var.ProjectDir)..\Program Files to Install\DefaultUserDefinedParameterSets.txt"></WixVariable>
+      <WixVariable Id="WixUICOBieUserDefTxt" Value="$(var.ProjectDir)..\Program Files to Install\IFC2x3 Extended FM HandOver View.txt"></WixVariable>
+      
+      <Feature Id="ProductFeature" Title="Revit IFC 2015" Level="1" ConfigurableDirectory='INSTALLDIR'>
 			<ComponentGroupRef Id="ProductComponents" />
          <ComponentGroupRef Id="ProductResourceComponents" />
+         <ComponentGroupRef Id="ProductFRFiles" />
          <ComponentGroupRef Id="AddinComponents" />
 		</Feature>
       <Feature Id="ProductDocumentation" Title="Revit IFC Documentation" Level="1000" ConfigurableDirectory='INSTALLRESOURCE'>
@@ -36,6 +39,7 @@
 			<Directory Id="ProgramFilesFolder">
 				<Directory Id="INSTALLDIR" Name="Revit IFC 2015">
                <Directory Id="INSTALLRESOURCE" Name="Resource" />
+               <Directory Id="INSTALLFRUI" Name="fr" />
             </Directory>
 			</Directory>
    
@@ -70,9 +74,15 @@
          </Component>
          <Component Id = "COMP_IFC_ExternalUI_DLL" Guid="D7F89B58-029F-4062-B226-6F3D2EB7FE5D">
             <File Id ="FILE_Ifc_ExternalUI_DLL" Name="IFCExportUIOverride.dll" Source="$(var.ProjectDir)..\..\..\..\..\ReleaseX64\IFCExportUIOverride.dll" KeyPath="yes" />
-         </Component>  
+         </Component>
          <Component Id = "COMP_LICENSE_RTF" Guid="9F0851DD-3A43-4D49-AC8C-8B8D2F394A91">
             <File Id ="FILE_LICENSE_RTF" Name="LICENSE.rtf" Source="$(var.ProjectDir)..\Program Files to Install\LICENSE.rtf" KeyPath="yes" />
+         </Component>
+         <Component Id = "COMP_DEFAULT_USERDEF_TXT" Guid="A269554D-2E77-4DA1-8942-EBF6CC297C09">
+            <File Id ="FILE_DEFAULT_USERDEF_TXT" Name="DefaultUserDefinedParameterSets.txt" Source="$(var.ProjectDir)..\Program Files to Install\DefaultUserDefinedParameterSets.txt" KeyPath="yes" />
+         </Component>
+         <Component Id = "COMP_COBIE_USERDEF_TXT" Guid="2981DA7F-F990-409A-BFF3-18687A50CE7A">
+            <File Id ="FILE_COBIE_USERDEF_TXT" Name="IFC2x3 Extended FM HandOver View.txt" Source="$(var.ProjectDir)..\Program Files to Install\IFC2x3 Extended FM HandOver View.txt" KeyPath="yes" />
          </Component>
       </ComponentGroup>
       
@@ -90,7 +100,13 @@
             <File Id ="FILE_IFC_16_PNG" Name="IFCExporter_16.png" Source="$(var.ProjectDir)..\Program Files to Install\bundle\Contents\Resources\IFCExporter_16.png" KeyPath="yes" />
          </Component>
       </ComponentGroup>
-      
+
+      <ComponentGroup Id="ProductFRFiles" Directory="INSTALLFRUI">
+         <Component Id = "COMP_IFC_ResourceFR_DLL" Guid="ACC9C313-F8EF-4DBB-A0DE-55D662E4857D">
+            <File Id ="FILE_Ifc_ResourceFR_DLL" Name="IFCExportUIOverride.resources.dll" Source="$(var.ProjectDir)..\..\..\..\..\ReleaseX64\fr\IFCExportUIOverride.resources.dll" KeyPath="yes" />
+         </Component>
+      </ComponentGroup>
+
       <ComponentGroup Id="AddinComponents" Directory="DIR_2015Addins">
          <Component Id = "COMP_IFC_Addin_manifest" Guid="EC8783CA-DAE8-4233-B714-BB16B5BDBAC3">
             <File Id ="FILE_Export_manifest" Name="Revit.IFC.addin" Source="$(var.ProjectDir)..\Program Files to Install\Revit.IFC.addin" KeyPath="yes" />

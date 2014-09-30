@@ -57,6 +57,16 @@ namespace Revit.IFC.Import.Utility
         {
             return IFCUnitUtil.ProjectScale(unitType, inValue);
         }
+
+        /// <summary>
+        /// Converts values from default unit to the project unit for the active IFCProject.
+        /// </summary>
+        /// <param name="unitType">The unit type.</param>
+        /// <param name="inValues">The value to convert.</param>
+        static public void ScaleValues(UnitType unitType, IList<XYZ> inValues)
+        {
+            IFCUnitUtil.ProjectScale(unitType, inValues);
+        }
         
         /// <summary>
         /// Converts an angle from default unit to the project unit for the active IFCProject.
@@ -86,6 +96,15 @@ namespace Revit.IFC.Import.Utility
         static public XYZ ScaleLength(XYZ inValue)
         {
             return ScaleValue(UnitType.UT_Length, inValue);
+        }
+
+        /// <summary>
+        /// Converts lengths from default unit to the project unit for the active IFCProject.
+        /// </summary>
+        /// <param name="inValues">The lengths to convert.</param>
+        static public void ScaleLengths(IList<XYZ> inValues)
+        {
+            ScaleValues(UnitType.UT_Length, inValues);
         }
         
         /// <summary>
@@ -117,6 +136,30 @@ namespace Revit.IFC.Import.Utility
                 return inValue * projectUnit.ScaleFactor;
 
             return inValue;
+        }
+
+        /// <summary>
+        /// Converts values from default unit to the project unit.
+        /// </summary>
+        /// <param name="unitType">The unit type.</param>
+        /// <param name="inValues">The value to convert.</param>
+        /// <remarks>Note the the OffsetFactor is ignored, as it is irrelevant for a location.</remarks>
+        static public void ProjectScale(UnitType unitType, IList<XYZ> inValues)
+        {
+            if (inValues == null)
+                return;
+
+            IFCUnit projectUnit = IFCImportFile.TheFile.IFCUnits.GetIFCProjectUnit(unitType);
+            if (projectUnit == null)
+                return;
+
+            double factor = projectUnit.ScaleFactor;
+            if (MathUtil.IsAlmostEqual(factor, 1.0))
+                return;
+         
+            int count = inValues.Count;
+            for (int ii = 0; ii < count; ii++)
+                inValues[ii] *= factor;
         }
     }
 }

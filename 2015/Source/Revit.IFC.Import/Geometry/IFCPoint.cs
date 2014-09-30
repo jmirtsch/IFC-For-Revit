@@ -57,11 +57,11 @@ namespace Revit.IFC.Import.Geometry
             }
         }
 
-        private static void AddToCaches(IFCAnyHandle point, XYZ xyz)
+        private static void AddToCaches(int stepId, IFCEntityType entityType, XYZ xyz)
         {
             if (xyz != null)
-                IFCImportFile.TheFile.XYZMap[point.StepId] = xyz;
-            IFCImportFile.TheLog.AddProcessedEntity(point);
+                IFCImportFile.TheFile.XYZMap[stepId] = xyz;
+            IFCImportFile.TheLog.AddProcessedEntity(entityType);
         }
 
         // This routine does no validity checking on the point, but does on attributes.
@@ -112,7 +112,8 @@ namespace Revit.IFC.Import.Geometry
             }
 
             XYZ xyz;
-            if (IFCImportFile.TheFile.XYZMap.TryGetValue(point.StepId, out xyz))
+            int stepId = point.StepId;
+            if (IFCImportFile.TheFile.XYZMap.TryGetValue(stepId, out xyz))
                 return xyz;
 
             if (IFCAnyHandleUtil.IsTypeOf(point, IFCEntityType.IfcCartesianPoint))
@@ -123,7 +124,7 @@ namespace Revit.IFC.Import.Geometry
                 return null;
             }
 
-            AddToCaches(point, xyz);
+            AddToCaches(stepId, IFCEntityType.IfcCartesianPoint, xyz);
             return xyz;
         }
 
@@ -141,6 +142,29 @@ namespace Revit.IFC.Import.Geometry
         }
 
         /// <summary>
+        /// Get the XYZ values corresponding to a list of IfcCartesianPoints, scaled by the length scale.
+        /// </summary>
+        /// <param name="points">The IfcCartesianPoint entity handles.</param>
+        /// <returns>The scaled XYZ values.</returns>
+        public static IList<XYZ> ProcessScaledLengthIFCCartesianPoints(IList<IFCAnyHandle> points)
+        {
+            if (points == null)
+                return null;
+
+            IList<XYZ> xyzs = new List<XYZ>();
+            foreach (IFCAnyHandle point in points)
+            {
+                XYZ xyz = ProcessIFCCartesianPoint(point);
+                if (xyz == null)
+                    continue;   // TODO: WARN
+                xyzs.Add(xyz);
+            }
+
+            IFCUnitUtil.ScaleLengths(xyzs);
+            return xyzs;
+        }
+
+        /// <summary>
         /// Converts an IfcCartesianPoint into an UV value.
         /// </summary>
         /// <param name="point">The handle to the IfcPoint.</param>
@@ -154,7 +178,8 @@ namespace Revit.IFC.Import.Geometry
             }
 
             XYZ xyz;
-            if (IFCImportFile.TheFile.XYZMap.TryGetValue(point.StepId, out xyz))
+            int stepId = point.StepId;
+            if (IFCImportFile.TheFile.XYZMap.TryGetValue(stepId, out xyz))
                 return new UV(xyz.X, xyz.Y);
 
             if (IFCAnyHandleUtil.IsTypeOf(point, IFCEntityType.IfcCartesianPoint))
@@ -167,7 +192,7 @@ namespace Revit.IFC.Import.Geometry
                 return null;
             }
 
-            AddToCaches(point, xyz);
+            AddToCaches(stepId, IFCEntityType.IfcCartesianPoint, xyz);
             return new UV(xyz.X, xyz.Y);
         }
         
@@ -185,7 +210,8 @@ namespace Revit.IFC.Import.Geometry
             }
 
             XYZ xyz;
-            if (IFCImportFile.TheFile.XYZMap.TryGetValue(point.StepId, out xyz))
+            int stepId = point.StepId;
+            if (IFCImportFile.TheFile.XYZMap.TryGetValue(stepId, out xyz))
                 return xyz;
 
             if (IFCAnyHandleUtil.IsTypeOf(point, IFCEntityType.IfcCartesianPoint))
@@ -196,7 +222,7 @@ namespace Revit.IFC.Import.Geometry
                 return null;
             }
 
-            AddToCaches(point, xyz);
+            AddToCaches(stepId, IFCEntityType.IfcCartesianPoint, xyz);
             return xyz;
         }
 
@@ -224,11 +250,12 @@ namespace Revit.IFC.Import.Geometry
             }
 
             XYZ xyz;
-            if (IFCImportFile.TheFile.XYZMap.TryGetValue(point.StepId, out xyz))
+            int stepId = point.StepId;
+            if (IFCImportFile.TheFile.XYZMap.TryGetValue(stepId, out xyz))
                 return xyz;
 
             xyz = ProcessIFCPointInternal(point, IFCPointType.DontCare);
-            AddToCaches(point, xyz);
+            AddToCaches(stepId, IFCEntityType.IfcCartesianPoint, xyz);
             return xyz;
         }
 
@@ -246,14 +273,15 @@ namespace Revit.IFC.Import.Geometry
             }
 
             XYZ xyz;
-            if (IFCImportFile.TheFile.XYZMap.TryGetValue(point.StepId, out xyz))
+            int stepId = point.StepId;
+            if (IFCImportFile.TheFile.XYZMap.TryGetValue(stepId, out xyz))
                 return new UV(xyz.X, xyz.Y);
 
             xyz = ProcessIFCPointInternal(point, IFCPointType.UVPoint);
             if (xyz == null)
                 return null;
 
-            AddToCaches(point, xyz);
+            AddToCaches(stepId, IFCEntityType.IfcCartesianPoint, xyz);
             return new UV(xyz.X, xyz.Y);
         }
         
@@ -271,11 +299,12 @@ namespace Revit.IFC.Import.Geometry
             }
 
             XYZ xyz;
-            if (IFCImportFile.TheFile.XYZMap.TryGetValue(point.StepId, out xyz))
+            int stepId = point.StepId;
+            if (IFCImportFile.TheFile.XYZMap.TryGetValue(stepId, out xyz))
                 return xyz;
 
             xyz = ProcessIFCPointInternal(point, IFCPointType.XYZPoint);
-            AddToCaches(point, xyz);
+            AddToCaches(stepId, IFCEntityType.IfcCartesianPoint, xyz);
             return xyz;
         }
 
@@ -294,14 +323,15 @@ namespace Revit.IFC.Import.Geometry
             }
 
             XYZ xyz = null;
+            int stepId = direction.StepId;
             if (normalize)
             {
-                if (IFCImportFile.TheFile.NormalizedXYZMap.TryGetValue(direction.StepId, out xyz))
+                if (IFCImportFile.TheFile.NormalizedXYZMap.TryGetValue(stepId, out xyz))
                     return xyz;
             }
             else
             {
-                if (IFCImportFile.TheFile.XYZMap.TryGetValue(direction.StepId, out xyz))
+                if (IFCImportFile.TheFile.XYZMap.TryGetValue(stepId, out xyz))
                     return xyz;
             }
 
@@ -310,7 +340,7 @@ namespace Revit.IFC.Import.Geometry
             XYZ normalizedXYZ = null;
             if (xyz != null)
             {
-                AddToCaches(direction, xyz);
+                AddToCaches(stepId, IFCEntityType.IfcDirection, xyz);
                 if (normalize)
                 {
                     normalizedXYZ = xyz.Normalize();
@@ -363,7 +393,8 @@ namespace Revit.IFC.Import.Geometry
             }
 
             XYZ xyz;
-            if (IFCImportFile.TheFile.XYZMap.TryGetValue(vector.StepId, out xyz))
+            int stepId = vector.StepId;
+            if (IFCImportFile.TheFile.XYZMap.TryGetValue(stepId, out xyz))
                 return xyz;
 
             IFCAnyHandle direction = IFCImportHandleUtil.GetRequiredInstanceAttribute(vector, "Orientation", false);
@@ -380,7 +411,7 @@ namespace Revit.IFC.Import.Geometry
                 return null;
 
             xyz = directionXYZ * magnitude;
-            AddToCaches(vector, xyz);
+            AddToCaches(stepId, IFCEntityType.IfcVector, xyz);
             return xyz;
         }
     }

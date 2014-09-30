@@ -998,7 +998,7 @@ namespace Revit.IFC.Import.Data
                 Position = IFCLocation.ProcessIFCAxis2Placement(positionHnd);
             else
             {
-                //LOG: WARNING: #: "Position" attribute not specified in IfcParameterizedProfileDef, using origin.
+                IFCImportFile.TheLog.LogWarning(profileDef.StepId, "\"Position\" attribute not specified in IfcParameterizedProfileDef, using origin.", false);
                 Position = Transform.Identity;
             }
 
@@ -1140,6 +1140,44 @@ namespace Revit.IFC.Import.Data
             }
         }
 
+        // In certain cases, Revit can't handle unbounded circles and ellipses.  Create a CurveLoop with the curve split into two segments.
+        private CurveLoop CreateCurveLoopFromUnboundedCyclicCurve(Curve innerCurve)
+        {
+            if (innerCurve == null)
+                return null;
+
+            if (!innerCurve.IsCyclic)
+                return null;
+
+            // We don't know how to handle anything other than circles or ellipses with a period of 2PI.
+            double period = innerCurve.Period;
+            if (!MathUtil.IsAlmostEqual(period, Math.PI * 2.0))
+                return null;
+
+            double startParam = innerCurve.IsBound ? innerCurve.GetEndParameter(0) : 0.0;
+            double endParam = innerCurve.IsBound ? innerCurve.GetEndParameter(1) : period;
+
+            // Not a closed curve.
+            if (!MathUtil.IsAlmostEqual(endParam - startParam, period))
+                return null;
+
+            Curve firstCurve = innerCurve.Clone();
+            if (firstCurve == null)
+                return null;
+
+            Curve secondCurve = innerCurve.Clone();
+            if (secondCurve == null)
+                return null;
+
+            firstCurve.MakeBound(0, period / 2.0);
+            secondCurve.MakeBound(period / 2.0, period);
+
+            CurveLoop innerCurveLoop = new CurveLoop();
+            innerCurveLoop.Append(firstCurve);
+            innerCurveLoop.Append(secondCurve);
+            return innerCurveLoop;
+        }
+
         private void ProcessIFCArbitraryClosedProfileDef(IFCAnyHandle profileDef)
         {
             IFCAnyHandle curveHnd = IFCImportHandleUtil.GetRequiredInstanceAttribute(profileDef, "OuterCurve", false);
@@ -1153,7 +1191,7 @@ namespace Revit.IFC.Import.Data
                 OuterCurve = outerCurveLoop;
             else
             {
-                //LOG: ERROR: Invalid outer curve in IfcArbitraryClosedProfileDef.
+                IFCImportFile.TheLog.LogError(profileDef.StepId, "Invalid outer curve #" + curveHnd.StepId + " in IfcArbitraryClosedProfileDef.", true);
                 return;
             }
 
@@ -1162,23 +1200,45 @@ namespace Revit.IFC.Import.Data
                 IList<IFCAnyHandle> innerCurveHnds = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(profileDef, "InnerCurves");
                 if (innerCurveHnds == null || innerCurveHnds.Count == 0)
                 {
-                    //LOG: WARNING: IfcArbitraryProfileDefWithVoids has no voids.
+                    IFCImportFile.TheLog.LogWarning(profileDef.StepId, "IfcArbitraryProfileDefWithVoids has no voids.", false);
                     return;
                 }
 
+                ISet<IFCAnyHandle> usedHandles = new HashSet<IFCAnyHandle>();
                 foreach (IFCAnyHandle innerCurveHnd in innerCurveHnds)
                 {
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(innerCurveHnd))
                     {
-                        //LOG: WARNING: Null or invalid inner curve handle in IfcArbitraryProfileDefWithVoids.
+                        IFCImportFile.TheLog.LogWarning(profileDef.StepId, "Null or invalid inner curve handle in IfcArbitraryProfileDefWithVoids.", false);
                         continue;
                     }
 
+                    if (usedHandles.Contains(innerCurveHnd))
+                    {
+                        IFCImportFile.TheLog.LogWarning(profileDef.StepId, "Duplicate void #" + innerCurveHnd.StepId + " in IfcArbitraryProfileDefWithVoids, ignoring.", false);
+                        continue;
+                    }
+
+                    // If any inner is the same as the outer, throw an exception.
+                    if (curveHnd.Equals(innerCurveHnd))
+                    {
+                        IFCImportFile.TheLog.LogError(profileDef.StepId, "Inner curve loop #" + innerCurveHnd.StepId + " same as outer curve loop in IfcArbitraryProfileDefWithVoids.", true);
+                        continue;
+                    }
+
+                    usedHandles.Add(innerCurveHnd);
+
                     IFCCurve innerIFCCurve = IFCCurve.ProcessIFCCurve(innerCurveHnd);
                     CurveLoop innerCurveLoop = innerIFCCurve.CurveLoop;
+                    
+                    // See if we have a closed curve instead.
+                    if (innerCurveLoop == null)
+                        innerCurveLoop = CreateCurveLoopFromUnboundedCyclicCurve(innerIFCCurve.Curve);
+
                     if (innerCurveLoop == null)
                     {
                         //LOG: WARNING: Null or invalid inner curve in IfcArbitraryProfileDefWithVoids.
+                        IFCImportFile.TheLog.LogWarning(profileDef.StepId, "Invalid inner curve #" + innerCurveHnd.StepId + " in IfcArbitraryProfileDefWithVoids.", false);
                         continue;
                     }
 

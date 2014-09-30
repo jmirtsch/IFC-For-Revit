@@ -116,11 +116,10 @@ namespace Revit.IFC.Import.Data
         /// </summary>
         /// <param name="shapeEditScope">The shape edit scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry.</param>
-        /// <param name="forceSolid">True if we require a Solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         /// <returns>One or more created Solids.</returns>
         protected override IList<GeometryObject> CreateGeometryInternal(
-              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
             Transform origLCS = (lcs == null) ? Transform.Identity : lcs;
             Transform revolvePosition = (Position == null) ? origLCS : origLCS.Multiply(Position);
@@ -162,13 +161,12 @@ namespace Revit.IFC.Import.Data
         /// <param name="shapeEditScope">The geometry creation scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">True if a Solid is required.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
 
-            IList<GeometryObject> revolvedGeometries = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            IList<GeometryObject> revolvedGeometries = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, guid);
             if (revolvedGeometries != null)
             {
                 foreach (GeometryObject revolvedGeometry in revolvedGeometries)

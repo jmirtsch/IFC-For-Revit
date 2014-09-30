@@ -379,12 +379,12 @@ namespace Revit.IFC.Import.Utility
         {
             if (LoggingEnabled && m_LogFile != null)
             {
-                int creatorId = (CurrentlyProcessedEntity != null) ? CurrentlyProcessedEntity.Id : 0;
+                int currentlyProcessedEntityId = (CurrentlyProcessedEntity != null) ? CurrentlyProcessedEntity.Id : 0;
                 IList<FailureMessageAccessor> failList = failuresAccessor.GetFailureMessages();
                 foreach (FailureMessageAccessor failure in failList)
                 {
-                    if (creatorId != 0)
-                        Write("#" + creatorId + ": ");
+                    if (currentlyProcessedEntityId != 0)
+                        Write("#" + currentlyProcessedEntityId + ": ");
                     else
                         Write("GENERIC ");
 
@@ -423,20 +423,16 @@ namespace Revit.IFC.Import.Utility
         /// <summary>
         /// Keep track of entities that have been processed, for later summary count.
         /// </summary>
-        /// <param name="handle">The processed handle.</param>
-        public void AddProcessedEntity(IFCAnyHandle handle)
+        /// <param name="type">The entity type of the handle.</param>
+        public void AddProcessedEntity(IFCEntityType type)
         {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(handle))
-                return;
-
-            IFCEntityType type = IFCAnyHandleUtil.GetEntityType(handle);
             if (m_ProcessedEntities.ContainsKey(type))
                 m_ProcessedEntities[type]++;
             else
                 m_ProcessedEntities.Add(new KeyValuePair<IFCEntityType, int>(type, 1));
 
             m_TotalProcessedEntities++;
-            if (m_TotalProcessedEntities % 100 == 0)
+            if (m_TotalProcessedEntities % 500 == 0)
                 Importer.TheCache.StatusBar.Set(String.Format(Resources.IFCProcessedEntities, m_TotalProcessedEntities));
         }
 

@@ -49,16 +49,16 @@ namespace Revit.IFC.Import.Data
             }
         }
 
-        // In the case of a tessellated shape, the IFCLoop is defined by vertexes.
-        IList<XYZ> m_LoopVertexes = null;
+        // In the case of a tessellated shape, the IFCLoop is defined by vertices.
+        IList<XYZ> m_LoopVertices = null;
 
-        public IList<XYZ> LoopVertexes
+        public IList<XYZ> LoopVertices
         {
            get
            {
-              if (m_LoopVertexes == null)
-                 m_LoopVertexes = GenerateLoopVertexes();
-              return m_LoopVertexes;
+               if (m_LoopVertices == null)
+                   m_LoopVertices = GenerateLoopVertices();
+               return m_LoopVertices;
            }
         }
 
@@ -76,7 +76,7 @@ namespace Revit.IFC.Import.Data
             return null;
         }
 
-        virtual protected IList<XYZ> GenerateLoopVertexes()
+        virtual protected IList<XYZ> GenerateLoopVertices()
         {
            return null;
         }
@@ -87,11 +87,10 @@ namespace Revit.IFC.Import.Data
         /// <param name="shapeEditScope">The geometry creation scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">True if we require a solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
         }
 
         protected IFCLoop(IFCAnyHandle ifcLoop)

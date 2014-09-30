@@ -31,6 +31,16 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
+    public enum IFCRepresentationIdentifier
+    {
+        Axis,
+        Body,
+        Box,
+        FootPrint,
+        Style,
+        Unhandled
+    }
+
     /// <summary>
     /// Represents an IfcRepresentation.
     /// </summary>
@@ -38,7 +48,7 @@ namespace Revit.IFC.Import.Data
     {
         protected IFCRepresentationContext m_RepresentationContext = null;
 
-        protected string m_RepresentationIdentifier = null;
+        protected IFCRepresentationIdentifier m_Identifier = IFCRepresentationIdentifier.Unhandled;
 
         protected string m_RepresentationType = null;
 
@@ -61,10 +71,10 @@ namespace Revit.IFC.Import.Data
         /// <summary>
         /// The optional representation identifier.
         /// </summary>
-        public string Identifier
+        public IFCRepresentationIdentifier Identifier
         {
-            get { return m_RepresentationIdentifier; }
-            protected set { m_RepresentationIdentifier = value; }
+            get { return m_Identifier; }
+            protected set { m_Identifier = value; }
         }
 
         /// <summary>
@@ -115,33 +125,47 @@ namespace Revit.IFC.Import.Data
 
         }
 
-        // Check current ("FootPrint") and old ("Annotation", "Plan") labels that all mean the same thing.
-        private bool IsFootprintRep(string identifier)
+        private IFCRepresentationIdentifier GetRepresentationIdentifier(string identifier, IFCAnyHandle ifcRepresentation)
         {
-            return ((string.Compare(Identifier, "FootPrint", true) == 0) ||
-                (string.Compare(Identifier, "Annotation", true) == 0) ||
-                (string.Compare(Identifier, "Plan", true) == 0));
+            // Sorted by order of expected occurences.
+            if ((string.Compare(identifier, "Body", true) == 0) ||
+                string.IsNullOrWhiteSpace(identifier))
+                return IFCRepresentationIdentifier.Body;
+            if (string.Compare(identifier, "Axis", true) == 0)
+                return IFCRepresentationIdentifier.Axis;
+            if (string.Compare(identifier, "Box", true) == 0)
+                return IFCRepresentationIdentifier.Box;
+            if ((string.Compare(identifier, "FootPrint", true) == 0) ||
+                (string.Compare(identifier, "Annotation", true) == 0) ||
+                (string.Compare(identifier, "Plan", true) == 0))
+                return IFCRepresentationIdentifier.FootPrint;
+            if (string.Compare(identifier, "Style", true) == 0 ||
+                IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentation, IFCEntityType.IfcStyledRepresentation))
+                return IFCRepresentationIdentifier.Style;
+            
+            return IFCRepresentationIdentifier.Unhandled;
         }
 
-        /// <summary>
-        /// Determines if a representation is a 2D footprint.
-        /// </summary>
-        /// <returns>True if it is, false otherwise.</returns>
-        public bool IsFootprintRepresentation()
+        private bool NotAllowedInRepresentation(IFCAnyHandle item)
         {
-            return IsFootprintRep(Identifier);
-        }
+            switch (Identifier)
+            {
+                case IFCRepresentationIdentifier.Axis:
+                    return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcCurve));
+                case IFCRepresentationIdentifier.Body:
+                    return (IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcCurve) ||
+                        IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcGeometricSet));
+                case IFCRepresentationIdentifier.Box:
+                    return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcBoundingBox));
+                case IFCRepresentationIdentifier.FootPrint:
+                    return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcCurve) ||
+                        IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcGeometricSet) ||
+                        IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcMappedItem));
+                case IFCRepresentationIdentifier.Style:
+                    return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcStyledItem));
+            }
 
-        private bool NotAllowedInPlan(IFCAnyHandle item)
-        {
-            return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcCurve) || 
-                IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcGeometricSet) ||
-                IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcMappedItem));
-        }
-
-        private bool AllowedOnlyInPlan(IFCAnyHandle item)
-        {
-            return (IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcCurve) || IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcGeometricSet));
+            return true;
         }
 
         /// <summary>
@@ -156,7 +180,13 @@ namespace Revit.IFC.Import.Data
             if (representationContext != null)
                 Context = IFCRepresentationContext.ProcessIFCRepresentationContext(representationContext);
 
-            Identifier = IFCImportHandleUtil.GetOptionalStringAttribute(ifcRepresentation, "RepresentationIdentifier", null);
+            string identifier = IFCImportHandleUtil.GetOptionalStringAttribute(ifcRepresentation, "RepresentationIdentifier", null);
+            Identifier = GetRepresentationIdentifier(identifier, ifcRepresentation);
+            
+            // Don't read in Box represenation unless options allow it.
+            bool isBoundingBox = (Identifier == IFCRepresentationIdentifier.Box);
+            if (isBoundingBox && !IFCImportFile.TheFile.Options.ProcessBoundingBoxGeometry)
+                throw new InvalidOperationException("BoundingBox not imported with ProcessBoundingBoxGeometry=false");
 
             Type = IFCImportHandleUtil.GetOptionalStringAttribute(ifcRepresentation, "RepresentationType", null);
 
@@ -165,57 +195,35 @@ namespace Revit.IFC.Import.Data
 
             LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(ifcRepresentation);
 
-            if (string.Compare(Identifier, "Box", true) == 0)
+            foreach (IFCAnyHandle item in items)
             {
-                if (!IFCImportFile.TheFile.Options.ProcessBoundingBoxGeometry)
-                    throw new InvalidOperationException("BoundingBox not imported with ProcessBoundingBoxGeometry=false");
-
-                foreach (IFCAnyHandle item in items)
+                IFCRepresentationItem repItem = null;
+                try
                 {
-                    if (BoundingBox != null)
+                    if (NotAllowedInRepresentation(item))
                     {
-                        // LOG: WARNING: #: Found more than 1 Bounding Box, #, ignoring.
-                        return;
+                        IFCEntityType entityType = IFCAnyHandleUtil.GetEntityType(item);
+                        IFCImportFile.TheLog.LogWarning(item.StepId, "Ignoring unhandled representation item of type " + entityType.ToString() + " in " +
+                            Identifier.ToString() + " representation.", true);
+                        continue;
                     }
 
-                    if (IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcBoundingBox))
+                    // Special processing for bounding boxes - only IfcBoundingBox allowed.
+                    if (isBoundingBox)
+                    {
                         BoundingBox = ProcessBoundingBox(item);
+                        if (BoundingBox != null)
+                            break;
+                    }
                     else
-                    {
-                        // LOG: ERROR: #: Expected IfcBoundingBox, found {type}, ignoring.
-                    }
-                }
-            }
-            else
-            {
-                bool isFootprintRep = IsFootprintRep(Identifier);
-
-                foreach (IFCAnyHandle item in items)
-                {
-                    IFCRepresentationItem repItem = null;
-                    try
-                    {
-                        // Ignore curves outside of FootPrint representation for now.
-                        if (!isFootprintRep && AllowedOnlyInPlan(item))
-                        {
-                            IFCImportFile.TheLog.LogWarning(item.StepId, "Ignoring unhandled curves in " + Identifier + " representation.", true);
-                            continue;
-                        }
-                        else if (isFootprintRep && NotAllowedInPlan(item))
-                        {
-                            IFCEntityType entityType = IFCAnyHandleUtil.GetEntityType(item);
-                            IFCImportFile.TheLog.LogWarning(item.StepId, "Only curves handled in 'FootPrint' representation, ignoring " + entityType.ToString(), true);
-                            continue;
-                        }
                         repItem = IFCRepresentationItem.ProcessIFCRepresentationItem(item);
-                    }
-                    catch (Exception ex)
-                    {
-                        IFCImportFile.TheLog.LogError(item.StepId, ex.Message, false);
-                    }
-                    if (repItem != null)
-                        RepresentationItems.Add(repItem);
                 }
+                catch (Exception ex)
+                {
+                    IFCImportFile.TheLog.LogError(item.StepId, ex.Message, false);
+                }
+                if (repItem != null)
+                    RepresentationItems.Add(repItem);
             }
         }
 
@@ -248,6 +256,10 @@ namespace Revit.IFC.Import.Data
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         public void CreateShape(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
+            // We are not yet displaying Axis information, but do (potentially) need the Axis curve for generating material layer-based extrusions.
+            if (Identifier == IFCRepresentationIdentifier.Axis)
+                return;
+
             if (LayerAssignment != null)
                 LayerAssignment.Create(shapeEditScope);
 
@@ -258,7 +270,11 @@ namespace Revit.IFC.Import.Data
                 {
                     foreach (IFCRepresentationItem representationItem in RepresentationItems)
                     {
-                        representationItem.CreateShape(shapeEditScope, lcs, scaledLcs, false, guid);
+                        using (IFCImportShapeEditScope.IFCTargetSetter setter =
+                            new IFCImportShapeEditScope.IFCTargetSetter(shapeEditScope, TessellatedShapeBuilderTarget.AnyGeometry, TessellatedShapeBuilderFallback.Mesh))
+                        {
+                            representationItem.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
+                        }
                     }
                 }
             }

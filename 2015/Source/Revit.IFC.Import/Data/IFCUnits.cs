@@ -46,9 +46,10 @@ namespace Revit.IFC.Import.Data
         /// <returns>The Unit object.</returns>
         public IFCUnit GetIFCProjectUnit(UnitType unitType)
         {
-            if (m_ProjectUnitsDictionary.ContainsKey(unitType))
+            IFCUnit projectUnit = null;
+            if (m_ProjectUnitsDictionary.TryGetValue(unitType, out projectUnit))
             {
-                return m_ProjectUnitsDictionary[unitType];
+                return projectUnit;
             }
             else
             {

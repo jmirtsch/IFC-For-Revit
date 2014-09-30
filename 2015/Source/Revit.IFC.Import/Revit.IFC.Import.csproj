@@ -67,6 +67,8 @@
     <Compile Include="Data\IFCFeatureElement.cs" />
     <Compile Include="Data\IFCFeatureElementSubtraction.cs" />
     <Compile Include="Data\IFCGeometricSet.cs" />
+    <Compile Include="Data\IFCGrid.cs" />
+    <Compile Include="Data\IFCGridAxis.cs" />
     <Compile Include="Data\IFCGroup.cs" />
     <Compile Include="Data\IFCHalfSpaceSolid.cs" />
     <Compile Include="Data\IFCImportFile.cs" />
@@ -75,6 +77,10 @@
     <Compile Include="Data\IFCManifoldSolidBrep.cs" />
     <Compile Include="Data\IFCMappedItem.cs" />
     <Compile Include="Data\IFCMaterial.cs" />
+    <Compile Include="Data\IFCMaterialLayer.cs" />
+    <Compile Include="Data\IFCMaterialLayerSet.cs" />
+    <Compile Include="Data\IFCMaterialLayerSetUsage.cs" />
+    <Compile Include="Data\IFCMaterialList.cs" />
     <Compile Include="Data\IFCObject.cs" />
     <Compile Include="Data\IFCObjectDefinition.cs" />
     <Compile Include="Data\IFCOpeningElement.cs" />
@@ -115,6 +121,7 @@
     <Compile Include="Data\IFCUnit.cs" />
     <Compile Include="Data\IFCWindowLiningProperties.cs" />
     <Compile Include="Data\IFCWindowPanelProperties.cs" />
+    <Compile Include="Data\IIFCMaterialSelect.cs" />
     <Compile Include="Enums\IFCEnums.cs" />
     <Compile Include="Enums\IFCSchemaVersion.cs" />
     <Compile Include="Geometry\IFCGeometryUtil.cs" />
@@ -136,7 +143,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Utility\DelayedCleanEntity.cs" />
     <Compile Include="Utility\IFCCategoryUtil.cs" />
     <Compile Include="Utility\IFCDataUtil.cs" />
     <Compile Include="Utility\IFCElementUtil.cs" />

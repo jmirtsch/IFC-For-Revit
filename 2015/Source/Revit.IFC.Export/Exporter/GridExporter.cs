@@ -390,14 +390,14 @@ namespace Revit.IFC.Export.Exporter
             {
                 currentLevel = currentView.GenLevel;
             }
-            List<ElementId> levelIds = new List<ElementId>();
+            IList<ElementId> levelIds = new List<ElementId>();
             if (currentLevel != null)
             {
                 levelIds.Add(currentLevel.Id);
             }
             else
             {
-                levelIds = ExporterCacheManager.LevelInfoCache.LevelsByElevation;
+                levelIds = ExporterCacheManager.LevelInfoCache.BuildingStoreysByElevation;
             }
 
             IDictionary<ElementId, double> LevelHeightMap = new Dictionary<ElementId, double>();

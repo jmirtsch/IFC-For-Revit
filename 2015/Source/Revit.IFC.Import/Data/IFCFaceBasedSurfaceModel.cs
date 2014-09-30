@@ -66,16 +66,20 @@ namespace Revit.IFC.Import.Data
             if (Shells.Count == 0)
                 return null;
 
-            shapeEditScope.StartCollectingFaceSet();
+            using (IFCImportShapeEditScope.IFCTargetSetter setter =
+                new IFCImportShapeEditScope.IFCTargetSetter(shapeEditScope, TessellatedShapeBuilderTarget.AnyGeometry, TessellatedShapeBuilderFallback.Mesh))
+            {
+                shapeEditScope.StartCollectingFaceSet();
 
-            foreach (IFCConnectedFaceSet faceSet in Shells)
-                faceSet.CreateShape(shapeEditScope, lcs, scaledLcs, false, guid);
+                foreach (IFCConnectedFaceSet faceSet in Shells)
+                    faceSet.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
 
-            IList<GeometryObject> geomObjs = shapeEditScope.CreateSolidOrMesh(guid);
-            if (geomObjs == null || geomObjs.Count == 0)
-               return null;
+                IList<GeometryObject> geomObjs = shapeEditScope.CreateGeometry(guid);
+                if (geomObjs == null || geomObjs.Count == 0)
+                    return null;
 
-            return geomObjs;
+                return geomObjs;
+            }
         }
         
         override protected void Process(IFCAnyHandle ifcFaceBasedSurfaceModel)
@@ -100,16 +104,15 @@ namespace Revit.IFC.Import.Data
         /// <param name="shapeEditScope">The geometry creation scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">True if we require a solid.</param>
-        /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+         /// <param name="guid">The guid of an element for which represntation is being created.</param>
+        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
 
             // Ignoring Inner shells for now.
             if (Shells.Count != 0)
             {
-                // This isn't an inherited function; forceSolid is false.
+                // This isn't an inherited function; see description for more details.
                IList<GeometryObject> createdGeometries = CreateGeometry(shapeEditScope, lcs, scaledLcs, guid);
                if (createdGeometries != null)
                {

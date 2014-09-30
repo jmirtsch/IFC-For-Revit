@@ -51,7 +51,7 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="element">The element.</param>
         /// <param name="typeName">The type value.</param>
         /// <param name="defaultValue">A default value that can be null.</param>
-        /// <returns>The found value.</returns>
+        /// <returns>The found value, or null.</returns>
         public static string GetValidIFCType<TEnum>(Element element, string typeName, string defaultValue) where TEnum : struct
         {
             string value = null;
@@ -63,12 +63,12 @@ namespace Revit.IFC.Export.Toolkit
                 value = typeName;
             }
 
-            if (ValidateStrEnum<TEnum>(value) == "NotDefined" && value != "NotDefined")
+            if (ValidateStrEnum<TEnum>(value) == null && value != "NotDefined")
             {
                 if (canUseTypeName)
                 {
                     value = typeName;
-                    if (ValidateStrEnum<TEnum>(value) == "NotDefined")
+                    if (ValidateStrEnum<TEnum>(value) == null)
                         value = null;
                 }
                 else
@@ -79,8 +79,12 @@ namespace Revit.IFC.Export.Toolkit
             {
                 if (!String.IsNullOrEmpty(defaultValue))
                     return defaultValue;
-                return "NotDefined";
+
+                // We used to return "NotDefined" here.  However, that assumed that all types had "NotDefined" as a value.
+                // It is better to return null.
+                return null;
             }
+
             return value;
         }
 
@@ -89,15 +93,17 @@ namespace Revit.IFC.Export.Toolkit
         /// </summary>
         /// <typeparam name="TEnum">The type of Enum.</typeparam>
         /// <param name="strEnumCheck">The string to check.</param>
-        /// <returns>The original string, if valid, or "NotDefined".</returns>
+        /// <returns>The original string, if valid, or null.</returns>
         public static string ValidateStrEnum<TEnum>(string strEnumCheck) where TEnum : struct
         {
             TEnum enumValue;
 
             if (typeof(TEnum).IsEnum)
             {
-                if (! Enum.TryParse(strEnumCheck, true, out enumValue)) 
-                    return "NotDefined";
+                // We used to return "NotDefined" here.  However, that assumed that all types had "NotDefined" as a value.
+                // It is better to return null.
+                if (!Enum.TryParse(strEnumCheck, true, out enumValue))
+                    return null;
             }
             return strEnumCheck;
         }

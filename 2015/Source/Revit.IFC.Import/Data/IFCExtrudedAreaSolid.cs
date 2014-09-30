@@ -91,19 +91,479 @@ namespace Revit.IFC.Import.Data
                 IFCImportFile.TheLog.LogError(solid.StepId, "extrusion depth of " + depthAsString + " is invalid, aborting.", true);
             }
         }
-        
+
+        /// <summary>
+        /// Get the curve from the Axis representation of the given IfcProduct, transformed to the current local coordinate system.
+        /// </summary>
+        /// <param name="creator">The IfcProduct that may or may not contain a valid axis curve.</param>
+        /// <param name="lcs">The local coordinate system.</param>
+        /// <returns>The axis curve, if found, and valid.</returns>
+        /// <remarks>In this case, we only allow bounded lines and arcs to be valid axis curves, as per IFC2x3 convention.
+        /// The Curve may be contained as either a single Curve in the IFCCurve representation item, or it could be an
+        /// open CurveLoop with one item.</remarks>
+        private Curve GetAxisCurve(IFCProduct creator, Transform lcs)
+        {
+            // We need an axis curve to clip the extrusion profiles; if we can't get one, fail
+            IFCProductRepresentation productRepresentation = creator.ProductRepresentation;
+            if (productRepresentation == null)
+                return null;
+
+            IList<IFCRepresentation> representations = productRepresentation.Representations;
+            if (representations == null)
+                return null;
+
+            foreach (IFCRepresentation representation in representations)
+            {
+                // Go through the list of representations for this product, to find the Axis representation.
+                if (representation == null || representation.Identifier != IFCRepresentationIdentifier.Axis)
+                    continue;
+
+                IList<IFCRepresentationItem> items = representation.RepresentationItems;
+                if (items == null)
+                    continue;
+
+                // Go through the list of representation items in the Axis representation, to look for the IfcCurve.
+                foreach (IFCRepresentationItem item in items)
+                {
+                    if (item is IFCCurve)
+                    {
+                        // We will accept either a bounded Curve of type Line or Arc, 
+                        // or an open CurveLoop with one curve that satisfies the same condition.
+                        IFCCurve ifcCurve = item as IFCCurve;
+                        Curve axisCurve = ifcCurve.Curve;
+                        if (axisCurve == null)
+                        {
+                            CurveLoop axisCurveLoop = ifcCurve.CurveLoop;
+                            if (axisCurveLoop != null && axisCurveLoop.IsOpen() && axisCurveLoop.Count() == 1)
+                            {
+                                axisCurve = axisCurveLoop.First();
+                                if (!(axisCurve is Line || axisCurve is Arc))
+                                    axisCurve = null;
+                            }
+                        }
+
+                        if (axisCurve != null)
+                            return axisCurve.CreateTransformed(lcs);
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        // Determines if two curves are oriented in generally opposite directions. Currently only handles lines and arcs.
+        // This is intended to determine if two curves have reverse parametrization, so isn't intended to be exhaustive.
+        private bool? CurvesHaveOppositeOrientation(Curve firstCurve, Curve secondCurve)
+        {
+            if (firstCurve == null || secondCurve == null)
+                return null;
+
+            if ((firstCurve is Line) && (secondCurve is Line))
+                return ((firstCurve as Line).Direction.DotProduct((secondCurve as Line).Direction) < 0.0);
+
+            if ((firstCurve is Arc) && (secondCurve is Arc))
+                return ((firstCurve as Arc).Normal.DotProduct((secondCurve as Arc).Normal) < 0.0);
+
+            return null;
+        }
+
+        /// <summary>
+        /// Returns a list of curves that represent the profile of an extrusion to be split into material layers, for simple cases.
+        /// </summary>
+        /// <param name="loops">The original CurveLoops representing the extrusion profile.</param>
+        /// <param name="axisCurve">The axis curve used by IfcMaterialLayerUsage to place the IfcMaterialLayers.</param>
+        /// <param name="offsetNorm">The normal used for calculating curve offsets.</param>
+        /// <param name="offset">The offset distance from the axis curve to the material layers, as defined in the IfcMaterialLayerSetUsage "OffsetFromReferenceLine" parameter.</param>
+        /// <param name="totalThickness">The total thickness of all of the generated material layers.</param>
+        /// <returns>A list of curves oriented according to the axis curve.</returns>
+        /// <remarks>The list will contain 4 curves in this order:
+        /// 1. The curve (a bounded Line or an Arc) at the boundary of the first material layer, oriented in the same direction as the Axis curve.
+        /// 2. The line, possibly slanted, representing an end cap and connecting the 1st curve to the 3rd curve.
+        /// 3. The curve (of the same type as the first) at the boundary of the last material layer, oriented in the opposite direction as the Axis curve.
+        /// 4. The line, possibly slanted, representing an end cap and connecting the 3rd curve to the 1st curve.
+        /// Over time, we may increase the number of cases suported.</remarks>
+        private IList<Curve> GetOrientedCurveList(IList<CurveLoop> loops, Curve axisCurve, XYZ offsetNorm, double offset, double totalThickness)
+        {
+            // We are going to limit our attempts to a fairly simple but common case:
+            // 1. 2 bounded curves parallel to the axis curve, of the same type, and either Lines or Arcs.
+            // 2. 2 other edges connecting the two other curves, which are Lines.
+            // This covers most cases and gets rid of issues with highly irregular edges.
+            if (loops.Count() != 1 || loops[0].Count() != 4)
+                return null;
+
+            // The CreateOffset routine works opposite what IFC expects.  For a line, the Revit API offset direction
+            // is the (line tangent) X (the normal of the plane containing the line).  In IFC, the (local) line tangent is +X,
+            // the local normal of the plane is +Z, and the positive direction of the offset is +Y.  As such, we need to
+            // reverse the normal of the plane to offset in the right direction.
+            Curve offsetAxisCurve = axisCurve.CreateOffset(offset, -offsetNorm);
+
+            Curve unboundOffsetAxisCurve = offsetAxisCurve.Clone();
+            unboundOffsetAxisCurve.MakeUnbound();
+
+            IList<Curve> originalCurveList = new List<Curve>();
+            IList<Curve> unboundCurveList = new List<Curve>();
+            foreach (Curve loopCurve in loops[0])
+            {
+                originalCurveList.Add(loopCurve);
+                Curve unboundCurve = loopCurve.Clone();
+                unboundCurve.MakeUnbound();
+                unboundCurveList.Add(unboundCurve);
+            }
+
+            int startIndex = -1;
+            bool flipped = false;
+            for (int ii = 0; ii < 4; ii++)
+            {
+                // The offset axis curve should match one of the curves of the extrusion profile.  
+                // We check that here by seeing if a point on the offset axis curve is on the current unbounded curve.
+                if (unboundCurveList[ii].Intersect(unboundOffsetAxisCurve) != SetComparisonResult.Overlap &&
+                    MathUtil.IsAlmostZero(unboundCurveList[ii].Distance(offsetAxisCurve.GetEndPoint(0))))
+                {
+                    startIndex = ii;
+
+                    Transform originalCurveLCS = originalCurveList[ii].ComputeDerivatives(0.0, true);
+                    Transform axisCurveLCS = axisCurve.ComputeDerivatives(0.0, true);
+
+                    // We want the first curve to have the same orientation as the axis curve. We will flip the resulting
+                    // "curve loop" if not.
+                    bool? maybeFlipped = CurvesHaveOppositeOrientation(originalCurveList[ii], axisCurve);
+                    if (!maybeFlipped.HasValue)
+                        return null;
+
+                    flipped = maybeFlipped.Value;
+
+                    // Now check that startIndex and startIndex+2 are parallel, and totalThickness apart.
+                    if ((unboundCurveList[ii].Intersect(unboundCurveList[(ii + 2) % 4]) == SetComparisonResult.Overlap) ||
+                        !MathUtil.IsAlmostEqual(unboundCurveList[ii].Distance(originalCurveList[(ii + 2) % 4].GetEndPoint(0)), totalThickness))
+                        return null;
+
+                    break;
+                }
+            }
+
+            // We may want to consider loosening the IsAlmostEqual check above if this fails a lot for seemingly good cases.
+            if (startIndex == -1)
+                return null;
+
+            IList<Curve> orientedCurveList = new List<Curve>();
+            for (int ii = 0, currentIndex = startIndex; ii < 4; ii++)
+            {
+                Curve currentCurve = originalCurveList[currentIndex];
+                if (flipped)
+                    currentCurve = currentCurve.CreateReversed();
+                orientedCurveList.Add(currentCurve);
+                currentIndex = flipped ? (currentIndex + 3) % 4 : (currentIndex + 1) % 4;
+            }
+            return orientedCurveList;
+        }
+
+        // This routine may return null geometry for one of three reasons:
+        // 1. Invalid input.
+        // 2. No IfcMaterialLayerUsage.
+        // 3. The IfcMaterialLayerUsage isn't handled.
+        // If the reason is #1 or #3, we want to warn the user.  If it is #2, we don't.  Pass back shouldWarn to let the caller know.
+        private IList<GeometryObject> CreateGeometryFromMaterialLayerUsage(IFCImportShapeEditScope shapeEditScope, Transform extrusionPosition,
+            IList<CurveLoop> loops, XYZ extrusionDirection, double currDepth, out bool shouldWarn)
+        {
+            IList<GeometryObject> extrusionSolids = null;
+
+            try
+            {
+                shouldWarn = true;  // Invalid input.
+
+                // Check for valid input.
+                if (shapeEditScope == null ||
+                    extrusionPosition == null ||
+                    loops == null ||
+                    loops.Count() == 0 ||
+                    extrusionDirection == null ||
+                    !Application.IsValidThickness(currDepth))
+                    return null;
+
+                IFCProduct creator = shapeEditScope.Creator;
+                if (creator == null)
+                    return null;
+
+                shouldWarn = false;  // Missing, empty, or optimized out IfcMaterialLayerSetUsage - valid reason to stop.
+
+                IIFCMaterialSelect materialSelect = creator.MaterialSelect;
+                if (materialSelect == null)
+                    return null;
+
+                IFCMaterialLayerSetUsage materialLayerSetUsage = materialSelect as IFCMaterialLayerSetUsage;
+                if (materialLayerSetUsage == null)
+                    return null;
+
+                IFCMaterialLayerSet materialLayerSet = materialLayerSetUsage.MaterialLayerSet;
+                if (materialLayerSet == null)
+                    return null;
+
+                IList<IFCMaterialLayer> materialLayers = materialLayerSet.MaterialLayers;
+                if (materialLayers == null || materialLayers.Count == 0)
+                    return null;
+
+                // Optimization: if there is only one layer, and it has the same material as the element, use the standard method.
+                ElementId baseMaterialId = GetMaterialElementId(shapeEditScope);
+                if (materialLayers.Count == 1)
+                {
+                    IFCMaterial oneMaterial = materialLayers[0].Material;
+                    if (oneMaterial == null)
+                        return null;
+
+                    if (oneMaterial.GetMaterialElementId() == baseMaterialId)
+                        return null;
+                }
+
+                shouldWarn = true;  // Anything below here is something we should report to the user.
+
+                IList<IFCMaterialLayer> realMaterialLayers = new List<IFCMaterialLayer>();
+                double totalThickness = 0.0;
+                foreach (IFCMaterialLayer materialLayer in materialLayers)
+                {
+                    double depth = materialLayer.LayerThickness;
+                    if (MathUtil.IsAlmostZero(depth))
+                        continue;
+
+                    if (depth < 0.0)
+                        return null;
+
+                    realMaterialLayers.Add(materialLayer);
+                    totalThickness += depth;
+                }
+
+                int numLayers = realMaterialLayers.Count();
+                if (numLayers == 0)
+                    return null;
+                // We'll use this initial value for the Axis2 case, so read it here.
+                double baseOffsetForLayer = materialLayerSetUsage.Offset;
+
+                // Needed for Axis2 case only.  The axisCurve is the curve defined in the product representation representing
+                // a base curve (an axis) for the footprint of the element.
+                Curve axisCurve = null;
+
+                // The oriented cuve list represents the 4 curves of supported Axis2 footprint in the following order:
+                // 1. curve along length of object closest to the first material layer with the orientation of the axis curve
+                // 2. connecting end curve
+                // 3. curve along length of object closest to the last material layer with the orientation opposite of the axis curve
+                // 4. connecting end curve.
+                IList<Curve> orientedCurveList = null;
+
+                // Axis3 means that the material layers are stacked in the Z direction.  This is common for floor slabs.
+                bool isAxis3 = (materialLayerSetUsage.Direction == IFCLayerSetDirection.Axis3);
+                if (!isAxis3)
+                {
+                    // Axis2 means that the material layers are stacked inthe Y direction.  This is by definition for IfcWallStandardCase,
+                    // which has a local coordinate system whose Y direction is orthogonal to the length of the wall.
+                    if (materialLayerSetUsage.Direction == IFCLayerSetDirection.Axis2)
+                    {
+                        axisCurve = GetAxisCurve(creator, extrusionPosition);
+                        if (axisCurve == null)
+                            return null;
+
+                        orientedCurveList = GetOrientedCurveList(loops, axisCurve, extrusionPosition.BasisZ, baseOffsetForLayer, totalThickness);
+                        if (orientedCurveList == null)
+                            return null;
+                    }
+                    else
+                        return null;    // Not handled.
+                }
+
+                extrusionSolids = new List<GeometryObject>();
+
+                bool positiveOrientation = (materialLayerSetUsage.DirectionSense == IFCDirectionSense.Positive);
+
+                // Always extrude in the positive direction for Axis2.
+                XYZ materialExtrusionDirection = (positiveOrientation || !isAxis3) ? extrusionDirection : -extrusionDirection;
+                
+                // Axis2 repeated values.
+                // The IFC concept of offset direction is reversed from Revit's.
+                XYZ normalDirectionForAxis2 = positiveOrientation ? -extrusionPosition.BasisZ : extrusionPosition.BasisZ;
+                bool axisIsCyclic = (axisCurve == null) ? false : axisCurve.IsCyclic;
+                double axisCurvePeriod = axisIsCyclic ? axisCurve.Period : 0.0;
+
+                Transform curveLoopTransform = Transform.Identity;
+                Plane curveLoopPlane = loops[0].GetPlane();
+
+                IList<CurveLoop> currLoops = null;
+                double depthSoFar = 0.0;
+
+                for (int ii = 0; ii < numLayers; ii++)
+                {
+                    IFCMaterialLayer materialLayer = materialLayers[ii];
+
+                    // Ignore 0 thickness layers.  No need to warn.
+                    double depth = materialLayer.LayerThickness;
+                    if (MathUtil.IsAlmostZero(depth))
+                        continue;
+
+                    // If the thickness is non-zero but invalid, fail.
+                    if (!Application.IsValidThickness(depth))
+                        return null;
+
+                    double extrusionDistance = 0.0;
+                    if (isAxis3)
+                    {
+                        // Offset the curve loops if necessary, using the base extrusionDirection, regardless of the direction sense
+                        // of the MaterialLayerSetUsage.
+                        double offsetForLayer = positiveOrientation ? baseOffsetForLayer + depthSoFar : baseOffsetForLayer - depthSoFar;
+                        if (!MathUtil.IsAlmostZero(offsetForLayer))
+                        {
+                            curveLoopTransform.Origin = offsetForLayer * curveLoopPlane.Normal;
+
+                            currLoops = new List<CurveLoop>();
+                            foreach (CurveLoop loop in loops)
+                            {
+                                CurveLoop newLoop = null;
+
+                                try
+                                {
+                                    newLoop = new CurveLoop();
+                                    foreach (Curve loopCurve in loop)
+                                    {
+                                        Curve newLoopCurve = loopCurve.CreateTransformed(curveLoopTransform);
+                                        if (newLoopCurve == null)
+                                            return null;
+                                        newLoop.Append(newLoopCurve);
+                                    }
+                                }
+                                catch
+                                {
+                                    return null;
+                                }
+
+                                if (newLoop == null)
+                                    return null;
+
+                                currLoops.Add(newLoop);
+                            }
+                        }
+                        else
+                            currLoops = loops;
+
+                        extrusionDistance = depth;
+                    }
+                    else
+                    {
+                        // startClipCurve, firstEndCapCurve, endClipCurve, secondEndCapCurve.
+                        Curve[] outline = new Curve[4];
+                        double[][] endParameters = new double[4][];
+
+                        double startClip = depthSoFar;
+                        double endClip = depthSoFar + depth;
+
+                        outline[0] = orientedCurveList[0].CreateOffset(startClip, normalDirectionForAxis2);
+                        outline[1] = orientedCurveList[1].Clone();
+                        outline[2] = orientedCurveList[2].CreateOffset(totalThickness - endClip, normalDirectionForAxis2);
+                        outline[3] = orientedCurveList[3].Clone();
+
+                        for (int jj = 0; jj < 4; jj++)
+                        {
+                            outline[jj].MakeUnbound();
+                            endParameters[jj] = new double[2];
+                            endParameters[jj][0] = 0.0;
+                            endParameters[jj][1] = 0.0;
+                        }
+
+                        // Trim/Extend the curves so that they make a closed loop.
+                        for (int jj = 0; jj < 4; jj++)
+                        {
+                            IntersectionResultArray resultArray = null;
+                            outline[jj].Intersect(outline[(jj + 1) % 4], out resultArray);
+                            if (resultArray == null || resultArray.Size == 0)
+                                return null;
+
+                            int numResults = resultArray.Size;
+                            if ((numResults > 1 && !axisIsCyclic) || (numResults > 2))
+                                return null;
+
+                            UV intersectionPoint = resultArray.get_Item(0).UVPoint;
+                            endParameters[jj][1] = intersectionPoint.U;
+                            endParameters[(jj + 1) % 4][0] = intersectionPoint.V;
+                            
+                            if (numResults == 2)
+                            {
+                                // If the current result is closer to the end of the curve, keep it.
+                                UV newIntersectionPoint = resultArray.get_Item(1).UVPoint;
+                                
+                                int endParamIndex = (jj % 2);
+                                double newParamToCheck = newIntersectionPoint[endParamIndex];
+                                double oldParamToCheck = (endParamIndex == 0) ? endParameters[jj][1] : endParameters[(jj + 1) % 4][0];
+                                double currentEndPoint = (endParamIndex == 0) ?
+                                    orientedCurveList[jj].GetEndParameter(1) : orientedCurveList[(jj + 1) % 4].GetEndParameter(0);
+
+                                // Put in range of [-Period/2, Period/2].
+                                double newDist = (currentEndPoint - newParamToCheck) % axisCurvePeriod;
+                                if (newDist < -axisCurvePeriod / 2.0) newDist += axisCurvePeriod;
+                                if (newDist > axisCurvePeriod / 2.0) newDist -= axisCurvePeriod;
+
+                                double oldDist = (currentEndPoint - oldParamToCheck) % axisCurvePeriod;
+                                if (oldDist < -axisCurvePeriod / 2.0) oldDist += axisCurvePeriod;
+                                if (oldDist > axisCurvePeriod / 2.0) oldDist -= axisCurvePeriod;
+
+                                if (Math.Abs(newDist) < Math.Abs(oldDist))
+                                {
+                                    endParameters[jj][1] = newIntersectionPoint.U;
+                                    endParameters[(jj + 1) % 4][0] = newIntersectionPoint.V;
+                                }
+                            }
+                        }
+
+                        CurveLoop newCurveLoop = new CurveLoop();
+                        for (int jj = 0; jj < 4; jj++)
+                        {
+                            if (endParameters[jj][1] < endParameters[jj][0])
+                            {
+                                if (!outline[jj].IsCyclic)
+                                    return null;
+                                endParameters[jj][1] += Math.Floor(endParameters[jj][0] / axisCurvePeriod + 1.0) * axisCurvePeriod;
+                            }
+
+                            outline[jj].MakeBound(endParameters[jj][0], endParameters[jj][1]);
+                            newCurveLoop.Append(outline[jj]);
+                        }
+
+                        currLoops = new List<CurveLoop>();
+                        currLoops.Add(newCurveLoop);
+
+                        extrusionDistance = currDepth;
+                    }
+
+                    // Determine the material id.
+                    IFCMaterial material = materialLayer.Material;
+                    ElementId materialId = (material == null) ? baseMaterialId : material.GetMaterialElementId();
+                    SolidOptions solidOptions = new SolidOptions(materialId, shapeEditScope.GraphicsStyleId);
+
+                    // Create the extrusion for the material layer.
+                    GeometryObject extrusionSolid = GeometryCreationUtilities.CreateExtrusionGeometry(
+                        currLoops, materialExtrusionDirection, extrusionDistance, solidOptions);
+                    if (extrusionSolid == null)
+                        return null;
+
+                    extrusionSolids.Add(extrusionSolid);
+                    depthSoFar += depth;
+                }
+            }
+            catch
+            {
+                // Ignore the specific exception, but let the user know there was a problem processing the IfcMaterialLayerSetUsage.
+                shouldWarn = true;
+                return null;
+            }
+
+            return extrusionSolids;
+        }
+
         /// <summary>
         /// Return geometry for a particular representation item.
         /// </summary>
         /// <param name="shapeEditScope">The shape edit scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry.</param>
-        /// <param name="forceSolid">True if we require a Solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         /// <returns>One or more created geometries.</returns>
         /// <remarks>The scaledLcs is only partially supported in this routine; it allows scaling the depth of the extrusion,
         /// which is commonly found in ACA files.</remarks>
         protected override IList<GeometryObject> CreateGeometryInternal(
-              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
             Transform origLCS = (lcs == null) ? Transform.Identity : lcs;
             Transform origScaledLCS = (scaledLcs == null) ? Transform.Identity : scaledLcs;
@@ -117,7 +577,7 @@ namespace Revit.IFC.Import.Data
             if (disjointLoops == null || disjointLoops.Count() == 0)
                 return null;
 
-            IList<GeometryObject> myObjs = new List<GeometryObject>();
+            IList<GeometryObject> extrusions = new List<GeometryObject>();
 
             foreach (IList<CurveLoop> loops in disjointLoops)
             {
@@ -125,28 +585,45 @@ namespace Revit.IFC.Import.Data
                 XYZ scaledDirection = scaledExtrusionPosition.OfVector(Direction);
                 double currDepth = Depth * scaledDirection.GetLength();
 
-                GeometryObject myObj = null;
+                GeometryObject extrusionObject = null;
                 try
                 {
-                    myObj = GeometryCreationUtilities.CreateExtrusionGeometry(loops, extrusionDirection, currDepth, solidOptions);
+                    // We may try to create separate extrusions, one per layer here.
+                    bool shouldWarn = false;
+                    IList<GeometryObject> extrusionLayers = CreateGeometryFromMaterialLayerUsage(shapeEditScope, extrusionPosition, loops, 
+                        extrusionDirection, currDepth, out shouldWarn);
+
+                    if (extrusionLayers == null || extrusionLayers.Count == 0)
+                    {
+                        if (shouldWarn)
+                            IFCImportFile.TheLog.LogWarning(Id, "Couldn't process associated IfcMaterialLayerSetUsage, using body geometry instead.", false);
+                        extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, extrusionDirection, currDepth, solidOptions);
+                    }
+                    else
+                    {
+                        foreach (GeometryObject extrusionLayer in extrusionLayers)
+                            extrusions.Add(extrusionLayer);
+                    }
                 }
                 catch (Exception ex)
                 {
-                   if (forceSolid)
+                   if (shapeEditScope.MustCreateSolid())
                       throw ex;
+
+                   IFCImportFile.TheLog.LogError(Id, "Extrusion has an invalid definition for a solid; reverting to mesh.", false);
 
                    MeshFromGeometryOperationResult meshResult = TessellatedShapeBuilder.CreateMeshByExtrusion(
                       loops, extrusionDirection, currDepth, GetMaterialElementId(shapeEditScope));
 
                       // will throw if mesh is not available
-                   myObj = meshResult.GetMesh();
+                   extrusionObject = meshResult.GetMesh();
                 }
 
-                if (myObj != null)
-                    myObjs.Add(myObj);
+                if (extrusionObject != null)
+                    extrusions.Add(extrusionObject);
             }
 
-            return myObjs;
+            return extrusions;
         }
 
         /// <summary>
@@ -155,13 +632,12 @@ namespace Revit.IFC.Import.Data
         /// <param name="shapeEditScope">The geometry creation scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">True if we require a Solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
 
-            IList<GeometryObject> extrudedGeometries = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            IList<GeometryObject> extrudedGeometries = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, guid);
             if (extrudedGeometries != null)
             {
                 foreach (GeometryObject extrudedGeometry in extrudedGeometries)
