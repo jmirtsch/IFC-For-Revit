@@ -990,6 +990,27 @@ namespace Revit.IFC.Common.Utility
         }
 
         /// <summary>
+        /// Gets an IFCLogical attribute.
+        /// </summary>
+        /// <param name="hnd">The handle.</param>
+        /// <param name="name">The attribute name.</param>
+        /// <returns>The boolean value.</returns>
+        public static IFCLogical? GetLogicalAttribute(IFCAnyHandle hnd, string name)
+        {
+            if (hnd == null)
+                throw new ArgumentNullException("hnd");
+
+            if (!hnd.HasValue)
+                throw new ArgumentException("Invalid handle.");
+
+            IFCData ifcData = hnd.GetAttribute(name);
+            if (ifcData.PrimitiveType == IFCDataPrimitiveType.Logical)
+                return ifcData.AsLogical();
+
+            return null;
+        }
+
+        /// <summary>
         /// Gets an arbitrary enumeration attribute.
         /// </summary>
         /// <remarks>

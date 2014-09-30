@@ -45,10 +45,10 @@ namespace Revit.IFC.Import.Data
         }
 
         protected override IList<GeometryObject> CreateGeometryInternal(
-           IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+           IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
             if (BooleanResult != null)
-                return BooleanResult.CreateGeometry(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+                return BooleanResult.CreateGeometry(shapeEditScope, lcs, scaledLcs, guid);
             return null;
         }
 
@@ -58,13 +58,12 @@ namespace Revit.IFC.Import.Data
         /// <param name="shapeEditScope">The geometry creation scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">True if we require a Solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
 
-            IList<GeometryObject> csgGeometries = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            IList<GeometryObject> csgGeometries = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, guid);
             if (csgGeometries != null)
             {
                 foreach (GeometryObject csgGeometry in csgGeometries)

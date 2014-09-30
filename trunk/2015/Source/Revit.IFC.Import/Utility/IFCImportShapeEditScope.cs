@@ -37,6 +37,45 @@ namespace Revit.IFC.Import.Utility
     /// </summary>
     public class IFCImportShapeEditScope: IDisposable
     {
+        static public double IFCFuzzyXYZEpsilon
+        {
+            get;
+            protected set;
+        }
+
+        /// <summary>
+        /// A class to allow comparison of XYZ values based on a static epsilon value contained in the IFCImportShapeEditScope class.
+        /// The static epsilon value should be set before using these values.
+        /// </summary>
+        public class IFCFuzzyXYZ : XYZ, IComparable
+        {
+            public IFCFuzzyXYZ() : base() { }
+
+            public IFCFuzzyXYZ(XYZ xyz) : base(xyz.X, xyz.Y, xyz.Z) { }
+
+            /// <summary>
+            /// Compare an IFCFuzzyXYZ with an XYZ value by checking that their individual X,Y, and Z components are within an epsilon value of each other.
+            /// </summary>
+            /// <param name="obj">The other value, an XYZ or IFCFuzzyXYZ.</param>
+            /// <returns>0 if they are equal, -1 if this is smaller than obj, and 1 if this is larger than obj.</returns>
+            public int CompareTo(Object obj)
+            {
+                if (obj == null || (!(obj is XYZ)))
+                    return -1;
+
+                XYZ otherXYZ = obj as XYZ;
+                for (int ii = 0; ii < 3; ii++)
+                {
+                    if (this[ii] < otherXYZ[ii] - IFCFuzzyXYZEpsilon)
+                        return -1;
+                    if (this[ii] > otherXYZ[ii] + IFCFuzzyXYZEpsilon)
+                        return 1;
+                }
+                
+                return 0;
+            }
+        }
+
         private Document m_Document = null;
 
         private IFCProduct m_Creator = null;
@@ -56,6 +95,47 @@ namespace Revit.IFC.Import.Utility
         /// A stack of material element id from IFCStyledItems and IFCPresentationLayerWithStyles.  The "current" material id should generally be used.
         /// </summary>
         private IList<ElementId> m_MaterialIdList = null;
+
+        // store all curves for 2D plan representation.  
+        private ViewShapeBuilder m_ViewShapeBuilder = null;
+
+        // stores all faces from the face set which will be built
+        private TessellatedShapeBuilder m_TessellatedShapeBuilder = null;
+
+        /// <summary>
+        /// A map of IFCFuzzyXYZ to XYZ values.  In practice, the two values will be the same, but this allows us to
+        /// "look up" an XYZ value and get the fuzzy equivalent.  Internally, this is represented by a SortedDictionary.
+        /// </summary>
+        private IDictionary<IFCFuzzyXYZ, XYZ> m_TessellatedFaceVertices = null;
+
+        // stores the current face being input. After the face will be
+        // completely set, it will be inserted into the resident shape builder.
+        private IList<IList<XYZ>> m_TessellatedFaceBoundary = null;
+
+        // material of the current face - see 'm_TessellatedFaceBoundary'
+        private ElementId m_faceMaterialId = ElementId.InvalidElementId;
+
+        // The target geometry being created.  This may affect tolerances used to include or exclude vertices that are very close to one another,
+        // or potentially degenerate faces.
+        private TessellatedShapeBuilderTarget m_TargetGeometry = TessellatedShapeBuilderTarget.AnyGeometry;
+
+        // The fallback geometry being created.
+        private TessellatedShapeBuilderFallback m_FallbackGeometry = TessellatedShapeBuilderFallback.Mesh;
+
+        // The target geometry being created.  This may affect tolerances used to include or exclude vertices that are very 
+        // close to one another, or potentially degenerate faces.
+        public TessellatedShapeBuilderTarget TargetGeometry
+        {
+            get { return m_TargetGeometry; }
+            private set { m_TargetGeometry = value; }
+        }
+
+        // The fallback geometry that will be created if we can't make the target geometry.
+        public TessellatedShapeBuilderFallback FallbackGeometry
+        {
+            get { return m_FallbackGeometry; }
+            private set { m_FallbackGeometry = value; }
+        }
 
         private IList<ElementId> MaterialIdList
         {
@@ -121,6 +201,45 @@ namespace Revit.IFC.Import.Utility
             {
                 if (m_Scope != null)
                     m_Scope.ContainingRepresentation = m_OldRepresentation;
+            }
+
+            #endregion
+        }
+
+        /// <summary>
+        /// A class to allow temporarily changing the required geometric output of IFCImportShapeEditScope.
+        /// </summary>
+        public class IFCTargetSetter : IDisposable
+        {
+            private IFCImportShapeEditScope m_Scope = null;
+            private TessellatedShapeBuilderTarget m_TargetGeometry = TessellatedShapeBuilderTarget.AnyGeometry;
+            private TessellatedShapeBuilderFallback m_FallbackGeometry = TessellatedShapeBuilderFallback.Mesh;
+
+            /// <summary>
+            /// The constructor.
+            /// </summary>
+            /// <param name="scope">The associated shape edit scope.</param>
+            /// <param name="targetGeometry">The current target geometry.</param>
+            /// <param name="fallbackGeometry">The current fallback geometry.</param>
+            public IFCTargetSetter(IFCImportShapeEditScope scope, TessellatedShapeBuilderTarget targetGeometry, TessellatedShapeBuilderFallback fallbackGeometry)
+            {
+                if (scope != null)
+                {
+                    m_Scope = scope;
+
+                    m_TargetGeometry = m_Scope.TargetGeometry;
+                    m_FallbackGeometry = m_Scope.FallbackGeometry;
+
+                    m_Scope.SetTargetAndFallbackGeometry(targetGeometry, fallbackGeometry);
+                }
+            }
+
+            #region IDisposable Members
+
+            public void Dispose()
+            {
+                if (m_Scope != null)
+                    m_Scope.SetTargetAndFallbackGeometry(m_TargetGeometry, m_FallbackGeometry);
             }
 
             #endregion
@@ -220,33 +339,35 @@ namespace Revit.IFC.Import.Utility
             protected set { m_ContainingRepresentation = value; }
         }
 
-        // store all curves for 2D plan representation.  
-        private ViewShapeBuilder m_ViewShapeBuilder = null;
-
-        // stores all faces from the face set which will be built
-        private TessellatedShapeBuilder m_TessellatedShapeBuilder = null;
-
-        // stores the current face being input. After the face will be
-        // completely set, it will be inserted into the resident shape builder.
-        private IList<IList<XYZ>> m_TessellatedFaceBoundary = null;
-
-        // material of the current face - see 'm_TessellatedFaceBoundary'
-        private ElementId m_faceMaterialId = ElementId.InvalidElementId;
+        /// <summary>
+        /// Set the target and fallback geometry for this scope.
+        /// </summary>
+        /// <param name="targetGeometry">The target geometry.</param>
+        /// <param name="fallbackGeometry">The fallback geometry.</param>
+        /// <remarks>This should not be directly called, but instead set with the IFCTargetSetter and the "using" scope.</remarks>
+        public void SetTargetAndFallbackGeometry(TessellatedShapeBuilderTarget targetGeometry, TessellatedShapeBuilderFallback fallbackGeometry)
+        {
+            TargetGeometry = targetGeometry;
+            FallbackGeometry = fallbackGeometry;
+        }
 
         /// <summary>
         /// Start collecting faces to create a BRep solid.
         /// </summary>
         public void StartCollectingFaceSet()
         {
-           if(m_TessellatedShapeBuilder == null)
-               m_TessellatedShapeBuilder = new TessellatedShapeBuilder();
+            if (m_TessellatedShapeBuilder == null)
+                m_TessellatedShapeBuilder = new TessellatedShapeBuilder();
 
-           m_TessellatedShapeBuilder.OpenConnectedFaceSet(false);
+            m_TessellatedShapeBuilder.OpenConnectedFaceSet(false);
 
-           if(m_TessellatedFaceBoundary != null)
-              m_TessellatedFaceBoundary.Clear();
+            if (m_TessellatedFaceVertices != null)
+                m_TessellatedFaceVertices.Clear();
 
-           m_faceMaterialId = ElementId.InvalidElementId;
+            if (m_TessellatedFaceBoundary != null)
+                m_TessellatedFaceBoundary.Clear();
+
+            m_faceMaterialId = ElementId.InvalidElementId;
         }
 
         /// <summary>
@@ -255,15 +376,18 @@ namespace Revit.IFC.Import.Utility
         /// 
         public void StopCollectingFaceSet()
         {
-           if (m_TessellatedShapeBuilder == null)
-              throw new InvalidOperationException("StartCollectingFaceSet has not been called.");
+            if (m_TessellatedShapeBuilder == null)
+                throw new InvalidOperationException("StartCollectingFaceSet has not been called.");
 
-           m_TessellatedShapeBuilder.CloseConnectedFaceSet();
+            m_TessellatedShapeBuilder.CloseConnectedFaceSet();
 
-           if (m_TessellatedFaceBoundary != null)
-              m_TessellatedFaceBoundary.Clear();
+            if (m_TessellatedFaceBoundary != null)
+                m_TessellatedFaceBoundary.Clear();
 
-           m_faceMaterialId = ElementId.InvalidElementId;
+            if (m_TessellatedFaceVertices != null)
+                m_TessellatedFaceVertices.Clear();
+
+            m_faceMaterialId = ElementId.InvalidElementId;
         }
 
         /// <summary>
@@ -271,15 +395,18 @@ namespace Revit.IFC.Import.Utility
         /// </summary>
         public void StartCollectingFace(ElementId materialId)
         {
-           if(m_TessellatedShapeBuilder == null)
-              throw new InvalidOperationException("StartCollectingFaceSet has not been called.");
+            if (m_TessellatedShapeBuilder == null)
+                throw new InvalidOperationException("StartCollectingFaceSet has not been called.");
 
-           if(m_TessellatedFaceBoundary == null)
-              m_TessellatedFaceBoundary = new List<IList<XYZ>>();
-           else
-              m_TessellatedFaceBoundary.Clear();
+            if (m_TessellatedFaceBoundary == null)
+                m_TessellatedFaceBoundary = new List<IList<XYZ>>();
+            else
+                m_TessellatedFaceBoundary.Clear();
 
-           m_faceMaterialId = materialId;
+            if (m_TessellatedFaceVertices == null)
+                m_TessellatedFaceVertices = new SortedDictionary<IFCFuzzyXYZ, XYZ>();
+
+            m_faceMaterialId = materialId;
         }
 
         /// <summary>
@@ -287,15 +414,23 @@ namespace Revit.IFC.Import.Utility
         /// </summary>
         public void StopCollectingFace()
         {
-           if (m_TessellatedShapeBuilder == null || m_TessellatedFaceBoundary == null)
-              throw new InvalidOperationException("StartCollectingFace has not been called.");
+            if (m_TessellatedShapeBuilder == null || m_TessellatedFaceBoundary == null)
+                throw new InvalidOperationException("StartCollectingFace has not been called.");
 
             TessellatedFace theFace = new TessellatedFace(m_TessellatedFaceBoundary, m_faceMaterialId);
             m_TessellatedShapeBuilder.AddFace(theFace);
-
             m_TessellatedFaceBoundary.Clear();
 
             m_faceMaterialId = ElementId.InvalidElementId;
+        }
+
+        /// <summary>
+        /// Check if we have started building a face.
+        /// </summary>
+        /// <returns>True if we have collected at least one face boundary, false otherwise.
+        public bool HaveActiveFace()
+        {
+            return (m_TessellatedFaceBoundary != null && m_TessellatedFaceBoundary.Count > 0);
         }
 
         /// <summary>
@@ -303,23 +438,53 @@ namespace Revit.IFC.Import.Utility
         /// </summary>
         public void AbortCurrentFace()
         {
-           if(m_TessellatedFaceBoundary != null)
-              m_TessellatedFaceBoundary.Clear();
+            if (m_TessellatedFaceBoundary != null)
+                m_TessellatedFaceBoundary.Clear();
 
-           m_faceMaterialId = ElementId.InvalidElementId;
+            m_faceMaterialId = ElementId.InvalidElementId;
         }
 
         /// <summary>
-        /// Add one loop of vertexes that will define a boundary loop of the current face.
+        /// Add one loop of vertices that will define a boundary loop of the current face.
         /// </summary>
-        public void AddLoopVertexes(IList<XYZ> loopVertexes)
+        public void AddLoopVertices(IList<XYZ> loopVertices)
         {
-           if (loopVertexes == null || loopVertexes.Count < 3)
-           {
-              throw new InvalidOperationException("In AddLoopVertexes, loopVertexes is null or has less than 3 vertexes.");
-           }
+            int vertexCount = (loopVertices == null) ? 0 : loopVertices.Count;
+            if (vertexCount < 3)
+                throw new InvalidOperationException("Too few distinct loop vertices, ignoring.");
 
-           m_TessellatedFaceBoundary.Add(loopVertexes);
+            IList<XYZ> adjustedLoopVertices = new List<XYZ>();
+            IDictionary<IFCFuzzyXYZ, int> createdVertices = new SortedDictionary<IFCFuzzyXYZ, int>();
+
+            int numCreated = 0;
+            for (int ii = 0; ii < vertexCount; ii++)
+            {
+                IFCFuzzyXYZ fuzzyXYZ = new IFCFuzzyXYZ(loopVertices[ii]);
+
+                int createdVertexIndex = -1;
+                if (createdVertices.TryGetValue(fuzzyXYZ, out createdVertexIndex))
+                {
+                    // We will allow the first and last point to be equivalent, or the current and last point.  Otherwise we will throw.
+                    if (((createdVertexIndex == 0) && (ii == vertexCount - 1)) || (createdVertexIndex == numCreated-1))
+                        continue;
+
+                    throw new InvalidOperationException("Loop is self-intersecting, ignoring.");
+                }
+
+                XYZ adjustedXYZ;
+                if (!m_TessellatedFaceVertices.TryGetValue(fuzzyXYZ, out adjustedXYZ))
+                    adjustedXYZ = m_TessellatedFaceVertices[fuzzyXYZ] = loopVertices[ii];
+                
+                adjustedLoopVertices.Add(adjustedXYZ);
+                createdVertices[new IFCFuzzyXYZ(adjustedXYZ)] = numCreated;
+                numCreated++;
+            }
+
+            // Checking start and end points should be covered above.
+            if (numCreated < 3)
+                throw new InvalidOperationException("Loop has less than 3 distinct vertices, ignoring.");
+
+            m_TessellatedFaceBoundary.Add(adjustedLoopVertices);
         }
 
         /// <summary>
@@ -331,17 +496,17 @@ namespace Revit.IFC.Import.Utility
         /// </summary>
         /// <returns>The IList created, or null. The IList can contain a Solid and/or a Mesh.
         /// If Solid is present, it always the 1st element.</returns>
-        private IList<GeometryObject> CreateGeometryObjects(
-           TessellatedShapeBuilderTarget target, TessellatedShapeBuilderFallback fallback, string guid,
+        private IList<GeometryObject> CreateGeometryObjects(string guid,
            out bool hasInvalidData, out TessellatedShapeBuilderOutcome outcome)
         {
             m_TessellatedShapeBuilder.CloseConnectedFaceSet();
 
+            // The OwnerInfo is currently unused; the value doesn't really matter.
             m_TessellatedShapeBuilder.LogString = IFCImportFile.TheFileName;
             m_TessellatedShapeBuilder.LogInteger = IFCImportFile.TheBrepCounter;
-            m_TessellatedShapeBuilder.OwnerInfo = guid;
+            m_TessellatedShapeBuilder.OwnerInfo = guid != null ? guid : "Temporary Element";
             TessellatedShapeBuilderResult result = m_TessellatedShapeBuilder.Build(
-                target, fallback, GraphicsStyleId);
+                TargetGeometry, FallbackGeometry, GraphicsStyleId);
 
             // It is important that we clear the TSB after we build above, otherwise we will "collect" geometries
             // in the DirectShape and create huge files with redundant data.
@@ -357,68 +522,78 @@ namespace Revit.IFC.Import.Utility
         /// or describe an open Solid, then nothing is created.
         /// </summary>
         /// <returns>The Solid created, or null.</returns>
-        public Solid CreateClosedSolid(string guid)
+        private IList<GeometryObject> CreateClosedSolid(string guid)
         {
-           bool invalidData;
-           TessellatedShapeBuilderOutcome outcome;
-           IList<GeometryObject> geomObjs = CreateGeometryObjects(
-              TessellatedShapeBuilderTarget.Solid, TessellatedShapeBuilderFallback.Abort, guid,
-              out invalidData, out outcome);
+            if (TargetGeometry != TessellatedShapeBuilderTarget.Solid || FallbackGeometry != TessellatedShapeBuilderFallback.Abort)
+                throw new ArgumentException("CreateClosedSolid expects TessellatedShapeBuilderTarget.Solid and TessellatedShapeBuilderFallback.Abort.");
 
-           if (geomObjs == null || geomObjs.Count != 1 || geomObjs[0] == null)
-              return null;
+            bool invalidData;
+            TessellatedShapeBuilderOutcome outcome;
+            IList<GeometryObject> geomObjs = CreateGeometryObjects(guid, out invalidData, out outcome);
 
-           if (geomObjs[0] is Solid)
-           {
-              Solid solid = geomObjs[0] as Solid;
-              return solid;
-           }
+            if (geomObjs == null || geomObjs.Count != 1 || geomObjs[0] == null)
+                return new List<GeometryObject>();
 
-           throw new InvalidOperationException("Unexpected object was created");
+            if (geomObjs[0] is Solid)
+                return geomObjs;
+
+            // TessellatedShapeBuilder is only allowed to return a Solid, or nothing in this case.  If it returns something else, throw.
+            throw new InvalidOperationException("Unexpected object was created");
         }
 
         /// <summary>
-        /// Create a Mesh if possible.
-        /// The function creates a mesh representing as many faces from the original
-        /// face sets as possible, while skipping unusable faces.
+        /// Indicates whether we are required to create a Solid.
         /// </summary>
-        /// <returns>The Mesh created, or null.</returns>
-        public Mesh CreateMesh(string guid)
+        /// <returns>True if we are required to create a Solid, false otherwise.</returns>
+        public bool MustCreateSolid()
         {
-           bool invalidData;
-           TessellatedShapeBuilderOutcome outcome;
-           IList<GeometryObject> geomObjs = CreateGeometryObjects(
-              TessellatedShapeBuilderTarget.Mesh, TessellatedShapeBuilderFallback.Salvage, guid,
-              out invalidData, out outcome);
-
-           if (geomObjs == null || geomObjs.Count != 1 || geomObjs[0] == null)
-              return null;
-
-           if (geomObjs[0] is Mesh)
-           {
-              Mesh mesh = geomObjs[0] as Mesh;
-              return mesh;
-           }
-
-           throw new InvalidOperationException("Unexpected object was created");
+            return (TargetGeometry == TessellatedShapeBuilderTarget.Solid &&
+                FallbackGeometry == TessellatedShapeBuilderFallback.Abort);
         }
 
         /// <summary>
-        /// If posible function creates a Solid representing all faces in all face
-        /// sets. If some faces in some sets are unusable, then a Mesh is created
-        /// instead. All faces from all face sets, which contain some unusable faces.
-        /// will be represented by a Mesh </summary>
-        /// <returns>Null or an IList conatining GeometryObjects of type Solid or Mesh, or null.
-        /// Usually a single-element IList is returned, but if multiple face sets are being built
-        /// and only some of them can be built as Solids, then a two-element IList containing
-        /// a Solid as 1st element and a Mesh as 2nd is returned.</returns>
-        public IList<GeometryObject> CreateSolidOrMesh(string guid)
+        /// Indicates whether we are attempting to create a Solid as our primary target.
+        /// </summary>
+        /// <returns>True if we are first trying to create a Solid, false otherwise.</returns>
+        public bool TryToCreateSolid()
         {
-           bool invalidData;
-           TessellatedShapeBuilderOutcome outcome;
-           return CreateGeometryObjects(
-              TessellatedShapeBuilderTarget.AnyGeometry, TessellatedShapeBuilderFallback.Mesh, guid,
-              out invalidData, out outcome);
+            return (TargetGeometry == TessellatedShapeBuilderTarget.AnyGeometry ||
+                TargetGeometry == TessellatedShapeBuilderTarget.Solid);
+        }
+
+        /// <summary>
+        /// If possible, create a Solid representing all faces in all face sets. If a Solid can't be created,
+        /// then a Mesh is created instead.</summary>
+        /// <returns>null or an IList containing 1 or more GeometryObjects of type Solid or Mesh.</returns>
+        /// <remarks>Usually a single-element IList is returned, but multiple GeometryObjects may be created.</remarks>
+        private IList<GeometryObject> CreateSolidOrMesh(string guid)
+        {
+            if (TargetGeometry != TessellatedShapeBuilderTarget.AnyGeometry || FallbackGeometry != TessellatedShapeBuilderFallback.Mesh)
+                throw new ArgumentException("CreateMesh expects TessellatedShapeBuilderTarget.AnyGeometry and TessellatedShapeBuilderFallback.Mesh.");
+
+            bool invalidData;
+            TessellatedShapeBuilderOutcome outcome;
+            IList<GeometryObject> geomObjects = CreateGeometryObjects(guid, out invalidData, out outcome);
+            if (outcome == TessellatedShapeBuilderOutcome.Nothing)
+                IFCImportFile.TheLog.LogWarning(Creator.Id, "Couldn't create any geometry.", false);
+
+            return geomObjects;
+        }
+
+        /// <summary>
+        /// Create geometry with the TessellatedShapeBuilder based on already existing settings.
+        /// </summary>
+        /// <param name="guid">The Guid associated with the geometry.</param>
+        /// <returns>A list of GeometryObjects, possibly empty.</returns>
+        public IList<GeometryObject> CreateGeometry(string guid)
+        {
+            if (TargetGeometry == TessellatedShapeBuilderTarget.AnyGeometry && FallbackGeometry == TessellatedShapeBuilderFallback.Mesh)
+                return CreateSolidOrMesh(guid);
+
+            if (TargetGeometry == TessellatedShapeBuilderTarget.Solid && FallbackGeometry == TessellatedShapeBuilderFallback.Abort)
+                return CreateClosedSolid(guid);
+
+            throw new ArgumentException("Unhandled TessellatedShapeBuilderTarget and TessellatedShapeBuilderFallback for CreateGeometry.");
         }
 
         // End temporary classes for holding BRep information.
@@ -427,6 +602,11 @@ namespace Revit.IFC.Import.Utility
         {
             Document = doc;
             Creator = creator;
+
+            // Note that this tolerance is larger than required for meshes, and slightly larger than
+            // required for BReps, as it is a cube instead of a sphere of equivalence.  However, we are
+            // generally trying to create Solids over Meshes, and as such we try for Solid tolerances.
+            IFCFuzzyXYZEpsilon = IFCImportFile.TheFile.Document.Application.ShortCurveTolerance;
         }
 
         /// <summary>
@@ -439,6 +619,18 @@ namespace Revit.IFC.Import.Utility
                 return;
 
             Creator.Solids.Add(solidInfo);
+        }
+
+        /// <summary>
+        /// Add a curve to the Footprint reprensentation of the object in scope.
+        /// </summary>
+        /// <param name="curve">The curve.</param>
+        public void AddFootprintCurve(Curve curve)
+        {
+            if (curve == null)
+                return;
+
+            Creator.FootprintCurves.Add(curve);
         }
 
         /// <summary>

@@ -158,45 +158,6 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
-        /// Gets offset of non-storey level.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="level">
-        /// The level.
-        /// </param>
-        /// <returns>
-        /// The offset.
-        /// </returns>
-        public static double GetNonStoryLevelOffsetIfAny(ExporterIFC exporterIFC, Level level)
-        {
-            if ((level == null) || IsBuildingStory(level))
-                return 0.0;
-            Document document = level.Document;
-
-            const double veryNegativeHeight = -1e+30;
-            double levelHeight = level.Elevation;
-            double prevHeight = veryNegativeHeight;
-            double firstLevelHeight = -veryNegativeHeight;
-
-            List<ElementId> levelIds = ExporterCacheManager.LevelInfoCache.LevelsByElevation;
-            foreach (ElementId levelId in levelIds)
-            {
-                double currentHeight = ExporterCacheManager.LevelInfoCache.FindHeight(levelId);
-                if (currentHeight < levelHeight + MathUtil.Eps() && currentHeight > prevHeight)
-                    prevHeight = currentHeight;
-                if (firstLevelHeight > currentHeight)
-                    firstLevelHeight = currentHeight;
-            }
-
-            if (prevHeight > veryNegativeHeight)
-                return levelHeight - prevHeight;
-            else
-                return 0.0;
-        }
-
-        /// <summary>
         /// Gets level extension.
         /// </summary>
         /// <remarks>
@@ -220,7 +181,7 @@ namespace Revit.IFC.Export.Utility
         /// <param name="level">
         /// The Level.
         /// </param>
-        public static double calculateDistanceToNextLevel(Document doc, ElementId levelId, IFCLevelInfo levelInfo)
+        public static double CalculateDistanceToNextLevel(Document doc, ElementId levelId, IFCLevelInfo levelInfo)
         {
             double height = 0.0;
             Level level = doc.GetElement(levelId) as Level;
@@ -291,21 +252,11 @@ namespace Revit.IFC.Export.Utility
         /// <remarks>
         /// We may need to split an element (e.g. column) into parts by level.
         /// </remarks>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="exportType">
-        /// The export type.
-        /// </param>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <param name="levels">
-        /// The levels to split the element.
-        /// </param>
-        /// <param name="ranges">
-        /// The ranges to split the element.
-        /// </param>
+        /// <param name="exporterIFC">The ExporterIFC object. </param>
+        /// <param name="exportType">The export type. </param>
+        /// <param name="element">The element. </param>
+        /// <param name="levels">The levels to split the element.</param>
+        /// <param name="ranges">The ranges to split the element. These will be non-overlapping.</param>
         public static void CreateSplitLevelRangesForElement(ExporterIFC exporterIFC, IFCExportType exportType, Element element,
            out IList<ElementId> levels, out IList<IFCRange> ranges)
         {
@@ -328,7 +279,7 @@ namespace Revit.IFC.Export.Utility
                         ElementId firstLevelId = GetBaseLevelIdForElement(element);
                         bool foundFirstLevel = (firstLevelId == ElementId.InvalidElementId);
 
-                        List<ElementId> levelIds = ExporterCacheManager.LevelInfoCache.LevelsByElevation;
+                        IList<ElementId> levelIds = ExporterCacheManager.LevelInfoCache.BuildingStoreysByElevation;
                         foreach (ElementId levelId in levelIds)
                         {
                             if (!foundFirstLevel)
@@ -356,7 +307,7 @@ namespace Revit.IFC.Export.Utility
                             // parameter is not set, we use DistanceToNextLevel.
                             double levelHeight = ExporterCacheManager.LevelInfoCache.FindHeight(levelId);
                             if (levelHeight < 0.0)
-                                levelHeight = calculateDistanceToNextLevel(element.Document, levelId, levelInfo);
+                                levelHeight = CalculateDistanceToNextLevel(element.Document, levelId, levelInfo);
                             skipToNextLevel = ExporterCacheManager.LevelInfoCache.FindNextLevel(levelId);
 
                             // startAboveLevel
@@ -373,6 +324,19 @@ namespace Revit.IFC.Export.Utility
                             IFCRange currentSpan = new IFCRange(
                                startBelowLevel ? levelInfo.Elevation : zSpan.Start,
                                endAboveLevel ? (levelInfo.Elevation + levelHeight) : zSpan.End);
+                            
+                            // We want our ranges to be non-overlapping.  As such, we'll modify the start parameter
+                            // to be at least as large as the previous end parameter (if any).  If this makes the
+                            // range invalid, we won't add it.
+                            if (ranges.Count > 0)
+                            {
+                                IFCRange lastSpan = ranges.Last();
+                                if (lastSpan.End > currentSpan.End - MathUtil.Eps())
+                                    continue;
+
+                                currentSpan.Start = Math.Max(currentSpan.Start, lastSpan.End);
+                            }
+
                             ranges.Add(currentSpan);
                             levels.Add(levelId);
 

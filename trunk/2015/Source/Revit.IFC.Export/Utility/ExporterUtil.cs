@@ -1363,5 +1363,148 @@ namespace Revit.IFC.Export.Utility
             return ((String.Compare(ExporterCacheManager.ExportOptionsCache.SelectedConfigName, "IFC2x3 Basic FM Handover View") == 0)
             || (String.Compare(ExporterCacheManager.ExportOptionsCache.SelectedConfigName, "IFC2x3 Extended FM Handover View") == 0));
         }
+
+        private static IList<IFCAnyHandle> CreateCartesianPointList(IFCFile file, IList<UV> projVecData)
+        {
+            if (projVecData == null)
+                return null;
+
+            // Generate handles for outer bound.
+            IList<IFCAnyHandle> polyLinePts = new List<IFCAnyHandle>();
+            foreach (UV uv in projVecData)
+                polyLinePts.Add(CreateCartesianPoint(file, uv));
+            polyLinePts.Add(polyLinePts[0]);
+
+            return polyLinePts;
+        }
+
+        /// <summary>
+        /// Create an IfcCreateCurveBoundedPlane given a polygonal outer boundary and 0 or more polygonal inner boundaries.
+        /// </summary>
+        /// <param name="file">The IFCFile.</param>
+        /// <param name="newOuterLoopPoints">The list of points representating the outer boundary of the plane.</param>
+        /// <param name="innerLoopPoints">The list of inner boundaries of the plane.  This list can be null.</param>
+        /// <returns>The IfcCreateCurveBoundedPlane.</returns>
+        public static IFCAnyHandle CreateCurveBoundedPlane(IFCFile file, IList<XYZ> newOuterLoopPoints, IList<IList<XYZ>> innerLoopPoints)
+        {
+            if (newOuterLoopPoints == null)
+                return null;
+
+            // We need at least 3 distinct points for the outer polygon.
+            int outerSz = newOuterLoopPoints.Count;
+            if (outerSz < 3)
+                return null;
+
+            // We allow the polygon to duplicate the first and last points, or not.  If the last point is duplicated, we will generally ignore it.
+            bool firstIsLast = newOuterLoopPoints[0].IsAlmostEqualTo(newOuterLoopPoints[outerSz - 1]);
+            if (firstIsLast && (outerSz == 3))
+                return null;
+
+            // Calculate the X direction of the plane using the first point and the next point that generates a valid direction.
+            XYZ firstDir = null;
+            int ii = 1;
+            for (; ii < outerSz; ii++)
+            {
+                firstDir = (newOuterLoopPoints[ii] - newOuterLoopPoints[0]).Normalize();
+                if (firstDir != null)
+                    break;
+            }
+            if (firstDir == null)
+                return null;
+
+            // Calculate the Y direction of the plane using the first point and the next point that generates a valid direction that isn't
+            // parallel to the first direction.
+            XYZ secondDir = null;
+            for (ii++; ii < outerSz; ii++)
+            {
+                secondDir = (newOuterLoopPoints[ii] - newOuterLoopPoints[0]).Normalize();
+                if (secondDir == null)
+                    continue;
+
+                if (MathUtil.IsAlmostEqual(Math.Abs(firstDir.DotProduct(secondDir)), 1.0))
+                    continue;
+
+                break;
+            }
+            if (secondDir == null)
+                return null;
+
+            // Generate the normal of the plane, ensure it is valid.
+            XYZ norm = firstDir.CrossProduct(secondDir);
+            if (norm == null || norm.IsZeroLength())
+                return null;
+
+            norm = norm.Normalize();
+            if (norm == null)
+                return null;
+
+            // The original secondDir was almost certainly not orthogonal to firstDir; generate an orthogonal direction.
+            secondDir = norm.CrossProduct(firstDir);
+            Plane projPlane = new Plane(firstDir, secondDir, newOuterLoopPoints[0]);
+
+            if (firstIsLast)
+                outerSz--;
+
+            // Create the UV points before we create handles, to avoid deleting handles on failure.
+            IList<UV> projVecData = new List<UV>();
+            for (ii = 0; ii < outerSz; ii++)
+            {
+                UV uv = GeometryUtil.ProjectPointToPlane(projPlane, newOuterLoopPoints[ii]);
+                if (uv == null)
+                    return null;
+                projVecData.Add(uv);
+            }
+
+            // Generate handles for outer bound.
+            IList<IFCAnyHandle> polyLinePts = CreateCartesianPointList(file, projVecData);
+
+            IFCAnyHandle outerBound = IFCInstanceExporter.CreatePolyline(file, polyLinePts);
+
+            IFCAnyHandle origHnd = CreateCartesianPoint(file, newOuterLoopPoints[0]);
+            IFCAnyHandle refHnd = CreateDirection(file, firstDir);
+            IFCAnyHandle dirHnd = CreateDirection(file, norm);
+
+            IFCAnyHandle positionHnd = IFCInstanceExporter.CreateAxis2Placement3D(file, origHnd, dirHnd, refHnd);
+            IFCAnyHandle basisPlane = IFCInstanceExporter.CreatePlane(file, positionHnd);
+
+            // We only assign innerBounds if we create any.  We expect innerBounds to be null if there aren't any created.
+            ISet<IFCAnyHandle> innerBounds = null;
+            if (innerLoopPoints != null)
+            {
+                int innerSz = innerLoopPoints.Count;
+                for (ii = 0; ii < innerSz; ii++)
+                {
+                    IList<XYZ> currInnerLoopVecData = innerLoopPoints[ii];
+                    int loopSz = currInnerLoopVecData.Count;
+
+                    projVecData.Clear();
+                    firstIsLast = currInnerLoopVecData[0].IsAlmostEqualTo(currInnerLoopVecData[outerSz - 1]);
+                    
+                    // Be lenient on what we find.
+                    bool continueOnFailure = ((loopSz < 2) || (firstIsLast && (loopSz == 3)));
+                    for (int jj = 0; jj < loopSz && !continueOnFailure; jj++)
+                    {
+                        UV uv = GeometryUtil.ProjectPointToPlane(projPlane, currInnerLoopVecData[jj]);
+                        if (uv == null)
+                            continueOnFailure = true;
+                        else
+                            projVecData.Add(uv);
+                    }
+
+                    // We allow for bad inners - we just ignore them.
+                    if (continueOnFailure)
+                        continue;
+
+                    polyLinePts = CreateCartesianPointList(file, projVecData);
+                    IFCAnyHandle polyLine = IFCInstanceExporter.CreatePolyline(file, polyLinePts);
+
+                    if (innerBounds == null)
+                        innerBounds = new HashSet<IFCAnyHandle>();
+                    innerBounds.Add(polyLine);
+                }
+            }
+
+            return IFCInstanceExporter.CreateCurveBoundedPlane(file, basisPlane, outerBound, innerBounds);
+        }
     }
 }

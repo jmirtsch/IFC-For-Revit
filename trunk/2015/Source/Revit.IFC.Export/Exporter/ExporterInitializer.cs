@@ -157,35 +157,14 @@ namespace Revit.IFC.Export.Exporter
                 foreach (PropertyDef prop in psetDef.propertyDefs)
                 {
                     PropertyType dataType;
-                    PropertySetEntry pSE;
-
+                    
                     if (!Enum.TryParse(prop.propertyDataType, out dataType))
                         dataType = PropertyType.Text;           // force default to Text/string if the type does not match with any correct datatype
 
-                    // Currently we will support only basic datatypes: Text, Integer, Real, Boolean
-                    switch (dataType)
-                    {
-                        case PropertyType.Integer:
-                            pSE = PropertySetEntry.CreateInteger(prop.propertyName);
-                            break;
-                        case PropertyType.Real:
-                            pSE = PropertySetEntry.CreateReal(prop.propertyName);
-                            break;
-                        case PropertyType.Boolean:
-                            pSE = PropertySetEntry.CreateBoolean(prop.propertyName);
-                            break;
-                        case PropertyType.Text:
-                            pSE = PropertySetEntry.CreateText(prop.propertyName);
-                            break;
-                        default:
-                            pSE = PropertySetEntry.CreateText(prop.propertyName);
-                            break;
-                    }
-
+                    PropertySetEntry pSE = PropertySetEntry.CreateGenericEntry(dataType, prop.propertyName);
                     if (string.Compare(prop.propertyName, prop.revitParameterName) != 0)
-                    {
                         pSE.RevitParameterName = prop.revitParameterName;
-                    }
+
                     userDefinedPropetySet.AddEntry(pSE);
                 }
                 userDefinedPropertySets.Add(userDefinedPropetySet);

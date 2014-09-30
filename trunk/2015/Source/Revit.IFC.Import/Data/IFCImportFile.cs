@@ -487,6 +487,15 @@ namespace Revit.IFC.Import.Data
                         otherElementsToDelete.Add(elementId);
                 }
 
+                foreach (ElementId elementId in Importer.TheCache.GridNameToElementMap.Values)
+                {
+                    Element element = doc.GetElement(elementId);
+                    if (element == null)
+                        continue;
+
+                    otherElementsToDelete.Add(elementId);
+                }
+
                 // Don't expect this to fail.
                 try
                 {
@@ -498,6 +507,7 @@ namespace Revit.IFC.Import.Data
                     TheLog.LogError(-1, ex.Message, false);
                 }
 
+                // Delete the temporary element we used for validation purposes.
                 IFCGeometryUtil.DeleteSolidValidator();
 
                 // This might fail.

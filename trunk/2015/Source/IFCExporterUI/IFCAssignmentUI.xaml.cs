@@ -43,7 +43,16 @@ namespace BIM.IFC.Export.UI
     /// </summary>
     public partial class IFCAssignment : Window
     {
-        private string[] purposeList = { "OFFICE", "SITE", "HOME", "DISTRIBUTIONPOINT", "USERDEFINED" };
+        private string[] ifcPurposeList = { "OFFICE", "SITE", "HOME", "DISTRIBUTIONPOINT", "USERDEFINED" };
+        private string[] purposeList = 
+        { 
+            Properties.Resources.Office, 
+            Properties.Resources.Site,
+            Properties.Resources.Home, 
+            Properties.Resources.DistributionPoint,
+            Properties.Resources.UserDefined 
+        };
+    
         private IFCAddress m_newAddress = new IFCAddress();
         private IFCFileHeader m_newFileHeader = new IFCFileHeader();
         private IFCAddressItem m_newAddressItem = new IFCAddressItem();
@@ -53,6 +62,11 @@ namespace BIM.IFC.Export.UI
         private IFCClassification m_newClassification = new IFCClassification();
         private IList<IFCClassification> m_newClassificationList = new List<IFCClassification>();
         private IFCClassification m_savedClassification = new IFCClassification();
+
+        private string getUserDefinedStringFromIFCPurposeList()
+        {
+            return ifcPurposeList[4];
+        }
 
         /// <summary>
         /// initialization of IFCAssignemt class
@@ -95,8 +109,8 @@ namespace BIM.IFC.Export.UI
         /// <param name="e"></param>
         private void PurposeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            m_newAddressItem.Purpose = (string)PurposeComboBox.SelectedItem;
-            if (String.Compare(m_newAddressItem.Purpose, "USERDEFINED") != 0)
+            m_newAddressItem.Purpose = ifcPurposeList[PurposeComboBox.SelectedIndex];
+            if (String.Compare(m_newAddressItem.Purpose, getUserDefinedStringFromIFCPurposeList()) != 0) // ifcPurposeList == "USERDEFINED"
                 m_newAddressItem.UserDefinedPurpose = "";         // Set User Defined Purpose field to empty if the Purpose is changed to other values
         }
 
@@ -158,8 +172,8 @@ namespace BIM.IFC.Export.UI
                     address += string.Format("{0}\r\n", m_newAddressItem.Country);
 
                 if (String.IsNullOrEmpty(m_newAddressItem.InternalLocation) == false)
-                    address += string.Format("\r\nInternal address: {0}\r\n", m_newAddressItem.InternalLocation);
-
+                    address += string.Format("\r\n{0}: {1}\r\n", 
+                        Properties.Resources.InternalAddress, m_newAddressItem.InternalLocation);
 
                 if (String.IsNullOrEmpty(m_newAddressItem.TownOrCity) == false)
                     geographicMapLocation = m_newAddressItem.TownOrCity;
@@ -180,7 +194,7 @@ namespace BIM.IFC.Export.UI
                         geographicMapLocation = m_newAddressItem.Country;
                 };
 
-                Transaction transaction = new Transaction(IFCCommandOverrideApplication.TheDocument, "Update Project Address");
+                Transaction transaction = new Transaction(IFCCommandOverrideApplication.TheDocument, Properties.Resources.UpdateProjectAddress);
                 transaction.Start();
 
                 ProjectInfo projectInfo = IFCCommandOverrideApplication.TheDocument.ProjectInformation;
@@ -201,7 +215,7 @@ namespace BIM.IFC.Export.UI
                 }
                 else if (!m_newClassification.IsClassificationEmpty())
                 {
-                    m_newClassification.ClassificationTabMsg = "Mandatory fields Name, Source or Publisher, and Edition cannot be empty.";
+                    m_newClassification.ClassificationTabMsg = Properties.Resources.ManditoryFieldsNotEmpty;
                     return;
                 }
             }
@@ -265,14 +279,15 @@ namespace BIM.IFC.Export.UI
 
                 if (tItemRemoved != null && tItemAdded != null)  // skip if it is not a TabItem type
                 {
-                    if (String.Compare(tItemRemoved.Header.ToString(), "Classification") == 0 && tItemAdded != tItemRemoved)  // avoid loop when we force the Tab back to the same one
+                    if (String.Compare(tItemRemoved.Header.ToString(), Properties.Resources.Classification) == 0 && 
+                        tItemAdded != tItemRemoved)  // avoid loop when we force the Tab back to the same one
                     {
                         // Current tab item is Classification Tab
                         if (!m_newClassification.IsClassificationEmpty()) // we will skip the mandatory field check when all fields are empty (i.e. user does not intend to create any Classification)
                         {
                             if (!m_newClassification.AreMandatoryFieldsFilled())
                             {
-                                m_newClassification.ClassificationTabMsg = "Mandatory fields Name, Source or Publisher, and Edition cannot be empty.";
+                                m_newClassification.ClassificationTabMsg = Properties.Resources.ManditoryFieldsNotEmpty;
                                 AssignmenttabControl.SelectedItem = tItemRemoved;  // Force the tab to return to Classification
                                 return false;
                             }
@@ -299,7 +314,21 @@ namespace BIM.IFC.Export.UI
             {
                 //keep a copy of the original saved items for checking for any value changed later on
                 m_savedAddressItem = m_newAddressItem.Clone();
-                PurposeComboBox.SelectedItem = m_newAddressItem.Purpose;
+
+                // We won't initialize PurposeComboBox.SelectedIndex, as otherwise that will change the value
+                // of m_newAddressItem.Purpose to the first item in the list, which we don't want.   It is
+                // OK for this to be "uninitialized".
+
+                // This is a short list, so we just do an O(n) search.
+                int numItems = ifcPurposeList.Count();
+                for (int ii = 0; ii < numItems; ii++)
+                {
+                    if (m_newAddressItem.Purpose == ifcPurposeList[ii])
+                    {
+                        PurposeComboBox.SelectedIndex = ii;
+                        break;
+                    }
+                }
             }
             else
             {
@@ -345,8 +374,8 @@ namespace BIM.IFC.Export.UI
         {
             if (String.IsNullOrEmpty(this.m_newAddressItem.UserDefinedPurpose) == false)
             {
-                m_newAddressItem.Purpose = "USERDEFINED";
-                PurposeComboBox.SelectedItem = "USERDEFINED";
+                m_newAddressItem.Purpose = getUserDefinedStringFromIFCPurposeList();
+                PurposeComboBox.SelectedItem = Properties.Resources.UserDefined;
             }
         }
 

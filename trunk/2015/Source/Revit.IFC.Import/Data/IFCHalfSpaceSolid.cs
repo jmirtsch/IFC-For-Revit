@@ -102,11 +102,10 @@ namespace Revit.IFC.Import.Data
         /// <param name="shapeEditScope">The shape edit scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">True if we require a Solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         /// <returns>A list containing one geometry for the IfcHalfSpaceSolid.</returns>
         protected virtual IList<GeometryObject> CreateGeometryInternal(
-              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
             IFCPlane ifcPlane = BaseSurface as IFCPlane;
             Plane plane = ifcPlane.Plane;
@@ -169,14 +168,17 @@ namespace Revit.IFC.Import.Data
         /// <param name="shapeEditScope">The shape edit scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">True if we force the return value to be a solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         /// <returns>The created geometries.</returns>
         public IList<GeometryObject> CreateGeometry(
-              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
             // A HalfSpaceSolid must always be a Solid, regardless of input.
-            return CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, true, guid);
+            using (IFCImportShapeEditScope.IFCTargetSetter setter =
+                new IFCImportShapeEditScope.IFCTargetSetter(shapeEditScope, TessellatedShapeBuilderTarget.Solid, TessellatedShapeBuilderFallback.Abort))
+            {
+                return CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, guid);
+            }
         }
         
         protected IFCHalfSpaceSolid(IFCAnyHandle solid)

@@ -102,13 +102,12 @@ namespace Revit.IFC.Import.Data
         /// <param name="shapeEditScope">The geometry creation scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">True if only solids are allowed as output.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         /// <returns>The created geometry.</returns>
         public IList<GeometryObject> CreateGeometry(
-              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            IList<GeometryObject> firstSolids = FirstOperand.CreateGeometry(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            IList<GeometryObject> firstSolids = FirstOperand.CreateGeometry(shapeEditScope, lcs, scaledLcs, guid);
             if (firstSolids != null)
             {
                 foreach (GeometryObject potentialSolid in firstSolids)
@@ -126,7 +125,11 @@ namespace Revit.IFC.Import.Data
             {
                 try
                 {
-                    secondSolids = SecondOperand.CreateGeometry(shapeEditScope, lcs, scaledLcs, true, guid);
+                    using (IFCImportShapeEditScope.IFCTargetSetter setter =
+                        new IFCImportShapeEditScope.IFCTargetSetter(shapeEditScope, TessellatedShapeBuilderTarget.Solid, TessellatedShapeBuilderFallback.Abort))
+                    {
+                        secondSolids = SecondOperand.CreateGeometry(shapeEditScope, lcs, scaledLcs, guid);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -191,13 +194,12 @@ namespace Revit.IFC.Import.Data
         /// <param name="shapeEditScope">The geometry creation scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">True if we require a solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
 
-            IList<GeometryObject> resultGeometries = CreateGeometry(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            IList<GeometryObject> resultGeometries = CreateGeometry(shapeEditScope, lcs, scaledLcs, guid);
             if (resultGeometries != null)
             {
                 foreach (GeometryObject resultGeometry in resultGeometries)

@@ -57,16 +57,28 @@ namespace Revit.IFC.Import.Data
             protected set { m_EntityType = value; }
         }
 
+        bool m_IsValidForCreation = true;
+
+        /// <summary>
+        /// Returns if the entity can be successfully converted into a Revit element.
+        /// This prevents repeated attempts to create an element from an invalid entity.
+        /// </summary>
+        public bool IsValidForCreation
+        {
+            get { return m_IsValidForCreation; }
+            protected set { m_IsValidForCreation = value; }
+        }
+
         protected IFCEntity()
         {
         }
 
         virtual protected void Process(IFCAnyHandle item)
         {
-            IFCImportFile.TheFile.EntityMap.Add(item.StepId, this);
-            IFCImportFile.TheLog.AddProcessedEntity(item);
             Id = item.StepId;
             EntityType = IFCAnyHandleUtil.GetEntityType(item);
+            IFCImportFile.TheFile.EntityMap.Add(Id, this);
+            IFCImportFile.TheLog.AddProcessedEntity(EntityType);
         }
 
         /// <summary>

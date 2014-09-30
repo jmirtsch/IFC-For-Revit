@@ -18,38 +18,33 @@
 //
 
 using System;
-using Revit.IFC.Import.Data;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.IFC;
+using Revit.IFC.Common.Utility;
+using Revit.IFC.Common.Enums;
+using Revit.IFC.Import.Enums;
+using Revit.IFC.Import.Geometry;
+using Revit.IFC.Import.Utility;
 
-namespace Revit.IFC.Import.Utility
+namespace Revit.IFC.Import.Data
 {
-    public class DelayedCleanEntity : IDisposable
+    /// <summary>
+    /// Interface that contains shared functions for IfcMaterialSelect
+    /// </summary>
+    public interface IIFCMaterialSelect
     {
-        IFCObjectDefinition m_ObjectDefinition = null;
+        /// <summary>
+        /// Return the material list for this IFCMaterialSelect.
+        /// </summary>
+        IList<IFCMaterial> GetMaterials();
 
         /// <summary>
-        /// The public constructor for this class.
+        /// Create the elements associated with the IFCMaterialSelect.
         /// </summary>
-        /// <param name="objectDefinition">The entity for which to delay cleaning, if it is enabled.</param>
-        public DelayedCleanEntity(IFCObjectDefinition objectDefinition)
-        {
-            if (objectDefinition != null)
-            {
-                m_ObjectDefinition = objectDefinition;
-                m_ObjectDefinition.DelayCleanEntity = true;
-            }
-        }
-
-        #region IDisposable Members
-
-        public void Dispose()
-        {
-            if (m_ObjectDefinition != null)
-            {
-                m_ObjectDefinition.DelayCleanEntity = false;
-                m_ObjectDefinition.CleanEntity();
-            }
-        }
-
-        #endregion
+        /// <param name="doc">The document.</param>
+        void Create(Document doc);
     }
 }

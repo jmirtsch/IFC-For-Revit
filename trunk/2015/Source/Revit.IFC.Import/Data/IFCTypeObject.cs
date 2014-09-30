@@ -148,12 +148,10 @@ namespace Revit.IFC.Import.Data
         /// <param name="doc">The document.</param>
         protected override void Create(Document doc)
         {
-            
-            string guid = GlobalId.ToString();
-            DirectShapeType shapeType = Importer.TheCache.UseElementByGUID<DirectShapeType>(doc, guid);
+            DirectShapeType shapeType = Importer.TheCache.UseElementByGUID<DirectShapeType>(doc, GlobalId);
             
             if (shapeType == null)
-                shapeType = DirectShapeType.Create(doc, GetName("Direct Shape Type"), m_CategoryId);
+                shapeType = DirectShapeType.Create(doc, GetName("Direct Shape Type"), CategoryId);
 
             if (shapeType == null)
                 throw new InvalidOperationException("Couldn't create DirectShapeType for IfcTypeObject.");

@@ -179,7 +179,10 @@ namespace Revit.IFC.Import.Data
                 {
                     IFCProduct product = IFCProduct.ProcessIFCProduct(elem);
                     if (product != null)
+                    {
+                        product.ContainingStructure = this;
                         m_IFCProducts.Add(product);
+                    }
                 }
                 catch (Exception ex)
                 {

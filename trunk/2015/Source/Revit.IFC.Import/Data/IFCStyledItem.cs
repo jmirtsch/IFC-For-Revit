@@ -41,8 +41,6 @@ namespace Revit.IFC.Import.Data
         // Currently the only created element would be a material.  May expand to a list of elements.
         private ElementId m_CreatedElementId = ElementId.InvalidElementId;
 
-        bool m_IsValidForCreation = true;
-
         /// <summary>
         /// The optional associated representation item.
         /// </summary>
@@ -79,16 +77,6 @@ namespace Revit.IFC.Import.Data
         public override ElementId GetMaterialElementId(IFCImportShapeEditScope scope) 
         { 
             return m_CreatedElementId; 
-        }
-
-        /// <summary>
-        /// Returns if the entity can be successfully converted into a Revit element.
-        /// This prevents repeated attempts to create an element from an invalid entity.
-        /// </summary>
-        public bool IsValidForCreation
-        {
-            get { return m_IsValidForCreation; }
-            protected set { m_IsValidForCreation = value; }
         }
 
         /// <summary>

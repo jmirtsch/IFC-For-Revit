@@ -400,7 +400,7 @@ namespace Revit.IFC.Import
 
                         // Limit creating the cache to Link, but may either remove limiting or make it more restrict (reload only) later.
                         if (TheOptions.Action == IFCImportAction.Link)
-                            TheCache.CreateGUIDToElementMap(ifcDocument);
+                            TheCache.CreateExistingElementMaps(ifcDocument);
 
                         // TheFile will contain the same value as the return value for this function.
                         IFCImportFile.Create(importer.FullFileName, m_ImportOptions, ifcDocument);

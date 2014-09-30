@@ -83,11 +83,10 @@ namespace Revit.IFC.Import.Data
         /// <param name="shapeEditScope">The geometry creation scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">True if we require a solid.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
 
             // Check scale; if it is uniform, create an instance.  If not, create a shape directly.
             // TODO: Instead allow creation of instances based on similar scaling.
@@ -117,9 +116,11 @@ namespace Revit.IFC.Import.Data
                 newScaledLcs = scaledLcs.Multiply(mappingTransform);
             
             // Pass in newLCS = null, use newLCS for instance.
+            bool isFootprint = (shapeEditScope.ContainingRepresentation.Identifier == IFCRepresentationIdentifier.FootPrint);
             bool canCreateType = (newLcs != null && newLcs.IsConformal) &&
                 (newScaledLcs != null && newScaledLcs.IsConformal) &&
-                isUnitScale;
+                isUnitScale &&
+                (shapeEditScope.ContainingRepresentation != null && !isFootprint);
 
             if (canCreateType)
             {

@@ -41,11 +41,17 @@ namespace Revit.IFC.Import.Data
 
         protected IFCFeatureElementSubtraction m_FillsOpening = null;
 
+        /// <summary>
+        /// The "Tag" field associated with the IfcElement.
+        /// </summary>
         public string Tag
         {
             get { return m_Tag; }
         }
 
+        /// <summary>
+        /// The openings that void the IfcElement.
+        /// </summary>
         public ICollection<IFCFeatureElementSubtraction> Openings
         {
             get 
@@ -56,6 +62,9 @@ namespace Revit.IFC.Import.Data
             }
         }
 
+        /// <summary>
+        /// The opening that is filled by the IfcElement.
+        /// </summary>
         public IFCFeatureElementSubtraction FillsOpening
         {
             get { return m_FillsOpening; }
@@ -136,13 +145,16 @@ namespace Revit.IFC.Import.Data
             {
                 try
                 {
-                    // Don't clean the element until after we get the solid information.
-                    using (DelayedCleanEntity dce = new DelayedCleanEntity(opening))
-                    {
-                        CreateElement(doc, opening);
-                        foreach (IFCSolidInfo voidGeom in opening.Solids)
-                            Voids.Add(voidGeom);
-                    }
+                    // Create the actual Revit element based on the IFCFeatureElement here.
+                    CreateElement(doc, opening);
+
+                    // This gets around the issue that the Boolean operation between the void(s) in the IFCFeatureElement and 
+                    // the solid(s) in the IFCElement may use the Graphics Style of the voids in the resulting Solid(s), meaning 
+                    // that some faces may disappear when we turn off the visibility of IfcOpeningElements.
+                    IFCFeatureElement openingClone = IFCFeatureElement.CreateOpeningClone(opening, this);
+                    CreateElement(doc, openingClone);
+                    foreach (IFCSolidInfo voidGeom in openingClone.Solids)
+                        Voids.Add(voidGeom);
                 }
                 catch (Exception ex)
                 {

@@ -129,7 +129,7 @@ namespace Revit.IFC.Import.Utility
         /// Ensure that a material has a unique name.
         /// </summary>
         /// <param name="originalName">The original name.</param>
-        /// <param name="id">The id of the creator.</param>
+        /// <param name="id">The id of the material.</param>
         /// <returns>A unique name, either the original name or original name + id.</returns>
         public string GetUniqueMaterialName(string originalName, int id)
         {

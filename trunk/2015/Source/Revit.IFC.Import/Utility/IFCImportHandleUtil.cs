@@ -288,6 +288,24 @@ namespace Revit.IFC.Import.Utility
         }
 
         /// <summary>
+        /// Get an optional logical attribute from an entity.
+        /// </summary>
+        /// <param name="handle">The entity handle.</param>
+        /// <param name="name">The attribute name.</param>
+        /// <returns>The attribute value, or IFCLogical.Unknown if not found.</returns>
+        static public IFCLogical GetOptionalLogicalAttribute(IFCAnyHandle handle, string name, out bool found)
+        {
+            IFCLogical? attribute = IFCAnyHandleUtil.GetLogicalAttribute(handle, name);
+            if (!attribute.HasValue)
+            {
+                found = false;
+                return IFCLogical.Unknown;
+            }
+            found = true;
+            return attribute.Value;
+        }
+
+        /// <summary>
         /// Read the HasAssignments INVERSE attribute from an IfcObjectDefinition, if it is defined.
         /// </summary>
         /// <param name="ifcObjectDefinition">The handle assumed to be an IfcObjectDefinition.</param>

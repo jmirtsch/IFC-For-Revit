@@ -61,6 +61,24 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
+        /// Get the curve or CurveLoop representation of IFCCurve, as a list of 0 or more curves.
+        /// </summary>
+        public IList<Curve> GetCurves()
+        {
+            IList<Curve> curves = new List<Curve>();
+
+            if (Curve != null)
+                curves.Add(Curve);
+            else if (CurveLoop != null)
+            {
+                foreach (Curve curve in CurveLoop)
+                    curves.Add(curve);
+            }
+
+            return curves;
+        }
+
+        /// <summary>
         /// Get the curve or CurveLoop representation of IFCCurve, as a CurveLoop.  This will have a value, as long as Curve or CurveLoop do.
         /// </summary>
         public CurveLoop GetCurveLoop()
@@ -596,25 +614,24 @@ namespace Revit.IFC.Import.Data
         /// <param name="shapeEditScope">The geometry creation scope.</param>
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="forceSolid">Ignored for IFCCurve.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         /// <remarks>This currently assumes that we are create plan view curves.</remarks>
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, bool forceSolid, string guid)
+        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, forceSolid, guid);
+            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
 
             // TODO: set graphics style.
             if (Curve != null)
             {
                 Curve transformedCurve = Curve.CreateTransformed(lcs);
-                shapeEditScope.Creator.FootprintCurves.Add(transformedCurve);
+                shapeEditScope.AddFootprintCurve(transformedCurve);
             }
             else if (CurveLoop != null)
             {
                 foreach (Curve curve in CurveLoop)
                 {
                     Curve transformedCurve = curve.CreateTransformed(lcs);
-                    shapeEditScope.Creator.FootprintCurves.Add(transformedCurve);
+                    shapeEditScope.AddFootprintCurve(transformedCurve);
                 }
             }
         }

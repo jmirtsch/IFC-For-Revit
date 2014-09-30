@@ -377,63 +377,130 @@ namespace Revit.IFC.Export.Exporter
         /// </remarks>
         /// <param name="faceSet">The collection of face handles.</param>
         /// <returns>True if can, false if can't.</returns>
-        public static bool CanCreateClosedShell(ICollection<IFCAnyHandle> faceSet)
+        public static bool CanCreateClosedShell(Mesh mesh)
         {
-            int numFaces = faceSet.Count;
+            int numFaces = mesh.NumTriangles;
+
+            // Do simple checks first.
             if (numFaces < 4)
                 return false;
 
-            HashSet<KeyValuePair<int, int>> unmatchedEdges = new HashSet<KeyValuePair<int, int>>();
-            bool someReversed = false;
+            // Try to match up edges.
+            IDictionary<uint, IList<uint>> unmatchedEdges = new Dictionary<uint, IList<uint>>();
+            int unmatchedEdgeSz = 0;
+
+            for (int ii = 0; ii < numFaces; ii++)
+            {
+                MeshTriangle meshTriangle = mesh.get_Triangle(ii);
+                for (int jj = 0; jj < 3; jj++)
+                {
+                    uint pt1 = meshTriangle.get_Index(jj);
+                    uint pt2 = meshTriangle.get_Index((jj + 1) % 3);
+
+                    IList<uint> unmatchedEdgesPt2 = null;
+                    if (unmatchedEdges.TryGetValue(pt2, out unmatchedEdgesPt2) && unmatchedEdgesPt2.Contains(pt1))
+                    {
+                        unmatchedEdgesPt2.Remove(pt1);
+                        unmatchedEdgeSz--;
+                    }
+                    else
+                    {
+                        IList<uint> unmatchedEdgesPt1 = null;
+                        if (unmatchedEdges.TryGetValue(pt1, out unmatchedEdgesPt1) && unmatchedEdgesPt1.Contains(pt2))
+                        {
+                            // An edge with the same orientation exists twice; can't create solid.
+                            return false;
+                        }
+
+                        if (unmatchedEdgesPt1 == null)
+                        {
+                            unmatchedEdgesPt1 = new List<uint>();
+                            unmatchedEdges[pt1] = unmatchedEdgesPt1;
+                        }
+
+                        unmatchedEdgesPt1.Add(pt2);
+                        unmatchedEdgeSz++;
+                    }
+                }
+            }
+
+            return (unmatchedEdgeSz == 0);
+        }
+
+        /// <summary>
+        /// Checks if the faces can create a closed shell.
+        /// </summary>
+        /// <remarks>
+        /// Limitation: This could let through an edge shared an even number of times greater than 2.
+        /// </remarks>
+        /// <param name="faceSet">The collection of face handles.</param>
+        /// <returns>True if can, false if can't.</returns>
+        public static bool CanCreateClosedShell(ICollection<IFCAnyHandle> faceSet)
+        {
+            int numFaces = faceSet.Count;
+            
+            // Do simple checks first.
+            if (numFaces < 4)
+                return false;
+
             foreach (IFCAnyHandle face in faceSet)
             {
                 if (IFCAnyHandleUtil.IsNullOrHasNoValue(face))
                     return false;
+            }
 
+            // Try to match up edges.
+            IDictionary<int, IList<int>> unmatchedEdges = new Dictionary<int, IList<int>>();
+            int unmatchedEdgeSz = 0;
+
+            foreach (IFCAnyHandle face in faceSet)
+            {
                 HashSet<IFCAnyHandle> currFaceBounds = GeometryUtil.GetFaceBounds(face);
                 foreach (IFCAnyHandle boundary in currFaceBounds)
                 {
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(boundary))
                         return false;
 
-                    bool reverse = !GeometryUtil.BoundaryHasSameSense(boundary);
                     IList<IFCAnyHandle> points = GeometryUtil.GetBoundaryPolygon(boundary);
-
                     int sizeOfBoundary = points.Count;
                     if (sizeOfBoundary < 3)
                         return false;
 
+                    bool reverse = !GeometryUtil.BoundaryHasSameSense(boundary);
                     for (int ii = 0; ii < sizeOfBoundary; ii++)
                     {
-                        int pt1 = points[ii].Id;
-                        int pt2 = points[(ii + 1) % sizeOfBoundary].Id;
+                        int pt1 = reverse ? points[(ii + 1) % sizeOfBoundary].Id : points[ii].Id;
+                        int pt2 = reverse ? points[ii].Id : points[(ii + 1) % sizeOfBoundary].Id;
 
-                        KeyValuePair<int, int> reverseEdge =
-                           reverse ? new KeyValuePair<int, int>(pt1, pt2) : new KeyValuePair<int, int>(pt2, pt1);
-                        if (unmatchedEdges.Contains(reverseEdge))
+                        IList<int> unmatchedEdgesPt2 = null;
+                        if (unmatchedEdges.TryGetValue(pt2, out unmatchedEdgesPt2) && unmatchedEdgesPt2.Contains(pt1))
                         {
-                            unmatchedEdges.Remove(reverseEdge);
+                            unmatchedEdgesPt2.Remove(pt1);
+                            unmatchedEdgeSz--;
                         }
                         else
                         {
-                            KeyValuePair<int, int> currEdge =
-                               reverse ? new KeyValuePair<int, int>(pt2, pt1) : new KeyValuePair<int, int>(pt1, pt2);
-                            if (unmatchedEdges.Contains(currEdge))
+                            IList<int> unmatchedEdgesPt1 = null;
+                            if (unmatchedEdges.TryGetValue(pt1, out unmatchedEdgesPt1) && unmatchedEdgesPt1.Contains(pt2))
                             {
-                                unmatchedEdges.Remove(currEdge);
-                                someReversed = true;
+                                // An edge with the same orientation exists twice; can't create solid.
+                                return false;
                             }
-                            else
+
+                            if (unmatchedEdgesPt1 == null)
                             {
-                                unmatchedEdges.Add(currEdge);
+                                unmatchedEdgesPt1 = new List<int>();
+                                unmatchedEdges[pt1] = unmatchedEdgesPt1;
                             }
+
+                            unmatchedEdgesPt1.Add(pt2);
+                            unmatchedEdgeSz++;
                         }
                     }
                 }
             }
 
-            bool allMatched = (unmatchedEdges.Count == 0);
-            return (allMatched && !someReversed);
+            return (unmatchedEdgeSz == 0);
         }
 
         /// <summary>
@@ -873,6 +940,7 @@ namespace Revit.IFC.Export.Exporter
             }
         }
 
+        // This routine is inefficient, so we will cap how much work we allow it to do.
         private static IList<LinkedList<int>> ConvertTrianglesToPlanarFacets(TriangulatedShellComponent component)
         {
             IList<LinkedList<int>> facets = new List<LinkedList<int>>();
@@ -952,13 +1020,26 @@ namespace Revit.IFC.Export.Exporter
 
                     TriangleInShellComponent currTriangle = component.GetTriangle(idx);
 
-                    HashSet<int> currFacetVertices = new HashSet<int>();
-
                     LinkedList<int> currFacet = new LinkedList<int>();
                     currFacet.AddLast(currTriangle.VertexIndex0);
                     currFacet.AddLast(currTriangle.VertexIndex1);
                     currFacet.AddLast(currTriangle.VertexIndex2);
 
+                    // If only one triangle, a common case, add the facet and break out.
+                    if (numCurrTriangles == 1)
+                    {
+                        facets.Add(currFacet);
+                        break;
+                    }
+
+                    // If there are too many triangles, we won't try to be fancy until this routine is optimized.
+                    if (numCurrTriangles > 150)
+                    {
+                        facets.Add(currFacet);
+                        continue;
+                    }
+                    
+                    HashSet<int> currFacetVertices = new HashSet<int>();
                     currFacetVertices.Add(currTriangle.VertexIndex0);
                     currFacetVertices.Add(currTriangle.VertexIndex1);
                     currFacetVertices.Add(currTriangle.VertexIndex2);
@@ -1139,7 +1220,11 @@ namespace Revit.IFC.Export.Exporter
                         TriangulatedShellComponent component = solidFacetation.GetShellComponent(0);
                         int numberOfTriangles = component.TriangleCount;
                         int numberOfVertices = component.VertexCount;
-                        if (numberOfTriangles > 0 && numberOfVertices > 0)
+
+                        // We are going to limit the number of triangles to 50,000.  This is a arbitrary number
+                        // that should prevent the solid faceter from creating too many extra triangles to sew the surfaces.
+                        // We may evaluate this number over time.
+                        if ((numberOfTriangles > 0 && numberOfVertices > 0) && (numberOfTriangles < 50000))
                         {
                             IList<IFCAnyHandle> vertexHandles = new List<IFCAnyHandle>();
                             HashSet<IFCAnyHandle> currentFaceSet = new HashSet<IFCAnyHandle>();
@@ -1300,7 +1385,21 @@ namespace Revit.IFC.Export.Exporter
 
                         if (exportAsBReps)
                         {
-                            if ((currentFaceSet.Count < 4) || !CanCreateClosedShell(currentFaceSet))
+                            bool canExportAsClosedShell = (currentFaceSet.Count >= 4);
+                            if (canExportAsClosedShell)
+                            {
+                                if ((geomObject is Mesh) && (numBReps == 1))
+                                {
+                                    // use optimized version.
+                                    canExportAsClosedShell = CanCreateClosedShell(geomObject as Mesh);
+                                }
+                                else
+                                {
+                                    canExportAsClosedShell = CanCreateClosedShell(currentFaceSet);
+                                }
+                            }
+
+                            if (!canExportAsClosedShell)
                             {
                                 exportAsBReps = false;
 
@@ -1615,17 +1714,19 @@ namespace Revit.IFC.Export.Exporter
 
             BoundingBoxXYZ bbox = GeometryUtil.GetBBoxOfGeometries(geometryList);
             XYZ unscaledTrfOrig = new XYZ();
+
+            int numItems = geometryList.Count;
+            bool tryExtrusionAnalyzer = tryToExportAsExtrusion && (options.ExtrusionLocalCoordinateSystem != null) && (numItems == 1) && (geometryList[0] is Solid);
+            bool supportOffsetTransformForExtrusions = !(tryExtrusionAnalyzer || tryToExportAsSweptSolidAsBRep);
+            bool useOffsetTransformForExtrusions = (options.AllowOffsetTransform && supportOffsetTransformForExtrusions && (exportBodyParams != null));
+
             using (IFCTransaction tr = new IFCTransaction(file))
             {
                 // generate "bottom corner" of bbox; create new local placement if passed in.
                 // need to transform, but not scale, this point to make it the new origin.
                 using (TransformSetter transformSetter = TransformSetter.Create())
                 {
-                    int numItems = geometryList.Count;
-                    bool tryExtrusionAnalyzer = tryToExportAsExtrusion && (options.ExtrusionLocalCoordinateSystem != null) && (numItems == 1) && (geometryList[0] is Solid);
-                    bool supportOffsetTransform = !(tryExtrusionAnalyzer || tryToExportAsSweptSolidAsBRep);
-
-                    if (options.AllowOffsetTransform && supportOffsetTransform && exportBodyParams != null)
+                    if (useOffsetTransformForExtrusions)
                         bodyData.OffsetTransform = transformSetter.InitializeFromBoundingBox(exporterIFC, bbox, exportBodyParams, out unscaledTrfOrig);
 
                     // If we passed in an ExtrusionLocalCoordinateSystem, and we have 1 Solid, we will try to create an extrusion using the ExtrusionAnalyzer.
@@ -1963,14 +2064,17 @@ namespace Revit.IFC.Export.Exporter
                 }
             }
 
+            // If we created some extrusions that we are using (e.g., creating a solid model), and we didn't use an offset transform for the extrusions, don't do it here either.
+            bool supportOffsetTransformForBreps = !hasSweptSolidsAsBReps;
+            bool disallowOffsetTransformForBreps = (exportAsExtrusion.Count > 0) && !useOffsetTransformForExtrusions;
+            bool useOffsetTransformForBReps = options.AllowOffsetTransform && supportOffsetTransformForBreps && !disallowOffsetTransformForBreps;
+
             using (IFCTransaction tr = new IFCTransaction(file))
             {
                 using (TransformSetter transformSetter = TransformSetter.Create())
                 {
                     // Need to do extra work to support offset transforms if we are using the sweep analyzer.
-                    bool supportOffsetTransform = !hasSweptSolidsAsBReps;
-
-                    if (options.AllowOffsetTransform && supportOffsetTransform)
+                    if (useOffsetTransformForBReps)
                         bodyData.OffsetTransform = transformSetter.InitializeFromBoundingBox(exporterIFC, bbox, exportBodyParams, out unscaledTrfOrig);
 
                     BodyData brepBodyData = 

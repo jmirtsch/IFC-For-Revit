@@ -1440,7 +1440,9 @@ namespace Revit.IFC.Export.Toolkit
             if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
             {
                 string validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCWallType>(preDefinedType);
-                if (String.Compare(validatedType, "STANDARD", true) == 0)                   // Special check here because .STANDARD. has been deprecated in IFC4 even though the definition still contains the Enum for backward compatibility
+                // Special check here because .STANDARD. has been deprecated in IFC4 even though the definition still contains the Enum 
+                // for backward compatibility.
+                if (String.Compare(validatedType, "STANDARD", true) == 0)                   
                     validatedType = "NOTDEFINED";
                 IFCAnyHandleUtil.SetAttribute(wall, "PreDefinedType", validatedType, true);
             }
@@ -1472,7 +1474,9 @@ namespace Revit.IFC.Export.Toolkit
             if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
             {
                 string validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCWallType>(preDefinedType);
-                if (String.Compare(validatedType, "STANDARD", true) == 0)                   // Special check here because .STANDARD. has been deprecated in IFC4 even though the definition still contains the Enum for backward compatibility
+                // Special check here because .STANDARD. has been deprecated in IFC4 even though the definition still contains the Enum 
+                // for backward compatibility.
+                if (String.Compare(validatedType, "STANDARD", true) == 0)                   
                     validatedType = "NOTDEFINED";
                 IFCAnyHandleUtil.SetAttribute(wallStandardCase, "PreDefinedType", validatedType, true);
             }
@@ -1591,7 +1595,9 @@ namespace Revit.IFC.Export.Toolkit
             if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
             {
                 validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCWallType>(predefinedType);
-                if (String.Compare(validatedType, "STANDARD", true) == 0)                   // Special check here because .STANDARD. has been deprecated in IFC4 even though the definition still contains the Enum for backward compatibility
+                // Special check here because .STANDARD. has been deprecated in IFC4 even though the definition still contains the Enum 
+                // for backward compatibility.
+                if (String.Compare(validatedType, "STANDARD", true) == 0)                   
                     validatedType = "NOTDEFINED";
             }
             else
@@ -6300,11 +6306,11 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="innerBoundaries">An optional set of inner boundaries.</param>
         /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateCurveBoundedPlane(IFCFile file, IFCAnyHandle basisSurface, IFCAnyHandle outerBoundary,
-            HashSet<IFCAnyHandle> innerBoundaries)
+            ISet<IFCAnyHandle> innerBoundaries)
         {
             IFCAnyHandleUtil.ValidateSubTypeOf(basisSurface, false, IFCEntityType.IfcPlane);
             IFCAnyHandleUtil.ValidateSubTypeOf(outerBoundary, false, IFCEntityType.IfcCurve);
-            IFCAnyHandleUtil.ValidateSubTypeOf(innerBoundaries, false, IFCEntityType.IfcCurve);
+            IFCAnyHandleUtil.ValidateSubTypeOf(innerBoundaries, true, IFCEntityType.IfcCurve);
 
             IFCAnyHandle curveBoundedPlane = CreateInstance(file, IFCEntityType.IfcCurveBoundedPlane);
             IFCAnyHandleUtil.SetAttribute(curveBoundedPlane, "BasisSurface", basisSurface);

@@ -632,13 +632,17 @@ namespace Revit.IFC.Export.Utility
         /// Get geometry of one level of a potentially multi-story stair, ramp, or railing.
         /// </summary>
         /// <param name="geomElement">The original geometry.</param>
+        /// <param name="numFlights">The number of stair flights, or 0 if unknown.  If there is exactly 1 flight, return the original geoemtry.</param>
         /// <returns>The geometry element.</returns>
         /// <remarks>This routine may not work properly for railings created before 2006.  If you get
         /// poor representations from such railings, please upgrade the railings if possible.</remarks>
-        public static GeometryElement GetOneLevelGeometryElement(GeometryElement geomElement)
+        public static GeometryElement GetOneLevelGeometryElement(GeometryElement geomElement, int numFlights)
         {
             if (geomElement == null)
                 return null;
+
+            if (numFlights == 1)
+                return geomElement;
 
             foreach (GeometryObject geomObject in geomElement)
             {
@@ -668,6 +672,21 @@ namespace Revit.IFC.Export.Utility
             return geomElement;
         }
 
+        /// <summary>
+        /// Projects a point to the closest point on a plane.
+        /// </summary>
+        /// <param name="plane">The plane.</param>
+        /// <param name="point">The point.</param>
+        /// <returns>The UV of the projected point.</returns>
+        public static UV ProjectPointToPlane(Plane plane, XYZ point)
+        {
+            if (plane == null || point == null)
+                return null;
+
+            XYZ diff = (point - plane.Origin);
+            return new UV(diff.DotProduct(plane.XVec), diff.DotProduct(plane.YVec));
+        }
+        
         /// <summary>
         /// Generates the UV value of a point projected to a plane, given an extrusion direction.
         /// </summary>
@@ -2427,6 +2446,6 @@ namespace Revit.IFC.Export.Utility
                 profileCurve = IFCInstanceExporter.CreateCompositeCurve(file, segments, IFCLogical.False);
             }
             return profileCurve;
-        }
+        }        
     }
 }
