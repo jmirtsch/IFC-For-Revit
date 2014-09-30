@@ -96,10 +96,10 @@ namespace BIM.IFC.Export.UI
         static public string GetAssemblyVersion()
         {
             string assemblyFile = typeof(IFCCommandOverrideApplication).Assembly.Location;
-            string uiVersion = "Unknown Alternate UI version";
+            string uiVersion = Properties.Resources.UnkownAltUIVer;
             if (File.Exists(assemblyFile))
             {
-                uiVersion = "Alternate UI " + FileVersionInfo.GetVersionInfo(assemblyFile).FileVersion;
+                uiVersion = Properties.Resources.AltUIVer + " " + FileVersionInfo.GetVersionInfo(assemblyFile).FileVersion;
             }
             return uiVersion;
         }

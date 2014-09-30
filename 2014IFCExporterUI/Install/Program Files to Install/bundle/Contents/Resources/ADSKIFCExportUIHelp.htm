@@ -96,23 +96,31 @@ The alternate interface is loaded when users access the Export functionality usi
 <li>2nd level – the room/space boundaries are included and are split with respect to spaces on the opposite side of the boundary</li>
 </menu>
 <p><strong>Phase to export</strong>: Selects the phase of the document to export, defaulting to the last phase of the document.  If "Export only elements visible in view" is selected, the phase of the view will be used and this option greyed out.</p>
-<p><strong>Export base quantities</strong>: Whether or not to include base quantities for model elements in the export data.  Base quantities are generated from model geometry to reflect actual physical quantity values, independent of measurement rules or methods.</p>
+
+<p><strong>Export only elements visible in view</strong>: Checked to export only the visible elements of the current view (based on filtering and/or element and category hiding), unchecked to export the entire model.  
+<p><strong>Export Bounding Box</strong>: Checked to export bounding box representations, Unchecked to exclude them.  This is the forced on for GSA export.</p>
+<p><strong>Export Linked Files as Separate IFCs</strong>: Checked to export any Revit links in the project as separate IFCs, unchecked to exclude them.  Each linked instance in the file will export as a separate IFC file with the right positioning relative to the host file.  Multiple instances of the same linked document will export as separate files, identical except for their position and orientation.  Note that linked IFC files will be re-exported, so may suffer data loss on roundtrip.  This will be addressed in a future update.
+
 <p><strong>Split walls and columns by Level</strong>: Whether or not to split walls and columns by building stories.</p>
-<p><strong>Export internal Revit property sets</strong>: True to include the Revit-specific property sets based on parameter groups.  False to exclude them.</p>
-<p><strong>Export IFC Common property sets</strong>: True to include the IFC common property sets.  False to exclude them.</p>
-<p><strong>Export Schedules as property sets</strong>: True to export schedules as custom property sets.  The name of the schedule is the property set name; the column names are the IFC parameter names.</p>
-<p><strong>Export only elements visible in view</strong>: True to export only the visible elements of the current view (based on filtering and/or element and category hiding).  False to export the entire model.  
-<p><strong>Export parts as building elements</strong>: True to export parts as standard IFC elements, false to export them as IfcBuildingElementPart.</p>
-<p><strong>Export 2D plan view elements</strong>: True to include 2D elements supported by IFC export (notes and filled regions). False to exclude them. </p>
-<p><strong>Export Bounding Box</strong>: True to export bounding box representations, false to exclude them.  This is the forced to true for GSA export.</p>
-<p><strong>Export Solid Models when possible</strong>: True to export solid models when applicable, which allow for mixing BRep and extrusion geometries for an entity.  This can result in smaller IFC files.</p>
-<p><strong>Use family and type name for references</strong>: True to use the family and type name for references, false to use the type name only.</p>
-<p><strong>Use 2D room boundaries for room volume</strong>: True to use a simplified approach to calculation of room volumes (based on extrusion of 2D room boundaries) which is also the default when exporting to IFC 2x2.   False to use the Revit calculated room geometry to represent the room volumes (which is the default when exporting to IFC 2x3).</p>
-<p><strong>Include IFCSITE elevation in the site local placement origin</strong>: True to include the elevation from the Z offset of the IFCSITE local placement, false to exclude it. It’s not available for IFC Coordination View 2.0 file version.</p>
-<p><strong>Use coarse tessellation for some BReps</strong>: True to use coarse tessellation for some Revit elements (floors, railings, ramps, spaces and stairs).  Disabling this option will generally result in larger, but more accurate, BRep representations for these items.</p>
+<p><strong>Export 2D plan view elements</strong>: Checked to include 2D elements supported by IFC export (notes and filled regions), unchecked to exclude them. </p>
+
+<p><strong>Export Revit property sets</strong>: Checked to include the Revit-specific property sets based on parameter groups.  Unchecked to exclude them.</p>
+<p><strong>Export IFC Common property sets</strong>: Checked to include the IFC common property sets, unchecked to exclude them.</p>
+<p><strong>Export Schedules as property sets</strong>: Checked to export schedules as custom property sets.  The name of the schedule is the property set name; the column names are the IFC parameter names.</p>
+<p><strong>Export user defined property sets</strong>: Checked to export user-defined property set.  If checked, the use can specify the name of a text file that contains the property set definitions.</p>
+
+<p><strong>Export base quantities</strong>: Whether or not to include base quantities for model elements in the export data.  Base quantities are generated from model geometry to reflect actual physical quantity values, independent of measurement rules or methods.</p>
+
+<p><strong>Export parts as building elements</strong>: Checked to export parts as standard IFC elements, Unchecked to export them as IfcBuildingElementPart.</p>
+<p><strong>Export Solid Models when possible</strong>: Checked to export solid models when applicable, which allow for mixing BRep and extrusion geometries for an entity.  This can result in smaller IFC files.</p>
+<p><strong>Use coarse tessellation for some BReps</strong>: Checked to use coarse tessellation for some Revit elements (floors, railings, ramps, spaces and stairs).  Disabling this option will generally result in larger, but more accurate, BRep representations for these items.</p>
 </p>
+<p><strong>Use family and type name for references</strong>: Checked to use the family and type name for references, unchecked to use the type name only.</p>
+<p><strong>Use 2D room boundaries for room volume</strong>: Checked to use a simplified approach to calculation of room volumes (based on extrusion of 2D room boundaries) which is also the default when exporting to IFC 2x2.   Unchecked to use the Revit calculated room geometry to represent the room volumes (which is the default when exporting to IFC 2x3).</p>
+<p><strong>Include IFCSITE elevation in the site local placement origin</strong>: Checked to include the elevation from the Z offset of the IFCSITE local placement, unchecked to exclude it.</p>
 <p><strong>Store IFC GUID in file after export</strong>: Optionally allow storing the generated IFC GUIDs into the project file after export. This will add "IFC GUID" parameters to elements and their types, and Project Information for Project, Site, and Building GUIDS. This requires v2.12 of the expoter to add the parameter values, and also requires a manual save. 
 </p>
+
 <p>There are 7 built-in setups in the user interface:</p>    
 <menu>
 <li>IFC 2x3 Coordination View 2.0</li>
@@ -153,7 +161,7 @@ The source code for this application is available on open source, at the SourceF
 <a href="http://sourceforge.net/p/ifcexporter/home/Home/" target=_blank>http://sourceforge.net/p/ifcexporter/home/Home/</a>
 </p>
 <h3>Known Issues</h3>
-<p>This add-in is currently provided only in English.</p>
+<p>The alternate export UI is currently provided only in English and French.  The help is currently provided only in English.</p>
 <p>There is no mechanism to transfer saved setups from one project to another (other than by recreating them manually).  If setups are saved in templates, they should be available in any project created by the template.</p>
 <h2 id="Contact" name="Contact">Contact</h2>
  <p>Autodesk. Please visit us at: <a href="http://www.autodesk.com/" target=_blank>http://www.autodesk.com/</a></p>
@@ -176,11 +184,56 @@ The source code for this application is available on open source, at the SourceF
 
 <div class="versionset">
 
+<div class="version">2.12.0</div><div class="versioninfo-bullet">
+New Functionality:
+
+<ul>
+<li>Added a message to the user stating that exporting linked files does not support exporting mirrored instances.
+<li>The export UI has been prepared for localization into alternate languages, and has been translated into French.  The French version will be automatically used if you have a French OS on your machine.  If you are interested in translating the UI into your local language, contact us and we will provide you with the resources file to translate.  Note that the help is still English-only.
+<li>The functionality for creating and using user-defined property sets has been greatly enhanced.  This includes:
+<ol>
+<li>Added a "DefaultUserDefinedParameterSets.txt" file to allow a user to create user-defined property sets for any setup, including the in-session setup.
+<li>Added the "IFC2x3 Extended FM Handover View.txt" user-defined property sets file to the installation.  This also fixes a typo in the original version.
+<li>Allow the user to specify any file as a user-defined property set file, instead of being forced to use the default name and location.
+<li>Increased the types of fields that can be used from the original 4.  The full list is detailed in the DefaultUserDefinedParameterSets.txt file.
+</ol>
+<li>The Setup dialog for the export alternate UI has been split into 3 tabbed pages to make it easier to find and understand the export options.
+</ul>
+
+</div>
+
+<div class="version">2.11.0</div><div class="versioninfo-bullet">
+New Functionality:
+
+<ul>
+<li>Export linked Revit files as separate IFCs as a UI option. Note that IFC linked instances will be re-exported; we will look to optimize this in a future release.
+<li>UI for coarse tessellation now includes profile loops for extrusions.
+</ul>
+
+<br>Bug Fixes:
+
+<ul>
+<li>Don't fail export if there are trailing spaces in the Classification Field Name.
+<li>Fix update of some files with old UI saved configurations.
+</ul>
+
+</div>
+
+<div class="version">2.9.0</div><div class="versioninfo-bullet">
+New Functionality:
+
+<ul>
+<li>Add option to export user defined property sets.  Please see the SourceForge wiki for more information on what is currently supported.
+<li>Added "IFC2x3 Extended FM Handover View" configuration to UI.  Use this option if you want to maximally extract COBie data from the IFC file.
+</ul>
+
+</div>
+
 <div class="version">2.8.0</div><div class="versioninfo-bullet">
 New Functionality:
 <li>Add "Classification Field Name" to Classification tab in Assignments.  This allows a user to specify the name of one field that will serve as a classification.
 <li>Add "Phase to Export" UI to allow user to choose which phase to export.  This field is grayed out if exporting the current view.<br />
-Bugs:
+<br>Bug Fixes:
 <li>Fix "Duplicate" button in the export setup dialog to respond to left-clicking.
 </div>
 <div class="version">2.5.0</div><div class="versioninfo-bullet">

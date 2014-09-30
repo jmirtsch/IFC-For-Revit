@@ -136,6 +136,8 @@ namespace BIM.IFC.Export.UI
                             configuration.ExportSchedulesAsPsets = bool.Parse(configMap[s_setupExportSchedulesAsPsets]);
                         if (configMap.ContainsKey(s_setupExportUserDefinedPsets))
                             configuration.ExportUserDefinedPsets = bool.Parse(configMap[s_setupExportUserDefinedPsets]);
+                        if (configMap.ContainsKey(s_setupExportUserDefinedPsetsFileName))
+                            configuration.ExportUserDefinedPsetsFileName = configMap[s_setupExportUserDefinedPsetsFileName];
                         if (configMap.ContainsKey(s_setupExportLinkedFiles))
                             configuration.ExportLinkedFiles = bool.Parse(configMap[s_setupExportLinkedFiles]);
                         if (configMap.ContainsKey(s_setupIncludeSiteElevation))
@@ -186,6 +188,9 @@ namespace BIM.IFC.Export.UI
                         Field fieldExportUserDefinedPsets = m_schema.GetField(s_setupExportUserDefinedPsets);
                         if (fieldExportUserDefinedPsets != null)
                             configuration.ExportUserDefinedPsets = configEntity.Get<bool>(s_setupExportUserDefinedPsets);
+                        Field fieldExportUserDefinedPsetsFileName = m_schema.GetField(s_setupExportUserDefinedPsetsFileName);
+                        if (fieldExportUserDefinedPsetsFileName != null)
+                            configuration.ExportUserDefinedPsetsFileName = configEntity.Get<string>(s_setupExportUserDefinedPsetsFileName);
                         Field fieldExportLinkedFiles = m_schema.GetField(s_setupExportLinkedFiles);
                         if (fieldExportLinkedFiles != null)
                             configuration.ExportLinkedFiles = configEntity.Get<bool>(s_setupExportLinkedFiles);
@@ -234,6 +239,7 @@ namespace BIM.IFC.Export.UI
         private const String s_setupExportSolidModelRep = "ExportSolidModelRep";
         private const String s_setupExportSchedulesAsPsets = "ExportSchedulesAsPsets";
         private const string s_setupExportUserDefinedPsets = "ExportUserDefinedPsets";
+        private const string s_setupExportUserDefinedPsetsFileName = "ExportUserDefinedPsetsFileName";
         private const string s_setupExportLinkedFiles = "ExportLinkedFiles";
         private const String s_setupIncludeSiteElevation = "IncludeSiteElevation";
         private const String s_setupUseCoarseTessellation = "UseCoarseTessellation";
@@ -255,7 +261,8 @@ namespace BIM.IFC.Export.UI
                 IList<DataStorage> oldSavedConfigurations = GetSavedConfigurations(m_schema);
                 if (oldSavedConfigurations.Count > 0)
                 {
-                    Transaction deleteTransaction = new Transaction(IFCCommandOverrideApplication.TheDocument, "Delete old IFC export setups");
+                    Transaction deleteTransaction = new Transaction(IFCCommandOverrideApplication.TheDocument, 
+                        Properties.Resources.DeleteOldSetups);
                     try
                     {
                         deleteTransaction.Start();
@@ -312,7 +319,7 @@ namespace BIM.IFC.Export.UI
            }
 
            // Overwrite all saved configs with the new list
-           Transaction transaction = new Transaction(IFCCommandOverrideApplication.TheDocument, "Update IFC export setups");
+           Transaction transaction = new Transaction(IFCCommandOverrideApplication.TheDocument, Properties.Resources.UpdateExportSetups);
            try
            {
                transaction.Start();
@@ -352,6 +359,7 @@ namespace BIM.IFC.Export.UI
                    mapData.Add(s_setupExportSolidModelRep, configuration.ExportSolidModelRep.ToString());
                    mapData.Add(s_setupExportSchedulesAsPsets, configuration.ExportSchedulesAsPsets.ToString());
                    mapData.Add(s_setupExportUserDefinedPsets, configuration.ExportUserDefinedPsets.ToString());
+                   mapData.Add(s_setupExportUserDefinedPsetsFileName, configuration.ExportUserDefinedPsetsFileName);
                    mapData.Add(s_setupExportLinkedFiles, configuration.ExportLinkedFiles.ToString());
                    mapData.Add(s_setupIncludeSiteElevation, configuration.IncludeSiteElevation.ToString());
                    mapData.Add(s_setupUseCoarseTessellation, configuration.UseCoarseTessellation.ToString());

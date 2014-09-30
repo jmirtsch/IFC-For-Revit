@@ -28,6 +28,7 @@ using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
 using Microsoft.Win32;
 
+using Revit.IFC.Common.Utility;
 using Revit.IFC.Common.Extensions;
 
 namespace BIM.IFC.Export.UI
@@ -199,11 +200,12 @@ namespace BIM.IFC.Export.UI
 
                         if (!result)
                         {
-                            //TODO localization
-                            TaskDialog taskDialog = new TaskDialog("Error exporting IFC file");
-                            taskDialog.MainInstruction = "The IFC export process encountered an error.";
-                            taskDialog.MainIcon = TaskDialogIcon.TaskDialogIconWarning;
-                            taskDialog.Show();
+                            using (TaskDialog taskDialog = new TaskDialog(Properties.Resources.IFCExport))
+                            {
+                                taskDialog.MainInstruction = Properties.Resources.IFCExportProcessError;
+                                taskDialog.MainIcon = TaskDialogIcon.TaskDialogIconWarning;
+                                TaskDialogResult taskDialogResult = taskDialog.Show();
+                            }
                         }
 
                         // This option should be rarely used, and is only for consistency with old files.  As such, it is set by environment variable only.
@@ -268,16 +270,59 @@ namespace BIM.IFC.Export.UI
             }
             catch (Exception e)
             {
-                //TODO localization
-                TaskDialog taskDialog = new TaskDialog("Error exporting IFC file");
-                taskDialog.MainInstruction = "The IFC export process encountered an error.";
-                taskDialog.MainIcon = TaskDialogIcon.TaskDialogIconWarning;
-                taskDialog.ExpandedContent = e.ToString();
-                taskDialog.Show();
+                using (TaskDialog taskDialog = new TaskDialog(Properties.Resources.IFCExport))
+                {
+                    taskDialog.MainInstruction = Properties.Resources.IFCExportProcessError;
+                    taskDialog.MainIcon = TaskDialogIcon.TaskDialogIconWarning;
+                    taskDialog.ExpandedContent = e.ToString();
+                    TaskDialogResult result = taskDialog.Show();
+                }
             }
         }
 
-        // If user canceled either dialog, a silent return (no notification or logging needed)
+        private string FileNameListToString(IList<string> fileNames)
+        {
+            string fileNameListString = "";
+            foreach (string fileName in fileNames)
+            {
+                if (fileNameListString != "")
+                    fileNameListString += "; ";
+                fileNameListString += fileNames;
+            }
+            return fileNameListString;
+        }
+        
+        private string ElementIdListToString(IList<ElementId> elementIds)
+        {
+            string elementString = "";
+            foreach (ElementId elementId in elementIds)
+            {
+                if (elementString != "")
+                    elementString += ", ";
+                elementString += elementId.IntegerValue.ToString();
+            }
+            return elementString;
+        }
+
+        // This modifies an existing string to display an expanded error message to the user.
+        private void AddExpandedStringContent(ref string messageString, string formatString, IList<string> items)
+        {
+            if (messageString != "")
+                messageString += "\n";
+
+            if (items.Count > 0)
+                messageString += string.Format(formatString, FileNameListToString(items));
+        }
+
+        // This modifies an existing string to display an expanded error message to the user.
+        private void AddExpandedElementIdContent(ref string messageString, string formatString, IList<ElementId> items)
+        {
+            if (messageString != "")
+                messageString += "\n";
+
+            if (items.Count > 0)
+                messageString += string.Format(formatString, ElementIdListToString(items));
+        }
 
         public void ExportLinkedDocuments(Autodesk.Revit.DB.Document document, string fileName, Dictionary<ElementId, string> linksGUIDsCache, IFCExportOptions exportOptions)
         {
@@ -351,6 +396,19 @@ namespace BIM.IFC.Export.UI
             }
 
             // get the link instances
+            // We will keep track of the instances we can't export.
+            // Reasons we can't export:
+            // 1. The path for the linked instance doesn't exist.
+            // 2. Couldn't create a temporary document for exporting the linked instance.
+            // 3. The document for the linked instance can't be found.
+            // 4. The linked instance is mirrored, non-conformal, or scaled.
+            IList<string> pathDoesntExist = new List<string>();
+            IList<string> noTempDoc = new List<string>();
+            IList<ElementId> cantFindDoc = new List<ElementId>();
+            IList<ElementId> nonConformalInst = new List<ElementId>();
+            IList<ElementId> scaledInst = new List<ElementId>();
+            IList<ElementId> instHasReflection = new List<ElementId>();
+
             foreach (String linkPathName in rvtLinkNamesToInstancesDict.Keys)
             {
                 // get the name of the copy
@@ -371,7 +429,10 @@ namespace BIM.IFC.Export.UI
                 // copy the file
                 File.Copy(linkPathName, linkPathNameCopy);
                 if (!File.Exists(linkPathNameCopy))
+                {
+                    pathDoesntExist.Add(linkPathName);
                     continue;
+                }
 
                 // open the document
                 Document documentCopy = null;
@@ -390,7 +451,10 @@ namespace BIM.IFC.Export.UI
                 }
 
                 if (documentCopy == null)
+                {
+                    noTempDoc.Add(linkPathName); 
                     continue;
+                }
 
                 // get the link document unit scale
                 DisplayUnitType dutLink = documentCopy.GetUnits().GetFormatOptions(UnitType.UT_Length).DisplayUnits;
@@ -403,13 +467,39 @@ namespace BIM.IFC.Export.UI
 
                 foreach (RevitLinkInstance currRvtLinkInstance in currRvtLinkInstances)
                 {
+                    // Nothing to report if the element itself is null.
                     if (currRvtLinkInstance == null)
                         continue;
 
                     // get the link document
                     Document linkDocument = currRvtLinkInstance.GetLinkDocument();
                     if (linkDocument == null)
+                    {
+                        cantFindDoc.Add(currRvtLinkInstance.Id);
                         continue;
+                    }
+
+                    // get the link transform
+                    Transform tr = currRvtLinkInstance.GetTransform();
+                    
+                    // We can't handle non-conformal, scaled, or mirrored transforms.
+                    if (!tr.IsConformal)
+                    {
+                        nonConformalInst.Add(currRvtLinkInstance.Id);
+                        continue;
+                    }
+
+                    if (tr.HasReflection)
+                    {
+                        instHasReflection.Add(currRvtLinkInstance.Id);
+                        continue;
+                    }
+
+                    if (!MathUtil.IsAlmostEqual(tr.Determinant, 1.0))
+                    {
+                        scaledInst.Add(currRvtLinkInstance.Id);
+                        continue;
+                    }
 
                     // get the link file path and name
                     String linkFileName = "";
@@ -464,9 +554,6 @@ namespace BIM.IFC.Export.UI
                     linkFileName += sExtension;
 
                     linkFileNames.Add(linkFileName);
-
-                    // set the link transform
-                    Transform tr = currRvtLinkInstance.GetTransform();
 
                     // scale the transform origin
                     tr.Origin *= lengthScaleFactorLink;
@@ -523,6 +610,30 @@ namespace BIM.IFC.Export.UI
                 }
                 catch
                 {
+                }
+
+                // Show user errors, if any.
+                int numBadInstances = pathDoesntExist.Count + noTempDoc.Count + cantFindDoc.Count + nonConformalInst.Count
+                    + scaledInst.Count + instHasReflection.Count;
+                if (numBadInstances > 0)
+                {
+                    using (TaskDialog taskDialog = new TaskDialog(Properties.Resources.IFCExport))
+                    {
+                        taskDialog.MainInstruction = string.Format(Properties.Resources.LinkInstanceExportErrorMain, numBadInstances);
+                        taskDialog.MainIcon = TaskDialogIcon.TaskDialogIconWarning;
+                        taskDialog.TitleAutoPrefix = false;
+
+                        string expandedContent = "";
+                        AddExpandedStringContent(ref expandedContent, Properties.Resources.LinkInstanceExportErrorPath, pathDoesntExist);
+                        AddExpandedStringContent(ref expandedContent, Properties.Resources.LinkInstanceExportCantCreateDoc, noTempDoc);
+                        AddExpandedElementIdContent(ref expandedContent, Properties.Resources.LinkInstanceExportCantFindDoc, cantFindDoc);
+                        AddExpandedElementIdContent(ref expandedContent, Properties.Resources.LinkInstanceExportNonConformal, nonConformalInst);
+                        AddExpandedElementIdContent(ref expandedContent, Properties.Resources.LinkInstanceExportScaled, scaledInst);
+                        AddExpandedElementIdContent(ref expandedContent, Properties.Resources.LinkInstanceExportHasReflection, instHasReflection);
+
+                        taskDialog.ExpandedContent = expandedContent;
+                        TaskDialogResult result = taskDialog.Show();
+                    }
                 }
             }
         }
