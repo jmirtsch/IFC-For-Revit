@@ -18,6 +18,7 @@
 //
 
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -50,7 +51,7 @@ namespace BIM.IFC.Export.UI
         /// <summary>
         /// The file to store the previous window bounds.
         /// </summary>
-        string m_SettingFile = "IFCExporterUIWindowSettings_v7.txt";    // update the file when resize window bounds.
+        string m_SettingFile = "IFCExporterUIWindowSettings_v15.txt";    // update the file when resize window bounds.
 
         /// <summary>
         /// Constructs a new IFC export options window.
@@ -219,6 +220,7 @@ namespace BIM.IFC.Export.UI
             checkboxExportSolidModelRep.IsChecked = configuration.ExportSolidModelRep;
             checkboxExportSchedulesAsPsets.IsChecked = configuration.ExportSchedulesAsPsets;
             checkboxExportUserDefinedPset.IsChecked = configuration.ExportUserDefinedPsets;
+            userDefinedPropertySetFileName.Text = configuration.ExportUserDefinedPsetsFileName;
             checkBoxExportLinkedFiles.IsChecked = configuration.ExportLinkedFiles;
             checkboxIncludeIfcSiteElevation.IsChecked = configuration.IncludeSiteElevation;
             checkboxUseCoarseTessellation.IsChecked = configuration.UseCoarseTessellation;
@@ -244,13 +246,17 @@ namespace BIM.IFC.Export.UI
                                                                 checkboxStoreIFCGUID,
                                                                 checkboxExportSchedulesAsPsets,
                                                                 comboboxActivePhase,
-                                                                checkboxExportUserDefinedPset
+                                                                checkboxExportUserDefinedPset,
+                                                                userDefinedPropertySetFileName,
+                                                                buttonBrowse
                                                                 };
             foreach (UIElement element in configurationElements)
             {
                 element.IsEnabled = !configuration.IsBuiltIn;
             }
             comboboxActivePhase.IsEnabled = comboboxActivePhase.IsEnabled && !configuration.VisibleElementsOfCurrentView;
+            userDefinedPropertySetFileName.IsEnabled = userDefinedPropertySetFileName.IsEnabled && configuration.ExportUserDefinedPsets;
+            buttonBrowse.IsEnabled = buttonBrowse.IsEnabled && configuration.ExportUserDefinedPsets;
         }
 
         /// <summary>
@@ -797,6 +803,8 @@ namespace BIM.IFC.Export.UI
             if (configuration != null)
             {
                 configuration.ExportUserDefinedPsets = GetCheckbuttonChecked(checkBox);
+                userDefinedPropertySetFileName.IsEnabled = configuration.ExportUserDefinedPsets;
+                buttonBrowse.IsEnabled = configuration.ExportUserDefinedPsets;
             }
         }
 
@@ -812,6 +820,45 @@ namespace BIM.IFC.Export.UI
             if (configuration != null)
             {
                 configuration.ExportLinkedFiles = GetCheckbuttonChecked(checkBox);
+            }
+        }
+
+        /// <summary>
+        /// Shows the new setup control and updates with the results.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">Event arguments that contains the event data.</param>
+        private void buttonBrowse_Click(object sender, RoutedEventArgs e)
+        {
+            IFCExportConfiguration configuration = GetSelectedConfiguration();
+            
+            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+
+            // Set filter for file extension and default file extension 
+            dlg.DefaultExt = ".txt";
+            dlg.Filter = Properties.Resources.UserDefinedParameterSets + @"|*.txt";
+            if (configuration != null && !string.IsNullOrWhiteSpace(configuration.ExportUserDefinedPsetsFileName))
+            {
+                string pathName = System.IO.Path.GetDirectoryName(configuration.ExportUserDefinedPsetsFileName);
+                if (Directory.Exists(pathName))
+                    dlg.InitialDirectory = pathName;
+                if (File.Exists(configuration.ExportUserDefinedPsetsFileName))
+                {
+                    string fileName = System.IO.Path.GetFileName(configuration.ExportUserDefinedPsetsFileName);
+                    dlg.FileName = fileName;
+                }
+            }
+
+            // Display OpenFileDialog by calling ShowDialog method 
+            bool? result = dlg.ShowDialog();
+
+            // Get the selected file name and display in a TextBox 
+            if (result.HasValue && result.Value)
+            {
+                string filename = dlg.FileName;
+                userDefinedPropertySetFileName.Text = filename;
+                if (configuration != null)
+                    configuration.ExportUserDefinedPsetsFileName = filename;
             }
         }
     }

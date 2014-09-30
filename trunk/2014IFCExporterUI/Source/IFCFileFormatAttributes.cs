@@ -54,15 +54,15 @@ namespace BIM.IFC.Export.UI
             switch (FileType)
             {
                 case IFCFileFormat.Ifc:
-                    return "IFC";
+                    return Properties.Resources.IFC;
                 case IFCFileFormat.IfcXML:
-                    return "IFC XML";
+                    return Properties.Resources.IFCXML;
                 case IFCFileFormat.IfcZIP:
-                    return "Zipped IFC";
+                    return Properties.Resources.IFCZIP;
                 case IFCFileFormat.IfcXMLZIP:
-                    return "Zipped IFC XML";
+                    return Properties.Resources.IFCXMLZIP;
                 default:
-                    return "unrecognized file type option";
+                    return Properties.Resources.IFCUnknown;
             }
         }
 
@@ -75,15 +75,15 @@ namespace BIM.IFC.Export.UI
             switch (FileType)
             {
                 case IFCFileFormat.Ifc:
-                    return "ifc";
+                    return Properties.Resources.IFCExt;
                 case IFCFileFormat.IfcXML:
-                    return "ifcxml";
+                    return Properties.Resources.IFCXMLExt;
                 case IFCFileFormat.IfcZIP:
-                    return "ifczip";
+                    return Properties.Resources.IFCZIPExt;
                 case IFCFileFormat.IfcXMLZIP:
-                    return "ifczip";
+                    return Properties.Resources.IFCXMLZIPExt;
                 default:
-                    return "unrecognized file type option";
+                    return Properties.Resources.IFCUnknown;
             }
         }
 
@@ -96,15 +96,15 @@ namespace BIM.IFC.Export.UI
             switch (FileType)
             {
                 case IFCFileFormat.Ifc:
-                    return "IFC-SPF|*.ifc";
+                    return Properties.Resources.IFCFiles;
                 case IFCFileFormat.IfcXML:
-                    return "Industry Foundation Classes XML(.ifcxml)|*.ifcxml";
+                    return Properties.Resources.IFCXMLFiles;
                 case IFCFileFormat.IfcZIP:
-                    return "Zipped Industry Foundation Classes(.ifczip)|*.ifczip";
+                    return Properties.Resources.IFCZIPFiles;
                 case IFCFileFormat.IfcXMLZIP:
-                    return "Zipped Industry Foundation Classes(.ifczip)|*.ifczip";
+                    return Properties.Resources.IFCZIPFiles;
                 default:
-                    return "unrecognized file type option";
+                    return Properties.Resources.IFCUnknown;
             }
         }
     }
