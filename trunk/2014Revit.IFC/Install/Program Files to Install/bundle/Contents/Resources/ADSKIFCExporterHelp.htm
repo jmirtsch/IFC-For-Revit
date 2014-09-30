@@ -126,6 +126,108 @@ working on expanding and eventually removing this limit, and we will be tracking
 
 <div class="versionset">
 
+<div class="version">3.12.0.0</div><div class="versioninfo-bullet">
+
+<p>General:
+
+<li>Moved some more native code into the open source .NET code.
+
+<p>New Functionality:
+
+<li>Revit spaces support IfcLongName to override the "LongName" parameter.
+
+<p>Bug Fixes:
+
+<li>Allow export of an instance of a face-based door or window family placed on a wall.
+<li>Correctly associate IfcFlowSegment to its associated IfcPipeSegmentType entity when exporting gutters.
+<li>Don't do special calculations to generate geometry for stairs, ramps, and railings that aren't multi-story.
+<li>Don't export "NOTDEFINED" as the type value if the user hasn't specified a value.  This was especially a problem for IFC entities that didn't have "NOTDEFINED" as a valid value, such as IfcBuildingElementProxy.
+<li>Fix the exported height of some walls that have vertical regions defined that extend beyond the actual height of the wall.
+<li>Fix the exported placement of some objects such as railings when the "Use Solid Models if Possible" UI option was used.
+<li>Improve performance when exporting 1st level space boundaries by not calculating the boundary information twice.
+<li>Significantly improve performance when trying to export a highly-tessellated geometry.
+<li>When splitting walls and columns on export, ignore non-building storeys when doing the split.
+
+</div>
+
+<div class="version">3.11.0.0</div><div class="versioninfo-bullet">
+
+<p>New Functionality:
+
+<li>(IFC2x3) Use an alternate coarser representation for some simple sweeps that significantly reduces the number of facets if the UI option to use coarse representations for some BReps and profiles is enabled.
+<li>(IFC4) Use IfcSurfaceCurveSweptAreaSolid for some simple sweeps instead of IfcFacetedBRep.
+<li>(IFC4) Support IfcFootingType.CAISSON_FOUNDATION.
+<li>Add support for Pset_DoorWindowGlazingType and Pset_DoorWindowShadingType.
+<li>Add support for properties of type IfcNormalisedRatioMeasure.
+<li>Allow export of in-place roofs as extrusions in any direction, not just Z direction.
+<li>Allow use of shared parameter "IfcPresentationLayer" to override IfcPresentationLayer for an element.
+<li>Export linked Revit files as separate IFCs as a UI option. Note that IFC linked instances will be re-exported; we will look to optimize this in a future release.
+<li>Family instances can be exported as IfcSpace/IfcSpaceType.
+<li>Revit floors and building pads can now be exported as IfcCovering, IfcFooting, IfcRamp or IfcSlab.  Foundation slabs will now default to "BASESLAB" instead of "FLOOR".
+<li>If all of the geometry of a mass belongs to the same sub-category, that sub-category will determine the IFC entity type in the IFC export layer mapping table.
+<li>UI for coarse tessellation now includes profile loops for extrusions.
+<li>Use a coarser representation for extrusion profiles that have more than 24 segments if the UI option to use coarse representations for some BReps and profiles is enabled. 
+<li>Use the "schedule level parameter" for Family Instances when determining which level the instance is on.  If the instance is of a nested family, use the "schedule level parameter" of the top-level family.
+
+<p>Bug Fixes:
+
+<li>(IFC4) Allow export of files when a currency is set in the Revit units.  Also, better export of the monetary unit.
+<li>Allow ceilings with finish layers with no material id assigned to be exported.
+<li>Allow export of imperfect geometry, generally previously imported, that can't calculate its volume.
+<li>Don't create IfcMaterialLayer unless also exporting IfcMaterialLayerSet.
+<li>Don't fail export if there are trailing spaces in the Classification Field Name.
+<li>Don't try to get shared coordinate information from projects whose project position has been incorrectly deleted.
+<li>Don't use IFCMonetaryUnit if IFC2x3 Coordination View 2.0 option is set.
+<li>Extend the footprint profile of some walls with full height openings at one of the two ends of the wall to include the opening footprint. 
+<li>Fix height of the space boundaries for some doors and windows in metric units.
+<li>Fix update of some files with old UI saved configurations.
+<li>The local placement of some doors and windows would sometimes refer directly to the building story if they referred to a stale opening local placement.  Always make sure to always refer to the correct local placement.
+<li>The ObjectType and Description fields for IfcBuildingStorey were previously reversed.  This has been fixed.
+
+</div>
+
+<div class="version">3.10.0.0</div><div class="versioninfo-bullet">
+
+<p>New Functionality:
+
+<li>Changed the heuristic used to determine what the "primary" view is for each exported level, necessary if exporting 2D annotations.  Previously, depending on the base template, some exports choose the site view over the plan view for the base level.
+<li>Extend use of ExtrusionAnalyser to simple mullion geometry, allow some highly faceted BReps to be exported as extrusions with clippings instead.
+
+<p>Bug Fixes:
+
+<li>Fix scaling issues of many wall base quantities.
+<li>Fix some cases where walls with openings at their base were exported with the wrong footprint.
+<li>Fix filter for space export based on selected phase.
+<li>Get correct space for family instances based on phase chosen on export, instead of the space in the last phase.
+
+</div>
+<div class="version">3.9.0.0</div><div class="versioninfo-bullet">
+
+<p>General:
+
+<li>A lot of changes have been made to make the IFC exporter create better COBie data, and work more closely with the new COBie exporter, found at http://www.autodesk.com/content/dam/autodesk/www/campaigns/interoperability/COBieExtensionSetup_v1.0.exe.  Note that the COBie
+exporter is for 2014 only, but the changes to create better COBie data were ported to the 2013 IFC exporter also.  Please see the SourceForge wiki for more information.
+
+<p>New Functionality:
+
+<li>Add support for IfcActorRole.
+<li>Add support for IfcBuildingElementProxyType (for IFC2x3 and IFC4; not supported in IFC2x2).
+<li>Add some support for IfcRailingType (not for all cases).
+<li>Add classifications to IfcBuildingStorey, IfcSystem and IfcZone.
+<li>Allow some proxies to be parts of MEP IfcSystems.
+<li>Better naming of distribution ports (Revit connectors), consistent with COBie requirements.
+<li>Get COBie contact information from the new COBie toolkit if it is available.
+<li>Remove use of .ELEMENT. for IfcBuildingElementProxy, which is obsolete in IFC4.
+<li>Set the description of connection types for wall connections consistent with COBie requirements.
+<li>Support export of user defined property sets.
+
+<p>Bugs Fixes:
+
+<li>Don't stop looking for custom classification codes when an empty classification code is found; check all 10.
+<li>Set ceilings as space boundaries regardless of which MVD is being used.
+<li>Use correct family type when creating classification information for types.
+
+</div>
 <div class="version">3.8.0.0</div><div class="versioninfo-bullet">
 
 <p>New Functionality:

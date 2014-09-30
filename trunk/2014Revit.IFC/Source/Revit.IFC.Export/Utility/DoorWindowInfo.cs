@@ -410,7 +410,10 @@ namespace Revit.IFC.Export.Utility
 
                     XYZ wallZDir = WallExporter.GetWallHeightDirection(wall);
 
-                    double param = famInst.HostParameter;
+                    // famInst.HostParameter will fail if FamilyPlacementType is WorkPlaneBased, regardless of whether or not the reported host is a Wall.
+                    // In this case, just use the start parameter of the curve.
+                    bool hasHostParameter = famInst.Symbol.Family.FamilyPlacementType != FamilyPlacementType.WorkPlaneBased;
+                    double param = hasHostParameter ? famInst.HostParameter : curve.GetEndParameter(0);
 
                     Transform wallTrf = curve.ComputeDerivatives(param, false);
                     XYZ wallOrig = wallTrf.Origin;

@@ -270,6 +270,19 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         }
 
         /// <summary>
+        /// Creates an entry of type given by propertyType.
+        /// </summary>
+        /// <param name="propetyType">The property type.</param>
+        /// <param name="revitParameterName">Revit parameter name.</param>
+        /// <returns>The PropertySetEntry.</returns>
+        public static PropertySetEntry CreateGenericEntry(PropertyType propertyType, string revitParameterName)
+        {
+            PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+            pse.PropertyType = propertyType;
+            return pse;
+        }
+
+        /// <summary>
         /// Creates an entry of type real.
         /// </summary>
         /// <param name="revitParameterName">

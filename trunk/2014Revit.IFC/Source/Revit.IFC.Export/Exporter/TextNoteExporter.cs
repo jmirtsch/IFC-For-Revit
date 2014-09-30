@@ -82,7 +82,7 @@ namespace Revit.IFC.Export.Exporter
                     XYZ xDir = textNote.BaseDirection;
                     XYZ zDir = xDir.CrossProduct(yDir);
 
-                    double sizeX = UnitUtil.ScaleLength(textNote.LineWidth * planScale);
+                    double sizeX = UnitUtil.ScaleLength(textNote.Width * planScale);
                     double sizeY = UnitUtil.ScaleLength(textNote.Height * planScale);
 
                     // When we display text on screen, we "flip" it if the xDir is negative with relation to

@@ -339,7 +339,7 @@ namespace Revit.IFC.Export.Exporter
                         ecData.SetLocalPlacement(placementSetter.LocalPlacement);
                         ecData.ReuseLocalPlacement = false;
 
-                        GeometryElement rampGeom = GeometryUtil.GetOneLevelGeometryElement(geometryElement);
+                        GeometryElement rampGeom = GeometryUtil.GetOneLevelGeometryElement(geometryElement, numFlights);
 
                         BodyData bodyData;
                         ElementId categoryId = CategoryUtil.GetSafeCategoryId(ramp);

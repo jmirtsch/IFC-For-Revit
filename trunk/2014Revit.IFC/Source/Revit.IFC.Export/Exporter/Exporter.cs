@@ -937,7 +937,7 @@ namespace Revit.IFC.Export.Exporter
                         else
                         {
                             levelInfo = IFCLevelInfo.Create(prevBuildingStorey, prevPlacement, prevHeight, prevElev, lengthScale, true);
-                            ExporterCacheManager.LevelInfoCache.AddLevelInfo(exporterIFC, level.Id, levelInfo);
+                            ExporterCacheManager.LevelInfoCache.AddLevelInfo(exporterIFC, level.Id, levelInfo, false);
                         }
                         continue;
                     }
@@ -995,7 +995,7 @@ namespace Revit.IFC.Export.Exporter
                         foreach (Level baseLevel in unassignedBaseLevels)
                         {
                             levelInfo = IFCLevelInfo.Create(buildingStorey, placement, height, elev, lengthScale, true);
-                            ExporterCacheManager.LevelInfoCache.AddLevelInfo(exporterIFC, baseLevel.Id, levelInfo);
+                            ExporterCacheManager.LevelInfoCache.AddLevelInfo(exporterIFC, baseLevel.Id, levelInfo, false);
                         }
                     }
                     prevBuildingStorey = buildingStorey;
@@ -1004,14 +1004,14 @@ namespace Revit.IFC.Export.Exporter
                     prevElev = elev;
 
                     levelInfo = IFCLevelInfo.Create(buildingStorey, placement, height, elev, lengthScale, true);
-                    ExporterCacheManager.LevelInfoCache.AddLevelInfo(exporterIFC, level.Id, levelInfo);
+                    ExporterCacheManager.LevelInfoCache.AddLevelInfo(exporterIFC, level.Id, levelInfo, true);
 
                     // if we have coincident levels, add buildingstoreys for them but use the old handle.
                     for (int jj = 0; jj < coincidentLevels.Count; jj++)
                     {
                         level = levels[ii + jj + 1];
                         levelInfo = IFCLevelInfo.Create(buildingStorey, placement, height, elev, lengthScale, true);
-                        ExporterCacheManager.LevelInfoCache.AddLevelInfo(exporterIFC, level.Id, levelInfo);
+                        ExporterCacheManager.LevelInfoCache.AddLevelInfo(exporterIFC, level.Id, levelInfo, true);
                     }
 
                     ii += coincidentLevels.Count;
@@ -2878,7 +2878,7 @@ namespace Revit.IFC.Export.Exporter
         private void RelateLevels(ExporterIFC exporterIFC, Document document)
         {
             HashSet<IFCAnyHandle> buildingStoreys = new HashSet<IFCAnyHandle>();
-            List<ElementId> levelIds = ExporterCacheManager.LevelInfoCache.LevelsByElevation;
+            IList<ElementId> levelIds = ExporterCacheManager.LevelInfoCache.LevelsByElevation;
             for (int ii = 0; ii < levelIds.Count; ii++)
             {
                 ElementId levelId = levelIds[ii];

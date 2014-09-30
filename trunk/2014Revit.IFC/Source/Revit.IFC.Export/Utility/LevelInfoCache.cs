@@ -37,7 +37,14 @@ namespace Revit.IFC.Export.Utility
         private Dictionary<ElementId, KeyValuePair<ElementId, double>> elementIdToLevelHeight = new Dictionary<ElementId, KeyValuePair<ElementId, double>>();
 
         /// <summary>
-        /// A list of levels, sorted by elevation.  The user is expected to create the list in the proper order; this is done in Exporter.cs.
+        /// A list of building storeys (that is, levels that are being exported), sorted by elevation.  
+        /// The user is expected to create the list in the proper order; this is done in Exporter.cs.
+        /// </summary>
+        List<ElementId> m_BuildingStoreysByElevation;
+
+        /// <summary>
+        /// A list of levels, sorted by elevation.  
+        /// The user is expected to create the list in the proper order; this is done in Exporter.cs.
         /// </summary>
         List<ElementId> m_LevelsByElevation;
 
@@ -100,9 +107,24 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
-        /// A list of levels, sorted by elevation.  The user is expected to create the list in the proper order; this is done in Exporter.cs.
+        /// A list of building storeys (that is, levels that are being exported), sorted by elevation.  
+        /// The user is expected to create the list in the proper order; this is done in Exporter.cs.
         /// </summary>
-        public List<ElementId> LevelsByElevation
+        public IList<ElementId> BuildingStoreysByElevation
+        {
+            get
+            {
+                if (m_BuildingStoreysByElevation == null)
+                    m_BuildingStoreysByElevation = new List<ElementId>();
+                return m_BuildingStoreysByElevation;
+            }
+        }
+
+        /// <summary>
+        /// A list of levels, sorted by elevation.  
+        /// The user is expected to create the list in the proper order; this is done in Exporter.cs.
+        /// </summary>
+        public IList<ElementId> LevelsByElevation
         {
             get
             {
@@ -110,24 +132,20 @@ namespace Revit.IFC.Export.Utility
                     m_LevelsByElevation = new List<ElementId>();
                 return m_LevelsByElevation;
             }
-            set { m_LevelsByElevation = value; }
         }
-
+        
         /// <summary>
         /// Adds an IFCLevelInfo to the LevelsByElevation list, also updating the native cache item.
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The exporter data object.
-        /// </param>
-        /// <param name="levelId">
-        /// The level ElementId.
-        /// </param>
-        /// <param name="info">
-        /// The IFCLevelInfo.
-        /// </param>
-        public void AddLevelInfo(ExporterIFC exporterIFC, ElementId levelId, IFCLevelInfo info)
+        /// <param name="exporterIFC">The exporter data object.</param>
+        /// <param name="levelId">The level ElementId.</param>
+        /// <param name="info">The IFCLevelInfo.</param>
+        /// <param name="isBaseBuildingStorey">True if it is the levelId associated with the building storey.</param>
+        public void AddLevelInfo(ExporterIFC exporterIFC, ElementId levelId, IFCLevelInfo info, bool isBaseBuildingStorey)
         {
             LevelsByElevation.Add(levelId);
+            if (isBaseBuildingStorey)
+                BuildingStoreysByElevation.Add(levelId);
             exporterIFC.AddBuildingStorey(levelId, info);
         }
 
