@@ -369,7 +369,7 @@ namespace Revit.IFC.Export.Utility
         /// <param name="options">The collection of named options for IFC export.</param>
         /// <param name="optionName">The name of the target option.</param>
         /// <returns>The value of the option, or null if the option is not set.</returns>
-        private static string GetNamedStringOption(IDictionary<String, String> options, String optionName)
+        public static string GetNamedStringOption(IDictionary<String, String> options, String optionName)
         {
             String optionString;
             options.TryGetValue(optionName, out optionString);

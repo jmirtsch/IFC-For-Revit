@@ -119,6 +119,11 @@ namespace Revit.IFC.Export.Toolkit
         InstanceAsType = 2048
     }
 
+    enum IFCHostedSweepSubElements
+    {
+        PipeSegmentType = 1
+    }
+
     enum IFCRampSubElements
     {
         ContainedRamp = 2,

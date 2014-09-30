@@ -178,7 +178,7 @@ namespace Revit.IFC.Export.Exporter
                 return;
 
             Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
-            GeometryElement geomElement = GeometryUtil.GetOneLevelGeometryElement(railing.get_Geometry(geomOptions));
+            GeometryElement geomElement = GeometryUtil.GetOneLevelGeometryElement(railing.get_Geometry(geomOptions), 0);
 
             // If this is a multistory railing, the geometry will contain all of the levels of railing.  We only want one.
             if (geomElement == null)
@@ -285,7 +285,7 @@ namespace Revit.IFC.Export.Exporter
                             Element subElement = railingElem.Document.GetElement(subElementId);
                             if (subElement != null)
                             {
-                                GeometryElement subElementGeom = GeometryUtil.GetOneLevelGeometryElement(subElement.get_Geometry(geomOptions));
+                                GeometryElement subElementGeom = GeometryUtil.GetOneLevelGeometryElement(subElement.get_Geometry(geomOptions), 0);
 
                                 SolidMeshGeometryInfo subElementSolidMeshInfo = GeometryUtil.GetSplitSolidMeshGeometry(subElementGeom);
                                 IList<Solid> subElementSolids = subElementSolidMeshInfo.GetSolids();

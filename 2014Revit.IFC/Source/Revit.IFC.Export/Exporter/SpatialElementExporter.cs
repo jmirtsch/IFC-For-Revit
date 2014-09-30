@@ -78,7 +78,8 @@ namespace Revit.IFC.Export.Exporter
             {
                 using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, spatialElement, null, null))
                 {
-                    if (!CreateIFCSpace(exporterIFC, spatialElement, productWrapper, setter))
+                    SpatialElementGeometryResults spatialElemGeomResult = null;
+                    if (!CreateIFCSpace(exporterIFC, spatialElement, productWrapper, setter, out spatialElemGeomResult))
                         return;
 
                     bool isArea = (spatialElement is Area);
@@ -94,8 +95,10 @@ namespace Revit.IFC.Export.Exporter
                         try
                         {
                             // This can throw an exception.  If it does, continue to export element without boundary information.
+                            // We will re-use the previously generated value, if we have it.
                             // TODO: warn user.
-                            SpatialElementGeometryResults spatialElemGeomResult = s_SpatialElementGeometryCalculator.CalculateSpatialElementGeometry(spatialElement);
+                            if (spatialElemGeomResult == null)
+                                spatialElemGeomResult = s_SpatialElementGeometryCalculator.CalculateSpatialElementGeometry(spatialElement);
 
                             Solid spatialElemGeomSolid = spatialElemGeomResult.GetGeometry();
                             FaceArray faces = spatialElemGeomSolid.Faces;
@@ -384,7 +387,9 @@ namespace Revit.IFC.Export.Exporter
                                 {
                                     using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, spatialElement))
                                     {
-                                        if (!CreateIFCSpace(exporterIFC, spatialElement, productWrapper, setter))
+                                        // We won't use the SpatialElementGeometryResults, as these are 1st level boundaries, not 2nd level.
+                                        SpatialElementGeometryResults results = null;
+                                        if (!CreateIFCSpace(exporterIFC, spatialElement, productWrapper, setter, out results))
                                             continue;
 
                                         exportedSpaceIds.Add(spatialElement.Id);
@@ -553,7 +558,7 @@ namespace Revit.IFC.Export.Exporter
             Polyloop outerLoop = surface.GetPolyloop();
             IList<XYZ> outerLoopPoints = outerLoop.GetPoints();
 
-            List<XYZ> newOuterLoopPoints = new List<XYZ>();
+            IList<XYZ> newOuterLoopPoints = new List<XYZ>();
             foreach (XYZ point in outerLoopPoints)
             {
                 newOuterLoopPoints.Add(UnitUtil.ScaleLength(point.Subtract(offset)));
@@ -571,7 +576,7 @@ namespace Revit.IFC.Export.Exporter
                 innerLoopPoints.Add(newOpeningPoints);
             }
 
-            IFCAnyHandle hnd = file.CreateCurveBoundedPlane(newOuterLoopPoints, innerLoopPoints);
+            IFCAnyHandle hnd = ExporterUtil.CreateCurveBoundedPlane(file, newOuterLoopPoints, innerLoopPoints);
 
             return IFCInstanceExporter.CreateConnectionSurfaceGeometry(file, hnd, null);
         }
@@ -606,7 +611,7 @@ namespace Revit.IFC.Export.Exporter
 
             IList<IList<XYZ>> innerLoopPoints = new List<IList<XYZ>>();
 
-            IFCAnyHandle hnd = file.CreateCurveBoundedPlane(newOuterLoopPoints, innerLoopPoints);
+            IFCAnyHandle hnd = ExporterUtil.CreateCurveBoundedPlane(file, newOuterLoopPoints, innerLoopPoints);
 
             return IFCInstanceExporter.CreateConnectionSurfaceGeometry(file, hnd, null);
         }
@@ -653,7 +658,7 @@ namespace Revit.IFC.Export.Exporter
             {
                 double levelHeight = ExporterCacheManager.LevelInfoCache.FindHeight(levelId);
                 if (levelHeight < 0.0)
-                    levelHeight = LevelUtil.calculateDistanceToNextLevel(document, levelId, levelInfo);
+                    levelHeight = LevelUtil.CalculateDistanceToNextLevel(document, levelId, levelInfo);
 
                 roomHeight = UnitUtil.ScaleLength(levelHeight);
             }
@@ -814,26 +819,23 @@ namespace Revit.IFC.Export.Exporter
         /// <summary>
         /// Creates IFC room/space/area item, not include boundaries. 
         /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="spatialElement">
-        /// The spatial element.
-        /// </param>
-        /// <param name="productWrapper">
-        /// The ProductWrapper.
-        /// </param>
-        /// <param name="setter">
-        /// The PlacementSetter.
-        /// </param>
-        /// <returns>
-        /// True if created successfully, false otherwise.
-        /// </returns>
-        static bool CreateIFCSpace(ExporterIFC exporterIFC, SpatialElement spatialElement, ProductWrapper productWrapper, PlacementSetter setter)
+        /// <param name="exporterIFC">The ExporterIFC object.</param>
+        /// <param name="spatialElement">The spatial element.</param>
+        /// <param name="productWrapper">The ProductWrapper.</param>
+        /// <param name="setter">The PlacementSetter.</param>
+        /// <returns>True if created successfully, false otherwise.</returns>
+        static bool CreateIFCSpace(ExporterIFC exporterIFC, SpatialElement spatialElement, ProductWrapper productWrapper, 
+            PlacementSetter setter, out SpatialElementGeometryResults results)
         {
+            results = null;
+
             IList<CurveLoop> curveLoops = null;
             try
             {
+                // Avoid throwing for a spatial element with no location.
+                if (spatialElement.Location == null)
+                    return false;
+
                 SpatialElementBoundaryOptions options = GetSpatialElementBoundaryOptions(spatialElement);
                 curveLoops = ExporterIFCUtils.GetRoomBoundaryAsCurveLoopArray(spatialElement, options, true);
             }
@@ -955,7 +957,8 @@ namespace Revit.IFC.Export.Exporter
                     spatialElementName = NamingUtil.GetNameOverride(spatialElement, name);
                     string spatialElementDescription = NamingUtil.GetDescriptionOverride(spatialElement, desc);
                     string spatialElementObjectType = NamingUtil.GetObjectTypeOverride(spatialElement, null);
-
+                    string spatialElementLongName = NamingUtil.GetLongNameOverride(spatialElement, longName);
+                    
                     double? spaceElevationWithFlooring = null;
                     double elevationWithFlooring = 0.0;
                     if (ParameterUtil.GetDoubleValueFromElement(spatialElement, null, "IfcElevationWithFlooring", out elevationWithFlooring) != null)
@@ -963,7 +966,7 @@ namespace Revit.IFC.Export.Exporter
                     spaceHnd = IFCInstanceExporter.CreateSpace(file, GUIDUtil.CreateGUID(spatialElement),
                                                   exporterIFC.GetOwnerHistoryHandle(),
                                                   spatialElementName, spatialElementDescription, spatialElementObjectType,
-                                                  extraParams.GetLocalPlacement(), repHnd, longName, Toolkit.IFCElementComposition.Element,
+                                                  extraParams.GetLocalPlacement(), repHnd, spatialElementLongName, Toolkit.IFCElementComposition.Element,
                                                   internalOrExternal, spaceElevationWithFlooring);
 
                     transaction2.Commit();
@@ -994,7 +997,7 @@ namespace Revit.IFC.Export.Exporter
             ExporterCacheManager.SpaceInfoCache.SetSpaceHandle(spatialElement, spaceHnd);
 
             // Find Ceiling as a Space boundary and keep the relationship in a cache for use later
-            bool ret = GetCeilingSpaceBoundary(spatialElement);
+            bool ret = GetCeilingSpaceBoundary(spatialElement, out results);
 
             if (!MathUtil.IsAlmostZero(dArea) && !(ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE) &&
                 !ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2 && !ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities)
@@ -1018,18 +1021,23 @@ namespace Revit.IFC.Export.Exporter
         /// Collect relationship information from Ceiling to Room to be used later to determine whether a Ceiling can be contained in a Room
         /// </summary>
         /// <param name="spatialElement">The revit spatial object to process</param>
-        /// <returns></returns>
-        static private bool GetCeilingSpaceBoundary(SpatialElement spatialElement)
+        /// <param name="results">The results of the CalculateSpatialElementGeometry call, for caching for later use.</param>
+        /// <returns>True if it found a ceiling, false otherwise.</returns>
+        static private bool GetCeilingSpaceBoundary(SpatialElement spatialElement, out SpatialElementGeometryResults results)
         {
+            results = null;
+            
+            // Areas don't have a 3D rep, so no ceiling space boundaries.
+            if (spatialElement is Area)
+                return false;
+
             // Represents the criteria for boundary elements to be considered bounding Ceiling
             LogicalOrFilter categoryFilter = new LogicalOrFilter(new ElementCategoryFilter(BuiltInCategory.OST_Ceilings),
                                                         new ElementCategoryFilter(BuiltInCategory.OST_Ceilings));
 
-            SpatialElementGeometryCalculator calculator = new SpatialElementGeometryCalculator(spatialElement.Document);
-            SpatialElementGeometryResults results = null;
             try
             {
-                results = calculator.CalculateSpatialElementGeometry(spatialElement);
+                results = s_SpatialElementGeometryCalculator.CalculateSpatialElementGeometry(spatialElement);
             }
             catch
             {

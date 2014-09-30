@@ -38,6 +38,8 @@ namespace Revit.IFC.Export.Utility
     {
         private bool m_ExportInternalRevit;
 
+        private string m_ExportUserDefinedPsetsFileName;
+
         /// <summary>
         /// Override for the RevitPropertySets value from UI or API options.
         /// </summary>
@@ -117,7 +119,7 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
-        /// Whether or not to export User Defined Pset as defined in the ParameterMap.txt
+        /// Whether or not to export User Defined Pset as defined in the text file corresponding to this export.
         /// </summary>
         public bool ExportUserDefinedPsets
         {
@@ -129,6 +131,20 @@ namespace Revit.IFC.Export.Utility
                 // otherwise return false by default.
                 return false;
             }
+        }
+
+        /// <summary>
+        /// The file name of the user defined property set file, if we are exporting user defined property sets.
+        /// </summary>
+        public string ExportUserDefinedPsetsFileName
+        {
+            get
+            {
+                if (!ExportUserDefinedPsets)
+                    return null;
+                return m_ExportUserDefinedPsetsFileName;
+            }
+            protected set { m_ExportUserDefinedPsetsFileName = value; }
         }
         
         /// <summary>
@@ -162,7 +178,10 @@ namespace Revit.IFC.Export.Utility
             
             // "ExportUserDefinedPsets" override
             propertySetOptions.ExportUserDefinedPsetsOverride = ExportOptionsCache.GetNamedBooleanOption(options, "ExportUserDefinedPsets");
-            
+
+            // "ExportUserDefinedPsetsFileName" override
+            propertySetOptions.ExportUserDefinedPsetsFileName = ExportOptionsCache.GetNamedStringOption(options, "ExportUserDefinedPsetsFileName");
+           
             return propertySetOptions;
         }
     }
