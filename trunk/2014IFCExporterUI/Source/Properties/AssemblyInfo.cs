@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC export alternate UI library: this library works with Autodesk(R) Revit(R) to provide an alternate user interface for the export of IFC files from Revit.
-// Copyright (C) 2013  Autodesk, Inc.
+// Copyright (C) 2015  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -31,7 +31,7 @@ using System.Windows;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Autodesk, Inc.")]
 [assembly: AssemblyProduct("IFCExporterUI")]
-[assembly: AssemblyCopyright("© 2012-2013 Autodesk, Inc. All rights reserved.")]
+[assembly: AssemblyCopyright("© 2012-2015 Autodesk, Inc. All rights reserved.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -70,5 +70,5 @@ using System.Windows;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.12.0.0")]
-[assembly: AssemblyFileVersion("2.12.0.0")]
+[assembly: AssemblyVersion("2.13.0.0")]
+[assembly: AssemblyFileVersion("2.13.0.0")]
