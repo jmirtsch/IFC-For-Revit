@@ -39,6 +39,15 @@
       <HintPath>C:\Program Files\Autodesk\Revit Architecture 2014\Program\RevitAPIIFC.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Revit.IFC.Common">
+      <SpecificVersion>False</SpecificVersion>
+	  <!-- Change to your directory of Revit installation. -->
+      <HintPath>C:\Program Files\Autodesk\Revit Architecture 2014\Program\Revit.IFC.Common.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+      <HintPath>C:\Program Files\Autodesk\Revit Architecture 2014\Program\RevitAPIIFC.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>  
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup />

@@ -6,21 +6,29 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" Height="291" Width="786" WindowStyle="SingleBorderWindow" ResizeMode="CanMinimize" Closing="Window_Closing">
    <Grid HorizontalAlignment="Right" Width="770" Margin="0,10,0,0" Height="238" VerticalAlignment="Top">
       <TabControl Height="195" HorizontalAlignment="Left" Name="tabControl" VerticalAlignment="Top" Width="518" Margin="235,10,0,0">
-         <TabItem Header="General" Name="General">
+         <TabItem Header="{x:Static p:Resources.General}" Name="General">
             <Grid Width="469" Margin="0,0,-2,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="109*"/>
+                        <RowDefinition Height="21*"/>
+                        <RowDefinition Height="4*"/>
+                        <RowDefinition Height="4*"/>
+                        <RowDefinition Height="20*"/>
+                    </Grid.RowDefinitions>
                <ComboBox Height="23" HorizontalAlignment="Left" Margin="351,35,0,0" Name="comboboxSpaceBoundaries" VerticalAlignment="Top" Width="92" ItemsSource="{Binding}" SelectionChanged="comboboxSpaceBoundaries_SelectionChanged" />
-               <CheckBox Content="{x:Static p:Resources.SplitWallsAndColumnsByLevel}" Margin="244,103,-11,0" Name="checkboxSplitWalls" Checked="checkboxSplitWalls_Checked" Unchecked="checkboxSplitWalls_Checked" Height="16" VerticalAlignment="Top" />
-               <CheckBox Content="{x:Static p:Resources.ExportPlanViewElements}" Margin="244,119,0,0" Name="checkbox2dElements" Checked="checkbox2dElements_Checked" Unchecked="checkbox2dElements_Checked" Height="16" VerticalAlignment="Top" />
-               <CheckBox Content="{x:Static p:Resources.ExportVisibleElementsInView}" HorizontalAlignment="Left" Margin="-16,103,0,0" Name="checkboxVisibleElementsCurrView" VerticalAlignment="Top" Checked="checkboxVisibleElementsCurrView_Checked" Unchecked="checkboxVisibleElementsCurrView_Checked" Height="16" Width="255" />
+                    <CheckBox Content="{x:Static p:Resources.SplitWallsAndColumnsByLevel}" Margin="244,103,-11,0" Name="checkboxSplitWalls" Checked="checkboxSplitWalls_Checked" Unchecked="checkboxSplitWalls_Checked" Height="16" VerticalAlignment="Top" Grid.RowSpan="2" />
+                    <CheckBox Content="{x:Static p:Resources.ExportPlanViewElements}" Margin="244,10,0,0" Name="checkbox2dElements" Checked="checkbox2dElements_Checked" Unchecked="checkbox2dElements_Checked" Height="16" VerticalAlignment="Top" Grid.Row="1" Grid.RowSpan="3" />
+                    <CheckBox Content="{x:Static p:Resources.ExportVisibleElementsInView}" HorizontalAlignment="Left" Margin="-16,103,0,0" Name="checkboxVisibleElementsCurrView" VerticalAlignment="Top" Checked="checkboxVisibleElementsCurrView_Checked" Unchecked="checkboxVisibleElementsCurrView_Checked" Height="16" Width="255" Grid.RowSpan="2" />
                <Label Content="{x:Static p:Resources.SpaceBoundaries}" Height="29" Margin="244,34,97,0" Name="label3" VerticalAlignment="Top" />
                <ComboBox Height="23" Margin="0,6,26,0" Name="comboboxIfcType" VerticalAlignment="Top" Text="" HorizontalAlignment="Right" Width="332" SelectionChanged="comboboxIfcType_SelectionChanged" />
                <Label Content="{x:Static p:Resources.IFCVersion}" Height="29" HorizontalAlignment="Left" Margin="-16,6,0,0" Name="label1" VerticalAlignment="Top" Width="122" />
                <ComboBox Height="23" Margin="0,34,230,0" Name="comboboxFileType" VerticalAlignment="Top" Text="" HorizontalAlignment="Right" Width="128" SelectionChanged="comboboxFileType_SelectionChanged" />
                <Label Content="{x:Static p:Resources.FileType}" Height="29" HorizontalAlignment="Left" Margin="-16,35,0,0" Name="label2" VerticalAlignment="Top" Width="122" />
-               <CheckBox Content="{x:Static p:Resources.ExportBoundingBox}" HorizontalAlignment="Left" Margin="-16,119,0,0" Name="checkboxExportBoundingBox" VerticalAlignment="Top" Checked="checkboxExportBoundingBox_Checked" Unchecked="checkboxExportBoundingBox_Checked" Height="16" Width="255" />
+                    <CheckBox Content="{x:Static p:Resources.ExportBoundingBox}" Margin="-16,1,230,0" Name="checkboxExportBoundingBox" VerticalAlignment="Top" Checked="checkboxExportBoundingBox_Checked" Unchecked="checkboxExportBoundingBox_Checked" Height="16" Grid.Row="3" Grid.RowSpan="2" HorizontalAlignment="Right" Width="255" />
                <Label Content="{x:Static p:Resources.PhaseToExport}" Height="29" HorizontalAlignment="Left" Margin="-16,61,0,0" x:Name="label2_Copy" VerticalAlignment="Top" Width="122" />
                <ComboBox Height="23" Margin="0,61,26,0" x:Name="comboboxActivePhase" VerticalAlignment="Top" Text="" HorizontalAlignment="Right" Width="332" SelectionChanged="comboboxActivePhase_SelectionChanged" />
-               <CheckBox Content="{x:Static p:Resources.ExportLinkedFiles}" HorizontalAlignment="Left" Margin="-16,137,0,0" x:Name="checkBoxExportLinkedFiles" VerticalAlignment="Top" Checked="checkBoxExportLinkedFiles_Checked" Unchecked="checkBoxExportLinkedFiles_Checked" Height="16" Width="322" />
+                    <CheckBox Content="{x:Static p:Resources.ExportLinkedFiles}" HorizontalAlignment="Left" Margin="244,1,-97,0" x:Name="checkBoxExportLinkedFiles" VerticalAlignment="Top" Checked="checkBoxExportLinkedFiles_Checked" Unchecked="checkBoxExportLinkedFiles_Checked" Height="16" Width="322" Grid.Row="3" Grid.RowSpan="2" />
+                    <CheckBox Content="{x:Static p:Resources.ExportRoomsInView}" HorizontalAlignment="Left" Margin="0,10,0,0" x:Name="checkBoxExportRoomsInView" VerticalAlignment="Top" Checked="checkBoxExportRoomsInView_Checked" Unchecked="checkBoxExportRoomsInView_Checked" Height="16" Width="239" Grid.Row="1" IsEnabled="False" Grid.RowSpan="3" />
             </Grid>
          </TabItem>
          <TabItem Header="{x:Static p:Resources.PropertySets}" x:Name="PropertySets">
@@ -35,19 +43,22 @@
             </Grid>
          </TabItem>
          <TabItem Header="{x:Static p:Resources.Advanced}" x:Name="Advanced" VerticalAlignment="Top" Height="25">
-            <Grid Width="469" Margin="0,0,-2,0">
+                <Grid Margin="22,0,-2,0">
                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="5*"/>
-                  <ColumnDefinition Width="14*"/>
-                  <ColumnDefinition Width="450*"/>
+                        <ColumnDefinition Width="119*"/>
+                        <ColumnDefinition Width="45*"/>
                </Grid.ColumnDefinitions>
-               <CheckBox Content="{x:Static p:Resources.ExportPartsAsBuildingElements}" HorizontalAlignment="Left" Margin="1,7,0,0" x:Name="checkBoxExportPartsAsBuildingElements" VerticalAlignment="Top" Checked="checkBoxExportPartsAsBuildingElements_Checked" Unchecked="checkBoxExportPartsAsBuildingElements_Checked" Visibility="Visible" Height="16" Grid.ColumnSpan="2" Grid.Column="1" Width="393" />
-               <CheckBox Content="{x:Static p:Resources.UseFamilyAndTypeNameForReference}" HorizontalAlignment="Left" Margin="1,70,0,0" x:Name="checkBoxFamilyAndTypeName" Checked="checkBoxFamilyAndTypeName_Checked" Unchecked="checkBoxFamilyAndTypeName_Checked" Grid.ColumnSpan="2" Height="16" VerticalAlignment="Top" Grid.Column="1" Width="393" />
-               <CheckBox Content="{x:Static p:Resources.IncludeIfcSiteElevation}" Height="16" HorizontalAlignment="Left" Margin="1,112,0,0" x:Name="checkboxIncludeIfcSiteElevation" VerticalAlignment="Top" Checked="checkboxIfcSiteElevation_Checked" Unchecked="checkboxIfcSiteElevation_Checked" Grid.ColumnSpan="2" Grid.Column="1" Width="393" />
-               <CheckBox Content="{x:Static p:Resources.UseRoomBoundariesForRoomVolume}" Height="16" HorizontalAlignment="Left" Margin="1,91,0,0" x:Name="checkBoxUse2DRoomVolumes" VerticalAlignment="Top" Checked="checkBoxUse2DRoomVolumes_Checked" Unchecked="checkBoxUse2DRoomVolumes_Checked" Grid.ColumnSpan="2" Grid.Column="1" Width="393" />
-               <CheckBox Content="{x:Static p:Resources.UseCoarseTessellationForBReps}" Height="16" HorizontalAlignment="Left" Margin="1,49,0,0" x:Name="checkboxUseCoarseTessellation" VerticalAlignment="Top" Checked="checkboxUseCoarseTessellation_Checked" Unchecked="checkboxUseCoarseTessellation_Checked" Grid.ColumnSpan="2" Grid.Column="1" Width="393" />
-               <CheckBox Content="{x:Static p:Resources.StoreIFCGUID}" Height="16" HorizontalAlignment="Left" Margin="1,133,0,0" x:Name="checkboxStoreIFCGUID" VerticalAlignment="Top" Checked="checkboxStoreIFCGUID_Checked" Unchecked="checkboxStoreIFCGUID_Checked" Grid.ColumnSpan="2" Grid.Column="1" Width="393"  />
-               <CheckBox Content="{x:Static p:Resources.ExportSolidModelsWhenPossible}" HorizontalAlignment="Left" Margin="1,28,0,0" x:Name="checkboxExportSolidModelRep" VerticalAlignment="Top"  Checked="checkboxExportSolidModelRep_Checked" Unchecked="checkboxExportSolidModelRep_Checked" Grid.ColumnSpan="2" Grid.Column="1" Width="393" />
+                    <CheckBox Content="{x:Static p:Resources.ExportPartsAsBuildingElements}" HorizontalAlignment="Left" Margin="6,7,0,0" x:Name="checkBoxExportPartsAsBuildingElements" VerticalAlignment="Top" Checked="checkBoxExportPartsAsBuildingElements_Checked" Unchecked="checkBoxExportPartsAsBuildingElements_Checked" Visibility="Visible" Height="16" Grid.ColumnSpan="2" Width="393" />
+                    <CheckBox Content="{x:Static p:Resources.UseFamilyAndTypeNameForReference}" HorizontalAlignment="Left" Margin="6,70,0,0" x:Name="checkBoxFamilyAndTypeName" Checked="checkBoxFamilyAndTypeName_Checked" Unchecked="checkBoxFamilyAndTypeName_Checked" Grid.ColumnSpan="2" Height="16" VerticalAlignment="Top" Width="393" />
+                    <CheckBox Content="{x:Static p:Resources.IncludeIfcSiteElevation}" Height="16" HorizontalAlignment="Left" Margin="6,112,0,0" x:Name="checkboxIncludeIfcSiteElevation" VerticalAlignment="Top" Checked="checkboxIfcSiteElevation_Checked" Unchecked="checkboxIfcSiteElevation_Checked" Grid.ColumnSpan="2" Width="393" />
+                    <CheckBox Content="{x:Static p:Resources.UseRoomBoundariesForRoomVolume}" Height="16" HorizontalAlignment="Left" Margin="6,91,0,0" x:Name="checkBoxUse2DRoomVolumes" VerticalAlignment="Top" Checked="checkBoxUse2DRoomVolumes_Checked" Unchecked="checkBoxUse2DRoomVolumes_Checked" Grid.ColumnSpan="2" Width="393" />
+                    <CheckBox Content="{x:Static p:Resources.UseCoarseTessellationForBReps}" Height="16" HorizontalAlignment="Left" Margin="6,49,0,0" x:Name="checkboxUseCoarseTessellation" VerticalAlignment="Top" Checked="checkboxUseCoarseTessellation_Checked" Unchecked="checkboxUseCoarseTessellation_Checked" Grid.ColumnSpan="2" Width="393" />
+                    <CheckBox Content="{x:Static p:Resources.StoreIFCGUID}" Height="16" HorizontalAlignment="Left" Margin="6,133,0,0" x:Name="checkboxStoreIFCGUID" VerticalAlignment="Top" Checked="checkboxStoreIFCGUID_Checked" Unchecked="checkboxStoreIFCGUID_Checked" Grid.ColumnSpan="2" Width="393"  />
+                    <CheckBox Content="{x:Static p:Resources.ExportSolidModelsWhenPossible}" HorizontalAlignment="Left" Margin="6,28,0,0" x:Name="checkboxExportSolidModelRep" VerticalAlignment="Top"  Checked="checkboxExportSolidModelRep_Checked" Unchecked="checkboxExportSolidModelRep_Checked" Grid.ColumnSpan="2" Width="393" Height="15" />
+                    <DockPanel x:Name="DocPanel_tessellation" Grid.Column="1" HorizontalAlignment="Left" Height="37" LastChildFill="False" Margin="0,49,0,0" VerticalAlignment="Top" Width="135">
+                        <Slider Name="sliderLODValue" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Top" Width="103" Minimum="0.25" Maximum="1" TickPlacement="BottomRight" TickFrequency="0.05" IsSnapToTickEnabled="True" ValueChanged="sliderLODValue_ValueChanged" />
+                        <TextBox x:Name="TextBox_LODValue" Height="18" TextWrapping="Wrap" VerticalAlignment="Top" Width="33" Text="{Binding ElementName=sliderLODValue, Path=Value, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right" TextAlignment="Right"/>
+                    </DockPanel>
             </Grid>
          </TabItem>
       </TabControl>
