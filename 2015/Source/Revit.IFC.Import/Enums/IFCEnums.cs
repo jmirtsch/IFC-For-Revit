@@ -22,10 +22,70 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-// NOTE: This is a copy of Revit.IFC.Export.Enums.  The intention is to move this to Revit.IFC.Common, but not until
-// after R2014 initial integration, to reduce the number of changes before FCS.
+using Autodesk.Revit.DB.IFC;
+using Revit.IFC.Common.Utility;
+using Revit.IFC.Import.Data;
+
+// NOTE: Most of this is a copy of Revit.IFC.Export.Enums.  The intention is to move this to Revit.IFC.Common.
 namespace Revit.IFC.Import.Enums
 {
+    /// <summary>
+    /// Utility functions for parsing enums.  Used for import.
+    /// </summary>
+    public static class IFCEnums
+    {
+        private static TEnum? GetSafeEnumerationAttributeBase<TEnum>(IFCAnyHandle hnd, string fieldName, TEnum? defaultVal) where TEnum : struct
+        {
+            TEnum? enumVal = defaultVal;
+
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(hnd) && !string.IsNullOrWhiteSpace(fieldName))
+            {
+                string hndAsString = IFCAnyHandleUtil.GetEnumerationAttribute(hnd, fieldName);
+                if (hndAsString != null)
+                {
+                    try
+                    {
+                        enumVal = (TEnum)Enum.Parse(typeof(TEnum), hndAsString, true);
+                    }
+                    catch
+                    {
+                        string warningVal = "Invalid enumeration value for " + enumVal.GetType().ToString() + ": " + hndAsString +
+                            ", defaulting to: " + defaultVal.ToString();
+                        IFCImportFile.TheLog.LogWarning(hnd.Id, warningVal, false);
+                        enumVal = defaultVal;
+                    }
+                }
+            }
+
+            return enumVal;
+        }
+        
+        /// <summary>
+        /// Get an enumarated value from a field of an IFC handle, if it exists.
+        /// </summary>
+        /// <typeparam name="TEnum">The Enumeration type.</typeparam>
+        /// <param name="hnd">The IFC handle.</param>
+        /// <param name="fieldName">The field name.</param>
+        /// <returns>The appropriate enumeration value, or null if it doesn't exist.</returns>
+        public static TEnum? GetSafeEnumerationAttribute<TEnum>(IFCAnyHandle hnd, string fieldName) where TEnum : struct
+        {
+            return GetSafeEnumerationAttributeBase<TEnum>(hnd, fieldName, null);
+        }
+
+        /// <summary>
+        /// Get an enumarated value from a field of an IFC handle, if it exists, or a default value if it does not.
+        /// </summary>
+        /// <typeparam name="TEnum">The Enumeration type.</typeparam>
+        /// <param name="hnd">The IFC handle.</param>
+        /// <param name="fieldName">The field name.</param>
+        /// <param name="defaultVal">The default value for the enumeration.</param>
+        /// <returns>The appropriate enumeration value.</returns>
+        public static TEnum GetSafeEnumerationAttribute<TEnum>(IFCAnyHandle hnd, string fieldName, TEnum defaultVal) where TEnum : struct
+        {
+            return GetSafeEnumerationAttributeBase<TEnum>(hnd, fieldName, defaultVal).Value;
+        }
+    }
+
     /// <summary>
     /// Defines the basic configuration of the window type in terms of the number of window panels and the subdivision of the total window.
     /// </summary>
@@ -127,6 +187,16 @@ namespace Revit.IFC.Import.Enums
         NotDefined
     }
 
+    public enum IFCSpaceType
+    {
+        Space,
+        Parking,
+        Gfa,
+        Internal,
+        External,
+        UserDefined,
+        NotDefined
+    }
     /// <summary>
     /// Defines the different types of space boundaries in terms of its physical manifestation.
     /// </summary>
@@ -1691,6 +1761,15 @@ namespace Revit.IFC.Import.Enums
         Cartesian,
         Parameter,
         Unspecified
+    }
+
+    /// <summary>
+    /// Defines the IfcAheadOrBehind enumeration.
+    /// </summary>
+    public enum IFCAheadOrBehind
+    {
+        Ahead,
+        Behind
     }
 
     /// <summary>

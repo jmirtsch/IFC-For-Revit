@@ -187,6 +187,8 @@ namespace Revit.IFC.Import.Data
                 return IFCSolidModel.ProcessIFCSolidModel(ifcRepresentationItem);
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcStyledItem))
                 return IFCStyledItem.ProcessIFCStyledItem(ifcRepresentationItem);
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcTriangulatedFaceSet))
+                return IFCTriangulatedFaceSet.ProcessIFCTriangulatedFaceSet(ifcRepresentationItem);
             
             IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcRepresentationItem, IFCEntityType.IfcRepresentationItem, true);
             return null;

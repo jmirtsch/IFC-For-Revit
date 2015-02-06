@@ -88,12 +88,15 @@ namespace Revit.IFC.Import.Utility
         /// </summary>
         /// <param name="doc">The document.</param>
         /// <param name="categoryId">The category of the DirectShape.</param>
-        /// <param name="appGUID">The GUID of the application creating the DirectShape.</param>
         /// <param name="dataGUID">The GUID of the data creating the DirectShape.</param>
         /// <returns>The DirectShape.</returns>
-        static public DirectShape CreateElement(Document doc, ElementId categoryId, string appGUID, string dataGUID)
+        static public DirectShape CreateElement(Document doc, ElementId categoryId, string dataGUID, IList<GeometryObject> geomObjs)
         {
+            string appGUID = Importer.ImportAppGUID();
             DirectShape directShape = DirectShape.CreateElement(doc, categoryId, appGUID, dataGUID);
+            if (directShape != null && geomObjs != null)
+                directShape.SetShape(geomObjs);
+
             return directShape;
         }
     }

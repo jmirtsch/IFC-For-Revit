@@ -62,6 +62,8 @@ namespace Revit.IFC.Import.Data
                 Importer.TheCache.CreatedGUIDs.Add(GlobalId);
 
             m_Name = IFCAnyHandleUtil.GetStringAttribute(ifcRoot, "Name");
+            if (string.IsNullOrWhiteSpace(m_Name) && CreateNameIfNull())
+                m_Name = ifcRoot.TypeName;
             m_Description = IFCAnyHandleUtil.GetStringAttribute(ifcRoot, "Description");
             
             IFCAnyHandle ownerHistoryHandle = IFCAnyHandleUtil.GetInstanceAttribute(ifcRoot, "OwnerHistory");
@@ -81,7 +83,8 @@ namespace Revit.IFC.Import.Data
         public virtual void CleanEntity()
         {
             GlobalId = null;
-            m_Name = null;
+            // m_Name will not be nullified because this information is needed for creating ifcContainedInHost parameter for doors and windows.
+            // m_Name = null;
             m_Description = null;
             m_OwnerHistory = null;
         }
@@ -141,6 +144,15 @@ namespace Revit.IFC.Import.Data
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Determines if we require the IfcRoot entity to have a name.
+        /// </summary>
+        /// <returns>Returns true if we require the IfcRoot entity to have a name.</returns>
+        protected virtual bool CreateNameIfNull()
+        {
+            return false;
         }
     }
 }

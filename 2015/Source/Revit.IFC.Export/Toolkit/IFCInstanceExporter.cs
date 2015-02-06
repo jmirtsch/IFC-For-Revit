@@ -413,6 +413,20 @@ namespace Revit.IFC.Export.Toolkit
         }
 
         /// <summary>
+        /// Validates the values to be set to IfcRelDefines.
+        /// </summary>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="relatedObjects">The objects to be related to a type.</param>
+        private static void ValidateRelDefinesByPropertiesIFC4(ICollection<IFCAnyHandle> relatedObjects)
+        {
+            if (ExporterCacheManager.ExportOptionsCache.ExportAs4 && (relatedObjects == null || relatedObjects.Count != 1))
+                throw new ArgumentException("relatedObjects can only have 1 entry fo IFC4.");
+        }
+
+        /// <summary>
         /// Sets attributes to IfcRelDefines.
         /// </summary>
         /// <param name="relDefines">The IfcRelDefines.</param>
@@ -899,6 +913,61 @@ namespace Revit.IFC.Export.Toolkit
         {
             if (geometryElements == null)
                 throw new ArgumentNullException("geometryElements");
+        }
+
+        /// <summary>
+        /// Validates the values to be set tot ControlPointsList
+        /// </summary>
+        /// <param name="controlPointsList">The Control Points List</param>
+        private static void ValidateControlPointsList(List<List<IFCAnyHandle>> controlPointsList)
+        {
+            if (controlPointsList == null)
+                throw new ArgumentNullException("controlPointsList");
+            if (controlPointsList.Count == 0)
+                throw new ArgumentNullException("controlPointsList");
+            if (controlPointsList.Count == 1 && controlPointsList.FirstOrDefault().Count == 0)
+                throw new ArgumentNullException("controlPointsList");
+
+            IFCAnyHandleUtil.ValidateSubTypeOf(controlPointsList.FirstOrDefault().FirstOrDefault(), false, IFCEntityType.IfcCartesianPoint);
+
+        }
+
+        /// <summary>
+        /// Validates the values of the List of List of double values
+        /// </summary>
+        /// <param name="the List">the List</param>
+        /// <param name="name">the parameter name of the list</param>
+        private static void ValidateListOfList(List<List<double>> theList, bool allowNull, string name)
+        {
+            if (!allowNull)
+            {
+                if (theList == null)
+                    throw new ArgumentNullException(name);
+                if (theList.Count == 0)
+                    throw new ArgumentNullException(name);
+            }
+            if (theList != null)
+                if (theList.Count == 1 && theList.FirstOrDefault().Count == 0)
+                    throw new ArgumentNullException(name);
+        }
+
+        /// <summary>
+        /// Validates the values of the List of List of int values 
+        /// </summary>
+        /// <param name="the List">the List</param>
+        /// <param name="name">the parameter name of the list</param>
+        private static void ValidateListOfList(List<List<int>> theList, bool allowNull, string name)
+        {
+            if (!allowNull)
+            {
+                if (theList == null)
+                    throw new ArgumentNullException(name);
+                if (theList.Count == 0)
+                    throw new ArgumentNullException(name);
+            }
+            if (theList != null)
+                if (theList.Count == 1 && theList.FirstOrDefault().Count == 0)
+                    throw new ArgumentNullException(name);
         }
 
         /// <summary>
@@ -2756,11 +2825,43 @@ namespace Revit.IFC.Export.Toolkit
         /// <param name="relatedObjects">Related objects, which are assigned to a single object.</param>
         /// <param name="relatingPropertyDefinition">The relating proprety definition.</param>
         /// <returns>The handle.</returns>
+        /// <remarks>In IFC4, we are only allowed one relatedObject.</remarks>
+        public static IFCAnyHandle CreateRelDefinesByProperties(IFCFile file, string guid, IFCAnyHandle ownerHistory,
+            string name, string description, IFCAnyHandle relatedObject, IFCAnyHandle relatingPropertyDefinition)
+        {
+            // We expect ValidateRelDefines to validate relatedObject.
+            ISet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
+            relatedObjects.Add(relatedObject);
+
+            IFCAnyHandleUtil.ValidateSubTypeOf(relatingPropertyDefinition, false, IFCEntityType.IfcPropertySetDefinition);
+            ValidateRelDefines(guid, ownerHistory, name, description, relatedObjects);
+
+            return CreateRelDefinesByProperties(file, guid, ownerHistory, name, description, relatedObjects, relatingPropertyDefinition);
+        }
+
+        /// <summary>
+        /// Creates a handle representing a IfcRelDefinesByProperties and assigns it to the file.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="relatedObjects">Related objects, which are assigned to a single object.</param>
+        /// <param name="relatingPropertyDefinition">The relating proprety definition.</param>
+        /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateRelDefinesByProperties(IFCFile file, string guid, IFCAnyHandle ownerHistory,
             string name, string description, ISet<IFCAnyHandle> relatedObjects, IFCAnyHandle relatingPropertyDefinition)
         {
             IFCAnyHandleUtil.ValidateSubTypeOf(relatingPropertyDefinition, false, IFCEntityType.IfcPropertySetDefinition);
             ValidateRelDefines(guid, ownerHistory, name, description, relatedObjects);
+
+            // ValidateRelDefines actually does more than usual - it checks relatedObjects for various sub-types.
+            // For IFC4 we need to also check that there is only 1 object in relatedObjects.
+
+            // We would like to do the check below, but because of the issue stated in ExportUtil.CreateRelDefinesByProperties,
+            // we can't do it yet.  This will be turned on in a future release.
+            //ValidateRelDefinesByPropertiesIFC4(relatedObjects);
 
             IFCAnyHandle relDefinesByProperties = CreateInstance(file, IFCEntityType.IfcRelDefinesByProperties);
             IFCAnyHandleUtil.SetAttribute(relDefinesByProperties, "RelatingPropertyDefinition", relatingPropertyDefinition);
@@ -3347,6 +3448,179 @@ namespace Revit.IFC.Export.Toolkit
         }
 
         /// <summary>
+        /// Creates a handle representing IfcVertexPoint and assigns it to the file
+        /// </summary>
+        /// <param name="file">The file</param>
+        /// <param name="coordinates">The coordinates of the vertex point</param>
+        /// <returns>the handle</returns>
+        public static IFCAnyHandle CreateVertexPoint(IFCFile file, IList<double> coordinates)
+        {
+            if (coordinates == null)
+                throw new ArgumentNullException("coordinates");
+
+            IFCAnyHandle vertexGeometry = CreateCartesianPoint(file, coordinates);
+            IFCAnyHandle vertexPoint = CreateInstance(file, IFCEntityType.IfcVertexPoint);
+            IFCAnyHandleUtil.SetAttribute(vertexPoint, "VertexGeometry", vertexGeometry);
+            return vertexPoint;
+        }
+
+        /// <summary>
+        /// Creates a handle representing IfcVertexPoint by IfcPoint as an input instead of the list and assigns it to the file
+        /// </summary>
+        /// <param name="file">the file</param>
+        /// <param name="point">IfcPoint</param>
+        /// <returns>the handle</returns>
+        public static IFCAnyHandle CreateVertexPoint(IFCFile file, IFCAnyHandle point)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(point, false, IFCEntityType.IfcPoint);
+
+            IFCAnyHandle vertexPoint = CreateInstance(file, IFCEntityType.IfcVertexPoint);
+            IFCAnyHandleUtil.SetAttribute(vertexPoint, "VertexGeometry", point);
+            return vertexPoint;
+        }
+
+        /// <summary>
+        /// Creates a handle representing IfcEdgeCurve and assigns it to the file
+        /// </summary>
+        /// <param name="file">the file</param>
+        /// <param name="edgeStart">start vertex of the edge</param>
+        /// <param name="edgeEnd">end vertex of the edge</param>
+        /// <param name="edgeGeometry">basis curve of the edge</param>
+        /// <param name="sameSense">sense agreement of the edge and the curve</param>
+        /// <returns>the handle</returns>
+        public static IFCAnyHandle CreateEdgeCurve(IFCFile file, IFCAnyHandle edgeStart, IFCAnyHandle edgeEnd, IFCAnyHandle edgeGeometry, bool sameSense)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(edgeStart, false, IFCEntityType.IfcVertex);
+            IFCAnyHandleUtil.ValidateSubTypeOf(edgeEnd, false, IFCEntityType.IfcVertex);
+            IFCAnyHandleUtil.ValidateSubTypeOf(edgeGeometry, false, IFCEntityType.IfcCurve);
+
+            IFCAnyHandle edgeCurve = CreateInstance(file, IFCEntityType.IfcEdgeCurve);
+            IFCAnyHandleUtil.SetAttribute(edgeCurve, "EdgeStart", edgeStart);
+            IFCAnyHandleUtil.SetAttribute(edgeCurve, "EdgeEnd", edgeEnd);
+            IFCAnyHandleUtil.SetAttribute(edgeCurve, "EdgeGeometry", edgeGeometry);
+            IFCAnyHandleUtil.SetAttribute(edgeCurve, "SameSense", sameSense);
+
+            return edgeCurve;
+        }
+
+        /// <summary>
+        /// Creates a handle representing IfcOrientedEdge and assigns it tot the file
+        /// </summary>
+        /// <param name="file">the file</param>
+        /// <param name="edgeElement">the edge element</param>
+        /// <param name="orientation">the topological orientation of the edge and the vertices</param>
+        /// <returns>the handle</returns>
+        public static IFCAnyHandle CreateOrientedEdge(IFCFile file, IFCAnyHandle edgeElement, bool orientation)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(edgeElement, false, IFCEntityType.IfcEdge);
+
+            IFCAnyHandle orientedEdge = CreateInstance(file, IFCEntityType.IfcOrientedEdge);
+            IFCAnyHandleUtil.SetAttribute(orientedEdge, "EdgeElement", edgeElement);
+            IFCAnyHandleUtil.SetAttribute(orientedEdge, "Orientation", orientation);
+
+            return orientedEdge;
+        }
+
+        /// <summary>
+        /// Creates a handle representing IfcEdgeLoop and assigns it to the file
+        /// </summary>
+        /// <param name="file">the file</param>
+        /// <param name="orientedEdgeList">List of the oriented edges</param>
+        /// <returns>teh handle</returns>
+        public static IFCAnyHandle CreateEdgeLoop(IFCFile file, IList<IFCAnyHandle> orientedEdgeList)
+        {
+            if (orientedEdgeList == null)
+                throw new ArgumentNullException("EdgeLIst");
+
+            foreach (IFCAnyHandle orientedEdge in orientedEdgeList)
+                IFCAnyHandleUtil.ValidateSubTypeOf(orientedEdge, false, IFCEntityType.IfcOrientedEdge);
+
+            IFCAnyHandle edgeLoop = CreateInstance(file, IFCEntityType.IfcEdgeLoop);
+            IFCAnyHandleUtil.SetAttribute(edgeLoop, "EdgeList", orientedEdgeList);
+
+            return edgeLoop;
+        }
+
+        /// <summary>
+        /// Creates a handle representing IfcLine and assigns it to the file
+        /// </summary>
+        /// <param name="file">the file</param>
+        /// <param name="coordinates">coordinates point reference of the line</param>
+        /// <param name="vector">the vector direction</param>
+        /// <returns>the handle</returns>
+        public static IFCAnyHandle CreateLine(IFCFile file, IList<double> coordinates, IFCAnyHandle vector)
+        {
+            if (coordinates == null)
+                throw new ArgumentNullException("Coordinates");
+
+            IFCAnyHandleUtil.ValidateSubTypeOf(vector, false, IFCEntityType.IfcVector);
+
+            IFCAnyHandle line = CreateInstance(file, IFCEntityType.IfcLine);
+            IFCAnyHandle pnt = CreateCartesianPoint(file, coordinates);
+            IFCAnyHandleUtil.SetAttribute(line, "Pnt", pnt);
+            IFCAnyHandleUtil.SetAttribute(line, "Dir", vector);
+
+            return line;
+        }
+
+        /// <summary>
+        /// Creates a handle representing IfcLine taking in IfcCartesianPoint as input, and assigns it to the file
+        /// </summary>
+        /// <param name="file">the file</param>
+        /// <param name="point">the point (IfcCartesianPoint)</param>
+        /// <param name="vector">the vector direction (IfcVector)</param>
+        /// <returns>the handle</returns>
+        public static IFCAnyHandle CreateLine(IFCFile file, IFCAnyHandle point, IFCAnyHandle vector)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(point, false, IFCEntityType.IfcCartesianPoint);
+            IFCAnyHandleUtil.ValidateSubTypeOf(vector, false, IFCEntityType.IfcVector);
+
+            IFCAnyHandle line = CreateInstance(file, IFCEntityType.IfcLine);
+            IFCAnyHandleUtil.SetAttribute(line, "Pnt", point);
+            IFCAnyHandleUtil.SetAttribute(line, "Dir", vector);
+
+            return line;
+        }
+
+        /// <summary>
+        /// Creates a handle representing IfcVector and assignes it to the file
+        /// </summary>
+        /// <param name="file">the file</param>
+        /// <param name="orientation">vector direction</param>
+        /// <param name="magnitude">magnitude of the vector</param>
+        /// <returns>the handle</returns>
+        public static IFCAnyHandle CreateVector(IFCFile file, IList<double> orientation, double magnitude)
+        {
+            if (orientation == null)
+                throw new ArgumentNullException("Orientation");
+
+            IFCAnyHandle direction = CreateInstance(file, IFCEntityType.IfcDirection);
+            IFCAnyHandleUtil.SetAttribute(direction, "DirectionRatios", orientation);
+
+            IFCAnyHandle vector = CreateInstance(file, IFCEntityType.IfcVector);
+            IFCAnyHandleUtil.SetAttribute(vector, "Orientation", direction);
+            IFCAnyHandleUtil.SetAttribute(vector, "Magnitude", magnitude);
+
+            return vector;
+        }
+
+        /// <summary>
+        /// Create IFC instance of IfcCartesianPointList3D
+        /// </summary>
+        /// <param name="file">The file</param>
+        /// <param name="coordinateList">the list of coordinates</param>
+        /// <returns>The handle</returns>
+        public static IFCAnyHandle CreateCartesianPointList3D(IFCFile file, List<List<double>> coordinateList)
+        {
+            ValidateListOfList(coordinateList, false, "CoordinateList");
+            
+            IFCAnyHandle CreateCartesianPointList3D = CreateInstance(file, IFCEntityType.IfcCartesianPointList3D);
+            IFCAnyHandleUtil.SetAttribute(CreateCartesianPointList3D, "CoordList", coordinateList, 1, null, 3, 3);
+
+            return CreateCartesianPointList3D;
+        }
+
+        /// <summary>
         /// Creates a handle representing an IfcPolyline and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -3526,6 +3800,50 @@ namespace Revit.IFC.Export.Toolkit
         }
 
         /// <summary>
+        /// Creates a handle representing an IfcFaceSurface and assign it to the file
+        /// </summary>
+        /// <param name="file">The file</param>
+        /// <param name="bounds">The boundaries</param>
+        /// <param name="faceSurface">faceSurface</param>
+        /// <param name="sameSense">same sense</param>
+        /// <returns>the Handle</returns>
+        public static IFCAnyHandle CreateFaceSurface(IFCFile file, HashSet<IFCAnyHandle> bounds, IFCAnyHandle faceSurface, bool sameSense)
+        {
+            if (bounds == null)
+                throw new ArgumentNullException("bounds");
+            if (bounds.Count == 0)
+                throw new ArgumentException("no bounds for FaceSurface.");
+
+            IFCAnyHandle fSurface = CreateInstance(file, IFCEntityType.IfcFaceSurface);
+            IFCAnyHandleUtil.SetAttribute(fSurface, "Bounds", bounds);
+            IFCAnyHandleUtil.SetAttribute(fSurface, "FaceSurface", faceSurface);
+            IFCAnyHandleUtil.SetAttribute(fSurface, "SameSense", sameSense);
+            return fSurface;
+        }
+
+        /// <summary>
+        /// Creates a handle representing an IfcAdvancedFace and assign it to the file
+        /// </summary>
+        /// <param name="file">The file</param>
+        /// <param name="bounds">The boundaries</param>
+        /// <param name="faceSurface">faceSurface</param>
+        /// <param name="sameSense">same sense</param>
+        /// <returns>the Handle</returns>
+        public static IFCAnyHandle CreateAdvancedFace(IFCFile file, HashSet<IFCAnyHandle> bounds, IFCAnyHandle faceSurface, bool sameSense)
+        {
+            if (bounds == null)
+                throw new ArgumentNullException("bounds");
+            if (bounds.Count == 0)
+                throw new ArgumentException("no bounds for AdvancedFace.");
+
+            IFCAnyHandle advancedFace = CreateInstance(file, IFCEntityType.IfcAdvancedFace);
+            IFCAnyHandleUtil.SetAttribute(advancedFace, "Bounds", bounds);
+            IFCAnyHandleUtil.SetAttribute(advancedFace, "FaceSurface", faceSurface);
+            IFCAnyHandleUtil.SetAttribute(advancedFace, "SameSense", sameSense);
+            return advancedFace;
+        }
+
+        /// <summary>
         /// Creates an IfcRepresentationMap, and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -3541,6 +3859,24 @@ namespace Revit.IFC.Export.Toolkit
             IFCAnyHandleUtil.SetAttribute(representationMap, "MappingOrigin", origin);
             IFCAnyHandleUtil.SetAttribute(representationMap, "MappedRepresentation", representation);
             return representationMap;
+        }
+
+        /// <summary>
+        /// Create a default IfcAxis1Placement and assign it to the file
+        /// </summary>
+        /// <param name="file">The file</param>
+        /// <param name="location">The origin</param>
+        /// <param name="axis">The Z direction</param>
+        /// <returns>The handle</returns>
+        public static IFCAnyHandle CreateAxis1Placement(IFCFile file, IFCAnyHandle location, IFCAnyHandle axis)
+        {
+            ValidatePlacement(location);
+            IFCAnyHandleUtil.ValidateSubTypeOf(axis, true, IFCEntityType.IfcDirection);
+
+            IFCAnyHandle axis1Placement = CreateInstance(file, IFCEntityType.IfcAxis1Placement);
+            SetPlacement(axis1Placement, location);
+            IFCAnyHandleUtil.SetAttribute(axis1Placement, "Axis", axis);
+            return axis1Placement;
         }
 
         /// <summary>
@@ -6320,6 +6656,123 @@ namespace Revit.IFC.Export.Toolkit
         }
 
         /// <summary>
+        /// Creates an IfcCurveBoundedSurface and assign it to the file
+        /// </summary>
+        /// <param name="file">The file</param>
+        /// <param name="basisSurface">The surface to be bound</param>
+        /// <param name="boundaries">The curve boundaries</param>
+        /// <param name="implicitOuter">Whether it uses implicit boundaries</param>
+        /// <returns>the handle</returns>
+        public static IFCAnyHandle CreateCurveBoundedSurface(IFCFile file, IFCAnyHandle basisSurface, HashSet<IFCAnyHandle> boundaries, bool implicitOuter)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(basisSurface, false, IFCEntityType.IfcSurface);
+            IFCAnyHandleUtil.ValidateSubTypeOf(boundaries, false, IFCEntityType.IfcBoundaryCurve);
+
+            IFCAnyHandle curveBoundedSurface = CreateInstance(file, IFCEntityType.IfcCurveBoundedSurface);
+            IFCAnyHandleUtil.SetAttribute(curveBoundedSurface, "BasisSurface", basisSurface);
+            IFCAnyHandleUtil.SetAttribute(curveBoundedSurface, "Boundaries", boundaries);
+            IFCAnyHandleUtil.SetAttribute(curveBoundedSurface, "ImplicitOuter", implicitOuter);
+            return curveBoundedSurface;
+        }
+
+        /// <summary>
+        /// Creates an IfcRectangularTrimmedSurface and assign it to the file
+        /// </summary>
+        /// <param name="file">the file</param>
+        /// <param name="basisSurface">The surface to be bound/trimmed</param>
+        /// <param name="u1">First u parametric value</param>
+        /// <param name="v1">Fisrt v parametric value</param>
+        /// <param name="u2">Second u parametric value</param>
+        /// <param name="v2">Second v parametric value</param>
+        /// <param name="uSense">direction sense of the first parameter of the trim surface compared to the u of the basissurface</param>
+        /// <param name="vSense">direction sense of the second parameter of the trim surface compared to the v of the basissurface</param>
+        /// <returns>the handle</returns>
+        public static IFCAnyHandle CreateRectangularTrimmedSurface(IFCFile file, IFCAnyHandle basisSurface, double u1, double v1, double u2, double v2,
+                                    bool uSense, bool vSense)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(basisSurface, false, IFCEntityType.IfcSurface);
+
+            IFCAnyHandle rectangularTrimmedSurface = CreateInstance(file, IFCEntityType.IfcRectangularTrimmedSurface);
+            IFCAnyHandleUtil.SetAttribute(rectangularTrimmedSurface, "BasisSurface", basisSurface);
+            IFCAnyHandleUtil.SetAttribute(rectangularTrimmedSurface, "U1", u1);
+            IFCAnyHandleUtil.SetAttribute(rectangularTrimmedSurface, "V1", v1);
+            IFCAnyHandleUtil.SetAttribute(rectangularTrimmedSurface, "U2", u2);
+            IFCAnyHandleUtil.SetAttribute(rectangularTrimmedSurface, "V2", v2);
+            IFCAnyHandleUtil.SetAttribute(rectangularTrimmedSurface, "Usense", uSense);
+            IFCAnyHandleUtil.SetAttribute(rectangularTrimmedSurface, "Vsense", vSense);
+
+            return rectangularTrimmedSurface;
+        }
+
+        /// <summary>
+        /// Creates an IfcBSplineSurface and assigns it to the handle
+        /// </summary>
+        /// <param name="file">the file</param>
+        /// <param name="uDegree">algebraic degree of basis functions in u</param>
+        /// <param name="vDegree">algebraic degree of basis functions in v</param>
+        /// <param name="controlPointsList">the list of control points</param>
+        /// <param name="surfaceForm">enum of the surface type</param>
+        /// <param name="uClosed">whether the surface is closed in the u direction</param>
+        /// <param name="vClosed">whether the surface is closed in the v direction</param>
+        /// <param name="selfIntersect">whether the surface is self-intersecting</param>
+        /// <returns>the handle</returns>
+        public static IFCAnyHandle CreateBSplineSurface(IFCFile file, int uDegree, int vDegree, List<List<IFCAnyHandle>> controlPointsList, 
+                        IFC4.IFCBSplineSurfaceForm surfaceForm, IFCLogical uClosed, IFCLogical vClosed, IFCLogical selfIntersect)
+        {
+            ValidateControlPointsList(controlPointsList);
+            
+            IFCAnyHandle BSplineSurface = CreateInstance(file, IFCEntityType.IfcBSplineSurface);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "UDegree", uDegree);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "VDegree", vDegree);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "ControlPointsList", controlPointsList, 2, null, 2, null);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "SurfaceForm", surfaceForm);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "UClosed", uClosed);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "VClosed", vClosed);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "SelfIntersect", selfIntersect);
+
+            return BSplineSurface;
+        }
+
+        /// <summary>
+        /// Creates an IfcBSplineSurfaceWithKnots and assigns it to the handle
+        /// </summary>
+        /// <param name="file">the file</param>
+        /// <param name="uDegree">algebraic degree of basis functions in u</param>
+        /// <param name="vDegree">algebraic degree of basis functions in v</param>
+        /// <param name="controlPointsList">the list of control points</param>
+        /// <param name="surfaceForm">enum of the surface type</param>
+        /// <param name="uClosed">whether the surface is closed in the u direction</param>
+        /// <param name="vClosed">whether the surface is closed in the v direction</param>
+        /// <param name="selfIntersect">whether the surface is self-intersecting</param>
+        /// <param name="uMultiplicities">The multiplicities of the knots in the u parameter direction</param>
+        /// <param name="vMultiplicities">The multiplicities of the knots in the v parameter direction</param>
+        /// <param name="uKnots">The list of the distinct knots in the u parameter direction</param>
+        /// <param name="vKnots">The list of the distinct knots in the v parameter direction</param>
+        /// <param name="knotSpec">The description of the knot type.</param>
+        /// <returns>the handle</returns>
+        public static IFCAnyHandle CreateBSplineSurfaceWithKnots(IFCFile file, int uDegree, int vDegree, List<List<IFCAnyHandle>> controlPointsList,
+                        IFCAnyHandle surfaceForm, IFCLogical uClosed, IFCLogical vClosed, IFCLogical selfIntersect, List<int> uMultiplicities, List<int> vMultiplicities,
+                        List<double> uKnots, List<double> vKnots, IFC4.IFCKnotType knotSpec)
+        {
+            ValidateControlPointsList(controlPointsList);
+
+            IFCAnyHandle BSplineSurface = CreateInstance(file, IFCEntityType.IfcBSplineSurface);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "UDegree", uDegree);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "VDegree", vDegree);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "ControlPointsList", controlPointsList, 2, null, 2, null);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "SurfaceForm", surfaceForm);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "UClosed", uClosed);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "VClosed", vClosed);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "SelfIntersect", selfIntersect);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "UMultiplicities", uMultiplicities);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "VMultiplicities", vMultiplicities);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "UKnots", uKnots);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "VKnots", vKnots);
+            IFCAnyHandleUtil.SetAttribute(BSplineSurface, "KnotSpec", knotSpec);
+            return BSplineSurface;
+        }
+
+        /// <summary>
         /// Creates an IfcDistributionControlElement, and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -6749,6 +7202,21 @@ namespace Revit.IFC.Export.Toolkit
             IFCAnyHandle facetedBrep = CreateInstance(file, IFCEntityType.IfcFacetedBrep);
             SetManifoldSolidBrep(facetedBrep, outer);
             return facetedBrep;
+        }
+
+        /// <summary>
+        /// Create instance of AdvancedBrep RepresentationItem
+        /// </summary>
+        /// <param name="file">The file</param>
+        /// <param name="outer">The outer closed shell</param>
+        /// <returns>The handle</returns>
+        public static IFCAnyHandle CreateAdvancedBrep(IFCFile file, IFCAnyHandle outer)
+        {
+            ValidateManifoldSolidBrep(outer);
+
+            IFCAnyHandle advancedBrep = CreateInstance(file, IFCEntityType.IfcAdvancedBrep);
+            SetManifoldSolidBrep(advancedBrep, outer);
+            return advancedBrep;
         }
 
         /// <summary>
@@ -7429,6 +7897,36 @@ namespace Revit.IFC.Export.Toolkit
         }
 
         /// <summary>
+        /// Create an instance of IFCTriangulatedFaceSet
+        /// </summary>
+        /// <param name="file">the IFC file</param>
+        /// <param name="coordinates">Coordinates attribute (IfcCartesianPointList3D)</param>
+        /// <param name="normals">List of Normals</param>
+        /// <param name="closed">Closed attribute</param>
+        /// <param name="coordIndex">Triangle Indexes</param>
+        /// <param name="normalIndex">Normal Indexes</param>
+        /// <returns>the handle</returns>
+        public static IFCAnyHandle CreateTriangulatedFaceSet(IFCFile file, IFCAnyHandle coordinates, List<List<double>> normals, bool? closed, 
+                List<List<int>> coordIndex, List<List<int>> normalIndex)
+        {
+            if (coordinates == null)
+                throw new ArgumentNullException("coordinates");
+            IFCAnyHandleUtil.ValidateSubTypeOf(coordinates, false, IFCEntityType.IfcCartesianPointList3D);
+            ValidateListOfList(normals, true, "Normals");
+            ValidateListOfList(coordIndex, false, "CoordIndex");
+            ValidateListOfList(normalIndex, true, "NormalIndex");
+            
+            IFCAnyHandle triangulatedFaceSet = CreateInstance(file, IFCEntityType.IfcTriangulatedFaceSet);
+            IFCAnyHandleUtil.SetAttribute(triangulatedFaceSet, "Coordinates", coordinates);
+            IFCAnyHandleUtil.SetAttribute(triangulatedFaceSet, "Normals", normals, 1, null, 3, 3);
+            IFCAnyHandleUtil.SetAttribute(triangulatedFaceSet, "Closed", closed);
+            IFCAnyHandleUtil.SetAttribute(triangulatedFaceSet, "CoordIndex", coordIndex, 1, null, 3, 3);
+            IFCAnyHandleUtil.SetAttribute(triangulatedFaceSet, "NormalIndex", normalIndex, 1, null, 3, 3);
+
+            return triangulatedFaceSet;
+        }
+
+        /// <summary>
         /// Creates an IfcWindow, and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -7955,6 +8453,27 @@ namespace Revit.IFC.Export.Toolkit
         }
 
         /// <summary>
+        /// Create Advanced Face: IfcSurfaceOfRevolution
+        /// </summary>
+        /// <param name="file">The file</param>
+        /// <param name="sweptCurve">The swept curve</param>
+        /// <param name="position">The position</param>
+        /// <param name="axisPosition">The axis of revolution</param>
+        /// <returns>the handle</returns>
+        public static IFCAnyHandle CreateSurfaceOfRevolution(IFCFile file, IFCAnyHandle sweptCurve, IFCAnyHandle position, IFCAnyHandle axisPosition)
+        {
+            IFCAnyHandleUtil.ValidateSubTypeOf(sweptCurve, false, IFCEntityType.IfcProfileDef);
+            if (position != null)
+                IFCAnyHandleUtil.ValidateSubTypeOf(position, false, IFCEntityType.IfcAxis2Placement3D);
+
+            IFCAnyHandle revolvedFace = CreateInstance(file, IFCEntityType.IfcSurfaceOfRevolution);
+            SetSweptSurface(revolvedFace, sweptCurve, position);
+            IFCAnyHandleUtil.ValidateSubTypeOf(axisPosition, false, IFCEntityType.IfcAxis1Placement);
+            IFCAnyHandleUtil.SetAttribute(revolvedFace, "AxisPosition", axisPosition);
+            return revolvedFace;
+        }
+
+        /// <summary>
         /// Creates a handle representing an IfcSurfaceStyleRendering and assigns it to the file.
         /// </summary>
         /// <param name="file">The file.</param>
@@ -8109,6 +8628,23 @@ namespace Revit.IFC.Export.Toolkit
             IFCAnyHandle planeHnd = CreateInstance(file, IFCEntityType.IfcPlane);
             SetElementarySurface(planeHnd, position);
             return planeHnd;
+        }
+
+        /// <summary>
+        /// Create unbounded Advanced Face: IfcCylindricalSurface
+        /// </summary>
+        /// <param name="file">The file</param>
+        /// <param name="position">the origin</param>
+        /// <param name="radius">The radius of the cylinder</param>
+        /// <returns>the handle</returns>
+        public static IFCAnyHandle CreateCylindricalSurface(IFCFile file, IFCAnyHandle position, double radius)
+        {
+            ValidateElementarySurface(position);
+
+            IFCAnyHandle cylindricalSurface = CreateInstance(file, IFCEntityType.IfcCylindricalSurface);
+            SetElementarySurface(cylindricalSurface, position);
+            IFCAnyHandleUtil.SetAttribute(cylindricalSurface, "Radius", radius);
+            return cylindricalSurface;
         }
 
         /// <summary>

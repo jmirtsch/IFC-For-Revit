@@ -33,7 +33,7 @@ namespace Revit.IFC.Import.Data
 {
     public class IFCBooleanResult : IFCRepresentationItem, IIFCBooleanOperand
     {
-        IFCBooleanOperator m_BooleanOperator;
+        IFCBooleanOperator? m_BooleanOperator = null;
 
         IIFCBooleanOperand m_FirstOperand;
 
@@ -42,7 +42,7 @@ namespace Revit.IFC.Import.Data
         /// <summary>
         /// The boolean operator.
         /// </summary>
-        public IFCBooleanOperator BooleanOperator
+        public IFCBooleanOperator? BooleanOperator
         {
             get { return m_BooleanOperator; }
             protected set { m_BooleanOperator = value; }
@@ -74,9 +74,9 @@ namespace Revit.IFC.Import.Data
         {
             base.Process(item);
 
-            string booleanOperatorAsString = IFCAnyHandleUtil.GetEnumerationAttribute(item, "Operator");
-            if (!string.IsNullOrWhiteSpace(booleanOperatorAsString))
-                BooleanOperator = (IFCBooleanOperator)Enum.Parse(typeof(IFCBooleanOperator), booleanOperatorAsString, true);
+            IFCBooleanOperator? booleanOperator = IFCEnums.GetSafeEnumerationAttribute<IFCBooleanOperator>(item, "Operator");
+            if (booleanOperator.HasValue)
+                BooleanOperator = booleanOperator.Value;
 
             IFCAnyHandle firstOperand = IFCImportHandleUtil.GetRequiredInstanceAttribute(item, "FirstOperand", true);
             FirstOperand = IFCBooleanOperand.ProcessIFCBooleanOperand(firstOperand);
@@ -119,7 +119,7 @@ namespace Revit.IFC.Import.Data
                     }
                 }
             }
-                
+
             IList<GeometryObject> secondSolids = null;
             if (SecondOperand != null)
             {
@@ -145,9 +145,15 @@ namespace Revit.IFC.Import.Data
 
             IList<GeometryObject> resultSolids = null;
             if (firstSolids == null)
+            {
                 resultSolids = secondSolids;
-            else if (secondSolids == null)
+            }
+            else if (secondSolids == null || BooleanOperator == null)
+            {
+                if (BooleanOperator == null)
+                    IFCImportFile.TheLog.LogError(Id, "Invalid BooleanOperationsType.", false);
                 resultSolids = firstSolids;
+            }
             else
             {
                 BooleanOperationsType booleanOperationsType = BooleanOperationsType.Difference;

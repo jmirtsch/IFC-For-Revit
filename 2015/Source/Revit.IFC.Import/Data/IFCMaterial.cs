@@ -149,11 +149,20 @@ namespace Revit.IFC.Import.Data
             if (materialElem == null)
                 return ElementId.InvalidElementId;
 
+            bool materialHasValidColor = false;
+
             // We don't want an invalid value set below to prevent creating an element; log the message and move on.
             try
             {
                 if (materialInfo.Color != null)
+                {
                     materialElem.Color = materialInfo.Color;
+                    materialHasValidColor = true;
+                }
+                else
+                {
+                    materialElem.Color = new Color(127, 127, 127);
+                }
 
                 if (materialInfo.Transparency.HasValue)
                     materialElem.Transparency = materialInfo.Transparency.Value;
@@ -169,11 +178,16 @@ namespace Revit.IFC.Import.Data
                 IFCImportFile.TheLog.LogError(id, "Couldn't set some Material values: " + ex.Message, false);
             }
 
-            string comment = "Created Material: " + revitMaterialName + " with color: (" +
-                materialElem.Color.Red + ", " + materialElem.Color.Green + ", " + materialElem.Color.Blue +
-                ") transparency: " + materialElem.Transparency + " shininess: " + materialElem.Shininess +
-                " smoothness: " + materialElem.Smoothness;
-            IFCImportFile.TheLog.LogComment(id, comment, false);
+            if (!materialHasValidColor)
+                Importer.TheCache.MaterialsWithNoColor.Add(createdElementId);
+
+            if (Importer.TheOptions.VerboseLogging)
+            {
+                string comment = "Created Material: " + revitMaterialName
+                    + " with color: (" + materialElem.Color.Red + ", " + materialElem.Color.Green + ", " + materialElem.Color.Blue + ") "
+                    + "transparency: " + materialElem.Transparency + " shininess: " + materialElem.Shininess + " smoothness: " + materialElem.Smoothness;
+                IFCImportFile.TheLog.LogComment(id, comment, false);
+            }
 
             IFCImportFile.TheLog.AddCreatedMaterial(doc, createdElementId);
             return createdElementId;

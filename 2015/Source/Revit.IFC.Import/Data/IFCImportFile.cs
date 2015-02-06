@@ -63,6 +63,9 @@ namespace Revit.IFC.Import.Data
 
         IFCProject m_IFCProject;
 
+        // A list of entities that aren't inside of the IFCProject that should regardless be created.
+        ICollection<IFCObjectDefinition> m_OtherEntitiesToCreate = new HashSet<IFCObjectDefinition>();
+
         IFCUnits m_IFCUnits = new IFCUnits();
 
         IDictionary<int, IFCEntity> m_EntityMap = new Dictionary<int, IFCEntity>();
@@ -216,6 +219,17 @@ namespace Revit.IFC.Import.Data
             set { m_IFCProject = value; }
         }
 
+        /// <summary>
+        /// A list of entities not contained in IFCProject to create.  This could include, e.g., zones.
+        /// </summary>
+        public ICollection<IFCObjectDefinition> OtherEntitiesToCreate
+        {
+            get { return m_OtherEntitiesToCreate; }
+        }
+
+        /// <summary>
+        /// The schema version of the IFC file.
+        /// </summary>
         public IFCSchemaVersion SchemaVersion
         {
             get { return m_SchemaVersion; }
@@ -243,34 +257,13 @@ namespace Revit.IFC.Import.Data
         public static string TheFileName { get; protected set; }
         public static int TheBrepCounter { get; set; }
 
-        private bool Process(string ifcFilePath, IFCImportOptions options, Document doc)
+        /// <summary>
+        /// Read in the IFC file specified by ifcFilePath, and report any errors.
+        /// </summary>
+        /// <param name="ifcFilePath">The IFC file name.</param>
+        /// <returns>True if the file read was successful, false otherwise.</returns>
+        private bool ProcessFile(string ifcFilePath)
         {
-            // Manually set to false if necessary for debugging.
-            CleanEntitiesAfterCreate = true;
-
-            TheFileName = ifcFilePath;
-            TheBrepCounter = 0;
-
-            Log = IFCImportLog.CreateLog(ifcFilePath + ".log.html");
-
-            try
-            {
-                IFCSchemaVersion schemaVersion;
-                m_IfcFile = CreateIFCFile(ifcFilePath, out schemaVersion);
-                SchemaVersion = schemaVersion;
-            }
-            catch (Exception ex)
-            {
-                Log.LogError(-1, "There was an error reading the IFC file: " + ex.Message + ".  Aborting import.", false);
-                return false;
-            }
-
-            Options = options;
-
-            Document = doc;
-            ShapeLibrary = DirectShapeLibrary.GetDirectShapeLibrary(doc);
-            ShapeLibrary.Reset();
-
             IFCFileReadOptions readOptions = new IFCFileReadOptions();
             readOptions.FileName = ifcFilePath;
             readOptions.XMLConfigFileName = Path.Combine(RevitProgramPath, "EDM\\ifcXMLconfiguration.xml");
@@ -304,22 +297,83 @@ namespace Revit.IFC.Import.Data
                 }
             }
 
+            return true;
+        }
+
+        /// <summary>
+        /// Top-level function that processes an IFC file for reference.
+        /// </summary>
+        /// <returns>True if the process is successful, false otherwise.</returns>
+        private bool ProcessReference()
+        {
+            InitializeOpenTransaction("Open IFC Reference File");
+
+            //If there is more than one project, we will be ignoring all but the first one.
+            IList<IFCAnyHandle> projects = IFCImportFile.TheFile.GetInstances(IFCEntityType.IfcProject, false);
+            if (projects.Count == 0)
+            {
+                Log.LogError(-1, "There were no IfcProjects found in the file.  Aborting import.", false);
+                return false;
+            }
+
+            IFCProject.ProcessIFCProject(projects[0]);
+
+            // The IFC toolkit relies on the IFC schema definition to read in the file. The schema definition has entities that have data fields,
+            // and INVERSE relationships. Unfortunately, the standard IFC 2x3 schema has a "bug" where one of the inverse relationships is missing. 
+            // Normally we don't care all that much, but now we do. So if we don't allow using this inverse (because if we did, it would just constantly 
+            // throw exceptions), we need another way to get the zones. This is the way.
+            if (!IFCImportFile.TheFile.Options.AllowUseHasAssignments)
+            {
+                IList<IFCAnyHandle> zones = IFCImportFile.TheFile.GetInstances(IFCEntityType.IfcZone, false);
+                foreach (IFCAnyHandle zone in zones)
+                {
+                    IFCZone ifcZone = IFCZone.ProcessIFCZone(zone);
+                    if (ifcZone != null)
+                        OtherEntitiesToCreate.Add(ifcZone);
+                }
+            }
+
+            return true;
+        }
+
+        private bool Process(string ifcFilePath, IFCImportOptions options, Document doc)
+        {
+            // Manually set to false if necessary for debugging.
+            CleanEntitiesAfterCreate = true;
+
+            TheFileName = ifcFilePath;
+            TheBrepCounter = 0;
+
+            Log = IFCImportLog.CreateLog(ifcFilePath + ".log.html");
+
+            try
+            {
+                IFCSchemaVersion schemaVersion;
+                m_IfcFile = CreateIFCFile(ifcFilePath, out schemaVersion);
+                SchemaVersion = schemaVersion;
+            }
+            catch (Exception ex)
+            {
+                Log.LogError(-1, "There was an error reading the IFC file: " + ex.Message + ".  Aborting import.", false);
+                return false;
+            }
+
+            Options = options;
+
+            // The DirectShapeLibrary must be reset to potentially remove stale pointers from the last use.
+            Document = doc;
+            ShapeLibrary = DirectShapeLibrary.GetDirectShapeLibrary(doc);
+            ShapeLibrary.Reset();
+
+            bool readFile = ProcessFile(ifcFilePath);
+            if (!readFile)
+                return false;
+
             m_Transaction = new Transaction(doc);
             switch (options.Intent)
             {
                 case IFCImportIntent.Reference:
-                    InitializeOpenTransaction("Open IFC Reference File");
-
-                    //If there is more than one project, we will be ignoring all but the first one.
-                    IList<IFCAnyHandle> projects = IFCImportFile.TheFile.GetInstances(IFCEntityType.IfcProject, false);
-                    if (projects.Count == 0)
-                    {
-                        Log.LogError(-1, "There were no IfcProjects found in the file.  Aborting import.", false);
-                        return false;
-                    }
-                    else
-                        IFCProject.ProcessIFCProject(projects[0]);
-                    break;
+                    return ProcessReference();
             }
 
             return true;

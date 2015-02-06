@@ -328,8 +328,8 @@ namespace Revit.IFC.Export.Exporter
             double baseWallElevation, 
             ElementId catId, 
             Curve baseCurve, 
-            Curve trimmedCurve, 
-            Plane plane, 
+            Curve trimmedCurve,
+            Plane wallLCS, 
             double scaledDepth, 
             IFCRange zSpan, 
             IFCRange range, 
@@ -347,7 +347,7 @@ namespace Revit.IFC.Export.Exporter
             double unscaledLength = trimmedCurve != null ? trimmedCurve.Length : 0;
             scaledLength = UnitUtil.ScaleLength(unscaledLength);
 
-            XYZ localOrig = plane.Origin;
+            XYZ localOrig = wallLCS.Origin;
 
             // Check to see if the wall has geometry given the specified range.
             if (!WallHasGeometryToExport(wallElement, solids, meshes, range, out isCompletelyClipped))
@@ -391,17 +391,19 @@ namespace Revit.IFC.Export.Exporter
             }
 
             // origin gets scaled later.
-            XYZ setterOffset = new XYZ(0, 0, setter.Offset + (localOrig[2] - baseWallElevation));
+            double baseWallZOffset = localOrig[2] - ((range == null) ? baseWallElevation : Math.Min(range.Start, baseWallElevation));
+            XYZ modifiedSetterOffset = new XYZ(0, 0, setter.Offset + baseWallZOffset);
 
-            IFCAnyHandle baseBodyItemHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, boundaryLoops, plane,
+            IFCAnyHandle baseBodyItemHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, boundaryLoops, wallLCS,
                 extrusionDir, scaledDepth);
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(baseBodyItemHnd))
                 return null;
 
             IFCAnyHandle bodyItemHnd = AddClippingsToBaseExtrusion(exporterIFC, wallElement,
-               setterOffset, range, zSpan, baseBodyItemHnd, out cutPairOpenings);
+               modifiedSetterOffset, range, zSpan, baseBodyItemHnd, out cutPairOpenings);
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyItemHnd))
                 return null;
+            bool hasClipping = bodyItemHnd.Id != baseBodyItemHnd.Id;
 
             ElementId matId = HostObjectExporter.GetFirstLayerMaterialId(wallElement);
             IFCAnyHandle styledItemHnd = BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, wallElement.Document,
@@ -410,11 +412,66 @@ namespace Revit.IFC.Export.Exporter
             HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
             bodyItems.Add(bodyItemHnd);
 
+            // Check whether wall has opening. If it has, exporting it in the Reference View will need to be in a tessellated geometry that includes the opening cut
+            IList<IFCOpeningData> openingDataList = ExporterIFCUtils.GetOpeningData(exporterIFC, wallElement, wallLCS, range);
+            bool wallHasOpening = openingDataList.Count > 0;
+            BodyExporterOptions options = new BodyExporterOptions(true);
+
             IFCAnyHandle contextOfItemsBody = exporterIFC.Get3DContextHandle("Body");
-            if (baseBodyItemHnd.Id == bodyItemHnd.Id)
-                bodyRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, wallElement, catId, contextOfItemsBody, bodyItems, null);
+            if (!hasClipping)
+            {
+                // Check whether wall has opening. If it has, exporting it in Reference View will need to be in a tesselated geometry that includes the opening cut
+                if (ExporterUtil.IsReferenceView() && wallHasOpening)
+                {
+                    List<GeometryObject> geomList = new List<GeometryObject>();
+                    bodyItems.Clear();       // Since we will change the geometry, clear existing extrusion data first
+                    if (solids.Count > 0)
+                        foreach (GeometryObject solid in solids)
+                            geomList.Add(solid);
+                    if (meshes.Count > 0)
+                        foreach (GeometryObject mesh in meshes)
+                            geomList.Add(mesh);
+                    foreach (GeometryObject geom in geomList)
+                    {
+                        IFCAnyHandle triangulatedBodyItem = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, wallElement, options, geom);
+                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(triangulatedBodyItem)) 
+                            bodyItems.Add(triangulatedBodyItem);
+                    }
+                    bodyRep = RepresentationUtil.CreateTessellatedRep(exporterIFC, wallElement, catId, contextOfItemsBody, bodyItems, null);
+                }
+                else
+                    bodyRep = RepresentationUtil.CreateSweptSolidRep(exporterIFC, wallElement, catId, contextOfItemsBody, bodyItems, null);
+            }
             else
-                bodyRep = RepresentationUtil.CreateClippingRep(exporterIFC, wallElement, catId, contextOfItemsBody, bodyItems);
+            {
+                // Create TessellatedRep geometry if it is Reference View.
+                if (ExporterUtil.IsReferenceView())
+                {
+                    List<GeometryObject> geomList = new List<GeometryObject>();
+                    // The native function AddClippingsToBaseExtrusion will create the IfcBooleanClippingResult entity and therefore here we need to delete it
+                    foreach (IFCAnyHandle item in bodyItems)
+                    {
+                        item.Dispose();     //Still DOES NOT work, the IfcBooleanClippingResult is still orphaned in the IFC file!
+                    }
+                    bodyItems.Clear();       // Since we will change the geometry, clear existing extrusion data first
+
+                    if (solids.Count > 0)
+                        foreach (GeometryObject solid in solids)
+                            geomList.Add(solid);
+                    if (meshes.Count > 0)
+                        foreach (GeometryObject mesh in meshes)
+                            geomList.Add(mesh);
+                    foreach (GeometryObject geom in geomList)
+                    {
+                        IFCAnyHandle triangulatedBodyItem = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, wallElement, options, geom);
+                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(triangulatedBodyItem)) 
+                            bodyItems.Add(triangulatedBodyItem);
+                    }
+                    bodyRep = RepresentationUtil.CreateTessellatedRep(exporterIFC, wallElement, catId, contextOfItemsBody, bodyItems, null);
+                }
+                else
+                    bodyRep = RepresentationUtil.CreateClippingRep(exporterIFC, wallElement, catId, contextOfItemsBody, bodyItems);
+            }
 
             return bodyRep;
         }
@@ -697,7 +754,8 @@ namespace Revit.IFC.Export.Exporter
                     {
                         IFCAnyHandle localPlacement = setter.LocalPlacement;
 
-                        Plane plane = new Plane(localXDir, localYDir, localOrig);  // project curve to XY plane.
+                        // The local coordinate system of the wall as defined by IFC for IfcWallStandardCase.
+                        Plane wallLCS = new Plane(localXDir, localYDir, localOrig);  // project curve to XY plane.
                         XYZ projDir = XYZ.BasisZ;
 
                         // two representations: axis, body.         
@@ -709,7 +767,7 @@ namespace Revit.IFC.Export.Exporter
                                 string identifierOpt = "Axis";	// IFC2x2 convention
                                 string representationTypeOpt = "Curve2D";  // IFC2x2 convention
 
-                                IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, plane, projDir, false);
+                                IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, wallLCS, projDir, false);
                                 ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, trimmedCurve, XYZ.Zero, true);
                                 IList<IFCAnyHandle> axisItems = info.GetCurves();
 
@@ -736,7 +794,7 @@ namespace Revit.IFC.Export.Exporter
                         {
                             bool isCompletelyClipped;
                             bodyRep = TryToCreateAsExtrusion(exporterIFC, wallElement, connectedWalls, solids, meshes, baseWallElevation,
-                                catId, centerCurve, trimmedCurve, plane, depth, zSpan, range, setter,
+                                catId, centerCurve, trimmedCurve, wallLCS, depth, zSpan, range, setter,
                                 out cutPairOpenings, out isCompletelyClipped, out scaledFootprintArea, out scaledLength);
                             if (isCompletelyClipped)
                                 return null;
@@ -872,15 +930,32 @@ namespace Revit.IFC.Export.Exporter
                                     wallHnd = IFCInstanceExporter.CreateFooting(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
                                         localPlacement, exportParts ? null : prodRep, elemTag, ifcType);
                                 }
-                                else if (exportParts)
-                                {
-                                    wallHnd = IFCInstanceExporter.CreateWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                                            localPlacement, null, elemTag, ifcType);
-                                }
                                 else
                                 {
-                                    wallHnd = IFCInstanceExporter.CreateWallStandardCase(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                                        localPlacement, prodRep, elemTag, ifcType);
+                                    bool exportAsWall = exportParts;
+                                    if (!exportAsWall)
+                                    {
+                                        // (For Reference View export) If the representation returned earlier is of type Tessellation, create IfcWall instead.
+                                        foreach (IFCAnyHandle pRep in IFCAnyHandleUtil.GetRepresentations(prodRep))
+                                        {
+                                            if (String.Compare(IFCAnyHandleUtil.GetRepresentationType(pRep), "Tessellation") == 0)
+                                            {
+                                                exportAsWall = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    if (exportAsWall)
+                                    {
+                                        wallHnd = IFCInstanceExporter.CreateWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
+                                                localPlacement, null, elemTag, ifcType);
+                                    }
+                                    else
+                                    {
+                                        wallHnd = IFCInstanceExporter.CreateWallStandardCase(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
+                                            localPlacement, prodRep, elemTag, ifcType);
+                                    }
                                 }
 
                                 if (exportParts)
@@ -910,7 +985,7 @@ namespace Revit.IFC.Export.Exporter
                                 {
                                     scaledFootprintArea = MathUtil.AreaIsAlmostZero(scaledFootprintArea) ? extraParams.ScaledArea : scaledFootprintArea;
                                     scaledLength = MathUtil.IsAlmostZero(scaledLength) ? extraParams.ScaledLength : scaledLength;
-                                    PropertyUtil.CreateWallBaseQuantities(exporterIFC, wallElement, wallHnd, scaledLength, depth, scaledFootprintArea);
+                                    PropertyUtil.CreateWallBaseQuantities(exporterIFC, wallElement, solids, meshes, wallHnd, scaledLength, depth, scaledFootprintArea);
                                 }
                             }
                             else

@@ -142,6 +142,12 @@ namespace Revit.IFC.Export.Toolkit
         RoofSlabEnd = RoofSlabStart + 255
     }
 
+    enum IFCSlabSubElements
+    {
+        SubSlabStart = 2,
+        SubSlabEnd = SubSlabStart + 255
+    }
+
     enum IFCStairSubElements
     {
         ContainedStair = 2,

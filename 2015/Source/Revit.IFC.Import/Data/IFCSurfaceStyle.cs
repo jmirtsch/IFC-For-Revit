@@ -64,14 +64,7 @@ namespace Revit.IFC.Import.Data
         {
             base.Process(item);
 
-            string surfaceSideAsString = IFCAnyHandleUtil.GetEnumerationAttribute(item, "Side");
-            if (surfaceSideAsString == null)
-            {
-                SurfaceSide = IFCSurfaceSide.Both;
-                IFCImportFile.TheLog.LogWarning(item.StepId, "No surface side defined, defaulting to Both.", false);
-            }
-            else
-                SurfaceSide = (IFCSurfaceSide)Enum.Parse(typeof(IFCSurfaceSide), surfaceSideAsString, true);
+            SurfaceSide = IFCEnums.GetSafeEnumerationAttribute<IFCSurfaceSide>(item, "Side", IFCSurfaceSide.Both);
 
             HashSet<IFCAnyHandle> styles = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(item, "Styles");
             if (styles == null || styles.Count == 0)

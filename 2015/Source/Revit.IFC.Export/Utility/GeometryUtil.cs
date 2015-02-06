@@ -1094,11 +1094,14 @@ namespace Revit.IFC.Export.Utility
         /// <param name="faces">The collection of faces.</param>
         /// <param name="range">The valid range of the extrusion.</param>
         /// <param name="origBodyRepHnd">The original body representation.</param>
+        /// <param name="skippedFaces">The faces that weren't handled by this operation.  These may represent openings.</param>
         /// <returns>The new body representation.  If the clipping completely clips the extrusion, this will be null.  Otherwise, this
         /// will be the clipped representation if a clipping was done, or the original representation if not.</returns>
         public static IFCAnyHandle CreateClippingFromFaces(ExporterIFC exporterIFC, Element cuttingElement, Plane extrusionBasePlane,
-            XYZ extrusionDirection, ICollection<Face> faces, IFCRange range, IFCAnyHandle origBodyRepHnd)
+            XYZ extrusionDirection, ICollection<Face> faces, IFCRange range, IFCAnyHandle origBodyRepHnd, out ICollection<Face> skippedFaces)
         {
+            skippedFaces = null;
+
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(origBodyRepHnd))
                 return null;
 
@@ -1136,6 +1139,7 @@ namespace Revit.IFC.Export.Utility
                 }
             }
 
+            // We only currently handle all planar faces.
             if (allPlanes)
             {
                 int numFaces = faces.Count;
@@ -1206,12 +1210,21 @@ namespace Revit.IFC.Export.Utility
                     }
 
                     IFCAnyHandle newBodyRepHnd = origBodyRepHnd;
-                    for (int ii = 0; ii < numFaces; ii++)
-                    {
-                        if (facesToSkip.Contains(ii))
-                            continue;
+                    skippedFaces = new HashSet<Face>();
 
-                        newBodyRepHnd = ProcessClippingFace(exporterIFC, outerCurveLoops[ii], outerCurveLoopPlanes[ii], 
+                    // faces is an ICollection, so we can't index it.  Instead, we will keep the count ourselves.
+                    int faceIdx = -1;   // start at -1 so that first increment puts faceIdx at 0.
+                    foreach (Face face in faces)
+                    {
+                        faceIdx++;
+
+                        if (facesToSkip.Contains(faceIdx))
+                    {
+                            skippedFaces.Add(face);
+                            continue;
+                        }
+
+                        newBodyRepHnd = ProcessClippingFace(exporterIFC, outerCurveLoops[faceIdx], outerCurveLoopPlanes[faceIdx], 
                             extrusionBasePlane, extrusionDirection, range, true, newBodyRepHnd);
                         if (newBodyRepHnd == null)
                             return null;
@@ -1227,6 +1240,10 @@ namespace Revit.IFC.Export.Utility
         public static IFCAnyHandle CreateOpeningFromFaces(ExporterIFC exporterIFC, Element cuttingElement, Plane extrusionBasePlane,
             XYZ extrusionDirection, ICollection<Face> faces, IFCRange range, IFCAnyHandle origBodyRepHnd)
         {
+            // If we have no faces, return the original value.
+            if (faces.Count == 0)
+                return origBodyRepHnd;
+
             // We will attempt to "sew" the faces, and see what we have left over.  Depending on what we have, we have an opening, recess, or clipping.
 
             // top and bottom profile curves to create extrusion
@@ -1497,16 +1514,14 @@ namespace Revit.IFC.Export.Utility
                 curveLoop2.Flip();
             }
 
-            // check planar and parallel and orthogonal to the main extrusion dir
+            // Check that the faces are planar and parallel to each other.
+            // If the faces have normals that are parallel to the extrusion direction, it could be better to either:
+            // 1. export the opening as an IfcOpeningElement, or
+            // 2. add the boundary as an inner boundary of the extrusion.
+            // as these would be less sensitive to Boolean operation errors.
+            // This will be considered for a future improvement.
 
             if (!MathUtil.VectorsAreParallel(plane1.Normal, plane2.Normal))
-            {
-                //Error, can't handle this
-                throw new Exception("Can't handle.");
-            }
-
-            if (!MathUtil.VectorsAreOrthogonal(plane1.Normal, extrusionDirection)
-                || !MathUtil.VectorsAreOrthogonal(plane2.Normal, extrusionDirection))
             {
                 //Error, can't handle this
                 throw new Exception("Can't handle.");
@@ -2446,6 +2461,134 @@ namespace Revit.IFC.Export.Utility
                 profileCurve = IFCInstanceExporter.CreateCompositeCurve(file, segments, IFCLogical.False);
             }
             return profileCurve;
-        }        
+        }      
+
+        /// <summary>
+        /// Function to process list of triangles set into an indexed triangles format for Tessellated geometry
+        /// </summary>
+        /// <param name="file">the IFC file</param>
+        /// <param name="triangleList">the list of triangles</param>
+        /// <returns>an IFC handle for IfcTriangulatedFaceSet Item</returns>
+        public static IFCAnyHandle GetIndexedTriangles(IFCFile file, List<List<XYZ>> triangleList)
+        {
+            List<XYZ> vertList = new List<XYZ>();
+            List<List<double>> coordList = new List<List<double>>();
+            List<List<int>> triIndex = new List<List<int>>();
+
+            if (triangleList.Count == 0)
+                return null;
+
+            foreach (List<XYZ> triangle in triangleList)
+            {
+                // Create triangle index and insert the index list of 3 into the triangle index list
+                List<int> tri = new List<int>();
+
+                foreach (XYZ vert in triangle)
+                {
+                    int idx = -1;
+
+                    idx = vertList.FindIndex(x => x.IsAlmostEqualTo(vert));
+                    if (idx < 0)
+                    {
+                        // Point not found, insert the point into the list
+                        vertList.Add(vert);
+                        idx = vertList.Count - 1; // Since the item is added at the end of the list, the index will be the last item in the List
+                    }
+
+                    tri.Add((idx) + 1); //!!! The index starts at 1 (and not 0) following X3D standard
+                }
+                triIndex.Add(tri);
+            }
+
+            if (vertList.Count == 0)
+                return null;
+
+            foreach (XYZ vert in vertList)
+            {
+                List<double> coord = new List<double>();
+                coord.Add(vert.X);
+                coord.Add(vert.Y);
+                coord.Add(vert.Z);
+                coordList.Add(coord);
+            }
+            IFCAnyHandle coordPointLists = IFCAnyHandleUtil.CreateInstance(file, IFCEntityType.IfcCartesianPointList3D);
+            IFCAnyHandleUtil.SetAttribute(coordPointLists, "CoordList", coordList, 1, null, 3, 3);
+
+            IFCAnyHandle triangulatedItem = IFCInstanceExporter.CreateTriangulatedFaceSet(file, coordPointLists, null, null, triIndex, null);
+
+            return triangulatedItem;
+        }
+
+        /// Check if two bounding boxes overlap. 
+        /// </summary>
+        /// <param name="originalBox1">The first bounding box</param>
+        /// <param name="originalBox2">The second bounding box</param>
+        /// <returns>true if two bounding boxes overlap</returns>
+        /// <remarks>This method only works under the assumption that two bounding boxes are in the same coordinate system, 
+        ///          which means that their respective faces are parallel to each other. 
+        ///          If the given boxes are transformed, then this function will create two axes-aligned bounding boxes
+        ///          of these two boxes in the model coordinate system, 
+        ///          and then check if the two new bounding boxes overlap</remarks>
+        public static bool BoundingBoxesOverlap(BoundingBoxXYZ originalBox1, BoundingBoxXYZ originalBox2)
+        {
+            if ((originalBox1 != null && originalBox1.Enabled && originalBox2 != null && originalBox2.Enabled))
+            {
+                BoundingBoxXYZ bbox1 = BoundingBoxInModelCoordinate(originalBox1);
+                BoundingBoxXYZ bbox2 = BoundingBoxInModelCoordinate(originalBox2);
+
+                if (bbox1 == null || bbox2 == null)
+                    return false;
+
+                return (bbox1.Max.X >= bbox2.Min.X) && (bbox1.Min.X <= bbox2.Max.X)
+                    && (bbox1.Max.Y >= bbox2.Min.Y) && (bbox1.Min.Y <= bbox2.Max.Y)
+                    && (bbox1.Max.Z >= bbox2.Min.Z) && (bbox1.Min.Z <= bbox2.Max.Z);
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        // return the bounding box in model coordinate of the given box
+        private static BoundingBoxXYZ BoundingBoxInModelCoordinate(BoundingBoxXYZ bbox)
+        {
+            if (bbox == null)
+                return null;
+
+            double[] xVals = new double[] { bbox.Min.X, bbox.Max.X };
+            double[] yVals = new double[] { bbox.Min.Y, bbox.Max.Y };
+            double[] zVals = new double[] { bbox.Min.Z, bbox.Max.Z };
+
+            XYZ toTest;
+
+            double minX, minY, minZ, maxX, maxY, maxZ;
+            minX = minY = minZ = double.MaxValue;
+            maxX = maxY = maxZ = double.MinValue;
+
+            // Get the max and min coordinate from the 8 vertices
+            for (int iX = 0; iX < 2; iX++)
+            {
+                for (int iY = 0; iY < 2; iY++)
+                {
+                    for (int iZ = 0; iZ < 2; iZ++)
+                    {
+                        toTest = bbox.Transform.OfPoint(new XYZ(xVals[iX], yVals[iY], zVals[iZ]));
+                        minX = Math.Min(minX, toTest.X);
+                        minY = Math.Min(minY, toTest.Y);
+                        minZ = Math.Min(minZ, toTest.Z);
+
+                        maxX = Math.Max(maxX, toTest.X);
+                        maxY = Math.Max(maxY, toTest.Y);
+                        maxZ = Math.Max(maxZ, toTest.Z);
+                    }
+                }
+            }
+
+            BoundingBoxXYZ returnBox = new BoundingBoxXYZ();
+            returnBox.Max = new XYZ(maxX, maxY, maxZ);
+            returnBox.Min = new XYZ(minX, minY, minZ);
+
+            return returnBox;
+        }
     }
 }

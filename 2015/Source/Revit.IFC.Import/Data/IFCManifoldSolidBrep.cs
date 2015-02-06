@@ -74,13 +74,55 @@ namespace Revit.IFC.Import.Data
         protected override IList<GeometryObject> CreateGeometryInternal(
            IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
+            if (Outer == null || Outer.Faces.Count == 0)
+                return null;
+
+            IList<GeometryObject> geomObjs = null;
+            
             shapeEditScope.StartCollectingFaceSet();
             Outer.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
             
-            IList<GeometryObject> geomObjs = shapeEditScope.CreateGeometry(guid);
+            bool closedFaceSet = false;
+            if (shapeEditScope.CreatedFacesCount == Outer.Faces.Count)
+            {
+                geomObjs = shapeEditScope.CreateGeometry(guid);
+                closedFaceSet = true;
+            }
+
+            if (geomObjs == null || geomObjs.Count == 0)
+            {
+                // Let's see if we can loosen the requirements a bit, and try again.
+                if (shapeEditScope.TargetGeometry == TessellatedShapeBuilderTarget.AnyGeometry &&
+                    shapeEditScope.FallbackGeometry == TessellatedShapeBuilderFallback.Mesh)
+                {
+                    using (IFCImportShapeEditScope.IFCTargetSetter targetSetter =
+                        new IFCImportShapeEditScope.IFCTargetSetter(shapeEditScope, TessellatedShapeBuilderTarget.Mesh, TessellatedShapeBuilderFallback.Salvage))
+                    {
+                        if (closedFaceSet)
+                            shapeEditScope.StartCollectingFaceSet();
+                        else
+                            shapeEditScope.ResetCreatedFacesCount();
+                        
+                        Outer.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
+
+                        // This needs to be in scope so that we keep the mesh tolerance for vertices.
+                        if (shapeEditScope.CreatedFacesCount != 0)
+                        {
+                            if (shapeEditScope.CreatedFacesCount != Outer.Faces.Count)
+                                IFCImportFile.TheLog.LogWarning(Outer.Id, "Processing " + shapeEditScope.CreatedFacesCount + " valid faces out of " + Outer.Faces.Count + " total.", false);
+
+                            geomObjs = shapeEditScope.CreateGeometry(guid);
+                        }
+                    }
+                }
+            }
             
             if (geomObjs == null || geomObjs.Count == 0)
+            {
+                // Couldn't use fallback, or fallback didn't work.
+                IFCImportFile.TheLog.LogWarning(Id, "Couldn't create any geometry.", false);
                return null;
+            }
 
             return geomObjs;
         }

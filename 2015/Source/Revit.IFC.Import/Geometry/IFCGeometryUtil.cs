@@ -52,10 +52,10 @@ namespace Revit.IFC.Import.Geometry
             {
                 if (m_SolidValidator == null)
                 {
-                    m_SolidValidator = DirectShape.CreateElement(IFCImportFile.TheFile.Document,
+                    m_SolidValidator = IFCElementUtil.CreateElement(IFCImportFile.TheFile.Document,
                         new ElementId(BuiltInCategory.OST_GenericModel),
-                        Importer.ImportAppGUID(),
-                        "(SolidValidator)");
+                        "(SolidValidator)", 
+                        null);
                 }
                 return m_SolidValidator;
             }
@@ -112,50 +112,87 @@ namespace Revit.IFC.Import.Geometry
         /// <param name="pointXYZs">The list of vertices.</param>
         /// <param name="points">The optional list of IFCAnyHandles that generated the vertices, used solely for error reporting.</param>
         /// <param name="id">The id of the IFCAnyHandle associated with the CurveLoop.</param>
-        /// <param name="isClosedLoop">True if the vertices represent a closed loop, false if not.</param>
+        /// <param name="closeCurve">True if the loop needs a segment between the last point and the first point.</param>
         /// <returns>The new curve loop.</returns>
-        /// <remarks>If isClosedLoop is true, there will be pointsXyz.Count line segments.  Otherwise, there will be pointsXyz.Count-1.</remarks>
-        public static CurveLoop CreatePolyCurveLoop(IList<XYZ> pointXYZs, IList<IFCAnyHandle> points, int id, bool isClosedLoop)
+        /// <remarks>If closeCurve is true, there will be pointsXyz.Count line segments.  Otherwise, there will be pointsXyz.Count-1.</remarks>
+        public static CurveLoop CreatePolyCurveLoop(IList<XYZ> pointXYZs, IList<IFCAnyHandle> points, int id, bool closeCurve)
         {
             int numPoints = pointXYZs.Count;
             if (numPoints < 2)
+            {
+                // TODO: log warning
                 return null;
+            }
 
             IList<int> badIds = new List<int>();
 
-            int numMinPoints = isClosedLoop ? 3 : 2;
+            bool wasAlreadyClosed = pointXYZs[0].IsAlmostEqualTo(pointXYZs[numPoints - 1]);
+
+            bool wasClosed = closeCurve ? true : wasAlreadyClosed;
             
+            // We expect at least 3 points if the curve is closed, 2 otherwise.
+            int numMinPoints = wasAlreadyClosed ? 4 : (closeCurve ? 3 : 2);
+            if (numPoints < numMinPoints)
+            {
+                // TODO: log warning
+                return null;
+            }
+
             // Check distance between points; remove too-close points, and warn if result is non-collinear.
             // Always include first point.
             IList<XYZ> finalPoints = new List<XYZ>();
             finalPoints.Add(pointXYZs[0]);
             int numNewPoints = 1;
-            for (int ii = 1; ii < numPoints; ii++)
+
+            int numPointsToCheck = closeCurve ? numPoints + 1 : numPoints;
+            for (int ii = 1; ii < numPointsToCheck; ii++)
             {
-                if (IFCGeometryUtil.LineSegmentIsTooShort(finalPoints[numNewPoints - 1], pointXYZs[ii]))
+                int nextIndex = (ii % numPoints);
+                if (IFCGeometryUtil.LineSegmentIsTooShort(finalPoints[numNewPoints - 1], pointXYZs[nextIndex]))
                 {
                     if (points != null)
-                        badIds.Add(points[ii].StepId);
+                        badIds.Add(points[nextIndex].StepId);
                     else
-                        badIds.Add(ii+1);
+                        badIds.Add(nextIndex + 1);
                 }
                 else
                 {
-                    finalPoints.Add(pointXYZs[ii]);
+                    finalPoints.Add(pointXYZs[nextIndex]);
                     numNewPoints++;
                 }
             }
 
-            // Check final segment; if too short, delete 2nd to last point.
-            if (isClosedLoop)
+            // Check final segment; if too short, delete 2nd to last point instead of the last.
+            if (wasClosed)
             {
-                if (IFCGeometryUtil.LineSegmentIsTooShort(finalPoints[numNewPoints - 1], pointXYZs[0]))
-                {
-                    finalPoints.RemoveAt(numNewPoints - 1);
-                    numNewPoints--;
-                }
-            }
+                if (numNewPoints < 4)
+                    return null;
 
+                bool isClosed = finalPoints[numNewPoints - 1].IsAlmostEqualTo(finalPoints[0]);  // Do we have a closed loop now?
+                if (wasClosed && !isClosed)   // If we had a closed loop, and now we don't, fix it up.
+                {
+                    // Presumably, the second-to-last point had to be very close to the last point, or we wouldn't have removed the last point.
+                    // So instead of creating a too-short segment, we replace the last point of the new point list with the last point of the original point list.
+                    finalPoints[numNewPoints - 1] = pointXYZs[numPoints - 1];
+
+                    // Now we have to check that we didn't inadvertently make a "too-short" segment.
+                    for (int ii = numNewPoints - 1; ii > 0; ii--)
+                    {
+                        if (IFCGeometryUtil.LineSegmentIsTooShort(finalPoints[ii], finalPoints[ii - 1]))
+                        {
+                            // TODO: log this removal.
+                            finalPoints.RemoveAt(ii - 1); // Remove the intermediate point, not the last point.
+                            numNewPoints--;
+                        }
+                        else
+                            break;   // We are in the clear, unless we removed too many points - we've already checked the rest of the loop.
+                    }
+                }
+
+                if (numNewPoints < 4)
+                    return null;                
+            }
+           
             // This can be a very common warning, so we will restrict to verbose logging.
             if (Importer.TheOptions.VerboseLogging)
             {
@@ -191,8 +228,6 @@ namespace Revit.IFC.Import.Geometry
             CurveLoop curveLoop = new CurveLoop();
             for (int ii = 0; ii < numNewPoints - 1; ii++)
                 curveLoop.Append(Line.CreateBound(finalPoints[ii], finalPoints[ii + 1]));
-            if (isClosedLoop)
-                curveLoop.Append(Line.CreateBound(finalPoints[numNewPoints - 1], finalPoints[0]));
 
             return curveLoop;
         }
@@ -355,6 +390,65 @@ namespace Revit.IFC.Import.Geometry
         }
 
         /// <summary>
+        /// Return a solid corresponding to the volume represented by boundingBoxXYZ. 
+        /// </summary>
+        /// <param name="lcs">The local coordinate system of the bounding box; if null, assume the Identity transform.</param>
+        /// <param name="boundingBoxXYZ">The bounding box.</param>
+        /// <param name="solidOptions">The options for creating the solid.  Allow null to mean default.</param>
+        /// <returns>A solid of the same size and orientation as boundingBoxXYZ, or null if boundingBoxXYZ is invalid or null.</returns>
+        /// <remarks>We don't do any checking on the input transform, which could have non-uniform scaling and/or mirroring.
+        /// This could potentially lead to unexpected results, which we can examine if and when such cases arise.</remarks>
+        public static Solid CreateSolidFromBoundingBox(Transform lcs, BoundingBoxXYZ boundingBoxXYZ, SolidOptions solidOptions)
+        {
+            // Check that the bounding box is valid.
+            if (boundingBoxXYZ == null || !boundingBoxXYZ.Enabled)
+                return null;
+
+            try
+            {
+                // Create a transform based on the incoming local coordinate system and the bounding box coordinate system.
+                Transform bboxTransform = (lcs == null) ? boundingBoxXYZ.Transform : lcs.Multiply(boundingBoxXYZ.Transform);
+                
+                XYZ[] profilePts = new XYZ[4];
+                profilePts[0] = bboxTransform.OfPoint(boundingBoxXYZ.Min);
+                profilePts[1] = bboxTransform.OfPoint(new XYZ(boundingBoxXYZ.Max.X, boundingBoxXYZ.Min.Y, boundingBoxXYZ.Min.Z));
+                profilePts[2] = bboxTransform.OfPoint(new XYZ(boundingBoxXYZ.Max.X, boundingBoxXYZ.Max.Y, boundingBoxXYZ.Min.Z));
+                profilePts[3] = bboxTransform.OfPoint(new XYZ(boundingBoxXYZ.Min.X, boundingBoxXYZ.Max.Y, boundingBoxXYZ.Min.Z));
+                
+                XYZ upperRightXYZ = bboxTransform.OfPoint(boundingBoxXYZ.Max);
+
+                // If we assumed that the transforms had no scaling, 
+                // then we could simply take boundingBoxXYZ.Max.Z - boundingBoxXYZ.Min.Z.
+                // This code removes that assumption.
+                XYZ origExtrusionVector = new XYZ(boundingBoxXYZ.Min.X, boundingBoxXYZ.Min.Y, boundingBoxXYZ.Max.Z) - boundingBoxXYZ.Min;
+                XYZ extrusionVector = bboxTransform.OfVector(origExtrusionVector);
+
+                double extrusionDistance = extrusionVector.GetLength();
+                XYZ extrusionDirection = extrusionVector.Normalize();
+                
+                CurveLoop baseLoop = new CurveLoop();
+
+                for (int ii = 0; ii < 4; ii++)
+                {
+                    baseLoop.Append(Line.CreateBound(profilePts[ii], profilePts[(ii + 1) % 4]));
+                }
+
+                IList<CurveLoop> baseLoops = new List<CurveLoop>();
+                baseLoops.Add(baseLoop);
+
+                if (solidOptions == null)
+                    return GeometryCreationUtilities.CreateExtrusionGeometry(baseLoops, extrusionDirection, extrusionDistance);
+                else
+                    return GeometryCreationUtilities.CreateExtrusionGeometry(baseLoops, extrusionDirection, extrusionDistance, solidOptions);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        
+        /// <summary>
         /// Checks if a Solid is valid for use in a generic DirectShape or DirecShapeType.
         /// </summary>
         /// <param name="solid"></param>
@@ -375,5 +469,47 @@ namespace Revit.IFC.Import.Geometry
                 m_SolidValidator = null;
             }
         }
+
+        /// <summary>
+        /// Check for any occurence where distance of two vertices are too narrow (within the tolerance)
+        /// </summary>
+        /// <param name="entityId">The integer number representing the current IFC entity Id</param>
+        /// <param name="shapeEditScope">the shapeEditScope</param>
+        /// <param name="inputVerticesList">Input list of the vertices</param>
+        /// <param name="outputVerticesList">Output List of the valid vertices, i.e. not vertices that are too close to each other</param>
+        /// <returns></returns>
+        public static void CheckAnyDistanceVerticesWithinTolerance(int entityId, IFCImportShapeEditScope shapeEditScope, IList<XYZ> inputVerticesList,  out IList<XYZ> outputVerticesList)
+        {
+            // Check triangle that is too narrow (2 vertices are within the tolerance
+            double shortSegmentTolerance = shapeEditScope.TryToCreateSolid() ?
+                                            shapeEditScope.Document.Application.ShortCurveTolerance :
+                                            shapeEditScope.Document.Application.VertexTolerance;
+
+            int lastVertex = 0;
+            IList<XYZ> vertList = new List<XYZ>();
+            outputVerticesList = vertList;
+            for (int ii = 1; ii <= inputVerticesList.Count; ii++)
+            {
+                int currIdx = (ii % inputVerticesList.Count);
+
+                double dist = inputVerticesList[lastVertex].DistanceTo(inputVerticesList[currIdx]);
+                if (dist >= shortSegmentTolerance)
+                {
+                    vertList.Add(inputVerticesList[lastVertex]);
+                    lastVertex = currIdx;
+                }
+                else
+                {
+                    string distAsString = UnitFormatUtils.Format(IFCImportFile.TheFile.Document.GetUnits(), UnitType.UT_Length, dist, true, false);
+                    string shortDistAsString = UnitFormatUtils.Format(IFCImportFile.TheFile.Document.GetUnits(), UnitType.UT_Length, shortSegmentTolerance, true, false);
+                    string warningString = "Distance between vertices " + lastVertex + " and " + currIdx +
+                                            " is " + distAsString + ", which is less than the minimum " + (shapeEditScope.TryToCreateSolid() ? "Solid" : "Mesh") +
+                                            " distance of " + shortDistAsString + ", removing second point.";
+
+                    IFCImportFile.TheLog.LogComment(entityId, warningString, false);
+                }
+            }
+        }
+
     }
 }

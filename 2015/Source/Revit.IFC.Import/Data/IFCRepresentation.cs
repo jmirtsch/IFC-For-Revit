@@ -137,12 +137,13 @@ namespace Revit.IFC.Import.Data
                 return IFCRepresentationIdentifier.Box;
             if ((string.Compare(identifier, "FootPrint", true) == 0) ||
                 (string.Compare(identifier, "Annotation", true) == 0) ||
+                (string.Compare(identifier, "Profile", true) == 0) ||
                 (string.Compare(identifier, "Plan", true) == 0))
                 return IFCRepresentationIdentifier.FootPrint;
             if (string.Compare(identifier, "Style", true) == 0 ||
                 IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentation, IFCEntityType.IfcStyledRepresentation))
                 return IFCRepresentationIdentifier.Style;
-            
+
             return IFCRepresentationIdentifier.Unhandled;
         }
 
@@ -247,6 +248,33 @@ namespace Revit.IFC.Import.Data
             Process(representation);
         }
 
+        private void CreateBoxShape(IFCImportShapeEditScope shapeEditScope, Transform scaledLcs)
+        {
+            using (IFCImportShapeEditScope.IFCContainingRepresentationSetter repSetter = new IFCImportShapeEditScope.IFCContainingRepresentationSetter(shapeEditScope, this))
+            {
+                // Get the material and graphics style based in the "Box" sub-category of Generic Models.  
+                // We will create the sub-category if this is our first time trying to use it.
+                // Note that all bounding boxes are controlled by a sub-category of Generic Models.  We may revisit that decision later.
+                SolidOptions solidOptions = null;
+                Category bboxCategory = IFCCategoryUtil.GetSubCategoryForRepresentation(shapeEditScope.Document, Id, Identifier);
+                if (bboxCategory != null)
+                {
+                    ElementId materialId = (bboxCategory.Material == null) ? ElementId.InvalidElementId : bboxCategory.Material.Id;
+                    GraphicsStyle graphicsStyle = bboxCategory.GetGraphicsStyle(GraphicsStyleType.Projection);
+                    ElementId gstyleId = (graphicsStyle == null) ? ElementId.InvalidElementId : graphicsStyle.Id;
+                    solidOptions = new SolidOptions(materialId, gstyleId);
+                }
+
+                Solid bboxSolid = IFCGeometryUtil.CreateSolidFromBoundingBox(scaledLcs, BoundingBox, solidOptions);
+                if (bboxSolid != null)
+                {
+                    IFCSolidInfo bboxSolidInfo = IFCSolidInfo.Create(Id, bboxSolid);
+                    shapeEditScope.AddGeometry(bboxSolidInfo);
+                }
+            }
+            return;
+        }
+
         /// <summary>
         /// Create geometry for a particular representation.
         /// </summary>
@@ -256,9 +284,12 @@ namespace Revit.IFC.Import.Data
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         public void CreateShape(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            // We are not yet displaying Axis information, but do (potentially) need the Axis curve for generating material layer-based extrusions.
-            if (Identifier == IFCRepresentationIdentifier.Axis)
+            // Special handling for Box representation.  We may decide to create an IFCBoundingBox class and stop this special treatment.
+            if (Identifier == IFCRepresentationIdentifier.Box)
+            {
+                CreateBoxShape(shapeEditScope, scaledLcs);
                 return;
+            }
 
             if (LayerAssignment != null)
                 LayerAssignment.Create(shapeEditScope);
@@ -280,6 +311,7 @@ namespace Revit.IFC.Import.Data
             }
         }
 
+        // TODO: this function should be moved to IFCBoundingBox.cs now that they are fully supported.
         static private BoundingBoxXYZ ProcessBoundingBox(IFCAnyHandle boundingBoxHnd)
         {
             IFCAnyHandle lowerLeftHnd = IFCAnyHandleUtil.GetInstanceAttribute(boundingBoxHnd, "Corner");

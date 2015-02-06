@@ -168,7 +168,7 @@
     <value>2ème étage</value>
   </data>
   <data name="SpaceBoundariesNone" xml:space="preserve">
-    <value>Aucun</value>
+    <value>Aucunes</value>
   </data>
   <data name="SpaceBoundariesUnrecognized" xml:space="preserve">
     <value>Niveau de la limite d'espace non reconnue</value>
@@ -228,7 +228,7 @@
     <value>Interne Revit seulement</value>
   </data>
   <data name="PropertySetsNone" xml:space="preserve">
-    <value>Aucun</value>
+    <value>Aucunes</value>
   </data>
   <data name="PropertySetsRevitPlusIFC" xml:space="preserve">
     <value>Interne Revit, IFC Common</value>
@@ -361,7 +361,7 @@
     <value>Interface alternative d'export</value>
   </data>
   <data name="ApplicationName" xml:space="preserve">
-    <value>Nom d'application</value>
+    <value>Nom de l'application</value>
   </data>
   <data name="Assignments" xml:space="preserve">
     <value>Assignations…</value>
@@ -403,7 +403,7 @@
     <value>Emplacement documentation</value>
   </data>
   <data name="Dont" xml:space="preserve">
-    <value>Ne {0}</value>
+    <value>Ne pas {0}</value>
   </data>
   <data name="Edition" xml:space="preserve">
     <value>Edition</value>
@@ -562,10 +562,10 @@
     <value>Numéro de version</value>
   </data>
   <data name="ValueSetByExportOption" xml:space="preserve">
-    <value>...la valeur est définie en fonction des paramètres d'export</value>
+    <value>...la valeur est définie en fonction des paramètres de l'export</value>
   </data>
   <data name="ValueSetOnExport" xml:space="preserve">
-    <value>...La valeur sera définie au moment de m'export</value>
+    <value>...La valeur sera définie au moment de l'export</value>
   </data>
   <data name="ClassificationAltName" xml:space="preserve">
     <value>Le nom de paramètre partagé alternatif optionnel pour cette classification (default: ClassificationCode)</value>
@@ -596,5 +596,11 @@
   </data>
   <data name="SaveSetupAndClose" xml:space="preserve">
     <value>Enregistrer réglages &amp;amp; Fermer</value>
+  </data>
+  <data name="General" xml:space="preserve">
+    <value>Général</value>
+  </data>
+  <data name="ExportRoomsInView" xml:space="preserve">
+    <value />
   </data>
 </root>

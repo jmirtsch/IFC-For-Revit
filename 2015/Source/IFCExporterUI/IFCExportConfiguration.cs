@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC export alternate UI library: this library works with Autodesk(R) Revit(R) to provide an alternate user interface for the export of IFC files from Revit.
-// Copyright (C) 2012  Autodesk, Inc.
+// Copyright (C) 2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -153,9 +153,23 @@ namespace BIM.IFC.Export.UI
         public bool UseCoarseTessellation { get; set; }
 
         /// <summary>
+        /// Value indicating the level of detail to be used by tessellation. Valid valus is between 0 to 1
+        /// </summary>
+        public double TessellationLevelOfDetail { get; set; }
+
+        /// <summary>
         /// True to store the IFC GUID in the file after the export.  This will require manually saving the file to keep the parameter.
         /// </summary>
         public bool StoreIFCGUID { get; set; }
+
+        /// <summary>
+        /// True to export rooms if their bounding box intersect with the section box.
+        /// </summary>
+        /// <remarks>
+        /// If the section box isn't visible, then all the rooms are exported if this option is set.
+        /// </remarks>
+        public bool ExportRoomsInView { get; set; }
+
 
         public bool ExportLinkedFiles { get; set; }
 
@@ -221,9 +235,11 @@ namespace BIM.IFC.Export.UI
             this.ExportLinkedFiles                = false;
             this.IncludeSiteElevation             = false;
             this.UseCoarseTessellation            = true;
+            this.TessellationLevelOfDetail        = 0.25;
             this.StoreIFCGUID                     = false;
             this.m_isBuiltIn                      = false; 
             this.m_isInSession                    = false;
+            this.ExportRoomsInView                = false;
         }
 
         /// <summary>
@@ -275,10 +291,12 @@ namespace BIM.IFC.Export.UI
             configuration.ExportLinkedFiles = exportLinkedFiles;
             configuration.IncludeSiteElevation = false;
             configuration.UseCoarseTessellation = true;
+            configuration.TessellationLevelOfDetail = 0.25;
             configuration.StoreIFCGUID = false;
             configuration.m_isBuiltIn = true;
             configuration.m_isInSession = false;
             configuration.ActivePhaseId = ElementId.InvalidElementId;
+            configuration.ExportRoomsInView = false;
             return configuration;
         }
 
@@ -314,10 +332,12 @@ namespace BIM.IFC.Export.UI
             this.ExportLinkedFiles = other.ExportLinkedFiles;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
             this.UseCoarseTessellation = other.UseCoarseTessellation;
+            this.TessellationLevelOfDetail = other.TessellationLevelOfDetail;
             this.StoreIFCGUID = other.StoreIFCGUID;
             this.m_isBuiltIn = other.m_isBuiltIn;
             this.m_isInSession = other.m_isInSession;
             this.ActivePhaseId = other.ActivePhaseId;
+            this.ExportRoomsInView = other.ExportRoomsInView;
         }
 
         /// <summary>
@@ -358,7 +378,9 @@ namespace BIM.IFC.Export.UI
             this.ExportLinkedFiles = other.ExportLinkedFiles;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
             this.UseCoarseTessellation = other.UseCoarseTessellation;
+            this.TessellationLevelOfDetail = other.TessellationLevelOfDetail;
             this.ActivePhaseId = other.ActivePhaseId;
+            this.ExportRoomsInView = other.ExportRoomsInView;
             this.m_isBuiltIn = false;
             this.m_isInSession = false;
         }
@@ -422,6 +444,7 @@ namespace BIM.IFC.Export.UI
             options.AddOption("ExportLinkedFiles", ExportLinkedFiles.ToString());
             options.AddOption("IncludeSiteElevation", IncludeSiteElevation.ToString());
             options.AddOption("UseCoarseTessellation", UseCoarseTessellation.ToString());
+            options.AddOption("TessellationLevelOfDetail", TessellationLevelOfDetail.ToString());
             options.AddOption("StoreIFCGUID", StoreIFCGUID.ToString());
             options.AddOption("ActivePhase", ActivePhaseId.ToString());
 
@@ -431,6 +454,8 @@ namespace BIM.IFC.Export.UI
 
             options.AddOption("ConfigName", Name);      // Add config name into the option for use in the exporter
             options.AddOption("ExportUserDefinedPsetsFileName", ExportUserDefinedPsetsFileName);
+
+            options.AddOption("ExportRoomsInView", ExportRoomsInView.ToString());
         }
 
         /// <summary>
@@ -494,6 +519,8 @@ namespace BIM.IFC.Export.UI
                     ConditionalAddLine(builder, Resources.IncludeIfcSiteElevation, IncludeSiteElevation, valueToMatch);
                     ConditionalAddLine(builder, Resources.UseCoarseTessellation, UseCoarseTessellation, valueToMatch);
                     ConditionalAddLine(builder, Resources.StoreIFCGUID, StoreIFCGUID, valueToMatch);
+
+                    ConditionalAddLine(builder, Resources.ExportRoomsInView, ExportRoomsInView, valueToMatch);
                 }
 
                 return builder.ToString();
@@ -510,10 +537,17 @@ namespace BIM.IFC.Export.UI
         {
             if (value is bool)
             {
-                if ((bool) value)
+                if ((bool)value)
                     return String.Format("{0}", label);
                 else
-                    return String.Format(Properties.Resources.Dont, label);
+                {
+                    // A small hack for western languages: remove the uppercase from the start of the sentence.
+                    char startChar = label.First();
+                    if (startChar >= 'A' && startChar <= 'Z')
+                        startChar = (char) ((int)startChar + 32);
+                    string newLabel = startChar + label.Substring(1);
+                    return String.Format(Properties.Resources.Dont, newLabel);
+                }
             }
             else
                 return String.Format("{0}: {1}", label, value.ToString());
@@ -527,6 +561,5 @@ namespace BIM.IFC.Export.UI
         {
             return Name + (IsBuiltIn? "*":"");
         }
-
     }
 }

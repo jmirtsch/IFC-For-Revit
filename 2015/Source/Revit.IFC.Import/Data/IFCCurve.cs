@@ -242,57 +242,7 @@ namespace Revit.IFC.Import.Data
             }
         }
 
-        private void AddCurveToLoopInternal(CurveLoop curveLoop, Curve curve, bool initialReverse, bool tryReversed)
-        {
-            try
-            {
-                if (tryReversed != initialReverse)
-                    curveLoop.Append(curve.CreateReversed());
-                else
-                    curveLoop.Append(curve);
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message.Contains("not contiguous"))
-                {
-                    if (!tryReversed)
-                        AddCurveToLoopInternal(curveLoop, curve, initialReverse, true);
-                    else
-                        throw ex;
-                }
-            }
-        }
-
-        // We are going to try a few passes to add a curve to the CurveLoop, based on the fact that we can't always trust that the
-        // orientation of the given curve loop is correct.  So we will:
-        // 1. Try to add the curve, according to the orientation we believe is correct.
-        // 2. Try to add the curve, reversing the orientation.
-        // 3. Reverse the curve loop, and try steps 1-2 again.
-        private void AddCurveToLoop(CurveLoop curveLoop, Curve curve, bool initialReverse, bool allowFlip)
-        {
-            try
-            {
-                AddCurveToLoopInternal(curveLoop, curve, initialReverse, false);
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message.Contains("not contiguous"))
-                {
-                    // One last attempt to solve the problem - flip the curve loop, try again.
-                    if (allowFlip)
-                    {
-                        curveLoop.Flip();
-                        AddCurveToLoop(curveLoop, curve, initialReverse, false);
-                    }
-                    else
-                        throw ex;
-                }
-                else
-                    throw ex;
-            }
-        }
-
-        private void ProcessIFCCompositeCurveSegment(IFCAnyHandle ifcCurveSegment)
+        private IList<Curve> ProcessIFCCompositeCurveSegment(IFCAnyHandle ifcCurveSegment)
         {
             bool found = false;
 
@@ -305,7 +255,7 @@ namespace Revit.IFC.Import.Data
             if (ifcParentCurve == null)
             {
                 IFCImportFile.TheLog.LogError(ifcCurveSegment.StepId, "Error processing ParentCurve for IfcCompositeCurveSegment.", false);
-                return;
+                return null;
             }
 
             bool hasCurve = (ifcParentCurve.Curve != null);
@@ -313,43 +263,174 @@ namespace Revit.IFC.Import.Data
             if (!hasCurve && !hasCurveLoop)
             {
                 IFCImportFile.TheLog.LogError(ifcCurveSegment.StepId, "Error processing ParentCurve for IfcCompositeCurveSegment.", false);
-                return;
-            }
-            else
-            {
-                // The CurveLoop here is from the parent IfcCurve, which is the IfcCompositeCurve, which will correspond to a CurveLoop. 
-                // IfcCompositiveCurveSegment may be either a curve or a curveloop, which we want to append to the parent curveloop.
-                if (CurveLoop == null)
-                    CurveLoop = new CurveLoop();
+                return null;
             }
 
-            try
+            IList<Curve> curveSegments = new List<Curve>();
+            if (hasCurve)
             {
-                if (hasCurve)
+                curveSegments.Add(ifcParentCurve.Curve);
+            }
+            else if (hasCurveLoop)
+            {
+                foreach (Curve subCurve in ifcParentCurve.CurveLoop)
                 {
-                    AddCurveToLoop(CurveLoop, ifcParentCurve.Curve, !sameSense, true);
-                }
-                else if (hasCurveLoop)
-                {
-                    foreach (Curve subCurve in ifcParentCurve.CurveLoop)
-                    {
-                        AddCurveToLoop(CurveLoop, subCurve, !sameSense, true);
-                    }
+                    curveSegments.Add(subCurve);
                 }
             }
-            catch (Exception ex)
-            {
-                IFCImportFile.TheLog.LogError(ifcParentCurve.Id, ex.Message, true);
-            }
+
+            return curveSegments;
+        }
+
+        private Line RepairLineAndReport(int id, XYZ startPoint, XYZ endPoint, double gap)
+        {
+            string gapAsString = UnitFormatUtils.Format(IFCImportFile.TheFile.Document.GetUnits(), UnitType.UT_Length, gap, true, false);
+            IFCImportFile.TheLog.LogWarning(id, "Repaired gap of size " + gapAsString + " in IfcCompositeCurve.", false);
+            return Line.CreateBound(startPoint, endPoint);
         }
 
         private void ProcessIFCCompositeCurve(IFCAnyHandle ifcCurve)
         {
+            // We are going to attempt minor repairs for small but reasonable gaps between Line/Line and Line/Arc pairs.  As such, we want to collect the
+            // curves before we create the curve loop.
+
             IList<IFCAnyHandle> segments = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcCurve, "Segments");
+            if (segments == null)
+                IFCImportFile.TheLog.LogError(Id, "Invalid IfcCompositeCurve with no segments.", true);
+
+            // need List<> so that we can AddRange later.
+            List<Curve> curveSegments = new List<Curve>();
             foreach (IFCAnyHandle segment in segments)
             {
-                ProcessIFCCompositeCurveSegment(segment);
-            }            
+                IList<Curve> currCurve = ProcessIFCCompositeCurveSegment(segment);
+                if (currCurve != null && currCurve.Count != 0)
+                    curveSegments.AddRange(currCurve);
+            }
+
+            int numSegments = curveSegments.Count;
+            if (numSegments == 0)
+                IFCImportFile.TheLog.LogError(Id, "Invalid IfcCompositeCurve with no segments.", true);
+
+            if (CurveLoop == null) 
+                CurveLoop = new CurveLoop();
+
+            try
+            {
+                // We are going to try to reverse or tweak segments as necessary to make the CurveLoop.
+                // NOTE: we do not do any checks yet to repair the endpoints of the curveloop to make them closed.
+                // NOTE: this is not expected to be perfect with dirty data, but is expected to not change already valid data.
+                XYZ startPoint = curveSegments[0].GetEndPoint(0);
+                XYZ endPoint = curveSegments[0].GetEndPoint(1);
+
+                double vertexEps = MathUtil.VertexEps;
+                double gapVertexEps = vertexEps * 5.0;  // This is the largest gap we'll repair.
+
+                bool firstCurveIsLine = (curveSegments[0] is Line);
+                for (int ii = 1; ii < numSegments; ii++)
+                {
+                    XYZ nextStartPoint = curveSegments[ii].GetEndPoint(0);
+                    XYZ nextEndPoint = curveSegments[ii].GetEndPoint(1);
+
+                    for (int jj = 0; jj < 2; jj++)
+                    {
+                        bool doRepair = (jj == 1);
+                        double currVertexEps = (jj == 0) ? vertexEps : gapVertexEps;
+
+                        // Check that we can repair.  At least one of the two segments must be a line.
+                        bool canRepairFirst = doRepair && (curveSegments[ii - 1] is Line);
+                        bool canRepairSecond = doRepair && (curveSegments[ii] is Line);
+                        if (doRepair && !canRepairFirst && !canRepairSecond)
+                            IFCImportFile.TheLog.LogError(Id, "IfcCompositeCurve contains a gap that cannot be repaired.", true);
+                                                
+                        // Trivial case: endPoint is almost equal to nextStartPoint.  Update the end point and continue.
+                        double dist1 = endPoint.DistanceTo(nextStartPoint);
+                        double dist2 = endPoint.DistanceTo(nextEndPoint);
+
+                        // If we are repairing, and the next segment is short but valid, fix the gap to the closer endpoint.
+                        if (dist1 < currVertexEps && (!(doRepair && (dist1 > dist2))))
+                        {
+                            endPoint = nextEndPoint;
+                            if (doRepair)
+                            {
+                                if (canRepairFirst)
+                                    curveSegments[ii - 1] = RepairLineAndReport(Id, curveSegments[ii - 1].GetEndPoint(0), nextStartPoint, dist1);
+                                else
+                                    curveSegments[ii] = RepairLineAndReport(Id, curveSegments[ii - 1].GetEndPoint(1), nextEndPoint, dist1);
+                            }
+                            break;
+                        }
+
+                        // Now we try to repair.  Next case - next segment is reversed.
+                        if (dist2 < currVertexEps)
+                        {
+                            curveSegments[ii] = curveSegments[ii].CreateReversed();
+                            endPoint = nextStartPoint;
+                            if (doRepair)
+                            {
+                                if (canRepairFirst)
+                                    curveSegments[ii - 1] = RepairLineAndReport(Id, curveSegments[ii - 1].GetEndPoint(0), nextEndPoint, dist2);
+                                else
+                                    curveSegments[ii] = RepairLineAndReport(Id, curveSegments[ii - 1].GetEndPoint(1), nextStartPoint, dist2);
+                            }
+                            break;
+                        }
+
+                        // We will now be trying to append ot the start of the loop.  We can only do repairs if either the start curve or the current curve
+                        // is a line.
+                        if (doRepair && !firstCurveIsLine && !canRepairSecond)
+                            IFCImportFile.TheLog.LogError(Id, "IfcCompositeCurve contains a gap that cannot be repaired.", true);
+
+                        // Next case: the curve needs to be appended to the front, not the back, of the curve loop.
+                        dist1 = startPoint.DistanceTo(nextEndPoint);
+                        dist2 = startPoint.DistanceTo(nextStartPoint);
+
+                        // If we are repairing, and the next segment is short but valid, fix the gap to the closer endpoint.
+                        if (dist1 < currVertexEps && (!(doRepair && (dist1 > dist2))))
+                        {
+                            Curve tmpCurve = curveSegments[ii];
+                            curveSegments.RemoveAt(ii);
+                            curveSegments.Insert(0, tmpCurve);
+                            startPoint = nextStartPoint;
+                            firstCurveIsLine = canRepairSecond;
+                            if (doRepair)
+                            {
+                                if (firstCurveIsLine)   // The former first curve is now the second curve.
+                                    curveSegments[1] = RepairLineAndReport(Id, nextEndPoint, curveSegments[1].GetEndPoint(1), dist1);
+                                else
+                                    curveSegments[0] = RepairLineAndReport(Id, curveSegments[0].GetEndPoint(0), curveSegments[1].GetEndPoint(0), dist1);
+                            }
+                            break;
+                        }
+
+                        // Last simple case: the curve needs to be appended to the front, and it is reversed.
+                        if (dist2 < currVertexEps)
+                        {
+                            Curve tmpCurve = curveSegments[ii].CreateReversed();
+                            curveSegments.RemoveAt(ii);
+                            curveSegments.Insert(0, tmpCurve);
+                            startPoint = nextEndPoint;
+                            firstCurveIsLine = canRepairSecond;
+                            if (doRepair)
+                            {
+                                if (firstCurveIsLine)   // The former first curve is now the second curve.
+                                    curveSegments[1] = RepairLineAndReport(Id, nextStartPoint, curveSegments[1].GetEndPoint(1), dist2);
+                                else
+                                    curveSegments[0] = RepairLineAndReport(Id, curveSegments[0].GetEndPoint(0), curveSegments[1].GetEndPoint(0), dist2);
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                foreach (Curve curveSegment in curveSegments)
+                {
+                    CurveLoop.Append(curveSegment);
+                }
+            }
+            catch (Exception ex)
+            {
+                IFCImportFile.TheLog.LogError(Id, ex.Message, true);
+            }
         }
          
         private void ProcessIFCPolyline(IFCAnyHandle ifcCurve)
@@ -411,6 +492,8 @@ namespace Revit.IFC.Import.Data
                     double trimParamDouble = trimParam.AsDouble();
                     if (basisCurve.Curve.IsCyclic)
                         trimParamDouble = IFCUnitUtil.ScaleAngle(trimParamDouble);
+                    else
+                        trimParamDouble = IFCUnitUtil.ScaleLength(trimParamDouble);
                     return trimParamDouble;
                 }
             }
@@ -489,10 +572,7 @@ namespace Revit.IFC.Import.Data
                 return;
             }
 
-            string trimPreferenceAsString = IFCAnyHandleUtil.GetEnumerationAttribute(ifcCurve, "MasterRepresentation");
-            IFCTrimmingPreference trimPreference = IFCTrimmingPreference.Parameter;
-            if (trimPreferenceAsString != null)
-                trimPreference = (IFCTrimmingPreference)Enum.Parse(typeof(IFCTrimmingPreference), trimPreferenceAsString, true);
+            IFCTrimmingPreference trimPreference = IFCEnums.GetSafeEnumerationAttribute<IFCTrimmingPreference>(ifcCurve, "MasterRepresentation", IFCTrimmingPreference.Parameter);
 
             double param1 = 0.0, param2 = 0.0;
             try
@@ -528,18 +608,26 @@ namespace Revit.IFC.Import.Data
             {
                 if (MathUtil.IsAlmostEqual(param1, param2))
                 {
-                    // LOG: ERROR: Param1 = Param2 for IfcTrimmedCurve #, ignoring.
+                    IFCImportFile.TheLog.LogError(Id, "Param1 = Param2 for IfcTrimmedCurve #, ignoring.", false);
                     return;
                 }
 
                 if (param1 >  param2 - MathUtil.Eps())
                 {
-                    // LOG: WARNING: Param1 > Param2 for IfcTrimmedCurve #, reversing.
+                    IFCImportFile.TheLog.LogWarning(Id, "Param1 > Param2 for IfcTrimmedCurve #, reversing.", false);
                     MathUtil.Swap(ref param1, ref param2);
                     return;
                 } 
                 
                 Curve copyCurve = baseCurve.Clone();
+
+                if (param2 - param1 <= IFCImportFile.TheFile.Document.Application.ShortCurveTolerance)
+                {
+                    string lengthAsString = UnitFormatUtils.Format(IFCImportFile.TheFile.Document.GetUnits(), UnitType.UT_Length, param2 - param1, true, false);
+                    IFCImportFile.TheLog.LogError(Id, "curve length of " + lengthAsString + " is invalid, ignoring.", false);
+                    return;
+                }
+
                 copyCurve.MakeBound(param1, param2);
                 if (sameSense)
                 {
@@ -608,6 +696,19 @@ namespace Revit.IFC.Import.Data
             return (curve as IFCCurve); 
         }
 
+        private Curve CreateTransformedCurve(Curve baseCurve, IFCRepresentation parentRep, Transform lcs)
+        {
+            Curve transformedCurve = (baseCurve != null) ? baseCurve.CreateTransformed(lcs) : null;
+            if (transformedCurve == null)
+            {
+                IFCImportFile.TheLog.LogWarning(Id, "couldn't create curve for " +
+                    ((parentRep == null) ? "" : parentRep.Identifier.ToString()) +
+                    " representation.", false);
+            }
+
+            return transformedCurve;
+        }
+
         /// <summary>
         /// Create geometry for a particular representation item, and add to scope.
         /// </summary>
@@ -615,24 +716,44 @@ namespace Revit.IFC.Import.Data
         /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
         /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        /// <remarks>This currently assumes that we are create plan view curves.</remarks>
         protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
+            // Reject Axis curves - not yet supported.
+            IFCRepresentation parentRep = shapeEditScope.ContainingRepresentation;
+
+            IFCRepresentationIdentifier repId = (parentRep == null) ? IFCRepresentationIdentifier.Unhandled : parentRep.Identifier;
+            bool createModelGeometry = (repId == IFCRepresentationIdentifier.Axis);
+            if (createModelGeometry)
+            {
+                IFCImportFile.TheLog.LogWarning(Id, "Can't process Axis representation, ignoring.", true);
+                return;
+            } 
+            
             base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
 
-            // TODO: set graphics style.
+            IList<Curve> transformedCurves = new List<Curve>();
             if (Curve != null)
             {
-                Curve transformedCurve = Curve.CreateTransformed(lcs);
-                shapeEditScope.AddFootprintCurve(transformedCurve);
+                Curve transformedCurve = CreateTransformedCurve(Curve, parentRep, lcs);
+                if (transformedCurve != null)
+                    transformedCurves.Add(transformedCurve);
             }
             else if (CurveLoop != null)
             {
                 foreach (Curve curve in CurveLoop)
                 {
-                    Curve transformedCurve = curve.CreateTransformed(lcs);
-                    shapeEditScope.AddFootprintCurve(transformedCurve);
+                    Curve transformedCurve = CreateTransformedCurve(curve, parentRep, lcs);
+                    if (transformedCurve != null)
+                        transformedCurves.Add(transformedCurve);
                 }
+            }
+
+            // TODO: set graphics style for footprint curves.
+            ElementId gstyleId = ElementId.InvalidElementId;
+            foreach (Curve curve in transformedCurves)
+            {
+                // Default: assume a plan view curve.
+                shapeEditScope.AddFootprintCurve(curve);
             }
         }
     }

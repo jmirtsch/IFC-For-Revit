@@ -33,7 +33,7 @@ namespace Revit.IFC.Import.Data
     public class IFCTypeProduct : IFCTypeObject
     {
         // TODO: representation maps.
-        protected string m_Tag;
+        private string m_Tag;
 
         /// <summary>
         /// The tag.
@@ -41,6 +41,7 @@ namespace Revit.IFC.Import.Data
         public string Tag
         {
             get { return m_Tag; }
+            protected set { m_Tag = value; }
         }
 
         protected IFCTypeProduct()
@@ -64,7 +65,7 @@ namespace Revit.IFC.Import.Data
         {
             base.Process(ifcTypeProduct);
 
-            m_Tag = IFCAnyHandleUtil.GetStringAttribute(ifcTypeProduct, "Tag");
+            Tag = IFCAnyHandleUtil.GetStringAttribute(ifcTypeProduct, "Tag");
         }
 
         /// <summary>
@@ -82,8 +83,14 @@ namespace Revit.IFC.Import.Data
 
             IFCEntity typeProduct;
             if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcTypeProduct.StepId, out typeProduct))
-                return (typeProduct as IFCTypeProduct); 
-            
+                return (typeProduct as IFCTypeProduct);
+
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcTypeProduct, IFCEntityType.IfcDoorStyle))
+                return IFCDoorStyle.ProcessIFCDoorStyle(ifcTypeProduct);
+
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcTypeProduct, IFCEntityType.IfcElementType))
+                return IFCElementType.ProcessIFCElementType(ifcTypeProduct);
+
             return new IFCTypeProduct(ifcTypeProduct);
         }
     }

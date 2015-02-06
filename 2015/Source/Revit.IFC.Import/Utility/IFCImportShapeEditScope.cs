@@ -122,12 +122,19 @@ namespace Revit.IFC.Import.Utility
         // The fallback geometry being created.
         private TessellatedShapeBuilderFallback m_FallbackGeometry = TessellatedShapeBuilderFallback.Mesh;
 
+        // The number of created faces (so far).
+        private int m_CreatedFacesCount = 0;
+
         // The target geometry being created.  This may affect tolerances used to include or exclude vertices that are very 
         // close to one another, or potentially degenerate faces.
         public TessellatedShapeBuilderTarget TargetGeometry
         {
             get { return m_TargetGeometry; }
-            private set { m_TargetGeometry = value; }
+            private set
+            {
+                m_TargetGeometry = value;
+                SetIFCFuzzyXYZEpsilon();
+        }
         }
 
         // The fallback geometry that will be created if we can't make the target geometry.
@@ -169,6 +176,23 @@ namespace Revit.IFC.Import.Utility
             if (count == 0)
                 return ElementId.InvalidElementId;
             return MaterialIdList[count - 1];
+        }
+
+        /// <summary>
+        /// The number of successfully created faces so far.
+        /// </summary>
+        public int CreatedFacesCount
+        {
+            get { return m_CreatedFacesCount; }
+            protected set { m_CreatedFacesCount = value; }
+        }
+
+        /// <summary>
+        /// Reset the number of created faces to 0.
+        /// </summary>
+        public void ResetCreatedFacesCount()
+        {
+            CreatedFacesCount = 0;
         }
 
         /// <summary>
@@ -331,12 +355,33 @@ namespace Revit.IFC.Import.Utility
         }
 
         /// <summary>
+        /// Safely get the top-level IFC entity associated with this shape, if it exists, or -1 otherwise.
+        /// </summary>
+        public int CreatorId()
+        {
+            if (Creator != null)
+                return Creator.Id;
+            return -1;
+        }
+
+        /// <summary>
         /// The IFCRepresentation that contains the currently processed IFC entity.
         /// </summary>
         public IFCRepresentation ContainingRepresentation
         {
             get { return m_ContainingRepresentation; }
             protected set { m_ContainingRepresentation = value; }
+        }
+
+        /// <summary>
+        /// Returns the type of the IFCRepresentation that contains the currently processed IFC entity, if set.
+        /// </summary>
+        /// <returns>The representation identifier, or Unhandled if there is none.</returns>
+        public IFCRepresentationIdentifier GetContainingRepresentationType()
+        {
+            if (ContainingRepresentation == null)
+                return IFCRepresentationIdentifier.Unhandled;
+            return ContainingRepresentation.Identifier;
         }
 
         /// <summary>
@@ -360,6 +405,7 @@ namespace Revit.IFC.Import.Utility
                 m_TessellatedShapeBuilder = new TessellatedShapeBuilder();
 
             m_TessellatedShapeBuilder.OpenConnectedFaceSet(false);
+            ResetCreatedFacesCount();
 
             if (m_TessellatedFaceVertices != null)
                 m_TessellatedFaceVertices.Clear();
@@ -409,6 +455,14 @@ namespace Revit.IFC.Import.Utility
             m_faceMaterialId = materialId;
         }
 
+        private void AddFaceToTessellatedShapeBuilder(TessellatedFace theFace)
+        {
+            m_TessellatedShapeBuilder.AddFace(theFace);
+            m_TessellatedFaceBoundary.Clear();
+            m_faceMaterialId = ElementId.InvalidElementId;
+            CreatedFacesCount++;
+        }
+
         /// <summary>
         /// Stop collecting edges for a face to create a BRep solid.
         /// </summary>
@@ -418,10 +472,7 @@ namespace Revit.IFC.Import.Utility
                 throw new InvalidOperationException("StartCollectingFace has not been called.");
 
             TessellatedFace theFace = new TessellatedFace(m_TessellatedFaceBoundary, m_faceMaterialId);
-            m_TessellatedShapeBuilder.AddFace(theFace);
-            m_TessellatedFaceBoundary.Clear();
-
-            m_faceMaterialId = ElementId.InvalidElementId;
+            AddFaceToTessellatedShapeBuilder(theFace);
         }
 
         /// <summary>
@@ -487,6 +538,12 @@ namespace Revit.IFC.Import.Utility
             m_TessellatedFaceBoundary.Add(adjustedLoopVertices);
         }
 
+        private void ClearTessellatedShapeBuilder()
+        {
+            m_TessellatedShapeBuilder.Clear();
+            CreatedFacesCount = 0;
+        }
+
         /// <summary>
         /// Create a geometry object(s) described by stored face sets, if possible.
         /// Usually a single-element IList conatining either Solid or Mesh is returned.
@@ -515,7 +572,7 @@ namespace Revit.IFC.Import.Utility
             outcome = result.Outcome;
             return result.GetGeometricalObjects();
         }
-        
+
 
         /// <summary>
         /// Create a closed Solid if possible. If the face sets have unusable faces
@@ -531,7 +588,11 @@ namespace Revit.IFC.Import.Utility
             TessellatedShapeBuilderOutcome outcome;
             IList<GeometryObject> geomObjs = CreateGeometryObjects(guid, out invalidData, out outcome);
 
-            if (geomObjs == null || geomObjs.Count != 1 || geomObjs[0] == null)
+            bool createdClosedSolid = (outcome == TessellatedShapeBuilderOutcome.SolidOrSheet);
+            if (!createdClosedSolid)
+                IFCImportFile.TheLog.LogWarning(CreatorId(), "Couldn't create closed solid.", false);
+
+            if (!createdClosedSolid || geomObjs == null || geomObjs.Count != 1 || geomObjs[0] == null)
                 return new List<GeometryObject>();
 
             if (geomObjs[0] is Solid)
@@ -562,6 +623,23 @@ namespace Revit.IFC.Import.Utility
         }
 
         /// <summary>
+        /// If possible, create a Mesh representing all faces in all face sets.</summary>
+        /// <returns>null or an IList containing 1 or more GeometryObjects of type Mesh.</returns>
+        /// <remarks>Usually a single-element IList is returned, but multiple GeometryObjects may be created.</remarks>
+        private IList<GeometryObject> CreateMesh(string guid)
+        {
+            if (TargetGeometry != TessellatedShapeBuilderTarget.Mesh || FallbackGeometry != TessellatedShapeBuilderFallback.Salvage)
+                throw new ArgumentException("CreateMesh expects TessellatedShapeBuilderTarget.Mesh and TessellatedShapeBuilderFallback.Salvage.");
+
+            bool invalidData;
+            TessellatedShapeBuilderOutcome outcome;
+            IList<GeometryObject> geomObjects = CreateGeometryObjects(guid, out invalidData, out outcome);
+
+            // We won't log a message here as we expect the receiver to warn as necessary.
+            return geomObjects;
+        }
+
+        /// <summary>
         /// If possible, create a Solid representing all faces in all face sets. If a Solid can't be created,
         /// then a Mesh is created instead.</summary>
         /// <returns>null or an IList containing 1 or more GeometryObjects of type Solid or Mesh.</returns>
@@ -569,14 +647,13 @@ namespace Revit.IFC.Import.Utility
         private IList<GeometryObject> CreateSolidOrMesh(string guid)
         {
             if (TargetGeometry != TessellatedShapeBuilderTarget.AnyGeometry || FallbackGeometry != TessellatedShapeBuilderFallback.Mesh)
-                throw new ArgumentException("CreateMesh expects TessellatedShapeBuilderTarget.AnyGeometry and TessellatedShapeBuilderFallback.Mesh.");
+                throw new ArgumentException("CreateSolidOrMesh expects TessellatedShapeBuilderTarget.AnyGeometry and TessellatedShapeBuilderFallback.Mesh.");
 
             bool invalidData;
             TessellatedShapeBuilderOutcome outcome;
             IList<GeometryObject> geomObjects = CreateGeometryObjects(guid, out invalidData, out outcome);
-            if (outcome == TessellatedShapeBuilderOutcome.Nothing)
-                IFCImportFile.TheLog.LogWarning(Creator.Id, "Couldn't create any geometry.", false);
 
+            // We won't log a message here as we expect the receiver to warn as necessary.
             return geomObjects;
         }
 
@@ -593,20 +670,29 @@ namespace Revit.IFC.Import.Utility
             if (TargetGeometry == TessellatedShapeBuilderTarget.Solid && FallbackGeometry == TessellatedShapeBuilderFallback.Abort)
                 return CreateClosedSolid(guid);
 
+            if (TargetGeometry == TessellatedShapeBuilderTarget.Mesh && FallbackGeometry == TessellatedShapeBuilderFallback.Salvage)
+                return CreateMesh(guid);
+
             throw new ArgumentException("Unhandled TessellatedShapeBuilderTarget and TessellatedShapeBuilderFallback for CreateGeometry.");
         }
 
         // End temporary classes for holding BRep information.
+        private void SetIFCFuzzyXYZEpsilon()
+        {
+            // Note that this tolerance is slightly larger than required, as it is a cube instead of a
+            // sphere of equivalence.  In the case of AnyGeoemtry, we resort to the Solid tolerance as we are
+            // generally trying to create Solids over Meshes.
+            IFCFuzzyXYZEpsilon = (TargetGeometry == TessellatedShapeBuilderTarget.Mesh) ?
+                IFCImportFile.TheFile.Document.Application.VertexTolerance :
+                IFCImportFile.TheFile.Document.Application.ShortCurveTolerance;
+        }
 
         protected IFCImportShapeEditScope(Document doc, IFCProduct creator)
         {
             Document = doc;
             Creator = creator;
 
-            // Note that this tolerance is larger than required for meshes, and slightly larger than
-            // required for BReps, as it is a cube instead of a sphere of equivalence.  However, we are
-            // generally trying to create Solids over Meshes, and as such we try for Solid tolerances.
-            IFCFuzzyXYZEpsilon = IFCImportFile.TheFile.Document.Application.ShortCurveTolerance;
+            SetIFCFuzzyXYZEpsilon();
         }
 
         /// <summary>
@@ -618,6 +704,7 @@ namespace Revit.IFC.Import.Utility
             if (solidInfo == null || solidInfo.GeometryObject == null)
                 return;
 
+            solidInfo.RepresentationType = GetContainingRepresentationType();
             Creator.Solids.Add(solidInfo);
         }
 
@@ -692,9 +779,15 @@ namespace Revit.IFC.Import.Utility
             if (m_ViewShapeBuilder != null)
             {
                 if (shape is DirectShape)
-                    m_ViewShapeBuilder.SetShape(shape as DirectShape);
+                {
+                    DirectShape ds = shape as DirectShape;
+                    m_ViewShapeBuilder.SetShape(ds);
+                }
                 else if (shape is DirectShapeType)
-                    m_ViewShapeBuilder.SetShape(shape as DirectShapeType);
+                {
+                    DirectShapeType dst = shape as DirectShapeType;
+                    m_ViewShapeBuilder.SetShape(dst);
+                }
                 else
                     throw new ArgumentException("SetPlanViewRep only works on DirectShape and DirectShapeType.");
             }

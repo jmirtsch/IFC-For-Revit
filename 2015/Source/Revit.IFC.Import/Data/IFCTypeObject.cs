@@ -35,8 +35,34 @@ namespace Revit.IFC.Import.Data
     /// </summary>
     public class IFCTypeObject : IFCObjectDefinition
     {
+        private static HashSet<IFCEntityType> m_sNoPredefinedTypePreIFC4 = null;
+        
         protected IDictionary<string, IFCPropertySetDefinition> m_IFCPropertySets;
 
+        private static bool HasPredefinedType(IFCEntityType type)
+        {
+            if (IFCImportFile.TheFile.SchemaVersion < IFCSchemaVersion.IFC4)
+            {
+                // Before IFC4, these are the only objects that have a predefined type that we support.
+                // Note that this is just a list of entity types that are dealt with generically; other types may override the base function.
+                if (m_sNoPredefinedTypePreIFC4 == null)
+                {
+                    m_sNoPredefinedTypePreIFC4 = new HashSet<IFCEntityType>();
+                    m_sNoPredefinedTypePreIFC4.Add(IFCEntityType.IfcDiscreteAccessoryType);
+                    m_sNoPredefinedTypePreIFC4.Add(IFCEntityType.IfcDoorStyle);
+                    m_sNoPredefinedTypePreIFC4.Add(IFCEntityType.IfcFastenerType);
+                    m_sNoPredefinedTypePreIFC4.Add(IFCEntityType.IfcFurnishingElementType);
+                    m_sNoPredefinedTypePreIFC4.Add(IFCEntityType.IfcFurnitureType);
+                    m_sNoPredefinedTypePreIFC4.Add(IFCEntityType.IfcWindowStyle);
+                }
+
+                if (m_sNoPredefinedTypePreIFC4.Contains(type))
+                    return false;
+            }
+
+            return true;
+        }
+        
         /// <summary>
         /// The property sets.
         /// </summary>
@@ -59,24 +85,17 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
-        /// Gets the shape type of the IfcTypeOject, depending on the file version and entity type.
+        /// Gets the predefined type of the IfcTypeOject, depending on the file version and entity type.
         /// </summary>
         /// <param name="ifcObjectDefinition">The associated handle.</param>
-        /// <returns>The shape type string, if any.</returns>
-        protected override string GetShapeType(IFCAnyHandle ifcObjectDefinition)
+        /// <returns>The predefined type string, if any.</returns>
+        protected override string GetPredefinedType(IFCAnyHandle ifcObjectDefinition)
         {
             // List of entities we explictly declare have no PredefinedType, to avoid exception.
-            if (IFCImportFile.TheFile.SchemaVersion != IFCSchemaVersion.IFC4)
-            {
-                if (EntityType == IFCEntityType.IfcDoorStyle ||
-                    EntityType == IFCEntityType.IfcFastenerType ||
-                    EntityType == IFCEntityType.IfcFurnishingElementType ||
-                    EntityType == IFCEntityType.IfcFurnitureType ||
-                    EntityType == IFCEntityType.IfcWindowStyle)
-                    return null;
-            }
+            if (!HasPredefinedType(EntityType))
+                return null;
 
-            // Most IfcTypeObjects have a PredefinedType.  Use try/catch for those that don't.
+            // Most IfcTypeObjects have a PredefinedType.  Use try/catch for those that don't and we didn't catch above.
             try
             {
                 return IFCAnyHandleUtil.GetEnumerationAttribute(ifcObjectDefinition, "PredefinedType");
@@ -151,7 +170,7 @@ namespace Revit.IFC.Import.Data
             DirectShapeType shapeType = Importer.TheCache.UseElementByGUID<DirectShapeType>(doc, GlobalId);
             
             if (shapeType == null)
-                shapeType = DirectShapeType.Create(doc, GetName("Direct Shape Type"), CategoryId);
+                shapeType = DirectShapeType.Create(doc, GetName("DirectShapeType"), CategoryId);
 
             if (shapeType == null)
                 throw new InvalidOperationException("Couldn't create DirectShapeType for IfcTypeObject.");

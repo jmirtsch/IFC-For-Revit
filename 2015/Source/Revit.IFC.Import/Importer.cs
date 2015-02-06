@@ -412,6 +412,11 @@ namespace Revit.IFC.Import
                         {
                             if (IFCImportFile.TheFile.IFCProject != null)
                                 IFCObjectDefinition.CreateElement(ifcDocument, IFCImportFile.TheFile.IFCProject);
+
+                            // Also process any other entities to create.
+                            foreach (IFCObjectDefinition objDef in IFCImportFile.TheFile.OtherEntitiesToCreate)
+                                IFCObjectDefinition.CreateElement(ifcDocument, objDef);
+
                             IFCImportFile.TheFile.EndImport(ifcDocument, importer.FullFileName);
                         }
 
@@ -424,7 +429,8 @@ namespace Revit.IFC.Import
                         }
                     }
 
-                    m_ImportCache.Reset(ifcDocument);
+                    if (m_ImportCache != null)
+                        m_ImportCache.Reset(ifcDocument);
                 }
             }
             catch (Exception ex)

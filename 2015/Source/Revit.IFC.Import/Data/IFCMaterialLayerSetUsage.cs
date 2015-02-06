@@ -110,24 +110,10 @@ namespace Revit.IFC.Import.Data
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialLayerSet))
                 MaterialLayerSet = IFCMaterialLayerSet.ProcessIFCMaterialLayerSet(ifcMaterialLayerSet);
 
-            string directionAsString = IFCAnyHandleUtil.GetEnumerationAttribute(ifcMaterialLayerSetUsage, "LayerSetDirection");
-            if (directionAsString == null)
-            {
-                Direction = IFCLayerSetDirection.Axis3;
-                IFCImportFile.TheLog.LogWarning(ifcMaterialLayerSetUsage.StepId, "No LayerSetDirection defined, defaulting to Axis3.", false);
-            }
-            else
-                Direction = (IFCLayerSetDirection)Enum.Parse(typeof(IFCLayerSetDirection), directionAsString, true);
+            Direction = IFCEnums.GetSafeEnumerationAttribute(ifcMaterialLayerSetUsage, "LayerSetDirection", IFCLayerSetDirection.Axis3);
 
-            string directionSenseAsString = IFCAnyHandleUtil.GetEnumerationAttribute(ifcMaterialLayerSetUsage, "DirectionSense");
-            if (directionSenseAsString == null)
-            {
-                DirectionSense = IFCDirectionSense.Positive;
-                IFCImportFile.TheLog.LogWarning(ifcMaterialLayerSetUsage.StepId, "No DirectionSense defined, defaulting to Positive.", false);
-            }
-            else
-                DirectionSense = (IFCDirectionSense)Enum.Parse(typeof(IFCDirectionSense), directionSenseAsString, true);
-
+            DirectionSense = IFCEnums.GetSafeEnumerationAttribute(ifcMaterialLayerSetUsage, "DirectionSense", IFCDirectionSense.Positive);
+            
             bool found = false;
             Offset = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(ifcMaterialLayerSetUsage, "OffsetFromReferenceLine", out found);
             if (!found)

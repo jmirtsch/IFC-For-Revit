@@ -77,6 +77,15 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
+        /// Determines if we require the IfcRoot entity to have a name.
+        /// </summary>
+        /// <returns>Returns true if we require the IfcRoot entity to have a name.</returns>
+        protected override bool CreateNameIfNull()
+        {
+            return true;
+        }
+        
+        /// <summary>
         /// Processes an IfcPropertySetDefinition.
         /// </summary>
         /// <param name="ifcPropertySetDefinition">The IfcPropertySetDefinition handle.</param>
