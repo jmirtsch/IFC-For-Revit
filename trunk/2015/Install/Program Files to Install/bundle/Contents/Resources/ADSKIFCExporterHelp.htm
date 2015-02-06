@@ -87,7 +87,7 @@ The export alternate interface is loaded when users access the Export functional
 <li>IFC 2x2 Coordination View</li>
 <li>IFC 2x3 GSA Concept Design BIM 2010 – This is a variant of the standard IFC 2x3 used for submitting files to the US Government Services Administration.  Additional property sets will be included.</li> 
 <li>IFC 2x2 Singapore BCA e-Plan Check - This is a certified variant of IFC 2x2 used for submitting files to the Singapore BCA e-Plan Check Server. When exporting to this file type, you should make sure that all room-bounding elements are selected.
-<li>IFC 4 Basic Coordination View 2.0 - This is the IFC4 equivalent of the IFC2x3 Coordination View 2.0 MVD.  Note that there are still no official IFC 4 MVDs, so this should be considered a beta file format.  Note also that our IFC toolkit does not support IFC4 ifcXML files, and that UR1 is needed to correct a bug in the toolkit that prevents IFC4 output from standard Revit 2014.</li>
+<li>IFC 4 Basic Coordination View 2.0 - This is the IFC4 equivalent of the IFC2x3 Coordination View 2.0 MVD.  This should be considered a beta file format.  Note also that our IFC toolkit does not support IFC4 ifcXML files, and that UR1 is needed to correct a bug in the toolkit that prevents IFC4 output from standard Revit 2014.</li>
 </li></menu>
 <p><strong>File Type</strong>: The file format</p>
 <menu><li>IFC</li>
@@ -126,15 +126,17 @@ The export alternate interface is loaded when users access the Export functional
 <p><strong>Store IFC GUID in file after export</strong>: Optionally allow storing the generated IFC GUIDs into the project file after export. This will add "IFC GUID" parameters to elements and their types, and Project Information for Project, Site, and Building GUIDS. This requires v2.12 of the expoter to add the parameter values, and also requires a manual save. 
 </p>
 
-<p>There are 7 built-in setups in the user interface:</p>    
+<p>There are 9 built-in setups in the user interface:</p>    
 <menu>
 <li>IFC 2x3 Coordination View 2.0</li>
 <li>IFC 2x3 Coordination View</li>
 <li>IFC 2x3 GSA Concept Design BIM 2010</li>
 <li>IFC 2x3 Basic FM Handover View</li>
+<li>IFC 2x3 Extended FM Handover View</li>
 <li>IFC 2x2 Coordination View</li>
 <li>IFC 2x2 Singapore BCA e-Plan Check</li>
 <li>IFC 4 Basic Coordination View 2.0</li>
+<li>IFC 4 Reference View</li>
 
 </menu>
     <p>These correspond to the file type options in the standard Revit UI. When selected, the individual options will adjust accordingly. 
@@ -191,6 +193,60 @@ working on expanding and eventually removing this limit, and we will be tracking
 <div class="versionset">
 
 </div>
+<div class="version">15.3.0.0</div><div class="versioninfo-bullet">
+<br><p>New Export Functionality:
+
+<ul>
+<li>Allow IfcLongName to override the "LongName" attribute for levels.
+<li>Rooms can now be exported from 3D views even when exporting only elements visible in view.  If the option is chosen to export rooms, then all rooms inside or bordering the bounding box of the section box will be exported.  If the section box isn't active, all rooms will be exported.
+<li>Work in progress: users can now opt to export files according to the IFC4 Reference View MVD.  This will result in IFC4 files that use IfcTriangulatedFaceSet instead of IfcFacetedBRep, resulting in significantly smaller IFC files.  There are still some cases where IfcFacetedBReps show up in these files, and there are some cases where the tessellation isn't optimized for the reference view; this will be improved in upcoming releases.
+</ul>
+
+<p>Export Bug Fixes:
+
+<ul>
+<li>Fix export of files with a project north value different than true north that would cause a slight shift in elevation.
+<li>Fix export of some IfcCurveBoundedPlanes with more outer loops than inner loops.
+<li>Fix the location of some assemblies on export.
+<li>Fix the base quantities export for walls and columns when they are split by level.
+<li>Improve splitting of walls in some cases when they are split by level on export.
+<li>Improved the export of some entities with extruded surface geometry with clippings and openings where some clippings and openings were not being exported.
+<li>Properly scale the volume of columns when base quantities are exported for non-imperial projects.
+</ul>
+
+<p>New Import Functionality:
+
+<ul>
+<li>Add ElevationWithFlooring and InteriorOrExteriorSpace/PredefinedType for IfcSpaces.
+<li>Add IfcContainedInHost parameter for doors and windows to contain the name of the hosting wall.
+<li>Add IfcElevation parameter for Levels.
+<li>Add IfcElementAssembly parameter for elements inside assemblies.
+<li>Add IfcSystem parameter for elements inside systems.
+<li>Add material thickness to the IfcMaterial parameter for elements who have an associated IfcMaterialLayerSetUsage.
+<li>Better handing of nameless grid lines.
+<li>Heal some curves with short curve segments, small gaps between segments, and vertices that are too close and better log file error reporting of the above problems.
+<li>IFC4: Import IfcTriangulatedFaceSets, generally created for the IFC4 Reference View MVD.
+<li>Import Box (i.e., the bounding box) representation for elements that have it, but only if they have no Body representation or it contains no visible geometry.
+<li>Import IfcAssemblies.
+<li>Import Construction Type and Operation Type for IfcDoorStyles.
+<li>Import IfcPorts.
+<li>Import IfcSystems.
+<li>Import IfcZones.
+</ul>
+
+<p>Import Bug Fixes:
+
+<ul>
+<li>Accept "Profile" as an alternate name for "FootPrint" when reading in entity representations.
+<li>Force some entities to have a default name if Revit requires them to, even if there is no name in the IFC file.
+<li>Improve processing of faceted BReps with gaps and short edges.
+<li>Improve processing of walls and slabs whose geometry is defined by IfcMaterialLayerSetUsage.
+<li>Properly scale IfcCompositeCurveSegment trim parameter for non-imperial files.
+<li>Use gray, not black, as the default material color for materials with no color assigned.
+</ul>
+
+</div>
+
 <div class="version">15.2.0.0</div><div class="versioninfo-bullet">
 <br><p>New Export Functionality:
 

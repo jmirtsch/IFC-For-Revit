@@ -223,7 +223,7 @@ namespace Revit.IFC.Export.Exporter
                 IList<IFCAnyHandle> localComponentHnds = new List<IFCAnyHandle>();
                 if (isSubRamp)
                 {
-                    string componentType = IFCAnyHandleUtil.GetEnumerationAttribute(component, "ShapeType");
+                    string componentType = IFCAnyHandleUtil.GetEnumerationAttribute(component, ExporterCacheManager.ExportOptionsCache.ExportAs4 ? "PredefinedType" : "ShapeType");
                     string localRampType = GetIFCRampType(componentType);
 
                     for (int ii = 0; ii < numFlights - 1; ii++)
@@ -295,7 +295,11 @@ namespace Revit.IFC.Export.Exporter
                 string rampObjectType = IFCAnyHandleUtil.GetStringAttribute(rampHnd, "ObjectType");
                 string rampDescription = IFCAnyHandleUtil.GetStringAttribute(rampHnd, "Description");
                 string rampElementTag = IFCAnyHandleUtil.GetStringAttribute(rampHnd, "Tag");
-                string rampTypeAsString = IFCAnyHandleUtil.GetEnumerationAttribute(rampHnd, "ShapeType");
+                string rampTypeAsString = null;
+                if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+                    rampTypeAsString = IFCAnyHandleUtil.GetEnumerationAttribute(rampHnd, "PredefinedType");
+                else
+                    rampTypeAsString = IFCAnyHandleUtil.GetEnumerationAttribute(rampHnd, "ShapeType");
                 string rampType = GetIFCRampType(rampTypeAsString);
 
                 string containerRampName = rampName + ":" + (ii + 2);

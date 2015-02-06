@@ -28,38 +28,42 @@ using Revit.IFC.Export.Utility;
 namespace Revit.IFC.Export.Exporter
 {
     /// <summary>
-    /// Enums of shape representation type.
+    /// Enums of shape representation type (according to the list defined in IFC4)
     /// </summary>
     public enum ShapeRepresentationType
     {
-        /// <summary>
-        /// Not defined.
-        /// </summary>
         Undefined,
-        /// <summary>
-        /// Swept solid.
-        /// </summary>
-        SweptSolid,
-        /// <summary>
-        /// Brep.
-        /// </summary>
-        Brep,
-        /// <summary>
-        /// Advanced swept solid.
-        /// </summary>
-        AdvancedSweptSolid,
-        /// <summary>
-        /// Solid model.
-        /// </summary>
+        Point,
+        PointCloud,
+        Curve,
+        Curve2D,
+        Curve3D,
+        Surface,
+        Surface2D,
+        Surface3D,
+        FillArea,
+        Text,
+        AdvancedSurface,
+        GeometricSet,
+            GeometricCurveSet,
+            Annotation2D,
+        SurfaceModel,
+           Tessellation,
         SolidModel,
-        /// <summary>
-        /// CSG representation.
-        /// </summary>
-        CSG,
-        /// <summary>
-        /// Clipping representation.
-        /// </summary>
-        Clipping
+            SweptSolid,
+            AdvancedSweptSolid,
+            Brep,
+            AdvancedBrep,
+            CSG,
+            Clipping,
+        // additional types
+            BoundingBox,
+            SectionedSpine,
+            LightSource,
+            MappedRepresentation,
+        // Misc. - non standard
+            Mesh,
+            Facetation
     }
 
     /// <summary>

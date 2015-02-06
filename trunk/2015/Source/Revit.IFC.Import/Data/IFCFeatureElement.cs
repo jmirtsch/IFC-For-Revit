@@ -101,9 +101,9 @@ namespace Revit.IFC.Import.Data
             clone.ObjectLocation = original.ObjectLocation;
             clone.ProductRepresentation = original.ProductRepresentation;
 
-            // Get the EntityType and ShapeType from the parent to ensure that it "matches" the category and graphics style of the parent.
+            // Get the EntityType and PredefinedType from the parent to ensure that it "matches" the category and graphics style of the parent.
             clone.EntityType = parentEntity.EntityType;
-            clone.ShapeType = parentEntity.ShapeType;
+            clone.PredefinedType = parentEntity.PredefinedType;
 
             // Copy the material of the parent entity to try to match the color of the opening faces.  
             // This will work nicely if the parent entity is one material.

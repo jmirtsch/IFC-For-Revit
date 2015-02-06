@@ -26,6 +26,7 @@ using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Common.Enums;
 using Revit.IFC.Common.Utility;
 using Revit.IFC.Import.Data;
+using Revit.IFC.Import.Enums;
 
 namespace Revit.IFC.Import.Utility
 {
@@ -195,8 +196,8 @@ namespace Revit.IFC.Import.Utility
             if (!found)
                 return null;
 
-            string sense = IFCAnyHandleUtil.GetEnumerationAttribute(handle, "Sense");
-            if (string.Compare(sense, "Behind", true) == 0)
+            IFCAheadOrBehind? sense = IFCEnums.GetSafeEnumerationAttribute<IFCAheadOrBehind>(handle, "Sense");
+            if (sense.HasValue && sense.Value == IFCAheadOrBehind.Behind)
                 hour = -hour;
 
             hour += daylightSavingHour;

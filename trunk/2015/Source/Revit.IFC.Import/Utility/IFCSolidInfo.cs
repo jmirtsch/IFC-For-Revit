@@ -32,9 +32,9 @@ using UnitName = Autodesk.Revit.DB.DisplayUnitType;
 namespace Revit.IFC.Import.Utility
 {
     /// <summary>
-    /// A class that contains the Solid, Id, and material information for a created Revit solid.
+    /// A class that contains the GeometryObject, Id, and material information for created Revit geometry.
     /// </summary>
-    /// <remarks>Need to rename to IFCGeometryInfo, as will contain Solids and Meshes.</remarks>
+    /// <remarks>TODO: Rename to IFCGeometryObjectInfo, as it can contain Solids, Meshes, and Curves.</remarks>
     public class IFCSolidInfo
     {
         /// <summary>
@@ -43,13 +43,19 @@ namespace Revit.IFC.Import.Utility
         public int Id { get; set; }
 
         /// <summary>
+        /// The representation that created the geometry.
+        /// </summary>
+        public IFCRepresentationIdentifier RepresentationType { get; set; }
+
+        /// <summary>
         /// The created geometry.
         /// </summary>
         public GeometryObject GeometryObject { get; set; }
-        
+
         protected IFCSolidInfo()
         {
             Id = -1;
+            RepresentationType = IFCRepresentationIdentifier.Unhandled;
             GeometryObject = null;
         }
 
@@ -65,6 +71,7 @@ namespace Revit.IFC.Import.Utility
         /// <param name="id">The id associated with the geometry in the IFC file.</param>
         /// <param name="geometryObject">The created geometry.</param>
         /// <returns>The IFCSolidInfo class.</returns>
+        /// <remarks>The RepresentationType is intended to be added in the AddGeometry function call.</remarks>
         public static IFCSolidInfo Create(int id, GeometryObject geometryObject)
         {
             return new IFCSolidInfo(id, geometryObject);

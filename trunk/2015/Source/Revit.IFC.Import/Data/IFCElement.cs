@@ -39,6 +39,8 @@ namespace Revit.IFC.Import.Data
 
         protected ICollection<IFCFeatureElementSubtraction> m_Openings = null;
 
+        protected ICollection<IFCPort> m_Ports = null;
+
         protected IFCFeatureElementSubtraction m_FillsOpening = null;
 
         /// <summary>
@@ -59,6 +61,19 @@ namespace Revit.IFC.Import.Data
                 if (m_Openings == null)
                     m_Openings = new List<IFCFeatureElementSubtraction>();
                 return m_Openings; 
+            }
+        }
+
+        /// <summary>
+        /// The ports associated with the IfcElement, via IfcRelConnectsPortToElement.
+        /// </summary>
+        public ICollection<IFCPort> Ports
+        {
+            get
+            {
+                if (m_Ports == null)
+                    m_Ports = new List<IFCPort>();
+                return m_Ports;
             }
         }
 
@@ -115,6 +130,28 @@ namespace Revit.IFC.Import.Data
                     }
                 }
             }
+
+            // For IFC4, "HasPorts" has moved to IfcDistributionElement.  We'll keep the check here, but we will only check it
+            // if we are exporting before IFC4 or if we have an IfcDistributionElement handle.
+            bool checkPorts = (IFCImportFile.TheFile.SchemaVersion < IFCSchemaVersion.IFC4 || IFCAnyHandleUtil.IsSubTypeOf(ifcElement, IFCEntityType.IfcDistributionElement));
+
+            if (checkPorts)
+            {
+                ICollection<IFCAnyHandle> hasPorts = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcElement, "HasPorts");
+                if (hasPorts != null)
+                {
+                    foreach (IFCAnyHandle hasPort in hasPorts)
+                    {
+                        IFCAnyHandle relatingPort = IFCAnyHandleUtil.GetInstanceAttribute(hasPort, "RelatingPort");
+                        if (IFCAnyHandleUtil.IsNullOrHasNoValue(relatingPort))
+                            continue;
+
+                        IFCPort port = IFCPort.ProcessIFCPort(relatingPort);
+                        if (port != null)
+                            Ports.Add(port);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -132,6 +169,19 @@ namespace Revit.IFC.Import.Data
                 string ifcTag = Tag;
                 if (!string.IsNullOrWhiteSpace(ifcTag))
                     IFCPropertySet.AddParameterString(doc, element, "IfcTag", ifcTag, Id);
+
+                IFCFeatureElementSubtraction ifcFeatureElementSubtraction = FillsOpening;
+                if (ifcFeatureElementSubtraction != null) 
+                {
+                    IFCElement ifcElement = ifcFeatureElementSubtraction.VoidsElement;
+                    if (ifcElement != null)
+                    {
+                        string ifcContainerName = ifcElement.Name;
+                        IFCPropertySet.AddParameterString(doc, element, "IfcContainedInHost", ifcContainerName, Id);
+                    }
+                }
+
+                
             }
         }
 
@@ -159,6 +209,18 @@ namespace Revit.IFC.Import.Data
                 catch (Exception ex)
                 {
                     IFCImportFile.TheLog.LogError(opening.Id, ex.Message, false);
+                }
+            }
+
+            foreach (IFCPort port in Ports)
+            {
+                try
+                {
+                    CreateElement(doc, port);
+                }
+                catch (Exception ex)
+                {
+                    IFCImportFile.TheLog.LogError(port.Id, ex.Message, false);
                 }
             }
 
@@ -201,6 +263,8 @@ namespace Revit.IFC.Import.Data
             // other subclasses not handled yet!
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcElement, IFCEntityType.IfcFeatureElement))
                 newIFCElement = IFCFeatureElement.ProcessIFCFeatureElement(ifcElement);
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcElement, IFCEntityType.IfcElementAssembly))
+                newIFCElement = IFCElementAssembly.ProcessIFCElementAssembly(ifcElement);
             else
                 newIFCElement = new IFCElement(ifcElement);
             return newIFCElement;

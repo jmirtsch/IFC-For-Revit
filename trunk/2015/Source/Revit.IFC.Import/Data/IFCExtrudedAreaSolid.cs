@@ -263,9 +263,10 @@ namespace Revit.IFC.Import.Data
         // 3. The IfcMaterialLayerUsage isn't handled.
         // If the reason is #1 or #3, we want to warn the user.  If it is #2, we don't.  Pass back shouldWarn to let the caller know.
         private IList<GeometryObject> CreateGeometryFromMaterialLayerUsage(IFCImportShapeEditScope shapeEditScope, Transform extrusionPosition,
-            IList<CurveLoop> loops, XYZ extrusionDirection, double currDepth, out bool shouldWarn)
+            IList<CurveLoop> loops, XYZ extrusionDirection, double currDepth, out ElementId materialId, out bool shouldWarn)
         {
             IList<GeometryObject> extrusionSolids = null;
+            materialId = ElementId.InvalidElementId;
 
             try
             {
@@ -302,7 +303,7 @@ namespace Revit.IFC.Import.Data
                 if (materialLayers == null || materialLayers.Count == 0)
                     return null;
 
-                // Optimization: if there is only one layer, and it has the same material as the element, use the standard method.
+                // Optimization: if there is only one layer, use the standard method, with possibly an overloaded material.
                 ElementId baseMaterialId = GetMaterialElementId(shapeEditScope);
                 if (materialLayers.Count == 1)
                 {
@@ -310,11 +311,21 @@ namespace Revit.IFC.Import.Data
                     if (oneMaterial == null)
                         return null;
 
-                    if (oneMaterial.GetMaterialElementId() == baseMaterialId)
-                        return null;
+                    materialId = oneMaterial.GetMaterialElementId();
+                    if (materialId != ElementId.InvalidElementId)
+                    {
+                        // We will not override the material of the element if the layer material has no color.
+                        if (Importer.TheCache.MaterialsWithNoColor.Contains(materialId))
+                            materialId = ElementId.InvalidElementId;
+                    }
+
+                    return null;
                 }
 
-                shouldWarn = true;  // Anything below here is something we should report to the user.
+                // Anything below here is something we should report to the user, with the exception of the total thickness
+                // not matching the extrusion thickness.  This would require more analysis to determine that it is actually
+                // an error condition.
+                shouldWarn = true; 
 
                 IList<IFCMaterialLayer> realMaterialLayers = new List<IFCMaterialLayer>();
                 double totalThickness = 0.0;
@@ -329,6 +340,21 @@ namespace Revit.IFC.Import.Data
 
                     realMaterialLayers.Add(materialLayer);
                     totalThickness += depth;
+                }
+
+                // Axis3 means that the material layers are stacked in the Z direction.  This is common for floor slabs.
+                bool isAxis3 = (materialLayerSetUsage.Direction == IFCLayerSetDirection.Axis3);
+                
+                // For elements extruded in the Z direction, if the extrusion layers don't have the same thickness as the extrusion,
+                // this could be one of two reasons:
+                // 1. There is a discrepancy between the extrusion depth and the material layer set usage calculated depth.
+                // 2. There are multiple extrusions in the body definition.
+                // In either case, we will use the extrusion geometry over the calculated material layer set usage geometry.
+                // In the future, we may decide to allow for case #1 by passing in a flag to allow for this.
+                if (isAxis3 && !MathUtil.IsAlmostEqual(totalThickness, currDepth))
+                {
+                    shouldWarn = false;
+                    return null;
                 }
 
                 int numLayers = realMaterialLayers.Count();
@@ -348,8 +374,6 @@ namespace Revit.IFC.Import.Data
                 // 4. connecting end curve.
                 IList<Curve> orientedCurveList = null;
 
-                // Axis3 means that the material layers are stacked in the Z direction.  This is common for floor slabs.
-                bool isAxis3 = (materialLayerSetUsage.Direction == IFCLayerSetDirection.Axis3);
                 if (!isAxis3)
                 {
                     // Axis2 means that the material layers are stacked inthe Y direction.  This is by definition for IfcWallStandardCase,
@@ -382,7 +406,6 @@ namespace Revit.IFC.Import.Data
                 double axisCurvePeriod = axisIsCyclic ? axisCurve.Period : 0.0;
 
                 Transform curveLoopTransform = Transform.Identity;
-                Plane curveLoopPlane = loops[0].GetPlane();
 
                 IList<CurveLoop> currLoops = null;
                 double depthSoFar = 0.0;
@@ -408,7 +431,7 @@ namespace Revit.IFC.Import.Data
                         double offsetForLayer = positiveOrientation ? baseOffsetForLayer + depthSoFar : baseOffsetForLayer - depthSoFar;
                         if (!MathUtil.IsAlmostZero(offsetForLayer))
                         {
-                            curveLoopTransform.Origin = offsetForLayer * curveLoopPlane.Normal;
+                            curveLoopTransform.Origin = offsetForLayer * extrusionDirection;
 
                             currLoops = new List<CurveLoop>();
                             foreach (CurveLoop loop in loops)
@@ -530,8 +553,17 @@ namespace Revit.IFC.Import.Data
 
                     // Determine the material id.
                     IFCMaterial material = materialLayer.Material;
-                    ElementId materialId = (material == null) ? baseMaterialId : material.GetMaterialElementId();
-                    SolidOptions solidOptions = new SolidOptions(materialId, shapeEditScope.GraphicsStyleId);
+                    ElementId layerMaterialId = (material == null) ? ElementId.InvalidElementId : material.GetMaterialElementId();
+                    
+                    // The second option here is really for Referencing.  Without a UI (yet) to determine whether to show the base
+                    // extusion or the layers for objects with material layer sets, we've chosen to display the base material if the layer material
+                    // has no color information.  This means that the layer is assigned the "wrong" material, but looks better on screen.
+                    // We will reexamine this decision (1) for the Open case, (2) if there is UI to toggle between layers and base extrusion, or
+                    // (3) based on user feedback.
+                    if (layerMaterialId == ElementId.InvalidElementId || Importer.TheCache.MaterialsWithNoColor.Contains(layerMaterialId))
+                        layerMaterialId = baseMaterialId;
+                    
+                    SolidOptions solidOptions = new SolidOptions(layerMaterialId, shapeEditScope.GraphicsStyleId);
 
                     // Create the extrusion for the material layer.
                     GeometryObject extrusionSolid = GeometryCreationUtilities.CreateExtrusionGeometry(
@@ -565,6 +597,12 @@ namespace Revit.IFC.Import.Data
         protected override IList<GeometryObject> CreateGeometryInternal(
               IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
+            if (Direction == null)
+            {
+                IFCImportFile.TheLog.LogError(Id, "Error processing IfcExtrudedAreaSolid, can't create geometry.", false);
+                return null;
+            }
+
             Transform origLCS = (lcs == null) ? Transform.Identity : lcs;
             Transform origScaledLCS = (scaledLcs == null) ? Transform.Identity : scaledLcs;
 
@@ -590,13 +628,16 @@ namespace Revit.IFC.Import.Data
                 {
                     // We may try to create separate extrusions, one per layer here.
                     bool shouldWarn = false;
+                    ElementId overrideMaterialId = ElementId.InvalidElementId;
                     IList<GeometryObject> extrusionLayers = CreateGeometryFromMaterialLayerUsage(shapeEditScope, extrusionPosition, loops, 
-                        extrusionDirection, currDepth, out shouldWarn);
+                        extrusionDirection, currDepth, out overrideMaterialId, out shouldWarn);
 
                     if (extrusionLayers == null || extrusionLayers.Count == 0)
                     {
                         if (shouldWarn)
                             IFCImportFile.TheLog.LogWarning(Id, "Couldn't process associated IfcMaterialLayerSetUsage, using body geometry instead.", false);
+                        if (overrideMaterialId != ElementId.InvalidElementId)
+                            solidOptions.MaterialId = overrideMaterialId;
                         extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, extrusionDirection, currDepth, solidOptions);
                     }
                     else

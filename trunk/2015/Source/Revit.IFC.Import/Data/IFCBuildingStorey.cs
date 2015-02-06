@@ -104,6 +104,22 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
+        /// Creates or populates Revit element params based on the information contained in this class.
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="element"></param>
+        protected override void CreateParametersInternal(Document doc, Element element)
+        {
+            base.CreateParametersInternal(doc, element);
+
+            if (element != null)
+            {
+                // Set "IfcElevation" parameter.
+                IFCPropertySet.AddParameterDouble(doc, element, "IfcElevation", UnitType.UT_Length, m_Elevation, Id); 
+            }
+        }
+
+        /// <summary>
         /// Creates or populates Revit elements based on the information contained in this class.
         /// </summary>
         /// <param name="doc">The document.</param>

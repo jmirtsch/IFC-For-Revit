@@ -169,19 +169,16 @@ namespace Revit.IFC.Export.Exporter
             {
                 IFCAnyHandle elementPlacement = IFCAnyHandleUtil.GetObjectPlacement(elementHandle);
 
-                Transform origTrf = ExporterIFCUtils.GetUnscaledTransform(exporterIFC, assemblyPlacement);
-                if (!origTrf.IsIdentity)
-                {
-                    Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(assemblyPlacement, elementPlacement);
-                    Transform inverseTrf = relTrf.Inverse;
+                Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(assemblyPlacement, elementPlacement);
+                Transform inverseTrf = relTrf.Inverse;
 
-                    IFCFile file = exporterIFC.GetFile();
-                    IFCAnyHandle relLocalPlacement = ExporterUtil.CreateAxis2Placement3D(file, inverseTrf.Origin, inverseTrf.BasisZ, inverseTrf.BasisX);
-                    
-                    // NOTE: caution that old IFCAXIS2PLACEMENT3D may be unused as the new one replace it. 
-                    // But we cannot delete it safely yet because we don't know if any handle is referencing it.
-                    GeometryUtil.SetRelativePlacement(elementPlacement, relLocalPlacement);
-                }
+                IFCFile file = exporterIFC.GetFile();
+                IFCAnyHandle relLocalPlacement = ExporterUtil.CreateAxis2Placement3D(file, inverseTrf.Origin, inverseTrf.BasisZ, inverseTrf.BasisX);
+
+                // NOTE: caution that old IFCAXIS2PLACEMENT3D may be unused as the new one replace it. 
+                // But we cannot delete it safely yet because we don't know if any handle is referencing it.
+                GeometryUtil.SetRelativePlacement(elementPlacement, relLocalPlacement);
+
                 GeometryUtil.SetPlacementRelTo(elementPlacement, assemblyPlacement);
             }
         }

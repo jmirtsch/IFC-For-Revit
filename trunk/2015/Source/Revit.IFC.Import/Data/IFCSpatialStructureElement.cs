@@ -37,8 +37,7 @@ namespace Revit.IFC.Import.Data
     {
         HashSet<IFCProduct> m_IFCProducts = null;
 
-        // TODO: Convert this to IFCSystem, if we care.
-        HashSet<IFCGroup> m_IFCSystems = null;
+        HashSet<IFCSystem> m_IFCSystems = null;
 
         string m_LongName = null;
 
@@ -53,9 +52,14 @@ namespace Revit.IFC.Import.Data
         /// <summary>
         /// The Systems for the associated spatial structure.
         /// </summary>
-        public ICollection<IFCGroup> Systems
+        public ICollection<IFCSystem> Systems
         {
-            get { return m_IFCSystems; }
+            get 
+            {
+                if (m_IFCSystems == null)
+                    m_IFCSystems = new HashSet<IFCSystem>();
+                return m_IFCSystems; 
+            }
         }
 
         /// <summary>
@@ -151,9 +155,6 @@ namespace Revit.IFC.Import.Data
                 IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcSpatialStructureElement, "ServicedBySystems");
             if (systemSet != null)
             {
-                if (m_IFCSystems == null)
-                    m_IFCSystems = new HashSet<IFCGroup>();
-
                 foreach (IFCAnyHandle system in systemSet)
                     ProcessIFCRelServicesBuildings(system);
             }
@@ -205,9 +206,9 @@ namespace Revit.IFC.Import.Data
                 return;
             }
 
-            IFCGroup system = IFCGroup.ProcessIFCGroup(relatingSystem);
+            IFCSystem system = IFCSystem.ProcessIFCSystem(relatingSystem);
             if (system != null)
-                m_IFCSystems.Add(system);
+                Systems.Add(system);
         }
 
         /// <summary>
@@ -227,7 +228,11 @@ namespace Revit.IFC.Import.Data
             if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcSpatialStructureElement.StepId, out spatialStructureElement))
                 return (spatialStructureElement as IFCSpatialStructureElement);
 
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcSpatialStructureElement, IFCEntityType.IfcBuildingStorey))
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcSpatialStructureElement, IFCEntityType.IfcSpace))
+            {
+                return IFCSpace.ProcessIFCSpace(ifcSpatialStructureElement);
+            }
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcSpatialStructureElement, IFCEntityType.IfcBuildingStorey))
             {
                 return IFCBuildingStorey.ProcessIFCBuildingStorey(ifcSpatialStructureElement);
             }

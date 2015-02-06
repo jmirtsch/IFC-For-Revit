@@ -82,17 +82,6 @@ namespace Revit.IFC.Import.Data
             IsOuter = (IFCAnyHandleUtil.IsSubTypeOf(ifcFaceBound, IFCEntityType.IfcFaceOuterBound));
         }
 
-        private string GenerateShortDistanceCommentString(double dist, double shortSegmentTolerance, int lastVertex, int currIdx, bool tryAsSolid)
-        {
-            string distAsString = UnitFormatUtils.Format(IFCImportFile.TheFile.Document.GetUnits(), UnitType.UT_Length, dist, true, false);
-            string shortDistAsString = UnitFormatUtils.Format(IFCImportFile.TheFile.Document.GetUnits(), UnitType.UT_Length, shortSegmentTolerance, true, false);
-            string warningString = "Distance between vertices " + lastVertex + " and " + currIdx +
-            " is " + distAsString + ", which is less than the minimum " + (tryAsSolid ? "Solid" : "Mesh") +
-            " distance of " + shortDistAsString + ", removing second point.";
-
-            return warningString;
-        }
-
         /// <summary>
         /// Create geometry for a particular representation item.
         /// </summary>
@@ -122,34 +111,12 @@ namespace Revit.IFC.Import.Data
                 transformedVertices.Add(scaledLcs.OfPoint(vertex));
             }
 
-            // The tolerance we use to determine if loop vertices are too close to one another is based on what type of data 
-            // we are trying to create.  If we are trying to create a Solid, then we must have vertices that are further apart than ShortCurveTolerance.
-            // If we are trying to cerate a Mesh, then the smaller VertexTolerance is acceptable.
-            double shortSegmentTolerance = shapeEditScope.TryToCreateSolid() ?
-                shapeEditScope.Document.Application.ShortCurveTolerance :
-                shapeEditScope.Document.Application.VertexTolerance;
-
             // Check that the loop vertices don't contain points that are very close to one another;
             // if so, throw the point away and hope that the TessellatedShapeBuilder can repair the result.
             // Warn in this case.  If the entire boundary is bad, report an error and don't add the loop vertices.
-            IList<XYZ> validVertices = new List<XYZ>();
-            int lastVertex = 0;
-            for (int ii = 1; ii <= count; ii++)
-            {
-                int currIdx = (ii % count);
 
-                double dist = transformedVertices[lastVertex].DistanceTo(transformedVertices[currIdx]);
-                if (dist >= shortSegmentTolerance)
-                {
-                    validVertices.Add(transformedVertices[lastVertex]);
-                    lastVertex = currIdx;
-                }
-                else
-                {
-                    string warningString = GenerateShortDistanceCommentString(dist, shortSegmentTolerance, lastVertex, currIdx, shapeEditScope.TryToCreateSolid());
-                    IFCImportFile.TheLog.LogComment(Id, warningString, false);
-                }
-            }
+            IList<XYZ> validVertices;
+            IFCGeometryUtil.CheckAnyDistanceVerticesWithinTolerance(Id, shapeEditScope, transformedVertices, out validVertices);
 
             // We are going to catch any exceptions if the loop is invalid.  
             // We are going to hope that we can heal the parent object in the TessellatedShapeBuilder.

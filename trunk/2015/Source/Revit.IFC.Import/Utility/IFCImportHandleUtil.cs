@@ -306,6 +306,138 @@ namespace Revit.IFC.Import.Utility
         }
 
         /// <summary>
+        /// Get attribute type of List of List of Double
+        /// </summary>
+        /// <param name="handle">the handle</param>
+        /// <param name="name">the attribute name</param>
+        /// <returns>List of List of Double</returns>
+        public static IList<IList<double>> GetListOfListOfDoubleAttribute(IFCAnyHandle handle, string name)
+        {
+            if (handle == null)
+                throw new ArgumentNullException("handle");
+
+            if (!handle.HasValue)
+                throw new ArgumentException("Invalid handle.");
+
+            IList<IList<double>> outerList = null;
+
+            IFCData ifcData = handle.GetAttribute(name);
+
+            if (ifcData.PrimitiveType == IFCDataPrimitiveType.Aggregate)
+            {
+                IFCAggregate outer = ifcData.AsAggregate();
+                if (outer != null)
+                {
+                    outerList = new List<IList<double>>();
+
+                    foreach (IFCData outerVal in outer)
+                    {
+                        IFCAggregate inner = outerVal.AsAggregate();
+
+                        if (inner != null)
+                        {
+                            IList<double> innerList = new List<double>();
+                            foreach (IFCData innerVal in inner)
+                            {
+                                innerList.Add(innerVal.AsDouble());
+                            }
+                            outerList.Add(innerList);
+                        }
+                    }
+                }
+            }
+            return outerList;
+        }
+
+        /// <summary>
+        /// Get attribute of type List of List of Integer
+        /// </summary>
+        /// <param name="handle">the handle</param>
+        /// <param name="name">attribute name</param>
+        /// <returns>List of List of Integer</returns>
+        public static IList<IList<int>> GetListOfListOfIntegerAttribute(IFCAnyHandle handle, string name)
+        {
+            if (handle == null)
+                throw new ArgumentNullException("handle");
+
+            if (!handle.HasValue)
+                throw new ArgumentException("Invalid handle.");
+
+            IList<IList<int>> outerList = null;
+
+            IFCData ifcData = handle.GetAttribute(name);
+
+            if (ifcData.PrimitiveType == IFCDataPrimitiveType.Aggregate)
+            {
+                IFCAggregate outer = ifcData.AsAggregate();
+                if (outer != null)
+                {
+                    outerList = new List<IList<int>>();
+
+                    foreach (IFCData outerVal in outer)
+                    {
+                        IFCAggregate inner = outerVal.AsAggregate();
+
+                        if (inner != null)
+                        {
+                            IList<int> innerList = new List<int>();
+                            foreach (IFCData innerVal in inner)
+                            {
+                                innerList.Add(innerVal.AsInteger());
+                            }
+                            outerList.Add(innerList);
+                        }
+                    }
+                }
+            }
+            return outerList;
+        }
+
+        /// <summary>
+        /// Get attribute of type List of List of Entity 
+        /// </summary>
+        /// <param name="handle">The handle</param>
+        /// <param name="name">attribute name</param>
+        /// <returns>List of List of Entity</returns>
+        public static List<List<IFCAnyHandle>> GetListOfListOfInstancettribute(IFCAnyHandle handle, string name)
+        {
+            if (handle == null)
+                throw new ArgumentNullException("handle");
+
+            if (!handle.HasValue)
+                throw new ArgumentException("Invalid handle.");
+
+            List<List<IFCAnyHandle>> outerList = null;
+
+            IFCData ifcData = handle.GetAttribute(name);
+
+            if (ifcData.PrimitiveType == IFCDataPrimitiveType.Aggregate)
+            {
+                IFCAggregate outer = ifcData.AsAggregate();
+                if (outer != null)
+                {
+                    outerList = new List<List<IFCAnyHandle>>();
+
+                    foreach (IFCData outerVal in outer)
+                    {
+                        IFCAggregate inner = outerVal.AsAggregate();
+
+                        if (inner != null)
+                        {
+                            List<IFCAnyHandle> innerList = new List<IFCAnyHandle>();
+                            foreach (IFCData innerVal in inner)
+                            {
+                                innerList.Add(innerVal.AsInstance());
+                            }
+                            outerList.Add(innerList);
+                        }
+                    }
+                }
+            }
+            return outerList;
+        }
+
+        /// <summary>
         /// Read the HasAssignments INVERSE attribute from an IfcObjectDefinition, if it is defined.
         /// </summary>
         /// <param name="ifcObjectDefinition">The handle assumed to be an IfcObjectDefinition.</param>

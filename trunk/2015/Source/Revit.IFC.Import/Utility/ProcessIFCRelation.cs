@@ -55,9 +55,10 @@ namespace Revit.IFC.Import.Utility
         /// <summary>
         /// Finds all related objects in IfcRelAssigns.
         /// </summary>
-        /// <param name="ifcRelAssigns">The IfcRelAssigns handle.</param>
+        /// <param name="relatedTo">The entity receiving the collection of objects and the IFCObjectDefinition will record the inverse relationship</param>
+        /// <param name="ifcRelAssignsOrAggregates">The IfcRelAssigns handle.</param>
         /// <returns>The related objects, or null if not found.</returns>
-        static public ICollection<IFCObjectDefinition> ProcessRelatedObjects(IFCAnyHandle ifcRelAssignsOrAggregates)
+        static public ICollection<IFCObjectDefinition> ProcessRelatedObjects(IFCObjectDefinition relatedTo, IFCAnyHandle ifcRelAssignsOrAggregates)
         {
             try
             {
@@ -78,11 +79,21 @@ namespace Revit.IFC.Import.Utility
 
             ICollection<IFCObjectDefinition> relatedObjectSet = new HashSet<IFCObjectDefinition>();
 
+            // If relatedTo is an IFCGroup then it will be added to the list of group that the relatedObject is assigned to.
+            // else it will become the relatedObject's composing object
+            bool relatedIsGroup = relatedTo is IFCGroup;
+
             foreach (IFCAnyHandle relatedObject in relatedObjects)
             {
                 IFCObjectDefinition objectDefinition = IFCObjectDefinition.ProcessIFCObjectDefinition(relatedObject);
                 if (objectDefinition != null)
+                {
+                    if (relatedIsGroup)
+                        objectDefinition.AssignmentGroups.Add(relatedTo as IFCGroup);
+                    else 
+                        objectDefinition.Decomposes = relatedTo;
                     relatedObjectSet.Add(objectDefinition);
+                }
             }
 
             return relatedObjectSet;
@@ -129,6 +140,60 @@ namespace Revit.IFC.Import.Utility
             }
 
             return IFCAnyHandleUtil.GetStringAttribute(ifcRelAssigns, "RelatedObjectsType");
+        }
+
+        /// <summary>
+        /// Gets the IFCElement associated via an IfcRelConnectsPortToElement handle to an IFCPort.
+        /// </summary>
+        /// <param name="ifcRelConnectsPortToElement">The IfcRelConnectsPortToElement handle.</param>
+        /// <returns>The IFCElement class corresponding to the IfcElement handle, if any.</returns>
+        static public IFCElement ProcessRelatedElement(IFCAnyHandle ifcRelConnectsPortToElement)
+        {
+            // Receiving apps need to decide whether to post an error or not.
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcRelConnectsPortToElement))
+                return null;
+            
+            IFCAnyHandle ifcRelatedElement = IFCAnyHandleUtil.GetInstanceAttribute(ifcRelConnectsPortToElement, "RelatedElement");
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcRelatedElement))
+                return null;
+
+            IFCElement relatedElement = IFCElement.ProcessIFCElement(ifcRelatedElement);
+            return relatedElement;
+        }
+
+        static private IFCPort ProcessOtherPort(IFCAnyHandle ifcRelConnectsPorts, string fieldName)
+        {
+            // Receiving apps need to decide whether to post an error or not.
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcRelConnectsPorts))
+                return null;
+
+            IFCAnyHandle ifcOtherPort = IFCAnyHandleUtil.GetInstanceAttribute(ifcRelConnectsPorts, fieldName);
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcOtherPort))
+                return null;
+
+            IFCPort otherPort = IFCPort.ProcessIFCPort(ifcOtherPort);
+            return otherPort;
+        }
+
+        /// <summary>
+        /// Gets the related IFCPort associated with a relating IFCPort via an IfcRelConnectsPorts relationship handle.
+        /// </summary>
+        /// <param name="ifcRelConnectsPorts">The IfcRelConnectsPorts handle, generally processed from the RelatingPort.</param>
+        /// <returns>The IFCPort class corresponding to the IfcPort handle associated with the RelatedPort, if any.</returns>
+        static public IFCPort ProcessRelatedPort(IFCAnyHandle ifcRelConnectsPorts)
+        {
+            return ProcessOtherPort(ifcRelConnectsPorts, "RelatedPort");
+        }
+
+        /// <summary>
+        /// Gets the relating IFCPort associated with a related IFCPort via an IfcRelConnectsPorts relationship handle.
+        /// </summary>
+        /// <param name="ifcRelConnectsPorts">The IfcRelConnectsPorts handle, generally processed from the RelatedPort.</param>
+        /// <returns>The IFCPort class corresponding to the IfcPort handle associated with the RelatingPort, if any.</returns>
+        static public IFCPort ProcessRelatingPort(IFCAnyHandle ifcRelConnectsPorts)
+        {
+            // Receiving apps need to decide whether to post an error or not.
+            return ProcessOtherPort(ifcRelConnectsPorts, "RelatingPort");
         }
     }
 }

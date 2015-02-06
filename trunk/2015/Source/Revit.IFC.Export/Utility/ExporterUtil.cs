@@ -1031,7 +1031,7 @@ namespace Revit.IFC.Export.Utility
                 IFCAnyHandle propertySet2 = IFCInstanceExporter.CreatePropertySet(file, GUIDUtil.CreateGUID(), ownerHistory, name, null, nameAndColorProps);
 
                 HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>(productWrapper.GetAllObjects());
-                IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, propertySet2);
+                ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, propertySet2);
 
                 transaction.Commit();
             }
@@ -1135,7 +1135,7 @@ namespace Revit.IFC.Export.Utility
 
                 foreach (KeyValuePair<IFCAnyHandle, HashSet<IFCAnyHandle>> relDefinesByProperties in relDefinesByPropertiesMap)
                 {
-                    IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null,
+                    ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null,
                         relDefinesByProperties.Value, relDefinesByProperties.Key);
                 }
 
@@ -1197,7 +1197,7 @@ namespace Revit.IFC.Export.Utility
                                     }
                                     HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
                                     relatedObjects.Add(prodHndToUse);
-                                    IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, propertySet);
+                                    ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, propertySet);
                                 }
                             }
                         }
@@ -1364,18 +1364,71 @@ namespace Revit.IFC.Export.Utility
             || (String.Compare(ExporterCacheManager.ExportOptionsCache.SelectedConfigName, "IFC2x3 Extended FM Handover View") == 0));
         }
 
+        /// <summary>
+        /// Returns true if the selected view for export is IFC4 Reference View
+        /// </summary>
+        /// <returns>true/false</returns>
+        public static bool IsReferenceView()
+        {
+            bool isRefV = String.Compare(ExporterCacheManager.ExportOptionsCache.SelectedConfigName, "IFC4 Reference View") == 0;
+            return isRefV;
+        }
+
+        /// <summary>
+        /// Returns true is the selected view for export is IFC4 Design Transfer View
+        /// </summary>
+        /// <returns></returns>
+        public static bool IsDesignTransferView()
+        {
+            return ((String.Compare(ExporterCacheManager.ExportOptionsCache.SelectedConfigName, "IFC4 Design Transfer View") == 0));
+        }
+
+        /// Creates a list of IfcCartesianPoints corresponding to a list of UV points that represent a closed boundary loop.
+        /// </summary>
+        /// <param name="file">The IFCFile.</param>
+        /// <param name="projVecData">The list of UV points.</param>
+        /// <returns>The corresponding list of IfcCartesianPoints.</returns>
+        /// <remarks>We expect that the input UV list is composed of distinct points (i.e., the last point is not the first point, repeated.)
+        /// Our output requires that the first IfcCartesianPoint is the same as the last one, and does so by reusing the IfcCartesianPoint handle.</remarks>
         private static IList<IFCAnyHandle> CreateCartesianPointList(IFCFile file, IList<UV> projVecData)
         {
             if (projVecData == null)
                 return null;
 
-            // Generate handles for outer bound.
+            // Generate handles for the boundary loop.
             IList<IFCAnyHandle> polyLinePts = new List<IFCAnyHandle>();
             foreach (UV uv in projVecData)
                 polyLinePts.Add(CreateCartesianPoint(file, uv));
+
+            // We expect the input to consist of distinct points, i.e., that the first and last points in projVecData are not equal.
+            // Our output requires that the first and last points are equal, and as such we reuse the first handle for the last point,
+            // to reduce file size and ensure that the endpoints are identically in the same location by sharing the same IfcCartesianPoint reference.
             polyLinePts.Add(polyLinePts[0]);
 
             return polyLinePts;
+        }
+
+        /// <summary>
+        /// Call the correct CreateRelDefinesByProperties depending on the schema to create one or more IFC entites.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="guid">The GUID.</param>
+        /// <param name="ownerHistory">The owner history.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="description">The description.</param>
+        /// <param name="relatedObjects">The related objects, required to be only 1 for IFC4.</param>
+        /// <param name="relatingPropertyDefinition">The property definition to relate to the IFC object entity/entities.</param>
+        public static void CreateRelDefinesByProperties(IFCFile file, string guid, IFCAnyHandle ownerHistory,
+            string name, string description, ISet<IFCAnyHandle> relatedObjects, IFCAnyHandle relatingPropertyDefinition)
+        {
+            if (relatedObjects == null)
+                return;
+
+            // This code isn't actually valid for IFC4 - IFC4 requires that there be a 1:1 relationship between
+            // the one relatedObject and the relatingPropertyDefinition.  This requires a cloning of the IfcPropertySet
+            // in addition to cloning the IfcRelDefinesByProperties.  This will be done in the next update.
+            IFCInstanceExporter.CreateRelDefinesByProperties(file, guid, ownerHistory, name, description,
+                relatedObjects, relatingPropertyDefinition);
         }
 
         /// <summary>
@@ -1442,6 +1495,7 @@ namespace Revit.IFC.Export.Utility
             secondDir = norm.CrossProduct(firstDir);
             Plane projPlane = new Plane(firstDir, secondDir, newOuterLoopPoints[0]);
 
+            // If the first and last points are the same, ignore the last point for IFC processing.
             if (firstIsLast)
                 outerSz--;
 
@@ -1455,7 +1509,7 @@ namespace Revit.IFC.Export.Utility
                 projVecData.Add(uv);
             }
 
-            // Generate handles for outer bound.
+            // Generate handles for the outer boundary.  This will close the loop by adding the first IfcCartesianPointHandle to the end of polyLinePts.
             IList<IFCAnyHandle> polyLinePts = CreateCartesianPointList(file, projVecData);
 
             IFCAnyHandle outerBound = IFCInstanceExporter.CreatePolyline(file, polyLinePts);
@@ -1476,12 +1530,18 @@ namespace Revit.IFC.Export.Utility
                 {
                     IList<XYZ> currInnerLoopVecData = innerLoopPoints[ii];
                     int loopSz = currInnerLoopVecData.Count;
+                    if (loopSz == 0)
+                        continue;
 
                     projVecData.Clear();
-                    firstIsLast = currInnerLoopVecData[0].IsAlmostEqualTo(currInnerLoopVecData[outerSz - 1]);
+                    firstIsLast = currInnerLoopVecData[0].IsAlmostEqualTo(currInnerLoopVecData[loopSz - 1]);
+
+                    // If the first and last points are the same, ignore the last point for IFC processing.
+                    if (firstIsLast)
+                        loopSz--;
                     
-                    // Be lenient on what we find.
-                    bool continueOnFailure = ((loopSz < 2) || (firstIsLast && (loopSz == 3)));
+                    // Be lenient on what we find, but we need at least 3 distinct points to process an inner polygon.
+                    bool continueOnFailure = (loopSz < 3);
                     for (int jj = 0; jj < loopSz && !continueOnFailure; jj++)
                     {
                         UV uv = GeometryUtil.ProjectPointToPlane(projPlane, currInnerLoopVecData[jj]);
@@ -1495,6 +1555,7 @@ namespace Revit.IFC.Export.Utility
                     if (continueOnFailure)
                         continue;
 
+                    // Generate handles for the inner boundary.  This will close the loop by adding the first IfcCartesianPointHandle to the end of polyLinePts.
                     polyLinePts = CreateCartesianPointList(file, projVecData);
                     IFCAnyHandle polyLine = IFCInstanceExporter.CreatePolyline(file, polyLinePts);
 

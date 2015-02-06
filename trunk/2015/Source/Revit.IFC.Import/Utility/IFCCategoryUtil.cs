@@ -39,40 +39,42 @@ namespace Revit.IFC.Import.Utility
         // Determines which entity types should be ignored on import.
         static ISet<IFCEntityType> m_EntityDontImport = null;
 
-        // Determines which entity and shape type combinations should be ignored on import.
-        static ISet<KeyValuePair<IFCEntityType, string>> m_EntityDontImportShapeType = null;
+        // Determines which entity and predefined type combinations should be ignored on import.
+        static ISet<KeyValuePair<IFCEntityType, string>> m_EntityDontImportPredefinedType = null;
 
         // Used for entity types that have a simple mapping to a built-in catgory.
         static IDictionary<IFCEntityType, BuiltInCategory> m_EntityTypeToCategory = null;
 
-        // Used for entity types and shape type pairs that have a simple mapping to a built-in catgory.
-        static IDictionary<KeyValuePair<IFCEntityType, string>, BuiltInCategory> m_EntityShapeTypeToCategory = null;
+        // Used for entity types and predefined type pairs that have a simple mapping to a built-in catgory.
+        static IDictionary<KeyValuePair<IFCEntityType, string>, BuiltInCategory> m_EntityPredefinedTypeToCategory = null;
 
         // Maps entity types to the type contained in the dictionary above, to avoid duplicate instance/type mappings.
         static IDictionary<IFCEntityType, IFCEntityType> m_EntityTypeKey = null;
 
+        static IDictionary<string, KeyValuePair<Color, int>> m_SubCategoryNameToMaterialData = null;
+            
         /// <summary>
         /// Clear the maps at the start of import, to force reload of options.
         /// </summary>
         public static void Clear()
         {
             m_EntityDontImport = null;
-            m_EntityDontImportShapeType = null;
+            m_EntityDontImportPredefinedType = null;
             m_EntityTypeToCategory = null;
             m_EntityTypeKey = null;
-            m_EntityShapeTypeToCategory = null;
+            m_EntityPredefinedTypeToCategory = null;
         }
 
         private static void InitializeCategoryMaps()
         {
             m_EntityDontImport = new HashSet<IFCEntityType>();
-            m_EntityDontImportShapeType = new HashSet<KeyValuePair<IFCEntityType, string>>();
+            m_EntityDontImportPredefinedType = new HashSet<KeyValuePair<IFCEntityType, string>>();
             m_EntityTypeToCategory = new Dictionary<IFCEntityType, BuiltInCategory>();
             m_EntityTypeKey = new Dictionary<IFCEntityType, IFCEntityType>();
-            m_EntityShapeTypeToCategory = new Dictionary<KeyValuePair<IFCEntityType, string>, BuiltInCategory>();
+            m_EntityPredefinedTypeToCategory = new Dictionary<KeyValuePair<IFCEntityType, string>, BuiltInCategory>();
 
             if (!InitFromFile())
-                InitEntityTypeToCategoryMaps();            
+                InitEntityTypeToCategoryMaps();
         }
 
         private static ISet<IFCEntityType> EntityDontImport
@@ -85,13 +87,13 @@ namespace Revit.IFC.Import.Utility
             }
         }
 
-        private static ISet<KeyValuePair<IFCEntityType, string>> EntityDontImportShapeType
+        private static ISet<KeyValuePair<IFCEntityType, string>> EntityDontImportPredefinedType
         {
             get
             {
-                if (m_EntityDontImportShapeType == null)
+                if (m_EntityDontImportPredefinedType == null)
                     InitializeCategoryMaps();
-                return m_EntityDontImportShapeType;
+                return m_EntityDontImportPredefinedType;
             }
         }
 
@@ -115,16 +117,38 @@ namespace Revit.IFC.Import.Utility
             }
         }
 
-        private static IDictionary<KeyValuePair<IFCEntityType, string>, BuiltInCategory> EntityShapeTypeToCategory
+        private static IDictionary<KeyValuePair<IFCEntityType, string>, BuiltInCategory> EntityPredefinedTypeToCategory
         {
             get
             {
-                if (m_EntityShapeTypeToCategory == null)
+                if (m_EntityPredefinedTypeToCategory == null)
                     InitializeCategoryMaps();
-                return m_EntityShapeTypeToCategory;
+                return m_EntityPredefinedTypeToCategory;
             }
         }
-        
+
+        private static IDictionary<string, KeyValuePair<Color, int>> SubCategoryNameToMaterialData
+        {
+            get
+            {
+                if (m_SubCategoryNameToMaterialData == null)
+                {
+                    m_SubCategoryNameToMaterialData = new Dictionary<string, KeyValuePair<Color, int>>(StringComparer.InvariantCultureIgnoreCase);
+                    m_SubCategoryNameToMaterialData["IfcDistributionPort"] = new KeyValuePair<Color, int>(new Color(0, 0, 0), 127);
+                    m_SubCategoryNameToMaterialData["IfcDistributionPort.SourceAndSink"] = new KeyValuePair<Color, int>(new Color(0, 255, 0), 127);
+                    m_SubCategoryNameToMaterialData["IfcDistributionPort.Source"] = new KeyValuePair<Color, int>(new Color(0, 0, 255), 127);
+                    m_SubCategoryNameToMaterialData["IfcDistributionPort.Sink"] = new KeyValuePair<Color, int>(new Color(255, 0, 0), 127);
+                    m_SubCategoryNameToMaterialData["IfcOpeningElement"] = new KeyValuePair<Color, int>(new Color(255, 165, 0), 64);
+                    m_SubCategoryNameToMaterialData["IfcSpace"] = new KeyValuePair<Color, int>(new Color(164, 232, 232), 64); // Default is "Internal".
+                    m_SubCategoryNameToMaterialData["IfcSpace.Internal"] = new KeyValuePair<Color, int>(new Color(164, 232, 232), 64); // Similar to "Light Sky Blue"
+                    m_SubCategoryNameToMaterialData["IfcSpace.External"] = new KeyValuePair<Color, int>(new Color(141, 184, 78), 64); // A nice shade of green.
+                    m_SubCategoryNameToMaterialData["IfcZone"] = new KeyValuePair<Color, int>(new Color(24, 167, 181), 64); // (Teal Blue (Crayola)), according to Wikipedia.
+                    m_SubCategoryNameToMaterialData["Box"] = new KeyValuePair<Color, int>(new Color(255, 250, 205), 64); // Lemon chiffon, a lovely color for a bounding box.
+                }
+                return m_SubCategoryNameToMaterialData;
+            }
+        }
+
         /// <summary>
         /// Checks if two strings are equal ignoring case, spaces, and apostrophes.
         /// </summary>
@@ -174,15 +198,15 @@ namespace Revit.IFC.Import.Utility
         }
 
         /// <summary>
-        /// Get the entity type and shape type for the IfcTypeObject of the entity.
+        /// Get the entity type and predefined type for the IfcTypeObject of the entity.
         /// </summary>
         /// <param name="entity">The entity.</param>
         /// <param name="typeEntityType">The IfcTypeObject entity type, if it exists.</param>
-        /// <param name="typeShapeType">The IfcTypeObject shape type, if it exists.</param>
-        private static void GetAssociatedTypeEntityInfo(IFCObjectDefinition entity, out IFCEntityType? typeEntityType, out string typeShapeType)
+        /// <param name="typePredefinedType">The IfcTypeObject predefined type, if it exists.</param>
+        private static void GetAssociatedTypeEntityInfo(IFCObjectDefinition entity, out IFCEntityType? typeEntityType, out string typePredefinedType)
         {
             typeEntityType = null;
-            typeShapeType = null;
+            typePredefinedType = null;
             if (entity is IFCObject)
             {
                 IFCObject ifcObject = entity as IFCObject;
@@ -190,7 +214,7 @@ namespace Revit.IFC.Import.Utility
                 {
                     IFCTypeObject typeObject = ifcObject.TypeObjects.First();
                     typeEntityType = typeObject.EntityType;
-                    typeShapeType = typeObject.ShapeType;
+                    typePredefinedType = typeObject.PredefinedType;
                 }
             }
         }
@@ -204,20 +228,20 @@ namespace Revit.IFC.Import.Utility
         public static string GetCustomCategoryName(IFCObjectDefinition entity)
         {
             IFCEntityType entityType = entity.EntityType;
-            string shapeType = entity.ShapeType;
-            
+            string predefinedType = entity.PredefinedType;
+
             IFCEntityType? typeEntityType = null;
-            string typeShapeType = null;
-            GetAssociatedTypeEntityInfo(entity, out typeEntityType, out typeShapeType);
+            string typePredefinedType = null;
+            GetAssociatedTypeEntityInfo(entity, out typeEntityType, out typePredefinedType);
 
             if (typeEntityType.HasValue)
                 entityType = typeEntityType.Value;
-            if (string.IsNullOrWhiteSpace(shapeType) && !string.IsNullOrWhiteSpace(typeShapeType))
-                shapeType = typeShapeType;
+            if (string.IsNullOrWhiteSpace(predefinedType) && !string.IsNullOrWhiteSpace(typePredefinedType))
+                predefinedType = typePredefinedType;
 
             string categoryName = entityType.ToString();
-            if (!string.IsNullOrWhiteSpace(shapeType))
-                categoryName += "." + shapeType;
+            if (!string.IsNullOrWhiteSpace(predefinedType))
+                categoryName += "." + predefinedType;
             return categoryName;
         }
 
@@ -254,6 +278,7 @@ namespace Revit.IFC.Import.Utility
             m_EntityTypeToCategory[IFCEntityType.IfcDiscreteAccessory] = BuiltInCategory.OST_SpecialityEquipment;
             m_EntityTypeToCategory[IFCEntityType.IfcDiscreteAccessoryType] = BuiltInCategory.OST_SpecialityEquipment;
             m_EntityTypeToCategory[IFCEntityType.IfcDistributionFlowElement] = BuiltInCategory.OST_MechanicalEquipment;
+            m_EntityTypeToCategory[IFCEntityType.IfcDistributionPort] = BuiltInCategory.OST_GenericModel;
             m_EntityTypeToCategory[IFCEntityType.IfcDoor] = BuiltInCategory.OST_Doors;
             m_EntityTypeToCategory[IFCEntityType.IfcDoorStyle] = BuiltInCategory.OST_Doors;
             m_EntityTypeToCategory[IFCEntityType.IfcDoorType] = BuiltInCategory.OST_Doors;
@@ -344,8 +369,9 @@ namespace Revit.IFC.Import.Utility
             m_EntityTypeToCategory[IFCEntityType.IfcWindow] = BuiltInCategory.OST_Windows;
             m_EntityTypeToCategory[IFCEntityType.IfcWindowStyle] = BuiltInCategory.OST_Windows;
             m_EntityTypeToCategory[IFCEntityType.IfcWindowType] = BuiltInCategory.OST_Windows;
+            m_EntityTypeToCategory[IFCEntityType.IfcZone] = BuiltInCategory.OST_GenericModel;
 
-            // Entity type/shape type pairs to categories.
+            // Entity type/predefined type pairs to categories.
             m_EntityTypeKey[IFCEntityType.IfcColumnType] = IFCEntityType.IfcColumn;
             m_EntityTypeKey[IFCEntityType.IfcCoveringType] = IFCEntityType.IfcCovering;
             m_EntityTypeKey[IFCEntityType.IfcElectricApplianceType] = IFCEntityType.IfcElectricAppliance;
@@ -355,28 +381,28 @@ namespace Revit.IFC.Import.Utility
             m_EntityTypeKey[IFCEntityType.IfcSlabType] = IFCEntityType.IfcSlab;
             m_EntityTypeKey[IFCEntityType.IfcValveType] = IFCEntityType.IfcValve;
 
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumn, "[LoadBearing]")] = BuiltInCategory.OST_StructuralColumns;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumn, "COLUMN")] = BuiltInCategory.OST_Columns;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumn, "USERDEFINED")] = BuiltInCategory.OST_Columns;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumn, "NOTDEFINED")] = BuiltInCategory.OST_Columns;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcCovering, "CEILING")] = BuiltInCategory.OST_Ceilings;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcCovering, "FLOORING")] = BuiltInCategory.OST_Floors;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcCovering, "ROOFING")] = BuiltInCategory.OST_Roofs;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcElectricAppliance, "DISHWASHER")] = BuiltInCategory.OST_PlumbingFixtures;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcElectricAppliance, "ELECTRICCOOKER")] = BuiltInCategory.OST_ElectricalFixtures;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcElectricAppliance, "FRIDGE_FREEZER")] = BuiltInCategory.OST_SpecialityEquipment;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcElectricAppliance, "TUMBLEDRYER")] = BuiltInCategory.OST_ElectricalFixtures;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcElectricAppliance, "WASHINGMACHINE")] = BuiltInCategory.OST_ElectricalFixtures;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcElectricAppliance, "USERDEFINED")] = BuiltInCategory.OST_ElectricalFixtures;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcFireSuppressionTerminal, "SPRINKLER")] = BuiltInCategory.OST_Sprinklers;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcMember, "MULLION")] = BuiltInCategory.OST_CurtainWallMullions;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcPlate, "CURTAIN_PANEL")] = BuiltInCategory.OST_CurtainWallPanels;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlab, "BASESLAB")] = BuiltInCategory.OST_StructuralFoundation;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlab, "FLOOR")] = BuiltInCategory.OST_Floors;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlab, "LANDING")] = BuiltInCategory.OST_StairsLandings;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlab, "ROOF")] = BuiltInCategory.OST_Roofs;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcValve, "DRAWOFFCOCK")] = BuiltInCategory.OST_PlumbingFixtures;
-            m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcValve, "FAUCET")] = BuiltInCategory.OST_PlumbingFixtures;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumn, "[LoadBearing]")] = BuiltInCategory.OST_StructuralColumns;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumn, "COLUMN")] = BuiltInCategory.OST_Columns;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumn, "USERDEFINED")] = BuiltInCategory.OST_Columns;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumn, "NOTDEFINED")] = BuiltInCategory.OST_Columns;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcCovering, "CEILING")] = BuiltInCategory.OST_Ceilings;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcCovering, "FLOORING")] = BuiltInCategory.OST_Floors;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcCovering, "ROOFING")] = BuiltInCategory.OST_Roofs;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcElectricAppliance, "DISHWASHER")] = BuiltInCategory.OST_PlumbingFixtures;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcElectricAppliance, "ELECTRICCOOKER")] = BuiltInCategory.OST_ElectricalFixtures;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcElectricAppliance, "FRIDGE_FREEZER")] = BuiltInCategory.OST_SpecialityEquipment;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcElectricAppliance, "TUMBLEDRYER")] = BuiltInCategory.OST_ElectricalFixtures;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcElectricAppliance, "WASHINGMACHINE")] = BuiltInCategory.OST_ElectricalFixtures;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcElectricAppliance, "USERDEFINED")] = BuiltInCategory.OST_ElectricalFixtures;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcFireSuppressionTerminal, "SPRINKLER")] = BuiltInCategory.OST_Sprinklers;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcMember, "MULLION")] = BuiltInCategory.OST_CurtainWallMullions;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcPlate, "CURTAIN_PANEL")] = BuiltInCategory.OST_CurtainWallPanels;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlab, "BASESLAB")] = BuiltInCategory.OST_StructuralFoundation;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlab, "FLOOR")] = BuiltInCategory.OST_Floors;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlab, "LANDING")] = BuiltInCategory.OST_StairsLandings;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlab, "ROOF")] = BuiltInCategory.OST_Roofs;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcValve, "DRAWOFFCOCK")] = BuiltInCategory.OST_PlumbingFixtures;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcValve, "FAUCET")] = BuiltInCategory.OST_PlumbingFixtures;
         }
 
         private static bool InitFromFile()
@@ -431,7 +457,7 @@ namespace Revit.IFC.Import.Utility
                     IFCImportFile.TheLog.LogWarning(-1, "Unknown class name in IFC entity to category mapping file: " + ifcClassName, true);
                     continue;
                 }
-                
+
                 bool hasTypeName = (numFields == 4);
                 string ifcTypeName = null;
                 if (hasTypeName)
@@ -442,8 +468,8 @@ namespace Revit.IFC.Import.Utility
                 if (string.IsNullOrWhiteSpace(ifcTypeName))
                     alreadyPresent = m_EntityTypeToCategory.ContainsKey(ifcClassType);
                 else
-                    alreadyPresent = m_EntityShapeTypeToCategory.ContainsKey(new KeyValuePair<IFCEntityType, string>(ifcClassType, ifcTypeName));
-      
+                    alreadyPresent = m_EntityPredefinedTypeToCategory.ContainsKey(new KeyValuePair<IFCEntityType, string>(ifcClassType, ifcTypeName));
+
                 if (alreadyPresent)
                     continue;
 
@@ -457,14 +483,14 @@ namespace Revit.IFC.Import.Utility
                     if (string.IsNullOrWhiteSpace(ifcTypeName))
                         m_EntityDontImport.Add(ifcClassType);
                     else
-                        m_EntityDontImportShapeType.Add(new KeyValuePair<IFCEntityType, string>(ifcClassType, ifcTypeName));
+                        m_EntityDontImportPredefinedType.Add(new KeyValuePair<IFCEntityType, string>(ifcClassType, ifcTypeName));
                     continue;
                 }
 
                 // TODO: Use enum name, not category name, in file.
                 ElementId categoryId = ElementId.InvalidElementId;
                 Category category = null;
-                
+
                 try
                 {
                     category = Importer.TheCache.DocumentCategories.get_Item(categoryName);
@@ -510,24 +536,24 @@ namespace Revit.IFC.Import.Utility
                 if (string.IsNullOrWhiteSpace(ifcTypeName))
                     m_EntityTypeToCategory[ifcClassType] = (BuiltInCategory)category.Id.IntegerValue;
                 else
-                    m_EntityShapeTypeToCategory[new KeyValuePair<IFCEntityType, string>(ifcClassType, ifcTypeName)] = (BuiltInCategory)category.Id.IntegerValue;
+                    m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(ifcClassType, ifcTypeName)] = (BuiltInCategory)category.Id.IntegerValue;
             }
 
             return true;
         }
 
-        private static ElementId GetCategoryElementId(IFCEntityType entityType, string shapeType)
+        private static ElementId GetCategoryElementId(IFCEntityType entityType, string predefinedType)
         {
             BuiltInCategory catId;
 
-            // Check to see if the entity type and shape type have a known mapping.
+            // Check to see if the entity type and predefined type have a known mapping.
             // Otherwise special cases follow that could be cached later.
-            if (EntityShapeTypeToCategory.TryGetValue(new KeyValuePair<IFCEntityType, string>(entityType, shapeType), out catId))
+            if (EntityPredefinedTypeToCategory.TryGetValue(new KeyValuePair<IFCEntityType, string>(entityType, predefinedType), out catId))
                 return new ElementId(catId);
 
             IFCEntityType key;
             if (EntityTypeKey.TryGetValue(entityType, out key) &&
-                EntityShapeTypeToCategory.TryGetValue(new KeyValuePair<IFCEntityType, string>(key, shapeType), out catId))
+                EntityPredefinedTypeToCategory.TryGetValue(new KeyValuePair<IFCEntityType, string>(key, predefinedType), out catId))
                 return new ElementId(catId);
 
             // Check if there is a simple entity type to category mapping, and return if found.
@@ -538,20 +564,53 @@ namespace Revit.IFC.Import.Utility
         }
 
         /// <summary>
-        /// Determines if a entity, with an optional shape type, should be imported.
+        /// Determines if a entity, with an optional predefined type, should be imported.
         /// </summary>
         /// <param name="type">The entity type.</param>
-        /// <param name="shapeType">The shape type.</param>
+        /// <param name="predefinedType">The predefined type.</param>
         /// <returns>True if it is being imported, false otherwise.</returns>
-        public static bool CanImport(IFCEntityType type, string shapeType)
+        public static bool CanImport(IFCEntityType type, string predefinedType)
         {
             if (EntityDontImport.Contains(type))
                 return false;
 
-            if (!string.IsNullOrWhiteSpace(shapeType) && EntityDontImportShapeType.Contains(new KeyValuePair<IFCEntityType,string>(type, shapeType)))
+            if (!string.IsNullOrWhiteSpace(predefinedType) && EntityDontImportPredefinedType.Contains(new KeyValuePair<IFCEntityType, string>(type, predefinedType)))
                 return false;
 
             return true;
+        }
+
+        private static Category GetOrCreateSubcategory(Document doc, int id, string subCategoryName)
+        {
+            if (string.IsNullOrWhiteSpace(subCategoryName))
+                return null;
+
+            Category subCategory = null;
+
+            IDictionary<string, Category> createdSubcategories = Importer.TheCache.CreatedSubcategories;
+            if (!createdSubcategories.TryGetValue(subCategoryName, out subCategory))
+            {
+                // Category may have been created by a previous action (probably a previous import).  Look first.
+                try
+                {
+                    CategoryNameMap subCategories = Importer.TheCache.GenericModelsCategory.SubCategories;
+                    subCategory = subCategories.get_Item(subCategoryName);
+                }
+                catch
+                {
+                    subCategory = null;
+                }
+
+                if (subCategory == null)
+                {
+                    subCategory = Importer.TheCache.DocumentCategories.NewSubcategory(Importer.TheCache.GenericModelsCategory, subCategoryName);
+                    CreateMaterialsForSpecialSubcategories(doc, id, subCategory, subCategoryName);
+                }
+
+                createdSubcategories[subCategoryName] = subCategory;
+            }
+
+            return subCategory;
         }
 
         /// <summary>
@@ -561,17 +620,26 @@ namespace Revit.IFC.Import.Utility
         /// <param name="category">The category class.</param>
         /// <param name="id">The id of the generating entity.</param>
         /// <param name="subCategoryName">The name of the created (sub-)category.</param>
-        private static void SetMaterialForSpacesAndOpenings(Document doc, int id, Category category, string subCategoryName)
+        private static void CreateMaterialsForSpecialSubcategories(Document doc, int id, Category category, string subCategoryName)
         {
+            // A pair of material color (key) and transparency (value).
+            KeyValuePair<Color, int> colorAndTransparency = new KeyValuePair<Color, int>(null, 127);
+
+            if (!SubCategoryNameToMaterialData.TryGetValue(subCategoryName, out colorAndTransparency))
+            {
+                // Search for just the entity part of the subcategory name.
+                int dot = subCategoryName.IndexOf('.');
+                if (dot > 0 && dot < subCategoryName.Length)
+                {
+                    string entityNameOnly = subCategoryName.Substring(dot);
+                    if (!SubCategoryNameToMaterialData.TryGetValue(subCategoryName, out colorAndTransparency))
+                        return;
+                }
+            }
+
             IFCMaterialInfo materialInfo = null;
-            if (String.Compare(subCategoryName, "IfcOpeningElement", true) == 0)
-            {
-                materialInfo = IFCMaterialInfo.Create(new Color(255, 165, 0), 64, null, null, ElementId.InvalidElementId);
-            }
-            else if (String.Compare(subCategoryName, "IfcSpace", true) == 0)
-            {
-                materialInfo = IFCMaterialInfo.Create(new Color(164, 232, 232), 64, null, null, ElementId.InvalidElementId);
-            }
+            if (colorAndTransparency.Key != null)
+                materialInfo = IFCMaterialInfo.Create(colorAndTransparency.Key, colorAndTransparency.Value, null, null, ElementId.InvalidElementId);
 
             if (materialInfo != null)
             {
@@ -594,67 +662,46 @@ namespace Revit.IFC.Import.Utility
         public static ElementId GetCategoryIdForEntity(Document doc, IFCObjectDefinition entity, out ElementId gstyleId)
         {
             gstyleId = ElementId.InvalidElementId;
-            
+
             IFCEntityType entityType = entity.EntityType;
-            
+
             IFCEntityType? typeEntityType = null;
-            string typeShapeType = null;
-            GetAssociatedTypeEntityInfo(entity, out typeEntityType, out typeShapeType);
+            string typePredefinedType = null;
+            GetAssociatedTypeEntityInfo(entity, out typeEntityType, out typePredefinedType);
 
-            // Use the IfcTypeObject shape type if the IfcElement shape type is either null, empty, white space, or not defined.
-            string shapeType = entity.ShapeType;
-            if ((string.IsNullOrWhiteSpace(shapeType) || (string.Compare(shapeType, "NOTDEFINED", true) == 0)) && 
-                !string.IsNullOrWhiteSpace(typeShapeType))
-                shapeType = typeShapeType;
+            // Use the IfcTypeObject predefined type if the IfcElement predefined type is either null, empty, white space, or not defined.
+            string predefinedType = entity.PredefinedType;
+            if ((string.IsNullOrWhiteSpace(predefinedType) || (string.Compare(predefinedType, "NOTDEFINED", true) == 0)) &&
+                !string.IsNullOrWhiteSpace(typePredefinedType))
+                predefinedType = typePredefinedType;
 
-            // Set "special" shape types 
+            // Set "special" predefined types 
             switch (entityType)
             {
                 case IFCEntityType.IfcColumn:
                 case IFCEntityType.IfcColumnType:
                     if (IsColumnLoadBearing(entity))
-                        shapeType = "[LoadBearing]";
+                        predefinedType = "[LoadBearing]";
                     break;
             }
 
-            ElementId catElemId = GetCategoryElementId(entityType, shapeType);
+            ElementId catElemId = GetCategoryElementId(entityType, predefinedType);
 
             // If we didn't find a category, or if we found the generic model category, try again with the IfcTypeObject, if there is one.
             if (catElemId == ElementId.InvalidElementId || catElemId.IntegerValue == (int)BuiltInCategory.OST_GenericModel)
             {
                 if (typeEntityType.HasValue)
-                    catElemId = GetCategoryElementId(typeEntityType.Value, shapeType);
+                    catElemId = GetCategoryElementId(typeEntityType.Value, predefinedType);
             }
 
             Category subCategory = null;
             if (catElemId.IntegerValue == (int)BuiltInCategory.OST_GenericModel)
             {
                 string subCategoryName = GetCustomCategoryName(entity);
-                if (!string.IsNullOrWhiteSpace(subCategoryName))
-                {
-                    IDictionary<string, Category> createdSubcategories = Importer.TheCache.CreatedSubcategories;
-                    if (!createdSubcategories.TryGetValue(subCategoryName, out subCategory))
-                    {
-                        // Category may have been created by a previous action (probably a previous import).  Look first.
-                        try
-                        {
-                            CategoryNameMap subCategories = Importer.TheCache.GenericModelsCategory.SubCategories;
-                            subCategory = subCategories.get_Item(subCategoryName);
-                        }
-                        catch
-                        {
-                            subCategory = null;
-                        }
 
-                        if (subCategory == null)
-                        {
-                            subCategory = Importer.TheCache.DocumentCategories.NewSubcategory(Importer.TheCache.GenericModelsCategory, subCategoryName);
-                            SetMaterialForSpacesAndOpenings(doc, entity.Id, subCategory, subCategoryName);
-                        }
-                        
-                        createdSubcategories[subCategoryName] = subCategory;
-                    }
-                    
+                subCategory = GetOrCreateSubcategory(doc, entity.Id, subCategoryName);
+                if (subCategory != null)
+                {
                     GraphicsStyle graphicsStyle = subCategory.GetGraphicsStyle(GraphicsStyleType.Projection);
                     if (graphicsStyle != null)
                         gstyleId = graphicsStyle.Id;
@@ -671,10 +718,10 @@ namespace Revit.IFC.Import.Utility
                     entityType != IFCEntityType.IfcElementAssembly)
                 {
                     string msg = "Setting IFC entity ";
-                    if (string.IsNullOrWhiteSpace(shapeType))
+                    if (string.IsNullOrWhiteSpace(predefinedType))
                         msg = entityType.ToString();
                     else
-                        msg = entityType.ToString() + "." + shapeType;
+                        msg = entityType.ToString() + "." + predefinedType;
 
                     if (typeEntityType.HasValue)
                         msg += " (" + typeEntityType.Value.ToString() + ")";
@@ -698,7 +745,7 @@ namespace Revit.IFC.Import.Utility
                 Category parentCategory = categoryToCheck.Parent;
                 if (parentCategory != null)
                     catElemId = parentCategory.Id;
-                
+
                 // Not already set by subcategory.
                 if (gstyleId == ElementId.InvalidElementId)
                 {
@@ -709,6 +756,28 @@ namespace Revit.IFC.Import.Utility
             }
 
             return catElemId;
+        }
+
+        /// <summary>
+        /// Get or create the sub-category for a representation other than the body representation for a particular category.
+        /// </summary>
+        /// <param name="doc">The doument.</param>
+        /// <param name="entityId">The entity id.</param>
+        /// <param name="repId">The representation identifier.</param>
+        /// <param name="category">The top-level category id for the element.</param>
+        /// <returns>The sub-category.  This allows shapes to have their visibility controlled by the sub-category.</param></returns>
+        public static Category GetSubCategoryForRepresentation(Document doc, int entityId, IFCRepresentationIdentifier repId)
+        {
+            if (repId == IFCRepresentationIdentifier.Body || repId == IFCRepresentationIdentifier.Unhandled)
+                throw new InvalidOperationException("Incorrect IFCRepresentationIdentifier: " + repId.ToString());
+
+            Category category = Importer.TheCache.GenericModelsCategory;
+            if (category == null)
+                return null;
+
+            string subCategoryName = repId.ToString();
+            Category subCategory = GetOrCreateSubcategory(doc, entityId, subCategoryName);
+            return subCategory;
         }
     }
 }

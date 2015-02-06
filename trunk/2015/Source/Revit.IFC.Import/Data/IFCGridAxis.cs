@@ -178,6 +178,7 @@ namespace Revit.IFC.Import.Data
             return FindMatchingGrid(otherCurves, id, ref curves, ref curveCount);
         }
 
+        // Revit doesn't allow grid lines to have the same name.  This routine makes a unique variant.
         private string MakeAxisTagUnique(string axisTag)
         {
             // Don't set the name.
@@ -192,11 +193,37 @@ namespace Revit.IFC.Import.Data
                 string uniqueAxisTag = axisTag + "-" + counter;
                 if (!gridAxes.ContainsKey(uniqueAxisTag))
                     return uniqueAxisTag;
+                counter++;
             }
             while (counter < 1000);
 
             // Give up; use default name.
             return null;
+        }
+
+        // This routine should be unnecessary if we called MakeAxisTagUnique correctly, but better to be safe.
+        private void SetAxisTagUnique(Grid grid, string axisTag)
+        {
+            if (grid != null && axisTag != null)
+            {
+                int counter = 1;
+                do
+                {
+                    try
+                    {
+                        grid.Name = (counter == 1) ? axisTag : axisTag + "-" + counter;
+                        break;
+                    }
+                    catch
+                    {
+                        counter++;
+                    }
+                }
+                while (counter < 1000);
+
+                if (counter >= 1000)
+                    IFCImportFile.TheLog.LogWarning(Id, "Couldn't set name: '" + axisTag + "' for Grid, reverting to default.", false);
+            }
         }
 
         /// <summary>
@@ -208,6 +235,8 @@ namespace Revit.IFC.Import.Data
             base.Process(ifcGridAxis);
 
             AxisTag = IFCImportHandleUtil.GetOptionalStringAttribute(ifcGridAxis, "AxisTag", null);
+            if (AxisTag == null)
+                AxisTag = "Z";    // arbitrary; all Revit Grids have names.
 
             IFCAnyHandle axisCurve = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcGridAxis, "AxisCurve", true);
             AxisCurve = IFCCurve.ProcessIFCCurve(axisCurve);
@@ -255,9 +284,29 @@ namespace Revit.IFC.Import.Data
                     DuplicateAxisId = matchingGridId;
                     return;
                 }
+                else
+                {
+                    // Revit doesn't allow grid lines to have the same name.  If it isn't a duplicate, rename it.
+                    // Note that this will mean that we may miss some "duplicate" grid lines because of the renaming.
+                    AxisTag = MakeAxisTagUnique(AxisTag);
+                }
             }
 
             gridAxes.Add(new KeyValuePair<string, IFCGridAxis>(AxisTag, this));
+        }
+
+        private Grid CreateArcGridAxis(Document doc, Arc curve)
+        {
+            if (doc == null || curve == null)
+                return null;
+
+            if (curve.IsBound)
+                return doc.Create.NewGrid(curve);
+
+            // Create almost-closed grid line.
+            Arc copyCurve = curve.Clone() as Arc;
+            copyCurve.MakeBound(0, 2 * Math.PI * (359.0 / 360.0));
+            return doc.Create.NewGrid(copyCurve);
         }
 
         /// <summary>
@@ -274,7 +323,7 @@ namespace Revit.IFC.Import.Data
                     
             if (CreatedElementId != ElementId.InvalidElementId)
                 return;
-            
+
             if (AxisCurve == null)
             {
                 IFCImportFile.TheLog.LogError(Id, "Couldn't find axis curve for grid line, ignoring.", false);
@@ -304,38 +353,34 @@ namespace Revit.IFC.Import.Data
                 return;
             }
 
+            // Grid.create can throw, so catch the exception if it does.
+            try
+            {
             if (curve is Arc)
-                grid = doc.Create.NewGrid(curve as Arc);
+                {
+                    // This will potentially make a small modification in the curve if it is unbounded,
+                    // as Revit doesn't allow unbounded grid lines.
+                    grid = CreateArcGridAxis(doc, curve as Arc);
+                }
             else if (curve is Line)
                 grid = doc.Create.NewGrid(curve as Line);
             else
             {
                 IFCImportFile.TheLog.LogError(AxisCurve.Id, "Couldn't create grid line from curve of type " + curve.GetType().ToString() + ", expected line or arc.", false);
                 IsValidForCreation = false;
+                    return;
             }
+                        }
+            catch (Exception ex)
+                        {
+                IFCImportFile.TheLog.LogError(AxisCurve.Id, ex.Message, false);
+                IsValidForCreation = false;
+                return;
+                        }
 
             if (grid != null)
             {
-                if (AxisTag != null)
-                {
-                    int counter = 1;
-                    do
-                    {
-                        try
-                        {
-                            grid.Name = (counter == 1) ? AxisTag : AxisTag + "-" + counter;
-                            break;
-                        }
-                        catch
-                        {
-                            counter++;
-                        }
-                    }
-                    while (counter < 500);
-
-                    if (counter >= 500)
-                        IFCImportFile.TheLog.LogWarning(Id, "Couldn't set name: '" + AxisTag + "' for Grid, reverting to default.", false);
-                }
+                SetAxisTagUnique(grid, AxisTag);
 
                 CreatedElementId = grid.Id;
             }
@@ -361,8 +406,9 @@ namespace Revit.IFC.Import.Data
                 {
                     gridAxis = new IFCGridAxis(ifcGridAxis);
                 }
-                catch
+                catch (Exception ex)
                 {
+                    IFCImportFile.TheLog.LogError(ifcGridAxis.StepId, ex.Message, false);
                     return null;
                 }
             }

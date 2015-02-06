@@ -55,6 +55,8 @@ namespace Revit.IFC.Import.Utility
 
         private ISet<string> m_ViewScheduleNames = null;
 
+        private ISet<ElementId> m_MaterialsWithNoColor = null;
+
         private string m_OriginalSharedParametersFile = null;
 
         private DefinitionGroup m_DefinitionInstanceGroup = null;
@@ -161,6 +163,19 @@ namespace Revit.IFC.Import.Utility
             }
         }
 
+        /// <summary>
+        /// The set of create schedule names, to prevent duplicates.
+        /// </summary>
+        public ISet<ElementId> MaterialsWithNoColor
+        {
+            get
+            {
+                if (m_MaterialsWithNoColor == null)
+                    m_MaterialsWithNoColor = new HashSet<ElementId>();
+                return m_MaterialsWithNoColor;
+            }
+        }
+        
         /// <summary>
         /// The pointer to the status bar in the running Revit executable, if found.
         /// </summary>

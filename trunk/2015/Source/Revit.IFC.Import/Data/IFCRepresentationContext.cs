@@ -202,9 +202,8 @@ namespace Revit.IFC.Import.Data
 
                     TargetScale = IFCImportHandleUtil.GetOptionalPositiveRatioAttribute(ifcRepresentationContext, "TargetScale", 1.0);
 
-                    string targetViewAsString = IFCAnyHandleUtil.GetEnumerationAttribute(ifcRepresentationContext, "TargetView");
-                    if (!string.IsNullOrWhiteSpace(targetViewAsString))
-                        TargetView = (IFCGeometricProjection)Enum.Parse(typeof(IFCGeometricProjection), targetViewAsString, true);
+                    TargetView = IFCEnums.GetSafeEnumerationAttribute<IFCGeometricProjection>(ifcRepresentationContext, "TargetView", 
+                        IFCGeometricProjection.NotDefined);
 
                     UserDefinedTargetView = IFCImportHandleUtil.GetOptionalStringAttribute(ifcRepresentationContext, "UserDefinedTargetView", null);
                 }

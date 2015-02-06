@@ -123,7 +123,10 @@ namespace Revit.IFC.Import.Data
                 
                 // If we can't create the outer face boundary, we will abort the creation of this face.  In that case, return.
                 if (!shapeEditScope.HaveActiveFace())
+                {
+                    shapeEditScope.AbortCurrentFace();
                     return;
+                }
             }
             shapeEditScope.StopCollectingFace();
         }

@@ -62,14 +62,7 @@ namespace Revit.IFC.Import.Data
         {
             base.Process(profileDef);
 
-            string profileTypeAsString = IFCAnyHandleUtil.GetEnumerationAttribute(profileDef, "ProfileType");
-            if (profileTypeAsString == null)
-            {
-                ProfileType = IFCProfileType.Area;
-                IFCImportFile.TheLog.LogWarning(profileDef.StepId, "No profile type defined, defaulting to Area.", false);
-            }
-            else
-                ProfileType = (IFCProfileType)Enum.Parse(typeof(IFCProfileType), profileTypeAsString, true);
+            ProfileType = IFCEnums.GetSafeEnumerationAttribute<IFCProfileType>(profileDef, "ProfileType", IFCProfileType.Area);
 
             ProfileName = IFCAnyHandleUtil.GetStringAttribute(profileDef, "ProfileName");
         }

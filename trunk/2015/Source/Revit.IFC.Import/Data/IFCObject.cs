@@ -35,11 +35,61 @@ namespace Revit.IFC.Import.Data
     /// </summary>
     public abstract class IFCObject : IFCObjectDefinition
     {
+        /// <summary>
+        /// Store the entity types of elements that have no predefined type.
+        /// </summary>
+        private static HashSet<IFCEntityType> m_sNoPredefinedType = null;
+
+        private static HashSet<IFCEntityType> m_sPredefinedTypePreIFC4 = null;
+
         private string m_ObjectType = null;
 
         private IDictionary<string, IFCPropertySetDefinition> m_IFCPropertySets = null;
 
         private HashSet<IFCTypeObject> m_IFCTypeObjects = null;
+
+        private static bool HasPredefinedType(IFCEntityType type)
+        {
+            // These entities have no predefined type field.
+            if (m_sNoPredefinedType == null)
+            {
+                m_sNoPredefinedType = new HashSet<IFCEntityType>();
+                m_sNoPredefinedType.Add(IFCEntityType.IfcProject);
+                m_sNoPredefinedType.Add(IFCEntityType.IfcSite);
+                m_sNoPredefinedType.Add(IFCEntityType.IfcBuilding);
+                m_sNoPredefinedType.Add(IFCEntityType.IfcBuildingStorey);
+                m_sNoPredefinedType.Add(IFCEntityType.IfcGroup);
+                m_sNoPredefinedType.Add(IFCEntityType.IfcSystem);
+            }
+
+            if (m_sNoPredefinedType.Contains(type))
+                return false;
+
+            if (IFCImportFile.TheFile.SchemaVersion < IFCSchemaVersion.IFC4)
+            {
+                // Before IFC4, these are the only objects that have a predefined type that we support.
+                // Note that this is just a list of entity types that are dealt with generically; other types may override the base function.
+                if (m_sPredefinedTypePreIFC4 == null)
+                {
+                    m_sPredefinedTypePreIFC4 = new HashSet<IFCEntityType>();
+                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcCovering);
+                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcDistributionPort);
+                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcFooting);
+                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcPile);
+                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcRailing);
+                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcRamp);
+                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcRoof);
+                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcSlab);
+                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcStair);
+                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcTendon);
+                }
+
+                if (!m_sPredefinedTypePreIFC4.Contains(type))
+                    return false;
+            }
+
+            return true;
+        }
 
         /// <summary>
         /// The object type.
@@ -100,22 +150,24 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
-        /// Gets the shape type from the IfcObject, depending on the file version and entity type.
+        /// Gets the predefined type from the IfcObject, depending on the file version and entity type.
         /// </summary>
         /// <param name="ifcObjectDefinition">The associated handle.</param>
-        /// <returns>The shape type, if any.</returns>
-        protected override string GetShapeType(IFCAnyHandle ifcObjectDefinition)
+        /// <returns>The predefined type, if any.</returns>
+        /// <remarks>Some entities use other fields as predefined type, including IfcDistributionPort ("FlowDirection") and IfcSpace (pre-IFC4).</remarks>
+        protected override string GetPredefinedType(IFCAnyHandle ifcObjectDefinition)
         {
-            string shapeTypeName = "PredefinedType";
-
-            // Not all entity types have any predefined type; for IFC2x3, some have a "ShapeType" instead of a "PredefinedType".
-            if ((EntityType == IFCEntityType.IfcProject) ||
-                (EntityType == IFCEntityType.IfcSite) ||
-                (EntityType == IFCEntityType.IfcBuilding) ||
-                (EntityType == IFCEntityType.IfcBuildingStorey))
+            // Not all entity types have any predefined type; check against a hard-coded list here.
+            if (!HasPredefinedType(EntityType))
                 return null;
 
-            if (IFCImportFile.TheFile.SchemaVersion < IFCSchemaVersion.IFC4)
+            // "PredefinedType" is the default name of the field.
+            // For IFC2x3, some entities have a "ShapeType" instead of a "PredefinedType", which we will check below.
+            string predefinedTypeName = "PredefinedType";
+
+            if (EntityType == IFCEntityType.IfcDistributionPort)
+                predefinedTypeName = "FlowDirection";
+            else if (IFCImportFile.TheFile.SchemaVersion < IFCSchemaVersion.IFC4)
             {
                 // The following have "PredefinedType", but are out of scope for now:
                 // IfcCostSchedule, IfcOccupant, IfcProjectOrder, IfcProjectOrderRecord, IfcServiceLifeFactor
@@ -123,20 +175,12 @@ namespace Revit.IFC.Import.Data
                 if ((EntityType == IFCEntityType.IfcRamp) ||
                     (EntityType == IFCEntityType.IfcRoof) ||
                     (EntityType == IFCEntityType.IfcStair))
-                    shapeTypeName = "ShapeType";
-                else if ((EntityType != IFCEntityType.IfcCovering) &&
-                    (EntityType != IFCEntityType.IfcElementAssembly) &&
-                    (EntityType != IFCEntityType.IfcFooting) &&
-                    (EntityType != IFCEntityType.IfcPile) &&
-                    (EntityType != IFCEntityType.IfcRailing) &&
-                    (EntityType != IFCEntityType.IfcSlab) &&
-                    (EntityType != IFCEntityType.IfcTendon))
-                    return null;
+                    predefinedTypeName = "ShapeType";
             }
 
             try
             {
-                return IFCAnyHandleUtil.GetEnumerationAttribute(ifcObjectDefinition, shapeTypeName);
+                return IFCAnyHandleUtil.GetEnumerationAttribute(ifcObjectDefinition, predefinedTypeName);
             }
             catch
             {
@@ -196,9 +240,11 @@ namespace Revit.IFC.Import.Data
             if (ifcPropertySet != null)
             {
                 int propertySetNumber = 1;
+                string propertySetName = ifcPropertySet.Name;
+
                 while (true)
                 {
-                    string name = (propertySetNumber == 1) ? ifcPropertySet.Name : ifcPropertySet.Name + " " + propertySetNumber.ToString();
+                    string name = (propertySetNumber == 1) ? propertySetName : propertySetName + " " + propertySetNumber.ToString();
                     if (PropertySets.ContainsKey(name))
                         propertySetNumber++;
                     else

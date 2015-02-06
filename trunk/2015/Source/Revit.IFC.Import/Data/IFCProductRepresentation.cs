@@ -118,7 +118,7 @@ namespace Revit.IFC.Import.Data
                         IFCRepresentation representation = IFCRepresentation.ProcessIFCRepresentation(representationHnd);
                         if (representation != null)
                         {
-                            if (representation.RepresentationItems.Count > 0)
+                            if (representation.RepresentationItems.Count > 0 || representation.BoundingBox != null)
                                 Representations.Add(representation);
                         }
                     }
@@ -166,9 +166,42 @@ namespace Revit.IFC.Import.Data
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         public void CreateProductRepresentation(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            // TODO: separate representations.
+            // Partially sort the representations so that we create: Body, Box, then the rest of the representations in that order.
+            // This allows us to skip Box representations if any of the Body representations create 3D geometry.  Until we have UI in place, 
+            // this will disable creating extra 3D (bounding box) geometry that clutters the display, is only marginally useful and is hard to turn off.
+            List<IFCRepresentation> sortedReps = new List<IFCRepresentation>(); // Double usage as body rep list.
+            IList<IFCRepresentation> boxReps = new List<IFCRepresentation>();
+            IList<IFCRepresentation> otherReps = new List<IFCRepresentation>();
+            
             foreach (IFCRepresentation representation in Representations)
             {
+                switch (representation.Identifier)
+                {
+                    case IFCRepresentationIdentifier.Body:
+                        sortedReps.Add(representation);
+                        break;
+                    case IFCRepresentationIdentifier.Box:
+                        boxReps.Add(representation);
+                        break;
+                    default:
+                        otherReps.Add(representation);
+                        break;
+                }
+            }
+
+            // Add back the other representations.
+            sortedReps.AddRange(boxReps);
+            sortedReps.AddRange(otherReps);
+
+            foreach (IFCRepresentation representation in sortedReps)
+            {
+                // Since we process all Body representations first, the misnamed "Solids" field will contain Solids and Meshes only (that is, only 3D geometry).
+                // If this isn't empty, then we'll skip the bounding box.  Note that we process Axis representations later since they create model geometry also,
+                // but we don't consider 2D geometry in our decision to import bounding boxes.  Note also that we will only read in the first bounding box, which
+                // is the maximum of Box representations allowed.
+                if ((representation.Identifier == IFCRepresentationIdentifier.Box) && shapeEditScope.Creator.Solids.Count > 0)
+                    continue;
+            
                 representation.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
             }
         }

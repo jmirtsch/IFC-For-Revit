@@ -154,7 +154,7 @@ namespace Revit.IFC.Import.Data
         /// to be used by derived classes.</remarks>
         public override bool? MaybeEquivalentTo(IFCEntity otherEntity)
         {
-            bool? maybeEquivalentTo = MaybeEquivalentTo(otherEntity);
+            bool? maybeEquivalentTo = base.MaybeEquivalentTo(otherEntity);
             if (maybeEquivalentTo.HasValue)
                 return maybeEquivalentTo.Value;
 

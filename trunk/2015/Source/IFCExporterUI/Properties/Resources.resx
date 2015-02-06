@@ -597,4 +597,10 @@
   <data name="SaveSetupAndClose" xml:space="preserve">
     <value>Save Setup &amp;amp; Close</value>
   </data>
+  <data name="General" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="ExportRoomsInView" xml:space="preserve">
+    <value>Export rooms in 3D views</value>
+  </data>
 </root>

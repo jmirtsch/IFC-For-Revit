@@ -212,7 +212,7 @@ namespace Revit.IFC.Import.Data
                 {
                     using (IFCImportShapeEditScope shapeEditScope = IFCImportShapeEditScope.Create(doc, this))
                     {
-                        shapeEditScope.GraphicsStyleId = m_GraphicsStyleId;
+                        shapeEditScope.GraphicsStyleId = GraphicsStyleId;
                         shapeEditScope.CategoryId = CategoryId;
 
                         // The name can be added as well. but it is usually less useful than 'oid'
@@ -257,11 +257,14 @@ namespace Revit.IFC.Import.Data
                             // Attempt to cut each solid with each void.
                             for (int solidIdx = 0; solidIdx < numSolids; solidIdx++)
                             {
+                                // We only cut body representation items.
+                                if (Solids[solidIdx].RepresentationType != IFCRepresentationIdentifier.Body)
+                                    continue;
+
                                 if (!(Solids[solidIdx].GeometryObject is Solid))
                                 {
-                                    // Assume that we only deal with solids, meshes and instances.
                                     string typeName = (Solids[solidIdx].GeometryObject is Mesh) ? "mesh" : "instance";
-                                    IFCImportFile.TheLog.LogError(Id, "Can't cut " +  typeName + " geometry, ignoring " + numVoids + " void(s).", false);
+                                    IFCImportFile.TheLog.LogError(Id, "Can't cut " + typeName + " geometry, ignoring " + numVoids + " void(s).", false);
                                     continue;
                                 }
 
@@ -299,7 +302,7 @@ namespace Revit.IFC.Import.Data
                                 DirectShape shape = Importer.TheCache.UseElementByGUID<DirectShape>(doc, GlobalId);
 
                                 if (shape == null)
-                                    shape = IFCElementUtil.CreateElement(doc, CategoryId, Importer.ImportAppGUID(), GlobalId);
+                                    shape = IFCElementUtil.CreateElement(doc, CategoryId, GlobalId, null);
 
                                 List<GeometryObject> directShapeGeometries = new List<GeometryObject>();
                                 foreach (IFCSolidInfo geometryObject in Solids)
@@ -339,7 +342,9 @@ namespace Revit.IFC.Import.Data
                                     shape.SetTypeId(typeId);
 
                                 PresentationLayerNames.UnionWith(shapeEditScope.PresentationLayerNames);
-                                m_CreatedElementId = shape.Id;
+
+                                CreatedElementId = shape.Id;
+                                CreatedGeometry = directShapeGeometries;
                             }
                         }
                     }
@@ -358,11 +363,15 @@ namespace Revit.IFC.Import.Data
         {
             base.CleanEntity();
 
-            ObjectLocation = null;
+            // Save the IFCSpace information for zone creation.
+            if (!(this is IFCSpace))
+            {
+                ObjectLocation = null;
 
-            m_ProductRepresentation = null;
+                m_ProductRepresentation = null;
 
-            m_Solids = null;
+                m_Solids = null;
+            }
 
             m_Voids = null;
         }

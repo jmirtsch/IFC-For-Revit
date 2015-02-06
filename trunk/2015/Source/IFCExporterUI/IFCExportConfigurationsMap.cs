@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC export alternate UI library: this library works with Autodesk(R) Revit(R) to provide an alternate user interface for the export of IFC files from Revit.
-// Copyright (C) 2012  Autodesk, Inc.
+// Copyright (C) 2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -75,6 +75,10 @@ namespace BIM.IFC.Export.UI
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x2 Singapore BCA e-Plan Check", IFCVersion.IFCBCA, 1, false, true, true, false, false, false, false, false));
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC4 Basic Coordination View 2.0", IFCVersion.IFC4, 0, false, false, false, false, false, false, false, false));
             Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 Extended FM Handover View", IFCVersion.IFC2x3, 1, true, false, false, true, true, true, true, false));
+            Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC4 Reference View", IFCVersion.IFC4, 0, false, false, false, false, false, false, false, false));
+            
+            // TODO: To be added in a future release.
+            //Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC4 Design Transfer View", IFCVersion.IFC4, 0, false, false, false, false, false, false, false, false));
         }
 
         /// <summary>
@@ -146,7 +150,8 @@ namespace BIM.IFC.Export.UI
                             configuration.UseCoarseTessellation = bool.Parse(configMap[s_setupUseCoarseTessellation]);
                         if (configMap.ContainsKey(s_setupStoreIFCGUID))
                             configuration.StoreIFCGUID = bool.Parse(configMap[s_setupStoreIFCGUID]);
-
+                        if (configMap.ContainsKey(s_setupExportRoomsInView))
+                            configuration.ExportRoomsInView = bool.Parse(configMap[s_setupExportRoomsInView]);
                         Add(configuration);
                     }
                     return; // if finds the config in map schema, return and skip finding the old schema.
@@ -207,6 +212,9 @@ namespace BIM.IFC.Export.UI
                         if (fieldActivePhase != null)
                             configuration.ActivePhaseId = new ElementId(int.Parse(configEntity.Get<string>(s_setupActivePhase)));
 
+                        Field fieldExportRoomsInView = m_schema.GetField(s_setupExportRoomsInView);
+                        if (fieldExportRoomsInView != null)
+                            configuration.ExportRoomsInView = configEntity.Get<bool>(s_setupExportRoomsInView);
                         Add(configuration);
                     }
                 }
@@ -245,7 +253,7 @@ namespace BIM.IFC.Export.UI
         private const String s_setupUseCoarseTessellation = "UseCoarseTessellation";
         private const String s_setupStoreIFCGUID = "StoreIFCGUID";
         private const String s_setupActivePhase = "ActivePhase";
-        
+        private const String s_setupExportRoomsInView = "ExportRoomsInView";
         /// <summary>
         /// Updates the setups to save into the document.
         /// </summary>
@@ -365,6 +373,9 @@ namespace BIM.IFC.Export.UI
                    mapData.Add(s_setupUseCoarseTessellation, configuration.UseCoarseTessellation.ToString());
                    mapData.Add(s_setupStoreIFCGUID, configuration.StoreIFCGUID.ToString());
                    mapData.Add(s_setupActivePhase, configuration.ActivePhaseId.ToString());
+
+                   mapData.Add(s_setupExportRoomsInView, configuration.ExportRoomsInView.ToString());
+
                    mapEntity.Set<IDictionary<string, String>>(s_configMapField, mapData);
 
                    configStorage.SetEntity(mapEntity);

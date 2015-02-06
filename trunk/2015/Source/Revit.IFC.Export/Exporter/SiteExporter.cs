@@ -75,7 +75,7 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="productWrapper">The ProductWrapper.</param>
         private static void ExportSiteBase(ExporterIFC exporterIFC, Document document, Element element, GeometryElement geometryElement, ProductWrapper productWrapper)
         {
-            IFCAnyHandle siteHandle = exporterIFC.GetSite();
+            IFCAnyHandle siteHandle = ExporterCacheManager.SiteHandle;
 
             int numSiteElements = (!IFCAnyHandleUtil.IsNullOrHasNoValue(siteHandle) ? 1 : 0);
             if (element == null && (numSiteElements != 0))
@@ -141,7 +141,7 @@ namespace Revit.IFC.Export.Exporter
                     double latitudeInDeg = projLocation.SiteLocation.Latitude * scaleToDegrees;
                     double longitudeInDeg = projLocation.SiteLocation.Longitude * scaleToDegrees;
 
-                    ExporterUtil.GetSafeProjectPositionAngle(doc, out unscaledElevation);
+                    ExporterUtil.GetSafeProjectPositionElevation(doc, out unscaledElevation);
             
                     int latDeg = ((int)latitudeInDeg); latitudeInDeg -= latDeg; latitudeInDeg *= 60;
                     int latMin = ((int)latitudeInDeg); latitudeInDeg -= latMin; latitudeInDeg *= 60;
@@ -236,7 +236,7 @@ namespace Revit.IFC.Export.Exporter
                     siteHandle = IFCInstanceExporter.CreateSite(file, siteGUID, ownerHistory, siteName, siteDescription, siteObjectType, localPlacement,
                        siteRepresentation, siteLongName, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, siteLandTitleNumber, null);
                     productWrapper.AddSite(mainSiteElement, siteHandle);
-                    exporterIFC.SetSite(siteHandle);
+                    ExporterCacheManager.SiteHandle = siteHandle;
                 }
 
 

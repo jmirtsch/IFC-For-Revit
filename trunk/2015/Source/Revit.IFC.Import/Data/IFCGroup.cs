@@ -33,16 +33,17 @@ namespace Revit.IFC.Import.Data
     /// </summary>
     public class IFCGroup : IFCObject
     {
-        protected ICollection<IFCObjectDefinition> m_IFCRelatedObjects;
+        protected ICollection<IFCObjectDefinition> m_IFCRelatedObjects = null;
 
-        protected string m_RelatedObjectType;
+        protected string m_RelatedObjectType = null;
 
         /// <summary>
         /// The related object type.
         /// </summary>
         public string RelatedObjectType
         {
-            get { return m_RelatedObjectType;}
+            get { return m_RelatedObjectType; }
+            protected set { m_RelatedObjectType = value; }
         }
 
         /// <summary>
@@ -50,7 +51,13 @@ namespace Revit.IFC.Import.Data
         /// </summary>
         public ICollection<IFCObjectDefinition> RelatedObjects
         {
-            get { return m_IFCRelatedObjects; }
+            get 
+            {
+                if (m_IFCRelatedObjects == null)
+                    m_IFCRelatedObjects = new HashSet<IFCObjectDefinition>();
+                return m_IFCRelatedObjects; 
+            }
+            protected set { m_IFCRelatedObjects = value; }
         }
 
         /// <summary>
@@ -82,10 +89,8 @@ namespace Revit.IFC.Import.Data
         /// <param name="isGroupedBy">The IfcRelAssignsToGroup handle.</param>
         void ProcessIFCRelAssignsToGroup(IFCAnyHandle isGroupedBy)
         {
-            m_RelatedObjectType = ProcessIFCRelation.ProcessRelatedObjectType(isGroupedBy);
-            // We will not process the related objects here, as that could cause infinite loops of partially processed items.
-            // Instead, items will add themselves to their groups as they are processed.
-            m_IFCRelatedObjects = new HashSet<IFCObjectDefinition>(); // ProcessIFCRelation.ProcessRelatedObjects(isGroupedBy);
+            RelatedObjectType = ProcessIFCRelation.ProcessRelatedObjectType(isGroupedBy);
+            RelatedObjects = ProcessIFCRelation.ProcessRelatedObjects(this, isGroupedBy);
         }
 
         /// <summary>
@@ -105,6 +110,11 @@ namespace Revit.IFC.Import.Data
             IFCImportFile.TheFile.EntityMap.TryGetValue(ifcGroup.StepId, out cachedIFCGroup);
             if (cachedIFCGroup != null)
                 return cachedIFCGroup as IFCGroup;
+
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcGroup, IFCEntityType.IfcZone))
+                return IFCZone.ProcessIFCZone(ifcGroup);
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcGroup, IFCEntityType.IfcSystem))
+                return IFCSystem.ProcessIFCSystem(ifcGroup);
 
             return new IFCGroup(ifcGroup);
         }
