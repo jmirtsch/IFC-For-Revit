@@ -45,16 +45,39 @@ namespace Revit.IFC.Export.Exporter
         HashSet<IFCAnyHandle> m_Facets = null;
         
         /// <summary>
-        /// True if it is a simple extrusion, false if it is a simple swept solid.
+        /// Enumeration value of the representation type used by SweptSolidExporter in its final form
         /// </summary>
-        bool m_IsExtrusion = false;
+        ShapeRepresentationType m_RepresentationType = ShapeRepresentationType.Undefined;
 
         /// <summary>
-        /// True if it is a simple extrusion, false if it is a simple swept solid.
+        /// Return the enum of Representation type being used
         /// </summary>
-        public bool IsExtrusion
+        public ShapeRepresentationType RepresentationType
         {
-            get { return m_IsExtrusion; }
+            get { return m_RepresentationType; }
+            protected set { m_RepresentationType = value; }
+        }
+
+        /// <summary>
+        /// Check whether the representation type used is of a specific type
+        /// </summary>
+        /// <param name="repType">the enum value that needs to be cchecked/compared to</param>
+        /// <returns>true/false</returns>
+        public bool isSpecificRepresentationType(ShapeRepresentationType repType)
+        {
+            return (repType == m_RepresentationType);
+        }
+        
+        /// <summary>
+        /// Check whether the representation type used is of a specific type but with string value (of the enum) as an input
+        /// </summary>
+        /// <param name="repTypeStr">the string value of the enum to be checked/compared to</param>
+        /// <returns>true/false</returns>
+        public bool isSpecificRepresentationType (string repTypeStr)
+        {
+            ShapeRepresentationType inputEnum;
+            Enum.TryParse(repTypeStr, out inputEnum);
+            return (inputEnum == m_RepresentationType);
         }
 
         /// <summary>
@@ -63,6 +86,7 @@ namespace Revit.IFC.Export.Exporter
         public IFCAnyHandle RepresentationItem
         {
             get { return m_RepresentationItem; }
+            protected set { m_RepresentationItem = value; }
         }
 
         /// <summary>
@@ -71,6 +95,7 @@ namespace Revit.IFC.Export.Exporter
         public HashSet<IFCAnyHandle> Facets
         {
             get { return m_Facets; }
+            protected set { m_Facets = value; }
         }
 
         /// <summary>
@@ -109,7 +134,7 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="solid">The solid.</param>
         /// <param name="normal">The normal of the plane that the path lies on.</param>
         /// <returns>The SweptSolidExporter.</returns>
-        public static SweptSolidExporter Create(ExporterIFC exporterIFC, Element element, SimpleSweptSolidAnalyzer sweptAnalyzer)
+        public static SweptSolidExporter Create(ExporterIFC exporterIFC, Element element, SimpleSweptSolidAnalyzer sweptAnalyzer, GeometryObject geomObject)
         {
             try
             {
@@ -139,18 +164,35 @@ namespace Revit.IFC.Export.Exporter
                         return null;
 
                     sweptSolidExporter = new SweptSolidExporter();
-                    sweptSolidExporter.m_IsExtrusion = true;
+                    sweptSolidExporter.RepresentationType = ShapeRepresentationType.SweptSolid;
                     Plane plane = new Plane(sweptAnalyzer.ProfileFace.Normal, sweptAnalyzer.ProfileFace.Origin);
-                    sweptSolidExporter.m_RepresentationItem = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, profileName, faceBoundaries, plane,
+                    sweptSolidExporter.RepresentationItem = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, profileName, faceBoundaries, plane,
                         line.Direction, UnitUtil.ScaleLength(line.Length));
                 }
                 else
                 {
                     sweptSolidExporter = new SweptSolidExporter();
                     if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-                        sweptSolidExporter.m_RepresentationItem = CreateSimpleSweptSolid(exporterIFC, profileName, faceBoundaries, sweptAnalyzer.ReferencePlaneNormal, sweptAnalyzer.PathCurve);
+                    {
+                        // Use tessellated geometry in IFC Reference View
+                        if (ExporterUtil.IsReferenceView())
+                        {
+                            // TODO: Create CreateSimpleSweptSolidAsTessellation routine that takes advantage of the superior tessellation of this class.
+                            BodyExporterOptions options = new BodyExporterOptions(false);
+                            sweptSolidExporter.RepresentationItem = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, element, options, geomObject);
+                            sweptSolidExporter.RepresentationType = ShapeRepresentationType.Tessellation;
+                        }
+                        else
+                        {
+                            sweptSolidExporter.RepresentationItem = CreateSimpleSweptSolid(exporterIFC, profileName, faceBoundaries, sweptAnalyzer.ReferencePlaneNormal, sweptAnalyzer.PathCurve);
+                            sweptSolidExporter.RepresentationType = ShapeRepresentationType.AdvancedSweptSolid;
+                        }
+                    }
                     else
-                        sweptSolidExporter.m_Facets = CreateSimpleSweptSolidAsBRep(exporterIFC, profileName, faceBoundaries, sweptAnalyzer.ReferencePlaneNormal, sweptAnalyzer.PathCurve);
+                    {
+                        sweptSolidExporter.Facets = CreateSimpleSweptSolidAsBRep(exporterIFC, profileName, faceBoundaries, sweptAnalyzer.ReferencePlaneNormal, sweptAnalyzer.PathCurve);
+                        sweptSolidExporter.RepresentationType = ShapeRepresentationType.Brep;
+                    }
                 }
                 return sweptSolidExporter;
             }
@@ -335,9 +377,9 @@ namespace Revit.IFC.Export.Exporter
 
         private static IList<double> CreateRoughParametricTessellation(Curve curve)
         {
-            IList<XYZ> originalTesselation = curve.Tessellate();
+            IList<XYZ> originalTessellation = curve.Tessellate();
 
-            int numPoints = originalTesselation.Count;
+            int numPoints = originalTessellation.Count;
             int numTargetPoints = Math.Min(numPoints, 12);
             int numInteriorPoints = numTargetPoints - 2;
 
@@ -348,12 +390,12 @@ namespace Revit.IFC.Export.Exporter
 
             for (int ii = 0; ii < numInteriorPoints; ii++)
             {
-                XYZ initialPoint = originalTesselation[(int)(numPoints - 2) * (ii + 1) / numInteriorPoints];
+                XYZ initialPoint = originalTessellation[(int)(numPoints - 2) * (ii + 1) / numInteriorPoints];
                 result = curve.Project(initialPoint);
                 roughTessellation.Add(result.Parameter);
             }
 
-            XYZ finalPoint = originalTesselation[numPoints - 1];
+            XYZ finalPoint = originalTessellation[numPoints - 1];
             result = curve.Project(finalPoint);
             roughTessellation.Add(result.Parameter);
 
@@ -362,9 +404,9 @@ namespace Revit.IFC.Export.Exporter
 
         private static IList<XYZ> CreateRoughTessellation(ExporterIFC exporterIFC, Curve curve)
         {
-            IList<XYZ> originalTesselation = curve.Tessellate();
+            IList<XYZ> originalTessellation = curve.Tessellate();
 
-            int numPoints = originalTesselation.Count;
+            int numPoints = originalTessellation.Count;
             int numTargetPoints = Math.Min(numPoints, 12);
             int numInteriorPoints = numTargetPoints - 2;
 
@@ -372,10 +414,10 @@ namespace Revit.IFC.Export.Exporter
 
             // Always add the first point, scaled; then add approximately equally spaced interior points.   Never add the last point
             // As this should be part of a closed curve loop.
-            AddScaledPointToList(exporterIFC, roughTessellation, originalTesselation[0]);
+            AddScaledPointToList(exporterIFC, roughTessellation, originalTessellation[0]);
             for (int ii = 0; ii < numInteriorPoints; ii++)
             {
-                AddScaledPointToList(exporterIFC, roughTessellation, originalTesselation[(int)(numPoints - 2) * (ii + 1) / numInteriorPoints]);
+                AddScaledPointToList(exporterIFC, roughTessellation, originalTessellation[(int)(numPoints - 2) * (ii + 1) / numInteriorPoints]);
             }
 
             return roughTessellation;

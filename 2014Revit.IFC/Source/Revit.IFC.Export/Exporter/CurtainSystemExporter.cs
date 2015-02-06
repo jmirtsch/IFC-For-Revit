@@ -195,8 +195,9 @@ namespace Revit.IFC.Export.Exporter
 
             // Want to make sure we don't accidentally add a mullion or curtain line more than once.
             HashSet<ElementId> alreadyVisited = new HashSet<ElementId>();
-
+            bool useFallbackBREP = true;
             Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
+
             foreach (ElementId subElemId in allSubElements)
             {
                 Element subElem = wallElement.Document.GetElement(subElemId);
@@ -208,19 +209,55 @@ namespace Revit.IFC.Export.Exporter
                     continue;
                 alreadyVisited.Add(subElem.Id);
 
-                ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, geomElem, XYZ.Zero, false);
-                HashSet<IFCAnyHandle> faces = new HashSet<IFCAnyHandle>(info.GetSurfaces());
-                IFCAnyHandle outer = IFCInstanceExporter.CreateClosedShell(file, faces);
 
-                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(outer))
-                    bodyItems.Add(RepresentationUtil.CreateFacetedBRep(exporterIFC, document, outer, ElementId.InvalidElementId));
+                // Export tessellated geometry when IFC4 Reference View is selected
+                if (ExporterUtil.IsReferenceView())
+                {
+                    BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(false);
+                    IFCAnyHandle triFaceSet = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, subElem, bodyExporterOptions, geomElem);
+                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(triFaceSet))
+                    {
+                        bodyItems.Add(triFaceSet);
+                        useFallbackBREP = false;    // no need to do Brep since it is successful
+                    }
+                }
+                // Export AdvancedFace before use fallback BREP
+                else if (ExporterUtil.IsDesignTransferView())
+                {
+                    BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(false);
+                    IFCAnyHandle advancedBRep = BodyExporter.ExportBodyAsAdvancedBrep(exporterIFC, subElem, bodyExporterOptions, geomElem);
+                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(advancedBRep))
+                    {
+                        bodyItems.Add(advancedBRep);
+                        useFallbackBREP = false;    // no need to do Brep since it is successful
+                    }
+                }
+
+                if (useFallbackBREP)
+                {
+                    ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, geomElem, XYZ.Zero, false);
+                    HashSet<IFCAnyHandle> faces = new HashSet<IFCAnyHandle>(info.GetSurfaces());
+                    IFCAnyHandle outer = IFCInstanceExporter.CreateClosedShell(file, faces);
+
+                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(outer))
+                        bodyItems.Add(RepresentationUtil.CreateFacetedBRep(exporterIFC, document, outer, ElementId.InvalidElementId));
+                }
             }
 
             if (bodyItems.Count == 0)
                 return prodDefRep;
 
             ElementId catId = CategoryUtil.GetSafeCategoryId(wallElement);
-            IFCAnyHandle shapeRep = RepresentationUtil.CreateBRepRep(exporterIFC, wallElement, catId, contextOfItems, bodyItems);
+            IFCAnyHandle shapeRep;
+
+            // Use tessellated geometry in Reference View
+            if (ExporterUtil.IsReferenceView() && !useFallbackBREP)
+                shapeRep = RepresentationUtil.CreateTessellatedRep(exporterIFC, wallElement, catId, contextOfItems, bodyItems, null);
+            else if (ExporterUtil.IsDesignTransferView() && !useFallbackBREP)
+                shapeRep = RepresentationUtil.CreateAdvancedBRepRep(exporterIFC, wallElement, catId, contextOfItems, bodyItems, null);
+            else
+                shapeRep = RepresentationUtil.CreateBRepRep(exporterIFC, wallElement, catId, contextOfItems, bodyItems);
+
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(shapeRep))
                 return prodDefRep;
 

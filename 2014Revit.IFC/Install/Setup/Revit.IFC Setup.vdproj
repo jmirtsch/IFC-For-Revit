@@ -40,13 +40,13 @@
         "Entry"
         {
         "MsmKey" = "8:_20E197C9734A20A89C5C2F23294E07AE"
-        "OwnerKey" = "8:_5A0D72FD96E1A13E10CC6F43FBF48065"
+        "OwnerKey" = "8:_BE34A6CB0F1AF71FC2124F174562E0A0"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_20E197C9734A20A89C5C2F23294E07AE"
-        "OwnerKey" = "8:_BE34A6CB0F1AF71FC2124F174562E0A0"
+        "OwnerKey" = "8:_5A0D72FD96E1A13E10CC6F43FBF48065"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -130,13 +130,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_5A0D72FD96E1A13E10CC6F43FBF48065"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_BE34A6CB0F1AF71FC2124F174562E0A0"
+        "OwnerKey" = "8:_26B3CB929C9D7B39E498142C4B22B974"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -148,7 +142,13 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_26B3CB929C9D7B39E498142C4B22B974"
+        "OwnerKey" = "8:_BE34A6CB0F1AF71FC2124F174562E0A0"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_5A0D72FD96E1A13E10CC6F43FBF48065"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -728,15 +728,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:IFC Exporter for Revit 2014"
-        "ProductCode" = "8:{93089FA5-10A4-4ADF-9ACE-909BE545F99F}"
-        "PackageCode" = "8:{3E39B2FD-4712-4462-BD75-5BDAF39A0FA8}"
+        "ProductCode" = "8:{43AAD308-4267-4432-9BDB-9CF01F566E07}"
+        "PackageCode" = "8:{C8F2012A-9BBB-4DF5-97A7-4073448CF956}"
         "UpgradeCode" = "8:{0520EC24-9B8C-4F18-82E6-93F13FD0089F}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:3.12.0"
+        "ProductVersion" = "8:3.13.0"
         "Manufacturer" = "8:IFC Exporter for Revit"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:http://sourceforge.net/projects/ifcexporter/"

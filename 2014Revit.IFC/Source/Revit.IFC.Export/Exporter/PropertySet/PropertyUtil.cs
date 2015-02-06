@@ -2383,7 +2383,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="elemHandle">The element handle.</param>
         /// <param name="element">The beam or column element.</param>
         /// <param name="typeInfo">The FamilyTypeInfo containing the appropriate data.</param>
-        public static void CreateBeamColumnBaseQuantities(ExporterIFC exporterIFC, IFCAnyHandle elemHandle, Element element, FamilyTypeInfo typeInfo)
+        /// <param name="geomObjects">The list of geometries for the exported column only, used if split walls and columns is set.</param>
+        /// <remarks>The geomObjects is used if we have the split by level option.  It is intended only for columns, as beams and members are not split by level.  
+        /// In this case, we use the solids in the list to determine the real volume of the exported objects. If the list contains meshes, we won't export the volume at all.</remarks>
+        public static void CreateBeamColumnBaseQuantities(ExporterIFC exporterIFC, IFCAnyHandle elemHandle, Element element, FamilyTypeInfo typeInfo, IList<GeometryObject> geomObjects)
         {
             // Make sure QTO export is enabled.
             if (!ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities || (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE))
@@ -2429,19 +2432,38 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             double volume = 0.0;
             if (element != null)
             {
+                // If we are splitting columns, we will look at the actual geometry used when exporting this segment
+                // of the column, but only if we have the geomObjects passed in.
+                if (geomObjects != null && ExporterCacheManager.ExportOptionsCache.WallAndColumnSplitting)
+                {
+                    foreach (GeometryObject geomObj in geomObjects)
+                    {
+                        // We don't suport calculating the volume of Meshes at this time.
+                        if (geomObj is Mesh)
+                        {
+                            volume = 0.0;
+                            break;
+                        }
 
-                ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.HOST_VOLUME_COMPUTED, out volume);
-                volume = UnitUtil.ScaleArea(volume);
+                        if (geomObj is Solid)
+                            volume += (geomObj as Solid).Volume;
+                    }
+                }
+                else
+                    ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.HOST_VOLUME_COMPUTED, out volume);
+                volume = UnitUtil.ScaleVolume(volume);
             }
+
+            // If we didn't calculate the volume above, but we did pass in a non-zero scaled length and area, calculate the volume.
             if (MathUtil.VolumeIsAlmostZero(volume))
-            {
                 volume = scaledLength * scaledArea;
-            }
+
             if (!MathUtil.VolumeIsAlmostZero(volume))
             {
                 IFCAnyHandle quantityHnd = IFCInstanceExporter.CreateQuantityVolume(file, "GrossVolume", null, null, volume);
                 quantityHnds.Add(quantityHnd);
             }
+
             CreateAndRelateBaseQuantities(file, exporterIFC, elemHandle, quantityHnds);
         }
         
@@ -2463,7 +2485,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             IFCAnyHandle quantity = IFCInstanceExporter.CreateElementQuantity(file, GUIDUtil.CreateGUID(), ownerHistory, quantityName, null, areaName, areaQuantityHnds);
             HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
             relatedObjects.Add(elemHnd);
-            IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, quantity);
+            ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, quantity);
         }
 
         /// <summary>
@@ -2502,10 +2524,17 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="exporterIFC">The exporter.</param>
         /// <param name="wallElement">The wall element.</param>
         /// <param name="wallHnd">The wall handle.</param>
+        /// <param name="solids">The list of solids for the entity created for the wall element.</param>
+        /// <param name="meshes">The list of meshes for the entity created for the wall element.</param>
         /// <param name="scaledLength">The scaled length.</param>
         /// <param name="scaledDepth">The scaled depth.</param>
         /// <param name="scaledFootPrintArea">The scaled foot print area.</param>
-        public static void CreateWallBaseQuantities(ExporterIFC exporterIFC, Wall wallElement, IFCAnyHandle wallHnd, double scaledLength, double scaledDepth, double scaledFootPrintArea)
+        /// <remarks>If we are splitting walls by level, the list of solids and meshes represent the currently
+        /// exported section of wall, not the entire wall.</remarks>
+        public static void CreateWallBaseQuantities(ExporterIFC exporterIFC, Wall wallElement, 
+            IList<Solid> solids, IList<Mesh> meshes,
+            IFCAnyHandle wallHnd, 
+            double scaledLength, double scaledDepth, double scaledFootPrintArea)
         {
             IFCFile file = exporterIFC.GetFile();
             HashSet<IFCAnyHandle> quantityHnds = new HashSet<IFCAnyHandle>();
@@ -2528,8 +2557,33 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                 quantityHnds.Add(quantityHnd);
             }
 
+            if (!MathUtil.IsAlmostZero(scaledFootPrintArea))
+            {
+                IFCAnyHandle quantityHnd = IFCInstanceExporter.CreateQuantityArea(file, "GrossFootprintArea", null, null, scaledFootPrintArea);
+                quantityHnds.Add(quantityHnd);
+            }
+
             double area = 0;
-            ParameterUtil.GetDoubleValueFromElement(wallElement, BuiltInParameter.HOST_AREA_COMPUTED, out area);
+            double volume = 0;
+
+            if (ExporterCacheManager.ExportOptionsCache.WallAndColumnSplitting)
+            {
+                // We will only assign the area if we have all solids that we are exporting; we won't bother calcuting values for Meshes.
+                if (solids != null && (meshes == null || meshes.Count == 0))
+                {
+                    foreach (Solid solid in solids)
+                    {
+                        area += solid.SurfaceArea;
+                        volume += solid.Volume;
+                    }
+                }
+            }
+            else
+            {
+                ParameterUtil.GetDoubleValueFromElement(wallElement, BuiltInParameter.HOST_AREA_COMPUTED, out area);
+                ParameterUtil.GetDoubleValueFromElement(wallElement, BuiltInParameter.HOST_VOLUME_COMPUTED, out volume);
+            }
+
             if (!MathUtil.IsAlmostZero(area))
             {
                 area = UnitUtil.ScaleArea(area);
@@ -2537,14 +2591,6 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                 quantityHnds.Add(quantityHnd);
             }
 
-            if (!MathUtil.IsAlmostZero(scaledFootPrintArea))
-            {
-                IFCAnyHandle quantityHnd = IFCInstanceExporter.CreateQuantityArea(file, "GrossFootprintArea", null, null, scaledFootPrintArea);
-                quantityHnds.Add(quantityHnd);
-            }
-
-            double volume = 0;
-            ParameterUtil.GetDoubleValueFromElement(wallElement, BuiltInParameter.HOST_VOLUME_COMPUTED, out volume);
             if (!MathUtil.IsAlmostZero(volume))
             {
                 volume = UnitUtil.ScaleVolume(volume);
@@ -2570,7 +2616,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                 IFCAnyHandle quantity = IFCInstanceExporter.CreateElementQuantity(file, GUIDUtil.CreateGUID(), ownerHistory, "BaseQuantities", null, null, quantityHnds);
                 HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
                 relatedObjects.Add(elemHnd);
-                IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, quantity);
+                ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, quantity);
             }
         }
 
@@ -2588,7 +2634,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             ifcTypeInfo.ScaledArea = ecData.ScaledArea;
             ifcTypeInfo.ScaledInnerPerimeter = ecData.ScaledInnerPerimeter;
             ifcTypeInfo.ScaledOuterPerimeter = ecData.ScaledOuterPerimeter;
-            CreateBeamColumnBaseQuantities(exporterIFC, elemHandle, element, ifcTypeInfo);
+            CreateBeamColumnBaseQuantities(exporterIFC, elemHandle, element, ifcTypeInfo, null);
         }
 
         /// <summary>
@@ -2987,7 +3033,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                     if (which == 1)
                         typePropertySets.Add(propertySet);
                     else
-                        IFCInstanceExporter.CreateRelDefinesByProperties(file, psetRelGUID, exporterIFC.GetOwnerHistoryHandle(),
+                        ExporterUtil.CreateRelDefinesByProperties(file, psetRelGUID, exporterIFC.GetOwnerHistoryHandle(),
                             null, null, elementSets, propertySet);
                 }
 
