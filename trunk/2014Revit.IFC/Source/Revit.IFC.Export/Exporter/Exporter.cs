@@ -214,8 +214,11 @@ namespace Revit.IFC.Export.Exporter
         protected void ExportSpatialElements(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
             ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
+
             View filterView = exportOptionsCache.FilterViewForExport;
 
+            bool exportIfBoundingBoxIsWithinViewExtent = (exportOptionsCache.ExportRoomsInView && (filterView != null) && filterView is View3D);
+            
             FilteredElementCollector spatialElementCollector;
             ICollection<ElementId> idsToExport = exportOptionsCache.ElementsForExport;
             if (idsToExport.Count > 0)
@@ -224,7 +227,7 @@ namespace Revit.IFC.Export.Exporter
             }
             else
             {
-                spatialElementCollector = (filterView == null || ExporterCacheManager.ExportOptionsCache.ExportingLink) ?
+                spatialElementCollector = (filterView == null || ExporterCacheManager.ExportOptionsCache.ExportingLink || exportIfBoundingBoxIsWithinViewExtent) ?
                     new FilteredElementCollector(document) : new FilteredElementCollector(filterView.Document, filterView.Id);
             }
 
@@ -236,11 +239,24 @@ namespace Revit.IFC.Export.Exporter
             SpatialElementExporter.InitializeSpatialElementGeometryCalculator(document, exporterIFC);
             ElementFilter spatialElementFilter = ElementFilteringUtil.GetSpatialElementFilter(document, exporterIFC);
             spatialElementCollector.WherePasses(spatialElementFilter);
+
+            // if the view is 3D and section box is active, then set the section box
+            BoundingBoxXYZ sectionBox = null;
+            if (exportIfBoundingBoxIsWithinViewExtent) 
+            {
+                View3D currentView = filterView as View3D;
+                sectionBox = currentView != null && currentView.IsSectionBoxActive ? currentView.GetSectionBox() : null;
+            }
+
             foreach (Element element in spatialElementCollector)
             {
                 if ((element == null) || (exportedSpaces != null && exportedSpaces.Contains(element.Id)))
                     continue;
                 if (ElementFilteringUtil.IsRoomInInvalidPhase(element))
+                    continue;
+                // if the element's bounding box doesn't intersect the section box then ignore it.
+                // if the section box isn't active, then we export the element.
+                if (sectionBox != null && !GeometryUtil.BoundingBoxesOverlap(element.get_BoundingBox(null), sectionBox))
                     continue;
                 ExportElement(exporterIFC, element);
             }
@@ -980,7 +996,7 @@ namespace Revit.IFC.Export.Exporter
                     string levelName = NamingUtil.GetNameOverride(level, level.Name);
                     string objectType = NamingUtil.GetObjectTypeOverride(level, null);
                     string description = NamingUtil.GetDescriptionOverride(level, null);
-                    string longName = level.Name;
+                    string longName = NamingUtil.GetLongNameOverride(level, level.Name);
                     string levelGUID = GUIDUtil.GetLevelGUID(level);
                     IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(file,
                         levelGUID, exporterIFC.GetOwnerHistoryHandle(),
@@ -1190,7 +1206,7 @@ namespace Revit.IFC.Export.Exporter
                 }
 
                 // create a default site if we have latitude and longitude information.
-                if (IFCAnyHandleUtil.IsNullOrHasNoValue(exporterIFC.GetSite()))
+                if (IFCAnyHandleUtil.IsNullOrHasNoValue(ExporterCacheManager.SiteHandle))
                 {
                     using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, true))
                     {
@@ -1198,10 +1214,10 @@ namespace Revit.IFC.Export.Exporter
                     }
                 }
 
-                IFCAnyHandle siteHandle = exporterIFC.GetSite();
+                IFCAnyHandle siteHandle = ExporterCacheManager.SiteHandle;
                 if (!IFCAnyHandleUtil.IsNullOrHasNoValue(siteHandle))
                 {
-                    ExporterCacheManager.ContainmentCache.AddRelation(exporterIFC.GetProject(), siteHandle);
+                    ExporterCacheManager.ContainmentCache.AddRelation(ExporterCacheManager.ProjectHandle, siteHandle);
 
                     // assoc. site to the building.
                     ExporterCacheManager.ContainmentCache.AddRelation(siteHandle, buildingHnd);
@@ -1211,7 +1227,7 @@ namespace Revit.IFC.Export.Exporter
                 else
                 {
                     // relate building and project if no site
-                    ExporterCacheManager.ContainmentCache.AddRelation(exporterIFC.GetProject(), buildingHnd);
+                    ExporterCacheManager.ContainmentCache.AddRelation(ExporterCacheManager.ProjectHandle, buildingHnd);
                 }
 
                 // relate levels and products.
@@ -1273,7 +1289,7 @@ namespace Revit.IFC.Export.Exporter
                     {
                         try
                         {
-                            IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory,
+                            ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory,
                                 null, null, elements, propertySet);
                         }
                         catch
@@ -1341,13 +1357,13 @@ namespace Revit.IFC.Export.Exporter
 
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.EnergyAnalysisProperySetHandle))
                             {
-                                IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
+                                ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
                                     ownerHistory, null, null, zoneHnds, zoneInfo.EnergyAnalysisProperySetHandle);
                             }
 
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.ZoneCommonProperySetHandle))
                             {
-                                IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
+                                ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
                                     ownerHistory, null, null, zoneHnds, zoneInfo.ZoneCommonProperySetHandle);
                             }
                         }
@@ -1378,7 +1394,7 @@ namespace Revit.IFC.Export.Exporter
 
                             if (spaceOccupantInfo.SpaceOccupantProperySetHandle != null && spaceOccupantInfo.SpaceOccupantProperySetHandle.HasValue)
                             {
-                                IFCAnyHandle relHnd = IFCInstanceExporter.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
+                                ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
                                     ownerHistory, null, null, spaceOccupantHandles, spaceOccupantInfo.SpaceOccupantProperySetHandle);
                             }
                         }
@@ -1555,6 +1571,14 @@ namespace Revit.IFC.Export.Exporter
                 {
                     descriptions.Add("IFC2X_PLATFORM");
                 }
+                else if (ExporterUtil.IsReferenceView())
+                {
+                    descriptions.Add("ViewDefinition [ReferenceView_V1.0]");
+                }
+                else if (ExporterUtil.IsDesignTransferView())
+                {
+                    descriptions.Add("ViewDefinition [DesignTransferView_V1.0]");   // Tentative name as the standard is not yet fuly released
+                }
                 else
                 {
                     string currentLine;
@@ -1587,7 +1611,7 @@ namespace Revit.IFC.Export.Exporter
                 if (projectStatus == null)
                     projectStatus = string.Empty;
 
-                IFCAnyHandle project = exporterIFC.GetProject();
+                IFCAnyHandle project = ExporterCacheManager.ProjectHandle;
                 if (!IFCAnyHandleUtil.IsNullOrHasNoValue(project))
                     IFCAnyHandleUtil.UpdateProject(project, projectNumber, projectName, projectStatus);
 
@@ -1998,7 +2022,7 @@ namespace Revit.IFC.Export.Exporter
             string projectGUID = GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Project);
             IFCAnyHandle projectHandle = IFCInstanceExporter.CreateProject(file, projectGUID, ownerHistory,
                 projectName, projectDescription, projectObjectType, projectLongName, projectPhase, repContexts, units);
-            exporterIFC.SetProject(projectHandle);
+            ExporterCacheManager.ProjectHandle = projectHandle;
 
             if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
             {

@@ -51,12 +51,7 @@ namespace Revit.IFC.Export.Exporter
             if (geometryElement == null)
                 return;
 
-            bool exportParts = PartExporter.CanExportParts(slabElement);
-                    
             IFCFile file = exporterIFC.GetFile();
-            IList<IFCAnyHandle> slabHnds = new List<IFCAnyHandle>();
-            IList<IFCAnyHandle> brepSlabHnds = new List<IFCAnyHandle>();
-            IList<IFCAnyHandle> nonBrepSlabHnds = new List<IFCAnyHandle>();
 
             using (IFCTransaction tr = new IFCTransaction(file))
             {
@@ -64,118 +59,82 @@ namespace Revit.IFC.Export.Exporter
                 {
                     using (PlacementSetter placementSetter = PlacementSetter.Create(exporterIFC, slabElement))
                     {
-                        IFCAnyHandle localPlacement = placementSetter.LocalPlacement;
-                        IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                        bool exportedAsInternalExtrusion = false;
-
-                        ElementId catId = CategoryUtil.GetSafeCategoryId(slabElement);
-
-                        IList<IFCAnyHandle> prodReps = new List<IFCAnyHandle>();
-                        IList<ShapeRepresentationType> repTypes = new List<ShapeRepresentationType>();
-                        IList<IList<CurveLoop>> extrusionLoops = new List<IList<CurveLoop>>();
-                        IList<IFCExtrusionCreationData> loopExtraParams = new List<IFCExtrusionCreationData>();
-                        Plane floorPlane = GeometryUtil.CreateDefaultPlane();
-
-                        IList<IFCAnyHandle> localPlacements = new List<IFCAnyHandle>();
-
                         using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                         {
-                            BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                            bodyExporterOptions.TessellationLevel = BodyExporter.GetTessellationLevel();
-                            BodyData bodyData;
-                            IFCAnyHandle prodDefHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
-                                slabElement, catId, geometryElement, bodyExporterOptions, null, ecData, out bodyData);
-                            if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodDefHnd))
+                            bool exportParts = PartExporter.CanExportParts(slabElement);
+                            
+                            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                            IFCAnyHandle localPlacement = placementSetter.LocalPlacement;
+                            
+                            IFCAnyHandle prodDefHnd = null;
+                            bool isBRepSlabHnd = false;
+                            
+                            if (!exportParts)
                             {
-                                ecData.ClearOpenings();
-                                return;
+                                ecData.SetLocalPlacement(localPlacement);
+
+                                ElementId catId = CategoryUtil.GetSafeCategoryId(slabElement);
+
+                                BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+                                bodyExporterOptions.TessellationLevel = BodyExporter.GetTessellationLevel();
+                                BodyData bodyData;
+                                prodDefHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
+                                    slabElement, catId, geometryElement, bodyExporterOptions, null, ecData, out bodyData);
+                                if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodDefHnd))
+                                {
+                                    ecData.ClearOpenings();
+                                    return;
+                                }
+                                isBRepSlabHnd = (bodyData.ShapeRepresentationType == ShapeRepresentationType.Brep);
                             }
 
-                            prodReps.Add(prodDefHnd);
-                            repTypes.Add(bodyData.ShapeRepresentationType);
-                        }
+                            // Create the slab from either the extrusion or the BRep information.
+                            string ifcGUID = GUIDUtil.CreateGUID(slabElement);
 
-                        // Create the slab from either the extrusion or the BRep information.
-                        string ifcGUID = GUIDUtil.CreateGUID(slabElement);
+                            string entityType = IFCValidateEntry.GetValidIFCType<IFCSlabType>(slabElement, ifcEnumType, "FLOOR");
 
-                        int numReps = exportParts ? 1 : prodReps.Count;
-
-                        string entityType = IFCValidateEntry.GetValidIFCType<IFCSlabType>(slabElement, ifcEnumType, "FLOOR");
-
-                        for (int ii = 0; ii < numReps; ii++)
-                        {
-                            string ifcName = NamingUtil.GetNameOverride(slabElement, NamingUtil.GetIFCNamePlusIndex(slabElement, ii == 0 ? -1 : ii + 1));
+                            string ifcName = NamingUtil.GetNameOverride(slabElement, NamingUtil.GetIFCName(slabElement));
                             string ifcDescription = NamingUtil.GetDescriptionOverride(slabElement, null);
                             string ifcObjectType = NamingUtil.GetObjectTypeOverride(slabElement, exporterIFC.GetFamilyName());
                             string ifcTag = NamingUtil.GetTagOverride(slabElement, NamingUtil.CreateIFCElementId(slabElement));
 
-                            string currentGUID = (ii == 0) ? ifcGUID : GUIDUtil.CreateGUID();
-                            IFCAnyHandle localPlacementHnd = exportedAsInternalExtrusion ? localPlacements[ii] : localPlacement;
-
-                            IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(file, currentGUID, ownerHistory, ifcName,
-                                    ifcDescription, ifcObjectType, localPlacementHnd, exportParts ? null : prodReps[ii],
+                            IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(file, ifcGUID, ownerHistory, ifcName,
+                                    ifcDescription, ifcObjectType, localPlacement, exportParts ? null : prodDefHnd,
                                     ifcTag, entityType);
 
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(slabHnd))
                                 return;
 
                             if (exportParts)
-                            {
-                                PartExporter.ExportHostPart(exporterIFC, slabElement, slabHnd, productWrapper, placementSetter, localPlacementHnd, null);
-                            }
+                                PartExporter.ExportHostPart(exporterIFC, slabElement, slabHnd, productWrapper, placementSetter, localPlacement, null);
 
-                            slabHnds.Add(slabHnd);
+                            productWrapper.AddElement(slabElement, slabHnd, placementSetter, ecData, true);
 
                             if (!exportParts)
                             {
-                                if (repTypes[ii] == ShapeRepresentationType.Brep)
-                                    brepSlabHnds.Add(slabHnd);
-                                else
-                                    nonBrepSlabHnds.Add(slabHnd);
-                            }
-                        }
+                                if (slabElement is HostObject)
+                                {
+                                    HostObject hostObject = slabElement as HostObject;
 
-                        for (int ii = 0; ii < numReps; ii++)
-                        {
-                            IFCExtrusionCreationData loopExtraParam = ii < loopExtraParams.Count ? loopExtraParams[ii] : null;
-                            productWrapper.AddElement(slabElement, slabHnds[ii], placementSetter, loopExtraParam, true);
-                        }
+                                    HostObjectExporter.ExportHostObjectMaterials(exporterIFC, hostObject, slabHnd,
+                                        geometryElement, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3, isBRepSlabHnd);
+                                }
+                                else if (slabElement is FamilyInstance)
+                                {
+                                    ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, slabElement);
+                                    Document doc = slabElement.Document;
+                                    CategoryUtil.CreateMaterialAssociation(exporterIFC, slabHnd, matId);
+                                }
 
-                        if (exportedAsInternalExtrusion)
-                            ExporterIFCUtils.ExportExtrudedSlabOpenings(exporterIFC, slabElement, placementSetter.LevelInfo,
-                               localPlacements[0], slabHnds, extrusionLoops, floorPlane, productWrapper.ToNative());
-                    }
-
-                    if (!exportParts)
-                    {
-                        if (slabElement is HostObject)
-                        {
-                            HostObject hostObject = slabElement as HostObject;
-                            if (nonBrepSlabHnds.Count > 0)
-                            {
-                                HostObjectExporter.ExportHostObjectMaterials(exporterIFC, hostObject, nonBrepSlabHnds,
-                                    geometryElement, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3, false);
-                            }
-                            if (brepSlabHnds.Count > 0)
-                            {
-                                HostObjectExporter.ExportHostObjectMaterials(exporterIFC, hostObject, brepSlabHnds,
-                                    geometryElement, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3, true);
-                            }
-                        }
-                        else if (slabElement is FamilyInstance && slabHnds.Count > 0)
-                        {
-                            ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, slabElement);
-                            Document doc = slabElement.Document;
-                            foreach (IFCAnyHandle slabHnd in slabHnds)
-                            {
-                                CategoryUtil.CreateMaterialAssociation(exporterIFC, slabHnd, matId);
+                                OpeningUtil.CreateOpeningsIfNecessary(slabHnd, slabElement, ecData, null, 
+                                    exporterIFC, ecData.GetLocalPlacement(), placementSetter, productWrapper);
                             }
                         }
                     }
+                    tr.Commit();
+
+                    return;
                 }
-                tr.Commit();
-
-                return;
             }
         }
 
@@ -229,7 +188,7 @@ namespace Revit.IFC.Export.Exporter
                         {
                             Floor floor = floorElement as Floor;
 
-                            // First, try to use the ExtrusionAnalyzer for the limited cases it handles - 1 solid, no openings, end clippings only.
+                            // Try to use the ExtrusionAnalyzer for the limited cases it handles - 1 solid, no openings, end clippings only.
                             // Also limited to cases with line and arc boundaries.
                             //
                             SolidMeshGeometryInfo solidMeshInfo = GeometryUtil.GetSplitSolidMeshGeometry(geometryElement);
@@ -406,6 +365,8 @@ namespace Revit.IFC.Export.Exporter
                             productWrapper.AddElement(floorElement, slabHnds[ii], placementSetter, loopExtraParam, true);
                         }
 
+                        // This call to the native function appears to create Brep opening also when appropriate. But the creation of the IFC instances is not
+                        //   controllable from the managed code. Therefore in some cases BRep geometry for Opening will still be exported even in the Reference View
                         if (exportedAsInternalExtrusion)
                             ExporterIFCUtils.ExportExtrudedSlabOpenings(exporterIFC, floorElement, placementSetter.LevelInfo,
                                localPlacements[0], slabHnds, extrusionLoops, floorPlane, productWrapper.ToNative());

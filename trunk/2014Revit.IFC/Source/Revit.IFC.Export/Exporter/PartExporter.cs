@@ -383,6 +383,9 @@ namespace Revit.IFC.Export.Exporter
                         PlacementSetter whichPlacementSetter = containedInLevel ? standalonePlacementSetter : placementSetter;
                         productWrapper.AddElement(partElement, ifcPart, whichPlacementSetter, extrusionCreationData, containedInLevel);
 
+                        OpeningUtil.CreateOpeningsIfNecessary(ifcPart, partElement, extrusionCreationData, bodyData.OffsetTransform, exporterIFC,
+                            extrusionCreationData.GetLocalPlacement(), whichPlacementSetter, productWrapper);
+
                         //Add the exported part to exported cache.
                         TraceExportedParts(partElement, partExportLevel, standaloneExport || asBuildingElement ? ElementId.InvalidElementId : hostElement.Id);
 

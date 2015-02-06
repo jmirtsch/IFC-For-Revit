@@ -192,6 +192,11 @@ namespace Revit.IFC.Export.Utility
         /// </summary>
         static PresentationStyleAssignmentCache m_PresentationStyleCache;
 
+        /// <summary>
+        /// The top level IfcProject handle.
+        /// </summary>
+        static IFCAnyHandle m_ProjectHandle;
+
         ///<summary>
         /// The RailingCache cache.
         /// This keeps track of all of the railings in the document, to export them last.
@@ -203,6 +208,11 @@ namespace Revit.IFC.Export.Utility
         /// This keeps track of all of the sub-elements of railings in the document, to not export them twice.
         /// </summary>
         static HashSet<ElementId> m_RailingSubElementCache;
+
+        /// <summary>
+        /// The top level IfcSite handle.
+        /// </summary>
+        static IFCAnyHandle m_SiteHandle;
 
         /// <summary>
         /// The SpaceBoundaryCache object.
@@ -561,6 +571,24 @@ namespace Revit.IFC.Export.Utility
                     m_PresentationStyleCache = new PresentationStyleAssignmentCache();
                 return m_PresentationStyleCache;
             }
+        }
+
+        /// <summary>
+        /// The top level IfcProject handle.
+        /// </summary>
+        public static IFCAnyHandle ProjectHandle
+        {
+            get { return m_ProjectHandle; }
+            set { m_ProjectHandle = value; }
+        }
+
+        /// <summary>
+        /// The top level IfcSite handle.
+        /// </summary>
+        public static IFCAnyHandle SiteHandle
+        {
+            get { return m_SiteHandle; }
+            set { m_SiteHandle = value; }
         }
 
         /// <summary>
@@ -1222,11 +1250,13 @@ namespace Revit.IFC.Export.Utility
             m_PartExportedCache = null;
             m_PresentationLayerSetCache = null;
             m_PresentationStyleCache = null;
+            m_ProjectHandle = null;
             m_PropertyInfoCache = null;
             m_PropertyMapCache = null;
             m_PropertySetsForTypeCache = null;
             m_RailingCache = null;
             m_RailingSubElementCache = null;
+            m_SiteHandle = null;
             m_SpaceBoundaryCache = null;
             m_SpaceInfoCache = null;
             m_SpaceOccupantInfoCache = null;

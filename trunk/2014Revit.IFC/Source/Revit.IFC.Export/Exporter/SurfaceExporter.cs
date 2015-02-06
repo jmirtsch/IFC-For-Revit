@@ -62,21 +62,36 @@ namespace Revit.IFC.Export.Exporter
             ExporterIFCUtils.CollectGeometryInfo(exporterIFC, ifcGeomInfo, geometryElement, XYZ.Zero, true);
 
             IFCFile file = exporterIFC.GetFile();
-            HashSet<IFCAnyHandle> faceSets = new HashSet<IFCAnyHandle>();
-            IList<ICollection<IFCAnyHandle>> faceList = ifcGeomInfo.GetFaces();
-            foreach (ICollection<IFCAnyHandle> faces in faceList)
+            IFCAnyHandle surface;
+
+            // Use tessellated geometry for surface in IFC Reference View
+            if (ExporterUtil.IsReferenceView())
             {
-                // no faces, don't complain.
-                if (faces.Count == 0)
-                    continue;
-                HashSet<IFCAnyHandle> faceSet = new HashSet<IFCAnyHandle>(faces);
-                faceSets.Add(IFCInstanceExporter.CreateConnectedFaceSet(file, faceSet));
+                BodyExporterOptions options = new BodyExporterOptions(false);
+                surface = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, element, options, geometryElement);
+            }
+            else
+            {
+                HashSet<IFCAnyHandle> faceSets = new HashSet<IFCAnyHandle>();
+                IList<ICollection<IFCAnyHandle>> faceList = ifcGeomInfo.GetFaces();
+                foreach (ICollection<IFCAnyHandle> faces in faceList)
+                {
+                    // no faces, don't complain.
+                    if (faces.Count == 0)
+                        continue;
+                    HashSet<IFCAnyHandle> faceSet = new HashSet<IFCAnyHandle>(faces);
+                    faceSets.Add(IFCInstanceExporter.CreateConnectedFaceSet(file, faceSet));
+                }
+
+                if (faceSets.Count == 0)
+                    return false;
+
+                surface = IFCInstanceExporter.CreateFaceBasedSurfaceModel(file, faceSets);
             }
 
-            if (faceSets.Count == 0)
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(surface))
                 return false;
 
-            IFCAnyHandle surface = IFCInstanceExporter.CreateFaceBasedSurfaceModel(file, faceSets);
             BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, doc, surface, BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element));
 
             ISet<IFCAnyHandle> surfaceItems = new HashSet<IFCAnyHandle>();

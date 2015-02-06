@@ -177,6 +177,49 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
+        /// Create tessellated body representation 
+        /// </summary>
+        /// <param name="exporterIFC">the ExporterIFC object</param>
+        /// <param name="element">the Element</param>
+        /// <param name="categoryId">The Category Id</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="bodyItems">Set of geometric representation items that are defined for this representation.</param>
+        /// <param name="originalRepresentation">The original shape representation.</param>
+        /// <returns></returns>
+        public static IFCAnyHandle CreateTessellatedRep(ExporterIFC exporterIFC, Element element, ElementId categoryId, IFCAnyHandle contextOfItems,
+            ISet<IFCAnyHandle> bodyItems, IFCAnyHandle originalRepresentation)
+        {
+            // Currently set to "Body" as shown also in the IFC documentation example. But there is also "Body-Fallback" for tessellated geometry.
+            string identifierOpt = "Body";
+            string repTypeOpt = ShapeRepresentationType.Tessellation.ToString();
+            IFCAnyHandle bodyRepresentation =
+                CreateOrAppendShapeRepresentation(exporterIFC, element, categoryId, contextOfItems, identifierOpt, repTypeOpt,
+                    bodyItems, originalRepresentation);
+            return bodyRepresentation;
+        }
+
+        /// <summary>
+        /// Create advanced Brep body representation 
+        /// </summary>
+        /// <param name="exporterIFC">the ExporterIFC object</param>
+        /// <param name="element">the Element</param>
+        /// <param name="categoryId">The Category Id</param>
+        /// <param name="contextOfItems">The context for which the different subtypes of representation are valid.</param>
+        /// <param name="bodyItems">Set of geometric representation items that are defined for this representation.</param>
+        /// <param name="originalRepresentation">The original shape representation.</param>
+        /// <returns></returns>
+        public static IFCAnyHandle CreateAdvancedBRepRep(ExporterIFC exporterIFC, Element element, ElementId categoryId, IFCAnyHandle contextOfItems,
+            ISet<IFCAnyHandle> bodyItems, IFCAnyHandle originalRepresentation)
+        {
+            string identifierOpt = "Body";
+            string repTypeOpt = ShapeRepresentationType.AdvancedBrep.ToString();
+            IFCAnyHandle bodyRepresentation =
+                CreateOrAppendShapeRepresentation(exporterIFC, element, categoryId, contextOfItems, identifierOpt, repTypeOpt,
+                    bodyItems, originalRepresentation);
+            return bodyRepresentation;
+        }
+
+        /// <summary>
         /// Creates a sweep solid representation.
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
@@ -189,7 +232,7 @@ namespace Revit.IFC.Export.Utility
             ISet<IFCAnyHandle> bodyItems, IFCAnyHandle originalRepresentation)
         {
             string identifierOpt = "Body";	// this is by IFC2x2 convention, not temporary
-            string repTypeOpt = "SweptSolid";  // this is by IFC2x2 convention, not temporary
+            string repTypeOpt = ShapeRepresentationType.SweptSolid.ToString();  // this is by IFC2x2 convention, not temporary
             IFCAnyHandle bodyRepresentation =
                CreateOrAppendShapeRepresentation(exporterIFC, element, categoryId, contextOfItems, identifierOpt, repTypeOpt,
                   bodyItems, originalRepresentation);
@@ -209,7 +252,7 @@ namespace Revit.IFC.Export.Utility
             ISet<IFCAnyHandle> bodyItems, IFCAnyHandle originalRepresentation)
         {
             string identifierOpt = "Body";	// this is by IFC2x2 convention, not temporary
-            string repTypeOpt = "AdvancedSweptSolid";  // this is by IFC2x2 convention, not temporary
+            string repTypeOpt = ShapeRepresentationType.AdvancedSweptSolid.ToString();  // this is by IFC2x2 convention, not temporary
             IFCAnyHandle bodyRepresentation =
                CreateOrAppendShapeRepresentation(exporterIFC, element, categoryId, contextOfItems, identifierOpt, repTypeOpt,
                   bodyItems, originalRepresentation);
@@ -228,7 +271,7 @@ namespace Revit.IFC.Export.Utility
            IFCAnyHandle contextOfItems, HashSet<IFCAnyHandle> bodyItems)
         {
             string identifierOpt = "Body";	// this is by IFC2x2 convention, not temporary
-            string repTypeOpt = "Clipping";  // this is by IFC2x2 convention, not temporary
+            string repTypeOpt = ShapeRepresentationType.Clipping.ToString();  // this is by IFC2x2 convention, not temporary
             IFCAnyHandle bodyRepresentation = CreateShapeRepresentation(exporterIFC, element, categoryId,
                contextOfItems, identifierOpt, repTypeOpt, bodyItems);
             return bodyRepresentation;
@@ -246,7 +289,7 @@ namespace Revit.IFC.Export.Utility
            IFCAnyHandle contextOfItems, ISet<IFCAnyHandle> bodyItems)
         {
             string identifierOpt = "Body";	// this is by IFC2x2 convention, not temporary
-            string repTypeOpt = "CSG";  // this is by IFC2x2 convention, not temporary
+            string repTypeOpt = ShapeRepresentationType.CSG.ToString();  // this is by IFC2x2 convention, not temporary
             IFCAnyHandle bodyRepresentation = CreateShapeRepresentation(exporterIFC, element, categoryId,
                contextOfItems, identifierOpt, repTypeOpt, bodyItems);
             return bodyRepresentation;
@@ -264,7 +307,7 @@ namespace Revit.IFC.Export.Utility
            IFCAnyHandle contextOfItems, ISet<IFCAnyHandle> bodyItems)
         {
             string identifierOpt = "Body";	// this is by IFC2x2 convention, not temporary
-            string repTypeOpt = "Brep";	// this is by IFC2x2 convention, not temporary
+            string repTypeOpt = ShapeRepresentationType.Brep.ToString();	// this is by IFC2x2 convention, not temporary
             IFCAnyHandle bodyRepresentation = CreateShapeRepresentation(exporterIFC, element, categoryId,
                contextOfItems, identifierOpt, repTypeOpt, bodyItems);
             return bodyRepresentation;
@@ -282,7 +325,7 @@ namespace Revit.IFC.Export.Utility
            IFCAnyHandle contextOfItems, ISet<IFCAnyHandle> bodyItems)
         {
             string identifierOpt = "Body";
-            string repTypeOpt = "SolidModel";
+            string repTypeOpt = ShapeRepresentationType.SolidModel.ToString();
             IFCAnyHandle bodyRepresentation = CreateShapeRepresentation(exporterIFC, element, categoryId,
                contextOfItems, identifierOpt, repTypeOpt, bodyItems);
             return bodyRepresentation;
@@ -308,14 +351,14 @@ namespace Revit.IFC.Export.Utility
             if (exportAsFacetationOrMesh)
             {
                 if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
-                    identifierOpt = "Mesh"; // IFC GSA convention
+                    identifierOpt = ShapeRepresentationType.Mesh.ToString(); // IFC GSA convention
                 else
-                    identifierOpt = "Facetation"; // IFC2x2+ convention
+                    identifierOpt = ShapeRepresentationType.Facetation.ToString(); // IFC2x2+ convention
             }
             else
                 identifierOpt = "Body";	// IFC2x2+ convention for IfcBuildingElement, IFC2x3 v2 convention for IfcSite
 
-            string repTypeOpt = "SurfaceModel";  // IFC2x2+ convention
+            string repTypeOpt = ShapeRepresentationType.SurfaceModel.ToString();  // IFC2x2+ convention
             IFCAnyHandle bodyRepresentation = CreateOrAppendShapeRepresentation(exporterIFC, element, categoryId,
                contextOfItems, identifierOpt, repTypeOpt, bodyItems, originalRepresentation);
             return bodyRepresentation;
@@ -335,7 +378,7 @@ namespace Revit.IFC.Export.Utility
         {
             string identifierOpt = "FootPrint";	// this is by IFC2x3 convention, not temporary
 
-            string repTypeOpt = "Curve2D";  // this is by IFC2x2 convention, not temporary
+            string repTypeOpt = ShapeRepresentationType.Curve2D.ToString();  // this is by IFC2x2 convention, not temporary
             IFCAnyHandle bodyRepresentation = CreateOrAppendShapeRepresentation(exporterIFC, element, categoryId,
                contextOfItems, identifierOpt, repTypeOpt, bodyItems, originalRepresentation);
             return bodyRepresentation;
@@ -354,7 +397,7 @@ namespace Revit.IFC.Export.Utility
            string type, IFCAnyHandle contextOfItems, HashSet<IFCAnyHandle> bodyItems)
         {
             string identifierOpt = type;
-            string repTypeOpt = "GeometricSet";	// this is by IFC2x2 convention, not temporary
+            string repTypeOpt = ShapeRepresentationType.GeometricSet.ToString();	// this is by IFC2x2 convention, not temporary
             IFCAnyHandle bodyRepresentation = CreateShapeRepresentation(exporterIFC, element, categoryId,
                contextOfItems, identifierOpt, repTypeOpt, bodyItems);
             return bodyRepresentation;
@@ -370,7 +413,7 @@ namespace Revit.IFC.Export.Utility
         public static IFCAnyHandle CreateBoundingBoxRep(ExporterIFC exporterIFC, IFCAnyHandle contextOfItems, IFCAnyHandle boundingBoxItem)
         {
             string identifierOpt = "Box";	// this is by IFC2x2+ convention
-            string repTypeOpt = "BoundingBox";  // this is by IFC2x2+ convention
+            string repTypeOpt = ShapeRepresentationType.BoundingBox.ToString();  // this is by IFC2x2+ convention
             ISet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
             bodyItems.Add(boundingBoxItem);
             IFCAnyHandle bodyRepresentation = CreateBaseShapeRepresentation(exporterIFC, contextOfItems, identifierOpt, repTypeOpt, bodyItems);
@@ -390,7 +433,7 @@ namespace Revit.IFC.Export.Utility
            IFCAnyHandle contextOfItems, ISet<IFCAnyHandle> bodyItems)
         {
             string identifierOpt = "Body";	// this is by IFC2x2+ convention
-            string repTypeOpt = "MappedRepresentation";  // this is by IFC2x2+ convention
+            string repTypeOpt = ShapeRepresentationType.MappedRepresentation.ToString();  // this is by IFC2x2+ convention
             IFCAnyHandle bodyRepresentation = CreateShapeRepresentation(exporterIFC, element, categoryId,
                contextOfItems, identifierOpt, repTypeOpt, bodyItems);
             return bodyRepresentation;
@@ -408,7 +451,7 @@ namespace Revit.IFC.Export.Utility
             IFCAnyHandle contextOfItems, HashSet<IFCAnyHandle> bodyItems)
         {
             string identifierOpt = "FootPrint";	// this is by IFC2x2+ convention
-            string repTypeOpt = "MappedRepresentation";  // this is by IFC2x2+ convention
+            string repTypeOpt = ShapeRepresentationType.MappedRepresentation.ToString();  // this is by IFC2x2+ convention
             IFCAnyHandle bodyRepresentation = CreateShapeRepresentation(exporterIFC, element, categoryId,
                 contextOfItems, identifierOpt, repTypeOpt, bodyItems);
             return bodyRepresentation;
@@ -427,7 +470,7 @@ namespace Revit.IFC.Export.Utility
             IFCAnyHandle contextOfItems, HashSet<IFCAnyHandle> bodyItems)
         {
             string identifierOpt = "Annotation";
-            string repTypeOpt = "Annotation2D";	// this is by IFC2x3 convention
+            string repTypeOpt = ShapeRepresentationType.Annotation2D.ToString();	// this is by IFC2x3 convention
 
             IFCAnyHandle bodyRepresentation = CreateShapeRepresentation(exporterIFC, element, categoryId,
                 contextOfItems, identifierOpt, repTypeOpt, bodyItems);

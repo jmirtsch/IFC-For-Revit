@@ -162,7 +162,13 @@ namespace Revit.IFC.Export.Utility
             cache.ExportPartsAsBuildingElementsOverride = null;
             cache.ExportAllLevels = false;
             cache.ExportAnnotationsOverride = null;
-            cache.FilterViewForExport = filterView;
+             
+            // There is a bug in the native code that doesn't allow us to cast the filterView to any sub-type of View.  Work around this by re-getting the element pointer.
+            if (filterView != null)
+                cache.FilterViewForExport = filterView.Document.GetElement(filterView.Id) as View;
+            else
+                cache.FilterViewForExport = null;
+            
             cache.ExportBoundingBoxOverride = null;
             cache.IncludeSiteElevation = false;
             cache.UseCoarseTessellation = true;
@@ -236,6 +242,9 @@ namespace Revit.IFC.Export.Utility
             // "ExportBoundingBox" override
             cache.ExportBoundingBoxOverride = GetNamedBooleanOption(options, "ExportBoundingBox");
 
+            bool? exportRoomsInView = GetNamedBooleanOption(options, "ExportRoomsInView");
+            cache.ExportRoomsInView = exportRoomsInView != null ? exportRoomsInView.Value : false;
+
             // Using the alternate UI or not.
             cache.AlternateUIVersionOverride = GetNamedStringOption(options, "AlternateUIVersion");
 
@@ -246,6 +255,13 @@ namespace Revit.IFC.Export.Utility
             // Use coarse tessellation for floors, railings, ramps, spaces and stairs.
             bool? useCoarseTessellation = GetNamedBooleanOption(options, "UseCoarseTessellation");
             cache.UseCoarseTessellation = useCoarseTessellation != null ? useCoarseTessellation.Value : true;
+
+            // Tessellation level of detail as set by the UI
+            double? tessellationLOD = GetNamedDoubleOption(options, "TessellationLevelOfDetail");
+            if (tessellationLOD.HasValue)
+                cache.TessellationLevelOfDetail = tessellationLOD.Value;
+            else
+                cache.TessellationLevelOfDetail = cache.UseCoarseTessellation ? 0.25 : 1.0;
 
             /// Allow exporting a mix of extrusions and BReps as a solid model, if possible.
             bool? canExportSolidModelRep = GetNamedBooleanOption(options, "ExportSolidModelRep");
@@ -359,6 +375,27 @@ namespace Revit.IFC.Export.Utility
 
                 // TODO: consider logging this error later and handling results better.
                 throw new Exception("Option '" + optionName + "' could not be parsed to int");
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Utility for processing double option from the options collection.
+        /// </summary>
+        /// <param name="options">The collection of named options for IFC export</param>
+        /// <param name="optionName">The name of the target option</param>
+        /// <returns>the value of the option, or null if the option is not set</returns>
+        public static double? GetNamedDoubleOption(IDictionary<String, String> options, String optionName)
+        {
+            String optionString;
+            if (options.TryGetValue(optionName, out optionString))
+            {
+                double option;
+                if (double.TryParse(optionString, out option))
+                    return option;
+
+                // TODO: consider logging this error later and handling results better.
+                throw new Exception("Option '" + optionName + "' could not be parsed to double");
             }
             return null;
         }
@@ -625,7 +662,13 @@ namespace Revit.IFC.Export.Utility
             get;
             set;
         }
-        
+
+        public double TessellationLevelOfDetail
+        {
+            get;
+            set;
+        }
+
         /// <summary>
         /// Cache variable for the Alternate UI version override (if export from Alternate UI)
         /// </summary>
@@ -819,6 +862,22 @@ namespace Revit.IFC.Export.Utility
                 return Transform.Identity;
 
             return m_LinkInstanceInfos[idx].Item2;
+        }
+
+
+        /// <summary>
+        /// Whether or not to export all the rooms in the view.
+        /// This option is only enabled if "export elements visible in view" is selected.
+        /// </summary>
+        /// <remarks>
+        /// If ExportRoomsInView is true and section box is active: then every room whose bounding box intersects with the section box is exported,
+        /// otherwise if ExportRoomsInView is false and section box is not active then every room is exported.
+        /// However, if Room is set to "Not Exported" in IFC Option then none of the room will be exported whether ExportRoomsInView is true or not.
+        /// </remarks>
+        public bool ExportRoomsInView
+        {
+            get;
+            set;
         }
     }
 }

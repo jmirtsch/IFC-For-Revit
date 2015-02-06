@@ -1129,6 +1129,8 @@ namespace Revit.IFC.Export.Exporter
             ElementId catId, IList<Solid> solids, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped, out HashSet<ElementId> materialIds)
         {
             IFCFile file = exporterIFC.GetFile();
+            bool mustUseTessellation = false;
+
             using (IFCTransaction tr = new IFCTransaction(file))
             {
                 completelyClipped = false;
@@ -1147,6 +1149,14 @@ namespace Revit.IFC.Export.Exporter
 
                     if (currRetVal != null && currRetVal.Handle != null)
                     {
+                        // If any of the solid is of the type of Clipping or Boolean and export is for Reference View, exit the loop and collect the geometries entirely
+                        //   for TriangulatedFaceSet
+                        if (ExporterUtil.IsReferenceView() && (hasClippingResult || hasBooleanResult))
+                        {
+                            mustUseTessellation = true;
+                            break;
+                        }
+
                         materialIds.Add(materialId);
                         IFCAnyHandle repHandle = currRetVal.Handle;
                         if (hasBooleanResult) // if both have boolean and clipping result, use boolean one.
@@ -1155,7 +1165,6 @@ namespace Revit.IFC.Export.Exporter
                             extrusionClippingBodyItems.Add(repHandle);
                         else
                             extrusionBodyItems.Add(repHandle);
-
                     }
                     else
                     {
@@ -1174,53 +1183,78 @@ namespace Revit.IFC.Export.Exporter
 
                 IFCAnyHandle contextOfItemsBody = exporterIFC.Get3DContextHandle("Body");
 
-                if (extrusionBodyItems.Count > 0 && (extrusionClippingBodyItems.Count == 0 && extrusionBooleanBodyItems.Count == 0))
+                // Handle Tessellation here for Reference View export. If all are extrusions, it should not get in here
+                if (mustUseTessellation)
                 {
-                    retVal.Handle = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, catId, contextOfItemsBody,
-                        extrusionBodyItems, null);
-                    retVal.ShapeRepresentationType = ShapeRepresentationType.SweptSolid;
-                }
-                else if (extrusionClippingBodyItems.Count > 0 && (extrusionBodyItems.Count == 0 && extrusionBooleanBodyItems.Count == 0))
-                {
-                    retVal.Handle = RepresentationUtil.CreateClippingRep(exporterIFC, element, catId, contextOfItemsBody,
-                        extrusionClippingBodyItems);
-                    retVal.ShapeRepresentationType = ShapeRepresentationType.Clipping;
-                }
-                else if (extrusionBooleanBodyItems.Count > 0 && (extrusionBodyItems.Count == 0 && extrusionClippingBodyItems.Count == 0))
-                {
-                    retVal.Handle = RepresentationUtil.CreateCSGRep(exporterIFC, element, catId, contextOfItemsBody,
-                        extrusionBooleanBodyItems);
-                    retVal.ShapeRepresentationType = ShapeRepresentationType.CSG;
+                    BodyExporterOptions options = new BodyExporterOptions(true);
+                    Document document = element.Document;
+                    ElementId materialId = ElementId.InvalidElementId;
+                    materialIds.Clear();
+                    extrusionBodyItems.Clear();
+
+                    foreach (Solid solid in solids)
+                    {
+                        IFCAnyHandle triangulatedBodyItem = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, element, options, solid);
+                        if (!IFCAnyHandleUtil.IsNullOrHasNoValue(triangulatedBodyItem)) 
+                            extrusionBodyItems.Add(triangulatedBodyItem);
+                        materialId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(solid, exporterIFC, element);
+                        materialIds.Add(materialId);
+                        BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document, triangulatedBodyItem, materialId);
+                    }
+                    retVal.Handle = RepresentationUtil.CreateTessellatedRep(exporterIFC, element, catId, contextOfItemsBody, extrusionBodyItems, null);
+                    retVal.ShapeRepresentationType = ShapeRepresentationType.Tessellation;
                 }
                 else
                 {
-                    IFCAnyHandle finalBodyItemHnd = null;
-
-                    ICollection<IFCAnyHandle> booleanBodyItems = extrusionClippingBodyItems.Union<IFCAnyHandle>(extrusionBooleanBodyItems).ToList();
-
-                    finalBodyItemHnd = booleanBodyItems.ElementAt(0);
-                    booleanBodyItems.Remove(finalBodyItemHnd);
-
-                    // union non-boolean result first with a boolean result
-                    foreach (IFCAnyHandle bodyRep in extrusionBodyItems)
+                    if (extrusionBodyItems.Count > 0 && (extrusionClippingBodyItems.Count == 0 && extrusionBooleanBodyItems.Count == 0))
                     {
-                        finalBodyItemHnd = IFCInstanceExporter.CreateBooleanResult(exporterIFC.GetFile(), IFCBooleanOperator.Union,
-                             finalBodyItemHnd, bodyRep);
+                        retVal.Handle = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, catId, contextOfItemsBody,
+                            extrusionBodyItems, null);
+                        retVal.ShapeRepresentationType = ShapeRepresentationType.SweptSolid;
                     }
-
-                    foreach (IFCAnyHandle bodyRep in booleanBodyItems)
+                    else if (extrusionClippingBodyItems.Count > 0 && (extrusionBodyItems.Count == 0 && extrusionBooleanBodyItems.Count == 0))
                     {
-                        finalBodyItemHnd = IFCInstanceExporter.CreateBooleanResult(exporterIFC.GetFile(), IFCBooleanOperator.Union,
-                             finalBodyItemHnd, bodyRep);
+                        retVal.Handle = RepresentationUtil.CreateClippingRep(exporterIFC, element, catId, contextOfItemsBody,
+                            extrusionClippingBodyItems);
+                        retVal.ShapeRepresentationType = ShapeRepresentationType.Clipping;
                     }
+                    else if (extrusionBooleanBodyItems.Count > 0 && (extrusionBodyItems.Count == 0 && extrusionClippingBodyItems.Count == 0))
+                    {
+                        retVal.Handle = RepresentationUtil.CreateCSGRep(exporterIFC, element, catId, contextOfItemsBody,
+                            extrusionBooleanBodyItems);
+                        retVal.ShapeRepresentationType = ShapeRepresentationType.CSG;
+                    }
+                    else
+                    {
+                        IFCAnyHandle finalBodyItemHnd = null;
 
-                    extrusionBodyItems.Clear();
-                    extrusionBodyItems.Add(finalBodyItemHnd);
+                        ICollection<IFCAnyHandle> booleanBodyItems = extrusionClippingBodyItems.Union<IFCAnyHandle>(extrusionBooleanBodyItems).ToList();
 
-                    retVal.Handle = RepresentationUtil.CreateCSGRep(exporterIFC, element, catId, contextOfItemsBody,
-                        extrusionBodyItems);
-                    retVal.ShapeRepresentationType = ShapeRepresentationType.CSG;
+                        finalBodyItemHnd = booleanBodyItems.ElementAt(0);
+                        booleanBodyItems.Remove(finalBodyItemHnd);
+
+                        // union non-boolean result first with a boolean result
+                        foreach (IFCAnyHandle bodyRep in extrusionBodyItems)
+                        {
+                            finalBodyItemHnd = IFCInstanceExporter.CreateBooleanResult(exporterIFC.GetFile(), IFCBooleanOperator.Union,
+                                 finalBodyItemHnd, bodyRep);
+                        }
+
+                        foreach (IFCAnyHandle bodyRep in booleanBodyItems)
+                        {
+                            finalBodyItemHnd = IFCInstanceExporter.CreateBooleanResult(exporterIFC.GetFile(), IFCBooleanOperator.Union,
+                                 finalBodyItemHnd, bodyRep);
+                        }
+
+                        extrusionBodyItems.Clear();
+                        extrusionBodyItems.Add(finalBodyItemHnd);
+
+                        retVal.Handle = RepresentationUtil.CreateCSGRep(exporterIFC, element, catId, contextOfItemsBody,
+                            extrusionBodyItems);
+                        retVal.ShapeRepresentationType = ShapeRepresentationType.CSG;
+                    }
                 }
+
                 tr.Commit();
                 return retVal;
             }
@@ -1317,15 +1351,18 @@ namespace Revit.IFC.Export.Exporter
                             Element cuttingElement = document.GetElement(elementCutoutsForElement.Key);
                             foreach (ICollection<Face> elementCutout in elementCutoutsForElement.Value)
                             {
+                                ICollection<Face> skippedFaces = null;
                                 bool unhandledClipping = false;
                                 try
                                 {
+                                    // The skippedFaces may represent openings that will be dealt with below.
                                     finalExtrusionBodyItemHnd = GeometryUtil.CreateClippingFromFaces(exporterIFC, cuttingElement, 
                                         extrusionBasePlane, projDir,
-                                        elementCutout, extrusionRange, finalExtrusionBodyItemHnd);
+                                        elementCutout, extrusionRange, finalExtrusionBodyItemHnd, out skippedFaces);
                                 }
                                 catch
                                 {
+                                    skippedFaces = null;
                                     unhandledClipping = true;
                                 }
 
@@ -1333,9 +1370,14 @@ namespace Revit.IFC.Export.Exporter
                                 {
                                     unhandledElementCutoutsForElement.Add(elementCutout);
                                 }
-                                else if (finalExtrusionBodyItemHnd != extrusionBodyItemHnd)
+                                else
                                 {
-                                    hasClippingResult = true;
+                                    if (finalExtrusionBodyItemHnd != extrusionBodyItemHnd)
+                                        hasClippingResult = true;
+
+                                    // Even if we created a clipping, we may have faces to further process as openings.  
+                                    if (skippedFaces != null && skippedFaces.Count != 0)
+                                        unhandledElementCutoutsForElement.Add(skippedFaces);
                                 }
                             }
 
@@ -1356,8 +1398,13 @@ namespace Revit.IFC.Export.Exporter
 
                                 if (finalExtrusionBodyItemHnd == null || unhandledOpening)
                                 {
-                                    // Item is completely clipped.
-                                    completelyClipped = (finalExtrusionBodyItemHnd == null);
+                                    // Item is completely clipped.  We use this only when we are certain:
+                                    // 1. finalExtrusionBodyItemHnd is null.
+                                    // 2. range is not null (i.e., we expect the possibility of clipping)
+                                    // 3. unhandledOpening is not true (i.e., we didn't abort the operation).
+                                    // If completelyClipped is true, we won't export the item, so we want to make sure
+                                    // that we don't actually want to try a backup method instead.
+                                    completelyClipped = (finalExtrusionBodyItemHnd == null) && (range != null) && (!unhandledOpening);
                                     tr.RollBack();
                                     return nullVal;
                                 }

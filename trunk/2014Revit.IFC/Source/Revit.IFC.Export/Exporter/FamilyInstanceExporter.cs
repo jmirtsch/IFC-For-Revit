@@ -733,7 +733,7 @@ namespace Revit.IFC.Export.Exporter
                                         exporterIFC, placementToUse, setter, wrapper);
 
                                     //export Base Quantities.
-                                    PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, instanceHandle, familyInstance, typeInfo);
+                                    PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, instanceHandle, familyInstance, typeInfo, geomObjects);
                                     break;
                                 }
                             case IFCExportType.IfcDoorType:
@@ -789,7 +789,7 @@ namespace Revit.IFC.Export.Exporter
                                         exporterIFC, localPlacement, setter, wrapper);
 
                                     //export Base Quantities.
-                                    PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, instanceHandle, familyInstance, typeInfo);
+                                    PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, instanceHandle, familyInstance, typeInfo, null);
                                     break;
                                 }
                             case IFCExportType.IfcPlateType:

@@ -414,7 +414,7 @@ namespace Revit.IFC.Export.Exporter
                 IList<IFCAnyHandle> localComponentHnds = new List<IFCAnyHandle>();
                 if (isSubStair)
                 {
-                    string componentType = IFCAnyHandleUtil.GetEnumerationAttribute(component, "ShapeType");
+                    string componentType = IFCAnyHandleUtil.GetEnumerationAttribute(component, ExporterCacheManager.ExportOptionsCache.ExportAs4 ? "PredefinedType" : "ShapeType");
                     string localStairType = GetIFCStairType(componentType);
 
                     ElementId catId = CategoryUtil.GetSafeCategoryId(stair);
@@ -515,7 +515,11 @@ namespace Revit.IFC.Export.Exporter
                 string stairObjectType = IFCAnyHandleUtil.GetStringAttribute(stairHnd, "ObjectType");
                 string stairDescription = IFCAnyHandleUtil.GetStringAttribute(stairHnd, "Description");
                 string stairElementTag = IFCAnyHandleUtil.GetStringAttribute(stairHnd, "Tag");
-                string stairTypeAsString = IFCAnyHandleUtil.GetEnumerationAttribute(stairHnd, "ShapeType");
+                string stairTypeAsString = null;
+                if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+                    stairTypeAsString = IFCAnyHandleUtil.GetEnumerationAttribute(stairHnd, "PredefinedType");
+                else
+                    stairTypeAsString = IFCAnyHandleUtil.GetEnumerationAttribute(stairHnd, "ShapeType");
                 string stairType = GetIFCStairType(stairTypeAsString);
 
                 string containerStairName = stairName + ":" + (ii + 2);
