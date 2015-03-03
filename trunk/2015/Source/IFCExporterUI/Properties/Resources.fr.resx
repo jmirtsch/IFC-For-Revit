@@ -601,6 +601,6 @@
     <value>Général</value>
   </data>
   <data name="ExportRoomsInView" xml:space="preserve">
-    <value />
+    <value>Exporter les pièces dans la vue</value>
   </data>
 </root>
