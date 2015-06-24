@@ -168,7 +168,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPort))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcPort);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcPort);
                 return null;
             }
 
@@ -184,11 +184,11 @@ namespace Revit.IFC.Import.Data
             catch (Exception ex)
             {
                 if (ex.Message != "Don't Import")
-                    IFCImportFile.TheLog.LogError(ifcPort.StepId, ex.Message, false);
+                    Importer.TheLog.LogError(ifcPort.StepId, ex.Message, false);
                 return null;
             }
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcPort, IFCEntityType.IfcPort, false);
+            Importer.TheLog.LogUnhandledSubTypeError(ifcPort, IFCEntityType.IfcPort, false);
             return null;
         }
 

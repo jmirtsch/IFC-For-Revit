@@ -82,7 +82,7 @@ namespace Revit.IFC.Import.Data
                 }
                 catch
                 {
-                    IFCImportFile.TheLog.LogWarning(ifcCfsFace.StepId, "Invalid face, ignoring.", false);
+                    Importer.TheLog.LogWarning(ifcCfsFace.StepId, "Invalid face, ignoring.", false);
                 }
             }
 
@@ -112,8 +112,8 @@ namespace Revit.IFC.Import.Data
                         throw ex;
                     else
                     {
-                        shapeEditScope.AbortCurrentFace();
-                        IFCImportFile.TheLog.LogError(face.Id, ex.Message, false);
+                        shapeEditScope.BuilderScope.AbortCurrentFace();
+                        Importer.TheLog.LogError(face.Id, ex.Message, false);
                     }
                 }
             }
@@ -133,7 +133,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcConnectedFaceSet))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcConnectedFaceSet);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcConnectedFaceSet);
                 return null;
             }
 

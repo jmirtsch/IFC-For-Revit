@@ -16,7 +16,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
-
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -146,16 +145,41 @@ namespace Revit.IFC.Export.Utility
         /// </returns>
         public static string GetNameOverride(Element element, string originalValue)
         {
-            string nameOverride = "NameOverride";
-            string overrideValue = GetOverrideStringValue(element, nameOverride, originalValue);
-            if ((String.Compare(originalValue, overrideValue) == 0) || overrideValue == null)
+           string nameOverride = "NameOverride";
+           // CQ_TODO: Understand the naming here and possible use GetCleanName - have it as UI option?
+
+           string overrideValue = GetOverrideStringValue(element, nameOverride, originalValue);
+
+           if ((String.Compare(originalValue, overrideValue) == 0) || overrideValue == null)
+           {
+              //if NameOverride is not used or does not exist, test for the actual IFC attribute name: Name (using parameter name: IfcName)
+              nameOverride = "IfcName";
+              overrideValue = GetOverrideStringValue(element, nameOverride, originalValue);
+           }
+
+           // CQ_TODO: Understand the naming here and possible use GetCleanName - have it as UI option?
+           //overrideValue = GetCleanName(overrideValue);
+           //GetOverrideStringValue will return the override value from the parameter specified, otherwise it will return the originalValue
+           return overrideValue;
+        }
+
+        private static System.Text.RegularExpressions.Regex g_rxMixedName = null;
+
+        private static string GetCleanName(string currentName)
+        {
+            if (g_rxMixedName == null)
             {
-                //if NameOverride is not used or does not exist, test for the actual IFC attribute name: Name (using parameter name: IfcName)
-                nameOverride = "IfcName";
-                overrideValue = GetOverrideStringValue(element, nameOverride, originalValue);
+                g_rxMixedName = new System.Text.RegularExpressions.Regex(@"([^:]+)+", System.Text.RegularExpressions.RegexOptions.Compiled);
             }
-            //GetOverrideStringValue will return the override value from the parameter specified, otherwise it will return the originalValue
-            return overrideValue;
+
+            if (string.IsNullOrEmpty(currentName)) return currentName;
+
+            System.Text.RegularExpressions.MatchCollection mc = g_rxMixedName.Matches(currentName);
+            if (mc.Count > 2)
+            {
+                return mc[0].Value+":"+mc[1].Value;
+            }
+            return currentName;
         }
 
         /// <summary>

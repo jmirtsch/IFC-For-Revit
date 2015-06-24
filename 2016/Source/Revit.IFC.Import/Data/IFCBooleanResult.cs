@@ -92,8 +92,34 @@ namespace Revit.IFC.Import.Data
             catch (Exception ex)
             {
                 SecondOperand = null;
-                IFCImportFile.TheLog.LogError(secondOperand.StepId, ex.Message, false);
+                Importer.TheLog.LogError(secondOperand.StepId, ex.Message, false);
             }
+        }
+
+        /// <summary>
+        /// Get the styled item corresponding to the solid inside of an IFCRepresentationItem.
+        /// </summary>
+        /// <param name="repItem">The representation item.</param>
+        /// <returns>The corresponding IFCStyledItem, or null if not found.</returns>
+        /// <remarks>This function is intended to work on an IFCBooleanResult with an arbitrary number of embedded
+        /// clipping operations.  We will take the first StyledItem that corresponds to either an IFCBooleanResult,
+        /// or the contained solid.  We explicitly do not want any material associated specifically with the void.</remarks>
+        private IFCStyledItem GetStyledItemFromOperand(IFCRepresentationItem repItem)
+        {
+            if (repItem == null)
+                return null;
+
+            if (repItem.StyledByItem != null)
+                return repItem.StyledByItem;
+
+            if (repItem is IFCBooleanResult)
+            {
+                IIFCBooleanOperand firstOperand = (repItem as IFCBooleanResult).FirstOperand;
+                if (firstOperand is IFCRepresentationItem)
+                    return GetStyledItemFromOperand(firstOperand as IFCRepresentationItem);
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -108,13 +134,14 @@ namespace Revit.IFC.Import.Data
               IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
             IList<GeometryObject> firstSolids = FirstOperand.CreateGeometry(shapeEditScope, lcs, scaledLcs, guid);
+            
             if (firstSolids != null)
             {
                 foreach (GeometryObject potentialSolid in firstSolids)
                 {
                     if (!(potentialSolid is Solid))
                     {
-                        IFCImportFile.TheLog.LogError((FirstOperand as IFCRepresentationItem).Id, "Can't perform Boolean operation on a Mesh.", false);
+                        Importer.TheLog.LogError((FirstOperand as IFCRepresentationItem).Id, "Can't perform Boolean operation on a Mesh.", false);
                         return firstSolids;
                     }
                 }
@@ -125,10 +152,18 @@ namespace Revit.IFC.Import.Data
             {
                 try
                 {
-                    using (IFCImportShapeEditScope.IFCTargetSetter setter =
-                        new IFCImportShapeEditScope.IFCTargetSetter(shapeEditScope, TessellatedShapeBuilderTarget.Solid, TessellatedShapeBuilderFallback.Abort))
+                    using (IFCImportShapeEditScope.BuildPreferenceSetter setter =
+                        new IFCImportShapeEditScope.BuildPreferenceSetter(shapeEditScope, IFCImportShapeEditScope.BuildPreferenceType.ForceSolid))
                     {
-                        secondSolids = SecondOperand.CreateGeometry(shapeEditScope, lcs, scaledLcs, guid);
+                        // Before we process the second operand, we are going to see if there is a uniform material set for the first operand 
+                        // (corresponding to the solid in the Boolean operation).  We will try to suggest the same material for the voids to avoid arbitrary
+                        // setting of material information for the cut faces.
+                        IFCStyledItem firstOperandStyledItem = GetStyledItemFromOperand(FirstOperand as IFCRepresentationItem);
+                        using (IFCImportShapeEditScope.IFCMaterialStack stack = 
+                            new IFCImportShapeEditScope.IFCMaterialStack(shapeEditScope, firstOperandStyledItem, null))
+                        {
+                            secondSolids = SecondOperand.CreateGeometry(shapeEditScope, lcs, scaledLcs, guid);
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -136,7 +171,7 @@ namespace Revit.IFC.Import.Data
                     // We will allow something to be imported, in the case where the second operand is invalid.
                     // If the first (base) operand is invalid, we will still fail the import of this solid.
                     if (SecondOperand is IFCRepresentationItem)
-                        IFCImportFile.TheLog.LogError((SecondOperand as IFCRepresentationItem).Id, ex.Message, false);
+                        Importer.TheLog.LogError((SecondOperand as IFCRepresentationItem).Id, ex.Message, false);
                     else
                         throw ex;
                     secondSolids = null;
@@ -151,7 +186,7 @@ namespace Revit.IFC.Import.Data
             else if (secondSolids == null || BooleanOperator == null)
             {
                 if (BooleanOperator == null)
-                    IFCImportFile.TheLog.LogError(Id, "Invalid BooleanOperationsType.", false);
+                    Importer.TheLog.LogError(Id, "Invalid BooleanOperationsType.", false);
                 resultSolids = firstSolids;
             }
             else
@@ -169,7 +204,7 @@ namespace Revit.IFC.Import.Data
                         booleanOperationsType = BooleanOperationsType.Union;
                         break;
                     default:
-                        IFCImportFile.TheLog.LogError(Id, "Invalid BooleanOperationsType.", true);
+                        Importer.TheLog.LogError(Id, "Invalid BooleanOperationsType.", true);
                         break;
                 }
 
@@ -229,7 +264,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcBooleanResult))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcBooleanResult);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcBooleanResult);
                 return null;
             }
 

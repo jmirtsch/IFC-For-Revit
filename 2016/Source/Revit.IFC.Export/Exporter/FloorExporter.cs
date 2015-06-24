@@ -62,8 +62,8 @@ namespace Revit.IFC.Export.Exporter
                         using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                         {
                             bool exportParts = PartExporter.CanExportParts(slabElement);
-                            
-                            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+
+                            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                             IFCAnyHandle localPlacement = placementSetter.LocalPlacement;
                             
                             IFCAnyHandle prodDefHnd = null;
@@ -171,7 +171,7 @@ namespace Revit.IFC.Export.Exporter
                     using (PlacementSetter placementSetter = PlacementSetter.Create(exporterIFC, floorElement))
                     {
                         IFCAnyHandle localPlacement = placementSetter.LocalPlacement;
-                        IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                        IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                         bool exportedAsInternalExtrusion = false;
 
                         ElementId catId = CategoryUtil.GetSafeCategoryId(floorElement);
@@ -206,6 +206,7 @@ namespace Revit.IFC.Export.Exporter
                             if (solids.Count == 1 && meshes.Count == 0)
                             {
                                 bool completelyClipped;
+                                // floorExtrusionDirection is set to (0, 0, -1) because extrusionAnalyzerFloorPlane is computed from the top face of the floor
                                 XYZ floorExtrusionDirection = new XYZ(0, 0, -1);
                                 XYZ modelOrigin = XYZ.Zero;
 

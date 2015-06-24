@@ -129,7 +129,7 @@ namespace Revit.IFC.Import.Data
                         if (msg != null)
                         {
                             if (!msg.Contains("not imported"))
-                                IFCImportFile.TheLog.LogError(Id, msg, false);
+                                Importer.TheLog.LogError(Id, msg, false);
                         }
                     }
                 }
@@ -237,7 +237,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcProductRepresentation))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcProductRepresentation);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcProductRepresentation);
                 return null;
             }
 

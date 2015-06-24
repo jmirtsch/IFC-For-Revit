@@ -60,7 +60,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPresentationStyle))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcPresentationStyle);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcPresentationStyle);
                 return null;
             }
 
@@ -71,7 +71,7 @@ namespace Revit.IFC.Import.Data
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcPresentationStyle, IFCEntityType.IfcSurfaceStyle))
                 return IFCSurfaceStyle.ProcessIFCSurfaceStyle(ifcPresentationStyle);
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcPresentationStyle, "IfcPresentationStyle", false);
+            Importer.TheLog.LogUnhandledSubTypeError(ifcPresentationStyle, "IfcPresentationStyle", false);
             return null;
         }
     }

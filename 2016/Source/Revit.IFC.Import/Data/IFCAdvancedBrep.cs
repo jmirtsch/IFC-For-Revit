@@ -73,13 +73,7 @@ namespace Revit.IFC.Import.Data
         protected override IList<GeometryObject> CreateGeometryInternal(
            IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            shapeEditScope.StartCollectingFaceSetForBrepBuilder();
-            Outer.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
-
-            IList<GeometryObject> geomObjs = null;
-            geomObjs = shapeEditScope.CreateGeometry(guid, true);
-
-            return geomObjs;
+           throw new InvalidOperationException("Unhandled code.");
         }
 
 
@@ -90,16 +84,7 @@ namespace Revit.IFC.Import.Data
         /// <returns>The IFCAdvancedBrep object.</returns>
         public static IFCAdvancedBrep ProcessIFCAdvancedBrep(IFCAnyHandle ifcAdvancedBrep)
         {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcAdvancedBrep))
-            {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcAdvancedBrep);
-                return null;
-            }
-
-            IFCEntity advancedBrep;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcAdvancedBrep.StepId, out advancedBrep))
-                advancedBrep = new IFCAdvancedBrep(ifcAdvancedBrep);
-            return (advancedBrep as IFCAdvancedBrep);
+           throw new InvalidOperationException("Unhandled code.");
         }
     }
 }

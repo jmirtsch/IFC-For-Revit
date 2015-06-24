@@ -365,12 +365,12 @@ namespace Revit.IFC.Export.Exporter
             bool alwaysThickenCurve = IsWallBaseRectangular(wallElement, trimmedCurve);
             
             double unscaledWidth = wallElement.Width;
-            IList<CurveLoop> boundaryLoops = GetBoundaryLoopsFromWall(exporterIFC, wallElement, alwaysThickenCurve, trimmedCurve, unscaledWidth);
-            if (boundaryLoops == null || boundaryLoops.Count == 0)
+            IList<CurveLoop> originalBoundaryLoops = GetBoundaryLoopsFromWall(exporterIFC, wallElement, alwaysThickenCurve, trimmedCurve, unscaledWidth);
+            if (originalBoundaryLoops == null || originalBoundaryLoops.Count == 0)
                 return null;
 
             double fullUnscaledLength = baseCurve.Length;
-            double unscaledFootprintArea = ExporterIFCUtils.ComputeAreaOfCurveLoops(boundaryLoops);
+            double unscaledFootprintArea = ExporterIFCUtils.ComputeAreaOfCurveLoops(originalBoundaryLoops);
             scaledFootprintArea = UnitUtil.ScaleArea(unscaledFootprintArea);
             // We are going to do a little sanity check here.  If the scaledFootprintArea is significantly less than the 
             // width * length of the wall footprint, we probably calculated the area wrong, and will abort.
@@ -378,32 +378,69 @@ namespace Revit.IFC.Export.Exporter
             // We want the scaledFootprintArea to be at least (95% of approximateBaseArea - 2 * side wall area).  
             // The "side wall area" is an approximate value that takes into account potential wall joins.  
             // This prevents us from doing extra work for many small walls because of joins.  We'll allow 1' (~30 cm) per side for this.
+            
+            // Note that this heuristic is fallable.  One known case where it can fail is when exporting a wall infill.  For this case,
+            // the infill inherits the base curve (axis) of the parent wall, but has no openings of its own.  Unfortunately, we can't
+            // detect if a wall is an infill - that information isn't readily available to the API - so we will instead add to the heuristic:
+            // if we do "expand" the base extrusion below, but we later find no cutPairOpenings, we will abort this case and fallback
+            // to the next heuristic in the calling function.
             double approximateUnscaledBaseArea = unscaledWidth * fullUnscaledLength;
+            bool expandedWallExtrusion = false;
+            IList<CurveLoop> boundaryLoops = null;
+
             if (unscaledFootprintArea < (approximateUnscaledBaseArea * .95 - 2 * unscaledWidth))
             {
-                // Can't handle the case where we don't have a simple extrusion to begin with.
-                if (!alwaysThickenCurve)
-                    return null;
+               // Can't handle the case where we don't have a simple extrusion to begin with.
+               if (!alwaysThickenCurve)
+                  return null;
 
-                boundaryLoops = GetBoundaryLoopsFromBaseCurve(wallElement, connectedWalls, baseCurve, trimmedCurve, unscaledWidth, scaledDepth);
-                if (boundaryLoops == null || boundaryLoops.Count == 0)
-                    return null;
+               boundaryLoops = GetBoundaryLoopsFromBaseCurve(wallElement, connectedWalls, baseCurve, trimmedCurve, unscaledWidth, scaledDepth);
+               if (boundaryLoops == null || boundaryLoops.Count == 0)
+                  return null;
+
+               expandedWallExtrusion = true;
             }
+            else
+               boundaryLoops = originalBoundaryLoops;
 
             // origin gets scaled later.
             double baseWallZOffset = localOrig[2] - ((range == null) ? baseWallElevation : Math.Min(range.Start, baseWallElevation));
             XYZ modifiedSetterOffset = new XYZ(0, 0, setter.Offset + baseWallZOffset);
 
-            IFCAnyHandle baseBodyItemHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, boundaryLoops, wallLCS,
-                extrusionDir, scaledDepth);
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(baseBodyItemHnd))
-                return null;
+            IFCAnyHandle baseBodyItemHnd = null;
+            IFCAnyHandle bodyItemHnd = null;
+            IFCFile file = exporterIFC.GetFile();
+            bool hasClipping = false;
+            using (IFCTransaction tr = new IFCTransaction(file))
+            {
+               baseBodyItemHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, boundaryLoops, wallLCS,
+                   extrusionDir, scaledDepth);
+               if (IFCAnyHandleUtil.IsNullOrHasNoValue(baseBodyItemHnd))
+                  return null;
 
-            IFCAnyHandle bodyItemHnd = AddClippingsToBaseExtrusion(exporterIFC, wallElement,
-               modifiedSetterOffset, range, zSpan, baseBodyItemHnd, out cutPairOpenings);
+               bodyItemHnd = AddClippingsToBaseExtrusion(exporterIFC, wallElement,
+                  modifiedSetterOffset, range, zSpan, baseBodyItemHnd, out cutPairOpenings);
+               if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyItemHnd))
+                  return null;
+               hasClipping = bodyItemHnd.Id != baseBodyItemHnd.Id;
+
+               if (expandedWallExtrusion && !hasClipping)
+               {
+                  // We expanded the wall base, expecting to find cutouts, but found none.  Delete the extrusion and try again below.
+                  tr.RollBack();
+                  baseBodyItemHnd = null;
+                  bodyItemHnd = null;
+               }
+               else
+                  tr.Commit();
+            }
+
+            // We created an extrusion, but we determined that it was too big (there were no cutouts).  So try again with our first guess.
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyItemHnd))
-                return null;
-            bool hasClipping = bodyItemHnd.Id != baseBodyItemHnd.Id;
+            {
+               baseBodyItemHnd = bodyItemHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, originalBoundaryLoops, wallLCS,
+                    extrusionDir, scaledDepth);
+            }
 
             ElementId matId = HostObjectExporter.GetFirstLayerMaterialId(wallElement);
             IFCAnyHandle styledItemHnd = BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, wallElement.Document,
@@ -739,7 +776,7 @@ namespace Revit.IFC.Export.Exporter
                         }
                     }
 
-                    IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                    IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
                     Transform orientationTrf = Transform.Identity;
                     orientationTrf.BasisX = localXDir;
@@ -1235,7 +1272,7 @@ namespace Revit.IFC.Export.Exporter
                 Document doc = element.Document;
                 
                 IFCFile file = exporterIFC.GetFile();
-                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
                 bool validRange = (range != null && !MathUtil.IsAlmostZero(range.Start - range.End));
 
@@ -1322,10 +1359,10 @@ namespace Revit.IFC.Export.Exporter
 
             // Property sets will be set later.
             if (asFooting)
-                wallType = IFCInstanceExporter.CreateFootingType(exporterIFC.GetFile(), elemGUID, exporterIFC.GetOwnerHistoryHandle(),
+                wallType = IFCInstanceExporter.CreateFootingType(exporterIFC.GetFile(), elemGUID, ExporterCacheManager.OwnerHistoryHandle,
                     elemName, elemDesc, elemApplicableOccurence, null, null, null, null, null);
             else
-                wallType = IFCInstanceExporter.CreateWallType(exporterIFC.GetFile(), elemGUID, exporterIFC.GetOwnerHistoryHandle(),
+                wallType = IFCInstanceExporter.CreateWallType(exporterIFC.GetFile(), elemGUID, ExporterCacheManager.OwnerHistoryHandle,
                     elemName, elemDesc, elemApplicableOccurence, null, null, elemTag, elemElementType, isStandard ? "STANDARD" : "NOTDEFINED");
 
             wrapper.RegisterHandleWithElementType(elementType as ElementType, wallType, null);

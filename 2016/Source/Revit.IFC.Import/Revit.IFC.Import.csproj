@@ -39,6 +39,9 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
@@ -47,12 +50,17 @@
     <Compile Include="Data\IFCApplication.cs" />
     <Compile Include="Data\IFCBooleanOperand.cs" />
     <Compile Include="Data\IFCBooleanResult.cs" />
+    <Compile Include="Data\IFCBoundedCurve.cs" />
     <Compile Include="Data\IFCBuilding.cs" />
     <Compile Include="Data\IFCBuildingStorey.cs" />
     <Compile Include="Data\IFCCartesianPointList3D.cs" />
     <Compile Include="Data\IFCCartesianTransformOperator.cs" />
+    <Compile Include="Data\IFCCircle.cs" />
     <Compile Include="Data\IFCClosedShell.cs" />
     <Compile Include="Data\IFCColourRgb.cs" />
+    <Compile Include="Data\IFCColourSpecification.cs" />
+    <Compile Include="Data\IFCCompositeCurve.cs" />
+    <Compile Include="Data\IFCConic.cs" />
     <Compile Include="Data\IFCConnectedFaceSet.cs" />
     <Compile Include="Data\IFCCSGSolid.cs" />
     <Compile Include="Data\IFCCurve.cs" />
@@ -69,12 +77,14 @@
     <Compile Include="Data\IFCElementAssembly.cs" />
     <Compile Include="Data\IFCElementQuantity.cs" />
     <Compile Include="Data\IFCElementType.cs" />
+    <Compile Include="Data\IFCEllipse.cs" />
     <Compile Include="Data\IFCEntity.cs" />
     <Compile Include="Data\IFCExtrudedAreaSolid.cs" />
     <Compile Include="Data\IFCFace.cs" />
     <Compile Include="Data\IFCFaceBasedSurfaceModel.cs" />
     <Compile Include="Data\IFCFaceBound.cs" />
     <Compile Include="Data\IFCFaceSurface.cs" />
+    <Compile Include="Data\IFCFacetedBrep.cs" />
     <Compile Include="Data\IFCFeatureElement.cs" />
     <Compile Include="Data\IFCFeatureElementSubtraction.cs" />
     <Compile Include="Data\IFCGeometricSet.cs" />
@@ -83,6 +93,7 @@
     <Compile Include="Data\IFCGroup.cs" />
     <Compile Include="Data\IFCHalfSpaceSolid.cs" />
     <Compile Include="Data\IFCImportFile.cs" />
+    <Compile Include="Data\IFCLine.cs" />
     <Compile Include="Data\IFCLocation.cs" />
     <Compile Include="Data\IFCLoop.cs" />
     <Compile Include="Data\IFCManifoldSolidBrep.cs" />
@@ -94,12 +105,15 @@
     <Compile Include="Data\IFCMaterialList.cs" />
     <Compile Include="Data\IFCObject.cs" />
     <Compile Include="Data\IFCObjectDefinition.cs" />
+    <Compile Include="Data\IFCOffsetCurve2D.cs" />
+    <Compile Include="Data\IFCOffsetCurve3D.cs" />
     <Compile Include="Data\IFCOpeningElement.cs" />
     <Compile Include="Data\IFCOrientedEdge.cs" />
     <Compile Include="Data\IFCOwnerHistory.cs" />
     <Compile Include="Data\IFCPhysicalQuantity.cs" />
     <Compile Include="Data\IFCPhysicalSimpleQuantity.cs" />
     <Compile Include="Data\IFCPlane.cs" />
+    <Compile Include="Data\IFCPolyline.cs" />
     <Compile Include="Data\IFCPolyLoop.cs" />
     <Compile Include="Data\IFCPort.cs" />
     <Compile Include="Data\IFCPresentationLayerAssignment.cs" />
@@ -133,6 +147,7 @@
     <Compile Include="Data\IFCSystem.cs" />
     <Compile Include="Data\IFCTopologicalRepresentationItem.cs" />
     <Compile Include="Data\IFCTriangulatedFaceSet.cs" />
+    <Compile Include="Data\IFCTrimmedCurve.cs" />
     <Compile Include="Data\IFCTypeObject.cs" />
     <Compile Include="Data\IFCTypeProduct.cs" />
     <Compile Include="Data\IFCUnit.cs" />
@@ -144,6 +159,8 @@
     <Compile Include="Data\IIFCMaterialSelect.cs" />
     <Compile Include="Enums\IFCEnums.cs" />
     <Compile Include="Enums\IFCSchemaVersion.cs" />
+    <Compile Include="Enums\IFCShapeBuilderType.cs" />
+    <Compile Include="Enums\IFCSharedParameters.cs" />
     <Compile Include="Geometry\IFCGeometryUtil.cs" />
     <Compile Include="Geometry\IFCPoint.cs" />
     <Compile Include="Data\IFCComplexProperty.cs" />
@@ -163,6 +180,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Utility\BuilderScope.cs" />
     <Compile Include="Utility\IFCCategoryUtil.cs" />
     <Compile Include="Utility\IFCDataUtil.cs" />
     <Compile Include="Utility\IFCElementUtil.cs" />
@@ -181,7 +199,7 @@
     <Compile Include="Utility\IFCSolidInfo.cs" />
     <Compile Include="Utility\IFCUnitUtil.cs" />
     <Compile Include="Utility\ProcessIFCRelation.cs" />
-    <Compile Include="Utility\RevitStatusBar.cs" />
+    <Compile Include="Utility\TessellatedShapeBuilderScope.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Framework.2.0">

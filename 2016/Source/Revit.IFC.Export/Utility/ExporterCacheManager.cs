@@ -173,6 +173,11 @@ namespace Revit.IFC.Export.Utility
         static MaterialRelationsCache m_MaterialRelationsCache;
 
         /// <summary>
+        /// The top level IfcOwnerHistory handle.
+        /// </summary>
+        static IFCAnyHandle m_OwnerHistoryHandle;
+        
+        /// <summary>
         /// The ParameterCache object.
         /// </summary>
         static ParameterCache m_ParameterCache;
@@ -571,6 +576,15 @@ namespace Revit.IFC.Export.Utility
                     m_PresentationStyleCache = new PresentationStyleAssignmentCache();
                 return m_PresentationStyleCache;
             }
+        }
+
+        /// <summary>
+        /// The top level IfcOwnerHistory handle.
+        /// </summary>
+        public static IFCAnyHandle OwnerHistoryHandle
+        {
+            get { return m_OwnerHistoryHandle; }
+            set { m_OwnerHistoryHandle = value; }
         }
 
         /// <summary>
@@ -1246,6 +1260,7 @@ namespace Revit.IFC.Export.Utility
             m_MaterialHandleCache = null;
             m_MaterialRelationsCache = null;
             m_MEPCache = null;
+            m_OwnerHistoryHandle = null;
             m_ParameterCache = null;
             m_PartExportedCache = null;
             m_PresentationLayerSetCache = null;

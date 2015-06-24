@@ -83,7 +83,7 @@ namespace Revit.IFC.Import.Data
                 if (IFCAnyHandleUtil.IsSubTypeOf(treeRootExpression, IFCEntityType.IfcBooleanResult))
                     BooleanResult = IFCBooleanResult.ProcessIFCBooleanResult(treeRootExpression);
                 else
-                    IFCImportFile.TheLog.LogUnhandledSubTypeError(treeRootExpression, "IfcCsgSelect", false);
+                    Importer.TheLog.LogUnhandledSubTypeError(treeRootExpression, "IfcCsgSelect", false);
             }
         }
 
@@ -101,7 +101,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcCSGSolid))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcCsgSolid);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcCsgSolid);
                 return null;
             }
 

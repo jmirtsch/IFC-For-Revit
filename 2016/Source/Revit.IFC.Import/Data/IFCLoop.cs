@@ -107,7 +107,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcLoop))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcLoop);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcLoop);
                 return null;
             }
 
@@ -116,12 +116,12 @@ namespace Revit.IFC.Import.Data
                 return (loop as IFCLoop);
 
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcLoop, IFCEntityType.IfcEdgeLoop))
-                return IFCEdgeLoop.ProcessIFCEdgeLoop(ifcLoop);
+               Importer.TheLog.LogUnhandledSubTypeError(ifcLoop, IFCEntityType.IfcLoop, true);
 
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcLoop, IFCEntityType.IfcPolyLoop))
                 return IFCPolyLoop.ProcessIFCPolyLoop(ifcLoop);
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcLoop, IFCEntityType.IfcLoop, false);
+            Importer.TheLog.LogUnhandledSubTypeError(ifcLoop, IFCEntityType.IfcLoop, false);
             return null;
         }
     }

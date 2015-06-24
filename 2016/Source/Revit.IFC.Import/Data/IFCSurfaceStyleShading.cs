@@ -90,7 +90,7 @@ namespace Revit.IFC.Import.Data
         public Color GetSurfaceColor(double factor)
         {
             if (m_SurfaceColour != null)
-                return m_SurfaceColour.GetColor(factor);
+                return m_SurfaceColour.GetScaledColor(factor);
             return GetDefaultColor();
         }
         
@@ -214,7 +214,7 @@ namespace Revit.IFC.Import.Data
                 shininess = 128;
 
             if (warning != null)
-                IFCImportFile.TheLog.LogWarning(Id, warning, true);
+                Importer.TheLog.LogWarning(Id, warning, true);
 
             return shininess;
         }
@@ -272,16 +272,16 @@ namespace Revit.IFC.Import.Data
                         else if (string.Compare(simpleType, "IfcSpecularRoughness", true) == 0)
                             m_SpecularRoughness = specularHighlight.AsDouble();
                         else
-                            IFCImportFile.TheLog.LogError(item.StepId, "Unknown type of specular highlight, ignoring.", false);
+                            Importer.TheLog.LogError(item.StepId, "Unknown type of specular highlight, ignoring.", false);
                     }
                     catch
                     {
-                        IFCImportFile.TheLog.LogError(item.StepId, "Unspecified type of specular highlight, ignoring.", false);
+                        Importer.TheLog.LogError(item.StepId, "Unspecified type of specular highlight, ignoring.", false);
                     }
                 }
                 else if (specularHighlight.HasValue)
                 {
-                    IFCImportFile.TheLog.LogError(item.StepId, "Unknown type of specular highlight, ignoring.", false);
+                    Importer.TheLog.LogError(item.StepId, "Unknown type of specular highlight, ignoring.", false);
                 }
             }
         }
@@ -300,7 +300,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSurfaceStyleShading))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcSurfaceStyleShading);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcSurfaceStyleShading);
                 return null;
             }
 

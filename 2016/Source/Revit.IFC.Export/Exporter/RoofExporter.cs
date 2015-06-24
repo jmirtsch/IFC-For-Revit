@@ -81,7 +81,7 @@ namespace Revit.IFC.Export.Exporter
                         bool exportSlab = ecData.ScaledLength > MathUtil.Eps();
 
                         string guid = GUIDUtil.CreateGUID(roof);
-                        IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                        IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                         string roofName = NamingUtil.GetNameOverride(roof, NamingUtil.GetIFCName(roof));
                         string roofDescription = NamingUtil.GetDescriptionOverride(roof, null);
                         string roofObjectType = NamingUtil.GetObjectTypeOverride(roof, NamingUtil.CreateIFCObjectName(exporterIFC, roof));
@@ -212,7 +212,7 @@ namespace Revit.IFC.Export.Exporter
                     {
                         using (IFCExtrusionCreationData extrusionCreationData = new IFCExtrusionCreationData())
                         {
-                            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                             extrusionCreationData.SetLocalPlacement(localPlacement);
                             extrusionCreationData.ReuseLocalPlacement = true;
 
@@ -245,8 +245,9 @@ namespace Revit.IFC.Export.Exporter
                                 IList<IFCAnyHandle> elementHandles = new List<IFCAnyHandle>();
                                 elementHandles.Add(hostObjectHandle);
 
-                                //only thing supported right now.
-                                XYZ extrusionDir = new XYZ(0, 0, 1);
+                                // If element is floor, then the profile curve loop of hostObjectSubComponent is computed from the top face of the floor
+                                // else if element is roof, then the profile curve loop is taken from the bottom face of the roof instead 
+                                XYZ extrusionDir = elementIsFloor ? new XYZ(0, 0, -1) : new XYZ(0, 0, 1);
 
                                 ElementId catId = CategoryUtil.GetSafeCategoryId(element);
 
@@ -350,7 +351,7 @@ namespace Revit.IFC.Export.Exporter
             {
                 using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, element))
                 {
-                    IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                    IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                     IFCAnyHandle localPlacement = setter.LocalPlacement;
 
                     IFCAnyHandle prodRepHnd = null;

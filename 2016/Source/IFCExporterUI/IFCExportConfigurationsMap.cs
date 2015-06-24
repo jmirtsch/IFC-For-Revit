@@ -130,6 +130,10 @@ namespace BIM.IFC.Export.UI
                             configuration.UseFamilyAndTypeNameForReference = bool.Parse(configMap[s_setupUseFamilyAndTypeName]);
                         if (configMap.ContainsKey(s_setupExportPartsAsBuildingElements))
                             configuration.ExportPartsAsBuildingElements = bool.Parse(configMap[s_setupExportPartsAsBuildingElements]);
+                        if (configMap.ContainsKey(s_useActiveViewGeometry))
+                            configuration.UseActiveViewGeometry = bool.Parse(configMap[s_useActiveViewGeometry]);
+                        if (configMap.ContainsKey(s_setupExportSpecificSchedules))
+                            configuration.ExportSpecificSchedules = bool.Parse(configMap[s_setupExportSpecificSchedules]);
                         if (configMap.ContainsKey(s_setupExportBoundingBox))
                             configuration.ExportBoundingBox = bool.Parse(configMap[s_setupExportBoundingBox]);
                         if (configMap.ContainsKey(s_setupExportSolidModelRep))
@@ -144,8 +148,6 @@ namespace BIM.IFC.Export.UI
                             configuration.ExportLinkedFiles = bool.Parse(configMap[s_setupExportLinkedFiles]);
                         if (configMap.ContainsKey(s_setupIncludeSiteElevation))
                             configuration.IncludeSiteElevation = bool.Parse(configMap[s_setupIncludeSiteElevation]);
-                        if (configMap.ContainsKey(s_setupUseCoarseTessellation))
-                            configuration.UseCoarseTessellation = bool.Parse(configMap[s_setupUseCoarseTessellation]);
                         if (configMap.ContainsKey(s_setupStoreIFCGUID))
                             configuration.StoreIFCGUID = bool.Parse(configMap[s_setupStoreIFCGUID]);
                         if (configMap.ContainsKey(s_setupExportRoomsInView))
@@ -200,16 +202,12 @@ namespace BIM.IFC.Export.UI
                         Field fieldIncludeSiteElevation = m_schema.GetField(s_setupIncludeSiteElevation);
                         if (fieldIncludeSiteElevation != null)
                             configuration.IncludeSiteElevation = configEntity.Get<bool>(s_setupIncludeSiteElevation);
-                        Field fieldUseCoarseTessellation = m_schema.GetField(s_setupUseCoarseTessellation);
-                        if (fieldUseCoarseTessellation != null)
-                            configuration.UseCoarseTessellation = configEntity.Get<bool>(s_setupUseCoarseTessellation);
                         Field fieldStoreIFCGUID = m_schema.GetField(s_setupStoreIFCGUID);
                         if (fieldStoreIFCGUID != null)
                             configuration.StoreIFCGUID = configEntity.Get<bool>(s_setupStoreIFCGUID);
                         Field fieldActivePhase = m_schema.GetField(s_setupActivePhase);
                         if (fieldActivePhase != null)
                             configuration.ActivePhaseId = new ElementId(int.Parse(configEntity.Get<string>(s_setupActivePhase)));
-
                         Field fieldExportRoomsInView = m_schema.GetField(s_setupExportRoomsInView);
                         if (fieldExportRoomsInView != null)
                             configuration.ExportRoomsInView = configEntity.Get<bool>(s_setupExportRoomsInView);
@@ -241,6 +239,8 @@ namespace BIM.IFC.Export.UI
         private const String s_setupUse2DForRoomVolume = "Use2DBoundariesForRoomVolume";
         private const String s_setupUseFamilyAndTypeName = "UseFamilyAndTypeNameForReference";
         private const String s_setupExportPartsAsBuildingElements = "ExportPartsAsBuildingElements";
+        private const String s_useActiveViewGeometry = "UseActiveViewGeometry";
+        private const String s_setupExportSpecificSchedules = "ExportSpecificSchedules";
         private const String s_setupExportBoundingBox = "ExportBoundingBox";
         private const String s_setupExportSolidModelRep = "ExportSolidModelRep";
         private const String s_setupExportSchedulesAsPsets = "ExportSchedulesAsPsets";
@@ -361,6 +361,8 @@ namespace BIM.IFC.Export.UI
                    mapData.Add(s_setupUse2DForRoomVolume, configuration.Use2DRoomBoundaryForVolume.ToString());
                    mapData.Add(s_setupUseFamilyAndTypeName, configuration.UseFamilyAndTypeNameForReference.ToString());
                    mapData.Add(s_setupExportPartsAsBuildingElements, configuration.ExportPartsAsBuildingElements.ToString());
+                   mapData.Add(s_useActiveViewGeometry, configuration.UseActiveViewGeometry.ToString());
+                   mapData.Add(s_setupExportSpecificSchedules, configuration.ExportSpecificSchedules.ToString());
                    mapData.Add(s_setupExportBoundingBox, configuration.ExportBoundingBox.ToString());
                    mapData.Add(s_setupExportSolidModelRep, configuration.ExportSolidModelRep.ToString());
                    mapData.Add(s_setupExportSchedulesAsPsets, configuration.ExportSchedulesAsPsets.ToString());
@@ -368,12 +370,9 @@ namespace BIM.IFC.Export.UI
                    mapData.Add(s_setupExportUserDefinedPsetsFileName, configuration.ExportUserDefinedPsetsFileName);
                    mapData.Add(s_setupExportLinkedFiles, configuration.ExportLinkedFiles.ToString());
                    mapData.Add(s_setupIncludeSiteElevation, configuration.IncludeSiteElevation.ToString());
-                   mapData.Add(s_setupUseCoarseTessellation, configuration.UseCoarseTessellation.ToString());
                    mapData.Add(s_setupStoreIFCGUID, configuration.StoreIFCGUID.ToString());
                    mapData.Add(s_setupActivePhase, configuration.ActivePhaseId.ToString());
-
                    mapData.Add(s_setupExportRoomsInView, configuration.ExportRoomsInView.ToString());
-
                    mapEntity.Set<IDictionary<string, String>>(s_configMapField, mapData);
 
                    configStorage.SetEntity(mapEntity);

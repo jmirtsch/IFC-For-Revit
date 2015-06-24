@@ -204,7 +204,7 @@ namespace Revit.IFC.Import.Data
                     if (NotAllowedInRepresentation(item))
                     {
                         IFCEntityType entityType = IFCAnyHandleUtil.GetEntityType(item);
-                        IFCImportFile.TheLog.LogWarning(item.StepId, "Ignoring unhandled representation item of type " + entityType.ToString() + " in " +
+                        Importer.TheLog.LogWarning(item.StepId, "Ignoring unhandled representation item of type " + entityType.ToString() + " in " +
                             Identifier.ToString() + " representation.", true);
                         continue;
                     }
@@ -221,7 +221,7 @@ namespace Revit.IFC.Import.Data
                 }
                 catch (Exception ex)
                 {
-                    IFCImportFile.TheLog.LogError(item.StepId, ex.Message, false);
+                    Importer.TheLog.LogError(item.StepId, ex.Message, false);
                 }
                 if (repItem != null)
                     RepresentationItems.Add(repItem);
@@ -301,11 +301,7 @@ namespace Revit.IFC.Import.Data
                 {
                     foreach (IFCRepresentationItem representationItem in RepresentationItems)
                     {
-                        using (IFCImportShapeEditScope.IFCTargetSetter setter =
-                            new IFCImportShapeEditScope.IFCTargetSetter(shapeEditScope, TessellatedShapeBuilderTarget.AnyGeometry, TessellatedShapeBuilderFallback.Mesh))
-                        {
-                            representationItem.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
-                        }
+                        representationItem.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
                     }
                 }
             }
@@ -337,7 +333,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcRepresentation))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcRepresentation);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcRepresentation);
                 return null;
             }
 

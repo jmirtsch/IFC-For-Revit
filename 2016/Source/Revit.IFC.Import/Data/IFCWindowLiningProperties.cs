@@ -98,7 +98,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcWindowLiningProperties))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcWindowLiningProperties);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcWindowLiningProperties);
                 return null;
             }
 

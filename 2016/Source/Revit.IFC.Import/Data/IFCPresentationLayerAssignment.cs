@@ -118,7 +118,7 @@ namespace Revit.IFC.Import.Data
                 if (entity != null)
                     AssignedItems.Add(entity);
                 else
-                    IFCImportFile.TheLog.LogUnhandledSubTypeError(assignedItem, "IfcLayeredItem", false);
+                    Importer.TheLog.LogUnhandledSubTypeError(assignedItem, "IfcLayeredItem", false);
             }
         }
 
@@ -131,7 +131,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPresentationLayerAssignment))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcPresentationLayerAssignment);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcPresentationLayerAssignment);
                 return null;
             }
 
@@ -237,7 +237,7 @@ namespace Revit.IFC.Import.Data
                 {
                     if (!IFCAnyHandleUtil.IsSubTypeOf(layerAssignment, IFCEntityType.IfcPresentationLayerAssignment))
                     {
-                        IFCImportFile.TheLog.LogUnexpectedTypeError(layerAssignment, IFCEntityType.IfcStyledItem, false);
+                        Importer.TheLog.LogUnexpectedTypeError(layerAssignment, IFCEntityType.IfcStyledItem, false);
                         theLayerAssignment = null;
                         break;
                     }

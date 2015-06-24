@@ -32,376 +32,390 @@ using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Import.Utility
 {
-    /// <summary>
-    /// Utilities for caching values during IFC Import.
-    /// </summary>
-    public class IFCImportCache
-    {
-        private Category m_GenericModelsCategory = null;
+   /// <summary>
+   /// Utilities for caching values during IFC Import.
+   /// </summary>
+   public class IFCImportCache
+   {
+      private Category m_GenericModelsCategory = null;
 
-        private Categories m_DocumentCategories = null;
+      private Categories m_DocumentCategories = null;
 
-        private IDictionary<string, Category> m_CreatedSubcategories = null;
+      private ElementId m_ProjectInformationId = ElementId.InvalidElementId;
 
-        private IDictionary<string, ElementId> m_GUIDToElementMap = null;
+      private IDictionary<string, Category> m_CreatedSubcategories = null;
 
-        private IDictionary<string, ElementId> m_GridNameToElementMap = null;
+      private IDictionary<string, ElementId> m_GUIDToElementMap = null;
 
-        private ISet<string> m_CreatedGUIDs = null;
+      private IDictionary<string, ElementId> m_GridNameToElementMap = null;
 
-        private IFCMaterialCache m_CreatedMaterials = null;
+      private ISet<string> m_CreatedGUIDs = null;
 
-        private IDictionary<KeyValuePair<ElementId, string>, ElementId> m_ViewSchedules = null;
+      private IFCMaterialCache m_CreatedMaterials = null;
 
-        private ISet<string> m_ViewScheduleNames = null;
+      private IDictionary<KeyValuePair<ElementId, string>, ElementId> m_ViewSchedules = null;
 
-        private ISet<ElementId> m_MaterialsWithNoColor = null;
+      private ISet<string> m_ViewScheduleNames = null;
 
-        private string m_OriginalSharedParametersFile = null;
+      private ISet<ElementId> m_MaterialsWithNoColor = null;
 
-        private DefinitionGroup m_DefinitionInstanceGroup = null;
+      private string m_OriginalSharedParametersFile = null;
 
-        private DefinitionGroup m_DefinitionTypeGroup = null;
+      private DefinitionGroup m_DefinitionInstanceGroup = null;
 
-        private RevitStatusBar m_StatusBar = null;
-        
-        /// <summary>
-        /// The Categories class for the document associated with this import.
-        /// </summary>
-        public Categories DocumentCategories
-        {
-            get { return m_DocumentCategories; }
-            protected set { m_DocumentCategories = value; }
-        }
+      private DefinitionGroup m_DefinitionTypeGroup = null;
 
-        /// <summary>
-        /// The Category class associated with OST_GenericModels for the document associated with this import.
-        /// </summary>
-        public Category GenericModelsCategory
-        {
-            get { return m_GenericModelsCategory; }
-            protected set { m_GenericModelsCategory = value; }
-        }
+      private RevitStatusBar m_StatusBar = null;
 
-        /// <summary>
-        /// The set of GUIDs imported.
-        /// </summary>
-        public ISet<string> CreatedGUIDs
-        {
-            get 
-            { 
-                if (m_CreatedGUIDs == null)
-                    m_CreatedGUIDs = new HashSet<string>();
-                return m_CreatedGUIDs;
-            }
-        }
+      /// <summary>
+      /// The Categories class for the document associated with this import.
+      /// </summary>
+      public Categories DocumentCategories
+      {
+         get { return m_DocumentCategories; }
+         protected set { m_DocumentCategories = value; }
+      }
 
-        /// <summary>
-        /// A map of material name to created material.
-        /// Intended to disallow creation of multiple materials with the same name and attributes.
-        /// </summary>
-        public IFCMaterialCache CreatedMaterials
-        {
-            get 
-            {
-                if (m_CreatedMaterials == null)
-                    m_CreatedMaterials = new IFCMaterialCache();
-                return m_CreatedMaterials; 
-            }
-        }
+      /// <summary>
+      /// The id of the ProjectInformation class for the document associated with this import.
+      /// </summary>
+      public ElementId ProjectInformationId
+      {
+         get { return m_ProjectInformationId; }
+         protected set { m_ProjectInformationId = value; }
+      }
 
-        /// <summary>
-        /// The name of the shared parameters file, if any, set before this import operation.
-        /// </summary>
-        public string OriginalSharedParametersFile
-        {
-            get { return m_OriginalSharedParametersFile; }
-            protected set { m_OriginalSharedParametersFile = value; }
-        }
+      /// <summary>
+      /// The Category class associated with OST_GenericModels for the document associated with this import.
+      /// </summary>
+      public Category GenericModelsCategory
+      {
+         get { return m_GenericModelsCategory; }
+         protected set { m_GenericModelsCategory = value; }
+      }
 
-        /// <summary>
-        /// The instance shared parameters group associated with this import.
-        /// </summary>
-        public DefinitionGroup DefinitionInstanceGroup
-        {
-            get { return m_DefinitionInstanceGroup; }
-            protected set { m_DefinitionInstanceGroup = value; }
-        }
+      /// <summary>
+      /// The set of GUIDs imported.
+      /// </summary>
+      public ISet<string> CreatedGUIDs
+      {
+         get
+         {
+            if (m_CreatedGUIDs == null)
+               m_CreatedGUIDs = new HashSet<string>();
+            return m_CreatedGUIDs;
+         }
+      }
 
-        /// <summary>
-        /// The type shared parameters group associated with this import.
-        /// </summary>
-        public DefinitionGroup DefinitionTypeGroup
-        {
-            get { return m_DefinitionTypeGroup; }
-            protected set { m_DefinitionTypeGroup = value; }
-        }
+      /// <summary>
+      /// A map of material name to created material.
+      /// Intended to disallow creation of multiple materials with the same name and attributes.
+      /// </summary>
+      public IFCMaterialCache CreatedMaterials
+      {
+         get
+         {
+            if (m_CreatedMaterials == null)
+               m_CreatedMaterials = new IFCMaterialCache();
+            return m_CreatedMaterials;
+         }
+      }
 
-        /// <summary>
-        /// A map of create schedules, sorted by category and property set name.
-        /// </summary>
-        public IDictionary<KeyValuePair<ElementId, string>, ElementId> ViewSchedules
-        {
-            get
-            {
-                if (m_ViewSchedules == null)
-                    m_ViewSchedules = new Dictionary<KeyValuePair<ElementId, string>, ElementId>();
-                return m_ViewSchedules;
-            }
-        }
+      /// <summary>
+      /// The name of the shared parameters file, if any, set before this import operation.
+      /// </summary>
+      public string OriginalSharedParametersFile
+      {
+         get { return m_OriginalSharedParametersFile; }
+         protected set { m_OriginalSharedParametersFile = value; }
+      }
 
-        /// <summary>
-        /// The set of create schedule names, to prevent duplicates.
-        /// </summary>
-        public ISet<string> ViewScheduleNames
-        {
-            get
-            {
-                if (m_ViewScheduleNames == null)
-                    m_ViewScheduleNames = new HashSet<string>();
-                return m_ViewScheduleNames;
-            }
-        }
+      /// <summary>
+      /// The instance shared parameters group associated with this import.
+      /// </summary>
+      public DefinitionGroup DefinitionInstanceGroup
+      {
+         get { return m_DefinitionInstanceGroup; }
+         protected set { m_DefinitionInstanceGroup = value; }
+      }
 
-        /// <summary>
-        /// The set of create schedule names, to prevent duplicates.
-        /// </summary>
-        public ISet<ElementId> MaterialsWithNoColor
-        {
-            get
-            {
-                if (m_MaterialsWithNoColor == null)
-                    m_MaterialsWithNoColor = new HashSet<ElementId>();
-                return m_MaterialsWithNoColor;
-            }
-        }
-        
-        /// <summary>
-        /// The pointer to the status bar in the running Revit executable, if found.
-        /// </summary>
-        public RevitStatusBar StatusBar
-        {
-            get { return m_StatusBar; }
-            protected set { m_StatusBar = value; }
-        }
+      /// <summary>
+      /// The type shared parameters group associated with this import.
+      /// </summary>
+      public DefinitionGroup DefinitionTypeGroup
+      {
+         get { return m_DefinitionTypeGroup; }
+         protected set { m_DefinitionTypeGroup = value; }
+      }
 
-        /// <summary>
-        /// Get the map from custom subcategory name to Category class.
-        /// </summary>
-        public IDictionary<string, Category> CreatedSubcategories
-        {
-            get 
-            {
-                if (m_CreatedSubcategories == null)
-                    m_CreatedSubcategories = new Dictionary<string, Category>();
-                return m_CreatedSubcategories; 
-            }
-        }
+      /// <summary>
+      /// A map of create schedules, sorted by category and property set name.
+      /// </summary>
+      public IDictionary<KeyValuePair<ElementId, string>, ElementId> ViewSchedules
+      {
+         get
+         {
+            if (m_ViewSchedules == null)
+               m_ViewSchedules = new Dictionary<KeyValuePair<ElementId, string>, ElementId>();
+            return m_ViewSchedules;
+         }
+      }
 
-        /// <summary>
-        /// The map of GUIDs to created elements, used when reloading a link.
-        /// </summary>
-        public IDictionary<string, ElementId> GUIDToElementMap
-        {
-            get
-            {
-                if (m_GUIDToElementMap == null)
-                    m_GUIDToElementMap = new Dictionary<string, ElementId>();
-                return m_GUIDToElementMap;
-            }
-        }
+      /// <summary>
+      /// The set of create schedule names, to prevent duplicates.
+      /// </summary>
+      public ISet<string> ViewScheduleNames
+      {
+         get
+         {
+            if (m_ViewScheduleNames == null)
+               m_ViewScheduleNames = new HashSet<string>();
+            return m_ViewScheduleNames;
+         }
+      }
 
-        /// <summary>
-        /// The map of grid names to created elements, used when reloading a link.
-        /// </summary>
-        public IDictionary<string, ElementId> GridNameToElementMap
-        {
-            get
-            {
-                if (m_GridNameToElementMap == null)
-                    m_GridNameToElementMap = new Dictionary<string, ElementId>();
-                return m_GridNameToElementMap;
-            }
-        }
-        
-        /// <summary>
-        /// Create the GUIDToElementMap and the GridNameToElementMap to reuse elements by GUID and Grid name.
-        /// </summary>
-        /// <param name="document">The document.</param>
-        public void CreateExistingElementMaps(Document document)
-        {
-            FilteredElementCollector collector = new FilteredElementCollector(document);
+      /// <summary>
+      /// The set of create schedule names, to prevent duplicates.
+      /// </summary>
+      public ISet<ElementId> MaterialsWithNoColor
+      {
+         get
+         {
+            if (m_MaterialsWithNoColor == null)
+               m_MaterialsWithNoColor = new HashSet<ElementId>();
+            return m_MaterialsWithNoColor;
+         }
+      }
 
-            // These are the only element types currently created in .NET code.  This list needs to be updated when a new
-            // type is created.
-            List<Type> supportedElementTypes = new List<Type>();
-            supportedElementTypes.Add(typeof(DirectShape));
-            supportedElementTypes.Add(typeof(DirectShapeType));
-            supportedElementTypes.Add(typeof(Level));
-            supportedElementTypes.Add(typeof(Grid));
-            
-            ElementMulticlassFilter multiclassFilter = new ElementMulticlassFilter(supportedElementTypes);
-            collector.WherePasses(multiclassFilter);
+      /// <summary>
+      /// The pointer to the status bar in the running Revit executable, if found.
+      /// </summary>
+      public RevitStatusBar StatusBar
+      {
+         get { return m_StatusBar; }
+         protected set { m_StatusBar = value; }
+      }
 
-            foreach (Element elem in collector)
-            {
-                string guid = IFCGUIDUtil.GetGUID(elem);
-                if (string.IsNullOrWhiteSpace(guid))
-                    continue;   // This Element was generated by other means.
+      /// <summary>
+      /// Get the map from custom subcategory name to Category class.
+      /// </summary>
+      public IDictionary<string, Category> CreatedSubcategories
+      {
+         get
+         {
+            if (m_CreatedSubcategories == null)
+               m_CreatedSubcategories = new Dictionary<string, Category>();
+            return m_CreatedSubcategories;
+         }
+      }
 
-                if (elem is Grid)
-                {
-                    string gridName = elem.Name;
-                    if (GridNameToElementMap.ContainsKey(gridName))
-                    {
-                        // If the Grid has a duplicate grid name, assign an arbitrary one to add to the map.  This will mean
-                        // that the Grid will be deleted at the end of reloading.
-                        // TODO: warn the user about this, and/or maybe allow for some duplication based on category.
-                        gridName = Guid.NewGuid().ToString();
-                    }
+      /// <summary>
+      /// The map of GUIDs to created elements, used when reloading a link.
+      /// </summary>
+      public IDictionary<string, ElementId> GUIDToElementMap
+      {
+         get
+         {
+            if (m_GUIDToElementMap == null)
+               m_GUIDToElementMap = new Dictionary<string, ElementId>();
+            return m_GUIDToElementMap;
+         }
+      }
 
-                    GridNameToElementMap.Add(new KeyValuePair<string, ElementId>(gridName, elem.Id));
-                }
-                else
-                {
-                    if (GUIDToElementMap.ContainsKey(guid))
-                    {
-                        // If the Element contains a duplicate GUID, assign an arbitrary one to add to the map.  This will mean
-                        // that the Element will be deleted at the end of reloading.
-                        // TODO: warn the user about this, and/or maybe allow for some duplication based on category.
-                        guid = Guid.NewGuid().ToString();
-                    }
+      /// <summary>
+      /// The map of grid names to created elements, used when reloading a link.
+      /// </summary>
+      public IDictionary<string, ElementId> GridNameToElementMap
+      {
+         get
+         {
+            if (m_GridNameToElementMap == null)
+               m_GridNameToElementMap = new Dictionary<string, ElementId>();
+            return m_GridNameToElementMap;
+         }
+      }
 
-                    GUIDToElementMap.Add(new KeyValuePair<string, ElementId>(guid, elem.Id));
-                }
-            }
-        }
+      /// <summary>
+      /// Create the GUIDToElementMap and the GridNameToElementMap to reuse elements by GUID and Grid name.
+      /// </summary>
+      /// <param name="document">The document.</param>
+      public void CreateExistingElementMaps(Document document)
+      {
+         FilteredElementCollector collector = new FilteredElementCollector(document);
 
-        /// <summary>
-        /// Remove an element from the GUID to element id map, if its GUID is found in the map.
-        /// </summary>
-        /// <param name="elem">The element.</param>
-        public void UseElement(Element elem)
-        {
-            if (elem == null)
-                return;
+         // These are the only element types currently created in .NET code.  This list needs to be updated when a new
+         // type is created.
+         List<Type> supportedElementTypes = new List<Type>();
+         supportedElementTypes.Add(typeof(DirectShape));
+         supportedElementTypes.Add(typeof(DirectShapeType));
+         supportedElementTypes.Add(typeof(Level));
+         supportedElementTypes.Add(typeof(Grid));
 
+         ElementMulticlassFilter multiclassFilter = new ElementMulticlassFilter(supportedElementTypes);
+         collector.WherePasses(multiclassFilter);
+
+         foreach (Element elem in collector)
+         {
             string guid = IFCGUIDUtil.GetGUID(elem);
             if (string.IsNullOrWhiteSpace(guid))
-                return;
+               continue;   // This Element was generated by other means.
 
-            GUIDToElementMap.Remove(guid);
-        }
-
-        /// <summary>
-        /// Remove a Grid from the Grid Name to element id map, if its grid name is found in the map.
-        /// </summary>
-        /// <param name="grid">The grid.</param>
-        public void UseGrid(Grid grid)
-        {
-            if (grid == null)
-                return;
-
-            string gridName = grid.Name;
-            if (string.IsNullOrWhiteSpace(gridName))
-                return;
-
-            GridNameToElementMap.Remove(gridName);
-        }
-
-        /// <summary>
-        /// Reuse an element from the GUID to element map, in a reload operation, if it exists.
-        /// </summary>
-        /// <typeparam name="T">The type of element.  We do type-checking for consistency.</typeparam>
-        /// <param name="document">The document.</param>
-        /// <param name="guid">The GUID.</param>
-        /// <returns>The element from the map.</returns>
-        public T UseElementByGUID<T>(Document document, string guid) where T : Element
-        {
-            T elementT = null;
-            ElementId elementId;
-            if (GUIDToElementMap.TryGetValue(guid, out elementId))
+            if (elem is Grid)
             {
-                Element element = document.GetElement(elementId);
-                if (element is T)
-                {
-                    elementT = element as T;
-                    GUIDToElementMap.Remove(guid);
-                }
+               string gridName = elem.Name;
+               if (GridNameToElementMap.ContainsKey(gridName))
+               {
+                  // If the Grid has a duplicate grid name, assign an arbitrary one to add to the map.  This will mean
+                  // that the Grid will be deleted at the end of reloading.
+                  // TODO: warn the user about this, and/or maybe allow for some duplication based on category.
+                  gridName = Guid.NewGuid().ToString();
+               }
+
+               GridNameToElementMap.Add(new KeyValuePair<string, ElementId>(gridName, elem.Id));
             }
-
-            return elementT;
-        }
-
-        protected IFCImportCache(Document doc, string fileName)
-        {
-            // Get all categories of current document
-            Settings documentSettings = doc.Settings;
-            
-            DocumentCategories = documentSettings.Categories;
-            GenericModelsCategory = DocumentCategories.get_Item(BuiltInCategory.OST_GenericModel);
-
-            // Cache the original shared parameters file, and create and read in a new one.
-            OriginalSharedParametersFile = doc.Application.SharedParametersFilename;
-            doc.Application.SharedParametersFilename = fileName + ".sharedparameters.txt";
-
-            DefinitionFile definitionFile = doc.Application.OpenSharedParameterFile();
-            if (definitionFile == null)
+            else
             {
-                StreamWriter definitionFileStream = new StreamWriter(doc.Application.SharedParametersFilename, false);
-                definitionFileStream.Close();
-                definitionFile = doc.Application.OpenSharedParameterFile();
+               if (GUIDToElementMap.ContainsKey(guid))
+               {
+                  // If the Element contains a duplicate GUID, assign an arbitrary one to add to the map.  This will mean
+                  // that the Element will be deleted at the end of reloading.
+                  // TODO: warn the user about this, and/or maybe allow for some duplication based on category.
+                  guid = Guid.NewGuid().ToString();
+               }
+
+               GUIDToElementMap.Add(new KeyValuePair<string, ElementId>(guid, elem.Id));
             }
+         }
+      }
 
-            if (definitionFile == null)
-                throw new InvalidOperationException("Can't create definition file for shared parameters, aborting import.");
+      /// <summary>
+      /// Remove an element from the GUID to element id map, if its GUID is found in the map.
+      /// </summary>
+      /// <param name="elem">The element.</param>
+      public void UseElement(Element elem)
+      {
+         if (elem == null)
+            return;
 
-            DefinitionInstanceGroup = definitionFile.Groups.get_Item("IFC Parameters");
-            if (DefinitionInstanceGroup == null)
-                DefinitionInstanceGroup = definitionFile.Groups.Create("IFC Parameters");
+         string guid = IFCGUIDUtil.GetGUID(elem);
+         if (string.IsNullOrWhiteSpace(guid))
+            return;
 
-            DefinitionTypeGroup = definitionFile.Groups.get_Item("IFC Type Parameters");
-            if (DefinitionTypeGroup == null)
-                DefinitionTypeGroup = definitionFile.Groups.Create("IFC Type Parameters");
+         GUIDToElementMap.Remove(guid);
+      }
 
-            // Cache list of schedules.
-            FilteredElementCollector viewScheduleCollector = new FilteredElementCollector(doc);
-            ICollection<Element> viewSchedules = viewScheduleCollector.OfClass(typeof(ViewSchedule)).ToElements();
-            foreach (Element viewSchedule in viewSchedules)
+      /// <summary>
+      /// Remove a Grid from the Grid Name to element id map, if its grid name is found in the map.
+      /// </summary>
+      /// <param name="grid">The grid.</param>
+      public void UseGrid(Grid grid)
+      {
+         if (grid == null)
+            return;
+
+         string gridName = grid.Name;
+         if (string.IsNullOrWhiteSpace(gridName))
+            return;
+
+         GridNameToElementMap.Remove(gridName);
+      }
+
+      /// <summary>
+      /// Reuse an element from the GUID to element map, in a reload operation, if it exists.
+      /// </summary>
+      /// <typeparam name="T">The type of element.  We do type-checking for consistency.</typeparam>
+      /// <param name="document">The document.</param>
+      /// <param name="guid">The GUID.</param>
+      /// <returns>The element from the map.</returns>
+      public T UseElementByGUID<T>(Document document, string guid) where T : Element
+      {
+         T elementT = null;
+         ElementId elementId;
+         if (GUIDToElementMap.TryGetValue(guid, out elementId))
+         {
+            Element element = document.GetElement(elementId);
+            if (element is T)
             {
-                ScheduleDefinition definition = (viewSchedule as ViewSchedule).Definition;
-                if (definition == null)
-                    continue;
-
-                ElementId categoryId = definition.CategoryId;
-                if (categoryId == ElementId.InvalidElementId)
-                    continue;
-
-                ViewSchedules[new KeyValuePair<ElementId, string>(categoryId, viewSchedule.Name)] = viewSchedule.Id;
-                ViewScheduleNames.Add(viewSchedule.Name);
+               elementT = element as T;
+               GUIDToElementMap.Remove(guid);
             }
+         }
 
-            // Find the status bar, so we can add messages.
-            StatusBar = RevitStatusBar.Create();
-        }
+         return elementT;
+      }
 
-        /// <summary>
-        /// Create a new IFCImportCache.
-        /// </summary>
-        /// <param name="doc">The document.</param>
-        /// <param name="fileName">The name of the IFC file to be imported.</param>
-        /// <returns>The IFCImportCache.</returns>
-        public static IFCImportCache Create(Document doc, string fileName)
-        {
-            return new IFCImportCache(doc, fileName);
-        }
+      protected IFCImportCache(Document doc, string fileName)
+      {
+         // Get all categories of current document
+         Settings documentSettings = doc.Settings;
 
-        /// <summary>
-        /// Restore the shared parameters file.
-        /// </summary>
-        public void Reset(Document doc)
-        {
-            doc.Application.SharedParametersFilename = OriginalSharedParametersFile;
-        }
-    }
+         DocumentCategories = documentSettings.Categories;
+         GenericModelsCategory = DocumentCategories.get_Item(BuiltInCategory.OST_GenericModel);
+
+         ProjectInfo projectInfo = doc.ProjectInformation;
+         ProjectInformationId = (projectInfo == null) ? ElementId.InvalidElementId : projectInfo.Id;
+
+         // Cache the original shared parameters file, and create and read in a new one.
+         OriginalSharedParametersFile = doc.Application.SharedParametersFilename;
+         doc.Application.SharedParametersFilename = fileName + ".sharedparameters.txt";
+
+         DefinitionFile definitionFile = doc.Application.OpenSharedParameterFile();
+         if (definitionFile == null)
+         {
+            StreamWriter definitionFileStream = new StreamWriter(doc.Application.SharedParametersFilename, false);
+            definitionFileStream.Close();
+            definitionFile = doc.Application.OpenSharedParameterFile();
+         }
+
+         if (definitionFile == null)
+            throw new InvalidOperationException("Can't create definition file for shared parameters, aborting import.");
+
+         DefinitionInstanceGroup = definitionFile.Groups.get_Item("IFC Parameters");
+         if (DefinitionInstanceGroup == null)
+            DefinitionInstanceGroup = definitionFile.Groups.Create("IFC Parameters");
+
+         DefinitionTypeGroup = definitionFile.Groups.get_Item("IFC Type Parameters");
+         if (DefinitionTypeGroup == null)
+            DefinitionTypeGroup = definitionFile.Groups.Create("IFC Type Parameters");
+
+         // Cache list of schedules.
+         FilteredElementCollector viewScheduleCollector = new FilteredElementCollector(doc);
+         ICollection<Element> viewSchedules = viewScheduleCollector.OfClass(typeof(ViewSchedule)).ToElements();
+         foreach (Element viewSchedule in viewSchedules)
+         {
+            ScheduleDefinition definition = (viewSchedule as ViewSchedule).Definition;
+            if (definition == null)
+               continue;
+
+            ElementId categoryId = definition.CategoryId;
+            if (categoryId == ElementId.InvalidElementId)
+               continue;
+
+            ViewSchedules[new KeyValuePair<ElementId, string>(categoryId, viewSchedule.Name)] = viewSchedule.Id;
+            ViewScheduleNames.Add(viewSchedule.Name);
+         }
+
+         // Find the status bar, so we can add messages.
+         StatusBar = RevitStatusBar.Create();
+      }
+
+      /// <summary>
+      /// Create a new IFCImportCache.
+      /// </summary>
+      /// <param name="doc">The document.</param>
+      /// <param name="fileName">The name of the IFC file to be imported.</param>
+      /// <returns>The IFCImportCache.</returns>
+      public static IFCImportCache Create(Document doc, string fileName)
+      {
+         return new IFCImportCache(doc, fileName);
+      }
+
+      /// <summary>
+      /// Restore the shared parameters file.
+      /// </summary>
+      public void Reset(Document doc)
+      {
+         doc.Application.SharedParametersFilename = OriginalSharedParametersFile;
+      }
+   }
 }

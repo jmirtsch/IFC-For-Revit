@@ -16,10 +16,10 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
-
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text;
 using Autodesk.Revit;
 using Autodesk.Revit.DB;
@@ -128,6 +128,30 @@ namespace Revit.IFC.Export.Exporter
 
         // Properties
 
+      private static ISet<IFCEntityType> GetListOfRelatedEntities(IFCEntityType entityType)
+      {
+         // This is currently only for extending IfcElementType for schemas before IFC4, but could be expanded in the future.
+         // TODO: add types for elements that didn't have types in IFC2x3 for IFC4 support.
+         if (ExportSchema >= IFCVersion.IFC4)
+            return null;
+
+         // Check IfcElementType and its parent types.
+         if (entityType == IFCEntityType.IfcElementType ||
+            entityType == IFCEntityType.IfcTypeProduct ||
+            entityType == IFCEntityType.IfcTypeObject)
+         {
+            ISet<IFCEntityType> relatedEntities = new HashSet<IFCEntityType>();
+            relatedEntities.Add(IFCEntityType.IfcFooting);
+            relatedEntities.Add(IFCEntityType.IfcPile);
+            relatedEntities.Add(IFCEntityType.IfcRamp);
+            relatedEntities.Add(IFCEntityType.IfcRoof);
+            relatedEntities.Add(IFCEntityType.IfcStair);
+            return relatedEntities;
+         }
+
+         return null;
+      }
+                  
         /// <summary>
         /// Initialize user-defined property sets (from external file ParameterMappingTable.txt)
         /// </summary>
@@ -152,19 +176,28 @@ namespace Revit.IFC.Export.Exporter
                 {
                     Common.Enums.IFCEntityType ifcEntity;
                     if (Enum.TryParse(elem, out ifcEntity))
+                    {
                         userDefinedPropetySet.EntityTypes.Add(ifcEntity);
+                        // This is intended mostly as a workaround in IFC2x3 for IfcElementType.  Not all elements have an associated type (e.g. IfcRoof),
+                        // but we still want to be able to export type property sets for that element.  So we will manually add these extra types here without
+                        // forcing the user to guess.  If this causes issues, we may come up with a different design.
+                        ISet<IFCEntityType> relatedEntities = GetListOfRelatedEntities(ifcEntity);
+                        if (relatedEntities != null)
+                            userDefinedPropetySet.EntityTypes.UnionWith(relatedEntities);
+                    }
                 }
                 foreach (PropertyDef prop in psetDef.propertyDefs)
                 {
                     PropertyType dataType;
-                    
+
                     if (!Enum.TryParse(prop.propertyDataType, out dataType))
                         dataType = PropertyType.Text;           // force default to Text/string if the type does not match with any correct datatype
 
                     PropertySetEntry pSE = PropertySetEntry.CreateGenericEntry(dataType, prop.propertyName);
                     if (string.Compare(prop.propertyName, prop.revitParameterName) != 0)
+                    {
                         pSE.RevitParameterName = prop.revitParameterName;
-
+                    }
                     userDefinedPropetySet.AddEntry(pSE);
                 }
                 userDefinedPropertySets.Add(userDefinedPropetySet);
@@ -188,9 +221,23 @@ namespace Revit.IFC.Export.Exporter
 
             ElementFilter viewScheduleElementFilter = new ElementClassFilter(typeof(ViewSchedule));
             viewScheduleElementCollector.WherePasses(viewScheduleElementFilter);
+            List<ViewSchedule> filteredSchedules = viewScheduleElementCollector.Cast<ViewSchedule>().ToList();
 
             int unnamedScheduleIndex = 1;
-            foreach (ViewSchedule schedule in viewScheduleElementCollector)
+
+            string includePattern = "PSET|IFC|COMMON";
+
+            if (ExporterCacheManager.ExportOptionsCache.PropertySetOptions.ExportSpecificSchedules)
+            {
+                var resultQuery =
+                    from viewSchedule in viewScheduleElementCollector
+                    where viewSchedule.Name != null &&
+                    System.Text.RegularExpressions.Regex.IsMatch(viewSchedule.Name, includePattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+                    select viewSchedule;
+                filteredSchedules = resultQuery.Cast<ViewSchedule>().ToList();
+            }
+
+            foreach (ViewSchedule schedule in filteredSchedules)
             {
                 //property set Manufacturer Information
                 PropertySetDescription customPSet = new PropertySetDescription();
@@ -209,7 +256,7 @@ namespace Revit.IFC.Export.Exporter
 
                 // The schedule will be responsible for determining which elements to actually export.
                 customPSet.ViewScheduleId = schedule.Id;
-                customPSet.EntityTypes.Add(IFCEntityType.IfcElement);
+                customPSet.EntityTypes.Add(IFCEntityType.IfcProduct);
                 
                 int fieldCount = definition.GetFieldCount();
                 if (fieldCount == 0)
@@ -2853,7 +2900,5 @@ namespace Revit.IFC.Export.Exporter
 
             cobieQuantities.Add(ifcCOBIEQuantity);
         }
-
-
     }
 }

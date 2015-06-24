@@ -189,7 +189,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <summary>
         /// Normalised Ratio
         /// </summary>
-        NormalisedRatio
+        NormalisedRatio,
+        /// <summary>
+        /// Linear Velocity
+        /// </summary>
+        LinearVelocity,
     }
 
     /// <summary>
@@ -540,6 +544,22 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             PropertySetEntry pse = new PropertySetEntry(revitParameterName);
             pse.PropertyType = PropertyType.Ratio;
             return pse;
+        }
+
+        /// <summary>
+        /// Creates an entry of type linear velocity.
+        /// </summary>
+        /// <param name="revitParameterName">
+        /// Revit parameter name.
+        /// </param>
+        /// <returns>
+        /// The PropertySetEntry.
+        /// </returns>
+        public static PropertySetEntry CreateLinearVelocity(string revitParameterName)
+        {
+           PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+           pse.PropertyType = PropertyType.LinearVelocity;
+           return pse;
         }
 
         /// <summary>
@@ -1049,6 +1069,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                             builtInParameter, ifcPropertyName);
                         break;
                     }
+                case PropertyType.LinearVelocity:
+                    {
+                       propHnd = PropertyUtil.CreateLinearVelocityPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                           ifcPropertyName, valueType);
+                       break;
+                    }
                 default:
                     throw new InvalidOperationException();
             }
@@ -1235,6 +1261,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                         {
                             propHnd = PropertyUtil.CreateVolumetricFlowRateMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                             break;
+                        }
+                    case PropertyType.LinearVelocity:
+                        {
+                           propHnd = PropertyUtil.CreateLinearVelocityMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                           break;
                         }
                     default:
                         throw new InvalidOperationException();

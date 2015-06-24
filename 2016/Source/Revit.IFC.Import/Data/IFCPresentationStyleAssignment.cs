@@ -68,7 +68,7 @@ namespace Revit.IFC.Import.Data
                         }
                         catch (Exception ex)
                         {
-                            IFCImportFile.TheLog.LogError(item.StepId, ex.Message, false);
+                            Importer.TheLog.LogError(item.StepId, ex.Message, false);
                         }
                     }
                 }
@@ -89,7 +89,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPresentationStyleAssignment))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcPresentationStyleAssignment);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcPresentationStyleAssignment);
                 return null;
             }
 

@@ -64,7 +64,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcCartesianPointList3D))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcCartesianPointList3D);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcCartesianPointList3D);
                 return null;
             }
 

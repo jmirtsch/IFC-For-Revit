@@ -66,7 +66,7 @@ namespace Revit.IFC.Import.Data
                 }
                 catch
                 {
-                    IFCImportFile.TheLog.LogWarning(ifcFace.StepId, "Invalid face boundary, ignoring", false);
+                    Importer.TheLog.LogWarning(ifcFace.StepId, "Invalid face boundary, ignoring", false);
                 }
             }
 
@@ -81,7 +81,7 @@ namespace Revit.IFC.Import.Data
                 {
                     if (hasOuter)
                     {
-                        IFCImportFile.TheLog.LogWarning(ifcFace.StepId, "Too many outer boundary loops for IfcFace.", false);
+                        Importer.TheLog.LogWarning(ifcFace.StepId, "Too many outer boundary loops for IfcFace.", false);
                         break;
                     }
                     hasOuter = true;
@@ -98,21 +98,32 @@ namespace Revit.IFC.Import.Data
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
+            if (shapeEditScope.BuilderType != IFCShapeBuilderType.TessellatedShapeBuilder)
+                throw new InvalidOperationException("Currently BrepBuilder is only used to support IFCAdvancedFace");
+
             base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
 
-            shapeEditScope.StartCollectingFace(GetMaterialElementId(shapeEditScope));
+            // we would only be in this code if we are not processing and IfcAdvancedBrep, since IfcAdvancedBrep must have IfcAdvancedFace
+            if (shapeEditScope.BuilderScope == null)
+            {
+                throw new InvalidOperationException("BuilderScope has not been initialized");
+            }
+            TessellatedShapeBuilderScope tsBuilderScope = shapeEditScope.BuilderScope as TessellatedShapeBuilderScope;
+
+            tsBuilderScope.StartCollectingFace(GetMaterialElementId(shapeEditScope));
+            
             foreach (IFCFaceBound faceBound in Bounds)
             {
                 faceBound.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
                 
                 // If we can't create the outer face boundary, we will abort the creation of this face.  In that case, return.
-                if (!shapeEditScope.HaveActiveFace())
+                if (!tsBuilderScope.HaveActiveFace())
                 {
-                    shapeEditScope.AbortCurrentFace();
+                    tsBuilderScope.AbortCurrentFace();
                     return;
                 }
             }
-            shapeEditScope.StopCollectingFace();
+            tsBuilderScope.StopCollectingFace();
         }
 
         protected IFCFace(IFCAnyHandle ifcFace)
@@ -129,7 +140,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcFace))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcFace);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcFace);
                 return null;
             }
 

@@ -235,7 +235,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             relatedObjects.Add(elemHnd);
 
             IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
-               exporterIFC.GetOwnerHistoryHandle(), classificationKeyString+" Classification", "", relatedObjects, classificationReference);
+               ExporterCacheManager.OwnerHistoryHandle, classificationKeyString + " Classification", "", relatedObjects, classificationReference);
 
         }
 
@@ -252,7 +252,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             relatedObjects.Add(elemHnd);
 
             IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
-               exporterIFC.GetOwnerHistoryHandle(), classificationReference.GetAttribute("ReferencedSource").ToString() + " Classification", "", relatedObjects, classificationReference);
+               ExporterCacheManager.OwnerHistoryHandle, classificationReference.GetAttribute("ReferencedSource").ToString() + " Classification", "", relatedObjects, classificationReference);
 
         }
 

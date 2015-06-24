@@ -41,23 +41,7 @@ namespace Revit.IFC.Import.Data
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            Transform localTransform = lcs != null ? lcs : Transform.Identity;
-            Surface surface = IFCGeometryUtil.GetTransformedSurface(FaceSurface.GetSurface(), localTransform);
-            shapeEditScope.StartCollectingFaceForBrepBuilder(surface, SameSense);
-
-            foreach (IFCFaceBound faceBound in Bounds)
-            {
-                shapeEditScope.InitializeNewLoopForBrepBuilder();
-                faceBound.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
-
-                //If we can't create the outer face boundary, we will abort the creation of this face and throw an exception
-                if (!shapeEditScope.HaveActiveFace())
-                {
-                    throw new InvalidOperationException("Invalid face");
-                }
-
-            }
-            shapeEditScope.StopCollectingFaceForBrepBuilder();
+           throw new InvalidOperationException("Unhandled code.");
         }
 
         /// <summary>
@@ -69,7 +53,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcAdvancedFace))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcAdvancedFace);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcAdvancedFace);
                 return null;
             }
 

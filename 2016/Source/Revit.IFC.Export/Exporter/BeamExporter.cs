@@ -405,7 +405,7 @@ namespace Revit.IFC.Export.Exporter
                         string preDefinedType = "BEAM";     // Default predefined type for Beam
                         preDefinedType = IFCValidateEntry.GetValidIFCType(element, preDefinedType);
 
-                        beam = IFCInstanceExporter.CreateBeam(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
+                        beam = IFCInstanceExporter.CreateBeam(file, instanceGUID, ExporterCacheManager.OwnerHistoryHandle,
                             instanceName, instanceDescription, instanceObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, instanceTag, preDefinedType);
 
                         productWrapper.AddElement(element, beam, setter, extrusionCreationData, true);

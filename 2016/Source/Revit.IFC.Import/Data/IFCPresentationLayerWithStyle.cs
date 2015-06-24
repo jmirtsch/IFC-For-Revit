@@ -95,7 +95,7 @@ namespace Revit.IFC.Import.Data
             {
                 if (layerStyle == null)
                 {
-                    IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcPresentationStyle);
+                    Importer.TheLog.LogNullError(IFCEntityType.IfcPresentationStyle);
                     continue;
                 }
 
@@ -103,7 +103,7 @@ namespace Revit.IFC.Import.Data
                 if (presentationStyle != null)
                     LayerStyles.Add(presentationStyle);
                 else
-                    IFCImportFile.TheLog.LogUnhandledSubTypeError(layerStyle, "IfcPresentationStyle", false);
+                    Importer.TheLog.LogUnhandledSubTypeError(layerStyle, "IfcPresentationStyle", false);
             }
         }
 
@@ -140,7 +140,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPresentationLayerWithStyle))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcPresentationLayerWithStyle);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcPresentationLayerWithStyle);
                 return null;
             }
 
@@ -183,7 +183,7 @@ namespace Revit.IFC.Import.Data
             catch (Exception ex)
             {
                 IsValidForCreation = false;
-                IFCImportFile.TheLog.LogCreationError(this, ex.Message, false);
+                Importer.TheLog.LogCreationError(this, ex.Message, false);
             }
         }
     }

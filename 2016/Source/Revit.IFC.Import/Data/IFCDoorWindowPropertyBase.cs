@@ -88,7 +88,7 @@ namespace Revit.IFC.Import.Data
 
             IFCAnyHandle shapeAspectStyle = IFCImportHandleUtil.GetOptionalInstanceAttribute(ifcDoorWindowPropertyBase, "ShapeAspectStyle");
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(shapeAspectStyle))
-                IFCImportFile.TheLog.LogError(Id, "ShapeAspectStyle unsupported.", false);
+                Importer.TheLog.LogError(Id, "ShapeAspectStyle unsupported.", false);
         }
 
         /// <summary>
@@ -97,8 +97,8 @@ namespace Revit.IFC.Import.Data
         /// <param name="doc">The document.</param>
         /// <param name="element">The element being created.</param>
         /// <param name="parameterGroupMap">The parameters of the element.  Cached for performance.</param>
-        /// <returns>The name of the property set created, if it was created.</returns>
-        public override string CreatePropertySet(Document doc, Element element, IFCParameterSetByGroup parameterGroupMap)
+        /// <returns>The name of the property set created, if it was created, and a Boolean value if it should be added to the property set list.</returns>
+        public override KeyValuePair<string, bool> CreatePropertySet(Document doc, Element element, IFCParameterSetByGroup parameterGroupMap)
         {
             IDictionary<string, IFCData> parametersToAdd = new Dictionary<string, IFCData>();
 
@@ -121,7 +121,7 @@ namespace Revit.IFC.Import.Data
                         existingParameter.Set(property.Value);
                         break;
                     default:   
-                        IFCImportFile.TheLog.LogError(Id, "couldn't create parameter: " + name + " of storage type: " + existingParameter.StorageType.ToString(), false);
+                        Importer.TheLog.LogError(Id, "couldn't create parameter: " + name + " of storage type: " + existingParameter.StorageType.ToString(), false);
                         break;
                 }                    
             }
@@ -142,12 +142,12 @@ namespace Revit.IFC.Import.Data
                         existingParameter.Set(property.Value);
                         break;
                     default:
-                        IFCImportFile.TheLog.LogError(Id, "couldn't create parameter: " + name + " of storage type: " + existingParameter.StorageType.ToString(), false);
+                        Importer.TheLog.LogError(Id, "couldn't create parameter: " + name + " of storage type: " + existingParameter.StorageType.ToString(), false);
                         break;
                 }
             }
 
-            return "\"" + EntityType.ToString() + "\"";
+            return new KeyValuePair<string,bool>("\"" + EntityType.ToString() + "\"", false);
         }
     }
 }

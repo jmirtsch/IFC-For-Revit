@@ -78,7 +78,7 @@ namespace Revit.IFC.Import.Data
             Id = item.StepId;
             EntityType = IFCAnyHandleUtil.GetEntityType(item);
             IFCImportFile.TheFile.EntityMap.Add(Id, this);
-            IFCImportFile.TheLog.AddProcessedEntity(EntityType);
+            Importer.TheLog.AddProcessedEntity(EntityType);
         }
 
         /// <summary>

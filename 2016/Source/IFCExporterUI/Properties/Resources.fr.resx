@@ -292,7 +292,7 @@
     <comment>Jeux de paramètres définis par l'utilisateur</comment>
   </data>
   <data name="IFCExportProcessError" xml:space="preserve">
-    <value>Une erreur est survenue lors du processus d'export IFC.</value>
+    <value>Une erreur est survenue lors du processus d'export IFC pour: {0}.</value>
   </data>
   <data name="LinkInstanceExportCantCreateDoc" xml:space="preserve">
     <value>Un document temporaire n'a pu être créé pour exporter l'(les)instance(s) liée(s) ayant pour ids: {0}</value>
@@ -602,5 +602,41 @@
   </data>
   <data name="ExportRoomsInView" xml:space="preserve">
     <value>Exporter les pièces dans la vue</value>
+  </data>
+  <data name="UseActiveViewForGeometry" xml:space="preserve">
+    <value>Utiliser la vue active pour la création de la géométrie</value>
+  </data>
+  <data name="MultipleFiles" xml:space="preserve">
+    <value>Plusieurs fichiers</value>
+  </data>
+  <data name="TessellationDetails" xml:space="preserve">
+    <value>Niveau de détail de la géométrie de l'élément</value>
+  </data>
+  <data name="DetailLevelExtraLow" xml:space="preserve">
+    <value>Très bas</value>
+  </data>
+  <data name="DetailLevelHigh" xml:space="preserve">
+    <value>Élevé</value>
+  </data>
+  <data name="DetailLevelLow" xml:space="preserve">
+    <value>Bas</value>
+  </data>
+  <data name="DetailLevelMedium" xml:space="preserve">
+    <value>Moyen</value>
+  </data>
+  <data name="DefaultFileName" xml:space="preserve">
+    <value>Projet</value>
+  </data>
+  <data name="CurrentOptions" xml:space="preserve">
+    <value>Options actuelle:</value>
+  </data>
+  <data name="ProjectToExport" xml:space="preserve">
+    <value>Projets d'exporter:</value>
+  </data>
+  <data name="SelectOneOrMoreProjects" xml:space="preserve">
+    <value>S'il vous plaît sélectionner au moins un projet d'exporter.</value>
+  </data>
+  <data name="IFCExportProcessGenericError" xml:space="preserve">
+    <value>Une erreur est survenue lors du processus d'export IFC.</value>
   </data>
 </root>

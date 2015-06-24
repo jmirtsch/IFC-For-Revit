@@ -16,7 +16,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -110,6 +109,30 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
+        /// Override for the ExportSpecificSchedules value from UI or API options.
+        /// </summary>
+        private bool? ExportSpecificSchedulesOverride
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Whether or not to use only specific schedules as templates for custom property sets.
+        /// </summary>
+        public bool ExportSpecificSchedules
+        {
+            get
+            {
+                // if the option is set by alternate UI, return the setting in UI.
+                if (ExportSpecificSchedulesOverride != null)
+                    return (bool)ExportSpecificSchedulesOverride;
+                // otherwise return false by default.
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Override for the ExportUserDefinedPsets value from UI or API options.
         /// </summary>
         public bool? ExportUserDefinedPsetsOverride
@@ -181,6 +204,9 @@ namespace Revit.IFC.Export.Utility
 
             // "ExportUserDefinedPsetsFileName" override
             propertySetOptions.ExportUserDefinedPsetsFileName = ExportOptionsCache.GetNamedStringOption(options, "ExportUserDefinedPsetsFileName");
+
+            // "ExportSpecificSchedules" overrid
+            propertySetOptions.ExportSpecificSchedulesOverride = ExportOptionsCache.GetNamedBooleanOption(options, "ExportSpecificSchedules");
            
             return propertySetOptions;
         }

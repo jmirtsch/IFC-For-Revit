@@ -210,7 +210,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcTransformOperator))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcCartesianTransformationOperator);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcCartesianTransformationOperator);
                 return null;
             }
 

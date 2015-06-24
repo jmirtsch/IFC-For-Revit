@@ -211,7 +211,7 @@ namespace Revit.IFC.Import.Geometry
                             msg += " #" + badId;
                         msg += ".";
                     }
-                    IFCImportFile.TheLog.LogWarning(id, msg, false);
+                    Importer.TheLog.LogWarning(id, msg, false);
                 }
             }
 
@@ -220,7 +220,7 @@ namespace Revit.IFC.Import.Geometry
                 if (Importer.TheOptions.VerboseLogging)
                 {
                     string msg = "PolyCurve had " + numNewPoints + " point(s) after removing points that were too close, expected at least " + numMinPoints + ", ignoring.";
-                    IFCImportFile.TheLog.LogWarning(id, msg, false);
+                    Importer.TheLog.LogWarning(id, msg, false);
                 }
                 return null;
             }
@@ -359,14 +359,14 @@ namespace Revit.IFC.Import.Geometry
             }
             catch (Exception ex)
             {
-                IFCImportFile.TheLog.LogError(id, ex.Message, false);
+                Importer.TheLog.LogError(id, ex.Message, false);
                 resultSolid = firstSolid;
             }
 
             if (SolidValidator.IsValidGeometry(resultSolid))
                 return resultSolid;
 
-            IFCImportFile.TheLog.LogError(id, opType.ToString() + " operation failed with void from #" + secondId.ToString(), false);
+            Importer.TheLog.LogError(id, opType.ToString() + " operation failed with void from #" + secondId.ToString(), false);
             return firstSolid;
         }
 
@@ -500,13 +500,13 @@ namespace Revit.IFC.Import.Geometry
                 }
                 else
                 {
-                    string distAsString = UnitFormatUtils.Format(IFCImportFile.TheFile.Document.GetUnits(), UnitType.UT_Length, dist, true, false);
-                    string shortDistAsString = UnitFormatUtils.Format(IFCImportFile.TheFile.Document.GetUnits(), UnitType.UT_Length, shortSegmentTolerance, true, false);
+               string distAsString = IFCUnitUtil.FormatLengthAsString(dist);
+               string shortDistAsString = IFCUnitUtil.FormatLengthAsString(shortSegmentTolerance);
                     string warningString = "Distance between vertices " + lastVertex + " and " + currIdx +
                                             " is " + distAsString + ", which is less than the minimum " + (shapeEditScope.TryToCreateSolid() ? "Solid" : "Mesh") +
                                             " distance of " + shortDistAsString + ", removing second point.";
 
-                    IFCImportFile.TheLog.LogComment(entityId, warningString, false);
+                    Importer.TheLog.LogComment(entityId, warningString, false);
                 }
             }
         }

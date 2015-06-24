@@ -392,11 +392,23 @@ namespace Revit.IFC.Export.Exporter
                                     (type == IFCExportType.IfcBuildingElementProxy) || (type == IFCExportType.IfcBuildingElementProxyType) )
                         {
                             string exportEntityStr = type.ToString();
-                            Common.Enums.IFCEntityType exportEntity;
+                            Common.Enums.IFCEntityType exportEntity = Common.Enums.IFCEntityType.UnKnown;
 
                             if (String.Compare(exportEntityStr.Substring(exportEntityStr.Length - 4), "Type", true) == 0)
                                 exportEntityStr = exportEntityStr.Substring(0, (exportEntityStr.Length - 4));
-                            if (Enum.TryParse(exportEntityStr, out exportEntity))
+                            if (!Enum.TryParse(exportEntityStr, out exportEntity))
+                            {
+                               // This is a special case.   IFC2x3 has IfcFlowElement for the instance, and both IfcElectricHeaterType and IfcSpaceHeaterType.
+                               // IFC4 has IfcSpaceHeater and IfcSpaceHeaterType.
+                               // Since IfcElectricHeater doesn't exist in IFC4, TryParse will fail.  For the instance only, we will map it to IfcSpaceHeater,
+                               // which will in turn be redirected to IfcFlowElement for IFC2x3, if necessary.
+                               if (type == IFCExportType.IfcElectricHeaterType)
+                                  exportEntity = Common.Enums.IFCEntityType.IfcSpaceHeater;
+                               else
+                                  exportEntity = Common.Enums.IFCEntityType.UnKnown;
+                            }
+                            
+                            if (exportEntity != Common.Enums.IFCEntityType.UnKnown)
                             {
                                 instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(exportEntity, file, instanceGUID, ownerHistory,
                                    instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
@@ -453,7 +465,7 @@ namespace Revit.IFC.Export.Exporter
            ElementType symbol)
         {
             IFCFile file = exporterIFC.GetFile();
-            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
             string elemIdToUse = elemId;
             string instanceElementType = null;
@@ -508,6 +520,8 @@ namespace Revit.IFC.Export.Exporter
            Element instance,
            ElementType symbol)
         {
+           // TODO: This routine needs to be simplified.  The long list of IFC2x3 and IFC4 calls to CreateGenericIFCType make it too easy to miss an entry.
+
             Revit.IFC.Common.Enums.IFCEntityType IFCTypeEntity;
             if (!Enum.TryParse(type.ToString(), out IFCTypeEntity))
                 return null;    // The export type is unknown IFC type entity
@@ -632,6 +646,13 @@ namespace Revit.IFC.Export.Exporter
                         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
                             typeName, GetPreDefinedType<Toolkit.IFC4.IFCElectricGeneratorType>(instance, ifcEnumType).ToString());
+                    case IFCExportType.IfcElectricHeaterType:
+                        {
+                           // Convert to IfcSpaceHeaterType for IFC4.
+                           return IFCInstanceExporter.CreateGenericIFCType(Common.Enums.IFCEntityType.IfcSpaceHeaterType, file, guid, ownerHistory, name,
+                               description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                               typeName, GetPreDefinedType<Toolkit.IFC4.IFCSpaceHeaterType>(instance, ifcEnumType).ToString());
+                        }
                     case IFCExportType.IfcElectricMotorType:
                         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
@@ -855,6 +876,13 @@ namespace Revit.IFC.Export.Exporter
                         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
                             typeName, GetPreDefinedType<Toolkit.IFCBoilerType>(instance, ifcEnumType).ToString());
+                    case IFCExportType.IfcBurnerType:
+                        {
+                           // Map to IFC2x3 IfcGasTerminalType instad.
+                           return IFCInstanceExporter.CreateGenericIFCType(Common.Enums.IFCEntityType.IfcGasTerminalType, file, guid, ownerHistory, name,
+                               description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                               typeName, GetPreDefinedType<Toolkit.IFCGasTerminalType>(instance, ifcEnumType).ToString());
+                        }
                     case IFCExportType.IfcCableCarrierFittingType:
                         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
@@ -967,10 +995,6 @@ namespace Revit.IFC.Export.Exporter
                         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
                             typeName, GetPreDefinedType<Toolkit.IFCFlowMeterType>(instance, ifcEnumType).ToString());
-                    case IFCExportType.IfcGasTerminalType:
-                        return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
-                            typeName, GetPreDefinedType<Toolkit.IFCGasTerminalType>(instance, ifcEnumType).ToString());
                     case IFCExportType.IfcHeatExchangerType:
                         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
@@ -1024,9 +1048,12 @@ namespace Revit.IFC.Export.Exporter
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
                             typeName, GetPreDefinedType<Toolkit.IFCSensorType>(instance, ifcEnumType).ToString());
                     case IFCExportType.IfcSpaceHeaterType:
-                        return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-                            description, applicableOccurrence, propertySets, representationMapList, elementTag,
-                            typeName, GetPreDefinedType<Toolkit.IFCSpaceHeaterType>(instance, ifcEnumType).ToString());
+                        {
+                           // Backwards compatibility with IFC2x3.
+                           return IFCInstanceExporter.CreateGenericIFCType(Common.Enums.IFCEntityType.IfcElectricHeaterType, file, guid, ownerHistory, name,
+                               description, applicableOccurrence, propertySets, representationMapList, elementTag,
+                               typeName, GetPreDefinedType<Toolkit.IFCElectricHeaterType>(instance, ifcEnumType).ToString());
+                        }
                     case IFCExportType.IfcStackTerminalType:
                         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
@@ -1103,6 +1130,7 @@ namespace Revit.IFC.Export.Exporter
                             description, applicableOccurrence, propertySets, representationMapList, elementTag,
                             typeName, GetPreDefinedType<Toolkit.IFCBuildingElementProxyType>(instance, ifcEnumType).ToString());
                     default:
+                        // NOTE: There is no type in IFC2x3 for IfcElectricDistributionPoint.
                         return null;
                 }
             }

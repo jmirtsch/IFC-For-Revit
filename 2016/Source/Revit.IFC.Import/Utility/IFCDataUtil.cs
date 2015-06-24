@@ -49,6 +49,7 @@ namespace Revit.IFC.Import.Utility
             m_MeasureCache["IfcLengthMeasure"] = UnitType.UT_Length;
             m_MeasureCache["IfcIlluminanceMeasure"] = UnitType.UT_Electrical_Illuminance;
             m_MeasureCache["IfcInteger"] = UnitType.UT_Number;
+            m_MeasureCache["IfcLinearVelocityMeasure"] = UnitType.UT_HVAC_Velocity;
             m_MeasureCache["IfcLuminousFluxMeasure"] = UnitType.UT_Electrical_Luminous_Flux;
             m_MeasureCache["IfcLuminousIntensityMeasure"] = UnitType.UT_Electrical_Luminous_Intensity;
             m_MeasureCache["IfcMassMeasure"] = UnitType.UT_Mass;

@@ -341,7 +341,7 @@ namespace Revit.IFC.Export.Exporter
 
                         IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
 
-                        IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                        IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
                         string instanceGUID = GUIDUtil.CreateGUID(element);
                         string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));

@@ -44,7 +44,7 @@ namespace Revit.IFC.Import.Data
         /// </summary>
         protected IFCRoot()
         {
-            IFCImportFile.TheLog.CurrentlyProcessedEntity = this;
+            Importer.TheLog.CurrentlyProcessedEntity = this;
         }
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace Revit.IFC.Import.Data
 
             GlobalId = IFCImportHandleUtil.GetRequiredStringAttribute(ifcRoot, "GlobalId", false);
             if (Importer.TheCache.CreatedGUIDs.Contains(GlobalId))
-                IFCImportFile.TheLog.LogWarning(Id, "Duplicate GUID: " + GlobalId, false);
+                Importer.TheLog.LogWarning(Id, "Duplicate GUID: " + GlobalId, false);
             else
                 Importer.TheCache.CreatedGUIDs.Add(GlobalId);
 

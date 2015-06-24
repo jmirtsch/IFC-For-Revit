@@ -65,13 +65,14 @@ namespace Revit.IFC.Import.Data
         {
             base.Process(ifcFaceSurface);
 
-            // Only allow IfcFaceSurface if the surface is a plane.
+            // Only allow IfcFaceSurface for certain supported surfaces.
             IFCAnyHandle faceSurface = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcFaceSurface, "FaceSurface", false);
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(faceSurface))
             {
                 FaceSurface = IFCSurface.ProcessIFCSurface(faceSurface);
-                if (!(FaceSurface is IFCPlane))
-                    IFCImportFile.TheLog.LogError(ifcFaceSurface.StepId,
+                bool validSurface = (FaceSurface is IFCPlane);
+                if (!validSurface)
+                    Importer.TheLog.LogError(ifcFaceSurface.StepId,
                         "cannot handle IfcFaceSurface with FaceSurface of type " + IFCAnyHandleUtil.GetEntityType(faceSurface).ToString(), true);
             }
 
@@ -83,7 +84,7 @@ namespace Revit.IFC.Import.Data
             }
             else
             {
-                IFCImportFile.TheLog.LogWarning(ifcFaceSurface.StepId,
+                Importer.TheLog.LogWarning(ifcFaceSurface.StepId,
                     "cannot find SameSense attribute, defaulting to true", false);
                 SameSense = true;
             }
@@ -98,14 +99,13 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcFaceSurface))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcFaceSurface);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcFaceSurface);
                 return null;
             }
 
             if (IFCImportFile.TheFile.SchemaVersion > IFCSchemaVersion.IFC2x3 && IFCAnyHandleUtil.IsSubTypeOf(ifcFaceSurface, IFCEntityType.IfcAdvancedFace))
-            {
-                return IFCAdvancedFace.ProcessIFCAdvancedFace(ifcFaceSurface);
-            }
+               Importer.TheLog.LogUnhandledSubTypeError(ifcFaceSurface, IFCEntityType.IfcFaceSurface, true);
+
             IFCEntity face;
             if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcFaceSurface.StepId, out face))
                 face = new IFCFaceSurface(ifcFaceSurface);

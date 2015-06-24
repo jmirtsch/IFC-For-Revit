@@ -48,7 +48,7 @@ namespace Revit.IFC.Import.Data
             else if (IFCAnyHandleUtil.IsSubTypeOf(ifcBooleanOperand, IFCEntityType.IfcSolidModel))
                 return IFCSolidModel.ProcessIFCSolidModel(ifcBooleanOperand);
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcBooleanOperand, "IfcBooleanOperand", true);
+            Importer.TheLog.LogUnhandledSubTypeError(ifcBooleanOperand, "IfcBooleanOperand", true);
             return null;
         }
     }

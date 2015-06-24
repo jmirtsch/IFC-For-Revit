@@ -216,7 +216,7 @@ namespace Revit.IFC.Import.Data
                         ProcessIFCRelDefinesByType(isDefinedByHandle);
                     }
                     else
-                        IFCImportFile.TheLog.LogUnhandledSubTypeError(isDefinedByHandle, IFCEntityType.IfcRelDefines, false);
+                        Importer.TheLog.LogUnhandledSubTypeError(isDefinedByHandle, IFCEntityType.IfcRelDefines, false);
                 }
             }
         }
@@ -231,7 +231,7 @@ namespace Revit.IFC.Import.Data
 
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(propertySetDefinition))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcPropertySetDefinition);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcPropertySetDefinition);
                 return;
             }
 
@@ -266,13 +266,13 @@ namespace Revit.IFC.Import.Data
 
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(typeObject))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcTypeObject);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcTypeObject);
                 return;
             }
 
             if (!IFCAnyHandleUtil.IsSubTypeOf(typeObject, IFCEntityType.IfcTypeObject))
             {
-                IFCImportFile.TheLog.LogUnhandledSubTypeError(typeObject, IFCEntityType.IfcTypeObject,false);
+                Importer.TheLog.LogUnhandledSubTypeError(typeObject, IFCEntityType.IfcTypeObject,false);
                 return;
             }
 
@@ -291,7 +291,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcObject))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcObject);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcObject);
                 return null;
             }
 
@@ -308,7 +308,7 @@ namespace Revit.IFC.Import.Data
                 return IFCProject.ProcessIFCProject(ifcObject);
             }
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcObject, IFCEntityType.IfcObject, true);
+            Importer.TheLog.LogUnhandledSubTypeError(ifcObject, IFCEntityType.IfcObject, true);
             return null;
         }
 
@@ -343,11 +343,14 @@ namespace Revit.IFC.Import.Data
                 IFCParameterSetByGroup parameterGroupMap = IFCParameterSetByGroup.Create(element);
                 foreach (IFCPropertySetDefinition propertySet in PropertySets.Values)
                 {
-                    string newPropertySetCreated = propertySet.CreatePropertySet(doc, element, parameterGroupMap);
+                    KeyValuePair<string, bool> newPropertySetCreated = propertySet.CreatePropertySet(doc, element, parameterGroupMap);
+                    if (!newPropertySetCreated.Value || string.IsNullOrWhiteSpace(newPropertySetCreated.Key))
+                        continue;
+
                     if (propertySetsCreated == null)
-                        propertySetsCreated = newPropertySetCreated;
+                        propertySetsCreated = newPropertySetCreated.Key;
                     else
-                        propertySetsCreated += ";" + newPropertySetCreated;
+                        propertySetsCreated += ";" + newPropertySetCreated.Key;
                 }
 
                 Parameter propertySetList = element.LookupParameter("IfcPropertySetList");

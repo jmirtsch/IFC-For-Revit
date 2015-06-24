@@ -31,6 +31,9 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
+    /// <summary>
+    /// Class that represents IFCPlane entity
+    /// </summary>
     public class IFCPlane : IFCElementarySurface
     {
         Plane m_Plane = null;
@@ -66,7 +69,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPlane))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcPlane);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcPlane);
                 return null;
             }
 
@@ -77,6 +80,10 @@ namespace Revit.IFC.Import.Data
             return plane as IFCPlane;
         }
 
+        /// <summary>
+        /// Returns the surface which defines the internal shape of the face
+        /// </summary>
+        /// <returns>The surface which defines the internal shape of the face</returns>
         public override Surface GetSurface()
         {
             return Plane;

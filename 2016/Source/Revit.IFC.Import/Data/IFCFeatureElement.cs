@@ -71,7 +71,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcFeatureElement))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcFeatureElement);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcFeatureElement);
                 return null;
             }
 
