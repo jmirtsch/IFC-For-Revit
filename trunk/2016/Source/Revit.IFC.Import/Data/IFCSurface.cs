@@ -57,7 +57,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSurface))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcSurface);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcSurface);
                 return null;
             }
 
@@ -70,14 +70,13 @@ namespace Revit.IFC.Import.Data
             else if (IFCAnyHandleUtil.IsSubTypeOf(ifcSurface, IFCEntityType.IfcSweptSurface))
                 return IFCSweptSurface.ProcessIFCSweptSurface(ifcSurface);
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcSurface, IFCEntityType.IfcSurface, true);
+            Importer.TheLog.LogUnhandledSubTypeError(ifcSurface, IFCEntityType.IfcSurface, true);
             return null;
         }
 
         /// <summary>
         /// Returns the surface which defines the internal shape of the face
         /// </summary>
-        /// <param name="lcs">The local coordinate system of the geometry</param>
         /// <returns>The surface which defines the internal shape of the face</returns>
         public virtual Surface GetSurface()
         {

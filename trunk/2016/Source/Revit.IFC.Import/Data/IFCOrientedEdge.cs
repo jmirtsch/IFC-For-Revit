@@ -79,7 +79,7 @@ namespace Revit.IFC.Import.Data
                 Orientation = orientation;
             else 
             {
-                IFCImportFile.TheLog.LogWarning(ifcOrientedEdge.StepId, "Cannot find Orientation attribute, defaulting to true", false);
+                Importer.TheLog.LogWarning(ifcOrientedEdge.StepId, "Cannot find Orientation attribute, defaulting to true", false);
                 Orientation = true;
             }
         }
@@ -93,7 +93,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcOrientedEdge))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcOrientedEdge);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcOrientedEdge);
                 return null;
             }
 

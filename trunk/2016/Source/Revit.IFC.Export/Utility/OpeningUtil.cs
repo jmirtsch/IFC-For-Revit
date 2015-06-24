@@ -91,7 +91,7 @@ namespace Revit.IFC.Export.Utility
 
                     IFCAnyHandle openingPlacement = ExporterUtil.CopyLocalPlacement(file, originalPlacement);
                     string guid = GUIDUtil.CreateGUID();
-                    IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                    IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                     string openingName = NamingUtil.GetIFCNamePlusIndex(element, openingNumber++);
                     string elementId = NamingUtil.CreateIFCElementId(element);
                     IFCAnyHandle openingElement = IFCInstanceExporter.CreateOpeningElement(file, guid, ownerHistory,
@@ -207,7 +207,7 @@ namespace Revit.IFC.Export.Utility
         {
             IList<IFCOpeningData> openingDataList = ExporterIFCUtils.GetOpeningData(exporterIFC, element, plane, range);
             IFCFile file = exporterIFC.GetFile();
-            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
             foreach (IFCOpeningData openingData in openingDataList)
             {
                 Element openingElem = element.Document.GetElement(openingData.OpeningElementId);
@@ -355,7 +355,7 @@ namespace Revit.IFC.Export.Utility
             openingPlacement = ExporterUtil.CreateLocalPlacement(file, hostObjPlacementHnd,
                 relTransform.Origin, relTransform.BasisZ, relTransform.BasisX);
 
-            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
             double scaledOpeningLength = extrusionCreationData.ScaledLength;
             string openingObjectType = "Opening";
             if (!MathUtil.IsAlmostZero(scaledHostWidth) && !MathUtil.IsAlmostZero(scaledOpeningLength))
@@ -429,7 +429,7 @@ namespace Revit.IFC.Export.Utility
                 curveLoops, plane, extrusionData.ExtrusionDirection, extrusionData.ScaledExtrusionLength);
 
             string openingObjectType = isRecess ? "Recess" : "Opening";
-            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
             string openingName = NamingUtil.GetNameOverride(insertElement, null);
             if (string.IsNullOrEmpty(openingName))
                 openingName = NamingUtil.GetNameOverride(hostElement, NamingUtil.CreateIFCObjectName(exporterIFC, hostElement));

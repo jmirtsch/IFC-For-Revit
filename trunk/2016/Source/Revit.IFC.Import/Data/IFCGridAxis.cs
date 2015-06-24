@@ -222,7 +222,7 @@ namespace Revit.IFC.Import.Data
                 while (counter < 1000);
 
                 if (counter >= 1000)
-                    IFCImportFile.TheLog.LogWarning(Id, "Couldn't set name: '" + axisTag + "' for Grid, reverting to default.", false);
+                    Importer.TheLog.LogWarning(Id, "Couldn't set name: '" + axisTag + "' for Grid, reverting to default.", false);
             }
         }
 
@@ -343,7 +343,7 @@ namespace Revit.IFC.Import.Data
 
             if (AxisCurve == null)
             {
-                IFCImportFile.TheLog.LogError(Id, "Couldn't find axis curve for grid line, ignoring.", false);
+                Importer.TheLog.LogError(Id, "Couldn't find axis curve for grid line, ignoring.", false);
                 IsValidForCreation = false;
                 return;
             }
@@ -352,20 +352,20 @@ namespace Revit.IFC.Import.Data
             int numCurves = curves.Count;
             if (numCurves == 0)
             {
-                IFCImportFile.TheLog.LogError(AxisCurve.Id, "Couldn't find axis curve for grid line, ignoring.", false);
+                Importer.TheLog.LogError(AxisCurve.Id, "Couldn't find axis curve for grid line, ignoring.", false);
                 IsValidForCreation = false;
                 return;
             }
 
             if (numCurves > 1)
-                IFCImportFile.TheLog.LogError(AxisCurve.Id, "Found multiple curve segments for grid line, ignoring all but first.", false);
+                Importer.TheLog.LogError(AxisCurve.Id, "Found multiple curve segments for grid line, ignoring all but first.", false);
 
             Grid grid = null;
 
             Curve curve = curves[0].CreateTransformed(lcs);
             if (curve == null)
             {
-                IFCImportFile.TheLog.LogError(AxisCurve.Id, "Couldn't create transformed axis curve for grid line, ignoring.", false);
+                Importer.TheLog.LogError(AxisCurve.Id, "Couldn't create transformed axis curve for grid line, ignoring.", false);
                 IsValidForCreation = false;
                 return;
             }
@@ -383,14 +383,14 @@ namespace Revit.IFC.Import.Data
                     grid = Grid.Create(doc, curve as Line);
                 else
                 {
-                    IFCImportFile.TheLog.LogError(AxisCurve.Id, "Couldn't create grid line from curve of type " + curve.GetType().ToString() + ", expected line or arc.", false);
+                    Importer.TheLog.LogError(AxisCurve.Id, "Couldn't create grid line from curve of type " + curve.GetType().ToString() + ", expected line or arc.", false);
                     IsValidForCreation = false;
                     return;
                 }
             }
             catch (Exception ex)
             {
-                IFCImportFile.TheLog.LogError(AxisCurve.Id, ex.Message, false);
+                Importer.TheLog.LogError(AxisCurve.Id, ex.Message, false);
                 IsValidForCreation = false;
                 return;
             }
@@ -419,7 +419,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcGridAxis))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcGridAxis);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcGridAxis);
                 return null;
             }
 
@@ -432,7 +432,7 @@ namespace Revit.IFC.Import.Data
                 }
                 catch (Exception ex)
                 {
-                    IFCImportFile.TheLog.LogError(ifcGridAxis.StepId, ex.Message, false);
+                    Importer.TheLog.LogError(ifcGridAxis.StepId, ex.Message, false);
                     return null;
                 }
             }

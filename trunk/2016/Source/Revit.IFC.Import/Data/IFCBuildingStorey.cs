@@ -168,7 +168,7 @@ namespace Revit.IFC.Import.Data
                         }
 
                         if (CreatedViewId == ElementId.InvalidElementId)
-                            IFCImportFile.TheLog.LogAssociatedCreationError(this, typeof(ViewPlan));
+                            Importer.TheLog.LogAssociatedCreationError(this, typeof(ViewPlan));
                     }
                     else
                     {
@@ -178,7 +178,7 @@ namespace Revit.IFC.Import.Data
                 }
             }
             else
-                IFCImportFile.TheLog.LogCreationError(this, null, false);
+                Importer.TheLog.LogCreationError(this, null, false);
             
             TraverseSubElements(doc);
         }
@@ -232,7 +232,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcBuildingStorey))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcBuildingStorey);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcBuildingStorey);
                 return null;
             }
 

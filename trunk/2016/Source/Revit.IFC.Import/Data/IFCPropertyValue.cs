@@ -111,7 +111,7 @@ namespace Revit.IFC.Import.Data
                     return AsString();
             }
 
-            IFCImportFile.TheLog.LogError(m_IFCSimpleProperty.Id, "Unable to set value of parameter of type: " + Type.ToString(), false);
+            Importer.TheLog.LogError(m_IFCSimpleProperty.Id, "Unable to set value of parameter of type: " + Type.ToString(), false);
             return null;
         }
 

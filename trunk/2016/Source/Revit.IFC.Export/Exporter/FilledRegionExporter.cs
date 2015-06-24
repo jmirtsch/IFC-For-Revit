@@ -112,7 +112,7 @@ namespace Revit.IFC.Export.Exporter
                         shapeReps.Add(bodyRepHnd);
 
                         IFCAnyHandle productShape = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
-                        IFCAnyHandle annotation = IFCInstanceExporter.CreateAnnotation(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(),
+                        IFCAnyHandle annotation = IFCInstanceExporter.CreateAnnotation(file, GUIDUtil.CreateGUID(), ExporterCacheManager.OwnerHistoryHandle,
                             null, null, null, setter.LocalPlacement, productShape);
 
                         productWrapper.AddAnnotation(annotation, setter.LevelInfo, true);

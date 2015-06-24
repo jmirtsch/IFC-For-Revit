@@ -79,7 +79,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcElementarySurface))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcElementarySurface);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcElementarySurface);
                 return null;
             }
 
@@ -89,8 +89,8 @@ namespace Revit.IFC.Import.Data
 
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcElementarySurface, IFCEntityType.IfcPlane))
                 return IFCPlane.ProcessIFCPlane(ifcElementarySurface);
-
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcElementarySurface, IFCEntityType.IfcElementarySurface, true);
+            
+            Importer.TheLog.LogUnhandledSubTypeError(ifcElementarySurface, IFCEntityType.IfcElementarySurface, true);
             return null;
         }
     }

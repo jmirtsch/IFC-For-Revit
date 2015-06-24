@@ -61,7 +61,7 @@ namespace Revit.IFC.Import.Data
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcTopologicalRepresentationItem, IFCEntityType.IfcLoop))
                 return IFCLoop.ProcessIFCLoop(ifcTopologicalRepresentationItem);
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcTopologicalRepresentationItem, IFCEntityType.IfcTopologicalRepresentationItem, true);
+            Importer.TheLog.LogUnhandledSubTypeError(ifcTopologicalRepresentationItem, IFCEntityType.IfcTopologicalRepresentationItem, true);
             return null;
         }
     }

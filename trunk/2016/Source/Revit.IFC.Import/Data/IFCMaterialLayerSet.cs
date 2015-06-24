@@ -94,7 +94,7 @@ namespace Revit.IFC.Import.Data
                 IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcMaterialLayerSet, "MaterialLayers");
             if (ifcMaterialLayers == null)
             {
-                IFCImportFile.TheLog.LogError(ifcMaterialLayerSet.Id, "Expected at least 1 IfcMaterialLayer, found none.", false);
+                Importer.TheLog.LogError(ifcMaterialLayerSet.Id, "Expected at least 1 IfcMaterialLayer, found none.", false);
                 return;
             }
 
@@ -127,7 +127,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialLayerSet))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcMaterialLayerSet);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialLayerSet);
                 return null;
             }
 

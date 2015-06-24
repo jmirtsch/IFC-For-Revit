@@ -103,8 +103,9 @@ The export alternate interface is loaded when users access the Export functional
 <p><strong>Phase to export</strong>: Selects the phase of the document to export, defaulting to the last phase of the document.  If "Export only elements visible in view" is selected, the phase of the view will be used and this option greyed out.</p>
 
 <p><strong>Export only elements visible in view</strong>: Checked to export only the visible elements of the current view (based on filtering and/or element and category hiding), unchecked to export the entire model.  
-<p><strong>Export Bounding Box</strong>: Checked to export bounding box representations, Unchecked to exclude them.  This is the forced on for GSA export.</p>
-<p><strong>Export Linked Files as Separate IFCs</strong>: Checked to export any Revit links in the project as separate IFCs, unchecked to exclude them.  Each linked instance in the file will export as a separate IFC file with the right positioning relative to the host file.  Multiple instances of the same linked document will export as separate files, identical except for their position and orientation.  Note that linked IFC files will be re-exported, so may suffer data loss on roundtrip.  This will be addressed in a future update.
+<p><strong>Export rooms in 3D views</strong>: If the "export only elements visible in view" is checked, checking this option will export all of the rooms that are contained inside the section box of the selected 3D view.  If there is no active section box, all rooms will be exported.
+<p><strong>Export Bounding Box</strong>: Checked to export bounding box representations, Unchecked to exclude them.  This is the the default for GSA export.</p>
+<p><strong>Export Linked Files as Separate IFCs</strong>: Checked to export any Revit links in the project as separate IFCs, unchecked to exclude them.  Each linked instance in the file will export as a separate IFC file with the right positioning relative to the host file.  Multiple instances of the same linked document will export as separate files, identical except for their position and orientation.  Note that linked IFC files will be re-exported, so may suffer data loss on roundtrip.
 
 <p><strong>Split walls and columns by Level</strong>: Whether or not to split walls and columns by building stories.</p>
 <p><strong>Export 2D plan view elements</strong>: Checked to include 2D elements supported by IFC export (notes and filled regions), unchecked to exclude them. </p>
@@ -112,13 +113,14 @@ The export alternate interface is loaded when users access the Export functional
 <p><strong>Export Revit property sets</strong>: Checked to include the Revit-specific property sets based on parameter groups.  Unchecked to exclude them.</p>
 <p><strong>Export IFC Common property sets</strong>: Checked to include the IFC common property sets, unchecked to exclude them.</p>
 <p><strong>Export Schedules as property sets</strong>: Checked to export schedules as custom property sets.  The name of the schedule is the property set name; the column names are the IFC parameter names.</p>
+<p><strong>Export only schedules containing IFC, Pset, or Common in the title</strong>: When checked, restricts the schedules exported to only those that contain "IFC", "PSet", or "Common" in their title.
 <p><strong>Export user defined property sets</strong>: Checked to export user-defined property set.  If checked, the use can specify the name of a text file that contains the property set definitions.</p>
 
 <p><strong>Export base quantities</strong>: Whether or not to include base quantities for model elements in the export data.  Base quantities are generated from model geometry to reflect actual physical quantity values, independent of measurement rules or methods.</p>
 
 <p><strong>Export parts as building elements</strong>: Checked to export parts as standard IFC elements, Unchecked to export them as IfcBuildingElementPart.</p>
-<p><strong>Export Solid Models when possible</strong>: Checked to export solid models when applicable, which allow for mixing BRep and extrusion geometries for an entity.  This can result in smaller IFC files.</p>
-<p><strong>Use coarse tessellation for some BReps</strong>: Checked to use coarse tessellation for some Revit elements (floors, railings, ramps, spaces and stairs).  Disabling this option will generally result in larger, but more accurate, BRep representations for these items.</p>
+<p><strong>Allow use of mixed "Solid Model" representation</strong>: Checked to allow for mixing BRep and extrusion geometries for an entity.  This can result in smaller IFC files, but which are not strictly within the standard IFC MVDs.</p>
+<p><strong>Level of detail for some element geometry</strong>: Allows control of the level of tessellation for some Revit elements.  Disabling this option will generally result in larger, but more accurate, BRep and profile representations.  The main Revit elements affected by this control are: elbows, floors, pipe fittings, railings, ramps, spaces and stairs.  Highly detailed extrusion profiles are also affected.for these items.</p>
 </p>
 <p><strong>Use family and type name for references</strong>: Checked to use the family and type name for references, unchecked to use the type name only.</p>
 <p><strong>Use 2D room boundaries for room volume</strong>: Checked to use a simplified approach to calculation of room volumes (based on extrusion of 2D room boundaries) which is also the default when exporting to IFC 2x2.   Unchecked to use the Revit calculated room geometry to represent the room volumes (which is the default when exporting to IFC 2x3).</p>
@@ -137,6 +139,7 @@ The export alternate interface is loaded when users access the Export functional
 <li>IFC 2x2 Singapore BCA e-Plan Check</li>
 <li>IFC 4 Basic Coordination View 2.0</li>
 <li>IFC 4 Reference View</li>
+<li>IFC 4 Design Transfer View</li>
 
 </menu>
     <p>These correspond to the file type options in the standard Revit UI. When selected, the individual options will adjust accordingly. 
@@ -146,6 +149,7 @@ The export alternate interface is loaded when users access the Export functional
     These configurations will be added to the active document and saved with the document. 
     The add-in will be able to retrieve and reuse these setups if the same model is being exported. 
     You can also rename and delete named setups from this dialog.</p>
+    <p> The last two options are for experimental use and have fewer settable options than the rest.</p>
 
 
 <h2 id="Install" name="Install">Installation and Uninstallation</h2>
@@ -192,7 +196,78 @@ working on expanding and eventually removing this limit, and we will be tracking
 
 <div class="versionset">
 
-<div class="version">16.0.0.0</div><div class="versioninfo-bullet">Initial Revit 2016 Version</div>
+<div class="version">16.1.0.0</div><div class="versioninfo-bullet">
+
+<br><p>General:
+
+<ul>
+<li>Special thanks to CAD-Q (http://www.cad-q.com/) for their contribution of this improvement to the Open Source.  Their contributions will be marked with (CADQ) below.
+<li>The installer has been updated to once again work with Revit LT.
+</ul>
+
+<p>New Export Functionality:
+
+<ul>
+<li>(CADQ) Ability to export only schedules whose titles include "PSet", "IFC" or "Common".
+<li>(CADQ) Added option to use the active view to generate the exported geometry.  Note that this can have unexpected effects if used in a non-3D view.
+<li>(CADQ) Added an export progress report to the status bar, similar to how Link IFC displays progress.
+<li>(CADQ) Allow export of multiple loaded exportable projects.  Note that for phasing, the list of available phases will be based on the current project only.  If a phase other than the default phase is chosen, it will be used for all projects assuming that they have the same phase with the same element id.  If multiple projects are chosen, default names will be uesd for the created files in the chosen folder.
+<li>(CADQ) Split walls and columns by level now also splits duct segments by level.
+<li>(CADQ) The "Advanced" tab tessellation level of detail controls now also apply to pipe fittings.  In addition, instead of being a checkbox, there are now four options: "Extra Low", "Low", "Medium" and "High".  The default setting is Low, which is slightly higher than the previous setting.
+<li>(CADQ) When splitting elements by level, if the splitting operation fails, use the original solid.
+<li>Added a setup for the IFC4 Design Transfer View MVD.  This is still a work in progress and is intended for advanced users to experiment with.  The bulk of the new functionality is around using the IfcAdvancedBRep to generate non-faceted geometry and topology on export.
+<li>Added support for properties with friction loss and linear velocity units, both for standard Revit properties and user defined property sets.
+<li>All properties for PSet_ZoneCommon are prepended with "Zone" to distinguish them from Room properties.  See the wiki for more information.
+</ul>
+
+<p>Export Bug Fixes:
+
+<ul>
+<li>(CADQ) IFC2x3: PSet_ZoneCommon now correctly exports "GrossAreaPlanned" and "NetAreaPlanned" properties (instead of the IFC4 GrossPlannedArea and NetPlannedArea).
+<li>Allow export of IfcElectricDistributionPoint (IFC2x3) and IfcElectricDistributionBoard (IFC4) entity types.
+<li>Allow export of DirectShapes in certain categories that were previously ignored.
+<li>Allow export of some infill elements in host objects.  Infill elements are created when a host object has an opening that is not in the currently exported phase.
+<li>Exporting schedules as property sets will now include room elements.
+<li>Fix orientation of some floors exported as containers.
+<li>IFC2x3: Allow export of type properties for elements whose corresponding IFC entity doesn't have a type in user-defined property sets assigned to "IfcElementType".
+<li>Significantly improve the export of walls with openings in the corners. Both the wall profile and the opening geometry have been improved to reflect user intent, and fewer clip planes are used.
+<li>Switch between the IFC4 IfcBurner/IfcBurnerType and IfcSpaceHeater/IfcSpaceHeaterType and their IFC2x3 counterparts depending on the schema version.
+</ul>
+
+<p>New Import Functionality:
+
+<ul>
+<li>Always reload a linked IFC file if the importer version is different than the one used to originally link the IFC file.
+<li>Better handling of IFC color information when scaling is involved.
+<li>Create the log file earlier, allowing for logging of more general failures.
+<li>If the default log file is locked, create a log file with a temporary name in the same directory.
+<li>Log an error if no template file could be found to generate an IFC file.
+<li>Log an error if the IFC file contains a zero length vectors used in local coordinate systems.
+<li>Process IfcPresentationLayerAssignment for grids.
+<li>Store IfcProject, IfcSite and IfcBuilding parameters and GUIDs in Revit Project Information if no element was created for them.
+</ul>
+
+<p>Import Bug Fixes:
+
+<ul>
+<li>Correctly rotate projects whose true north deviates from project north.
+<li>Correct unit scaling and symbol display for friction loss, linear velocity, luminous efficacy, thermal transmittance, and volumetric flow rate.
+<li>Include units when displaying material thicknesses in the IfcMaterialList parameter and in some log messages.
+<li>Import extruded geometry whose profile is a single, unbounded, closed curve (e.g., a fule circle or ellipse).
+<li>Improve creation of geometry in cases where a Solid couldn't be created, and we reverted to Mesh geometry instead.
+<li>Improve material assignment for geometries where the material was attached to the first argument of a Boolean operation.
+<li>Properly scale IfcVertexPoint input.
+<li>Stop displaying irrelevant property sets in the IfcPropertySetList parameter.
+</ul>
+
 </div>
+
+<div class="version">16.0.0.0</div><div class="versioninfo-bullet">
+
+<br>Initial Revit 2016 release
+
+</div>
+</div>
+
 </body>
 </html>

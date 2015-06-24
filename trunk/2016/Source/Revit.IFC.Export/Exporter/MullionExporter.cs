@@ -109,7 +109,7 @@ namespace Revit.IFC.Export.Exporter
                     }
 
                     string elemGUID = GUIDUtil.CreateGUID(mullion);
-                    IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                    IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                     string elemObjectType = NamingUtil.CreateIFCObjectName(exporterIFC, mullion);
                     string name = NamingUtil.GetNameOverride(mullion, elemObjectType);
                     string description = NamingUtil.GetDescriptionOverride(mullion, null);

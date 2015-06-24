@@ -72,7 +72,7 @@ namespace Revit.IFC.Export.Exporter
                         }
 
                         string guid = GUIDUtil.CreateGUID(element);
-                        IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                        IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                         string revitObjectType = exporterIFC.GetFamilyName();
                         string name = NamingUtil.GetNameOverride(element, revitObjectType);
                         string description = NamingUtil.GetDescriptionOverride(element, null);

@@ -76,7 +76,7 @@ namespace Revit.IFC.Import.Data
                 IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcMaterialList, "Materials");
             if (ifcMaterials == null)
             {
-                IFCImportFile.TheLog.LogError(ifcMaterialList.Id, "Expected at least 1 IfcMaterial, found none.", false);
+                Importer.TheLog.LogError(ifcMaterialList.Id, "Expected at least 1 IfcMaterial, found none.", false);
                 return;
             }
 
@@ -107,7 +107,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialList))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcMaterialList);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialList);
                 return null;
             }
 

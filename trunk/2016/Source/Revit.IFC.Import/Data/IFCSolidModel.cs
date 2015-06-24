@@ -57,7 +57,11 @@ namespace Revit.IFC.Import.Data
         {
             if (StyledByItem != null)
                 StyledByItem.Create(shapeEditScope);
-            return CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, guid);
+
+            using (IFCImportShapeEditScope.IFCMaterialStack stack = new IFCImportShapeEditScope.IFCMaterialStack(shapeEditScope, StyledByItem, null))
+            {
+                return CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, guid);
+            }
         }
 
         protected IFCSolidModel(IFCAnyHandle item)
@@ -74,7 +78,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSolidModel))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcSolidModel);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcSolidModel);
                 return null;
             }
 
@@ -87,7 +91,7 @@ namespace Revit.IFC.Import.Data
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcSolidModel, IFCEntityType.IfcSweptDiskSolid))
                 return IFCSweptDiskSolid.ProcessIFCSweptDiskSolid(ifcSolidModel); 
             
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcSolidModel, IFCEntityType.IfcSolidModel, true);
+            Importer.TheLog.LogUnhandledSubTypeError(ifcSolidModel, IFCEntityType.IfcSolidModel, true);
             return null;
         }
     }

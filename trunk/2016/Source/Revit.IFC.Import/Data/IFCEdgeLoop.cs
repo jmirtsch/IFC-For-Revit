@@ -67,11 +67,11 @@ namespace Revit.IFC.Import.Data
         {
             base.Process(ifcEdgeLoop);
 
-            // TODO in REVIT-61368: checks that edgeList is closed and continuous
+            // TODO: checks that edgeList is closed and continuous
             IList<IFCAnyHandle> edgeList = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcEdgeLoop, "EdgeList");
             if (edgeList == null) 
             {
-                IFCImportFile.TheLog.LogError(Id, "Cannot find the EdgeList of this loop", true);
+                Importer.TheLog.LogError(Id, "Cannot find the EdgeList of this loop", true);
             }
             IFCOrientedEdge orientedEdge = null;
             foreach(IFCAnyHandle edge in edgeList) 
@@ -106,7 +106,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcEdgeLoop))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcFace);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcFace);
                 return null;
             }
 
@@ -118,44 +118,7 @@ namespace Revit.IFC.Import.Data
 
         protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            // this code only works for IFC 4 for now
-            if (IFCImportFile.TheFile.SchemaVersion > IFCSchemaVersion.IFC2x3)
-            {
-                foreach (IFCOrientedEdge edge in EdgeList)
-                {
-                    if (edge == null || edge.EdgeStart == null || edge.EdgeEnd == null) 
-                    {
-                        IFCImportFile.TheLog.LogError(Id, "Invalid edge loop", true);
-                        return;
-                    }
-
-                    edge.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
-
-                    if (lcs == null)
-                        lcs = Transform.Identity;
-
-                    IFCEdge edgeElement = edge.EdgeElement;
-                    Curve edgeGeometry = null;
-                    if (edgeElement is IFCEdgeCurve)
-                    {
-                        edgeGeometry = edgeElement.GetGeometry();
-                    }
-                    else 
-                    {
-                        edgeGeometry = null;
-                    }
-                    XYZ edgeStart = edgeElement.EdgeStart.GetCoordinate();
-                    XYZ edgeEnd = edgeElement.EdgeEnd.GetCoordinate();
-
-                    if (edgeStart == null || edgeEnd == null)
-                    {
-                        IFCImportFile.TheLog.LogError(Id, "Invalid start or end vertices", true);
-                    }
-                    bool orientation = lcs.HasReflection ? !edge.Orientation : edge.Orientation;
-                    shapeEditScope.AddOrientedEdgeToTheBoundary(edgeElement.Id, edgeGeometry.CreateTransformed(lcs), lcs.OfPoint(edgeStart), lcs.OfPoint(edgeEnd), edge.Orientation);
-                }
-            }
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
+           throw new InvalidOperationException("Unhandled code.");
         }
     }
 }

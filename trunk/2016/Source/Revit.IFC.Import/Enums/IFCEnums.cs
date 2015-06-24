@@ -51,7 +51,7 @@ namespace Revit.IFC.Import.Enums
                     {
                         string warningVal = "Invalid enumeration value for " + enumVal.GetType().ToString() + ": " + hndAsString +
                             ", defaulting to: " + defaultVal.ToString();
-                        IFCImportFile.TheLog.LogWarning(hnd.Id, warningVal, false);
+                        Importer.TheLog.LogWarning(hnd.Id, warningVal, false);
                         enumVal = defaultVal;
                     }
                 }

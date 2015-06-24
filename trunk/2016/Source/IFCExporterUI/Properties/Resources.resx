@@ -198,7 +198,7 @@
     <value>Export bounding box</value>
   </data>
   <data name="ExportSolidModelRep" xml:space="preserve">
-    <value>Export solid models when possible</value>
+    <value>Allow use of mixed "Solid Model" representation</value>
   </data>
   <data name="ExportSchedulesAsPsets" xml:space="preserve">
     <value>Export schedules as property sets</value>
@@ -292,7 +292,7 @@
     <comment>User Defined Parameter Sets</comment>
   </data>
   <data name="IFCExportProcessError" xml:space="preserve">
-    <value>The IFC export process encountered an error.</value>
+    <value>The IFC export process encountered an error for: {0}.</value>
   </data>
   <data name="LinkInstanceExportCantCreateDoc" xml:space="preserve">
     <value>Could not create a temporary document for exporting the linked instance(s) for ids: {0}</value>
@@ -403,7 +403,7 @@
     <value>Export schedules as property sets</value>
   </data>
   <data name="ExportSolidModelsWhenPossible" xml:space="preserve">
-    <value>Export solid models when possible</value>
+    <value>Allow use of mixed "Solid Model" representation</value>
   </data>
   <data name="ExportUserDefinedPropertySets" xml:space="preserve">
     <value>Export user defined property sets</value>
@@ -602,5 +602,44 @@
   </data>
   <data name="ExportRoomsInView" xml:space="preserve">
     <value>Export rooms in 3D views</value>
+  </data>
+  <data name="UseActiveViewForGeometry" xml:space="preserve">
+    <value>Use active view when creating geometry</value>
+  </data>
+  <data name="ExportSpecificSchedules" xml:space="preserve">
+    <value>Export only schedules containing IFC, Pset, or Common in the title</value>
+  </data>
+  <data name="MultipleFiles" xml:space="preserve">
+    <value>Multiple files</value>
+  </data>
+  <data name="TessellationDetails" xml:space="preserve">
+    <value>Level of detail for some element geometry</value>
+  </data>
+  <data name="DetailLevelExtraLow" xml:space="preserve">
+    <value>Extra Low</value>
+  </data>
+  <data name="DetailLevelHigh" xml:space="preserve">
+    <value>High</value>
+  </data>
+  <data name="DetailLevelLow" xml:space="preserve">
+    <value>Low</value>
+  </data>
+  <data name="DetailLevelMedium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="CurrentOptions" xml:space="preserve">
+    <value>Current options:</value>
+  </data>
+  <data name="ProjectToExport" xml:space="preserve">
+    <value>Projects to export:</value>
+  </data>
+  <data name="DefaultFileName" xml:space="preserve">
+    <value>Project</value>
+  </data>
+  <data name="SelectOneOrMoreProjects" xml:space="preserve">
+    <value>Please select at least one project to export.</value>
+  </data>
+  <data name="IFCExportProcessGenericError" xml:space="preserve">
+    <value>The IFC export process encountered an error.</value>
   </data>
 </root>

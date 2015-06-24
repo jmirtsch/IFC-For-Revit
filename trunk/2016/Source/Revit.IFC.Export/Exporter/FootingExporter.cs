@@ -119,7 +119,7 @@ namespace Revit.IFC.Export.Exporter
                         string footingType = GetIFCFootingType(ifcEnumType);    // need to keep it for legacy support when original data follows slightly diff naming
                         footingType = IFCValidateEntry.GetValidIFCType(element, footingType);
 
-                        IFCAnyHandle footing = IFCInstanceExporter.CreateFooting(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
+                        IFCAnyHandle footing = IFCInstanceExporter.CreateFooting(file, instanceGUID, ExporterCacheManager.OwnerHistoryHandle,
                             instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(), prodRep, instanceTag, footingType);
 
                         if (exportParts)

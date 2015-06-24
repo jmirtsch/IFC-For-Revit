@@ -68,7 +68,7 @@ namespace Revit.IFC.Import.Data
                             Curves.Add(curve);
                     }
                     else
-                        IFCImportFile.TheLog.LogError(Id, "Unhandled entity type in IfcGeometricSet: " + IFCAnyHandleUtil.GetEntityType(element).ToString(), false);
+                        Importer.TheLog.LogError(Id, "Unhandled entity type in IfcGeometricSet: " + IFCAnyHandleUtil.GetEntityType(element).ToString(), false);
                 }
             }
         }
@@ -87,7 +87,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcGeometricSet))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcGeometricSet); 
+                Importer.TheLog.LogNullError(IFCEntityType.IfcGeometricSet); 
                 return null;
             }
 

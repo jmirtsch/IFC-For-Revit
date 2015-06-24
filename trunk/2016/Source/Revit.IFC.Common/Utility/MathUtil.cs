@@ -44,25 +44,6 @@ namespace Revit.IFC.Common.Utility
         }
 
         /// <summary>
-        /// Returns a small value for use in comparing angles.
-        /// </summary>
-        /// <returns>
-        /// The value.
-        /// </returns>
-        public static double AngleEps()
-        {
-            return Math.PI / 1800.0;
-        }
-
-        /// <summary>
-        /// A small value for use in comparing vertex.
-        /// </summary>
-        public static double VertexEps
-        {
-            get { return 0.0005; }
-        }
-
-        /// <summary>
         /// Check if two double variables are almost equal.
         /// </summary>
         /// <returns>
@@ -175,6 +156,7 @@ namespace Revit.IFC.Common.Utility
 
             double aa, bb, ab;
             double epsSq = Eps() * Eps();
+            double angleEps = Math.PI / 1800.0;
 
             aa = a.DotProduct(a);
             bb = b.DotProduct(b);
@@ -184,7 +166,7 @@ namespace Revit.IFC.Common.Utility
 
             ab = a.DotProduct(b);
             double cosAngleSq = (ab / aa) * (ab / bb);
-            if (cosAngleSq < 1.0 - AngleEps() * AngleEps())
+            if (cosAngleSq < 1.0 - angleEps * angleEps)
                 return 0;
 
             return ab > 0 ? 1 : -1;
@@ -207,8 +189,9 @@ namespace Revit.IFC.Common.Utility
             double ab = a.DotProduct(b);
             double aa = a.DotProduct(a);
             double bb = b.DotProduct(b);
+            double angleEps = Math.PI / 1800.0;
 
-            return (ab * ab < aa * AngleEps() * bb * AngleEps()) ? true : false;
+            return (ab * ab < aa * angleEps * bb * angleEps) ? true : false;
         }
 
         /// <summary>

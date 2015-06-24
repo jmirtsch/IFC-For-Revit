@@ -145,7 +145,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcTypeObject))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcTypeObject);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcTypeObject);
                 return null;
             }
 
@@ -195,11 +195,14 @@ namespace Revit.IFC.Import.Data
                 IFCParameterSetByGroup parameterGroupMap = IFCParameterSetByGroup.Create(element);
                 foreach (IFCPropertySetDefinition propertySet in PropertySets.Values)
                 {
-                    string newPropertySetCreated = propertySet.CreatePropertySet(doc, element, parameterGroupMap);
+                    KeyValuePair<string, bool> newPropertySetCreated = propertySet.CreatePropertySet(doc, element, parameterGroupMap);
+                    if (!newPropertySetCreated.Value || string.IsNullOrWhiteSpace(newPropertySetCreated.Key))
+                        continue;
+
                     if (propertySetsCreated == null)
-                        propertySetsCreated = newPropertySetCreated;
+                        propertySetsCreated = newPropertySetCreated.Key;
                     else
-                        propertySetsCreated += ";" + newPropertySetCreated;
+                        propertySetsCreated += ";" + newPropertySetCreated.Key;
                 }
                 Parameter propertySetList = element.LookupParameter("Type IfcPropertySetList");
                 if (propertySetList != null)

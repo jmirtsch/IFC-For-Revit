@@ -114,80 +114,85 @@ namespace Revit.IFC.Import.Data
 
         protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
-
-            shapeEditScope.StartCollectingFaceSet();
-
-            // Create triangle face set from CoordIndex. We do not support the Normals yet at this point
-            foreach (List<int> triIndex in CoordIndex)
+            using (BuilderScope bs = shapeEditScope.InitializeBuilder(IFCShapeBuilderType.TessellatedShapeBuilder))
             {
-                // This is a defensive check in an unlikely situation that the index is larger than the data
-                if (triIndex[0] > Coordinates.CoordList.Count || triIndex[1] > Coordinates.CoordList.Count || triIndex[2] > Coordinates.CoordList.Count)
+                base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
+
+                TessellatedShapeBuilderScope tsBuilderScope = bs as TessellatedShapeBuilderScope;
+
+                tsBuilderScope.StartCollectingFaceSet();
+
+                // Create triangle face set from CoordIndex. We do not support the Normals yet at this point
+                foreach (List<int> triIndex in CoordIndex)
                 {
-                    continue;
-                } 
-                
-                shapeEditScope.StartCollectingFace(GetMaterialElementId(shapeEditScope));
-
-                IList<XYZ> loopVertices = new List<XYZ>();
-
-                IList<double> v1 = Coordinates.CoordList[triIndex[0] - 1];
-                IList<double> v2 = Coordinates.CoordList[triIndex[1] - 1];
-                IList<double> v3 = Coordinates.CoordList[triIndex[2] - 1];
-
-                loopVertices.Add (new XYZ(v1[0], v1[1], v1[2]));
-                loopVertices.Add (new XYZ(v2[0], v2[1], v2[2]));
-                loopVertices.Add (new XYZ(v3[0], v3[1], v3[2]));
-
-                IList<XYZ> transformedVertices = new List<XYZ>();
-                foreach (XYZ vertex in loopVertices)
-                {
-                    // Need to apply the project unit scaling here
-                    XYZ scaledVertex = applyProjectUnitScaleVertex(vertex);
-                    transformedVertices.Add(scaledLcs.OfPoint(scaledVertex));
-                }
-
-                // Check triangle that is too narrow (2 vertices are within the tolerance
-                IList<XYZ> validVertices;
-                IFCGeometryUtil.CheckAnyDistanceVerticesWithinTolerance(Id, shapeEditScope, transformedVertices, out validVertices);
-
-                // We are going to catch any exceptions if the loop is invalid.  
-                // We are going to hope that we can heal the parent object in the TessellatedShapeBuilder.
-                bool bPotentiallyAbortFace = false;
-
-                int count = validVertices.Count;
-                if (validVertices.Count < 3)
-                {
-                    IFCImportFile.TheLog.LogComment(Id, "Too few distinct loop vertices (" + count + "), ignoring.", false);
-                    bPotentiallyAbortFace = true;
-                }
-                else
-                {
-                    try
+                    // This is a defensive check in an unlikely situation that the index is larger than the data
+                    if (triIndex[0] > Coordinates.CoordList.Count || triIndex[1] > Coordinates.CoordList.Count || triIndex[2] > Coordinates.CoordList.Count)
                     {
-                        shapeEditScope.AddLoopVertices(validVertices);
+                        continue;
                     }
-                    catch (InvalidOperationException ex)
+
+                    tsBuilderScope.StartCollectingFace(GetMaterialElementId(shapeEditScope));
+
+                    IList<XYZ> loopVertices = new List<XYZ>();
+
+                    IList<double> v1 = Coordinates.CoordList[triIndex[0] - 1];
+                    IList<double> v2 = Coordinates.CoordList[triIndex[1] - 1];
+                    IList<double> v3 = Coordinates.CoordList[triIndex[2] - 1];
+
+                    loopVertices.Add(new XYZ(v1[0], v1[1], v1[2]));
+                    loopVertices.Add(new XYZ(v2[0], v2[1], v2[2]));
+                    loopVertices.Add(new XYZ(v3[0], v3[1], v3[2]));
+
+                    IList<XYZ> transformedVertices = new List<XYZ>();
+                    foreach (XYZ vertex in loopVertices)
                     {
-                        IFCImportFile.TheLog.LogComment(Id, ex.Message, false);
+                        // Need to apply the project unit scaling here
+                        XYZ scaledVertex = applyProjectUnitScaleVertex(vertex);
+                        transformedVertices.Add(scaledLcs.OfPoint(scaledVertex));
+                    }
+
+                    // Check triangle that is too narrow (2 vertices are within the tolerance
+                    IList<XYZ> validVertices;
+                    IFCGeometryUtil.CheckAnyDistanceVerticesWithinTolerance(Id, shapeEditScope, transformedVertices, out validVertices);
+
+                    // We are going to catch any exceptions if the loop is invalid.  
+                    // We are going to hope that we can heal the parent object in the TessellatedShapeBuilder.
+                    bool bPotentiallyAbortFace = false;
+
+                    int count = validVertices.Count;
+                    if (validVertices.Count < 3)
+                    {
+                        Importer.TheLog.LogComment(Id, "Too few distinct loop vertices (" + count + "), ignoring.", false);
                         bPotentiallyAbortFace = true;
                     }
+                    else
+                    {
+                        try
+                        {
+                            tsBuilderScope.AddLoopVertices(validVertices);
+                        }
+                        catch (InvalidOperationException ex)
+                        {
+                            Importer.TheLog.LogComment(Id, ex.Message, false);
+                            bPotentiallyAbortFace = true;
+                        }
+                    }
+
+                    if (bPotentiallyAbortFace)
+                        tsBuilderScope.AbortCurrentFace();
+                    else
+                        tsBuilderScope.StopCollectingFace();
                 }
 
-                if (bPotentiallyAbortFace)
-                    shapeEditScope.AbortCurrentFace();
-                else
-                    shapeEditScope.StopCollectingFace();
-            }
-
-            IList<GeometryObject> createdGeometries = shapeEditScope.CreateGeometry(guid);
-            if (createdGeometries != null)
-            {
-                foreach (GeometryObject createdGeometry in createdGeometries)
+                IList<GeometryObject> createdGeometries = tsBuilderScope.CreateGeometry(guid);
+                if (createdGeometries != null)
                 {
-                    shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, createdGeometry));
+                    foreach (GeometryObject createdGeometry in createdGeometries)
+                    {
+                        shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, createdGeometry));
+                    }
                 }
-            }                
+            }
 
         }
 
@@ -214,7 +219,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcTriangulatedFaceSet))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcTriangulatedFaceSet);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcTriangulatedFaceSet);
                 return null;
             }
 

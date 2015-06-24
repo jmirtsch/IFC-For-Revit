@@ -68,14 +68,14 @@ namespace Revit.IFC.Import.Data
             IFCAnyHandle edgeStart = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcEdge, "EdgeStart", false);
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(edgeStart))
             {
-                IFCImportFile.TheLog.LogError(ifcEdge.StepId, "Cannot find the starting vertex", true);
+                Importer.TheLog.LogError(ifcEdge.StepId, "Cannot find the starting vertex", true);
                 return;
             }
 
             IFCAnyHandle edgeEnd = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcEdge, "EdgeEnd", false);
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(edgeEnd))
             {
-                IFCImportFile.TheLog.LogError(ifcEdge.StepId, "Cannot find the ending vertex", true);
+                Importer.TheLog.LogError(ifcEdge.StepId, "Cannot find the ending vertex", true);
                 return;
             }
 
@@ -91,7 +91,7 @@ namespace Revit.IFC.Import.Data
         {
             if (EdgeStart == null || EdgeEnd == null) 
             {
-                IFCImportFile.TheLog.LogError(Id, "Invalid edge", true);
+                Importer.TheLog.LogError(Id, "Invalid edge", true);
                 return null;
             }
             return Line.CreateBound(EdgeStart.GetCoordinate(), EdgeEnd.GetCoordinate());
@@ -106,7 +106,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcEdge))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcEdge);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcEdge);
                 return null;
             }
 

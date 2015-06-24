@@ -73,7 +73,7 @@ namespace Revit.IFC.Import.Data
                 SameSense = sameSense;
             else
             {
-                IFCImportFile.TheLog.LogWarning(ifcEdgeCurve.StepId, "Cannot find SameSense attribute, defaulting to true", false);
+                Importer.TheLog.LogWarning(ifcEdgeCurve.StepId, "Cannot find SameSense attribute, defaulting to true", false);
                 SameSense = true;
             }
         }
@@ -87,7 +87,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcEdgeCurve))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcEdgeCurve);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcEdgeCurve);
                 return null;
             }
 

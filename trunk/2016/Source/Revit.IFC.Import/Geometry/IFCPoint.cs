@@ -61,7 +61,7 @@ namespace Revit.IFC.Import.Geometry
         {
             if (xyz != null)
                 IFCImportFile.TheFile.XYZMap[stepId] = xyz;
-            IFCImportFile.TheLog.AddProcessedEntity(entityType);
+            Importer.TheLog.AddProcessedEntity(entityType);
         }
 
         // This routine does no validity checking on the point, but does on attributes.
@@ -107,7 +107,7 @@ namespace Revit.IFC.Import.Geometry
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(point))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcCartesianPoint);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcCartesianPoint);
                 return null;
             }
 
@@ -120,7 +120,7 @@ namespace Revit.IFC.Import.Geometry
                 xyz = ProcessIFCCartesianPointInternal(point, IFCPointType.DontCare);
             else
             {
-                IFCImportFile.TheLog.LogUnhandledSubTypeError(point, IFCEntityType.IfcCartesianPoint, false);
+                Importer.TheLog.LogUnhandledSubTypeError(point, IFCEntityType.IfcCartesianPoint, false);
                 return null;
             }
 
@@ -173,7 +173,7 @@ namespace Revit.IFC.Import.Geometry
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(point))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcCartesianPoint);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcCartesianPoint);
                 return null;
             }
 
@@ -188,7 +188,7 @@ namespace Revit.IFC.Import.Geometry
             }
             else
             {
-                IFCImportFile.TheLog.LogUnhandledSubTypeError(point, IFCEntityType.IfcCartesianPoint, false);
+                Importer.TheLog.LogUnhandledSubTypeError(point, IFCEntityType.IfcCartesianPoint, false);
                 return null;
             }
 
@@ -205,7 +205,7 @@ namespace Revit.IFC.Import.Geometry
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(point))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcCartesianPoint);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcCartesianPoint);
                 return null;
             }
 
@@ -218,7 +218,7 @@ namespace Revit.IFC.Import.Geometry
                 xyz = ProcessIFCCartesianPointInternal(point, IFCPointType.XYZPoint);
             else
             {
-                IFCImportFile.TheLog.LogUnhandledSubTypeError(point, IFCEntityType.IfcCartesianPoint, false);
+                Importer.TheLog.LogUnhandledSubTypeError(point, IFCEntityType.IfcCartesianPoint, false);
                 return null;
             }
 
@@ -231,7 +231,7 @@ namespace Revit.IFC.Import.Geometry
             if (IFCAnyHandleUtil.IsTypeOf(point, IFCEntityType.IfcCartesianPoint))
                 return ProcessIFCCartesianPointInternal(point, IFCPointType.DontCare);
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(point, IFCEntityType.IfcCartesianPoint, false);
+            Importer.TheLog.LogUnhandledSubTypeError(point, IFCEntityType.IfcCartesianPoint, false);
             return null;
         }
         
@@ -245,7 +245,7 @@ namespace Revit.IFC.Import.Geometry
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(point))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcCartesianPoint); 
+                Importer.TheLog.LogNullError(IFCEntityType.IfcCartesianPoint); 
                 return null;
             }
 
@@ -268,7 +268,7 @@ namespace Revit.IFC.Import.Geometry
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(point))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcCartesianPoint);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcCartesianPoint);
                 return null;
             }
 
@@ -294,7 +294,7 @@ namespace Revit.IFC.Import.Geometry
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(point))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcCartesianPoint);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcCartesianPoint);
                 return null;
             }
 
@@ -312,13 +312,13 @@ namespace Revit.IFC.Import.Geometry
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(direction))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcDirection);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcDirection);
                 return null;
             }
 
             if (!IFCAnyHandleUtil.IsSubTypeOf(direction, IFCEntityType.IfcDirection))
             {
-                IFCImportFile.TheLog.LogUnexpectedTypeError(direction, IFCEntityType.IfcDirection, false);
+                Importer.TheLog.LogUnexpectedTypeError(direction, IFCEntityType.IfcDirection, false);
                 return null;
             }
 
@@ -344,6 +344,10 @@ namespace Revit.IFC.Import.Geometry
                 if (normalize)
                 {
                     normalizedXYZ = xyz.Normalize();
+                    if (normalizedXYZ.IsZeroLength()) 
+                    {
+                        Importer.TheLog.LogError(stepId, "Local transform contains 0 length vectors", true);
+                    }
                     IFCImportFile.TheFile.NormalizedXYZMap[direction.StepId] = normalizedXYZ;
                 }
             }
@@ -382,13 +386,13 @@ namespace Revit.IFC.Import.Geometry
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(vector))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcVector); 
+                Importer.TheLog.LogNullError(IFCEntityType.IfcVector); 
                 return null;
             }
 
             if (!IFCAnyHandleUtil.IsSubTypeOf(vector, IFCEntityType.IfcVector))
             {
-                IFCImportFile.TheLog.LogUnexpectedTypeError(vector, IFCEntityType.IfcVector, false);
+                Importer.TheLog.LogUnexpectedTypeError(vector, IFCEntityType.IfcVector, false);
                 return null;
             }
 

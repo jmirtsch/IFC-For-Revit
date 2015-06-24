@@ -69,7 +69,7 @@ namespace Revit.IFC.Import.Data
 
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcVertex))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcVertex);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcVertex);
                 return null;
             }
 

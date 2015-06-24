@@ -68,7 +68,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcProperty))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcProperty);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcProperty);
                 return null;
             }
 
@@ -86,11 +86,11 @@ namespace Revit.IFC.Import.Data
             }
             catch (Exception ex)
             {
-                IFCImportFile.TheLog.LogError(ifcProperty.StepId, ex.Message, false);
+                Importer.TheLog.LogError(ifcProperty.StepId, ex.Message, false);
                 return null;
             }
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcProperty, IFCEntityType.IfcProperty, false);
+            Importer.TheLog.LogUnhandledSubTypeError(ifcProperty, IFCEntityType.IfcProperty, false);
             return null;
         }
 
@@ -167,7 +167,7 @@ namespace Revit.IFC.Import.Data
                 string propertyValueAsString = PropertyValueAsString();
                 if (propertyValueAsString == null)
                 {
-                    IFCImportFile.TheLog.LogError(Id, "Couldn't create parameter: " + Name, false);
+                    Importer.TheLog.LogError(Id, "Couldn't create parameter: " + Name, false);
                     return;
                 }
 
@@ -218,7 +218,7 @@ namespace Revit.IFC.Import.Data
                             doubleValueToUse = propertyValueToUse.AsScaledDouble();
                             break;
                         default:
-                            IFCImportFile.TheLog.LogError(Id, "Unknown value type for parameter: " + Name, false);
+                            Importer.TheLog.LogError(Id, "Unknown value type for parameter: " + Name, false);
                             return;
                     }
                 }
@@ -243,7 +243,7 @@ namespace Revit.IFC.Import.Data
                     parameterNameCount++;
                 }
                 if (parameterNameCount > 2)
-                    IFCImportFile.TheLog.LogWarning(Id, "Renamed parameter: " + originalParameterName + " to: " + parameterName, false);
+                    Importer.TheLog.LogWarning(Id, "Renamed parameter: " + originalParameterName + " to: " + parameterName, false);
 
                 bool created = false;
                 switch (dataType)
@@ -327,7 +327,7 @@ namespace Revit.IFC.Import.Data
             }
 
             if (!couldSetValue)
-                IFCImportFile.TheLog.LogError(Id, "Couldn't create parameter: " + Name + " of storage type: " + existingParameter.StorageType.ToString(), false);
+                Importer.TheLog.LogError(Id, "Couldn't create parameter: " + Name + " of storage type: " + existingParameter.StorageType.ToString(), false);
         }
     }
 }

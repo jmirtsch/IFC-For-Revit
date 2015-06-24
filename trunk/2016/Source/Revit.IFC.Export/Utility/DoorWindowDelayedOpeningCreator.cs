@@ -196,7 +196,7 @@ namespace Revit.IFC.Export.Utility
             foreach (DoorWindowOpeningInfo openingInfo in doorWindowOpeningInfoList)
             {
                 IFCFile file = exporterIFC.GetFile();
-                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
                 IFCAnyHandle openingHnd = openingInfo.OpeningHnd;
                 double openingHeight = openingInfo.OpeningHeight;

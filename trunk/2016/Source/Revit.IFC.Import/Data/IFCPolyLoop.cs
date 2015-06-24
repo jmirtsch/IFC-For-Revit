@@ -112,7 +112,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPolyLoop))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcPolyLoop); 
+                Importer.TheLog.LogNullError(IFCEntityType.IfcPolyLoop); 
                 return null;
             }
 

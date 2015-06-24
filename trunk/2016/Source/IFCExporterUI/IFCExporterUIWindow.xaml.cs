@@ -51,7 +51,7 @@ namespace BIM.IFC.Export.UI
         /// <summary>
         /// The file to store the previous window bounds.
         /// </summary>
-        string m_SettingFile = "IFCExporterUIWindowSettings_v15.txt";    // update the file when resize window bounds.
+        string m_SettingFile = "IFCExporterUIWindowSettings_v16.txt";    // update the file when resize window bounds.
 
         /// <summary>
         /// Constructs a new IFC export options window.
@@ -143,6 +143,12 @@ namespace BIM.IFC.Export.UI
             {
                 comboboxActivePhase.Items.Add(new IFCPhaseAttributes(phase.Id));
             }
+
+            // Initialize level of detail combo box
+            comboBoxLOD.Items.Add(Properties.Resources.DetailLevelExtraLow);
+            comboBoxLOD.Items.Add(Properties.Resources.DetailLevelLow);
+            comboBoxLOD.Items.Add(Properties.Resources.DetailLevelMedium);
+            comboBoxLOD.Items.Add(Properties.Resources.DetailLevelHigh);
         }
 
         private void UpdatePhaseAttributes(IFCExportConfiguration configuration)
@@ -216,6 +222,7 @@ namespace BIM.IFC.Export.UI
             checkBoxUse2DRoomVolumes.IsChecked = configuration.Use2DRoomBoundaryForVolume;
             checkBoxFamilyAndTypeName.IsChecked = configuration.UseFamilyAndTypeNameForReference;
             checkBoxExportPartsAsBuildingElements.IsChecked = configuration.ExportPartsAsBuildingElements;
+            checkBoxUseActiveViewGeometry.IsChecked = configuration.UseActiveViewGeometry;
             checkboxExportBoundingBox.IsChecked = configuration.ExportBoundingBox;
             checkboxExportSolidModelRep.IsChecked = configuration.ExportSolidModelRep;
             checkboxExportSchedulesAsPsets.IsChecked = configuration.ExportSchedulesAsPsets;
@@ -223,11 +230,9 @@ namespace BIM.IFC.Export.UI
             userDefinedPropertySetFileName.Text = configuration.ExportUserDefinedPsetsFileName;
             checkBoxExportLinkedFiles.IsChecked = configuration.ExportLinkedFiles;
             checkboxIncludeIfcSiteElevation.IsChecked = configuration.IncludeSiteElevation;
-            checkboxUseCoarseTessellation.IsChecked = configuration.UseCoarseTessellation;
-            sliderLODValue.Value = configuration.TessellationLevelOfDetail;
             checkboxStoreIFCGUID.IsChecked = configuration.StoreIFCGUID;
             checkBoxExportRoomsInView.IsChecked = configuration.ExportRoomsInView;
-
+            comboBoxLOD.SelectedIndex = (int)(Math.Round(configuration.TessellationLevelOfDetail * 4) - 1);
             UIElement[] configurationElements = new UIElement[]{comboboxIfcType, 
                                                                 comboboxFileType, 
                                                                 comboboxSpaceBoundaries, 
@@ -244,14 +249,17 @@ namespace BIM.IFC.Export.UI
                                                                 checkboxExportSolidModelRep,
                                                                 checkBoxExportLinkedFiles,
                                                                 checkboxIncludeIfcSiteElevation,
-                                                                checkboxUseCoarseTessellation,
                                                                 checkboxStoreIFCGUID,
                                                                 checkboxExportSchedulesAsPsets,
                                                                 checkBoxExportRoomsInView,
+                                                                checkBoxLevelOfDetails,
                                                                 comboboxActivePhase,
                                                                 checkboxExportUserDefinedPset,
                                                                 userDefinedPropertySetFileName,
-                                                                buttonBrowse
+                                                                buttonBrowse,
+                                                                comboBoxLOD,
+                                                                checkBoxUseActiveViewGeometry,
+                                                                checkBoxExportSpecificSchedules
                                                                 };
             foreach (UIElement element in configurationElements)
             {
@@ -265,27 +273,11 @@ namespace BIM.IFC.Export.UI
             bool? cboVisibleElementInCurrentView = checkboxVisibleElementsCurrView.IsChecked;
             checkBoxExportRoomsInView.IsEnabled = checkBoxExportRoomsInView.IsEnabled && cboVisibleElementInCurrentView.HasValue ? cboVisibleElementInCurrentView.Value : false;
 
-			// This is to enable the Tessellation related checkbox for Reference view only.
-			// At the same time, it set the slider to be visible if the checkbox is unchecked
+            // This is to enable the Tessellation related checkbox for Reference view only.
             if (string.Compare(configuration.Name, "IFC4 Reference View") == 0)
             {
-                checkboxUseCoarseTessellation.IsEnabled = true;
-                if (checkboxUseCoarseTessellation.IsChecked == true)
-                {
-                    DocPanel_tessellation.Visibility = System.Windows.Visibility.Hidden;
-        }
-                else
-                {
-                    DocPanel_tessellation.Visibility = System.Windows.Visibility.Visible;
-                    sliderLODValue.IsEnabled = true;
-					// 0.25 is the default value of Coarse tessellation
-                    if (checkboxUseCoarseTessellation.IsChecked == true)
-                        sliderLODValue.Value = 0.25;
-                }
-            }
-            else
-            {
-                DocPanel_tessellation.Visibility = System.Windows.Visibility.Hidden;
+                DocPanel_tessellation.IsEnabled = true;
+                comboBoxLOD.IsEnabled = true;
             }
         }
 
@@ -312,6 +304,17 @@ namespace BIM.IFC.Export.UI
             return false;
         }
 
+        /// <summary>
+        /// Helper method to convert RadioButton.IsChecked to usable bool.
+        /// </summary>
+        /// <param name="checkBox">The check box.</param>
+        /// <returns>True if the box is checked, false if unchecked or uninitialized.</returns>
+        private bool GetRadiobuttonChecked(RadioButton checkBox)
+        {
+           if (checkBox.IsChecked.HasValue)
+              return checkBox.IsChecked.Value;
+           return false;
+        }
         /// <summary>
         /// The OK button callback.
         /// </summary>
@@ -734,7 +737,17 @@ namespace BIM.IFC.Export.UI
             }
         }
 
-        /// <summary>
+        private void checkBoxUseActiveViewGeometry_Checked(object sender, RoutedEventArgs e)
+        {
+           CheckBox checkBox = (CheckBox)sender;
+           IFCExportConfiguration configuration = GetSelectedConfiguration();
+           if (configuration != null)
+           {
+              configuration.UseActiveViewGeometry = GetCheckbuttonChecked(checkBox);
+           }
+        }
+       
+       /// <summary>
         /// Updates the configuration ExportBoundingBox when the Export Bounding Box changed in the check box.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
@@ -795,33 +808,6 @@ namespace BIM.IFC.Export.UI
         }
 
         /// <summary>
-        /// Updates the configuration UseCoarseTessellation when the Use Coarse Tessellation changed in the check box.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">Event arguments that contains the event data.</param>
-        private void checkboxUseCoarseTessellation_Checked(object sender, RoutedEventArgs e)
-        {
-            CheckBox checkBox = (CheckBox)sender;
-            IFCExportConfiguration configuration = GetSelectedConfiguration();
-            if (configuration != null)
-            {
-                configuration.UseCoarseTessellation = GetCheckbuttonChecked(checkBox);
-            }
-
-            // If checked, hide the slider. Only show the slider when option to use coarse tessellation is not selected
-            if (GetCheckbuttonChecked(checkBox))
-            {
-                DocPanel_tessellation.Visibility = System.Windows.Visibility.Hidden;
-        }
-            else
-            {
-                DocPanel_tessellation.Visibility = System.Windows.Visibility.Visible;
-                if (configuration != null)
-                    configuration.TessellationLevelOfDetail = sliderLODValue.Value;
-            }
-        }
-
-        /// <summary>
         /// Updates the configuration StoreIFCGUID when the Store IFC GUID changed in the check box.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
@@ -834,6 +820,21 @@ namespace BIM.IFC.Export.UI
             {
                 configuration.StoreIFCGUID = GetCheckbuttonChecked(checkBox);
             }
+        }
+
+        private void checkBoxExportSpecificSchedules_Checked(object sender, RoutedEventArgs e)
+        {
+           CheckBox checkBox = (CheckBox)sender;
+           IFCExportConfiguration configuration = GetSelectedConfiguration();
+           if (configuration != null)
+           {
+              configuration.ExportSpecificSchedules = GetCheckbuttonChecked(checkBox);
+              if ((bool)configuration.ExportSpecificSchedules)
+              {
+                 configuration.ExportSchedulesAsPsets = true;
+                 checkboxExportSchedulesAsPsets.IsChecked = true;
+              }
+           }
         }
 
         /// <summary>
@@ -907,23 +908,6 @@ namespace BIM.IFC.Export.UI
             }
         }
 
-        /// <summary>
-        /// Responds to change of the slider
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void sliderLODValue_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (e.OldValue == 0.0)
-                return;     // The first initialization no IFCExportConfiguration has been setup yet
-
-            IFCExportConfiguration configuration = GetSelectedConfiguration();
-            if (DocPanel_tessellation.IsVisible == true)
-            {
-                configuration.TessellationLevelOfDetail = sliderLODValue.Value;
-            }
-        }
-
         private void checkBoxExportRoomsInView_Checked(object sender, RoutedEventArgs e)
         {
             CheckBox checkBox = (CheckBox)sender;
@@ -931,6 +915,26 @@ namespace BIM.IFC.Export.UI
             if (configuration != null)
             {
                 configuration.ExportRoomsInView = GetCheckbuttonChecked(checkBox);
+            }
+        }
+
+        private void comboBoxLOD_SelectionChanged(object sender, RoutedEventArgs e)
+        {
+            string selectedItem = (string)comboBoxLOD.SelectedItem;
+            IFCExportConfiguration configuration = GetSelectedConfiguration();
+            if (configuration != null)
+            {
+                double levelOfDetail = 0;
+                if (string.Compare(selectedItem, Properties.Resources.DetailLevelExtraLow) == 0)
+                    levelOfDetail = 0.25;
+                else if (string.Compare(selectedItem, Properties.Resources.DetailLevelLow) == 0)
+                    levelOfDetail = 0.5;
+                else if (string.Compare(selectedItem, Properties.Resources.DetailLevelMedium) == 0)
+                    levelOfDetail = 0.75;
+                else
+                    // detail level is high
+                    levelOfDetail = 1;
+                configuration.TessellationLevelOfDetail = levelOfDetail;
             }
         }
     }

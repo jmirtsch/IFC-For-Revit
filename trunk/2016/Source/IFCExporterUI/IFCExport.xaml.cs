@@ -16,7 +16,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,6 +31,7 @@ using System.Windows.Shapes;
 
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using System.Windows.Automation;
 
 namespace BIM.IFC.Export.UI
 {
@@ -46,30 +46,22 @@ namespace BIM.IFC.Export.UI
         /// <summary>
         /// The dialog result.
         /// </summary>
-        IFCExportResult m_result = IFCExportResult.Invalid;
+        IFCExportResult m_Result = IFCExportResult.Invalid;
 
         /// <summary>
         /// The file to store the previous window bounds.
         /// </summary>
-        string m_SettingFile = "IFCExportSettings_v15.txt";  // update the file when resize window bounds.
+        string m_SettingFile = "IFCExportSettings_v16.txt";  // update the file when resize window bounds.
 
         /// <summary>
-        /// Construction of the main export dialog.
+        /// The list of documents to export as chosen by the user.
         /// </summary>
-        /// <param name="configurationsMap">The configurations to show in the dialog.</param>
-        /// <param name="selectedConfigName">The current selected configuration name.</param>
-        public IFCExport(Document doc, IFCExportConfigurationsMap configurationsMap, String selectedConfigName)
-        {
-            m_configMap = configurationsMap;
-        
-            InitializeComponent();
+        private IList<Document> m_DocumentsToExport = null;
 
-            RestorePreviousWindow();
-
-            UpdateCurrentSelectedSetupCombo(selectedConfigName);
-
-            Title = Properties.Resources.IFCExport + " (" + IFCUISettings.GetAssemblyVersion() + ")";
-       }
+        /// <summary>
+        /// The list of exportable documents ordered by the order displayed in the UI.
+        /// </summary>
+        private IList<Document> m_OrderedDocuments = null;
 
         /// <summary>
         /// Restores the previous window. If no previous window found, place on the left top.
@@ -105,8 +97,130 @@ namespace BIM.IFC.Export.UI
                 currentSelectedSetup.SelectedItem = selected;
         }
 
-        /// <summary>
-        /// Add a configuration to the map list to show in dialog.
+       /// <summary>
+       /// The list of documents to export as chosen by the user.
+       /// </summary>
+       public IList<Document> DocumentsToExport
+       {
+          get 
+       {
+             if (m_DocumentsToExport == null)
+                m_DocumentsToExport = new List<Document>();
+             return m_DocumentsToExport; 
+          }
+          set { m_DocumentsToExport = value; }
+       }
+
+       /// <summary>
+       /// The list of exportable documents ordered by the order displayed in the UI.
+       /// </summary>
+       public IList<Document> OrderedDocuments
+       {
+          get
+       {
+             if (m_OrderedDocuments == null)
+                m_OrderedDocuments = new List<Document>();
+             return m_OrderedDocuments;
+       }
+          set { m_OrderedDocuments = value; }
+       }
+       /// <summary>
+       /// Construction of the main export dialog.
+       /// </summary>
+       /// <param name="app">The UIApplication that contains a list of all documents.</param>
+       /// <param name="configurationsMap">The configurations to show in the dialog.</param>
+       /// <param name="selectedConfigName">The current selected configuration name.</param>
+       public IFCExport(Autodesk.Revit.UI.UIApplication app, IFCExportConfigurationsMap configurationsMap, String selectedConfigName)
+       {
+           m_configMap = configurationsMap;
+
+           InitializeComponent();
+
+           RestorePreviousWindow();
+
+           UpdateCurrentSelectedSetupCombo(selectedConfigName);
+           UpdateOpenedProjectsTreeView(app);
+
+           Title = "IFC Export (" + IFCUISettings.GetAssemblyVersion() + ")";
+       }
+
+       private CheckBox createCheckBoxForDocument(Document doc, int id)
+       {
+           string docPathName = null;
+
+           CheckBox cb = new CheckBox();
+
+           if (!String.IsNullOrEmpty(doc.PathName))
+           {
+              // If the user saves the file, the path where the document is saved is displayed
+              // along with the parantheses, else it remains empty and is not displayed with the name of the
+              // document
+              docPathName = " (" + doc.PathName + ")";
+           }
+
+           cb.Content = doc.Title + docPathName;
+           cb.SetValue(AutomationProperties.AutomationIdProperty, "projectToExportCheckBox" + id);
+           return cb;
+       }
+
+       private bool CanExportDocument(Document doc)
+       {
+          return (doc != null && !doc.IsFamilyDocument && !doc.IsLinked);
+       }
+
+       private void UpdateOpenedProjectsTreeView(Autodesk.Revit.UI.UIApplication app)
+       {
+          DocumentSet docSet = app.Application.Documents;
+
+          Document activeDocument = app.ActiveUIDocument.Document;
+          List<CheckBox> checkBoxes = new List<CheckBox>();
+          int exportDocumentCount = 0;
+
+          OrderedDocuments = null;
+          foreach (Document doc in docSet)
+          {
+             if (CanExportDocument(doc))
+             {
+                // Count the number of Documents which can be exported
+                exportDocumentCount++;
+             }
+          }
+
+          foreach (Document doc in docSet)
+          {
+             if (CanExportDocument(doc))
+             {
+                CheckBox cb = createCheckBoxForDocument(doc, OrderedDocuments.Count);
+
+                // Add the active document as the top item.
+                if (doc.Equals(activeDocument))
+                {
+                   // This should only be hit once
+                   cb.IsChecked = true;
+                   checkBoxes.Insert(0, cb);
+
+                   if (exportDocumentCount == 1)
+                   {
+
+                      // If a single project is to be exported, make it read only
+                      cb.IsEnabled = false;
+
+                   }
+                   OrderedDocuments.Insert(0, doc);
+                }
+                else
+                {
+                   checkBoxes.Add(cb);
+                   OrderedDocuments.Add(doc);
+                }
+             }
+          }
+
+          this.treeViewDocuments.ItemsSource = checkBoxes;
+       }
+       
+       /// <summary>
+       /// Add a configuration to the map list to show in dialog.
         /// </summary>
         /// <param name="configuration">The configuration to add.</param>
         private void AddToConfigList(IFCExportConfiguration configuration)
@@ -119,7 +233,8 @@ namespace BIM.IFC.Export.UI
         /// </summary>
         public IFCExportResult Result
         {
-            get { return m_result; }
+           get { return m_Result; }
+           protected set { m_Result = value; }
         }
 
         /// <summary>
@@ -206,7 +321,22 @@ namespace BIM.IFC.Export.UI
         /// <param name="args">Event arguments that contains the event data.</param>
         private void buttonNext_Click(object sender, RoutedEventArgs args)
         {
-            m_result = IFCExportResult.ExportAndSaveSettings;
+           List<CheckBox> cbList = this.treeViewDocuments.Items.Cast<CheckBox>().ToList();
+
+           int count = 0;
+           foreach (CheckBox cb in cbList)
+           {
+              if ((bool)cb.IsChecked)
+                 DocumentsToExport.Add(OrderedDocuments[count]);
+              count++;
+           }
+
+           if (DocumentsToExport.Count == 0)
+           {
+              MessageBox.Show(Properties.Resources.SelectOneOrMoreProjects, Properties.Resources.IFCExport, MessageBoxButton.OK, MessageBoxImage.Error);
+              return;
+           }
+           Result = IFCExportResult.ExportAndSaveSettings;
             Close();
         }
 
@@ -217,7 +347,7 @@ namespace BIM.IFC.Export.UI
         /// <param name="args">Event arguments that contains the event data.</param>
         private void buttonCancel_Click(object sender, RoutedEventArgs args)
         {
-            m_result = IFCExportResult.Cancel;
+            Result = IFCExportResult.Cancel;
             Close();
         }
 

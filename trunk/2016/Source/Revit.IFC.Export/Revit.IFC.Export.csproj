@@ -143,6 +143,11 @@
     <Compile Include="Exporter\WallSweepExporter.cs" />
     <Compile Include="Exporter\ZoneExporter.cs" />
     <Compile Include="Exporter\ZoneInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Toolkit\IFCValidateEntry.cs" />
     <Compile Include="Toolkit\IFC4Enums.cs" />
     <Compile Include="Toolkit\IFCEnums.cs" />
@@ -261,6 +266,16 @@
       <Name>Revit.IFC.Common</Name>
       <Private>False</Private>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Interface\" />
   </ItemGroup>
   <Import Project=".\Revit.IFC.Export.props" />
   <PropertyGroup>

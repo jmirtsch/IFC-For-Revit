@@ -81,7 +81,7 @@ namespace Revit.IFC.Import.Data
             IFCAnyHandle baseSurface = IFCImportHandleUtil.GetRequiredInstanceAttribute(solid, "BaseSurface", true);
             BaseSurface = IFCSurface.ProcessIFCSurface(baseSurface);
             if (!(BaseSurface is IFCPlane))
-                IFCImportFile.TheLog.LogUnhandledSubTypeError(baseSurface, IFCEntityType.IfcSurface, true);
+                Importer.TheLog.LogUnhandledSubTypeError(baseSurface, IFCEntityType.IfcSurface, true);
 
             if (IFCAnyHandleUtil.IsSubTypeOf(solid, IFCEntityType.IfcPolygonalBoundedHalfSpace))
             {
@@ -173,12 +173,7 @@ namespace Revit.IFC.Import.Data
         public IList<GeometryObject> CreateGeometry(
               IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            // A HalfSpaceSolid must always be a Solid, regardless of input.
-            using (IFCImportShapeEditScope.IFCTargetSetter setter =
-                new IFCImportShapeEditScope.IFCTargetSetter(shapeEditScope, TessellatedShapeBuilderTarget.Solid, TessellatedShapeBuilderFallback.Abort))
-            {
-                return CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, guid);
-            }
+            return CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, guid);
         }
         
         protected IFCHalfSpaceSolid(IFCAnyHandle solid)
@@ -195,7 +190,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcHalfSpaceSolid))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcHalfSpaceSolid);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcHalfSpaceSolid);
                 return null;
             }
 

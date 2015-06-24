@@ -130,7 +130,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialLayer))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcMaterialLayer);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialLayer);
                 return null;
             }
 

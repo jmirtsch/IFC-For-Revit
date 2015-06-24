@@ -261,7 +261,7 @@ namespace Revit.IFC.Export.Exporter
                     string gridGUID = GUIDUtil.CreateGUID();
                     // Get the first grid's override name, if cannot find it, use null.
                     string gridName = GetGridName(sameDirectionAxesU, sameDirectionAxesV, sameDirectionAxesW);
-                    IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                    IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                     IFCAnyHandle gridLevelHandle = levelInfo.GetBuildingStorey();
                     IFCAnyHandle levelObjectPlacement = IFCAnyHandleUtil.GetObjectPlacement(gridLevelHandle);
                     double elev = levelInfo.Elevation;

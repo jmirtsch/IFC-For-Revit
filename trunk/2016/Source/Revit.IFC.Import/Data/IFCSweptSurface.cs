@@ -78,7 +78,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSweptSurface))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcSweptSurface);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcSweptSurface);
                 return null;
             }
 
@@ -89,7 +89,7 @@ namespace Revit.IFC.Import.Data
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcSweptSurface, IFCEntityType.IfcSurfaceOfLinearExtrusion))
                 return IFCSurfaceOfLinearExtrusion.ProcessIFCSurfaceOfLinearExtrusion(ifcSweptSurface);
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcSweptSurface, IFCEntityType.IfcSweptSurface, true);
+            Importer.TheLog.LogUnhandledSubTypeError(ifcSweptSurface, IFCEntityType.IfcSweptSurface, true);
             return null;
         }
     }

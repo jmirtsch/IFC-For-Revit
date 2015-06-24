@@ -201,7 +201,6 @@ namespace Revit.IFC.Common.Enums.IFC2x
         IfcDoorLiningProperties,
         IfcDoorPanelProperties,
         IfcDoorStyle,
-        IfcDoorType,
         IfcDraughtingCallout,
         IfcDraughtingCalloutRelationship,
         IfcDraughtingPreDefinedColour,

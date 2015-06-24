@@ -56,7 +56,8 @@ namespace Revit.IFC.Import.Data
             base.Process(ifcVertexPoint);
 
             IFCAnyHandle vertexGeometry = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcVertexPoint, "VertexGeometry", true);
-            VertexGeometry = IFCPoint.ProcessIFCPoint(vertexGeometry);
+            XYZ unScaledVertexGeometry = IFCPoint.ProcessIFCPoint(vertexGeometry);
+            VertexGeometry = IFCUnitUtil.ScaleLength(unScaledVertexGeometry);
         }
 
         /// <summary>
@@ -68,7 +69,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcVertexPoint))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcVertexPoint);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcVertexPoint);
                 return null;
             }
 

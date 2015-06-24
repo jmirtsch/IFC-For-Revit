@@ -192,6 +192,13 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project=".\IFCExporterUI.props" />
+  <PropertyGroup>
+    <PostBuildEvent>call $(SolutionDir)SignFile.bat $(TargetPath)
+$(SolutionDir)..\..\ThirdParty\RevitAPI\Identification\SignData\Release\SignData.exe $(TargetPath) $(SolutionDir)..\..\ThirdParty\RevitAPI\Identification\pair.dat LT
+perl $(SolutionDir)PostBuild.pl $(ProjectDir) $(TargetPath) $(Configuration) $(Platform)
+    if exist $(ProjectDir)PostBuildStep.bat call $(ProjectDir)PostBuildStep.bat $(OutDir) $(SolutionDir) $(TargetName) $(ConfigurationName) $(PlatformName)
+</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

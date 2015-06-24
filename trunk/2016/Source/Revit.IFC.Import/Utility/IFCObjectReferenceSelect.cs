@@ -115,7 +115,7 @@ namespace Revit.IFC.Import.Utility
                 default:
                     // TODO: Support IfcMaterialLayer, IfcTimeSeries, IfcAppliedValue.
                     // IfcTimeSeries and IfcAppliedValue are abstract supertypes.
-                    IFCImportFile.TheLog.LogWarning(handle.StepId, "Unhandled sub-type of IFCObjectReferenceSelect: " + handleType.ToString(), true);
+                    Importer.TheLog.LogWarning(handle.StepId, "Unhandled sub-type of IFCObjectReferenceSelect: " + handleType.ToString(), true);
                     break;
             }
 

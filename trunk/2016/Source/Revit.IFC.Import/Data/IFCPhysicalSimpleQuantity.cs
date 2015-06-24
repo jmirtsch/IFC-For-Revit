@@ -121,7 +121,7 @@ namespace Revit.IFC.Import.Data
                     BaseUnitType = UnitType.UT_Number;  // No time unit type in Revit.
                 else
                 {
-                    IFCImportFile.TheLog.LogWarning(Id, "Can't determine unit type for IfcPhysicalSimpleQuantity of type: " + attributeName, true);
+                    Importer.TheLog.LogWarning(Id, "Can't determine unit type for IfcPhysicalSimpleQuantity of type: " + attributeName, true);
                     BaseUnitType = UnitType.UT_Number;
                 }
             }
@@ -140,7 +140,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPhysicalSimpleQuantity))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcPhysicalSimpleQuantity);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcPhysicalSimpleQuantity);
                 return null;
             }
 
@@ -154,7 +154,7 @@ namespace Revit.IFC.Import.Data
             }
             catch (Exception ex)
             {
-                IFCImportFile.TheLog.LogError(ifcPhysicalSimpleQuantity.StepId, ex.Message, false);
+                Importer.TheLog.LogError(ifcPhysicalSimpleQuantity.StepId, ex.Message, false);
                 return null;
             }
         }
@@ -184,7 +184,7 @@ namespace Revit.IFC.Import.Data
                     parameterNameCount++;
                 }
                 if (parameterNameCount > 2)
-                    IFCImportFile.TheLog.LogWarning(Id, "Renamed parameter: " + originalParameterName + " to: " + parameterName, false);
+                    Importer.TheLog.LogWarning(Id, "Renamed parameter: " + originalParameterName + " to: " + parameterName, false);
 
                 if (existingParameter == null)
                 {
@@ -217,7 +217,7 @@ namespace Revit.IFC.Import.Data
             }
 
             if (!setValue)
-                IFCImportFile.TheLog.LogError(Id, "Couldn't create parameter: " + Name + " of storage type: " + existingParameter.StorageType.ToString(), false);
+                Importer.TheLog.LogError(Id, "Couldn't create parameter: " + Name + " of storage type: " + existingParameter.StorageType.ToString(), false);
         }
     }
 }

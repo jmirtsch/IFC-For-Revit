@@ -15,34 +15,27 @@
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-//
-
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Xml;
-using Autodesk.Revit;
 using Autodesk.Revit.ApplicationServices;
 using Autodesk.Revit.DB;
-using Autodesk.Revit.DB.Analysis;
 using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.DB.Electrical;
 using Autodesk.Revit.DB.Mechanical;
 using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.DB.Structure;
-using Autodesk.Revit.Exceptions;
 using Revit.IFC.Export.Exporter.PropertySet;
 using Revit.IFC.Export.Utility;
-using System.Reflection;
 using Revit.IFC.Common.Extensions;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Utility;
 using Revit.IFC.Common.Enums;
 using Autodesk.Revit.DB.ExternalService;
+using Revit.IFC.Export.Properties;
 
 namespace Revit.IFC.Export.Exporter
 {
@@ -101,6 +94,8 @@ namespace Revit.IFC.Export.Exporter
     /// </summary>
     public class Exporter : IExporterIFC
     {
+        RevitStatusBar statusBar = null;
+
         // Used for debugging tool "WriteIFCExportedElements"
         private StreamWriter m_Writer;
 
@@ -108,7 +103,7 @@ namespace Revit.IFC.Export.Exporter
 
         // Allow a derived class to add Element exporter routines.
         public delegate void ElementExporter(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document);
-        
+
         protected ElementExporter m_ElementExporter = null;
 
         // Allow a derived class to add property sets.
@@ -155,6 +150,8 @@ namespace Revit.IFC.Export.Exporter
 
             try
             {
+                statusBar = RevitStatusBar.Create();
+
                 BeginExport(exporterIFC, document, filterView);
 
                 InitializeElementExporters();
@@ -212,11 +209,10 @@ namespace Revit.IFC.Export.Exporter
         protected void ExportSpatialElements(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
             ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
-
             View filterView = exportOptionsCache.FilterViewForExport;
 
             bool exportIfBoundingBoxIsWithinViewExtent = (exportOptionsCache.ExportRoomsInView && (filterView != null) && filterView is View3D);
-            
+
             FilteredElementCollector spatialElementCollector;
             ICollection<ElementId> idsToExport = exportOptionsCache.ElementsForExport;
             if (idsToExport.Count > 0)
@@ -240,14 +236,17 @@ namespace Revit.IFC.Export.Exporter
 
             // if the view is 3D and section box is active, then set the section box
             BoundingBoxXYZ sectionBox = null;
-            if (exportIfBoundingBoxIsWithinViewExtent) 
+            if (exportIfBoundingBoxIsWithinViewExtent)
             {
                 View3D currentView = filterView as View3D;
                 sectionBox = currentView != null && currentView.IsSectionBoxActive ? currentView.GetSectionBox() : null;
             }
-
+            int numOfSpatialElements = spatialElementCollector.Count<Element>();
+            int spatialElementCount = 1;
             foreach (Element element in spatialElementCollector)
             {
+                statusBar.Set(String.Format(Resources.IFCProcessingSpatialElements, spatialElementCount, numOfSpatialElements));
+                spatialElementCount++;
                 if ((element == null) || (exportedSpaces != null && exportedSpaces.Contains(element.Id)))
                     continue;
                 if (ElementFilteringUtil.IsRoomInInvalidPhase(element))
@@ -280,11 +279,15 @@ namespace Revit.IFC.Export.Exporter
 
             ElementFilter nonSpatialElementFilter = ElementFilteringUtil.GetNonSpatialElementFilter(document, exporterIFC);
             otherElementCollector.WherePasses(nonSpatialElementFilter);
+
+            int numOfOtherElement = otherElementCollector.Count<Element>();
+            int otherElementCollectorCount = 1;
             foreach (Element element in otherElementCollector)
             {
+                statusBar.Set(String.Format(Resources.IFCProcessingNonSpatialElements, otherElementCollectorCount, numOfOtherElement));
+                otherElementCollectorCount++;
                 ExportElement(exporterIFC, element);
             }
-
         }
 
         /// <summary>
@@ -314,8 +317,12 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="exporterIFC">The exporterIFC class.</param>
         protected void ExportCachedRailings(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
+            HashSet<ElementId> railingCollection = ExporterCacheManager.RailingCache;
+            int railingIndex = 1;
             foreach (ElementId elementId in ExporterCacheManager.RailingCache)
             {
+                statusBar.Set(String.Format(Resources.IFCProcessingRailings, railingIndex, railingCollection.Count));
+                railingIndex++;
                 Element element = document.GetElement(elementId);
                 ExportElement(exporterIFC, element);
             }
@@ -529,7 +536,19 @@ namespace Revit.IFC.Export.Exporter
         public virtual void ExportElementImpl(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
         {
             Options options;
-            View ownerView = element.Document.GetElement(element.OwnerViewId) as View;
+            View ownerView = null;
+
+            ownerView = element.Document.GetElement(element.OwnerViewId) as View;
+
+            if (ExporterCacheManager.ExportOptionsCache.UseActiveViewGeometry)
+            {
+                ownerView = ExporterCacheManager.ExportOptionsCache.ActiveView;
+            }
+            else
+            {
+                ownerView = element.Document.GetElement(element.OwnerViewId) as View;
+            }
+
             if (ownerView == null)
             {
                 options = GeometryUtil.GetIFCExportGeometryOptions();
@@ -746,11 +765,21 @@ namespace Revit.IFC.Export.Exporter
                         string ifcEnumType;
                         IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
 
+                        // The intention with the code below is to make this the "generic" element exporter, which would export any Revit element as any IFC instance.
+                        // We would then in addition have specialized functions that would convert specific Revit elements to specific IFC instances where extra information
+                        // could be gathered from the element.
                         bool exported = false;
                         if (IsMEPType(exporterIFC, element, exportType))
-                            exported = GenericMEPExporter.Export(exporterIFC, element, geomElem, exportType, ifcEnumType, productWrapper);
+                           exported = GenericMEPExporter.Export(exporterIFC, element, geomElem, exportType, ifcEnumType, productWrapper);
                         else if (ExportAsProxy(element, exportType))
-                            exported = ProxyElementExporter.Export(exporterIFC, element, geomElem, productWrapper);
+                           exported = ProxyElementExporter.Export(exporterIFC, element, geomElem, productWrapper);
+                        else if ((element is HostObject) || (element is DirectShape))
+                        {
+                           // This is intended to work for any element.  However, there are some hidden elements that we likely want to ignore.
+                           // As such, this is currently limited to the two types of elements that we know we want to export that aren't covered above.
+                           // Note the general comment that we would like to revamp this whole routine to be cleaner and simpler.
+                           exported = FamilyInstanceExporter.ExportGenericBuildingElement(exporterIFC, element, geomElem, exportType, ifcEnumType, productWrapper);
+                        }
 
                         // For ducts and pipes, we will add a IfcRelCoversBldgElements during the end of export.
                         if (exported && (element is Duct || element is Pipe))
@@ -881,12 +910,12 @@ namespace Revit.IFC.Export.Exporter
                 }
                 else
                     relativePlacement = ExporterUtil.CreateAxis2Placement3D(file);
-                
+
                 IFCAnyHandle buildingPlacement = IFCInstanceExporter.CreateLocalPlacement(file, null, relativePlacement);
 
                 CreateProject(exporterIFC, document, applicationHandle);
 
-                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                 ProjectInfo projectInfo = document.ProjectInformation;
 
                 string buildingName = String.Empty;
@@ -904,7 +933,7 @@ namespace Revit.IFC.Export.Exporter
                     buildingDescription = NamingUtil.GetOverrideStringValue(projectInfo, "BuildingDescription", null);
                     buildingLongName = NamingUtil.GetOverrideStringValue(projectInfo, "BuildingLongName", buildingName);
                 }
-                
+
                 IFCAnyHandle buildingAddress = CreateIFCAddress(file, document, projectInfo);
 
                 string buildingGUID = GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building);
@@ -999,7 +1028,7 @@ namespace Revit.IFC.Export.Exporter
                     string longName = NamingUtil.GetLongNameOverride(level, level.Name);
                     string levelGUID = GUIDUtil.GetLevelGUID(level);
                     IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(file,
-                        levelGUID, exporterIFC.GetOwnerHistoryHandle(),
+                        levelGUID, ExporterCacheManager.OwnerHistoryHandle,
                         levelName, description, objectType, placement,
                         null, longName, Toolkit.IFCElementComposition.Element, elevation);
 
@@ -1059,14 +1088,14 @@ namespace Revit.IFC.Export.Exporter
         private void EndExport(ExporterIFC exporterIFC, Document document)
         {
             IFCFile file = exporterIFC.GetFile();
-            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
-                            
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
+
             using (IFCTransaction transaction = new IFCTransaction(file))
             {
                 // In some cases, like multi-story stairs and ramps, we may have the same Pset used for multiple levels.
                 // If ifcParams is null, re-use the property set.
                 ISet<string> locallyUsedGUIDs = new HashSet<string>();
-                
+
                 // Relate Ducts and Pipes to their coverings (insulations and linings)
                 foreach (ElementId ductOrPipeId in ExporterCacheManager.MEPCache.CoveredElementsCache)
                 {
@@ -1159,7 +1188,7 @@ namespace Revit.IFC.Export.Exporter
 
                         // We don't do this in RegisterAssemblyElement because we want to make sure that the IfcElementAssembly has been created.
                         ExporterCacheManager.ElementsInAssembliesCache.UnionWith(elementHandles);
-                    }                  
+                    }
                 }
 
                 // relate group elements to groups
@@ -1290,7 +1319,7 @@ namespace Revit.IFC.Export.Exporter
                         try
                         {
                             ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory,
-                                null, null, elements, propertySet);
+                                                            null, null, elements, propertySet);
                         }
                         catch
                         {
@@ -1323,7 +1352,7 @@ namespace Revit.IFC.Export.Exporter
 
                             // NOTE: Definition of RelConnectsPathElements has the connection information reversed
                             // with respect to the order of the paths.
-                            string connectionName = IFCAnyHandleUtil.GetStringAttribute(wallElementHandle, "GlobalId") + "|" 
+                            string connectionName = IFCAnyHandleUtil.GetStringAttribute(wallElementHandle, "GlobalId") + "|"
                                                         + IFCAnyHandleUtil.GetStringAttribute(otherElementHandle, "GlobalId");
                             string connectionType = "Structural";   // Assigned as Description
                             IFCInstanceExporter.CreateRelConnectsPathElements(file, GUIDUtil.CreateGUID(), ownerHistory,
@@ -1358,7 +1387,7 @@ namespace Revit.IFC.Export.Exporter
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.EnergyAnalysisProperySetHandle))
                             {
                                 ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
-                                    ownerHistory, null, null, zoneHnds, zoneInfo.EnergyAnalysisProperySetHandle);
+                                                                    ownerHistory, null, null, zoneHnds, zoneInfo.EnergyAnalysisProperySetHandle);
                             }
 
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.ZoneCommonProperySetHandle))
@@ -1395,7 +1424,7 @@ namespace Revit.IFC.Export.Exporter
                             if (spaceOccupantInfo.SpaceOccupantProperySetHandle != null && spaceOccupantInfo.SpaceOccupantProperySetHandle.HasValue)
                             {
                                 ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
-                                    ownerHistory, null, null, spaceOccupantHandles, spaceOccupantInfo.SpaceOccupantProperySetHandle);
+                                                                  ownerHistory, null, null, spaceOccupantHandles, spaceOccupantInfo.SpaceOccupantProperySetHandle);
                             }
                         }
                     }
@@ -1430,10 +1459,10 @@ namespace Revit.IFC.Export.Exporter
                         string systemGUID = GUIDUtil.CreateGUID(systemElem);
                         IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file, systemGUID,
                             ownerHistory, name, desc, objectType);
-                        
+
                         // Create classification reference when System has classification filed name assigned to it
                         ClassificationUtil.CreateClassification(exporterIFC, file, systemElem, systemHandle);
-                        
+
                         productWrapper.AddSystem(systemElem, systemHandle);
 
                         IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
@@ -1597,7 +1626,7 @@ namespace Revit.IFC.Export.Exporter
                     }
 
                     descriptions.Add(currentLine);
-                  
+
                 }
 
                 string projectNumber = (projectInfo != null) ? projectInfo.Number : null;
@@ -1726,11 +1755,11 @@ namespace Revit.IFC.Export.Exporter
                     // If the ModelPath is actually a file path, then the model is not server based.
                     bool isAFilePath = centralModelPath is FilePath;
                     if (!isAFilePath)
-                {
-                   //This is just a temporary fix for SPR#226541, currently it's unable to get the FileInfo of a server based file stored at server.
-                   //Should server based file stored at server support this functionality and how to support will be tracked by SPR#226761. 
-                   return 0;
-                }
+                    {
+                        //This is just a temporary fix for SPR#226541, currently it's unable to get the FileInfo of a server based file stored at server.
+                        //Should server based file stored at server support this functionality and how to support will be tracked by SPR#226761. 
+                        return 0;
+                    }
                 }
                 FileInfo fileInfo = new FileInfo(pathName);
                 DateTime creationTimeUtc = fileInfo.CreationTimeUtc;
@@ -1771,10 +1800,10 @@ namespace Revit.IFC.Export.Exporter
         private HashSet<IFCAnyHandle> CreateContextInformation(ExporterIFC exporterIFC, Document doc)
         {
             HashSet<IFCAnyHandle> repContexts = new HashSet<IFCAnyHandle>();
-            double scaledPrecision = UnitUtil.ScaleLength(doc.Application.VertexTolerance/10.0);
+            double scaledPrecision = UnitUtil.ScaleLength(doc.Application.VertexTolerance / 10.0);
             int exponent = Convert.ToInt32(Math.Log10(scaledPrecision));
             double precision = Math.Pow(10.0, exponent);
-            
+
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle origin = ExporterIFCUtils.GetGlobal3DOriginHandle();
             IFCAnyHandle wcs = IFCInstanceExporter.CreateAxis2Placement3D(file, origin, null, null);
@@ -1997,8 +2026,8 @@ namespace Revit.IFC.Export.Exporter
                 }
             }
 
-            int creationDate = (int) GetCreationDate(doc);
-            
+            int creationDate = (int)GetCreationDate(doc);
+
             IFCAnyHandle organization = IFCInstanceExporter.CreateOrganization(file, null, organizationName, organizationDescription,
                 null, null);
 
@@ -2006,7 +2035,8 @@ namespace Revit.IFC.Export.Exporter
             IFCAnyHandle ownerHistory = IFCInstanceExporter.CreateOwnerHistory(file, owningUser, application, null,
                 Toolkit.IFCChangeAction.NoChange, null, null, null, creationDate);
 
-            exporterIFC.SetOwnerHistoryHandle(ownerHistory);
+            exporterIFC.SetOwnerHistoryHandle(ownerHistory);    // For use by native code only.
+            ExporterCacheManager.OwnerHistoryHandle = ownerHistory;
 
             // Getting contact information from Revit extensible storage that COBie extension tool creates
             GetCOBieContactInfo(file, doc);
@@ -2016,7 +2046,7 @@ namespace Revit.IFC.Export.Exporter
 
             // As per IFC implementer's agreement, we get IfcProject.Name from ProjectInfo.Number and IfcProject.Longname from ProjectInfo.Name 
             string projectName = (projectInfo != null) ? projectInfo.Number : null;
-            string projectLongName = (projectInfo != null) ? projectInfo.Name :null;
+            string projectLongName = (projectInfo != null) ? projectInfo.Name : null;
 
             // Get project description if it is set in the Project info
             string projectObjectType = (projectInfo != null) ? NamingUtil.GetObjectTypeOverride(projectInfo, null) : null;
@@ -2045,7 +2075,7 @@ namespace Revit.IFC.Export.Exporter
             }
         }
 
-        private void CreateContact(IFCFile file, string category, string company, string department, string organizationCode, string contactFirstName, 
+        private void CreateContact(IFCFile file, string category, string company, string department, string organizationCode, string contactFirstName,
             string contactFamilyName, string postalBox, string town, string stateRegion, string postalCode, string country,
             IList<string> eMailAddressList, IList<string> telNoList, IList<string> addressLines)
         {
@@ -2080,7 +2110,7 @@ namespace Revit.IFC.Export.Exporter
 
             return null;
         }
-        
+
         /// <summary>
         /// Create IFC Address from the saved data obtained by the UI and saved in the extensible storage
         /// </summary>
@@ -2095,7 +2125,7 @@ namespace Revit.IFC.Export.Exporter
             if (savedAddress.GetSavedAddress(document, out savedAddressItem) == true)
             {
                 IFCAnyHandle postalAddress;
-                
+
                 // We have address saved in the extensible storage
                 List<string> addressLines = new List<string>();
                 if (!String.IsNullOrEmpty(savedAddressItem.AddressLine1))
@@ -2122,7 +2152,7 @@ namespace Revit.IFC.Export.Exporter
                 }
 
                 postalAddress = IFCInstanceExporter.CreatePostalAddress(file, addressPurpose, savedAddressItem.Description, savedAddressItem.UserDefinedPurpose,
-                   savedAddressItem.InternalLocation, addressLines, savedAddressItem.POBox, savedAddressItem.TownOrCity, savedAddressItem.RegionOrState, savedAddressItem.PostalCode, 
+                   savedAddressItem.InternalLocation, addressLines, savedAddressItem.POBox, savedAddressItem.TownOrCity, savedAddressItem.RegionOrState, savedAddressItem.PostalCode,
                    savedAddressItem.Country);
 
                 return postalAddress;
@@ -2653,21 +2683,38 @@ namespace Revit.IFC.Export.Exporter
                 double electricalEfficacyFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_LUMENS_PER_WATT);
                 ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_Electrical_Efficacy, luminousEfficacyUnit, electricalEfficacyFactor, 0.0);
                 ExporterCacheManager.UnitsCache["LUMINOUSEFFICACY"] = luminousEfficacyUnit;
+
+                unitSet.Add(luminousEfficacyUnit);
             }
 
-            // Currency - disallowed for IC2x3 Coordination View 2.0.  If we find a currency, export it as a real.
+            // Linear Velocity - support m/s only.
+            {
+               ISet<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
+               elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, lenSIBaseUnit, 1));
+               elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, timeSIUnit, -1));
+
+               IFCAnyHandle linearVelocityUnit = IFCInstanceExporter.CreateDerivedUnit(file, elements,
+                   IFCDerivedUnitEnum.LinearVelocityUnit, null);
+
+               double linearVelocityFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_METERS_PER_SECOND);
+               ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_HVAC_Velocity, linearVelocityUnit, linearVelocityFactor, 0.0);
+
+               unitSet.Add(linearVelocityUnit);
+            }
+
+           // Currency - disallowed for IC2x3 Coordination View 2.0.  If we find a currency, export it as a real.
             if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
             {
                 FormatOptions currencyFormatOptions = doc.GetUnits().GetFormatOptions(UnitType.UT_Currency);
                 UnitSymbolType ust = currencyFormatOptions.UnitSymbol;
 
                 IFCAnyHandle currencyUnit = null;
-                
+
                 // Some of these are guesses for IFC2x3, since multiple currencies may use the same symbol, 
                 // but no detail is given on which currency is being used.  For IFC4, we just use the label.
                 if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
                 {
-                    string currencyLabel = null; 
+                    string currencyLabel = null;
                     try
                     {
                         currencyLabel = LabelUtils.GetLabelFor(ust);
@@ -2680,44 +2727,44 @@ namespace Revit.IFC.Export.Exporter
                 }
                 else
                 {
-                IFCCurrencyType? currencyType = null;
+                    IFCCurrencyType? currencyType = null;
 
-                switch (ust)
-                {
-                    case UnitSymbolType.UST_DOLLAR:
-                        currencyType = IFCCurrencyType.USD;
-                        break;
-                    case UnitSymbolType.UST_EURO_PREFIX:
-                    case UnitSymbolType.UST_EURO_SUFFIX:
-                        currencyType = IFCCurrencyType.EUR;
-                        break;
-                    case UnitSymbolType.UST_POUND:
-                        currencyType = IFCCurrencyType.GBP;
-                        break;
-                    case UnitSymbolType.UST_CHINESE_HONG_KONG_SAR:
-                        currencyType = IFCCurrencyType.HKD;
-                        break;
-                    case UnitSymbolType.UST_KRONER:
-                        currencyType = IFCCurrencyType.NOK;
-                        break;
-                    case UnitSymbolType.UST_SHEQEL:
-                        currencyType = IFCCurrencyType.ILS;
-                        break;
-                    case UnitSymbolType.UST_YEN:
-                        currencyType = IFCCurrencyType.JPY;
-                        break;
-                    case UnitSymbolType.UST_WON:
-                        currencyType = IFCCurrencyType.KRW;
-                        break;
-                    case UnitSymbolType.UST_BAHT:
-                        currencyType = IFCCurrencyType.THB;
-                        break;
-                    case UnitSymbolType.UST_DONG:
-                        currencyType = IFCCurrencyType.VND;
-                        break;
-                }
+                    switch (ust)
+                    {
+                        case UnitSymbolType.UST_DOLLAR:
+                            currencyType = IFCCurrencyType.USD;
+                            break;
+                        case UnitSymbolType.UST_EURO_PREFIX:
+                        case UnitSymbolType.UST_EURO_SUFFIX:
+                            currencyType = IFCCurrencyType.EUR;
+                            break;
+                        case UnitSymbolType.UST_POUND:
+                            currencyType = IFCCurrencyType.GBP;
+                            break;
+                        case UnitSymbolType.UST_CHINESE_HONG_KONG_SAR:
+                            currencyType = IFCCurrencyType.HKD;
+                            break;
+                        case UnitSymbolType.UST_KRONER:
+                            currencyType = IFCCurrencyType.NOK;
+                            break;
+                        case UnitSymbolType.UST_SHEQEL:
+                            currencyType = IFCCurrencyType.ILS;
+                            break;
+                        case UnitSymbolType.UST_YEN:
+                            currencyType = IFCCurrencyType.JPY;
+                            break;
+                        case UnitSymbolType.UST_WON:
+                            currencyType = IFCCurrencyType.KRW;
+                            break;
+                        case UnitSymbolType.UST_BAHT:
+                            currencyType = IFCCurrencyType.THB;
+                            break;
+                        case UnitSymbolType.UST_DONG:
+                            currencyType = IFCCurrencyType.VND;
+                            break;
+                    }
 
-                if (currencyType.HasValue)
+                    if (currencyType.HasValue)
                         currencyUnit = IFCInstanceExporter.CreateMonetaryUnit2x3(file, currencyType.Value);
                 }
 
@@ -2752,6 +2799,23 @@ namespace Revit.IFC.Export.Exporter
                 IFCAnyHandle pressureSIUnit = CreateSIUnit(file, UnitType.UT_HVAC_Pressure, IFCUnit.PressureUnit, IFCSIUnitName.Pascal,
                     prefix, dut);
                 unitSet.Add(pressureSIUnit);      // created above, so unique.
+            }
+
+            // Friction loss - support Pa/m only.
+            {
+               ISet<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
+               elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, lenSIBaseUnit, -2));
+               elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, massSIUnit, 1));
+               elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, timeSIUnit, -2));
+
+               IFCAnyHandle frictionLossUnit = IFCInstanceExporter.CreateDerivedUnit(file, elements,
+                   IFCDerivedUnitEnum.UserDefined, "Friction Loss");
+
+               double frictionLossFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_PASCALS_PER_METER);
+               ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_HVAC_Friction, frictionLossUnit, frictionLossFactor, 0.0);
+               ExporterCacheManager.UnitsCache["FRICTIONLOSS"] = frictionLossUnit;
+
+               unitSet.Add(frictionLossUnit);
             }
 
             // GSA only units.
@@ -2971,7 +3035,7 @@ namespace Revit.IFC.Export.Exporter
                     {
                         IFCAnyHandle buildingStoreyHandle = levelInfo.GetBuildingStorey();
                         buildingStoreys.Add(buildingStoreyHandle);
-                    
+
                         // Add Property set, quantities and classification of Building Storey also to IFC
                         productWrapper.AddElement(level, buildingStoreyHandle, levelInfo, null, false);
 
@@ -2991,7 +3055,7 @@ namespace Revit.IFC.Export.Exporter
                 {
                     HashSet<IFCAnyHandle> buildingElements = RemoveContainedHandlesFromSet(relatedElements);
                     string guid = GUIDUtil.CreateSubElementGUID(level, (int)IFCBuildingStoreySubElements.RelContainedInSpatialStructure);
-                    IFCInstanceExporter.CreateRelContainedInSpatialStructure(exporterIFC.GetFile(), guid, exporterIFC.GetOwnerHistoryHandle(), null, null, buildingElements, levelInfo.GetBuildingStorey());
+                    IFCInstanceExporter.CreateRelContainedInSpatialStructure(exporterIFC.GetFile(), guid, ExporterCacheManager.OwnerHistoryHandle, null, null, buildingElements, levelInfo.GetBuildingStorey());
                 }
             }
 

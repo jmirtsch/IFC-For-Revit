@@ -29,237 +29,238 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
-    /// <summary>
-    /// A description mapping of a group of Revit parameters and/or calculated values to an IfcPropertySet or IfcElementQuantity.
-    /// </summary>
-    /// <remarks>
-    /// A property or quantity set mapping is valid for only one entity type.
-    /// </remarks>
-    abstract public class Description
-    {
-        /// <summary>
-        /// The name to be used to create property set or quantity.
-        /// </summary>
-        string m_Name = String.Empty;
+   /// <summary>
+   /// A description mapping of a group of Revit parameters and/or calculated values to an IfcPropertySet or IfcElementQuantity.
+   /// </summary>
+   /// <remarks>
+   /// A property or quantity set mapping is valid for only one entity type.
+   /// </remarks>
+   abstract public class Description
+   {
+      /// <summary>
+      /// The name to be used to create property set or quantity.
+      /// </summary>
+      string m_Name = String.Empty;
 
-        /// <summary>
-        /// The element id of the view schedule generating this Description, if appropriate.
-        /// </summary>
-        ElementId m_ViewScheduleId = ElementId.InvalidElementId;
+      /// <summary>
+      /// The element id of the view schedule generating this Description, if appropriate.
+      /// </summary>
+      ElementId m_ViewScheduleId = ElementId.InvalidElementId;
 
-        /// <summary>
-        /// The types of element appropriate for this property or quantity set.
-        /// </summary>
-        List<IFCEntityType> m_IFCEntityTypes = new List<IFCEntityType>();
+      /// <summary>
+      /// The types of element appropriate for this property or quantity set.
+      /// </summary>
+      HashSet<IFCEntityType> m_IFCEntityTypes = new HashSet<IFCEntityType>();
 
-        /// <summary>
-        /// The object type of element appropriate for this property or quantity set.
-        /// </summary>
-        string m_ObjectType = String.Empty;
+      /// <summary>
+      /// The object type of element appropriate for this property or quantity set.
+      /// </summary>
+      string m_ObjectType = String.Empty;
 
-        /// <summary>
-        /// The predefined or shape type of element appropriate for this property or quantity set.
-        /// </summary>
-        string m_PredefinedType = String.Empty;
+      /// <summary>
+      /// The predefined or shape type of element appropriate for this property or quantity set.
+      /// </summary>
+      string m_PredefinedType = String.Empty;
 
-        /// <summary>
-        /// The index used to create a consistent GUID for this item.
-        /// It is expected that this index will come from the list in IFCSubElementEnums.cs.
-        /// </summary>
-        int m_SubElementIndex = -1;
+      /// <summary>
+      /// The index used to create a consistent GUID for this item.
+      /// It is expected that this index will come from the list in IFCSubElementEnums.cs.
+      /// </summary>
+      int m_SubElementIndex = -1;
 
-        /// <summary>
-        /// The redirect calculator associated with this property or quantity set.
-        /// </summary>
-        DescriptionCalculator m_DescriptionCalculator;
+      /// <summary>
+      /// The redirect calculator associated with this property or quantity set.
+      /// </summary>
+      DescriptionCalculator m_DescriptionCalculator;
 
-        /// <summary>
-        /// Identifies if the input handle is sub type of one IFCEntityType in the EntityTypes list.
-        /// </summary>
-        /// <param name="handle">The handle.</param>
-        /// <returns>True if it is sub type, false otherwise.</returns>
-        public bool IsSubTypeOfEntityTypes(IFCAnyHandle handle)
-        {
-            foreach (IFCEntityType entityType in EntityTypes)
-            {
-                if (IFCAnyHandleUtil.IsSubTypeOf(handle, entityType))
-                    return true;
-            }
+      /// <summary>
+      /// Identifies if the input handle is sub type of one IFCEntityType in the EntityTypes list.
+      /// </summary>
+      /// <param name="handle">The handle.</param>
+      /// <returns>True if it is sub type, false otherwise.</returns>
+      public bool IsSubTypeOfEntityTypes(IFCAnyHandle handle)
+      {
+         // Note that although EntityTypes is represented as a set, we still need to go through each item in the last to check for subtypes.
+         foreach (IFCEntityType entityType in EntityTypes)
+         {
+            if (IFCAnyHandleUtil.IsSubTypeOf(handle, entityType))
+               return true;
+         }
+         return false;
+      }
+
+      /// <summary>
+      /// Identifies if the input handle matches the type of element, and optionally the object type, 
+      /// to which this description applies.
+      /// </summary>
+      /// <param name="handle">
+      /// The handle.
+      /// </param>
+      /// <returns>
+      /// True if it matches, false otherwise.
+      /// </returns>
+      public bool IsAppropriateType(IFCAnyHandle handle)
+      {
+         if (handle == null || !IsSubTypeOfEntityTypes(handle))
             return false;
-        }
+         if (ObjectType == "")
+            return true;
 
-        /// <summary>
-        /// Identifies if the input handle matches the type of element, and optionally the object type, 
-        /// to which this description applies.
-        /// </summary>
-        /// <param name="handle">
-        /// The handle.
-        /// </param>
-        /// <returns>
-        /// True if it matches, false otherwise.
-        /// </returns>
-        public bool IsAppropriateType(IFCAnyHandle handle)
-        {
-            if (handle == null || !IsSubTypeOfEntityTypes(handle))
-                return false;
-            if (ObjectType == "")
-                return true;
+         string objectType = IFCAnyHandleUtil.GetObjectType(handle);
+         return (NamingUtil.IsEqualIgnoringCaseAndSpaces(ObjectType, objectType));
+      }
 
-            string objectType = IFCAnyHandleUtil.GetObjectType(handle);
-            return (NamingUtil.IsEqualIgnoringCaseAndSpaces(ObjectType, objectType));
-        }
+      /// <summary>
+      /// Identifies if the input handle matches the type of element only to which this description applies.
+      /// </summary>
+      /// <param name="handle">
+      /// The handle.
+      /// </param>
+      /// <returns>
+      /// True if it matches, false otherwise.
+      /// </returns>
+      public bool IsAppropriateEntityType(IFCAnyHandle handle)
+      {
+         if (handle == null || !IsSubTypeOfEntityTypes(handle))
+            return false;
+         return true;
+      }
 
-        /// <summary>
-        /// Identifies if the input handle matches the type of element only to which this description applies.
-        /// </summary>
-        /// <param name="handle">
-        /// The handle.
-        /// </param>
-        /// <returns>
-        /// True if it matches, false otherwise.
-        /// </returns>
-        public bool IsAppropriateEntityType(IFCAnyHandle handle)
-        {
-            if (handle == null || !IsSubTypeOfEntityTypes(handle))
-                return false;
-            return true;         
-        }
+      /// <summary>
+      /// Identifies if the input handle matches the object type only to which this description applies.
+      /// </summary>
+      /// <param name="handle">
+      /// The handle.
+      /// </param>
+      /// <returns>
+      /// True if it matches, false otherwise.
+      /// </returns>
+      public bool IsAppropriateObjectType(IFCAnyHandle handle)
+      {
+         if (handle == null)
+            return false;
+         if (ObjectType == "")
+            return true;
 
-        /// <summary>
-        /// Identifies if the input handle matches the object type only to which this description applies.
-        /// </summary>
-        /// <param name="handle">
-        /// The handle.
-        /// </param>
-        /// <returns>
-        /// True if it matches, false otherwise.
-        /// </returns>
-        public bool IsAppropriateObjectType(IFCAnyHandle handle)
-        {
-            if (handle == null)
-                return false;
-            if (ObjectType == "")
-                return true;
+         string objectType = IFCAnyHandleUtil.GetObjectType(handle);
+         return (NamingUtil.IsEqualIgnoringCaseAndSpaces(ObjectType, objectType));
+      }
 
-            string objectType = IFCAnyHandleUtil.GetObjectType(handle);
-            return (NamingUtil.IsEqualIgnoringCaseAndSpaces(ObjectType, objectType));
-        }
+      /// <summary>
+      /// Identifies if the input handle matches the predefined type only to which this description applies.
+      /// </summary>
+      /// <param name="handle">The handle.</param>
+      /// <param name="predefinedType">Optional predefined type.  Will be set if null.</param>
+      /// <returns>True if it matches, false otherwise. </returns>
+      /// <remarks>Currently only works with types that have "PredefinedType", not "ShapeType".</remarks>
+      public bool IsAppropriatePredefinedType(IFCAnyHandle handle, string predefinedType)
+      {
+         if (handle == null)
+            return false;
+         if (PredefinedType == "")
+            return true;
 
-        /// <summary>
-        /// Identifies if the input handle matches the predefined type only to which this description applies.
-        /// </summary>
-        /// <param name="handle">The handle.</param>
-        /// <param name="predefinedType">Optional predefined type.  Will be set if null.</param>
-        /// <returns>True if it matches, false otherwise. </returns>
-        /// <remarks>Currently only works with types that have "PredefinedType", not "ShapeType".</remarks>
-        public bool IsAppropriatePredefinedType(IFCAnyHandle handle, string predefinedType)
-        {
-            if (handle == null)
-                return false;
-            if (PredefinedType == "")
-                return true;
-
-            if (string.IsNullOrEmpty(predefinedType))
+         if (string.IsNullOrEmpty(predefinedType))
+         {
+            try
             {
-                try
-                {
-                    predefinedType = IFCAnyHandleUtil.GetEnumerationAttribute(handle, "PredefinedType");
-                }
-                catch
-                {
-                    return false;
-                }
+               predefinedType = IFCAnyHandleUtil.GetEnumerationAttribute(handle, "PredefinedType");
             }
+            catch
+            {
+               return false;
+            }
+         }
 
-            return (NamingUtil.IsEqualIgnoringCaseAndSpaces(PredefinedType, predefinedType));
-        }
-        
-        /// <summary>
-        /// The name of the property or quantity set.
-        /// </summary>
-        public string Name
-        {
-            get { return m_Name; }
-            set { m_Name = value; }
-        }
+         return (NamingUtil.IsEqualIgnoringCaseAndSpaces(PredefinedType, predefinedType));
+      }
 
-        /// <summary>
-        /// The element id of the ViewSchedule that generatd this description.
-        /// </summary>
-        public ElementId ViewScheduleId
-        {
-            get { return m_ViewScheduleId; }
-            set { m_ViewScheduleId = value; }
-        }
-        
-        /// <summary>
-        /// The type of element appropriate for this property or quantity set.
-        /// </summary>
-        public List<IFCEntityType> EntityTypes
-        {
-            get
-            {
-                return m_IFCEntityTypes;
-            }
-        }
+      /// <summary>
+      /// The name of the property or quantity set.
+      /// </summary>
+      public string Name
+      {
+         get { return m_Name; }
+         set { m_Name = value; }
+      }
 
-        /// <summary>
-        /// The object type of element appropriate for this property or quantity set.
-        /// Primarily used for identifying proxies.
-        /// </summary>
-        /// <remarks>Currently limited to one entity type.</remarks>
-        public string ObjectType
-        {
-            get
-            {
-                return m_ObjectType;
-            }
-            set
-            {
-                m_ObjectType = value;
-            }
-        }
+      /// <summary>
+      /// The element id of the ViewSchedule that generatd this description.
+      /// </summary>
+      public ElementId ViewScheduleId
+      {
+         get { return m_ViewScheduleId; }
+         set { m_ViewScheduleId = value; }
+      }
 
-        /// <summary>
-        /// The pre-defined type of element appropriate for this property or quantity set.
-        /// Primarily used for identifying sub-types of MEP objects.
-        /// </summary>
-        /// <remarks>Currently limited to one entity type.</remarks>
-        public string PredefinedType
-        {
-            get
-            {
-                return m_PredefinedType;
-            }
-            set
-            {
-                m_PredefinedType = value;
-            }
-        }
-        
-        /// <summary>
-        /// The index used to create a consistent GUID for this item.
-        /// It is expected that this index will come from the list in IFCSubElementEnums.cs.
-        /// </summary>
-        public int SubElementIndex
-        {
-            get { return m_SubElementIndex; }
-            set { m_SubElementIndex = value; }
-        }
-        
-        /// <summary>
-        /// The redirect calculator associated with this property or quantity set.
-        /// </summary>
-        public DescriptionCalculator DescriptionCalculator
-        {
-            get
-            {
-                return m_DescriptionCalculator;
-            }
-            set
-            {
-                m_DescriptionCalculator = value;
-            }
-        }
-    }
+      /// <summary>
+      /// The type of element appropriate for this property or quantity set.
+      /// </summary>
+      public HashSet<IFCEntityType> EntityTypes
+      {
+         get
+         {
+            return m_IFCEntityTypes;
+         }
+      }
+
+      /// <summary>
+      /// The object type of element appropriate for this property or quantity set.
+      /// Primarily used for identifying proxies.
+      /// </summary>
+      /// <remarks>Currently limited to one entity type.</remarks>
+      public string ObjectType
+      {
+         get
+         {
+            return m_ObjectType;
+         }
+         set
+         {
+            m_ObjectType = value;
+         }
+      }
+
+      /// <summary>
+      /// The pre-defined type of element appropriate for this property or quantity set.
+      /// Primarily used for identifying sub-types of MEP objects.
+      /// </summary>
+      /// <remarks>Currently limited to one entity type.</remarks>
+      public string PredefinedType
+      {
+         get
+         {
+            return m_PredefinedType;
+         }
+         set
+         {
+            m_PredefinedType = value;
+         }
+      }
+
+      /// <summary>
+      /// The index used to create a consistent GUID for this item.
+      /// It is expected that this index will come from the list in IFCSubElementEnums.cs.
+      /// </summary>
+      public int SubElementIndex
+      {
+         get { return m_SubElementIndex; }
+         set { m_SubElementIndex = value; }
+      }
+
+      /// <summary>
+      /// The redirect calculator associated with this property or quantity set.
+      /// </summary>
+      public DescriptionCalculator DescriptionCalculator
+      {
+         get
+         {
+            return m_DescriptionCalculator;
+         }
+         set
+         {
+            m_DescriptionCalculator = value;
+         }
+      }
+   }
 }

@@ -49,7 +49,7 @@ namespace Revit.IFC.Common.Utility
 
             m_SuperTypeCompatibility.Add(IFCEntityType.IfcAirTerminalBox, IFCEntityType.IfcFlowController);
             m_SuperTypeCompatibility.Add(IFCEntityType.IfcDamper, IFCEntityType.IfcFlowController);
-            m_SuperTypeCompatibility.Add(IFCEntityType.IfcElectricDistributionBoard, IFCEntityType.IfcFlowController);
+            m_SuperTypeCompatibility.Add(IFCEntityType.IfcElectricDistributionBoard, IFCEntityType.IfcElectricDistributionPoint);
             m_SuperTypeCompatibility.Add(IFCEntityType.IfcElectricTimeControl, IFCEntityType.IfcFlowController);
             m_SuperTypeCompatibility.Add(IFCEntityType.IfcFlowMeter, IFCEntityType.IfcFlowController);
             m_SuperTypeCompatibility.Add(IFCEntityType.IfcProtectiveDevice, IFCEntityType.IfcFlowController);

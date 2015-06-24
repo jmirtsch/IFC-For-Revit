@@ -112,6 +112,7 @@ namespace Revit.IFC.Import.Data
                     m_PresentationLayerNames = new SortedSet<string>();
                 return m_PresentationLayerNames;
             }
+            protected set { m_PresentationLayerNames = value; }
         }
 
         /// <summary>
@@ -240,7 +241,7 @@ namespace Revit.IFC.Import.Data
                                         //else if (geomObj is Mesh)
                                             //Solids.Add(IFCSolidInfo.Create(Solids[solidIdx].Id, geomObj as Mesh));
                                         //else if (geomObj is GeometryInstance)
-                                            //IFCImportFile.TheLog.LogError(Solids[solidIdx].Id, "Can't cut nested mapped items, ignoring " + numVoids + " void(s).", false);
+                                            //Importer.TheLog.LogError(Solids[solidIdx].Id, "Can't cut nested mapped items, ignoring " + numVoids + " void(s).", false);
                                         
                                         // Other items are irrelevant here.
                                     //}
@@ -264,7 +265,7 @@ namespace Revit.IFC.Import.Data
                                 if (!(Solids[solidIdx].GeometryObject is Solid))
                                 {
                                     string typeName = (Solids[solidIdx].GeometryObject is Mesh) ? "mesh" : "instance";
-                                    IFCImportFile.TheLog.LogError(Id, "Can't cut " + typeName + " geometry, ignoring " + numVoids + " void(s).", false);
+                                    Importer.TheLog.LogError(Id, "Can't cut " + typeName + " geometry, ignoring " + numVoids + " void(s).", false);
                                     continue;
                                 }
 
@@ -272,7 +273,7 @@ namespace Revit.IFC.Import.Data
                                 {
                                     if (!(Voids[voidIdx].GeometryObject is Solid))
                                     {
-                                        IFCImportFile.TheLog.LogError(Id, "Can't cut Solid geometry with a Mesh (# " + Voids[voidIdx].Id + "), ignoring.", false);
+                                        Importer.TheLog.LogError(Id, "Can't cut Solid geometry with a Mesh (# " + Voids[voidIdx].Id + "), ignoring.", false);
                                         continue;
                                     }
 
@@ -314,7 +315,7 @@ namespace Revit.IFC.Import.Data
                                         Solid solid = currObject as Solid;
                                         if (!shape.IsValidGeometry(solid))
                                         {
-                                            IFCImportFile.TheLog.LogWarning(Id, "Couldn't create valid solid, reverting to mesh.", false);
+                                            Importer.TheLog.LogWarning(Id, "Couldn't create valid solid, reverting to mesh.", false);
                                             directShapeGeometries.AddRange(IFCGeometryUtil.CreateMeshesFromSolid(solid));
                                             currObject = null;
                                         }
@@ -350,7 +351,7 @@ namespace Revit.IFC.Import.Data
                     }
                 }
                 else
-                    IFCImportFile.TheLog.LogWarning(Id, "There is no valid geometry for this " + EntityType.ToString() + "; entity will not be built.", false);
+                    Importer.TheLog.LogWarning(Id, "There is no valid geometry for this " + EntityType.ToString() + "; entity will not be built.", false);
             }
 
             base.Create(doc);
@@ -397,7 +398,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcProduct))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcProduct);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcProduct);
                 return null;
             }
 
@@ -419,11 +420,11 @@ namespace Revit.IFC.Import.Data
             catch (Exception ex)
             {
                 if (ex.Message != "Don't Import")
-                    IFCImportFile.TheLog.LogError(ifcProduct.StepId, ex.Message, false);
+                    Importer.TheLog.LogError(ifcProduct.StepId, ex.Message, false);
                 return null;
             }
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcProduct, IFCEntityType.IfcProduct, false);
+            Importer.TheLog.LogUnhandledSubTypeError(ifcProduct, IFCEntityType.IfcProduct, false);
             return null;
         }
     }

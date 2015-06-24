@@ -115,7 +115,7 @@ namespace Revit.IFC.Export.Exporter
                         string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
                         string coveringType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType, defaultCoveringEnumType);
 
-                        IFCAnyHandle covering = IFCInstanceExporter.CreateCovering(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
+                        IFCAnyHandle covering = IFCInstanceExporter.CreateCovering(file, instanceGUID, ExporterCacheManager.OwnerHistoryHandle,
                             instanceName, instanceDescription, instanceObjectType, setter.LocalPlacement, prodRep, instanceTag, coveringType);
 
                         if (exportParts)

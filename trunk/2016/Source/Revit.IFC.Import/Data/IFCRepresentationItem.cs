@@ -93,7 +93,7 @@ namespace Revit.IFC.Import.Data
                 {
                     if (!IFCAnyHandleUtil.IsSubTypeOf(styledByItem, IFCEntityType.IfcStyledItem))
                     {
-                        IFCImportFile.TheLog.LogUnexpectedTypeError(styledByItem, IFCEntityType.IfcStyledItem, false);
+                        Importer.TheLog.LogUnexpectedTypeError(styledByItem, IFCEntityType.IfcStyledItem, false);
                         StyledByItem = null;
                         break;
                     }
@@ -106,7 +106,7 @@ namespace Revit.IFC.Import.Data
                             IFCStyledItem compStyledByItem = IFCStyledItem.ProcessIFCStyledItem(styledByItem);
                             if (!StyledByItem.IsEquivalentTo(compStyledByItem))
                             {
-                                IFCImportFile.TheLog.LogWarning(Id, "Multiple inconsistent styled items found for this item; using first one.", false);
+                                Importer.TheLog.LogWarning(Id, "Multiple inconsistent styled items found for this item; using first one.", false);
                                 break;
                             }
                         }
@@ -191,7 +191,7 @@ namespace Revit.IFC.Import.Data
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcTopologicalRepresentationItem))
                 return IFCTopologicalRepresentationItem.ProcessIFCTopologicalRepresentationItem(ifcRepresentationItem);
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcRepresentationItem, IFCEntityType.IfcRepresentationItem, true);
+            Importer.TheLog.LogUnhandledSubTypeError(ifcRepresentationItem, IFCEntityType.IfcRepresentationItem, true);
             return null;
         }
     }
