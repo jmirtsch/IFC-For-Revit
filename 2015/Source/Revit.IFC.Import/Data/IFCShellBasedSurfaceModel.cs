@@ -68,12 +68,19 @@ namespace Revit.IFC.Import.Data
             if (Shells.Count == 0)
                 return null;
 
-            shapeEditScope.StartCollectingFaceSet();
+            IList<GeometryObject> geomObjs = null;
 
-            foreach (IFCConnectedFaceSet faceSet in Shells)
-                faceSet.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
+            using (BuilderScope bs = shapeEditScope.InitializeBuilder(IFCShapeBuilderType.TessellatedShapeBuilder))
+            {
+                TessellatedShapeBuilderScope tsBuilderScope = shapeEditScope.BuilderScope as TessellatedShapeBuilderScope;
 
-            IList<GeometryObject> geomObjs = shapeEditScope.CreateGeometry(guid);
+                tsBuilderScope.StartCollectingFaceSet();
+
+                foreach (IFCConnectedFaceSet faceSet in Shells)
+                    faceSet.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
+
+                geomObjs = tsBuilderScope.CreateGeometry(guid);
+            }
 
             if (geomObjs == null || geomObjs.Count == 0)
                return null;
@@ -136,7 +143,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcShellBasedSurfaceModel))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcShellBasedSurfaceModel);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcShellBasedSurfaceModel);
                 return null;
             }
 

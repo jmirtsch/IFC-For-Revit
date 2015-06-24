@@ -558,7 +558,8 @@ namespace Revit.IFC.Export.Utility
                     bodyReps.Add(hnd);
             }
 
-            IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geometryElement, Transform.Identity);
+            Transform boundingBoxTrf = (bodyData.OffsetTransform != null) ? bodyData.OffsetTransform.Inverse : Transform.Identity;
+            IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geometryElement, boundingBoxTrf);
             if (boundingBoxRep != null)
                 bodyReps.Add(boundingBoxRep);
 

@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
    
-	<Product Id="040E2995-ABD0-4E22-9128-4884B6F74627" Name="Revit IFC 2015" Language="1033" Version="15.3.0.1" Manufacturer="Autodesk" UpgradeCode="D125CBE4-F927-41EE-869F-8A39845EFAEA">
+	<Product Id="C319065F-FBBD-4F90-B36D-764628D3DF77" Name="Revit IFC 2015" Language="1033" Version="15.4.0.0" Manufacturer="Autodesk" UpgradeCode="D125CBE4-F927-41EE-869F-8A39845EFAEA">
 		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
 		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
@@ -24,6 +24,7 @@
          <ComponentGroupRef Id="ProductResourceComponents" />
          <ComponentGroupRef Id="ProductFRFiles" />
          <ComponentGroupRef Id="AddinComponents" />
+         <ComponentGroupRef Id="AddinComponentsLT" />
 		</Feature>
       <Feature Id="ProductDocumentation" Title="Revit IFC Documentation" Level="1000" ConfigurableDirectory='INSTALLRESOURCE'>
          <ComponentGroupRef Id="ProductResourceComponents" />
@@ -50,6 +51,11 @@
                      <Directory Id="DIR_2015Addins" Name="2015"/>
                   </Directory>
                </Directory>
+               <Directory Id="DIR_REVIT_LT" Name="RevitLT">
+                  <Directory Id="DIR_ADDINS_LT" Name="Addins">
+                     <Directory Id="DIR_Addins_LT" Name="2015"/>
+                  </Directory>
+               </Directory>
             </Directory>
          </Directory>
       </Directory>
@@ -69,6 +75,9 @@
          <Component Id = "COMP_IFC_Import_Sig" Guid="48EE6912-FCF6-4AE5-9A63-F5A98DFEE811">
             <File Id ="FILE_Ifc_Import_Sig" Name="Revit.IFC.Import.sig" Source="$(var.ProjectDir)..\..\..\..\..\ReleaseX64\Revit.IFC.Import.sig" KeyPath="yes" />
          </Component>
+         <Component Id = "COMP_IFC_ExternalUI_Sig" Guid="3159B919-CD50-469D-8DDE-FE339CEBBC1C">
+            <File Id ="FILE_Ifc_ExternalUI_Sig" Name="IFCExportUIOverride.sig" Source="$(var.ProjectDir)..\..\..\..\..\ReleaseX64\IFCExportUIOverride.sig" KeyPath="yes" />
+         </Component>
          <Component Id = "COMP_IFC_Common_DLL" Guid="C7ED4A2C-DCB1-457E-968F-2DDE9993C1B6">
             <File Id ="FILE_Ifc_Common_DLL" Name="BIM.IFC.Common.dll" Source="$(var.ProjectDir)..\..\..\..\..\ReleaseX64\BIM.IFC.Common.dll" KeyPath="yes" />
          </Component>
@@ -85,7 +94,7 @@
             <File Id ="FILE_COBIE_USERDEF_TXT" Name="IFC2x3 Extended FM HandOver View.txt" Source="$(var.ProjectDir)..\Program Files to Install\IFC2x3 Extended FM HandOver View.txt" KeyPath="yes" />
          </Component>
       </ComponentGroup>
-      
+
       <ComponentGroup Id="ProductResourceComponents" Directory="INSTALLRESOURCE">
          <Component Id = "COMP_HELP_FILE" Guid="D6D4F404-001B-4B9B-9EA6-F0480FBCF65A">
             <File Id ="FILE_HELP_FILE" Name="ADSKIFCExporterHelp.htm" Source="$(var.ProjectDir)..\Program Files to Install\bundle\Contents\Resources\ADSKIFCExporterHelp.htm" KeyPath="yes" />
@@ -134,8 +143,22 @@
                File="[#FILE_UI_manifest]"
                SelectionLanguage="XPath"
                Sequence="1" />
-         </Component> 
-		</ComponentGroup>
+         </Component>
+      </ComponentGroup>
 
-	</Fragment>
+      <!-- Wix doesn't allow the same file to be installed twice.  As such, we must copy the .addin into the RevitLT addins directory.
+      Note that it copies the installed file, before the file modification from util:XmlFile, so that must be duplicated. -->
+      <ComponentGroup Id="AddinComponentsLT" Directory="DIR_Addins_LT">
+         <Component Id = "COMP_IFC_ExternalUI_Addin_manifest_LT" Guid="5BA55F42-2545-4056-8050-B73FA6E6E522">
+            <CopyFile Id="CopyAddin" FileId ="FILE_UI_manifest" DestinationProperty="DIR_Addins_LT" />
+            <util:XmlFile Id="SetKeyUI_LT"
+               Action="setValue"
+               ElementPath="RevitAddIns/AddIn[\[]position()=1[\]]/Assembly"
+               Value="[INSTALLDIR]IFCExportUIOverride.dll"
+               File="[DIR_Addins_LT]IFCExporterUI.addin"
+               SelectionLanguage="XPath"
+               Sequence="1" />
+         </Component>
+      </ComponentGroup>
+   </Fragment>
 </Wix>

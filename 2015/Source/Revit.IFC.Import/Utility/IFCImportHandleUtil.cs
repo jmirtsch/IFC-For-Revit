@@ -49,7 +49,7 @@ namespace Revit.IFC.Import.Utility
                 return IFCUnitUtil.ScaleLength(value.Value);
             }
 
-            IFCImportFile.TheLog.LogMissingRequiredAttributeError(handle, name, false); 
+            Importer.TheLog.LogMissingRequiredAttributeError(handle, name, false); 
             found = false;
             return 0.0;
         }
@@ -186,7 +186,7 @@ namespace Revit.IFC.Import.Utility
         {
             IFCAnyHandle attribute = IFCAnyHandleUtil.GetInstanceAttribute(handle, name);
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(attribute))
-                IFCImportFile.TheLog.LogMissingRequiredAttributeError(handle, name, throwError);
+                Importer.TheLog.LogMissingRequiredAttributeError(handle, name, throwError);
             return attribute;
         }
 
@@ -212,7 +212,7 @@ namespace Revit.IFC.Import.Utility
             bool? attribute = IFCAnyHandleUtil.GetBooleanAttribute(handle, name);
             if (!attribute.HasValue)
             {
-                IFCImportFile.TheLog.LogMissingRequiredAttributeError(handle, name, false);
+                Importer.TheLog.LogMissingRequiredAttributeError(handle, name, false);
                 found = false;
                 return false;
             }
@@ -231,7 +231,7 @@ namespace Revit.IFC.Import.Utility
             int? attribute = IFCAnyHandleUtil.GetIntAttribute(handle, name);
             if (!attribute.HasValue)
             {
-                IFCImportFile.TheLog.LogMissingRequiredAttributeError(handle, name, false);
+                Importer.TheLog.LogMissingRequiredAttributeError(handle, name, false);
                 found = false;
                 return 0;
             }
@@ -268,7 +268,7 @@ namespace Revit.IFC.Import.Utility
         {
             string attribute = IFCAnyHandleUtil.GetStringAttribute(handle, name);
             if (attribute == null)
-                IFCImportFile.TheLog.LogMissingRequiredAttributeError(handle, name, throwError);
+                Importer.TheLog.LogMissingRequiredAttributeError(handle, name, throwError);
             return attribute;
         }
 

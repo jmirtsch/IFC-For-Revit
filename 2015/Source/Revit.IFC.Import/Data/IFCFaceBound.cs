@@ -91,58 +91,73 @@ namespace Revit.IFC.Import.Data
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
+            if (shapeEditScope.BuilderScope == null) 
+            {
+                throw new InvalidOperationException("BuilderScope has not been initialised");
+            }
             base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
+            Bound.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
 
-            IList<XYZ> loopVertices = Bound.LoopVertices;
-            int count = 0;
-            if (loopVertices == null || ((count = loopVertices.Count) == 0))
-                throw new InvalidOperationException("#" + Id + ": missing loop vertices, ignoring.");
-
-            if (count < 3)
-                throw new InvalidOperationException("#" + Id + ": too few loop vertices (" + count + "), ignoring.");
-
-            if (!Orientation)
-                loopVertices.Reverse();
-
-            // Apply the transform
-            IList<XYZ> transformedVertices = new List<XYZ>();
-            foreach (XYZ vertex in loopVertices)
+            if (shapeEditScope.BuilderType == IFCShapeBuilderType.TessellatedShapeBuilder)
             {
-                transformedVertices.Add(scaledLcs.OfPoint(vertex));
-            }
+                TessellatedShapeBuilderScope tsBuilderScope = shapeEditScope.BuilderScope as TessellatedShapeBuilderScope;
 
-            // Check that the loop vertices don't contain points that are very close to one another;
-            // if so, throw the point away and hope that the TessellatedShapeBuilder can repair the result.
-            // Warn in this case.  If the entire boundary is bad, report an error and don't add the loop vertices.
-
-            IList<XYZ> validVertices;
-            IFCGeometryUtil.CheckAnyDistanceVerticesWithinTolerance(Id, shapeEditScope, transformedVertices, out validVertices);
-
-            // We are going to catch any exceptions if the loop is invalid.  
-            // We are going to hope that we can heal the parent object in the TessellatedShapeBuilder.
-            bool bPotentiallyAbortFace = false;
-
-            count = validVertices.Count;
-            if (validVertices.Count < 3)
-            {
-                IFCImportFile.TheLog.LogComment(Id, "Too few distinct loop vertices (" + count + "), ignoring.", false);
-                bPotentiallyAbortFace = true;
-            }
-            else
-            {
-                try
+                if (tsBuilderScope == null) 
                 {
-                    shapeEditScope.AddLoopVertices(validVertices);
+                    throw new InvalidOperationException("Expect a TessellatedShapeBuilderScope, but get a BrepBuilderScope instead");
                 }
-                catch (InvalidOperationException ex)
+
+                IList<XYZ> loopVertices = Bound.LoopVertices;
+                int count = 0;
+                if (loopVertices == null || ((count = loopVertices.Count) == 0))
+                    throw new InvalidOperationException("#" + Id + ": missing loop vertices, ignoring.");
+
+                if (count < 3)
+                    throw new InvalidOperationException("#" + Id + ": too few loop vertices (" + count + "), ignoring.");
+
+                if (!Orientation)
+                    loopVertices.Reverse();
+
+                // Apply the transform
+                IList<XYZ> transformedVertices = new List<XYZ>();
+                foreach (XYZ vertex in loopVertices)
                 {
-                    IFCImportFile.TheLog.LogComment(Id, ex.Message, false);
+                    transformedVertices.Add(scaledLcs.OfPoint(vertex));
+                }
+
+                // Check that the loop vertices don't contain points that are very close to one another;
+                // if so, throw the point away and hope that the TessellatedShapeBuilder can repair the result.
+                // Warn in this case.  If the entire boundary is bad, report an error and don't add the loop vertices.
+
+                IList<XYZ> validVertices;
+                IFCGeometryUtil.CheckAnyDistanceVerticesWithinTolerance(Id, shapeEditScope, transformedVertices, out validVertices);
+
+                // We are going to catch any exceptions if the loop is invalid.  
+                // We are going to hope that we can heal the parent object in the TessellatedShapeBuilder.
+                bool bPotentiallyAbortFace = false;
+
+                count = validVertices.Count;
+                if (validVertices.Count < 3)
+                {
+                    Importer.TheLog.LogComment(Id, "Too few distinct loop vertices (" + count + "), ignoring.", false);
                     bPotentiallyAbortFace = true;
                 }
-            }
+                else
+                {
+                    try
+                    {
+                        tsBuilderScope.AddLoopVertices(validVertices);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        Importer.TheLog.LogComment(Id, ex.Message, false);
+                        bPotentiallyAbortFace = true;
+                    }
+                }
 
-            if (bPotentiallyAbortFace && IsOuter)
-                shapeEditScope.AbortCurrentFace();
+                if (bPotentiallyAbortFace && IsOuter)
+                    tsBuilderScope.AbortCurrentFace();
+            }
         }
 
         protected IFCFaceBound(IFCAnyHandle ifcFaceBound)
@@ -159,7 +174,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcFaceBound))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcFaceBound);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcFaceBound);
                 return null;
             }
 

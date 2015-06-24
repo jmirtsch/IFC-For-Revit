@@ -93,7 +93,7 @@ namespace Revit.IFC.Import.Data
                 {
                     if (!IFCAnyHandleUtil.IsSubTypeOf(styledByItem, IFCEntityType.IfcStyledItem))
                     {
-                        IFCImportFile.TheLog.LogUnexpectedTypeError(styledByItem, IFCEntityType.IfcStyledItem, false);
+                        Importer.TheLog.LogUnexpectedTypeError(styledByItem, IFCEntityType.IfcStyledItem, false);
                         StyledByItem = null;
                         break;
                     }
@@ -106,7 +106,7 @@ namespace Revit.IFC.Import.Data
                             IFCStyledItem compStyledByItem = IFCStyledItem.ProcessIFCStyledItem(styledByItem);
                             if (!StyledByItem.IsEquivalentTo(compStyledByItem))
                             {
-                                IFCImportFile.TheLog.LogWarning(Id, "Multiple inconsistent styled items found for this item; using first one.", false);
+                                Importer.TheLog.LogWarning(Id, "Multiple inconsistent styled items found for this item; using first one.", false);
                                 break;
                             }
                         }
@@ -171,8 +171,6 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcBooleanResult))
                 return IFCBooleanResult.ProcessIFCBooleanResult(ifcRepresentationItem);
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcConnectedFaceSet))
-                return IFCConnectedFaceSet.ProcessIFCConnectedFaceSet(ifcRepresentationItem);
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcCurve))
                 return IFCCurve.ProcessIFCCurve(ifcRepresentationItem);
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcFaceBasedSurfaceModel))
@@ -187,10 +185,13 @@ namespace Revit.IFC.Import.Data
                 return IFCSolidModel.ProcessIFCSolidModel(ifcRepresentationItem);
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcStyledItem))
                 return IFCStyledItem.ProcessIFCStyledItem(ifcRepresentationItem);
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcTriangulatedFaceSet))
+
+            if (IFCImportFile.TheFile.SchemaVersion > IFCSchemaVersion.IFC2x3 && IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcTriangulatedFaceSet))
                 return IFCTriangulatedFaceSet.ProcessIFCTriangulatedFaceSet(ifcRepresentationItem);
-            
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcRepresentationItem, IFCEntityType.IfcRepresentationItem, true);
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcTopologicalRepresentationItem))
+                return IFCTopologicalRepresentationItem.ProcessIFCTopologicalRepresentationItem(ifcRepresentationItem);
+
+            Importer.TheLog.LogUnhandledSubTypeError(ifcRepresentationItem, IFCEntityType.IfcRepresentationItem, true);
             return null;
         }
     }

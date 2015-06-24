@@ -93,7 +93,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcDoorStyle))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcDoorStyle);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcDoorStyle);
                 return null;
             }
 

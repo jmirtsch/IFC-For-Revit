@@ -208,7 +208,7 @@ namespace Revit.IFC.Import.Data
                 }
                 catch (Exception ex)
                 {
-                    IFCImportFile.TheLog.LogError(opening.Id, ex.Message, false);
+                    Importer.TheLog.LogError(opening.Id, ex.Message, false);
                 }
             }
 
@@ -220,7 +220,7 @@ namespace Revit.IFC.Import.Data
                 }
                 catch (Exception ex)
                 {
-                    IFCImportFile.TheLog.LogError(port.Id, ex.Message, false);
+                    Importer.TheLog.LogError(port.Id, ex.Message, false);
                 }
             }
 
@@ -250,7 +250,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcElement))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcElement);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcElement);
                 return null;
             }
 

@@ -81,7 +81,7 @@ namespace Revit.IFC.Export.Exporter
                 using (IFCTransaction tr = new IFCTransaction(file))
                 {
                     string guid = GUIDUtil.CreateGUID(element);
-                    IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                    IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                     string revitObjectType = exporterIFC.GetFamilyName();
                     string name = NamingUtil.GetNameOverride(element, revitObjectType);
                     string description = NamingUtil.GetDescriptionOverride(element, null);
@@ -241,7 +241,7 @@ namespace Revit.IFC.Export.Exporter
                         string rebarGUID = (i < maxBarGUIDS) ?
                             GUIDUtil.CreateSubElementGUID(element, i + (int)IFCReinforcingBarSubElements.BarStart) :
                             GUIDUtil.CreateGUID();
-                        IFCAnyHandle elemHnd = IFCInstanceExporter.CreateReinforcingBar(file, rebarGUID, exporterIFC.GetOwnerHistoryHandle(),
+                        IFCAnyHandle elemHnd = IFCInstanceExporter.CreateReinforcingBar(file, rebarGUID, ExporterCacheManager.OwnerHistoryHandle,
                             rebarName, rebarDescription, rebarObjectType, copyLevelPlacement,
                             prodRep, rebarTag, steelGrade, longitudinalBarNominalDiameter, longitudinalBarCrossSectionArea,
                             barLength, role, null);

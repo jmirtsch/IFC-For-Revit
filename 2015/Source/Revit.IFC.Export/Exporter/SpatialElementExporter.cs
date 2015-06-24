@@ -60,6 +60,18 @@ namespace Revit.IFC.Export.Exporter
         }
 
         /// <summary>
+        /// Destroys SpatialElementGeometryCalculator object.
+        /// </summary>
+        public static void DestroySpatialElementGeometryCalculator()
+        {
+           if (s_SpatialElementGeometryCalculator != null)
+           {
+              s_SpatialElementGeometryCalculator.Dispose();
+              s_SpatialElementGeometryCalculator = null;
+           }
+        }
+
+        /// <summary>
         /// Exports spatial elements, including rooms, areas and spaces. 1st level space boundaries.
         /// </summary>
         /// <param name="exporterIFC">
@@ -740,7 +752,7 @@ namespace Revit.IFC.Export.Exporter
                     return false;
             }
 
-            IFCInstanceExporter.CreateRelSpaceBoundary(file, GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(), spaceBoundaryName, null,
+            IFCInstanceExporter.CreateRelSpaceBoundary(file, GUIDUtil.CreateGUID(), ExporterCacheManager.OwnerHistoryHandle, spaceBoundaryName, null,
                spatialElemHnd, buildingElemHnd, boundary.ConnectGeometryHandle, boundaryType, boundary.InternalOrExternal);
 
             return true;
@@ -781,7 +793,7 @@ namespace Revit.IFC.Export.Exporter
                 IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
                   "http://www.omniclass.org/tables/OmniClass_13_2006-03-28.pdf", itemReference, itemName, classification);
                 IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
-                   exporterIFC.GetOwnerHistoryHandle(), "OmniClass", null, spaceHnds, classificationReference);
+                   ExporterCacheManager.OwnerHistoryHandle, "OmniClass", null, spaceHnds, classificationReference);
             }
 
             // Space Type (Owner)
@@ -794,7 +806,7 @@ namespace Revit.IFC.Export.Exporter
                 IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
                   bimStandardsLocation, itemReference, itemName, null);
                 IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
-                   exporterIFC.GetOwnerHistoryHandle(), "Space Type (Owner)", null, spaceHnds, classificationReference);
+                   ExporterCacheManager.OwnerHistoryHandle, "Space Type (Owner)", null, spaceHnds, classificationReference);
             }
 
             // Space Category (Owner)
@@ -807,7 +819,7 @@ namespace Revit.IFC.Export.Exporter
                 IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
                   bimStandardsLocation, itemReference, itemName, null);
                 IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
-                   exporterIFC.GetOwnerHistoryHandle(), "Space Category (Owner)", null, spaceHnds, classificationReference);
+                   ExporterCacheManager.OwnerHistoryHandle, "Space Category (Owner)", null, spaceHnds, classificationReference);
             }
 
             // Space Category (BOMA)
@@ -820,7 +832,7 @@ namespace Revit.IFC.Export.Exporter
                 IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
                   "http://www.BOMA.org", itemReference, itemName, null);
                 IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
-                   exporterIFC.GetOwnerHistoryHandle(), "Space Category (BOMA)", "", spaceHnds, classificationReference);
+                   ExporterCacheManager.OwnerHistoryHandle, "Space Category (BOMA)", "", spaceHnds, classificationReference);
             }
         }
 
@@ -970,9 +982,9 @@ namespace Revit.IFC.Export.Exporter
                     double? spaceElevationWithFlooring = null;
                     double elevationWithFlooring = 0.0;
                     if (ParameterUtil.GetDoubleValueFromElement(spatialElement, null, "IfcElevationWithFlooring", out elevationWithFlooring) != null)
-                        spaceElevationWithFlooring = elevationWithFlooring;
+                        spaceElevationWithFlooring = UnitUtil.ScaleLength(elevationWithFlooring);
                     spaceHnd = IFCInstanceExporter.CreateSpace(file, GUIDUtil.CreateGUID(spatialElement),
-                                                  exporterIFC.GetOwnerHistoryHandle(),
+                                                  ExporterCacheManager.OwnerHistoryHandle,
                                                   spatialElementName, spatialElementDescription, spatialElementObjectType,
                                                   extraParams.GetLocalPlacement(), repHnd, spatialElementLongName, Toolkit.IFCElementComposition.Element,
                                                   internalOrExternal, spaceElevationWithFlooring);
@@ -1167,7 +1179,7 @@ namespace Revit.IFC.Export.Exporter
             if (properties.Count > 0)
             {
                 return IFCInstanceExporter.CreatePropertySet(file,
-                    GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(), "ePset_SpatialZoneEnergyAnalysis",
+                    GUIDUtil.CreateGUID(), ExporterCacheManager.OwnerHistoryHandle, "ePset_SpatialZoneEnergyAnalysis",
                     null, properties);
             }
 
@@ -1187,35 +1199,33 @@ namespace Revit.IFC.Export.Exporter
             HashSet<IFCAnyHandle> properties = new HashSet<IFCAnyHandle>();
 
             IFCAnyHandle propSingleValue = PropertyUtil.CreateLabelPropertyFromElementOrSymbol(file, element,
-                "Category", BuiltInParameter.INVALID, "Category", PropertyValueType.SingleValue, null);
+                "ZoneCategory", BuiltInParameter.INVALID, "Category", PropertyValueType.SingleValue, null);
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
             {
                 properties.Add(propSingleValue);
             }
 
+            string grossPlannedAreaName = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? "GrossPlannedArea" : "GrossAreaPlanned";
             propSingleValue = PropertyUtil.CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, element,
-                "GrossPlannedArea", BuiltInParameter.INVALID, "GrossPlannedArea", PropertyValueType.SingleValue);
+                "Zone" + grossPlannedAreaName, BuiltInParameter.INVALID, grossPlannedAreaName, PropertyValueType.SingleValue);
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
-            {
                 properties.Add(propSingleValue);
-            }
-
+           
+            string netPlannedAreaName = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? "NetPlannedArea" : "NetAreaPlanned";
             propSingleValue = PropertyUtil.CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, element,
-                "NetPlannedArea", BuiltInParameter.INVALID, "NetPlannedArea", PropertyValueType.SingleValue);
+                "Zone" + netPlannedAreaName, BuiltInParameter.INVALID, netPlannedAreaName, PropertyValueType.SingleValue);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
+                properties.Add(propSingleValue);
+           
+            propSingleValue = PropertyUtil.CreateBooleanPropertyFromElementOrSymbol(file, element,
+                "ZonePubliclyAccessible", "PubliclyAccessible", PropertyValueType.SingleValue);
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
             {
                 properties.Add(propSingleValue);
             }
 
             propSingleValue = PropertyUtil.CreateBooleanPropertyFromElementOrSymbol(file, element,
-                "PubliclyAccessible", "PubliclyAccessible", PropertyValueType.SingleValue);
-            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
-            {
-                properties.Add(propSingleValue);
-            }
-
-            propSingleValue = PropertyUtil.CreateBooleanPropertyFromElementOrSymbol(file, element,
-                "HandicapAccessible", "HandicapAccessible", PropertyValueType.SingleValue);
+                "ZoneHandicapAccessible", "HandicapAccessible", PropertyValueType.SingleValue);
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
             {
                 properties.Add(propSingleValue);
@@ -1224,7 +1234,7 @@ namespace Revit.IFC.Export.Exporter
             if (properties.Count > 0)
             {
                 return IFCInstanceExporter.CreatePropertySet(file,
-                    GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(), "Pset_ZoneCommon",
+                    GUIDUtil.CreateGUID(), ExporterCacheManager.OwnerHistoryHandle, "Pset_ZoneCommon",
                     null, properties);
             }
 
@@ -1260,7 +1270,7 @@ namespace Revit.IFC.Export.Exporter
             if (properties.Count > 0)
             {
                 return IFCInstanceExporter.CreatePropertySet(file,
-                    GUIDUtil.CreateGUID(), exporterIFC.GetOwnerHistoryHandle(), "ePset_SpaceOccupant", null, properties);
+                    GUIDUtil.CreateGUID(), ExporterCacheManager.OwnerHistoryHandle, "ePset_SpaceOccupant", null, properties);
             }
 
             return null;

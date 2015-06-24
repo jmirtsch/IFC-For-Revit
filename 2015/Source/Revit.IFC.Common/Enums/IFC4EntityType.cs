@@ -222,7 +222,6 @@ namespace Revit.IFC.Common.Enums.IFC4
         IfcDoorLiningProperties,
         IfcDoorPanelProperties,
         IfcDoorStandardCase,
-        IfcDoorStyle,
         IfcDoorType,
         IfcDraughtingPreDefinedColour,
         IfcDraughtingPreDefinedCurveFont,

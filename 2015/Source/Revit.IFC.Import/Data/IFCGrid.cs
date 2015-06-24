@@ -31,208 +31,313 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents an IfcGrid, which corresponds to a group of Revit Grid elements.
-    /// The fields of the IFCGrid class correspond to the IfcGrid entity defined in the IFC schema.
-    /// </summary>
-    public class IFCGrid : IFCProduct
-    {
-        private IList<IFCGridAxis> m_UAxes = null;
+   /// <summary>
+   /// Represents an IfcGrid, which corresponds to a group of Revit Grid elements.
+   /// The fields of the IFCGrid class correspond to the IfcGrid entity defined in the IFC schema.
+   /// </summary>
+   public class IFCGrid : IFCProduct
+   {
+      private IList<IFCGridAxis> m_UAxes = null;
 
-        private IList<IFCGridAxis> m_VAxes = null;
+      private IList<IFCGridAxis> m_VAxes = null;
 
-        private IList<IFCGridAxis> m_WAxes = null;
+      private IList<IFCGridAxis> m_WAxes = null;
 
-        /// <summary>
-        /// The required list of U Axes.
-        /// </summary>
-        public IList<IFCGridAxis> UAxes
-        {
-            get 
-            { 
-                if (m_UAxes == null)
-                    m_UAxes = new List<IFCGridAxis>();
-                
-                return m_UAxes; 
-            }
-            private set { m_UAxes = value; }
-        }
+      private IDictionary<ElementId, IFCPresentationLayerAssignment> m_PresentationLayerAssignmentsForAxes = null;
 
-        /// <summary>
-        /// The required list of V Axes.
-        /// </summary>
-        public IList<IFCGridAxis> VAxes
-        {
-            get 
-            { 
-                if (m_VAxes == null)
-                    m_VAxes = new List<IFCGridAxis>();
-                
-                return m_VAxes; 
-            }
-            private set { m_VAxes = value; }
-        }
+      /// <summary>
+      /// The required list of U Axes.
+      /// </summary>
+      public IList<IFCGridAxis> UAxes
+      {
+         get
+         {
+            if (m_UAxes == null)
+               m_UAxes = new List<IFCGridAxis>();
 
-        /// <summary>
-        /// The optional list of W Axes.
-        /// </summary>
-        public IList<IFCGridAxis> WAxes
-        {
-            get 
-            { 
-                if (m_WAxes == null)
-                    m_WAxes = new List<IFCGridAxis>();
-                
-                return m_WAxes; 
-            }
-            private set { m_WAxes = value; }
-        }
+            return m_UAxes;
+         }
+         private set { m_UAxes = value; }
+      }
 
-        /// <summary>
-        /// Default constructor.
-        /// </summary>
-        protected IFCGrid()
-        {
+      /// <summary>
+      /// The required list of V Axes.
+      /// </summary>
+      public IList<IFCGridAxis> VAxes
+      {
+         get
+         {
+            if (m_VAxes == null)
+               m_VAxes = new List<IFCGridAxis>();
 
-        }
+            return m_VAxes;
+         }
+         private set { m_VAxes = value; }
+      }
 
-        /// <summary>
-        /// Constructs an IFCGrid from the IfcGrid handle.
-        /// </summary>
-        /// <param name="ifcGrid">The IfcGrid handle.</param>
-        protected IFCGrid(IFCAnyHandle ifcGrid)
-        {
-            Process(ifcGrid);
-        }
+      /// <summary>
+      /// The optional list of W Axes.
+      /// </summary>
+      public IList<IFCGridAxis> WAxes
+      {
+         get
+         {
+            if (m_WAxes == null)
+               m_WAxes = new List<IFCGridAxis>();
 
-        private IList<IFCGridAxis> ProcessOneAxis(IFCAnyHandle ifcGrid, string axisName)
-        {
-            IList<IFCGridAxis> gridAxes = new List<IFCGridAxis>();
+            return m_WAxes;
+         }
+         private set { m_WAxes = value; }
+      }
 
-            List<IFCAnyHandle> ifcAxes = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcGrid, axisName);
-            if (ifcAxes != null)
+      /// <summary>
+      /// A map of grid axes to their presentation layer assignments.  Overrides the IfcGrid PresentationLayerNames if present.
+      /// </summary>
+      protected IDictionary<ElementId, IFCPresentationLayerAssignment> PresentationLayerAssignmentsForAxes
+      {
+         get
+         {
+            if (m_PresentationLayerAssignmentsForAxes == null)
+               m_PresentationLayerAssignmentsForAxes = new Dictionary<ElementId, IFCPresentationLayerAssignment>();
+            return m_PresentationLayerAssignmentsForAxes;
+         }
+      }
+
+      /// <summary>
+      /// Default constructor.
+      /// </summary>
+      protected IFCGrid()
+      {
+
+      }
+
+      /// <summary>
+      /// Constructs an IFCGrid from the IfcGrid handle.
+      /// </summary>
+      /// <param name="ifcGrid">The IfcGrid handle.</param>
+      protected IFCGrid(IFCAnyHandle ifcGrid)
+      {
+         Process(ifcGrid);
+      }
+
+      private IList<IFCGridAxis> ProcessOneAxis(IFCAnyHandle ifcGrid, string axisName)
+      {
+         IList<IFCGridAxis> gridAxes = new List<IFCGridAxis>();
+
+         List<IFCAnyHandle> ifcAxes = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcGrid, axisName);
+         if (ifcAxes != null)
+         {
+            foreach (IFCAnyHandle axis in ifcAxes)
             {
-                foreach (IFCAnyHandle axis in ifcAxes)
-                {
-                    IFCGridAxis gridAxis = IFCGridAxis.ProcessIFCGridAxis(axis);
-                    if (gridAxis != null)
-                    {
-                        if (gridAxis.DuplicateAxisId == -1)
-                            gridAxes.Add(gridAxis);
-                        else
-                        {
-                            IFCEntity originalEntity;
-                            if (IFCImportFile.TheFile.EntityMap.TryGetValue(gridAxis.DuplicateAxisId, out originalEntity))
-                            {
-                                IFCGridAxis originalGridAxis = originalEntity as IFCGridAxis;
-                                if (originalGridAxis != null)
-                                    gridAxes.Add(originalGridAxis);
-                            }
-                        }
-                    }
-                }
+               IFCGridAxis gridAxis = IFCGridAxis.ProcessIFCGridAxis(axis);
+               if (gridAxis != null)
+               {
+                  if (gridAxis.DuplicateAxisId == -1)
+                     gridAxes.Add(gridAxis);
+                  else
+                  {
+                     IFCEntity originalEntity;
+                     if (IFCImportFile.TheFile.EntityMap.TryGetValue(gridAxis.DuplicateAxisId, out originalEntity))
+                     {
+                        IFCGridAxis originalGridAxis = originalEntity as IFCGridAxis;
+                        if (originalGridAxis != null)
+                           gridAxes.Add(originalGridAxis);
+                     }
+                  }
+               }
             }
+         }
 
-            return gridAxes;
-        }
+         return gridAxes;
+      }
 
-        /// <summary>
-        /// Add to a set of created element ids, based on elements created from the contained grid axes.
-        /// </summary>
-        /// <param name="createdElementIds">The set of created element ids.</param>
-        public override void GetCreatedElementIds(ISet<ElementId> createdElementIds)
-        {
-            foreach (IFCGridAxis uaxis in UAxes)
+      /// <summary>
+      /// Add to a set of created element ids, based on elements created from the contained grid axes.
+      /// </summary>
+      /// <param name="createdElementIds">The set of created element ids.</param>
+      public override void GetCreatedElementIds(ISet<ElementId> createdElementIds)
+      {
+         foreach (IFCGridAxis uaxis in UAxes)
+         {
+            ElementId gridId = uaxis.CreatedElementId;
+            if (gridId != ElementId.InvalidElementId)
+               createdElementIds.Add(gridId);
+         }
+
+         foreach (IFCGridAxis vaxis in VAxes)
+         {
+            ElementId gridId = vaxis.CreatedElementId;
+            if (gridId != ElementId.InvalidElementId)
+               createdElementIds.Add(gridId);
+         }
+
+         foreach (IFCGridAxis waxis in WAxes)
+         {
+            ElementId gridId = waxis.CreatedElementId;
+            if (gridId != ElementId.InvalidElementId)
+               createdElementIds.Add(gridId);
+         }
+      }
+
+      /// <summary>
+      /// Processes IfcGrid attributes.
+      /// </summary>
+      /// <param name="ifcGrid">The IfcGrid handle.</param>
+      protected override void Process(IFCAnyHandle ifcGrid)
+      {
+         base.Process(ifcGrid);
+
+         // We will be lenient and allow for missing U and V axes.
+         UAxes = ProcessOneAxis(ifcGrid, "UAxes");
+         VAxes = ProcessOneAxis(ifcGrid, "VAxes");
+         WAxes = ProcessOneAxis(ifcGrid, "WAxes");
+      }
+
+      /// <summary>
+      /// Create either the U, V, or W grid lines.
+      /// </summary>
+      /// <param name="axes">The list of axes in a particular direction.</param>
+      /// <param name="doc">The document.</param>
+      /// <param name="lcs">The local transform.</param>
+      private void CreateOneDirection(IList<IFCGridAxis> axes, Document doc, Transform lcs)
+      {
+         foreach (IFCGridAxis axis in axes)
+         {
+            if (axis == null)
+               continue;
+
+            try
             {
-                ElementId gridId = uaxis.CreatedElementId;
-                if (gridId != ElementId.InvalidElementId)
-                    createdElementIds.Add(gridId);
+               axis.Create(doc, lcs);
+               ElementId createdElementId = axis.CreatedElementId;
+               if (createdElementId != ElementId.InvalidElementId && axis.AxisCurve != null && axis.AxisCurve.LayerAssignment != null)
+                  PresentationLayerAssignmentsForAxes[createdElementId] = axis.AxisCurve.LayerAssignment;
             }
-
-            foreach (IFCGridAxis vaxis in VAxes)
+            catch
             {
-                ElementId gridId = vaxis.CreatedElementId;
-                if (gridId != ElementId.InvalidElementId)
-                    createdElementIds.Add(gridId);
             }
+         }
+      }
 
-            foreach (IFCGridAxis waxis in WAxes)
+      /// <summary>
+      /// As IfcGrid should have at most one associated IFCPresentationLayerAssignment.  Return it if it exists.
+      /// </summary>
+      /// <returns>The associated IFCPresentationLayerAssignment, or null.</returns>
+      protected IFCPresentationLayerAssignment GetTheFirstPresentationLayerAssignment()
+      {
+         if (ProductRepresentation == null)
+            return null;
+
+         IList<IFCRepresentation> representations = ProductRepresentation.Representations;
+         if (representations == null)
+            return null;
+
+         foreach (IFCRepresentation representation in representations)
+         {
+            IList<IFCRepresentationItem> representationItems = representation.RepresentationItems;
+            if (representationItems == null)
+               continue;
+
+            foreach (IFCRepresentationItem representationItem in representationItems)
             {
-                ElementId gridId = waxis.CreatedElementId;
-                if (gridId != ElementId.InvalidElementId)
-                    createdElementIds.Add(gridId);
-            }
-        }
-
-        /// <summary>
-        /// Processes IfcGrid attributes.
-        /// </summary>
-        /// <param name="ifcGrid">The IfcGrid handle.</param>
-        protected override void Process(IFCAnyHandle ifcGrid)
-        {
-            base.Process(ifcGrid);
-
-            // We will be lenient and allow for missing U and V axes.
-            UAxes = ProcessOneAxis(ifcGrid, "UAxes");
-            VAxes = ProcessOneAxis(ifcGrid, "VAxes");
-            WAxes = ProcessOneAxis(ifcGrid, "WAxes");
-        }
-
-        private void CreateOneDirection(IList<IFCGridAxis> axes, Document doc, Transform lcs)
-        {
-            foreach (IFCGridAxis axis in axes)
-            {
-                try
-                {
-                    axis.Create(doc, lcs);
-                }
-                catch
-                {
-                }
-            }
-        }
-
-        /// <summary>
-        /// Creates or populates Revit elements based on the information contained in this class.
-        /// </summary>
-        /// <param name="doc">The document.</param>
-        protected override void Create(Document doc)
-        {
-            Transform lcs = (ObjectLocation != null) ? ObjectLocation.TotalTransform : Transform.Identity;
-
-            CreateOneDirection(UAxes, doc, lcs);
-            CreateOneDirection(VAxes, doc, lcs);
-            CreateOneDirection(WAxes, doc, lcs);
-
-            ISet<ElementId> createdElementIds = new HashSet<ElementId>();
-            GetCreatedElementIds(createdElementIds);
-
-            foreach (ElementId createdElementId in createdElementIds)
-            {
-                CreatedElementId = createdElementId;
-                CreateParameters(doc);
+               // We will favor the layer assignment of the items over the representation itself.
+               if (representationItem.LayerAssignment != null)
+                  return representationItem.LayerAssignment;
             }
 
-            CreatedElementId = ElementId.InvalidElementId;
-        }
+            if (representation.LayerAssignment != null)
+               return representation.LayerAssignment;
+         }
 
-        /// <summary>
-        /// Processes an IfcGrid object.
-        /// </summary>
-        /// <param name="ifcGrid">The IfcGrid handle.</param>
-        /// <returns>The IFCGrid object.</returns>
-        public static IFCGrid ProcessIFCGrid(IFCAnyHandle ifcGrid)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcGrid))
-            {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcGrid);
-                return null;
-            }
+         return null;
+      }
 
-            IFCEntity grid;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcGrid.StepId, out grid))
-                grid = new IFCGrid(ifcGrid);
-            return (grid as IFCGrid);
-        }
-    }
+      /// <summary>
+      /// Override PresentationLayerNames for the current axis.
+      /// </summary>
+      /// <param name="defaultLayerAssignmentName">The grid's layer assignment name</param>
+      /// <param name="hasDefaultLayerAssignmentName">True if defaultLayerAssignmentName isn't empty.</param>
+      private void SetCurrentPresentationLayerNames(string defaultLayerAssignmentName, bool hasDefaultLayerAssignmentName)
+      {
+         PresentationLayerNames.Clear();
+
+         // We will get the presentation layer names from either the grid lines or the grid, with
+         // grid lines getting the higher priority.
+         IFCPresentationLayerAssignment currentLayerAssigment;
+         if (PresentationLayerAssignmentsForAxes.TryGetValue(CreatedElementId, out currentLayerAssigment) &&
+             currentLayerAssigment != null &&
+             !string.IsNullOrWhiteSpace(currentLayerAssigment.Name))
+            PresentationLayerNames.Add(currentLayerAssigment.Name);
+         else if (hasDefaultLayerAssignmentName)
+            PresentationLayerNames.Add(defaultLayerAssignmentName);
+      }
+
+      /// <summary>
+      /// Allow for override of IfcObjectDefinition shared parameter names.
+      /// </summary>
+      /// <param name="name">The enum corresponding of the shared parameter.</param>
+      /// <returns>The name appropriate for this IfcObjectDefinition.</returns>
+      public override string GetSharedParameterName(IFCSharedParameters name)
+      {
+         switch (name)
+         {
+            case IFCSharedParameters.IfcName:
+               return "IfcGrid Name";
+            case IFCSharedParameters.IfcDescription:
+               return "IfcGrid Description";
+            default:
+               return base.GetSharedParameterName(name);
+         }
+      }
+
+      /// <summary>
+      /// Creates or populates Revit elements based on the information contained in this class.
+      /// </summary>
+      /// <param name="doc">The document.</param>
+      protected override void Create(Document doc)
+      {
+         Transform lcs = (ObjectLocation != null) ? ObjectLocation.TotalTransform : Transform.Identity;
+
+         CreateOneDirection(UAxes, doc, lcs);
+         CreateOneDirection(VAxes, doc, lcs);
+         CreateOneDirection(WAxes, doc, lcs);
+
+         ISet<ElementId> createdElementIds = new HashSet<ElementId>();
+         GetCreatedElementIds(createdElementIds);
+
+         // We want to get the presentation layer from the Grid representation, if any.
+         IFCPresentationLayerAssignment defaultLayerAssignment = GetTheFirstPresentationLayerAssignment();
+         string defaultLayerAssignmentName = (defaultLayerAssignment != null) ? defaultLayerAssignment.Name : null;
+         bool hasDefaultLayerAssignmentName = !string.IsNullOrWhiteSpace(defaultLayerAssignmentName);
+
+         foreach (ElementId createdElementId in createdElementIds)
+         {
+            CreatedElementId = createdElementId;
+
+            SetCurrentPresentationLayerNames(defaultLayerAssignmentName, hasDefaultLayerAssignmentName);
+            CreateParameters(doc);
+         }
+
+         CreatedElementId = ElementId.InvalidElementId;
+      }
+
+      /// <summary>
+      /// Processes an IfcGrid object.
+      /// </summary>
+      /// <param name="ifcGrid">The IfcGrid handle.</param>
+      /// <returns>The IFCGrid object.</returns>
+      public static IFCGrid ProcessIFCGrid(IFCAnyHandle ifcGrid)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcGrid))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcGrid);
+            return null;
+         }
+
+         IFCEntity grid;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcGrid.StepId, out grid))
+            grid = new IFCGrid(ifcGrid);
+         return (grid as IFCGrid);
+      }
+   }
 }

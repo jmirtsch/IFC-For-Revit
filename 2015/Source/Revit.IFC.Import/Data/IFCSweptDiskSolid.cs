@@ -107,13 +107,13 @@ namespace Revit.IFC.Import.Data
             bool found = false;
             Radius = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(solid, "Radius", out found);
             if (!found || !Application.IsValidThickness(Radius))
-                IFCImportFile.TheLog.LogError(solid.StepId, "IfcSweptDiskSolid radius is invalid, aborting.", true);
+                Importer.TheLog.LogError(solid.StepId, "IfcSweptDiskSolid radius is invalid, aborting.", true);
 
             double innerRadius = IFCImportHandleUtil.GetOptionalScaledLengthAttribute(solid, "InnerRadius", 0.0);
             if (Application.IsValidThickness(innerRadius))
             {
                 if (!Application.IsValidThickness(Radius - innerRadius))
-                   IFCImportFile.TheLog.LogError(solid.StepId, "IfcSweptDiskSolid inner radius is too large, aborting.", true);
+                   Importer.TheLog.LogError(solid.StepId, "IfcSweptDiskSolid inner radius is too large, aborting.", true);
                 InnerRadius = innerRadius;
             }
 
@@ -125,7 +125,7 @@ namespace Revit.IFC.Import.Data
             if (!MathUtil.IsAlmostEqual(endParameter, -1.0))
             {
                 if (endParameter < StartParameter + MathUtil.Eps())
-                   IFCImportFile.TheLog.LogError(solid.StepId, "IfcSweptDiskSolid swept curve end parameter less than or equal to start parameter, aborting.", true);
+                   Importer.TheLog.LogError(solid.StepId, "IfcSweptDiskSolid swept curve end parameter less than or equal to start parameter, aborting.", true);
                 EndParameter = endParameter;
             }
         }
@@ -230,7 +230,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSolid))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcSweptDiskSolid);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcSweptDiskSolid);
                 return null;
             }
 

@@ -19,15 +19,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Common.Utility;
 using Revit.IFC.Common.Enums;
-using Revit.IFC.Import.Enums;
-using Revit.IFC.Import.Geometry;
 using Revit.IFC.Import.Utility;
+using Revit.IFC.Import.Enums;
 
 namespace Revit.IFC.Import.Data
 {
@@ -54,19 +51,6 @@ namespace Revit.IFC.Import.Data
 
         override protected void Process(IFCAnyHandle ifcFace)
         {
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcFace, IFCEntityType.IfcFaceSurface))
-            {
-                // Only allow IfcFaceSurface is the surface is a plane.
-                IFCAnyHandle faceSurface = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcFace, "FaceSurface", false);
-                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(faceSurface))
-                {
-                    IFCSurface surface = IFCSurface.ProcessIFCSurface(faceSurface);
-                    if (!(surface is IFCPlane))
-                        IFCImportFile.TheLog.LogError(ifcFace.StepId,
-                            "cannot handle IfcFaceSurface with FaceSurface of type " + IFCAnyHandleUtil.GetEntityType(faceSurface).ToString(), true);
-                }
-            }
-
             base.Process(ifcFace);
 
             HashSet<IFCAnyHandle> ifcBounds =
@@ -82,7 +66,7 @@ namespace Revit.IFC.Import.Data
                 }
                 catch
                 {
-                    // LOG: WARNING: #: Invalid face boundary ifcBound.StepId, ignoring.
+                    Importer.TheLog.LogWarning(ifcFace.StepId, "Invalid face boundary, ignoring", false);
                 }
             }
 
@@ -97,7 +81,7 @@ namespace Revit.IFC.Import.Data
                 {
                     if (hasOuter)
                     {
-                        // LOG: WARNING: #: Too many outer boundary loops for IfcFace.
+                        Importer.TheLog.LogWarning(ifcFace.StepId, "Too many outer boundary loops for IfcFace.", false);
                         break;
                     }
                     hasOuter = true;
@@ -114,21 +98,32 @@ namespace Revit.IFC.Import.Data
         /// <param name="guid">The guid of an element for which represntation is being created.</param>
         protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
+            if (shapeEditScope.BuilderType != IFCShapeBuilderType.TessellatedShapeBuilder)
+                throw new InvalidOperationException("Currently BrepBuilder is only used to support IFCAdvancedFace");
+
             base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
 
-            shapeEditScope.StartCollectingFace(GetMaterialElementId(shapeEditScope));
+            // we would only be in this code if we are not processing and IfcAdvancedBrep, since IfcAdvancedBrep must have IfcAdvancedFace
+            if (shapeEditScope.BuilderScope == null)
+            {
+                throw new InvalidOperationException("BuilderScope has not been initialized");
+            }
+            TessellatedShapeBuilderScope tsBuilderScope = shapeEditScope.BuilderScope as TessellatedShapeBuilderScope;
+
+            tsBuilderScope.StartCollectingFace(GetMaterialElementId(shapeEditScope));
+            
             foreach (IFCFaceBound faceBound in Bounds)
             {
                 faceBound.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
                 
                 // If we can't create the outer face boundary, we will abort the creation of this face.  In that case, return.
-                if (!shapeEditScope.HaveActiveFace())
+                if (!tsBuilderScope.HaveActiveFace())
                 {
-                    shapeEditScope.AbortCurrentFace();
+                    tsBuilderScope.AbortCurrentFace();
                     return;
                 }
             }
-            shapeEditScope.StopCollectingFace();
+            tsBuilderScope.StopCollectingFace();
         }
 
         protected IFCFace(IFCAnyHandle ifcFace)
@@ -145,9 +140,12 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcFace))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcFace); 
+                Importer.TheLog.LogNullError(IFCEntityType.IfcFace);
                 return null;
             }
+
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcFace, IFCEntityType.IfcFaceSurface))
+                return IFCFaceSurface.ProcessIFCFaceSurface(ifcFace);
 
             IFCEntity face;
             if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcFace.StepId, out face))

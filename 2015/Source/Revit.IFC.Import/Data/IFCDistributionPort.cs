@@ -148,7 +148,7 @@ namespace Revit.IFC.Import.Data
                     CreatedElementId = directShape.Id;
                 }
                 else
-                    IFCImportFile.TheLog.LogCreationError(this, null, false);
+                    Importer.TheLog.LogCreationError(this, null, false);
             }
         }
         
@@ -161,7 +161,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcDistributionPort))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcDistributionPort);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcDistributionPort);
                 return null;
             }
 
@@ -176,7 +176,7 @@ namespace Revit.IFC.Import.Data
             catch (Exception ex)
             {
                 if (ex.Message != "Don't Import")
-                    IFCImportFile.TheLog.LogError(ifcDistributionPort.StepId, ex.Message, false);
+                    Importer.TheLog.LogError(ifcDistributionPort.StepId, ex.Message, false);
                 return null;
             }
         }

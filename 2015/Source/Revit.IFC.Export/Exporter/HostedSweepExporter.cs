@@ -81,7 +81,7 @@ namespace Revit.IFC.Export.Exporter
                             return;
                         }
 
-                        IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                        IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                         string originalTag = NamingUtil.CreateIFCElementId(element);
 
                         // In Revit, we don't have a corresponding type, so we create one for every gutter.

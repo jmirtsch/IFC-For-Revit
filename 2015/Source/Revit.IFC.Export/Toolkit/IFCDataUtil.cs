@@ -208,6 +208,16 @@ namespace Revit.IFC.Export.Toolkit
         }
 
         /// <summary>
+        /// Creates an IFCData object as IfcLinearVelocityMeasure.
+        /// </summary>
+        /// <param name="value">The double value.</param>
+        /// <returns>The IFCData object.</returns>
+        public static IFCData CreateAsLinearVelocityMeasure(double value)
+        {
+           return CreateAsMeasure(value, "IfcLinearVelocityMeasure");
+        }
+       
+         /// <summary>
         /// Creates an IFCData object as IfcCountMeasure.
         /// </summary>
         /// <param name="value">The integer value.</param>

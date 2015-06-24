@@ -454,7 +454,7 @@ namespace Revit.IFC.Import.Utility
                 IFCEntityType ifcClassType;
                 if (!Enum.TryParse<IFCEntityType>(ifcClassName, true, out ifcClassType))
                 {
-                    IFCImportFile.TheLog.LogWarning(-1, "Unknown class name in IFC entity to category mapping file: " + ifcClassName, true);
+                    Importer.TheLog.LogWarning(-1, "Unknown class name in IFC entity to category mapping file: " + ifcClassName, true);
                     continue;
                 }
 
@@ -498,7 +498,7 @@ namespace Revit.IFC.Import.Utility
                 }
                 catch
                 {
-                    IFCImportFile.TheLog.LogWarning(-1, "Unknown top-level category in IFC entity to category mapping file: " + categoryName, true);
+                    Importer.TheLog.LogWarning(-1, "Unknown top-level category in IFC entity to category mapping file: " + categoryName, true);
                     continue;
                 }
 
@@ -528,7 +528,7 @@ namespace Revit.IFC.Import.Utility
                                 categoryId = subcategory.Id;
                             }
                             else
-                                IFCImportFile.TheLog.LogWarning(-1, "Can't add sub-category " + subCategoryName + " to top-level category " + categoryName + " in IFC entity to category mapping file.", true);
+                                Importer.TheLog.LogWarning(-1, "Can't add sub-category " + subCategoryName + " to top-level category " + categoryName + " in IFC entity to category mapping file.", true);
                         }
                     }
                 }
@@ -727,7 +727,7 @@ namespace Revit.IFC.Import.Utility
                         msg += " (" + typeEntityType.Value.ToString() + ")";
 
                     msg += " to Generic Models.";
-                    IFCImportFile.TheLog.LogWarning(entity.Id, msg, true);
+                    Importer.TheLog.LogWarning(entity.Id, msg, true);
                 }
             }
 

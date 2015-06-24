@@ -16,7 +16,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,6 +25,8 @@ using System.Diagnostics;
 
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+
+// CQ_TODO: Better storage of pipe insulation options
 
 namespace Revit.IFC.Export.Utility
 {
@@ -171,8 +172,7 @@ namespace Revit.IFC.Export.Utility
             
             cache.ExportBoundingBoxOverride = null;
             cache.IncludeSiteElevation = false;
-            cache.UseCoarseTessellation = true;
-
+            
             cache.PropertySetOptions = PropertySetOptions.Create(exporterIFC, cache);
 
             String use2DRoomBoundary = Environment.GetEnvironmentVariable("Use2DRoomBoundaryForRoomVolumeCalculationOnIFCExport");
@@ -252,16 +252,28 @@ namespace Revit.IFC.Export.Utility
             bool? includeIfcSiteElevation = GetNamedBooleanOption(options, "IncludeSiteElevation");
             cache.IncludeSiteElevation = includeIfcSiteElevation != null ? includeIfcSiteElevation.Value : false;
 
-            // Use coarse tessellation for floors, railings, ramps, spaces and stairs.
+            // We have two ways to get information about level of detail:
+            // 1. The old Boolean "UseCoarseTessellation".
+            // 2. The new double "TessellationLevelOfDetail".
+            // We will combine these both into a LevelOfDetail integer that can be used by different elements differently.
+            // The scale is from 1 (Extra Low) to 4 (High), where :
+            // UseCoarseTessellation = true -> 1, UseCoarseTessellation = false -> 4
+            // TessellationLevelOfDetail * 4 = LevelOfDetail
+            // TessellationLevelOfDetail takes precedence over UseCoarseTessellation.
+            
+            cache.LevelOfDetail = 2;   // Default: Low
+            
             bool? useCoarseTessellation = GetNamedBooleanOption(options, "UseCoarseTessellation");
-            cache.UseCoarseTessellation = useCoarseTessellation != null ? useCoarseTessellation.Value : true;
-
-            // Tessellation level of detail as set by the UI
+            if (useCoarseTessellation.HasValue)
+               cache.LevelOfDetail = useCoarseTessellation.Value ? 1 : 4;
+            
             double? tessellationLOD = GetNamedDoubleOption(options, "TessellationLevelOfDetail");
             if (tessellationLOD.HasValue)
-                cache.TessellationLevelOfDetail = tessellationLOD.Value;
-            else
-                cache.TessellationLevelOfDetail = cache.UseCoarseTessellation ? 0.25 : 1.0;
+            {
+               cache.LevelOfDetail = (int)(tessellationLOD.Value * 4.0 + 0.5);
+               // Ensure LOD is between 1 to 4, inclusive.
+               cache.LevelOfDetail = Math.Min(Math.Max(cache.LevelOfDetail, 1), 4);
+            }
 
             /// Allow exporting a mix of extrusions and BReps as a solid model, if possible.
             bool? canExportSolidModelRep = GetNamedBooleanOption(options, "ExportSolidModelRep");
@@ -291,6 +303,24 @@ namespace Revit.IFC.Export.Utility
             else
             {
                 cache.ActivePhaseElement = document.GetElement(cache.ActivePhaseId) as Phase;
+            }
+
+            bool? useActiveViewGeometry = GetNamedBooleanOption(options, "UseActiveViewGeometry");
+            cache.UseActiveViewGeometry = useActiveViewGeometry.HasValue ? useActiveViewGeometry.Value : false;
+
+            if (cache.UseActiveViewGeometry)
+            {
+                int? viewId = GetNamedIntOption(options, "ActiveViewId");
+                int activeViewId = viewId.HasValue ? viewId.Value : -1;
+                View activeView = null;
+                try
+                {
+                    activeView = document.GetElement(new ElementId(activeViewId)) as View;
+                }
+                catch
+                {
+                }
+                cache.ActiveView = activeView;
             }
 
             // "FileType" - note - setting is not respected yet
@@ -585,6 +615,16 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
+        /// True to use the active view when generating geometry.
+        /// False to use default export options.
+        /// </summary>
+        public bool UseActiveViewGeometry
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
         /// Whether or not export the Part element from host.
         /// Export Part element only if 'Current View Only' is checked and 'Show Parts' is selected. 
         /// </summary>
@@ -654,21 +694,15 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
-        /// Whether or not to use coarse tessellation for selected element types.
-        /// This is currently: floors, railings, ramps, spaces, and stairs.
+        /// The level of detail to use when exporting geometry.  Different elements will use this differently.
+        /// 1 = Extra Low, 2 = Low, 3 = Medium, 4 = High.
         /// </summary>
-        public bool UseCoarseTessellation
+        public int LevelOfDetail
         {
             get;
             set;
         }
-
-        public double TessellationLevelOfDetail
-        {
-            get;
-            set;
-        }
-
+        
         /// <summary>
         /// Cache variable for the Alternate UI version override (if export from Alternate UI)
         /// </summary>
@@ -875,6 +909,15 @@ namespace Revit.IFC.Export.Utility
         /// However, if Room is set to "Not Exported" in IFC Option then none of the room will be exported whether ExportRoomsInView is true or not.
         /// </remarks>
         public bool ExportRoomsInView
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// The active view
+        /// </summary>
+        public View ActiveView
         {
             get;
             set;

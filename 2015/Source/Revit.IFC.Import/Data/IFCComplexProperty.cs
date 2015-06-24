@@ -115,7 +115,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcComplexProperty))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcComplexProperty);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcComplexProperty);
                 return null;
             }
 

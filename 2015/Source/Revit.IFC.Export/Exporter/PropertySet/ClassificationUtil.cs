@@ -93,13 +93,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             int customPass = 0;
             int standardPass = 1;
             int numCustomCodes = ExporterCacheManager.ClassificationCache.CustomClassificationCodeNames.Count;
-
+            
             while (standardPass <= 10)
             {
                 // Create a classification, if it is not set.
                 string classificationCodeFieldName = null;
                 if (customPass < numCustomCodes)
-            {
+                {
                     classificationCodeFieldName = ExporterCacheManager.ClassificationCache.CustomClassificationCodeNames[customPass];
                     customPass++;
 
@@ -119,40 +119,40 @@ namespace Revit.IFC.Export.Exporter.PropertySet
 
                 parseClassificationCode(paramClassificationCode, classificationCodeFieldName, out classificationName, out classificationCode, out classificationDescription);
 
-                    IFCAnyHandle classification;
+                IFCAnyHandle classification;
                 if (!ExporterCacheManager.ClassificationCache.ClassificationHandles.TryGetValue(classificationName, out classification))
-                    {
-                        IFCClassification savedClassification = new IFCClassification();
+                {
+                    IFCClassification savedClassification = new IFCClassification();
                     if (ExporterCacheManager.ClassificationCache.ClassificationsByName.TryGetValue(classificationName, out savedClassification))
+                    {
+                        if (savedClassification.ClassificationEditionDate == null)
                         {
-                            if (savedClassification.ClassificationEditionDate == null)
-                            {
-                                IFCAnyHandle editionDate = IFCInstanceExporter.CreateCalendarDate(file, savedClassification.ClassificationEditionDate.Day, savedClassification.ClassificationEditionDate.Month, savedClassification.ClassificationEditionDate.Year);
+                            IFCAnyHandle editionDate = IFCInstanceExporter.CreateCalendarDate(file, savedClassification.ClassificationEditionDate.Day, savedClassification.ClassificationEditionDate.Month, savedClassification.ClassificationEditionDate.Year);
 
-                                classification = IFCInstanceExporter.CreateClassification(file, savedClassification.ClassificationSource, savedClassification.ClassificationEdition,
-                                    editionDate, savedClassification.ClassificationName);
-                            }
-                            else
+                            classification = IFCInstanceExporter.CreateClassification(file, savedClassification.ClassificationSource, savedClassification.ClassificationEdition,
+                                editionDate, savedClassification.ClassificationName);
+                        }
+                        else
                         {
-                                classification = IFCInstanceExporter.CreateClassification(file, savedClassification.ClassificationSource, savedClassification.ClassificationEdition,
-                                    null, savedClassification.ClassificationName);
+                            classification = IFCInstanceExporter.CreateClassification(file, savedClassification.ClassificationSource, savedClassification.ClassificationEdition,
+                                null, savedClassification.ClassificationName);
                         }
 
                         if (!String.IsNullOrEmpty(savedClassification.ClassificationLocation))
                             ExporterCacheManager.ClassificationLocationCache.Add(classificationName, savedClassification.ClassificationLocation);
                     }
-                        else
+                    else
                     {
-                            classification = IFCInstanceExporter.CreateClassification(file, "", "", null, classificationName);
+                        classification = IFCInstanceExporter.CreateClassification(file, "", "", null, classificationName);
                     }
 
                     ExporterCacheManager.ClassificationCache.ClassificationHandles.Add(classificationName, classification);
                     createdClassification = true;
-                    }
+                }
 
                 string location = null;
-                        ExporterCacheManager.ClassificationLocationCache.TryGetValue(classificationName, out location);
-                    if (!String.IsNullOrEmpty(classificationCode)) 
+                ExporterCacheManager.ClassificationLocationCache.TryGetValue(classificationName, out location);
+                if (!String.IsNullOrEmpty(classificationCode))
                 {
                     InsertClassificationReference(exporterIFC, file, elemHnd, classificationName, classificationCode, classificationDescription, location);
                     createdClassification = true;
@@ -208,16 +208,16 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             }
 
             if (String.IsNullOrEmpty(classificationName))
-            {
+                {
                 // No Classification Name specified, look for Classification Name assignment from the cache (from UI)
                 if (!ExporterCacheManager.ClassificationCache.FieldNameToClassificationNames.TryGetValue(classificationCodeFieldName, out classificationName))
                     classificationName = "Default Classification";
             }
             
             return noCodepart;
-        }
+                }
 
-/// <summary>
+        /// <summary>
         /// Create a new classification reference and associate it with the Element (ElemHnd)
         /// </summary>
         /// <param name="exporterIFC">The exporterIFC class.</param>
@@ -235,7 +235,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             relatedObjects.Add(elemHnd);
 
             IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
-               exporterIFC.GetOwnerHistoryHandle(), classificationKeyString+" Classification", "", relatedObjects, classificationReference);
+               ExporterCacheManager.OwnerHistoryHandle, classificationKeyString + " Classification", "", relatedObjects, classificationReference);
 
         }
 
@@ -248,11 +248,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="classificationReference">The classification reference to be associated with</param>
         public static void AssociateClassificationReference(ExporterIFC exporterIFC, IFCFile file, IFCAnyHandle elemHnd, IFCAnyHandle classificationReference)
         {
-            HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
-            relatedObjects.Add(elemHnd);
+                HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
+                relatedObjects.Add(elemHnd);
 
-            IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
-               exporterIFC.GetOwnerHistoryHandle(), classificationReference.GetAttribute("ReferencedSource").ToString() + " Classification", "", relatedObjects, classificationReference);
+                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
+               ExporterCacheManager.OwnerHistoryHandle, classificationReference.GetAttribute("ReferencedSource").ToString() + " Classification", "", relatedObjects, classificationReference);
 
         }
 

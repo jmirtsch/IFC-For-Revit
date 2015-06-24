@@ -94,7 +94,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPropertySetDefinition))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcPropertySetDefinition);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcPropertySetDefinition);
                 return null;
             }
 
@@ -117,7 +117,7 @@ namespace Revit.IFC.Import.Data
                 return IFCWindowPanelProperties.ProcessIFCWindowPanelProperties(ifcPropertySetDefinition,
                     GetNextCounter(IFCEntityType.IfcWindowPanelProperties));
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcPropertySetDefinition, IFCEntityType.IfcPropertySetDefinition, false);
+            Importer.TheLog.LogUnhandledSubTypeError(ifcPropertySetDefinition, IFCEntityType.IfcPropertySetDefinition, false);
             return null;
         }
 
@@ -201,10 +201,10 @@ namespace Revit.IFC.Import.Data
         /// <param name="doc">The document.</param>
         /// <param name="element">The element being created.</param>
         /// <param name="parameterGroupMap">The parameters of the element.  Cached for performance.</param>
-        /// <returns>The name of the property set created, if it was created.</returns>
-        public virtual string CreatePropertySet(Document doc, Element element, IFCParameterSetByGroup parameterGroupMap)
+        /// <returns>The name of the property set created, if it was created, and a Boolean value if it should be added to the property set list.</returns>
+        public virtual KeyValuePair<string, bool> CreatePropertySet(Document doc, Element element, IFCParameterSetByGroup parameterGroupMap)
         {
-            return null;
+            return new KeyValuePair<string, bool>(null, false);
         }
     }
 }

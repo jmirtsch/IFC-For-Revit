@@ -152,7 +152,7 @@ namespace Revit.IFC.Export.Exporter
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(localPlacement))
                 return;
 
-            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
             IFCFile file = exporterIFC.GetFile();
 
@@ -359,7 +359,7 @@ namespace Revit.IFC.Export.Exporter
                         }
 
                         string containedRampGuid = GUIDUtil.CreateSubElementGUID(ramp, (int)IFCRampSubElements.ContainedRamp);
-                        IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                        IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                         string rampName = NamingUtil.GetNameOverride(ramp, NamingUtil.GetIFCName(ramp));
                         string rampDescription = NamingUtil.GetDescriptionOverride(ramp, null);
                         string rampObjectType = NamingUtil.GetObjectTypeOverride(ramp, NamingUtil.CreateIFCObjectName(exporterIFC, ramp));

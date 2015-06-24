@@ -110,7 +110,7 @@ namespace Revit.IFC.Import.Data
             else if (IFCAnyHandleUtil.IsSubTypeOf(simpleProperty, IFCEntityType.IfcPropertyListValue))
                 ProcessIFCPropertyListValue(simpleProperty);
             else
-                IFCImportFile.TheLog.LogUnhandledSubTypeError(simpleProperty, "IfcSimpleProperty", true);
+                Importer.TheLog.LogUnhandledSubTypeError(simpleProperty, "IfcSimpleProperty", true);
         }
         
         /// <summary>
@@ -122,7 +122,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSimpleProperty))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcSimpleProperty);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcSimpleProperty);
                 return null;
             }
 
@@ -208,7 +208,7 @@ namespace Revit.IFC.Import.Data
                         if (unitType != UnitType.UT_Undefined)
                             ifcUnit = IFCImportFile.TheFile.IFCUnits.GetIFCProjectUnit(unitType);
                         else
-                            IFCImportFile.TheLog.LogWarning(simplePropertyHandle.StepId, "Unhandled unit type: " + unitTypeName, true);
+                            Importer.TheLog.LogWarning(simplePropertyHandle.StepId, "Unhandled unit type: " + unitTypeName, true);
                     }
                 }
             }

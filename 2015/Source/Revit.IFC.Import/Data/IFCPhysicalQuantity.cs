@@ -95,7 +95,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPhysicalQuantity))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcPhysicalQuantity);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcPhysicalQuantity);
                 return null;
             }
 
@@ -112,11 +112,11 @@ namespace Revit.IFC.Import.Data
             }
             catch (Exception ex)
             {
-                IFCImportFile.TheLog.LogError(ifcPhysicalQuantity.StepId, ex.Message, false);
+                Importer.TheLog.LogError(ifcPhysicalQuantity.StepId, ex.Message, false);
                 return null;
             }
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcPhysicalQuantity, IFCEntityType.IfcPhysicalQuantity, false);
+            Importer.TheLog.LogUnhandledSubTypeError(ifcPhysicalQuantity, IFCEntityType.IfcPhysicalQuantity, false);
             return null;
         }
 

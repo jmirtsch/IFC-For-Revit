@@ -86,7 +86,7 @@ namespace Revit.IFC.Export.Exporter
                         string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
                         string pileType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
 
-                        IFCAnyHandle pile = IFCInstanceExporter.CreatePile(file, instanceGUID, exporterIFC.GetOwnerHistoryHandle(),
+                        IFCAnyHandle pile = IFCInstanceExporter.CreatePile(file, instanceGUID, ExporterCacheManager.OwnerHistoryHandle,
                             instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(), prodRep, instanceTag, pileType, null);
 
                         if (exportParts)

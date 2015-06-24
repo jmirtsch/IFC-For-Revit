@@ -78,7 +78,7 @@ namespace Revit.IFC.Export.Exporter
                 if (exportType == IFCExportType.DontExport)
                     return;
 
-                if (ExportFamilyInstanceAsStandardElement(exporterIFC, familyInstance, geometryElement, exportType, ifcEnumType, productWrapper))
+                if (ExportGenericBuildingElement(exporterIFC, familyInstance, geometryElement, exportType, ifcEnumType, productWrapper))
                 {
                     tr.Commit();
                     return;
@@ -177,7 +177,7 @@ namespace Revit.IFC.Export.Exporter
 
             IFCAnyHandle typeStyle = null;
 
-            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
             // for Door, Window
             bool paramTakesPrecedence = false; // For Revit, this is currently always false.
@@ -354,7 +354,7 @@ namespace Revit.IFC.Export.Exporter
             ProductWrapper familyProductWrapper = ProductWrapper.Create(wrapper);
             Options options = GeometryUtil.GetIFCExportGeometryOptions();
 
-            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
             HostObject hostElement = familyInstance.Host as HostObject; //hostElement could be null
             ElementId categoryId = CategoryUtil.GetSafeCategoryId(familySymbol);
@@ -919,7 +919,7 @@ namespace Revit.IFC.Export.Exporter
         }
 
         /// <summary>
-        /// Exports a family instance as standard element.
+        /// Exports a generic element as one of a few IFC building element entity types.
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The element to be exported.</param>
@@ -927,15 +927,17 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="familyType">The export type.</param>
         /// <param name="ifcEnumTypeString">The string value represents the IFC type.</param>
         /// <param name="productWrapper">The ProductWrapper.</param>
-        /// <returns>True if the family instance was exported, false otherwise.</returns>
-        static bool ExportFamilyInstanceAsStandardElement(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, IFCExportType familyType,
+        /// <returns>True if the elements was exported, false otherwise.</returns>
+        static public bool ExportGenericBuildingElement(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, IFCExportType exportType,
             string ifcEnumTypeString, ProductWrapper productWrapper)
         {
-            switch (familyType)
+           // This function is here because it was originally used exclusive by FamilyInstances.  Moving forward, this will be combined with some other
+           // functions to attempt to create a way to export any element as any IFC entity.  There will still be functions that do a better job of mapping
+           // specific Revit element types to specific IFC entity types (e.g., a Revit Wall to an IFC IfcWallStandardCase), but most elements will use generic
+           // handling.
+           // Note that this function doesn't support creating types - it exports a simple IFC instance only of a few possible types.
+           switch (exportType)
             {
-                // These entities don't get exported as a mapped instance.  As such, we export them using
-                // the standard methods.
-
                 // standard building elements
                 case IFCExportType.IfcBeam:
                     BeamExporter.ExportBeam(exporterIFC, element, geometryElement, productWrapper);

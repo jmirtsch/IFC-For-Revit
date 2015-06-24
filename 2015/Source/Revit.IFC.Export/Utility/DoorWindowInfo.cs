@@ -200,7 +200,7 @@ namespace Revit.IFC.Export.Utility
             if (numArcs == 0)
                 return "NOTDEFINED";
 
-            double angleEps = MathUtil.AngleEps();
+            double angleEps = ExporterCacheManager.Document.Application.AngleTolerance;
 
             if (numArcs == 1)
             {

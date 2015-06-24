@@ -147,17 +147,20 @@ namespace Revit.IFC.Import.Utility
 
         private void Write(string msg)
         {
-            m_LogFile.Write(msg);
+           if (LoggingEnabled && m_LogFile != null)
+              m_LogFile.Write(msg);
         }
 
         private void WriteLine(string msg)
         {
-            m_LogFile.WriteLine(msg + "<br>");
+           if (LoggingEnabled && m_LogFile != null)
+               m_LogFile.WriteLine(msg + "<br>");
         }
 
         private void WriteLineNoBreak(string msg)
         {
-            m_LogFile.WriteLine(msg);
+           if (LoggingEnabled && m_LogFile != null)
+              m_LogFile.WriteLine(msg);
         }
 
         /// <summary>
@@ -168,31 +171,28 @@ namespace Revit.IFC.Import.Utility
         /// <param name="throwError">Optionally throw an InvalidOperationException.</param>
         public void LogError(int id, string msg, bool throwError)
         {
-            // We won't log an error that starts with a "#", as that has already been logged.
-            string errorMsg = null;
-            if (!string.IsNullOrWhiteSpace(msg) && msg[0] != '#')
-            {
-                if (id == -1)
-                    errorMsg = "General ERROR: " + msg;
-                else
-                    errorMsg = "#" + id + ": ERROR: " + msg;
+           // We won't log an error that starts with a "#", as that has already been logged.
+           string errorMsg = null;
+           if (!string.IsNullOrWhiteSpace(msg) && msg[0] != '#')
+           {
+              if (id == -1)
+                 errorMsg = "General ERROR: " + msg;
+              else
+                 errorMsg = "#" + id + ": ERROR: " + msg;
 
-                if (LoggingEnabled && m_LogFile != null)
-                {
-                    // Don't bother logging an error that doesn't throw, and has already been identically filed.
-                    KeyValuePair<int,string> newError = new KeyValuePair<int,string>(id, msg);
-                    if (!m_AlreadyLoggedErrors.Contains(newError))
-                    {
-                        WriteLine(errorMsg);
-                        m_AlreadyLoggedErrors.Add(newError);
-                    }
-                }
-            }
-            else if (throwError)
-                errorMsg = msg;
+              // Don't bother logging an error that doesn't throw, and has already been identically filed.
+              KeyValuePair<int, string> newError = new KeyValuePair<int, string>(id, msg);
+              if (!m_AlreadyLoggedErrors.Contains(newError))
+              {
+                 WriteLine(errorMsg);
+                 m_AlreadyLoggedErrors.Add(newError);
+              }
+           }
+           else if (throwError)
+              errorMsg = msg;
 
-            if (throwError)
-                throw new InvalidOperationException(errorMsg);
+           if (throwError)
+              throw new InvalidOperationException(errorMsg);
         }
 
         /// <summary>
@@ -203,30 +203,28 @@ namespace Revit.IFC.Import.Utility
         /// <param name="logOnce">Only log this message the first time it is encountered.</param>
         public void LogComment(int id, string msg, bool logOnce)
         {
-            if (Importer.TheOptions.VerboseLogging)
-            {
-                if (!string.IsNullOrWhiteSpace(msg))
-                {
-                    if (!logOnce || !m_LogOnceComments.Contains(msg))
-                    {
-                        if (LoggingEnabled && m_LogFile != null)
-                        {
-                            if (id == -1)
-                                Write("General COMMENT: " + msg);
-                            else
-                                Write("#" + id + ": COMMENT: " + msg);
-                        }
+           if (Importer.TheOptions.VerboseLogging)
+           {
+              if (!string.IsNullOrWhiteSpace(msg))
+              {
+                 if (!logOnce || !m_LogOnceComments.Contains(msg))
+                 {
 
-                        if (logOnce)
-                        {
-                            m_LogOnceComments.Add(msg);
-                            WriteLine(" (This message will only appear once.)");
-                        }
-                        else
-                            WriteLine("");
+                    if (id == -1)
+                       Write("General COMMENT: " + msg);
+                    else
+                       Write("#" + id + ": COMMENT: " + msg);
+
+                    if (logOnce)
+                    {
+                       m_LogOnceComments.Add(msg);
+                       WriteLine(" (This message will only appear once.)");
                     }
-                }
-            }
+                    else
+                       WriteLine("");
+                 }
+              }
+           }
         }
 
         /// <summary>
@@ -237,27 +235,24 @@ namespace Revit.IFC.Import.Utility
         /// <param name="logOnce">Only log this message the first time it is encountered.</param>
         public void LogWarning(int id, string msg, bool logOnce)
         {
-            if (!string.IsNullOrWhiteSpace(msg))
-            {
-                if (!logOnce || !m_LogOnceWarnings.Contains(msg))
-                {
-                    if (LoggingEnabled && m_LogFile != null)
-                    {
-                        if (id == -1)
-                            Write("General WARNING: " + msg);
-                        else
-                            Write("#" + id + ": WARNING: " + msg);
-                    }
-                    
-                    if (logOnce)
-                    {
-                        m_LogOnceWarnings.Add(msg);
-                        WriteLine(" (This message will only appear once.)");
-                    }
-                    else
-                        WriteLine("");
-                }
-            }
+           if (!string.IsNullOrWhiteSpace(msg))
+           {
+              if (!logOnce || !m_LogOnceWarnings.Contains(msg))
+              {
+                 if (id == -1)
+                    Write("General WARNING: " + msg);
+                 else
+                    Write("#" + id + ": WARNING: " + msg);
+
+                 if (logOnce)
+                 {
+                    m_LogOnceWarnings.Add(msg);
+                    WriteLine(" (This message will only appear once.)");
+                 }
+                 else
+                    WriteLine("");
+              }
+           }
         }
         
         /// <summary>
@@ -266,8 +261,7 @@ namespace Revit.IFC.Import.Utility
         /// <param name="expectedType">The expected type of the handle.</param>
         public void LogNullError(IFCEntityType expectedType)
         {
-            if (LoggingEnabled && m_LogFile != null)
-                WriteLine("ERROR: " + expectedType.ToString() + " is null or has no value.");
+            WriteLine("ERROR: " + expectedType.ToString() + " is null or has no value.");
         }
 
         /// <summary>
@@ -278,21 +272,17 @@ namespace Revit.IFC.Import.Utility
         /// <param name="throwError">throw an InvalidOperationException if true.</param>
         public void LogUnexpectedTypeError(IFCAnyHandle handle, IFCEntityType expectedType, bool throwError)
         {
-            if (LoggingEnabled && m_LogFile != null)
-                LogError(handle.StepId, "Expected handle of type " + expectedType.ToString() + ", found: " + IFCAnyHandleUtil.GetEntityType(handle).ToString(), throwError);
+            LogError(handle.StepId, "Expected handle of type " + expectedType.ToString() + ", found: " + IFCAnyHandleUtil.GetEntityType(handle).ToString(), throwError);
         }
 
         private void LogUnhandledSubTypeErrorBase(IFCAnyHandle handle, string mainTypeAsString, bool throwError)
         {
-            if (LoggingEnabled && m_LogFile != null)
-            {
-                IFCEntityType subType = IFCAnyHandleUtil.GetEntityType(handle);
-                if (!m_LogUnhandledSubtypeErrors.Contains(subType))
-                {
-                    m_LogUnhandledSubtypeErrors.Add(subType);
-                    LogError(handle.StepId, "Unhandled subtype of " + mainTypeAsString + ": " + subType.ToString() + " (This message will only appear once.)", throwError);
-                }
-            }
+           IFCEntityType subType = IFCAnyHandleUtil.GetEntityType(handle);
+           if (!m_LogUnhandledSubtypeErrors.Contains(subType))
+           {
+              m_LogUnhandledSubtypeErrors.Add(subType);
+              LogError(handle.StepId, "Unhandled subtype of " + mainTypeAsString + ": " + subType.ToString() + " (This message will only appear once.)", throwError);
+           }
         }
 
         /// <summary>
@@ -324,8 +314,7 @@ namespace Revit.IFC.Import.Utility
         /// <param name="unitType">The unit type as a string.</param>
         public void LogUnhandledUnitTypeError(IFCAnyHandle unitHnd, string unitType)
         {
-            if (LoggingEnabled && m_LogFile != null)
-                LogError(unitHnd.StepId, "Unhandled type of IfcSIUnit: " + unitType, false);
+           LogError(unitHnd.StepId, "Unhandled type of IfcSIUnit: " + unitType, false);
         }
 
         /// <summary>
@@ -336,8 +325,7 @@ namespace Revit.IFC.Import.Utility
         /// <param name="throwError">Throw an InvalidOperationException.</param>
         public void LogMissingRequiredAttributeError(IFCAnyHandle handle, string name, bool throwError)
         {
-            if (LoggingEnabled && m_LogFile != null)
-                LogError(handle.StepId, "required attribute " + name + " not found for " + IFCAnyHandleUtil.GetEntityType(handle).ToString(), throwError);
+           LogError(handle.StepId, "required attribute " + name + " not found for " + IFCAnyHandleUtil.GetEntityType(handle).ToString(), throwError);
         }
 
         /// <summary>
@@ -347,8 +335,7 @@ namespace Revit.IFC.Import.Utility
         /// <param name="root">The IFCRoot object.</param>
         public void LogAssociatedCreationError(IFCRoot root, Type classType)
         {
-            if (LoggingEnabled && m_LogFile != null)
-                LogError(root.Id, "couldn't create associated Revit element(s) of type " + classType.ToString(), false);
+           LogError(root.Id, "couldn't create associated Revit element(s) of type " + classType.ToString(), false);
         }
         
         /// <summary>
@@ -359,13 +346,10 @@ namespace Revit.IFC.Import.Utility
         /// <param name="throwError">True if we should also throw an error.</param>
         public void LogCreationError(IFCEntity entity, string optionalMessage, bool throwError)
         {
-            if (LoggingEnabled && m_LogFile != null)
-            {
-                if (string.IsNullOrWhiteSpace(optionalMessage))
-                    LogError(entity.Id, "couldn't create associated Revit element(s)", throwError);
-                else
-                    LogError(entity.Id, optionalMessage, throwError);
-            }
+           if (string.IsNullOrWhiteSpace(optionalMessage))
+              LogError(entity.Id, "couldn't create associated Revit element(s)", throwError);
+           else
+              LogError(entity.Id, optionalMessage, throwError);
         }
 
         /// <summary>
@@ -377,47 +361,45 @@ namespace Revit.IFC.Import.Utility
         /// just logs them.</remarks>
         public FailureProcessingResult PreprocessFailures(FailuresAccessor failuresAccessor)
         {
-            if (LoggingEnabled && m_LogFile != null)
-            {
-                int currentlyProcessedEntityId = (CurrentlyProcessedEntity != null) ? CurrentlyProcessedEntity.Id : 0;
-                IList<FailureMessageAccessor> failList = failuresAccessor.GetFailureMessages();
-                foreach (FailureMessageAccessor failure in failList)
-                {
-                    if (currentlyProcessedEntityId != 0)
-                        Write("#" + currentlyProcessedEntityId + ": ");
-                    else
-                        Write("GENERIC ");
+           int currentlyProcessedEntityId = (CurrentlyProcessedEntity != null) ? CurrentlyProcessedEntity.Id : 0;
+           IList<FailureMessageAccessor> failList = failuresAccessor.GetFailureMessages();
+           foreach (FailureMessageAccessor failure in failList)
+           {
+              if (currentlyProcessedEntityId != 0)
+                 Write("#" + currentlyProcessedEntityId + ": ");
+              else
+                 Write("GENERIC ");
 
-                    switch (failure.GetSeverity())
-                    {
-                        case FailureSeverity.Warning:
-                            Write("WARNING: ");
-                            break;
-                        default:
-                            Write("ERROR: ");
-                            break;
-                    }
+              switch (failure.GetSeverity())
+              {
+                 case FailureSeverity.Warning:
+                    Write("WARNING: ");
+                    break;
+                 default:
+                    Write("ERROR: ");
+                    break;
+              }
 
-                    ICollection<ElementId> failureIds = failure.GetFailingElementIds();
-                    int numFailureIds = (failureIds == null) ? 0 : failureIds.Count;
-                    if (numFailureIds > 0)
-                    {
-                        Write("(Revit Element Id");
-                        if (numFailureIds > 1)
-                            Write("s");
-                        Write(": ");
-                        foreach (ElementId failureId in failureIds)
-                            Write(failureId + " ");
-                        Write("): ");
-                    }
+              ICollection<ElementId> failureIds = failure.GetFailingElementIds();
+              int numFailureIds = (failureIds == null) ? 0 : failureIds.Count;
+              if (numFailureIds > 0)
+              {
+                 Write("(Revit Element Id");
+                 if (numFailureIds > 1)
+                    Write("s");
+                 Write(": ");
+                 foreach (ElementId failureId in failureIds)
+                    Write(failureId + " ");
+                 Write("): ");
+              }
 
-                    WriteLine(failure.GetDescriptionText());
-                }
+              WriteLine(failure.GetDescriptionText());
+           }
 
-                // Only remove the warnings if logging is on.
-                failuresAccessor.DeleteAllWarnings();
-            }
-            return FailureProcessingResult.Continue;
+           // Only remove the warnings if logging is on.
+           failuresAccessor.DeleteAllWarnings();
+
+           return FailureProcessingResult.Continue;
         }
 
         /// <summary>
@@ -588,29 +570,48 @@ namespace Revit.IFC.Import.Utility
 
                 m_LogFile.Close();
             }
+
             m_LogFile = null;
             LoggingEnabled = false;
             LogFileName = null;
+        }
+
+        static private bool CreateLogInternal(IFCImportLog importLog, string logFileName)
+        {
+           try
+           {
+              importLog.OpenLog(logFileName);
+           }
+           catch
+           {
+              return false;
+           }
+
+           if (importLog.LoggingEnabled)
+           {
+              importLog.WriteLine("<A NAME=\"Warnings and Errors\"></A>Warnings and Errors");
+              importLog.WriteLine("");
+              return true;
+           }
+
+           return false;
         }
 
         /// <summary>
         /// Create a new log from a file name.
         /// </summary>
         /// <param name="logFileName">The file name.</param>
-        static public IFCImportLog CreateLog(string logFileName)
+        static public IFCImportLog CreateLog(string logFileName, string extension)
         {
-            IFCImportLog importLog = new IFCImportLog();
-            try
-            {
-                importLog.OpenLog(logFileName);
-                importLog.WriteLine("<A NAME=\"Warnings and Errors\"></A>Warnings and Errors");
-                importLog.WriteLine("");
-            }
-            catch
-            {
-                // TODO: potentially alert user if log file can't be created.
-            }
-            return importLog;
+           IFCImportLog importLog = new IFCImportLog();
+
+           if (!CreateLogInternal(importLog, logFileName + "." + extension))
+           {
+              // Try a unique file name in case the original file is locked for some reason.
+              CreateLogInternal(importLog, logFileName + "." + Guid.NewGuid().ToString() + "." + extension);
+           }
+
+           return importLog;
         }
     }
 }

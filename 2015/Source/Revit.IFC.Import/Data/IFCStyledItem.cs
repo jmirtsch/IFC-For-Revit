@@ -137,9 +137,9 @@ namespace Revit.IFC.Import.Data
 
             List<IFCAnyHandle> styles = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(styledItem, "Styles");
             if (styles == null || styles.Count == 0 || IFCAnyHandleUtil.IsNullOrHasNoValue(styles[0]))
-                IFCImportFile.TheLog.LogMissingRequiredAttributeError(styledItem, "Styles", true);
+                Importer.TheLog.LogMissingRequiredAttributeError(styledItem, "Styles", true);
             if (styles.Count > 1)
-                IFCImportFile.TheLog.LogWarning(styledItem.StepId, "Multiple presentation styles found for IfcStyledItem - using first.", false);
+                Importer.TheLog.LogWarning(styledItem.StepId, "Multiple presentation styles found for IfcStyledItem - using first.", false);
 
             Styles = IFCPresentationStyleAssignment.ProcessIFCPresentationStyleAssignment(styles[0]);
         }
@@ -206,7 +206,7 @@ namespace Revit.IFC.Import.Data
             catch (Exception ex)
             {
                 IsValidForCreation = false;
-                IFCImportFile.TheLog.LogCreationError(this, ex.Message, false);
+                Importer.TheLog.LogCreationError(this, ex.Message, false);
             }
         }
 
@@ -219,7 +219,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcStyledItem))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcStyledItem);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcStyledItem);
                 return null;
             }
 

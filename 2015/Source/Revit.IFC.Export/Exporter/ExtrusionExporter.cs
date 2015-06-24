@@ -665,7 +665,8 @@ namespace Revit.IFC.Export.Exporter
 
         private static IList<CurveLoop> CoarsenCurveLoops(IList<CurveLoop> origCurveLoops)
         {
-            if (!ExporterCacheManager.ExportOptionsCache.UseCoarseTessellation)
+           // Coarsen loop unless we are at the Highest level of detail.
+            if (ExporterCacheManager.ExportOptionsCache.LevelOfDetail >= 4)
                 return origCurveLoops;
 
             IList<CurveLoop> modifiedLoops = new List<CurveLoop>();

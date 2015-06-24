@@ -17,21 +17,17 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Common.Utility;
 using Revit.IFC.Common.Enums;
-using Revit.IFC.Import.Enums;
-using Revit.IFC.Import.Geometry;
-using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    public class IFCSurface : IFCRepresentationItem
+    /// <summary>
+    /// Class that represents IFCSurface entity
+    /// </summary>
+    public abstract class IFCSurface : IFCRepresentationItem
     {
         protected IFCSurface()
         {
@@ -61,7 +57,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSurface))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcSurface);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcSurface);
                 return null;
             }
 
@@ -73,8 +69,17 @@ namespace Revit.IFC.Import.Data
                 return IFCElementarySurface.ProcessIFCElementarySurface(ifcSurface);
             else if (IFCAnyHandleUtil.IsSubTypeOf(ifcSurface, IFCEntityType.IfcSweptSurface))
                 return IFCSweptSurface.ProcessIFCSweptSurface(ifcSurface);
+            
+            Importer.TheLog.LogUnhandledSubTypeError(ifcSurface, IFCEntityType.IfcSurface, true);
+            return null;
+        }
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcSurface, IFCEntityType.IfcSurface, true);
+        /// <summary>
+        /// Returns the surface which defines the internal shape of the face
+        /// </summary>
+        /// <returns>The surface which defines the internal shape of the face</returns>
+        public virtual Plane GetSurface()
+        {
             return null;
         }
     }

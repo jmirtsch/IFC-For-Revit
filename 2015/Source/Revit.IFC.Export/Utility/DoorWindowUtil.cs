@@ -93,7 +93,7 @@ namespace Revit.IFC.Export.Utility
            DoorWindowInfo doorWindowInfo, Element familyInstance)
         {
             IFCFile file = exporterIFC.GetFile();
-            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
             IList<IFCAnyHandle> doorPanels = new List<IFCAnyHandle>();
 
@@ -189,7 +189,7 @@ namespace Revit.IFC.Export.Utility
         public static IFCAnyHandle CreateDoorLiningProperties(ExporterIFC exporterIFC, Element familyInstance)
         {
             IFCFile file = exporterIFC.GetFile();
-            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
             double? liningDepthOpt = null;
             double? liningThicknessOpt = null;
@@ -588,7 +588,7 @@ namespace Revit.IFC.Export.Utility
            Element familyInstance, string description)
         {
             IFCFile file = exporterIFC.GetFile();
-            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
             double? liningDepthOpt = null;
             double? liningThicknessOpt = null;
@@ -658,7 +658,7 @@ namespace Revit.IFC.Export.Utility
         {
             IList<IFCAnyHandle> panels = new List<IFCAnyHandle>();
             IFCFile file = exporterIFC.GetFile();
-            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
             const int maxPanels = 1000;  // arbitrary large number to prevent infinite loops.
             for (int panelNumber = 1; panelNumber < maxPanels; panelNumber++)
@@ -896,7 +896,7 @@ namespace Revit.IFC.Export.Utility
             double unScaledDepth = origUnscaledDepth;
 
             IFCAnyHandle hostObjPlacementHnd = IFCAnyHandleUtil.GetObjectPlacement(hostObjHnd);
-            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
             XYZ relOrig = XYZ.Zero;
             XYZ relZ = XYZ.BasisZ;

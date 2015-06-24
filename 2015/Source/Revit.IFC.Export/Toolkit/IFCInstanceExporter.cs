@@ -1482,6 +1482,60 @@ namespace Revit.IFC.Export.Toolkit
             IFCAnyHandleUtil.SetAttribute(sweptSurface, "SweptCurve", sweptCurve);
             IFCAnyHandleUtil.SetAttribute(sweptSurface, "Position", position);
         }
+
+        /// <summary>
+        /// Validates the attribute for IfcBSplineCurve
+        /// </summary>
+        /// <param name="controlPointsList">The list of control points</param>
+        private static void ValidateBSplineCurve(IList<IFCAnyHandle> controlPointsList) 
+        {
+            if (!ExporterCacheManager.ExportOptionsCache.ExportAs4)
+            {
+                throw new InvalidOperationException("IfcBSplineCurve is only supported in IFC 4");
+            }
+            IFCAnyHandleUtil.ValidateSubTypeOf(controlPointsList, false, IFCEntityType.IfcCartesianPoint);
+        }
+
+        /// <summary>
+        /// Set attributes for IfcBSplineCurveWithKnots
+        /// </summary>
+        /// <param name="bSplineCurveWithKnots">The IfcBSplineCurveWithKnots</param>
+        /// <param name="degree">The degree</param>
+        /// <param name="controlPointsList">The list of control points</param>
+        /// <param name="curveForm">The curve form</param>
+        /// <param name="closedCurve">Indicates whether this curve is closed or not (or unknown)</param>
+        /// <param name="selfIntersect">Indicates whether this curve is self-intersect (or unknown)</param>
+        /// <param name="knotMultiplicities">The knot multiplicites</param>
+        /// <param name="knots">The list of disctinct knots, the multiplicity of each knot is stored in knotMultiplicities</param>
+        /// <param name="knotSpec">The description of knot type</param>
+        private static void SetBSplineCurveWithKnots(IFCAnyHandle bSplineCurveWithKnots, int degree, IList<IFCAnyHandle> controlPointsList, IFC4.IFCBSplineCurveForm curveForm,
+            IFCLogical closedCurve, IFCLogical selfIntersect, IList<int> knotMultiplicities, IList<double> knots, IFC4.IFCKnotType knotSpec)
+        {
+            IFCAnyHandleUtil.SetAttribute(bSplineCurveWithKnots, "KnotMultiplicities", knotMultiplicities);
+            IFCAnyHandleUtil.SetAttribute(bSplineCurveWithKnots, "Knots", knots);
+            IFCAnyHandleUtil.SetAttribute(bSplineCurveWithKnots, "KnotSpec", knotSpec);
+            SetBSplineCurve(bSplineCurveWithKnots, degree, controlPointsList, curveForm, closedCurve, selfIntersect);
+        }
+
+        /// <summary>
+        /// Set attributes for IfcBSplineCurve
+        /// </summary>
+        /// <param name="bSplineCurve">The IfcBSplineCurve</param>
+        /// <param name="degree">The degree</param>
+        /// <param name="controlPointsList">The list of control points</param>
+        /// <param name="curveForm">The curve form</param>
+        /// <param name="closedCurve">Indicates whether this curve is closed or not, (or unknown)</param>
+        /// <param name="selfIntersect">Indicates whether this curve is self-intersect or not, (or unknown)</param>
+        private static void SetBSplineCurve(IFCAnyHandle bSplineCurve, int degree, IList<IFCAnyHandle> controlPointsList, IFC4.IFCBSplineCurveForm curveForm,
+            IFCLogical closedCurve, IFCLogical selfIntersect)
+        {
+            ValidateBSplineCurve(controlPointsList);
+            IFCAnyHandleUtil.SetAttribute(bSplineCurve, "Degree", degree);
+            IFCAnyHandleUtil.SetAttribute(bSplineCurve, "ControlPointsList", controlPointsList);
+            IFCAnyHandleUtil.SetAttribute(bSplineCurve, "CurveForm", curveForm);
+            IFCAnyHandleUtil.SetAttribute(bSplineCurve, "ClosedCurve", closedCurve);
+            IFCAnyHandleUtil.SetAttribute(bSplineCurve, "SelfIntersect", selfIntersect);
+        }
         #endregion
 
         #region public creation methods goes here
@@ -2931,9 +2985,8 @@ namespace Revit.IFC.Export.Toolkit
         public static IFCAnyHandle CreateOrganization(IFCFile file, string id, string name, string description,
             IList<IFCAnyHandle> actorRoles, IList<IFCAnyHandle> addresses)
         {
-            if (name == null)
-                throw new ArgumentNullException("name");
-
+            string organizationName = (name != null) ? name : String.Empty;
+            
             IFCAnyHandleUtil.ValidateSubTypeOf(actorRoles, true, IFCEntityType.IfcActorRole);
             IFCAnyHandleUtil.ValidateSubTypeOf(addresses, true, IFCEntityType.IfcAddress);
 
@@ -2941,7 +2994,7 @@ namespace Revit.IFC.Export.Toolkit
 
             IFCAnyHandle organization = CreateInstance(file, IFCEntityType.IfcOrganization);
             IFCAnyHandleUtil.SetAttribute(organization, idAttribName, id);
-            IFCAnyHandleUtil.SetAttribute(organization, "Name", name);
+            IFCAnyHandleUtil.SetAttribute(organization, "Name", organizationName);
             IFCAnyHandleUtil.SetAttribute(organization, "Description", description);
             IFCAnyHandleUtil.SetAttribute(organization, "Roles", actorRoles);
             IFCAnyHandleUtil.SetAttribute(organization, "Addresses", addresses);
@@ -6702,6 +6755,52 @@ namespace Revit.IFC.Export.Toolkit
             IFCAnyHandleUtil.SetAttribute(rectangularTrimmedSurface, "Vsense", vSense);
 
             return rectangularTrimmedSurface;
+        }
+
+        /// <summary>
+        /// Creates an IfcBSplineCurveWithKnots, and assigns it to the handle
+        /// </summary>
+        /// <param name="file">The file</param>
+        /// <param name="degree">The degree of the b-spline curve</param>
+        /// <param name="controlPointLists">The list of control points</param>
+        /// <param name="curveForm">The form of the b-spline curve</param>
+        /// <param name="closedCurve">The flag that indicates whether the curve is closed or not</param>
+        /// <param name="selfIntersect">The flag that indicates whether the curve is self-intersect or not</param>
+        /// <param name="knotMultiplicities">The knot multiplicities</param>
+        /// <param name="knots">The knots</param>
+        /// <param name="knotSpec">The type of the knots</param>
+        /// <returns>The handle</returns>
+        public static IFCAnyHandle CreateBSplineCurveWithKnots(IFCFile file, int degree, IList<IFCAnyHandle> controlPointLists, IFC4.IFCBSplineCurveForm curveForm,
+            IFCLogical closedCurve, IFCLogical selfIntersect, IList<int> knotMultiplicities, IList<double> knots, IFC4.IFCKnotType knotSpec) 
+        {
+            //TODO: validate parameters
+            IFCAnyHandle bSplineCurveWithKnots = CreateInstance(file, IFCEntityType.IfcBSplineCurveWithKnots);
+            SetBSplineCurveWithKnots(bSplineCurveWithKnots, degree, controlPointLists, curveForm, closedCurve, selfIntersect, knotMultiplicities, knots, knotSpec);
+            return bSplineCurveWithKnots;
+        }
+
+        /// <summary>
+        /// Creates an IfcRationalBSplineCurveWithKnots, and assigns it to the handle
+        /// </summary>
+        /// <param name="file">The file</param>
+        /// <param name="degree">The degree of the b-spline curve</param>
+        /// <param name="controlPointLists">The list of control points</param>
+        /// <param name="curveForm">The form of the b-spline curve</param>
+        /// <param name="closedCurve">The flag that indicates whether the curve is closed or not</param>
+        /// <param name="selfIntersect">The flag that indicates whether the curve is self-intersect or not</param>
+        /// <param name="knotMultiplicities">The knot multiplicities</param>
+        /// <param name="knots">The knots</param>
+        /// <param name="knotSpec">The type of the knots</param>
+        /// <param name="weightsData">The weights</param>
+        /// <returns>The handle</returns>
+        public static IFCAnyHandle CreateRationalBSplineCurveWithKnots(IFCFile file, int degree, IList<IFCAnyHandle> controlPointLists, IFC4.IFCBSplineCurveForm curveForm,
+            IFCLogical closedCurve, IFCLogical selfIntersect, IList<int> knotMultiplicities, IList<double> knots, IFC4.IFCKnotType knotSpec, IList<double> weightsData)
+        {
+            //TODO: validate parameters
+            IFCAnyHandle rationBSplineCurveWithKnots = CreateInstance(file, IFCEntityType.IfcRationalBSplineCurveWithKnots);
+            IFCAnyHandleUtil.SetAttribute(rationBSplineCurveWithKnots, "WeightsData", weightsData);
+            SetBSplineCurveWithKnots(rationBSplineCurveWithKnots, degree, controlPointLists, curveForm, closedCurve, selfIntersect, knotMultiplicities, knots, knotSpec);
+            return rationBSplineCurveWithKnots;
         }
 
         /// <summary>

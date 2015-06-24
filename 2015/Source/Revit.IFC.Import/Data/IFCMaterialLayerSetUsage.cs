@@ -117,7 +117,7 @@ namespace Revit.IFC.Import.Data
             bool found = false;
             Offset = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(ifcMaterialLayerSetUsage, "OffsetFromReferenceLine", out found);
             if (!found)
-                IFCImportFile.TheLog.LogWarning(ifcMaterialLayerSetUsage.StepId, "No Offset defined, defaulting to 0.", false);
+                Importer.TheLog.LogWarning(ifcMaterialLayerSetUsage.StepId, "No Offset defined, defaulting to 0.", false);
         }
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialLayerSetUsage))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcMaterialLayerSetUsage);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialLayerSetUsage);
                 return null;
             }
 

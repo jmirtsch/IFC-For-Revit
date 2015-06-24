@@ -217,7 +217,6 @@ namespace Revit.IFC.Export.Utility
         /// </summary>
         IfcFlowController,
         // direct subclass of FlowController
-        //not suported -- ExportElectricDistributionPointType,
         // types of DistributionControlElementType
         /// <summary>
         /// Actuator type.
@@ -256,10 +255,6 @@ namespace Revit.IFC.Export.Utility
         /// Boiler type.
         /// </summary>
         IfcBoilerType,
-        /// <summary>
-        /// Burner type (new in IFC4)
-        /// </summary>
-        IfcBurnerType,
         /// <summary>
         /// Chiller type.
         /// </summary>
@@ -444,6 +439,10 @@ namespace Revit.IFC.Export.Utility
         /// </summary>
         IfcAudioVisualAppliance,
         /// <summary>
+        /// Burner type. (IFC2x3: IfcGasTerminalType)
+        /// </summary>
+        IfcBurnerType,
+        /// <summary>
         /// Communication Applicance type (new in IFC4)
         /// </summary>
         IfcCommunicationAppliance,
@@ -452,17 +451,13 @@ namespace Revit.IFC.Export.Utility
         /// </summary>
         IfcElectricApplianceType,
         /// <summary>
-        /// Electric heater type. (no more in IFC4?)
+        /// Electic heater type (IFC2x3 only)
         /// </summary>
         IfcElectricHeaterType,
         /// <summary>
         /// Fire suppression terminal type.
         /// </summary>
         IfcFireSuppressionTerminalType,
-        /// <summary>
-        /// Gas terminal type. (no more in IFC4?)
-        /// </summary>
-        IfcGasTerminalType,
         /// <summary>
         /// Lamp type.
         /// </summary>
@@ -484,7 +479,7 @@ namespace Revit.IFC.Export.Utility
         /// </summary>
         IfcSanitaryTerminalType,
         /// <summary>
-        /// Space heater type.
+        /// Space heater type
         /// </summary>
         IfcSpaceHeaterType,
         /// <summary>
@@ -898,6 +893,12 @@ namespace Revit.IFC.Export.Utility
                     return IFCExportType.IfcAlarmType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcBoiler")))
                     return IFCExportType.IfcBoilerType;
+                else if (IsEqualToTypeName(ifcClassName, ("IfcBurner")) || 
+                   IsEqualToTypeName(ifcClassName, ("IfcGasTerminal")))
+                {
+                   // IFC2x3 IfcGasTerminalType has been renamed to IfcBurnerType in IFC4.
+                   return IFCExportType.IfcBurnerType;
+                }
                 else if (IsEqualToTypeName(ifcClassName, ("IfcCableCarrierFitting")))
                     return IFCExportType.IfcCableCarrierFittingType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcCableCarrierSegment")))
@@ -932,14 +933,25 @@ namespace Revit.IFC.Export.Utility
                     return IFCExportType.IfcDuctSilencerType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcElectricAppliance")))
                     return IFCExportType.IfcElectricApplianceType;
-                //else if (IsEqualToTypeName(ifcClassName, ("IfcElectricDistributionPoint")))
-                //return IFCExportType.ExportElectricDistributionPointType;
+                else if (IsEqualToTypeName(ifcClassName, ("IfcElectricDistributionPoint")) || 
+                   IsEqualToTypeName(ifcClassName, ("IfcElectricDistributionBoard")))
+                {
+                   // IFC2x3 IfcElectricDistributionPoint has been renamed to IfcElectricDistributionBoard in IFC4.
+                   // IFC2x3 IfcElectricDistributionBoardType has been added to IFC4.
+                   return IFCExportType.IfcElectricDistributionBoardType;
+                }
                 else if (IsEqualToTypeName(ifcClassName, ("IfcElectricFlowStorageDevice")))
                     return IFCExportType.IfcElectricFlowStorageDeviceType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcElectricGenerator")))
                     return IFCExportType.IfcElectricGeneratorType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcElectricHeater")))
-                    return IFCExportType.IfcElectricHeaterType;
+                {
+                   // IFC4 IfcElectricHeaterType is obsolete and should be replaced by IfcSpaceHeaterType.
+                   if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+                      return IFCExportType.IfcSpaceHeaterType;
+                   else
+                     return IFCExportType.IfcElectricHeaterType;
+                }
                 else if (IsEqualToTypeName(ifcClassName, ("IfcElectricMotor")))
                     return IFCExportType.IfcElectricMotorType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcElectricTimeControl")))
@@ -976,8 +988,6 @@ namespace Revit.IFC.Export.Utility
                     return IFCExportType.IfcFlowTerminal;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcFlowTreatmentDevice")))
                     return IFCExportType.IfcFlowTreatmentDevice;
-                else if (IsEqualToTypeName(ifcClassName, ("IfcGasTerminal")))
-                    return IFCExportType.IfcGasTerminalType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcHeatExchanger")))
                     return IFCExportType.IfcHeatExchangerType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcHumidifier")))
@@ -1012,24 +1022,28 @@ namespace Revit.IFC.Export.Utility
                     return IFCExportType.IfcSanitaryTerminalType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcSensor")))
                     return IFCExportType.IfcSensorType;
-                else if (IsEqualToTypeName(ifcClassName, ("IfcSpaceHeater")))
-                    return IFCExportType.IfcSpaceHeaterType;
+                else if ((IsEqualToTypeName(ifcClassName, ("IfcSpaceHeater"))) ||
+                   (IsEqualToTypeName(ifcClassName, ("IfcElectricHeater"))))
+                {
+                   // IFC2x3 IfcElectricHeaterType has been renamed to IfcSpaceHeaterType in IFC4.
+                   return IFCExportType.IfcSpaceHeaterType;
+                }
                 else if (IsEqualToTypeName(ifcClassName, ("IfcStackTerminal")))
-                    return IFCExportType.IfcStackTerminalType;
+                   return IFCExportType.IfcStackTerminalType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcSwitchingDevice")))
-                    return IFCExportType.IfcSwitchingDeviceType;
+                   return IFCExportType.IfcSwitchingDeviceType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcTank")))
-                    return IFCExportType.IfcTankType;
+                   return IFCExportType.IfcTankType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcTransformer")))
-                    return IFCExportType.IfcTransformerType;
+                   return IFCExportType.IfcTransformerType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcTubeBundle")))
-                    return IFCExportType.IfcTubeBundleType;
+                   return IFCExportType.IfcTubeBundleType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcUnitaryEquipment")))
-                    return IFCExportType.IfcUnitaryEquipmentType;
+                   return IFCExportType.IfcUnitaryEquipmentType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcValve")))
-                    return IFCExportType.IfcValveType;
+                   return IFCExportType.IfcValveType;
                 else if (IsEqualToTypeName(ifcClassName, ("IfcWasteTerminal")))
-                    return IFCExportType.IfcWasteTerminalType;
+                   return IFCExportType.IfcWasteTerminalType;
 
                 // This used to throw an exception, but this could abort export if the user enters a bad IFC class name
                 // in the ExportLayerOptions table.  In the future, we should log this.

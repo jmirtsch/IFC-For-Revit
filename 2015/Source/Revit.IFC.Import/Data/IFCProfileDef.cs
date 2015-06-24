@@ -76,7 +76,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcProfileDef))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcProfileDef);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcProfileDef);
                 return null;
             }
 
@@ -89,7 +89,7 @@ namespace Revit.IFC.Import.Data
 
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcProfileDef, IFCEntityType.IfcDerivedProfileDef))
             {
-                IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcProfileDef, IFCEntityType.IfcDerivedProfileDef, false);
+                Importer.TheLog.LogUnhandledSubTypeError(ifcProfileDef, IFCEntityType.IfcDerivedProfileDef, false);
                 return null;
             }
 
@@ -147,7 +147,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcProfileDef))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcCompositeProfileDef);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcCompositeProfileDef);
                 return null;
             }
 
@@ -311,13 +311,13 @@ namespace Revit.IFC.Import.Data
 
             if (xDim < MathUtil.Eps())
             {
-                IFCImportFile.TheLog.LogError(Id, "IfcRectangleProfileDef has invalid XDim: " + xDim + ", ignoring.", false);
+                Importer.TheLog.LogError(Id, "IfcRectangleProfileDef has invalid XDim: " + xDim + ", ignoring.", false);
                 return;
             }
 
             if (yDim < MathUtil.Eps())
             {
-                IFCImportFile.TheLog.LogError(Id, "IfcRectangleProfileDef has invalid YDim: " + yDim + ", ignoring.", false);
+                Importer.TheLog.LogError(Id, "IfcRectangleProfileDef has invalid YDim: " + yDim + ", ignoring.", false);
                 return;
             }
 
@@ -356,7 +356,7 @@ namespace Revit.IFC.Import.Data
 
             if (radius < MathUtil.Eps())
             {
-                IFCImportFile.TheLog.LogError(Id, "IfcCircleProfileDef has invalid radius: " + radius + ", ignoring.", false);
+                Importer.TheLog.LogError(Id, "IfcCircleProfileDef has invalid radius: " + radius + ", ignoring.", false);
                 return;
             }
 
@@ -991,7 +991,7 @@ namespace Revit.IFC.Import.Data
                 Position = IFCLocation.ProcessIFCAxis2Placement(positionHnd);
             else
             {
-                IFCImportFile.TheLog.LogWarning(profileDef.StepId, "\"Position\" attribute not specified in IfcParameterizedProfileDef, using origin.", false);
+                Importer.TheLog.LogWarning(profileDef.StepId, "\"Position\" attribute not specified in IfcParameterizedProfileDef, using origin.", false);
                 Position = Transform.Identity;
             }
 
@@ -1036,7 +1036,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcProfileDef))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcProfileDef);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcProfileDef);
                 return null;
             }
 
@@ -1076,7 +1076,7 @@ namespace Revit.IFC.Import.Data
             IFCAnyHandle curveHnd = IFCAnyHandleUtil.GetInstanceAttribute(profileDef, "Curve");
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(curveHnd))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcArbitraryOpenProfileDef);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcArbitraryOpenProfileDef);
                 return;
             }
 
@@ -1142,6 +1142,8 @@ namespace Revit.IFC.Import.Data
             if (!innerCurve.IsCyclic)
                 return null;
 
+            // Note that we don't disallow bound curves, as they could be bound but still closed.
+
             // We don't know how to handle anything other than circles or ellipses with a period of 2PI.
             double period = innerCurve.Period;
             if (!MathUtil.IsAlmostEqual(period, Math.PI * 2.0))
@@ -1180,12 +1182,25 @@ namespace Revit.IFC.Import.Data
             IFCCurve outerIFCCurve = IFCCurve.ProcessIFCCurve(curveHnd);
             CurveLoop outerCurveLoop = outerIFCCurve.CurveLoop;
 
+            // We need to convert outerIFCCurve into a CurveLoop with bound curves.  This is handled below (with possible errors logged).
             if (outerCurveLoop != null)
                 OuterCurve = outerCurveLoop;
             else
             {
-                IFCImportFile.TheLog.LogError(profileDef.StepId, "Invalid outer curve #" + curveHnd.StepId + " in IfcArbitraryClosedProfileDef.", true);
-                return;
+               Curve outerCurve = outerIFCCurve.Curve;
+               if (outerCurve == null)
+                  Importer.TheLog.LogError(profileDef.StepId, "Couldn't convert outer curve #" + curveHnd.StepId + " in IfcArbitraryClosedProfileDef.", true);
+               else 
+               {
+                  OuterCurve = CreateCurveLoopFromUnboundedCyclicCurve(outerCurve);
+                  if (OuterCurve == null)
+                  {
+                     if (outerCurve.IsBound)
+                        Importer.TheLog.LogError(profileDef.StepId, "Outer curve #" + curveHnd.StepId + " in IfcArbitraryClosedProfileDef isn't closed and can't be used.", true);
+                     else
+                        Importer.TheLog.LogError(profileDef.StepId, "Couldn't split unbound outer curve #" + curveHnd.StepId + " in IfcArbitraryClosedProfileDef.", true);
+                  }
+               }
             }
 
             if (IFCAnyHandleUtil.IsSubTypeOf(profileDef, IFCEntityType.IfcArbitraryProfileDefWithVoids))
@@ -1193,7 +1208,7 @@ namespace Revit.IFC.Import.Data
                 IList<IFCAnyHandle> innerCurveHnds = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(profileDef, "InnerCurves");
                 if (innerCurveHnds == null || innerCurveHnds.Count == 0)
                 {
-                    IFCImportFile.TheLog.LogWarning(profileDef.StepId, "IfcArbitraryProfileDefWithVoids has no voids.", false);
+                    Importer.TheLog.LogWarning(profileDef.StepId, "IfcArbitraryProfileDefWithVoids has no voids.", false);
                     return;
                 }
 
@@ -1202,20 +1217,20 @@ namespace Revit.IFC.Import.Data
                 {
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(innerCurveHnd))
                     {
-                        IFCImportFile.TheLog.LogWarning(profileDef.StepId, "Null or invalid inner curve handle in IfcArbitraryProfileDefWithVoids.", false);
+                        Importer.TheLog.LogWarning(profileDef.StepId, "Null or invalid inner curve handle in IfcArbitraryProfileDefWithVoids.", false);
                         continue;
                     }
 
                     if (usedHandles.Contains(innerCurveHnd))
                     {
-                        IFCImportFile.TheLog.LogWarning(profileDef.StepId, "Duplicate void #" + innerCurveHnd.StepId + " in IfcArbitraryProfileDefWithVoids, ignoring.", false);
+                        Importer.TheLog.LogWarning(profileDef.StepId, "Duplicate void #" + innerCurveHnd.StepId + " in IfcArbitraryProfileDefWithVoids, ignoring.", false);
                         continue;
                     }
 
                     // If any inner is the same as the outer, throw an exception.
                     if (curveHnd.Equals(innerCurveHnd))
                     {
-                        IFCImportFile.TheLog.LogError(profileDef.StepId, "Inner curve loop #" + innerCurveHnd.StepId + " same as outer curve loop in IfcArbitraryProfileDefWithVoids.", true);
+                        Importer.TheLog.LogError(profileDef.StepId, "Inner curve loop #" + innerCurveHnd.StepId + " same as outer curve loop in IfcArbitraryProfileDefWithVoids.", true);
                         continue;
                     }
 
@@ -1231,7 +1246,7 @@ namespace Revit.IFC.Import.Data
                     if (innerCurveLoop == null)
                     {
                         //LOG: WARNING: Null or invalid inner curve in IfcArbitraryProfileDefWithVoids.
-                        IFCImportFile.TheLog.LogWarning(profileDef.StepId, "Invalid inner curve #" + innerCurveHnd.StepId + " in IfcArbitraryProfileDefWithVoids.", false);
+                        Importer.TheLog.LogWarning(profileDef.StepId, "Invalid inner curve #" + innerCurveHnd.StepId + " in IfcArbitraryProfileDefWithVoids.", false);
                         continue;
                     }
 
@@ -1272,7 +1287,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcProfileDef))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcProfileDef);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcProfileDef);
                 return null;
             }
 

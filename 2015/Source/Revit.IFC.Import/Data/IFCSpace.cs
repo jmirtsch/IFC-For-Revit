@@ -175,7 +175,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSpace))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcSpace);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcSpace);
                 return null;
             }
 

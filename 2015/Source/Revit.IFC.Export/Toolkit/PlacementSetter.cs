@@ -290,11 +290,21 @@ namespace Revit.IFC.Export.Toolkit
             return null;
         }
 
-        void commonInit(ExporterIFC exporterIFC, Element elem, Transform familyTrf, Transform orientationTrf, ElementId overrideLevelId)
+        /// <summary>
+        /// Attempt to determine the local placement of the element based on the element type and initial input.
+        /// </summary>
+        /// <param name="exporterIFC">The ExporterIFC class.</param>
+        /// <param name="elem">The element being exported.</param>
+        /// <param name="familyTrf">The optional family transform.</param>
+        /// <param name="orientationTrf">The optional orientation of the element based on IFC standards or agreements.</param>
+        /// <param name="overrideLevelId">The optional level to place the element, to be used instead of heuristics.</param>
+        private void commonInit(ExporterIFC exporterIFC, Element elem, Transform familyTrf, Transform orientationTrf, ElementId overrideLevelId)
         {
             m_ExporterIFC = exporterIFC;
 
-            overrideLevelId = overrideLevelId != null ? overrideLevelId : ElementId.InvalidElementId;
+            // Convert null value to InvalidElementId.
+            if (overrideLevelId == null)
+                overrideLevelId = ElementId.InvalidElementId;
 
             Document doc = elem.Document;
             Element hostElem = elem;

@@ -1752,13 +1752,12 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
-        /// Common method to create a poly line.
+        /// Common method to create a poly line segment for an IfcCompositeCurve.
         /// </summary>
         /// <param name="exporterIFC">The exporter.</param>
         /// <param name="points">The line points.</param>
-        /// <param name="scaledPlane">The scaled plane.</param>
         /// <returns>The handle.</returns>
-        static IFCAnyHandle CreatePolyLineCommon(ExporterIFC exporterIFC, IList<XYZ> points, Plane scaledPlane)
+        static IFCAnyHandle CreatePolyLineSegmentCommon(ExporterIFC exporterIFC, IList<XYZ> points)
         {
             if (exporterIFC == null || points == null)
                 throw new ArgumentNullException();
@@ -1779,14 +1778,7 @@ namespace Revit.IFC.Export.Utility
             for (int ii = 0; ii < count; ii++)
             {
                 XYZ point = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, points[ii]);
-                IFCAnyHandle pointHandle = null;
-                if (scaledPlane != null)
-                {
-                    List<double> pointValues = ConvertPointToLocalCoordinatesCommon(scaledPlane, point);
-                    pointHandle = ExporterUtil.CreateCartesianPoint(file, pointValues);
-                }
-                else
-                    pointHandle = ExporterUtil.CreateCartesianPoint(file, point);
+                IFCAnyHandle pointHandle = ExporterUtil.CreateCartesianPoint(file, point);
                 polyLinePoints.Add(pointHandle);
             }
 
@@ -1797,103 +1789,132 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
-        /// Creates an IFC line from a Revit line object.
+        /// Creates an IFC line segment for an IfcCompositeCurve from a Revit line object.
         /// </summary>
         /// <param name="exporterIFC">The exporter.</param>
         /// <param name="line">The line.</param>
-        /// <param name="scaledPlane">The scaled plane.</param>
         /// <returns>The line handle.</returns>
-        public static IFCAnyHandle CreateLine(ExporterIFC exporterIFC, Line line, Plane scaledPlane)
+        public static IFCAnyHandle CreateLineSegment(ExporterIFC exporterIFC, Line line)
         {
             List<XYZ> points = new List<XYZ>();
             points.Add(line.GetEndPoint(0));
             points.Add(line.GetEndPoint(1));
-            return CreatePolyLineCommon(exporterIFC, points, scaledPlane);
+            return CreatePolyLineSegmentCommon(exporterIFC, points);
         }
 
         /// <summary>
-        /// Creates an IFC arc from a Revit arc object.
+        /// Returns an Ifc handle corresponding to the curve segment after processing its bounds, if any.
+        /// </summary>
+        /// <param name="file">The IFCFile handle.</param>
+        /// <param name="curveHnd">The unbounded curve handle.</param>
+        /// <param name="curve">The Revit curve to process.</param>
+        /// <returns>The original handle if the curve is unbound, or a new IfcTrimmedCurve handle if bounded.</returns>
+        /// <remarks>This routine expects that bounded curves are periodic curves with a periodicity of 2*PI.</remarks>
+        private static IFCAnyHandle CreateBoundsIfNecessary(IFCFile file, IFCAnyHandle curveHnd, Curve curve)
+        {
+            if (!curve.IsBound)
+                return curveHnd;
+
+            if (!curve.IsCyclic || !MathUtil.IsAlmostEqual(curve.Period, 2 * Math.PI))
+                throw new InvalidOperationException("Expected periodic curve with period of 2*PI.");
+
+            double endParam0 = curve.GetEndParameter(0);
+            double endParam1 = curve.GetEndParameter(1);
+
+            IFCData firstParam = IFCDataUtil.CreateAsParameterValue(UnitUtil.ScaleAngle(MathUtil.PutInRange(endParam0, Math.PI, 2 * Math.PI)));
+            IFCData secondParam = IFCDataUtil.CreateAsParameterValue(UnitUtil.ScaleAngle(MathUtil.PutInRange(endParam1, Math.PI, 2 * Math.PI)));
+
+            // todo: check that firstParam != secondParam.
+            HashSet<IFCData> trim1 = new HashSet<IFCData>();
+            trim1.Add(firstParam);
+            HashSet<IFCData> trim2 = new HashSet<IFCData>();
+            trim2.Add(secondParam);
+
+            return IFCInstanceExporter.CreateTrimmedCurve(file, curveHnd, trim1, trim2, true, IFCTrimmingPreference.Parameter);
+        }
+
+        /// <summary>
+        /// Creates an IFC arc segment for an IfcCompositeCurve from a Revit arc object.
         /// </summary>
         /// <param name="exporterIFC">The exporter.</param>
         /// <param name="arc">The arc.</param>
-        /// <param name="scaledPlane">The scaled plane.</param>
         /// <returns>The arc handle.</returns>
-        public static IFCAnyHandle CreateArc(ExporterIFC exporterIFC, Arc arc, Plane scaledPlane)
+        public static IFCAnyHandle CreateArcSegment(ExporterIFC exporterIFC, Arc arc)
         {
             IFCFile file = exporterIFC.GetFile();
 
             XYZ centerPoint = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, arc.Center);
 
-            IFCAnyHandle centerPointHandle;
-            if (scaledPlane != null)
-            {
-                List<double> centerPointValues = ConvertPointToLocalCoordinatesCommon(scaledPlane, centerPoint);
-                centerPointHandle = ExporterUtil.CreateCartesianPoint(file, centerPointValues);
-            }
-            else
-                centerPointHandle = ExporterUtil.CreateCartesianPoint(file, centerPoint);
+            IFCAnyHandle centerPointHandle = ExporterUtil.CreateCartesianPoint(file, centerPoint);
 
             XYZ xDirection = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, arc.XDirection);
-            IFCAnyHandle axis;
-            if (scaledPlane != null)
-            {
-                List<double> xDirectionValues = ConvertVectorToLocalCoordinates(scaledPlane, xDirection);
-                IFCAnyHandle xDirectionHandle = ExporterUtil.CreateDirection(file, xDirectionValues);
-                axis = IFCInstanceExporter.CreateAxis2Placement2D(file, centerPointHandle, null, xDirectionHandle);
-            }
-            else
-                axis = ExporterUtil.CreateAxis2Placement3D(file, centerPoint, arc.Normal, xDirection);
+            IFCAnyHandle axis = ExporterUtil.CreateAxis2Placement3D(file, centerPoint, arc.Normal, xDirection);
 
             double arcRadius = UnitUtil.ScaleLength(arc.Radius);
 
             IFCAnyHandle circle = IFCInstanceExporter.CreateCircle(file, axis, arcRadius);
-
-            IFCAnyHandle arcHandle = circle;
-            if (arc.IsBound)
-            {
-                double endParam0 = arc.GetEndParameter(0);
-                double endParam1 = arc.GetEndParameter(1);
-                if (scaledPlane != null && MustFlipCurve(scaledPlane, arc))
-                {
-                    double oldParam0 = endParam0;
-                    endParam0 = Math.PI * 2 - endParam1;
-                    endParam1 = Math.PI * 2 - oldParam0;
-                }
-                IFCData firstParam = IFCDataUtil.CreateAsParameterValue(UnitUtil.ScaleAngle(MathUtil.PutInRange(endParam0, Math.PI, 2 * Math.PI)));
-                IFCData secondParam = IFCDataUtil.CreateAsParameterValue(UnitUtil.ScaleAngle(MathUtil.PutInRange(endParam1, Math.PI, 2 * Math.PI)));
-
-                // todo: check that firstParam != secondParam.
-                HashSet<IFCData> trim1 = new HashSet<IFCData>();
-                trim1.Add(firstParam);
-                HashSet<IFCData> trim2 = new HashSet<IFCData>();
-                trim2.Add(secondParam);
-
-                arcHandle = IFCInstanceExporter.CreateTrimmedCurve(file, circle, trim1, trim2, true, IFCTrimmingPreference.Parameter);
-            }
-            return arcHandle;
+            return CreateBoundsIfNecessary(file, circle, arc);
         }
 
+        /// <summary>
+        /// Creates an IFC ellipse segment for an IfcCompositeCurve from a Revit ellipse object.
+        /// </summary>
+        /// <param name="exporterIFC">The exporter.</param>
+        /// <param name="ellipticalArc">The elliptical arc.</param>
+        /// <returns>The ellipse handle.</returns>
+        public static IFCAnyHandle CreateEllipticalArcSegment(ExporterIFC exporterIFC, Ellipse ellipticalArc)
+        {
+            IFCFile file = exporterIFC.GetFile();
+
+            XYZ centerPoint = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, ellipticalArc.Center);
+
+            IFCAnyHandle centerPointHandle = ExporterUtil.CreateCartesianPoint(file, centerPoint);
+
+            XYZ xDirection = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, ellipticalArc.XDirection);
+            IFCAnyHandle axis = ExporterUtil.CreateAxis2Placement3D(file, centerPoint, ellipticalArc.Normal, xDirection);
+
+            double ellipseRadiusX = UnitUtil.ScaleLength(ellipticalArc.RadiusX);
+            double ellipseRadiusY = UnitUtil.ScaleLength(ellipticalArc.RadiusY);
+
+            IFCAnyHandle ellipse = IFCInstanceExporter.CreateEllipse(file, axis, ellipseRadiusX, ellipseRadiusY);
+            return CreateBoundsIfNecessary(file, ellipse, ellipticalArc);
+        }
+        
         /// <summary>
         /// Creates an IFC composite curve from an array of curves.
         /// </summary>
         /// <param name="exporterIFC">The exporter.</param>
         /// <param name="curves">The curves.</param>
         /// <returns>The IfcCompositeCurve handle.</returns>
+        /// <remarks>This function tessellates all curve types except lines, arcs, and ellipses.</remarks>
         public static IFCAnyHandle CreateCompositeCurve(ExporterIFC exporterIFC, IList<Curve> curves)
         {
             IFCFile file = exporterIFC.GetFile();
             List<IFCAnyHandle> segments = new List<IFCAnyHandle>();
             foreach (Curve curve in curves)
             {
+                if (curve == null)
+                    continue;
+
                 IFCAnyHandle curveHandle = null;
                 if (curve is Line)
                 {
-                    curveHandle = CreateLine(exporterIFC, curve as Line, null);
+                    curveHandle = CreateLineSegment(exporterIFC, curve as Line);
                 }
                 else if (curve is Arc)
                 {
-                    curveHandle = CreateArc(exporterIFC, curve as Arc, null);
+                    curveHandle = CreateArcSegment(exporterIFC, curve as Arc);
                 }
+                else if (curve is Ellipse)
+                {
+                    curveHandle = CreateEllipticalArcSegment(exporterIFC, curve as Ellipse);
+                }
+                else
+                {
+                    IList<XYZ> points = curve.Tessellate();
+                    curveHandle = CreatePolyLineSegmentCommon(exporterIFC, points);
+                }
+
                 if (!IFCAnyHandleUtil.IsNullOrHasNoValue(curveHandle))
                 {
                     segments.Add(IFCInstanceExporter.CreateCompositeCurveSegment(file, IFCTransitionCode.Continuous, true, curveHandle));
@@ -1907,6 +1928,38 @@ namespace Revit.IFC.Export.Utility
 
             return null;
         }
+
+        /// <summary>
+        /// Create an IfcSweptDiskSolid from a base curve.
+        /// </summary>
+        /// <param name="exporterIFC">The exporterIFC class.</param>
+        /// <param name="file">The IFCFile.</param>
+        /// <param name="centerCurve">The directrix of the sweep.</param>
+        /// <param name="radius">The outer radius.</param>
+        /// <param name="innerRadius">The optional inner radius.</param>
+        /// <returns>The IfcSweptDiskSolid.</returns>
+        public static IFCAnyHandle CreateSweptDiskSolid(ExporterIFC exporterIFC, IFCFile file, Curve centerCurve, double radius, double? innerRadius)
+        {
+            if (centerCurve == null || radius < MathUtil.Eps() || (innerRadius.HasValue && innerRadius.Value > radius - MathUtil.Eps()))
+                return null;
+
+            IList<Curve> curves = new List<Curve>();
+            double endParam = 0.0;
+            if (centerCurve is Arc || centerCurve is Ellipse)
+            {
+                if (centerCurve.IsBound)
+                    endParam = UnitUtil.ScaleAngle(centerCurve.GetEndParameter(1) - centerCurve.GetEndParameter(0));
+                else
+                    endParam = UnitUtil.ScaleAngle(2 * Math.PI);
+            }
+            else
+                endParam = 1.0;
+            curves.Add(centerCurve);
+
+            IFCAnyHandle compositeCurve = GeometryUtil.CreateCompositeCurve(exporterIFC, curves);
+            return IFCInstanceExporter.CreateSweptDiskSolid(file, compositeCurve, radius, innerRadius, 0, endParam);
+        }
+
 
         /// <summary>
         /// Sorts curves to allow CurveLoop creation that means each curve end must meet next curve start.
@@ -2589,6 +2642,445 @@ namespace Revit.IFC.Export.Utility
             returnBox.Min = new XYZ(minX, minY, minZ);
 
             return returnBox;
+        }
+
+        /// <summary>
+        /// Sort the edge loops in the given face
+        /// </summary>
+        /// <param name="edgeArrays">The list of loops</param>
+        /// <param name="face">The given face</param>
+        /// <returns>Returns a map that maps every outer loop to its corresponding inner loops</returns>
+        public static Dictionary<EdgeArray, IList<EdgeArray>> SortEdgeLoop(EdgeArrayArray edgeArrays, Face face) 
+        {
+            // we will sort these loops by tessellating every edgeArray on the given face to get the uv loop. 
+            // The connection between each edge array and its corresponding uv loop will be stored in the loopMap. 
+            // We will then sort the uv loops and store the result in the sortedTessellatedLoops. After we 
+            // finish sorting uv loops, we convert them back to edge arrays and return the result
+          
+            Dictionary<EdgeArray, IList<EdgeArray>> sortedEdgeLoops = new Dictionary<EdgeArray, IList<EdgeArray>>();
+            Dictionary<IList<UV>, IList<IList<UV>>> sortedTessellatedLoops = new Dictionary<IList<UV>,IList<IList<UV>>>();
+            IDictionary<IList<UV>, EdgeArray> loopMap = new Dictionary<IList<UV>, EdgeArray>();
+            
+            foreach (EdgeArray edgeArray in edgeArrays) 
+            {
+                // We will tessellate edgeArray to get tessellatedLoop
+                List<UV> tessellatedLoop = new List<UV>();
+                
+
+                // the number of already processed edges, we only use this to know if we are processing the last edge or not
+                int count = 0;
+
+                // Tessellate each edge to get a list of UV points and add them to tessellatedLoop
+                // we have to make sure that we don't add the same point twice to the list, since each point is shared by 2 edges in the loop
+                foreach (Edge edge in edgeArray) 
+                {
+                    
+                    bool lastEdge = (++count == edgeArray.Size);
+                    List<UV> tessellatedEdge = edge.TessellateOnFace(face).ToList<UV>();
+
+                    // For the first edge in the loop, we will add all of its tessellated points to the list
+                    if (tessellatedLoop.Count == 0)
+                    {
+                        tessellatedLoop.AddRange(tessellatedEdge);
+                    }
+                    else
+                    {
+                        // For every other edge that is not the first one, one of its end point will already be in tessellatedLoop (if not then
+                        // we have a disconnected edge loop, in that case we will stop the process and throw an exception). 
+                        // However, because tessellateOnFace is not consistent in the direction that it tessellates an edge, we don't know how 
+                        // this edge connects to the existing loop. Thus we have to check 2 end points of this edge against 2 end points of the
+                        // loops to decide which 2 of them are equal. 
+
+                        // If this edge is the last edge in the loop, then both of its end point will already be in the loop, hence we need an extra
+                        // check to avoid adding redundant points.
+
+                        if (tessellatedEdge[tessellatedEdge.Count - 1].IsAlmostEqualTo(tessellatedLoop[0])) 
+                        {
+                            // if the last point of the edge is the first point of the loop, then remove that last point, and
+                            // append the loop to this edge
+                            tessellatedEdge.RemoveAt(tessellatedEdge.Count - 1);
+                            if (lastEdge) 
+                            {
+                                tessellatedEdge.RemoveAt(0);
+                            }
+                            tessellatedEdge.AddRange(tessellatedLoop);
+                            tessellatedLoop = tessellatedEdge;
+                        }
+                        else if (tessellatedEdge[0].IsAlmostEqualTo(tessellatedLoop[0])) 
+                        {
+                            // if the first point of the edge is the first point of the loop, we reverse the edge, remove the last point (which used to be 
+                            // the first one), and append the loop to this edge
+                            tessellatedEdge.Reverse();
+                            tessellatedEdge.RemoveAt(tessellatedEdge.Count - 1);
+                            if (lastEdge) 
+                            {
+                                tessellatedEdge.RemoveAt(0);
+                            }
+                            tessellatedEdge.AddRange(tessellatedLoop);
+                            tessellatedLoop = tessellatedEdge;
+                        }
+                        else if (tessellatedEdge[tessellatedEdge.Count - 1].IsAlmostEqualTo(tessellatedLoop[tessellatedLoop.Count - 1])) 
+                        {
+                            // if the last point of the edge is the last point of the loop, we remove that point and append the reversed edge to the loop
+                            tessellatedEdge.Reverse();
+                            tessellatedEdge.RemoveAt(0);
+                            if (lastEdge) 
+                            {
+                                tessellatedEdge.RemoveAt(tessellatedEdge.Count - 1);
+                            }
+                            tessellatedLoop.AddRange(tessellatedEdge);
+                        }
+                        else if (tessellatedEdge[0].IsAlmostEqualTo(tessellatedLoop[tessellatedLoop.Count - 1]))
+                        {
+                            // if the last point of the loop is the first point of the edge, then we remove that point and append the edge to the loop
+                            tessellatedEdge.RemoveAt(0);
+                            if (lastEdge)
+                            {
+                                tessellatedEdge.RemoveAt(tessellatedEdge.Count - 1);
+                            }
+                            tessellatedLoop.AddRange(tessellatedEdge);
+                        }
+                        else 
+                        {
+                            throw new InvalidOperationException("Disconnected edge loop");
+                        }
+                    }
+                }
+
+                // After finishing tessellating this loop, store a map from the tessellatedLoop to the edgeArray in the loopMap
+                loopMap.Add(tessellatedLoop, edgeArray);
+
+                bool created = false;
+                // After getting the tessellatedLoop, we will add it to the sortedTessellatedLoops by first checking if this loop is inside 
+                // any of the outer loops in the map (which are the keys in this map)
+                // 1. If this loop is inside one of them, says outerLoop, then we will have to check if this loop is inside or contains any of the outerLoop's inners:
+                //      - if it is inside one of the outerLoop's inners, then this loop will be an outer loop and we will just have to add it as a new key to the map
+                //      - if it contains some of the outerLoop's inners, then all of these inners will become outer loops
+                //      - if none of the above, then we will add this loop as an another inner loop of the outerLoop
+                // 2. If this loop is not inside any of the outer loops, then it will be an outer loop.
+                foreach (KeyValuePair<IList<UV>, IList<IList<UV>>> entry in sortedTessellatedLoops)
+                {
+                    // first we check if tessellatedLoop is inside any of the loop in the sortedTessellatedEdges
+                    if (PointInsidePolygon(tessellatedLoop[0], entry.Key))
+                    {
+                        // now we need to check if each loop in entry.Value is inside this loop
+                        IList<IList<UV>> innerLoops = new List<IList<UV>>();
+                        if (IsInsideAnotherLoop(tessellatedLoop, entry.Value))
+                        {
+                            // if tessellateLoop is inside another loop, then it will become the outer loop
+                            sortedTessellatedLoops.Add(tessellatedLoop, new List<IList<UV>>());
+                        }
+                        else if (IsOutsideOtherLoops(tessellatedLoop, entry.Value, out innerLoops))
+                        {
+                            // if tessellatedLoop contains some other loops, then all of these loops become outer loop
+                            entry.Value.Add(tessellatedLoop);
+                            foreach (IList<UV> innerLoop in innerLoops)
+                            {
+                                entry.Value.Remove(innerLoop);
+                                sortedTessellatedLoops.Add(innerLoop, new List<IList<UV>>());
+                            }
+                        }
+                        else 
+                        {
+                            entry.Value.Add(tessellatedLoop);
+                        }
+                        created = true;
+                        break;
+                    }
+                }
+
+                if (!created)
+                {
+                    // this means tessellatedLoop is not inside any of the outerloop in the sortedTessellatedLoop
+                    sortedTessellatedLoops.Add(tessellatedLoop, new List<IList<UV>>());
+                }
+            }
+
+            // convert IList<UV> back into EdgeArray and return the result;
+
+            foreach (KeyValuePair<IList<UV>, IList<IList<UV>>> entry in sortedTessellatedLoops)
+            {
+                IList<UV> key = entry.Key;
+                IList<EdgeArray> innerLoops = new List<EdgeArray>();
+
+                foreach (IList<UV> uvLoop in entry.Value) 
+                {
+                    innerLoops.Add(loopMap[uvLoop]);
+                }
+
+                sortedEdgeLoops.Add(loopMap[key], innerLoops);
+            }
+
+            return sortedEdgeLoops;
+        }
+
+        /// <summary>
+        /// Check if the given loop (loopToCheck) is inside any of the loop in the given list of loops (listOfLoops). 
+        /// The loop that contains loopToCheck will be stored in outerLoop
+        /// Currently this method is only used in SortEdgeLoop, and we are sure that there is at most one loop that can contain
+        /// loopToCheck. If there is no such loop, then outerLoop will be an empty list
+        /// </summary>
+        /// <param name="loopToCheck">The given loop</param>
+        /// <param name="listOfLoops">The given list of loops</param>
+        /// <returns>true if the given loop is inside any of the loop in the given list of loops</returns>
+        private static bool IsInsideAnotherLoop(IList<UV> loopToCheck, IList<IList<UV>> listOfLoops) 
+        {
+            foreach (IList<UV> loop in listOfLoops) 
+            {
+                if (PointInsidePolygon(loopToCheck[0], loop)) 
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Check if the given loop (loopToCheck) is outside any of the loop in the given list of loops (listOfLoops).
+        /// Every loop that is inside loopToCheck will be collected and stored in resultedList
+        /// </summary>
+        /// <param name="loopToCheck">The given loop</param>
+        /// <param name="listOfLoops">The given list of loops</param>
+        /// <param name="resultedList">The list of loops that is inside loopToCheck</param>
+        /// <returns>true if loopToCheck is outside any loop in the given list of loops</returns>
+        private static bool IsOutsideOtherLoops(IList<UV> loopToCheck, IList<IList<UV>> listOfLoops, out IList<IList<UV>> resultedList) 
+        {
+            resultedList = new List<IList<UV>>();
+            foreach (IList<UV> loop in listOfLoops) 
+            {
+                if (PointInsidePolygon(loop[0], loopToCheck)) 
+                {
+                    resultedList.Add(loop);
+                }
+            }
+
+            return resultedList.Count > 0;
+        }
+
+        /// <summary>
+        /// Checks if the given point is inside the given loop
+        /// </summary>
+        /// <param name="pnt">The given point</param>
+        /// <param name="polyNodes">The given loop</param>
+        /// <returns>true if the given point is inside the given loop</returns>
+        /// <remarks>This function returns an arbitrary result when the point is on the boundary of the polygon. The caller of this function should check
+        ///          if the point is on the boundary first</remarks>
+        private static bool PointInsidePolygon(UV pnt, IList<UV> polyNodes) 
+        {
+            if (pnt == null || polyNodes == null || polyNodes.Count == 0)
+                return false;
+
+            int nNodes = polyNodes.Count;
+            // Find the number of intersections of the ray strting from the 'pnt'
+            // in the left direction, with the edges of the polygon.
+            int count = 0; // number of intersections
+            for (int iPrev = 0; iPrev < nNodes; iPrev++)
+            {
+                int iNext = (iPrev + 1) % nNodes;
+                if (polyNodes[iPrev].V >= pnt.V == polyNodes[iNext].V < pnt.V)
+                {
+                    if ((pnt.V - polyNodes[iPrev].V) * (polyNodes[iPrev].U - polyNodes[iNext].U) /
+                       (polyNodes[iPrev].V - polyNodes[iNext].V) + polyNodes[iPrev].U < pnt.U)
+                        count++;
+                }
+            }
+            return (count % 2) != 0;
+        }
+
+        /// <summary>
+        /// Create IFCCurve from the given curve
+        /// </summary>
+        /// <param name="file">The file</param>
+        /// <param name="exporterIFC">The exporter</param>
+        /// <param name="curve">The curve that needs to convert to IFCCurve</param>
+        /// <param name="allowAdvancedCurve">indicates whether (TRUE) we want to convert "advanced" curve type 
+        ///                                  like Hermite or NURBS to IfcCurve or (FALSE) we want to tessellate them</param>
+        /// <returns>The handle representing the IFCCurve</returns>
+        public static IFCAnyHandle CreateIFCCurveFromRevitCurve(IFCFile file, ExporterIFC exporterIFC, Curve curve, bool allowAdvancedCurve) 
+        {
+            IFCAnyHandle ifcCurve = null;
+
+            // if the Curve is a line, do the following
+            if (curve is Line)
+            {
+                // Unbounded line doesn't make sense, skip if somehow it is 
+                if (curve.IsBound)
+                {
+                    Line curveLine = curve as Line;
+                    IFCAnyHandle point = XYZtoIfcCartesianPoint(exporterIFC, curveLine.GetEndPoint(0), true);
+                    IList<double> direction = new List<double>();
+                    direction.Add(UnitUtil.ScaleLength(curveLine.Direction.X));
+                    direction.Add(UnitUtil.ScaleLength(curveLine.Direction.Y));
+                    direction.Add(UnitUtil.ScaleLength(curveLine.Direction.Z));
+                    IFCAnyHandle vector = IFCInstanceExporter.CreateVector(file, direction, curveLine.Direction.GetLength());
+                    ifcCurve = IFCInstanceExporter.CreateLine(file, point, vector);
+                }
+            }
+            // if the Curve is an Arc do following
+            else if (curve is Arc)
+            {
+                Arc curveArc = curve as Arc;
+                XYZ curveArcCenter = curveArc.Center;
+                XYZ curveArcNormal = curveArc.Normal;
+                XYZ curveArcXDirection = curveArc.XDirection;
+
+                if (curveArcCenter == null || curveArcNormal == null || curveArcXDirection == null)
+                {
+                    // encounter invalid curve, return null
+                    return null;
+                }
+                IFCAnyHandle location3D = XYZtoIfcCartesianPoint(exporterIFC, curveArcCenter, true);
+
+                // Create the z-direction
+                IFCAnyHandle axis = null;
+                IList<double> axisList = new List<double>();
+                axisList.Add(UnitUtil.ScaleLength(curveArcNormal.X));
+                axisList.Add(UnitUtil.ScaleLength(curveArcNormal.Y));
+                axisList.Add(UnitUtil.ScaleLength(curveArcNormal.Z));
+                axis = IFCInstanceExporter.CreateDirection(file, axisList);
+
+                // Create the x-direction
+                IFCAnyHandle refDirection = null;
+                IList<double> refDirectionList = new List<double>();
+                refDirectionList.Add(UnitUtil.ScaleLength(curveArcXDirection.X));
+                refDirectionList.Add(UnitUtil.ScaleLength(curveArcXDirection.Y));
+                refDirectionList.Add(UnitUtil.ScaleLength(curveArcXDirection.Z));
+                refDirection = IFCInstanceExporter.CreateDirection(file, refDirectionList);
+
+                IFCAnyHandle position3D = IFCInstanceExporter.CreateAxis2Placement3D(file, location3D, axis, refDirection);
+                ifcCurve = IFCInstanceExporter.CreateCircle(file, position3D, UnitUtil.ScaleLength(curveArc.Radius));
+            }
+            // If curve is an ellipse or elliptical Arc type
+            else if (curve is Ellipse)
+            {
+                Ellipse curveEllipse = curve as Ellipse;
+                IFCAnyHandle location = XYZtoIfcCartesianPoint2D(exporterIFC, curveEllipse.Center, true);
+                IList<double> direction = new List<double>();
+                direction.Add(UnitUtil.ScaleLength(curveEllipse.XDirection.X));
+                direction.Add(UnitUtil.ScaleLength(curveEllipse.YDirection.Y));
+                IFCAnyHandle dir = IFCInstanceExporter.CreateDirection(file, direction);
+                IFCAnyHandle position = IFCInstanceExporter.CreateAxis2Placement2D(file, location, null, dir);
+                ifcCurve = IFCInstanceExporter.CreateEllipse(file, position, UnitUtil.ScaleLength(curveEllipse.RadiusX), UnitUtil.ScaleLength(curveEllipse.RadiusY));
+            }
+            else if (allowAdvancedCurve && (curve is NurbSpline))
+            {
+                NurbSpline nurbSpline = curve as NurbSpline;
+
+                int degree = nurbSpline.Degree;
+                IList<XYZ> controlPoints = nurbSpline.CtrlPoints;
+                IList<IFCAnyHandle> controlPointsInIfc = new List<IFCAnyHandle>();
+                foreach (XYZ xyz in controlPoints)
+                {
+                    controlPointsInIfc.Add(XYZtoIfcCartesianPoint(exporterIFC, xyz, true));
+                }
+
+                // Based on IFC4 specification, curveForm is for information only, leave it as UNSPECIFIED for now.
+                Revit.IFC.Export.Toolkit.IFC4.IFCBSplineCurveForm curveForm = Toolkit.IFC4.IFCBSplineCurveForm.UNSPECIFIED;
+
+                IFCLogical closedCurve = nurbSpline.isClosed ? IFCLogical.True : IFCLogical.False;
+
+                // Based on IFC4 specification, selfIntersect is for information only, leave it as Unknown for now
+                IFCLogical selfIntersect = IFCLogical.Unknown;
+
+                // Unlike Revit, IFC uses 2 lists to store knots information. The first list contain every distinct knot, 
+                // and the second list stores the multiplicities of each knot. The following code creates those 2 lists  
+                // from the Knots property of Revit NurbSpline
+                DoubleArray revitKnots = nurbSpline.Knots;
+                IList<double> ifcKnots = new List<double>();
+                IList<int> knotMultiplitices = new List<int>();
+
+                foreach (double knot in revitKnots)
+                {
+                    if (ifcKnots.Count == 0 || !MathUtil.IsAlmostEqual(knot, ifcKnots[ifcKnots.Count - 1]))
+                    {
+                        ifcKnots.Add(knot);
+                        knotMultiplitices.Add(1);
+                    }
+                    else
+                    {
+                        knotMultiplitices[knotMultiplitices.Count - 1]++;
+                    }
+                }
+
+                // Based on IFC4 specification, knotSpec is for information only, leave it as UNSPECIFIED for now.
+                Toolkit.IFC4.IFCKnotType knotSpec = Toolkit.IFC4.IFCKnotType.UNSPECIFIED;
+
+                if (!nurbSpline.isRational)
+                {
+                    ifcCurve = IFCInstanceExporter.CreateBSplineCurveWithKnots
+                        (file, degree, controlPointsInIfc, curveForm, closedCurve, selfIntersect, knotMultiplitices, ifcKnots, knotSpec);
+                }
+                else
+                {
+                    DoubleArray revitWeights = nurbSpline.Weights;
+                    IList<double> ifcWeights = new List<double>();
+
+                    foreach (double weight in revitWeights)
+                    {
+                        ifcWeights.Add(weight);
+                    }
+
+                    ifcCurve = IFCInstanceExporter.CreateRationalBSplineCurveWithKnots
+                        (file, degree, controlPointsInIfc, curveForm, closedCurve, selfIntersect, knotMultiplitices, ifcKnots, knotSpec, ifcWeights);
+                }
+            }
+            // if the Curve is of any other type, tessellate it and use polyline to represent it
+            else
+            {
+                // any other curve is not supported, we will tessellate it
+                IList<XYZ> tessCurve = curve.Tessellate();
+                IList<IFCAnyHandle> polylineVertices = new List<IFCAnyHandle>();
+                foreach (XYZ vertex in tessCurve)
+                {
+                    IFCAnyHandle ifcVert = XYZtoIfcCartesianPoint(exporterIFC, vertex, true);
+                    polylineVertices.Add(ifcVert);
+                }
+                ifcCurve = IFCInstanceExporter.CreatePolyline(file, polylineVertices);
+            }
+            return ifcCurve;
+        }
+
+        /// <summary>
+        /// Converts the given XYZ point to IfcCartesianPoint3D
+        /// </summary>
+        /// <param name="exporterIFC">The exporter</param>
+        /// <param name="thePoint">The point</param>
+        /// <param name="applyUnitScale">indicates if we want to convert the point from global Revit coordinates to IFC current coordinates, including scale</param>
+        /// <returns>The hanlde representing IfcCartesianPoint3D</returns>
+        public static IFCAnyHandle XYZtoIfcCartesianPoint(ExporterIFC exporterIFC, XYZ thePoint, bool applyUnitScale)
+        {
+            IFCFile file = exporterIFC.GetFile();
+            XYZ vertexScaled = thePoint;
+            if (applyUnitScale)
+                vertexScaled = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, thePoint);
+
+            IList<double> coordPoint = new List<double>();
+            coordPoint.Add(vertexScaled.X);
+            coordPoint.Add(vertexScaled.Y);
+            coordPoint.Add(vertexScaled.Z);
+            IFCAnyHandle cartesianPoint = IFCInstanceExporter.CreateCartesianPoint(file, coordPoint);
+            return cartesianPoint;
+        }
+
+        /// <summary>
+        /// Converts the given XYZ point to IfcCartesianPoint2D
+        /// </summary>
+        /// <param name="exporterIFC">The exporter</param>
+        /// <param name="thePoint">The point</param>
+        /// <param name="applyUnitScale">indicates if we want to convert the point from global Revit coordinates to IFC current coordinates, including scale</param>
+        /// <returns>The hanlde representing IfcCartesianPoint2D</returns>
+        public static IFCAnyHandle XYZtoIfcCartesianPoint2D(ExporterIFC exporterIFC, XYZ thePoint, bool applyUnitScale)
+        {
+            IFCFile file = exporterIFC.GetFile();
+            XYZ vertexScaled = thePoint;
+            if (applyUnitScale)
+                vertexScaled = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, thePoint);
+
+            IList<double> coordPoint = new List<double>();
+            coordPoint.Add(vertexScaled.X);
+            coordPoint.Add(vertexScaled.Y);
+            IFCAnyHandle cartesianPoint = IFCInstanceExporter.CreateCartesianPoint(file, coordPoint);
+            return cartesianPoint;
         }
     }
 }

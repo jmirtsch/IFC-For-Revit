@@ -68,7 +68,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcClosedShell))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcClosedShell);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcClosedShell);
                 return null;
             }
 

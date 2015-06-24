@@ -220,7 +220,7 @@ namespace Revit.IFC.Export.Exporter
                 return;
 
             IFCFile ifcFile = exporterIFC.GetFile();
-            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
             IFCAnyHandle portOut = null;
             IFCAnyHandle portIn = null;
             // ----------------------- In Port ----------------------

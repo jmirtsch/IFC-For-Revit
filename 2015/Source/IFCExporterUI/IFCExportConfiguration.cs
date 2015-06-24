@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC export alternate UI library: this library works with Autodesk(R) Revit(R) to provide an alternate user interface for the export of IFC files from Revit.
-// Copyright (C) 2016  Autodesk, Inc.
+// Copyright (C) 2012  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -16,7 +16,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -147,13 +146,18 @@ namespace BIM.IFC.Export.UI
         public bool IncludeSiteElevation { get; set; }
 
         /// <summary>
-        /// True to use coarse tessellation for certain elements (currently floors, spaces, stairs, ramps and railings).
-        /// Will reduce the size of the export file, but may create less usable geometry.
+        /// True to use the active view when generating geometry.
+        /// False to use default export options.
         /// </summary>
-        public bool UseCoarseTessellation { get; set; }
+        public bool UseActiveViewGeometry { get; set; }
 
         /// <summary>
-        /// Value indicating the level of detail to be used by tessellation. Valid valus is between 0 to 1
+        /// True to export specific schedules.
+        /// </summary>
+        public bool? ExportSpecificSchedules { get; set; }
+
+        /// <summary>
+/// Value indicating the level of detail to be used by tessellation. Valid valus is between 0 to 1
         /// </summary>
         public double TessellationLevelOfDetail { get; set; }
 
@@ -170,8 +174,15 @@ namespace BIM.IFC.Export.UI
         /// </remarks>
         public bool ExportRoomsInView { get; set; }
 
-
+        /// <summary>
+        /// 
+        /// </summary>
         public bool ExportLinkedFiles { get; set; }
+
+        /// <summary>
+        /// Id of the active view.
+        /// </summary>
+        public int ActiveViewId { get; set; }
 
         private bool m_isBuiltIn = false;
         private bool m_isInSession = false;
@@ -234,8 +245,9 @@ namespace BIM.IFC.Export.UI
             this.ExportUserDefinedPsetsFileName   = "";
             this.ExportLinkedFiles                = false;
             this.IncludeSiteElevation             = false;
-            this.UseCoarseTessellation            = true;
-            this.TessellationLevelOfDetail        = 0.25;
+            this.UseActiveViewGeometry = false;
+            this.ExportSpecificSchedules = false;
+            this.TessellationLevelOfDetail        = 0.5;
             this.StoreIFCGUID                     = false;
             this.m_isBuiltIn                      = false; 
             this.m_isInSession                    = false;
@@ -283,6 +295,8 @@ namespace BIM.IFC.Export.UI
             configuration.Use2DRoomBoundaryForVolume = false;
             configuration.UseFamilyAndTypeNameForReference = false;
             configuration.ExportPartsAsBuildingElements = false;
+            configuration.UseActiveViewGeometry = false;
+            configuration.ExportSpecificSchedules = false;
             configuration.ExportBoundingBox = exportBoundingBox;
             configuration.ExportSolidModelRep = false;
             configuration.ExportSchedulesAsPsets = schedulesAsPSets;
@@ -290,8 +304,8 @@ namespace BIM.IFC.Export.UI
             configuration.ExportUserDefinedPsetsFileName = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"\" + name + @".txt";
             configuration.ExportLinkedFiles = exportLinkedFiles;
             configuration.IncludeSiteElevation = false;
-            configuration.UseCoarseTessellation = true;
-            configuration.TessellationLevelOfDetail = 0.25;
+            // The default tesselationLevelOfDetail will be low
+            configuration.TessellationLevelOfDetail = 0.5;
             configuration.StoreIFCGUID = false;
             configuration.m_isBuiltIn = true;
             configuration.m_isInSession = false;
@@ -324,6 +338,8 @@ namespace BIM.IFC.Export.UI
             this.Use2DRoomBoundaryForVolume = other.Use2DRoomBoundaryForVolume;
             this.UseFamilyAndTypeNameForReference = other.UseFamilyAndTypeNameForReference;
             this.ExportPartsAsBuildingElements = other.ExportPartsAsBuildingElements;
+            this.UseActiveViewGeometry = other.UseActiveViewGeometry;
+            this.ExportSpecificSchedules = other.ExportSpecificSchedules;
             this.ExportBoundingBox = other.ExportBoundingBox;
             this.ExportSolidModelRep = other.ExportSolidModelRep;
             this.ExportSchedulesAsPsets = other.ExportSchedulesAsPsets;
@@ -331,7 +347,6 @@ namespace BIM.IFC.Export.UI
             this.ExportUserDefinedPsetsFileName = other.ExportUserDefinedPsetsFileName;
             this.ExportLinkedFiles = other.ExportLinkedFiles;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
-            this.UseCoarseTessellation = other.UseCoarseTessellation;
             this.TessellationLevelOfDetail = other.TessellationLevelOfDetail;
             this.StoreIFCGUID = other.StoreIFCGUID;
             this.m_isBuiltIn = other.m_isBuiltIn;
@@ -370,6 +385,8 @@ namespace BIM.IFC.Export.UI
             this.Use2DRoomBoundaryForVolume = other.Use2DRoomBoundaryForVolume;
             this.UseFamilyAndTypeNameForReference = other.UseFamilyAndTypeNameForReference;
             this.ExportPartsAsBuildingElements = other.ExportPartsAsBuildingElements;
+            this.UseActiveViewGeometry = other.UseActiveViewGeometry;
+            this.ExportSpecificSchedules = other.ExportSpecificSchedules;
             this.ExportBoundingBox = other.ExportBoundingBox;
             this.ExportSolidModelRep = other.ExportSolidModelRep;
             this.ExportSchedulesAsPsets = other.ExportSchedulesAsPsets;
@@ -377,7 +394,6 @@ namespace BIM.IFC.Export.UI
             this.ExportUserDefinedPsetsFileName = other.ExportUserDefinedPsetsFileName;
             this.ExportLinkedFiles = other.ExportLinkedFiles;
             this.IncludeSiteElevation = other.IncludeSiteElevation;
-            this.UseCoarseTessellation = other.UseCoarseTessellation;
             this.TessellationLevelOfDetail = other.TessellationLevelOfDetail;
             this.ActivePhaseId = other.ActivePhaseId;
             this.ExportRoomsInView = other.ExportRoomsInView;
@@ -419,17 +435,14 @@ namespace BIM.IFC.Export.UI
         /// Updates the IFCExportOptions with the settings in this configuration.
         /// </summary>
         /// <param name="options">The IFCExportOptions to update.</param>
-        /// <param name="filterViewId">The filter view.</param>
+        /// <param name="filterViewId">The id of the view that will be used to select which elements to export.</param>
         public void UpdateOptions(IFCExportOptions options, ElementId filterViewId)
         {
             options.FileVersion = IFCVersion;
             options.SpaceBoundaryLevel = SpaceBoundaries;
             options.ExportBaseQuantities = ExportBaseQuantities;
             options.WallAndColumnSplitting = SplitWallsAndColumns;
-            if (VisibleElementsOfCurrentView) 
-                options.FilterViewId = filterViewId;
-            else
-                options.FilterViewId = ElementId.InvalidElementId;
+           options.FilterViewId = VisibleElementsOfCurrentView ? filterViewId : ElementId.InvalidElementId;
             options.AddOption("ExportInternalRevitPropertySets", ExportInternalRevitPropertySets.ToString());
             options.AddOption("ExportIFCCommonPropertySets", ExportIFCCommonPropertySets.ToString());
             options.AddOption("ExportAnnotations", Export2DElements.ToString());
@@ -437,15 +450,22 @@ namespace BIM.IFC.Export.UI
             options.AddOption("UseFamilyAndTypeNameForReference",UseFamilyAndTypeNameForReference.ToString());
             options.AddOption("ExportVisibleElementsInView", VisibleElementsOfCurrentView.ToString());
             options.AddOption("ExportPartsAsBuildingElements", ExportPartsAsBuildingElements.ToString());
+            options.AddOption("UseActiveViewGeometry", UseActiveViewGeometry.ToString());
+            options.AddOption("ExportSpecificSchedules", ExportSpecificSchedules.ToString());
             options.AddOption("ExportBoundingBox", ExportBoundingBox.ToString());
             options.AddOption("ExportSolidModelRep", ExportSolidModelRep.ToString());
             options.AddOption("ExportSchedulesAsPsets", ExportSchedulesAsPsets.ToString());
             options.AddOption("ExportUserDefinedPsets", ExportUserDefinedPsets.ToString());
             options.AddOption("ExportLinkedFiles", ExportLinkedFiles.ToString());
             options.AddOption("IncludeSiteElevation", IncludeSiteElevation.ToString());
-            options.AddOption("UseCoarseTessellation", UseCoarseTessellation.ToString());
             options.AddOption("TessellationLevelOfDetail", TessellationLevelOfDetail.ToString());
+            options.AddOption("ActiveViewId", ActiveViewId.ToString());
             options.AddOption("StoreIFCGUID", StoreIFCGUID.ToString());
+
+           // The active phase may not be valid if we are exporting multiple projects. However, if projects share a template that defines the phases,
+           // then the ActivePhaseId would likely be valid for all.  There is some small chance that the ActivePhaseId would be a valid, but different, phase
+           // in different projects, but that is unlikely enough that it seems worth warning against it but allowing the better functionality in general.
+           if (IFCPhaseAttributes.Validate(ActivePhaseId))
             options.AddOption("ActivePhase", ActivePhaseId.ToString());
 
             options.AddOption("FileType", IFCFileType.ToString());
@@ -454,7 +474,6 @@ namespace BIM.IFC.Export.UI
 
             options.AddOption("ConfigName", Name);      // Add config name into the option for use in the exporter
             options.AddOption("ExportUserDefinedPsetsFileName", ExportUserDefinedPsetsFileName);
-
             options.AddOption("ExportRoomsInView", ExportRoomsInView.ToString());
         }
 
@@ -497,7 +516,7 @@ namespace BIM.IFC.Export.UI
                 builder.AppendLine(GetDescriptionLine(Resources.PropertySets, exportedPropertySets.ToString()));
 
                 if (ExportUserDefinedPsets)
-                    builder.AppendLine(GetDescriptionLine(Resources.ExportUserDefinedPsetsFileName, ExportUserDefinedPsetsFileName));
+                   builder.AppendLine(GetDescriptionLine(Resources.ExportUserDefinedPsetsFileName, ExportUserDefinedPsetsFileName));
 
                 // Sort by "do" and "don't"
                 for (int pass = 0; pass < 2; pass++)
@@ -509,6 +528,7 @@ namespace BIM.IFC.Export.UI
                     ConditionalAddLine(builder, Resources.ExportPlanViewElements, Export2DElements, valueToMatch);
 
                     ConditionalAddLine(builder, Resources.ExportVisibleElementsInView, VisibleElementsOfCurrentView, valueToMatch);
+                    ConditionalAddLine(builder, Resources.UseActiveViewForGeometry, UseActiveViewGeometry, valueToMatch);
                     ConditionalAddLine(builder, Resources.ExportLinkedFiles, ExportLinkedFiles, valueToMatch);
                     ConditionalAddLine(builder, Resources.ExportPartsAsBuildingElements, ExportPartsAsBuildingElements, valueToMatch);
                     ConditionalAddLine(builder, Resources.ExportBoundingBox, ExportBoundingBox, valueToMatch);
@@ -517,10 +537,11 @@ namespace BIM.IFC.Export.UI
                     ConditionalAddLine(builder, Resources.UseFamilyAndTypeNameForReferences, UseFamilyAndTypeNameForReference, valueToMatch);
                     ConditionalAddLine(builder, Resources.Use2DRoomBoundariesForRoomVolume, Use2DRoomBoundaryForVolume, valueToMatch);
                     ConditionalAddLine(builder, Resources.IncludeIfcSiteElevation, IncludeSiteElevation, valueToMatch);
-                    ConditionalAddLine(builder, Resources.UseCoarseTessellation, UseCoarseTessellation, valueToMatch);
                     ConditionalAddLine(builder, Resources.StoreIFCGUID, StoreIFCGUID, valueToMatch);
-
+ 
                     ConditionalAddLine(builder, Resources.ExportRoomsInView, ExportRoomsInView, valueToMatch);
+                    bool exportSpecificSchedules = ExportSpecificSchedules.HasValue ? ExportSpecificSchedules.Value : false;
+                    ConditionalAddLine(builder, Resources.ExportSpecificSchedules, exportSpecificSchedules, valueToMatch);
                 }
 
                 return builder.ToString();
@@ -537,10 +558,10 @@ namespace BIM.IFC.Export.UI
         {
             if (value is bool)
             {
-                if ((bool)value)
+                if ((bool) value)
                     return String.Format("{0}", label);
                 else
-                {
+ {
                     // A small hack for western languages: remove the uppercase from the start of the sentence.
                     char startChar = label.First();
                     if (startChar >= 'A' && startChar <= 'Z')
@@ -561,5 +582,6 @@ namespace BIM.IFC.Export.UI
         {
             return Name + (IsBuiltIn? "*":"");
         }
+
     }
 }

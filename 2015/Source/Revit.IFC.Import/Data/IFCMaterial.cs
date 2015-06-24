@@ -90,12 +90,12 @@ namespace Revit.IFC.Import.Data
             if (hasRepresentation != null && hasRepresentation.Count == 1)
             {
                 if (!IFCAnyHandleUtil.IsSubTypeOf(hasRepresentation[0], IFCEntityType.IfcMaterialDefinitionRepresentation))
-                    IFCImportFile.TheLog.LogUnexpectedTypeError(hasRepresentation[0], IFCEntityType.IfcMaterialDefinitionRepresentation, false);
+                    Importer.TheLog.LogUnexpectedTypeError(hasRepresentation[0], IFCEntityType.IfcMaterialDefinitionRepresentation, false);
                 else
                     MaterialDefinitionRepresentation = IFCProductRepresentation.ProcessIFCProductRepresentation(hasRepresentation[0]);
             }
 
-            IFCImportFile.TheLog.AddToElementCount();
+            Importer.TheLog.AddToElementCount();
         }
 
         private static string GetMaterialName(int id, string originalName)
@@ -175,7 +175,7 @@ namespace Revit.IFC.Import.Data
             }
             catch (Exception ex)
             {
-                IFCImportFile.TheLog.LogError(id, "Couldn't set some Material values: " + ex.Message, false);
+                Importer.TheLog.LogError(id, "Couldn't set some Material values: " + ex.Message, false);
             }
 
             if (!materialHasValidColor)
@@ -186,10 +186,10 @@ namespace Revit.IFC.Import.Data
                 string comment = "Created Material: " + revitMaterialName
                     + " with color: (" + materialElem.Color.Red + ", " + materialElem.Color.Green + ", " + materialElem.Color.Blue + ") "
                     + "transparency: " + materialElem.Transparency + " shininess: " + materialElem.Shininess + " smoothness: " + materialElem.Smoothness;
-                IFCImportFile.TheLog.LogComment(id, comment, false);
+                Importer.TheLog.LogComment(id, comment, false);
             }
 
-            IFCImportFile.TheLog.AddCreatedMaterial(doc, createdElementId);
+            Importer.TheLog.AddCreatedMaterial(doc, createdElementId);
             return createdElementId;
         }
 
@@ -237,7 +237,7 @@ namespace Revit.IFC.Import.Data
             catch (Exception ex)
             {
                 IsValidForCreation = false;
-                IFCImportFile.TheLog.LogCreationError(this, ex.Message, false);
+                Importer.TheLog.LogCreationError(this, ex.Message, false);
             }
         }
 
@@ -250,7 +250,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterial))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcMaterial);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcMaterial);
                 return null;
             }
 
