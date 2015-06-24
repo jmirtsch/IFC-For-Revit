@@ -68,7 +68,7 @@ namespace Revit.IFC.Import.Data
 
             HashSet<IFCAnyHandle> styles = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(item, "Styles");
             if (styles == null || styles.Count == 0)
-                IFCImportFile.TheLog.LogError(item.StepId, "No style information found, ignoring.", true);
+                Importer.TheLog.LogError(item.StepId, "No style information found, ignoring.", true);
 
             foreach (IFCAnyHandle style in styles)
             {
@@ -79,14 +79,14 @@ namespace Revit.IFC.Import.Data
                         if (ShadingStyle == null)
                             ShadingStyle = IFCSurfaceStyleShading.ProcessIFCSurfaceStyleShading(style);
                         else
-                            IFCImportFile.TheLog.LogWarning(item.StepId, "Duplicate IfcSurfaceStyleShading, ignoring.", false);
+                            Importer.TheLog.LogWarning(item.StepId, "Duplicate IfcSurfaceStyleShading, ignoring.", false);
                     }
                     else
-                        IFCImportFile.TheLog.LogUnhandledSubTypeError(style, "IfcSurfaceStyleElementSelect", false);
+                        Importer.TheLog.LogUnhandledSubTypeError(style, "IfcSurfaceStyleElementSelect", false);
                 }
                 catch (Exception ex)
                 {
-                    IFCImportFile.TheLog.LogError(style.StepId, ex.Message, false);
+                    Importer.TheLog.LogError(style.StepId, ex.Message, false);
                 }
             }
         }
@@ -152,7 +152,7 @@ namespace Revit.IFC.Import.Data
             catch (Exception ex)
             {
                 IsValidForCreation = false;
-                IFCImportFile.TheLog.LogCreationError(this, ex.Message, false);
+                Importer.TheLog.LogCreationError(this, ex.Message, false);
             }
 
             return ElementId.InvalidElementId;
@@ -167,7 +167,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSurfaceStyle))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcSurfaceStyle);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcSurfaceStyle);
                 return null;
             }
 

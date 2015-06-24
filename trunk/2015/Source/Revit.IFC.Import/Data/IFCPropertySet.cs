@@ -225,7 +225,7 @@ namespace Revit.IFC.Import.Data
             }
             else
             {
-                IFCImportFile.TheLog.LogMissingRequiredAttributeError(ifcPropertySet, "HasProperties", false);
+                Importer.TheLog.LogMissingRequiredAttributeError(ifcPropertySet, "HasProperties", false);
             }
         }
 
@@ -238,7 +238,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPropertySet))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcPropertySet);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcPropertySet);
                 return null;
             }
 
@@ -293,12 +293,12 @@ namespace Revit.IFC.Import.Data
             Category category = element.Category;
             if (category == null)
             {
-                IFCImportFile.TheLog.LogWarning(parameterSetId, "Can't add parameters for element with no category.", true);
+                Importer.TheLog.LogWarning(parameterSetId, "Can't add parameters for element with no category.", true);
                 return null;
             }
             else if (IsDisallowedCategory(category))
             {
-                IFCImportFile.TheLog.LogWarning(parameterSetId, "Can't add parameters for category: " + category.Name, true);
+                Importer.TheLog.LogWarning(parameterSetId, "Can't add parameters for category: " + category.Name, true);
                 return null;
             }
 
@@ -370,7 +370,7 @@ namespace Revit.IFC.Import.Data
             }
 
             if (parameter == null)
-                IFCImportFile.TheLog.LogError(parameterSetId, "Couldn't create parameter: " + parameterName, false);
+                Importer.TheLog.LogError(parameterSetId, "Couldn't create parameter: " + parameterName, false);
 
             return parameter;
         }
@@ -487,13 +487,38 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
+        /// Add a string parameter to an element.
+        /// </summary>
+        /// <param name="doc">The document.</param>
+        /// <param name="element">The element.</param>
+        /// <param name="objDef">The IFCObjectDefinition that created the element.</param>
+        /// <param name="name">The enum corresponding to the parameter name.</param>
+        /// <param name="parameterValue">The parameter value.</param>
+        /// <param name="parameterSetId">The id of the containing parameter set, for reporting errors.</param>
+        /// <returns>True if the parameter was successfully added, false otherwise.</returns>
+        public static bool AddParameterString(Document doc, Element element, IFCObjectDefinition objDef, IFCSharedParameters name, string parameterValue, int parameterSetId)
+        {
+            if (objDef == null)
+                return false;
+
+            string parameterName = objDef.GetSharedParameterName(name);
+
+            Parameter parameter = AddParameterBase(doc, element, parameterName, parameterSetId, ParameterType.Text);
+            if (parameter == null)
+                return false;
+
+            parameter.Set(parameterValue);
+            return true;
+        }
+
+        /// <summary>
         /// Create a property set for a given element.
         /// </summary>
         /// <param name="doc">The document.</param>
         /// <param name="element">The element being created.</param>
         /// <param name="parameterGroupMap">The parameters of the element.  Cached for performance.</param>
-        /// <returns>The name of the property set created, if it was created.</returns>
-        public override string CreatePropertySet(Document doc, Element element, IFCParameterSetByGroup parameterGroupMap)
+        /// <returns>The name of the property set created, if it was created, and a Boolean value if it should be added to the property set list.</returns>
+        public override KeyValuePair<string, bool> CreatePropertySet(Document doc, Element element, IFCParameterSetByGroup parameterGroupMap)
         {
             string quotedName = "\"" + Name + "\"";
 
@@ -504,7 +529,7 @@ namespace Revit.IFC.Import.Data
             }
 
             CreateScheduleForPropertySet(doc, element, parameterGroupMap, parametersCreated);
-            return quotedName;
+            return new KeyValuePair<string,bool>(quotedName, true);
         }
     }
 }

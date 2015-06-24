@@ -49,7 +49,9 @@
     <AppDesigner Include="Properties\" />
     <Compile Include="Utility\IFCAnyHandleUtil.cs" />
     <Compile Include="Utility\IFCCompatibilityType.cs" />
+    <Compile Include="Utility\IFCFuzzyXYZ.cs" />
     <Compile Include="Utility\MathUtil.cs" />
+    <Compile Include="Utility\RevitStatusBar.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Framework.2.0">
@@ -74,5 +76,5 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup />
-<Import Project=".\Revit.IFC.Common.props" />
+  <Import Project=".\Revit.IFC.Common.props" />
 </Project>

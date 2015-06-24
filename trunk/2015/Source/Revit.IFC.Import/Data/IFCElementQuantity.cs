@@ -97,7 +97,7 @@ namespace Revit.IFC.Import.Data
             }
             else
             {
-                IFCImportFile.TheLog.LogMissingRequiredAttributeError(ifcElementQuantity, "Quantities", false);
+                Importer.TheLog.LogMissingRequiredAttributeError(ifcElementQuantity, "Quantities", false);
             }
         }
 
@@ -110,7 +110,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcElementQuantity))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcElementQuantity);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcElementQuantity);
                 return null;
             }
 
@@ -127,8 +127,8 @@ namespace Revit.IFC.Import.Data
         /// <param name="doc">The document.</param>
         /// <param name="element">The element being created.</param>
         /// <param name="parameterGroupMap">The parameters of the element.  Cached for performance.</param>
-        /// <returns>The name of the element quantity created, if it was created.</returns>
-        public override string CreatePropertySet(Document doc, Element element, IFCParameterSetByGroup parameterGroupMap)
+        /// <returns>The name of the property set created, if it was created, and a Boolean value if it should be added to the property set list.</returns>
+        public override KeyValuePair<string, bool> CreatePropertySet(Document doc, Element element, IFCParameterSetByGroup parameterGroupMap)
         {
             string quotedName = "\"" + Name + "\"";
 
@@ -139,7 +139,7 @@ namespace Revit.IFC.Import.Data
             }
 
             CreateScheduleForPropertySet(doc, element, parameterGroupMap, parametersCreated);
-            return quotedName;
+            return new KeyValuePair<string,bool>(quotedName, true);
         }
     }
 }

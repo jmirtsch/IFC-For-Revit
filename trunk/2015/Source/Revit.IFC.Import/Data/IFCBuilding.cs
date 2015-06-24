@@ -29,64 +29,101 @@ using Revit.IFC.Import.Enums;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents an IfcBuilding.
-    /// </summary>
-    public class IFCBuilding : IFCSpatialStructureElement
-    {
-        /// <summary>
-        /// Constructs an IFCBuilding from the IfcBuilding handle.
-        /// </summary>
-        /// <param name="ifcIFCBuilding">The IfcBuilding handle.</param>
-        protected IFCBuilding(IFCAnyHandle ifcIFCBuilding)
-        {
-            Process(ifcIFCBuilding);
-        }
+   /// <summary>
+   /// Represents an IfcBuilding.
+   /// </summary>
+   public class IFCBuilding : IFCSpatialStructureElement
+   {
+      /// <summary>
+      /// Constructs an IFCBuilding from the IfcBuilding handle.
+      /// </summary>
+      /// <param name="ifcIFCBuilding">The IfcBuilding handle.</param>
+      protected IFCBuilding(IFCAnyHandle ifcIFCBuilding)
+      {
+         Process(ifcIFCBuilding);
+      }
 
-        /// <summary>
-        /// Creates or populates Revit elements based on the information contained in this class.
-        /// </summary>
-        /// <param name="doc">The document.</param>
-        protected override void Create(Document doc)
-        {
-            base.Create(doc);
-        }
+      /// <summary>
+      /// Cleans out the IFCEntity to save memory.
+      /// </summary>
+      public override void CleanEntity()
+      {
+         base.CleanEntity();
+      }
 
-        /// <summary>
-        /// Cleans out the IFCEntity to save memory.
-        /// </summary>
-        public override void CleanEntity()
-        {
-            base.CleanEntity();
-        }
-        
-        /// <summary>
-        /// Processes IfcBuilding attributes.
-        /// </summary>
-        /// <param name="ifcIFCBuilding">The IfcBuilding handle.</param>
-        protected override void Process(IFCAnyHandle ifcIFCBuilding)
-        {
-            // TODO: process IfcBuilding specific data.
-            base.Process(ifcIFCBuilding);
-        }
+      /// <summary>
+      /// Processes IfcBuilding attributes.
+      /// </summary>
+      /// <param name="ifcIFCBuilding">The IfcBuilding handle.</param>
+      protected override void Process(IFCAnyHandle ifcIFCBuilding)
+      {
+         // TODO: process IfcBuilding specific data.
+         base.Process(ifcIFCBuilding);
+      }
 
-        /// <summary>
-        /// Processes an IfcBuilding object.
-        /// </summary>
-        /// <param name="ifcBuilding">The IfcBuilding handle.</param>
-        /// <returns>The IFCBuilding object.</returns>
-        public static IFCBuilding ProcessIFCBuilding(IFCAnyHandle ifcBuilding)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcBuilding))
-            {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcBuilding);
-                return null;
-            }
+      /// <summary>
+      /// Allow for override of IfcObjectDefinition shared parameter names.
+      /// </summary>
+      /// <param name="name">The enum corresponding of the shared parameter.</param>
+      /// <returns>The name appropriate for this IfcObjectDefinition.</returns>
+      public override string GetSharedParameterName(IFCSharedParameters name)
+      {
+         switch (name)
+         {
+            case IFCSharedParameters.IfcName:
+               return "IfcBuilding Name";
+            case IFCSharedParameters.IfcDescription:
+               return "IfcBuilding Description";
+            default:
+               return base.GetSharedParameterName(name);
+         }
+      }
 
-            IFCEntity building;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcBuilding.StepId, out building))
-                building = new IFCBuilding(ifcBuilding);
-            return (building as IFCBuilding);
-        }
-    }
+      /// <summary>
+      /// Get the element ids created for this entity, for summary logging.
+      /// </summary>
+      /// <param name="createdElementIds">The creation list.</param>
+      /// <remarks>May contain InvalidElementId; the caller is expected to remove it.</remarks>
+      public override void GetCreatedElementIds(ISet<ElementId> createdElementIds)
+      {
+         // If we used ProjectInformation, don't report that.
+         if (CreatedElementId != ElementId.InvalidElementId && CreatedElementId != Importer.TheCache.ProjectInformationId)
+         {
+            createdElementIds.Add(CreatedElementId);
+         }
+      }
+      
+      /// <summary>
+      /// Creates or populates Revit elements based on the information contained in this class.
+      /// </summary>
+      /// <param name="doc">The document.</param>
+      protected override void Create(Document doc)
+      {
+         base.Create(doc);
+
+         // IfcBuilding usually won't create an element, as it contains no geometry.
+         // If it doesn't, use the ProjectInfo element in the document to store its parameters.
+         if (CreatedElementId == ElementId.InvalidElementId)
+            CreatedElementId = Importer.TheCache.ProjectInformationId;
+      }
+
+      /// <summary>
+      /// Processes an IfcBuilding object.
+      /// </summary>
+      /// <param name="ifcBuilding">The IfcBuilding handle.</param>
+      /// <returns>The IFCBuilding object.</returns>
+      public static IFCBuilding ProcessIFCBuilding(IFCAnyHandle ifcBuilding)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcBuilding))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcBuilding);
+            return null;
+         }
+
+         IFCEntity building;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcBuilding.StepId, out building))
+            building = new IFCBuilding(ifcBuilding);
+         return (building as IFCBuilding);
+      }
+   }
 }

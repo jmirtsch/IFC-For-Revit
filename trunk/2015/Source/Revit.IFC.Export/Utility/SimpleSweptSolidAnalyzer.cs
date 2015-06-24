@@ -469,6 +469,8 @@ namespace Revit.IFC.Export.Utility
         /// <returns>The potential path edges. Should at least have two path on one face</returns>
         private static List<Edge> FindCandidatePathEdge(Face face, Edge edge0, Edge edge1)
         {
+           double vertexEps = ExporterCacheManager.Document.Application.VertexTolerance;
+
             Curve curve0 = edge0.AsCurveFollowingFace(face);
             Curve curve1 = edge1.AsCurveFollowingFace(face);
 
@@ -486,10 +488,10 @@ namespace Revit.IFC.Export.Utility
                     bool found = false;
                     for (int j = 0; j < 2; j++)
                     {
-                        if (endPoint0.IsAlmostEqualTo(endPoints[i, j], MathUtil.VertexEps))
+                        if (endPoint0.IsAlmostEqualTo(endPoints[i, j], vertexEps))
                         {
                             int k = 1 - j;
-                            if (endPoint1.IsAlmostEqualTo(endPoints[i, k], MathUtil.VertexEps))
+                            if (endPoint1.IsAlmostEqualTo(endPoints[i, k], vertexEps))
                             {
                                 candidatePathEdges.Add(edge);
                                 found = true;

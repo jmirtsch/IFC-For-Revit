@@ -103,7 +103,7 @@ namespace Revit.IFC.Import.Data
             if (!MathUtil.IsAlmostEqual(endParameter, -1.0))
             {
                 if (endParameter < StartParameter + MathUtil.Eps())
-                   IFCImportFile.TheLog.LogError(solid.StepId, "IfcSurfaceCurveSweptAreaSolid swept curve end parameter less than or equal to start parameter, aborting.", true);
+                   Importer.TheLog.LogError(solid.StepId, "IfcSurfaceCurveSweptAreaSolid swept curve end parameter less than or equal to start parameter, aborting.", true);
                 EndParameter = endParameter;
             }
         }
@@ -200,7 +200,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSolid))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcSurfaceCurveSweptAreaSolid);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcSurfaceCurveSweptAreaSolid);
                 return null;
             }
 

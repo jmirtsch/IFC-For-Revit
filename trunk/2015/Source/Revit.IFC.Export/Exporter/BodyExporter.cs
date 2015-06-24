@@ -16,7 +16,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
-
+#define CQ_IFC_EXPORT
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,6 +31,8 @@ using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Enums;
 using Revit.IFC.Common.Utility;
 
+// CQ_TODO: Move all of the CQ_IFC_EXPORT code out into the appropriate files.
+
 namespace Revit.IFC.Export.Exporter
 {
     /// <summary>
@@ -43,12 +45,13 @@ namespace Revit.IFC.Export.Exporter
         /// Used by floors, railings, ramps, spaces and stairs.
         /// </summary>
         /// <returns></returns>
-        public static BodyExporterOptions.BodyTessellationLevel GetTessellationLevel()
-        {
-            if (ExporterCacheManager.ExportOptionsCache.UseCoarseTessellation)
-                return BodyExporterOptions.BodyTessellationLevel.Coarse;
-            return BodyExporterOptions.BodyTessellationLevel.Default;
-        }
+       public static BodyExporterOptions.BodyTessellationLevel GetTessellationLevel()
+       {
+          // Use Coarse representation for elements unless High level of detail is set.
+          if (ExporterCacheManager.ExportOptionsCache.LevelOfDetail < 4)
+             return BodyExporterOptions.BodyTessellationLevel.Coarse;
+          return BodyExporterOptions.BodyTessellationLevel.Default;
+       }
 
         /// <summary>
         /// Sets best material id for current export state.
@@ -1193,63 +1196,10 @@ namespace Revit.IFC.Export.Exporter
             return true;
         }
 
-        private static IFCAnyHandle CreateEdgeCurveFromCurve(IFCFile file, ExporterIFC exporterIFC, Curve currCurve, IFCAnyHandle edgeStart, IFCAnyHandle edgeEnd, bool sameSense)
+        private static IFCAnyHandle CreateEdgeCurveFromCurve(IFCFile file, ExporterIFC exporterIFC, Curve curve, IFCAnyHandle edgeStart, IFCAnyHandle edgeEnd, bool sameSense)
         {
-            IFCAnyHandle baseCurve = null;
-
-            // if the Curve is a line, do the following
-            if (currCurve is Line)
-            {
-                // Unbounded line doesn't make sense, skip if somehow it is 
-                if (!currCurve.IsBound)
-                {
-                    Line curveLine = currCurve as Line;
-                    IFCAnyHandle point = XYZtoIfcCartesianPoint(exporterIFC, curveLine.GetEndPoint(0), true);
-                    IList<double> direction = new List<double>();
-                    direction.Add(UnitUtil.ScaleLength(curveLine.Direction.X));
-                    direction.Add(UnitUtil.ScaleLength(curveLine.Direction.Y));
-                    direction.Add(UnitUtil.ScaleLength(curveLine.Direction.Z));
-                    IFCAnyHandle vector = IFCInstanceExporter.CreateVector(file, direction, curveLine.Direction.GetLength());
-                    baseCurve = IFCInstanceExporter.CreateLine(file, point, vector);
-                }
-            }
-            // if the Curve is an Arc do following
-            else if (currCurve is Arc)
-            {
-                Arc curveArc = currCurve as Arc;
-                IFCAnyHandle location = XYZtoIfcCartesianPoint2D(exporterIFC, curveArc.Center, true);
-                IList<double> direction = new List<double>();
-                direction.Add(UnitUtil.ScaleLength(curveArc.XDirection.X));
-                direction.Add(UnitUtil.ScaleLength(curveArc.YDirection.Y));
-                IFCAnyHandle dir = IFCInstanceExporter.CreateDirection(file, direction);
-                IFCAnyHandle position = IFCInstanceExporter.CreateAxis2Placement2D(file, location, null, dir);
-                baseCurve = IFCInstanceExporter.CreateCircle(file, position, UnitUtil.ScaleLength(curveArc.Radius));
-            }
-            // If curve is an ellipse or elliptical Arc type
-            else if (currCurve is Ellipse)
-            {
-                Ellipse curveEllipse = currCurve as Ellipse;
-                IFCAnyHandle location = XYZtoIfcCartesianPoint2D(exporterIFC, curveEllipse.Center, true);
-                IList<double> direction = new List<double>();
-                direction.Add(UnitUtil.ScaleLength(curveEllipse.XDirection.X));
-                direction.Add(UnitUtil.ScaleLength(curveEllipse.YDirection.Y));
-                IFCAnyHandle dir = IFCInstanceExporter.CreateDirection(file, direction);
-                IFCAnyHandle position = IFCInstanceExporter.CreateAxis2Placement2D(file, location, null, dir);
-                baseCurve = IFCInstanceExporter.CreateEllipse(file, position, UnitUtil.ScaleLength(curveEllipse.RadiusX), UnitUtil.ScaleLength(curveEllipse.RadiusY));
-            }
-            // if the Curve is of any other type, tessellate it and use polyline to represent it
-            else
-            {
-                // any other curve is not supported, we will tessellate it
-                IList<XYZ> tessCurve = currCurve.Tessellate();
-                IList<IFCAnyHandle> polylineVertices = new List<IFCAnyHandle>();
-                foreach (XYZ vertex in tessCurve)
-                {
-                    IFCAnyHandle ifcVert = XYZtoIfcCartesianPoint(exporterIFC, vertex, true);
-                    polylineVertices.Add(ifcVert);
-                }
-                baseCurve = IFCInstanceExporter.CreatePolyline(file, polylineVertices);
-            }
+            bool allowAdvancedCurve = exporterIFC.FileVersion >= IFCVersion.IFC4;
+            IFCAnyHandle baseCurve = GeometryUtil.CreateIFCCurveFromRevitCurve(file, exporterIFC, curve, allowAdvancedCurve);
 
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(baseCurve))
                 return null;
@@ -1258,6 +1208,62 @@ namespace Revit.IFC.Export.Exporter
             return edgeCurve;
         }
 
+        private static IFCAnyHandle CreateProfileCurveFromCurve(IFCFile file, ExporterIFC exporterIFC, Curve curve)
+            {
+            bool allowAdvancedCurve = exporterIFC.FileVersion >= IFCVersion.IFC4;
+            IFCAnyHandle ifcCurve = GeometryUtil.CreateIFCCurveFromRevitCurve(file, exporterIFC, curve, allowAdvancedCurve);
+            IFCAnyHandle sweptCurve = null;
+
+            string name = curve.GetType().ToString() + "CurveBaseProfile";
+
+            bool isBound = false;
+            
+            IFCAnyHandle edgeStart = null;
+            IFCAnyHandle edgeEnd = null;
+
+            if (!curve.IsBound)
+                {
+                isBound = false;
+                }
+            else 
+            {
+                XYZ startPoint = curve.GetEndPoint(0);
+                XYZ endPoint = curve.GetEndPoint(1);
+
+                if (startPoint.IsAlmostEqualTo(endPoint))
+                {
+                    isBound = false;
+            }
+                else
+            {
+                    edgeStart = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, curve.GetEndPoint(0), true);
+                    edgeEnd = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, curve.GetEndPoint(1), true);
+                    isBound = true;
+                }
+            }
+
+            if (!isBound)
+            {
+                sweptCurve = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Curve, name, ifcCurve);
+            }
+            else
+            {
+                IFCAnyHandle trimmedCurve = null;
+
+                IFCData trim1data = IFCData.CreateIFCAnyHandle(edgeStart);
+                HashSet<IFCData> trim1 = new HashSet<IFCData>();
+                trim1.Add(trim1data);
+                IFCData trim2data = IFCData.CreateIFCAnyHandle(edgeEnd);
+                HashSet<IFCData> trim2 = new HashSet<IFCData>();
+                trim2.Add(trim2data);
+                bool senseAgreement = true;
+                trimmedCurve = IFCInstanceExporter.CreateTrimmedCurve(file, ifcCurve, trim1, trim2, senseAgreement, IFCTrimmingPreference.Cartesian);
+
+                sweptCurve = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Curve, name, trimmedCurve);
+                }
+
+            return sweptCurve;
+        }
         /// <summary>
         /// Returns a handle for creation of an AdvancedBrep with AdvancedFace and assigns it to the file
         /// </summary>
@@ -1272,126 +1278,271 @@ namespace Revit.IFC.Export.Exporter
             IFCFile file = exporterIFC.GetFile();
             Document document = element.Document;
 
+            // IFCFuzzyXYZ will be used in this routine to compare 2 XYZs, we consider two points are the same if their distance
+            // is within this tolerance
+            IFCFuzzyXYZ.IFCFuzzyXYZEpsilon = document.Application.VertexTolerance; 
+            
             IFCAnyHandle advancedBrep = null;
 
             try
             {
-                if (geomObject is Solid)
+                if (!(geomObject is Solid))
                 {
-                    IList<IFCAnyHandle> edgeLoopList = new List<IFCAnyHandle>();
+                    return null;
+                }
                     HashSet<IFCAnyHandle> cfsFaces = new HashSet<IFCAnyHandle>();
                     Solid geomSolid = geomObject as Solid;
                     FaceArray faces = geomSolid.Faces;
-                    foreach (Face face in faces)
+
+                // Return null if encounter any edge that is not Line, Arc, HermiteSpline or NurbSpline or any face that is not PlanarFace or CylindricalFace
+                foreach (Edge edge in geomSolid.Edges) 
                     {
-                        IList<IFCAnyHandle> orientedEdgeList = new List<IFCAnyHandle>();
-                        IFCAnyHandle surface = null;
+                    Curve currCurve = edge.AsCurve();
 
-                        // Use SortCurveLoops to collect the outerbound(s) with its list of innerbounds
-                        IList<IList<CurveLoop>> curveloopList = ExporterIFCUtils.SortCurveLoops(face.GetEdgesAsCurveLoops());
-                        IList<HashSet<IFCAnyHandle>> boundsCollection = new List<HashSet<IFCAnyHandle>>();
+                    bool isValidCurve = (currCurve is Line) || (currCurve is Arc) || (currCurve is HermiteSpline) || (currCurve is NurbSpline);
+                    if (!isValidCurve)
+                    {
+                        return null;
+                    }
 
-                        // loop for each outerloop (and its list of innerloops
-                        foreach (IList<CurveLoop> curveloops in curveloopList)
+                    if (currCurve == null)
                         {
-                            foreach (CurveLoop curveloop in curveloops)
+                        return null;
+                    }
+
+                    // based on the definition of IfcAdvancedBrep in IFC 4 specification, an IfcAdvancedBrep must contain a closed shell, so we
+                    // have a test to reject all open shells here.
+                    // we check that geomSolid is an actual solid and not an open shell by verifying that each edge is shared by exactly 2 faces.
+                    for (int ii = 0; ii < 2; ii++)
                             {
-                                CurveLoopIterator curveloopIter = curveloop.GetCurveLoopIterator();
-                                XYZ lastPoint = new XYZ();
-                                bool first = true;
-                                bool unbounded = false;
-                                while (curveloopIter.MoveNext())
+                        if (edge.GetFace(ii) == null)
                                 {
-                                    IFCAnyHandle edgeCurve = null;
-                                    bool orientation = true;
-                                    bool sameSense = true;
-                                    Curve currCurve = curveloopIter.Current;
+                            return null;
+                        }
+                    }
+                }
+
+                foreach (Face face in geomSolid.Faces) 
+                {
+                    bool isValidFace = (face is PlanarFace) || (face is CylindricalFace);
+                    if (!isValidFace) 
+                    {
+                        return null;
+                    }
+                }
+
+                Dictionary<Face, IList<Edge>> faceToEdges = new Dictionary<Face, IList<Edge>>();
+                Dictionary<Edge, IFCAnyHandle> edgeToIfcEdgeCurve = new Dictionary<Edge, IFCAnyHandle>();
+                IDictionary<IFCFuzzyXYZ, IFCAnyHandle> vertices = new SortedDictionary<IFCFuzzyXYZ, IFCAnyHandle>();
+
+                // First phase: get all the vertices:
+                foreach (Edge edge in geomSolid.Edges)
+                {
+                    Curve currCurve = edge.AsCurve();
+
+                    XYZ startPoint = currCurve.GetEndPoint(0);
+                    XYZ endPoint = currCurve.GetEndPoint(1);
+                    IFCFuzzyXYZ fuzzyStartPoint = new IFCFuzzyXYZ(startPoint);
+                    IFCFuzzyXYZ fuzzyEndPoint = new IFCFuzzyXYZ(endPoint);
                                     IFCAnyHandle edgeStart = null;
                                     IFCAnyHandle edgeEnd = null;
 
-                                    if (currCurve.IsBound)
+                    if (vertices.ContainsKey(fuzzyStartPoint))
                                     {
-                                        IFCAnyHandle edgeStartCP = XYZtoIfcCartesianPoint(exporterIFC, currCurve.GetEndPoint(0), true);
+                        edgeStart = vertices[fuzzyStartPoint];
+                    }
+                    else
+                    {
+                        IFCAnyHandle edgeStartCP = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, currCurve.GetEndPoint(0), true);
                                         edgeStart = IFCInstanceExporter.CreateVertexPoint(file, edgeStartCP);
-                                        IFCAnyHandle edgeEndCP = XYZtoIfcCartesianPoint(exporterIFC, currCurve.GetEndPoint(1), true);
+                        vertices.Add(fuzzyStartPoint, edgeStart);
+                    }
+
+                    if (vertices.ContainsKey(fuzzyEndPoint))
+                    {
+                        edgeEnd = vertices[fuzzyEndPoint];
+                    }
+                    else
+                    {
+                        IFCAnyHandle edgeEndCP = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, currCurve.GetEndPoint(1), true);
                                         edgeEnd = IFCInstanceExporter.CreateVertexPoint(file, edgeEndCP);
-                                    }
-                                    else
-                                    {
-                                        unbounded = true;
+                        vertices.Add(fuzzyEndPoint, edgeEnd);
                                     }
 
-                                    // Detect the sense direction by the continuity of the last point in the previous curve to the first point of the current curve
-                                    if (!unbounded)
+                    IFCAnyHandle edgeCurve = CreateEdgeCurveFromCurve(file, exporterIFC, currCurve, edgeStart, edgeEnd, true);
+
+                    edgeToIfcEdgeCurve.Add(edge, edgeCurve);
+
+                    Face face = null;
+                    for (int ii = 0; ii < 2; ii++)
+                    {
+                        face = edge.GetFace(ii);
+                        if (!faceToEdges.ContainsKey(face))
                                     {
-                                        if (first)
-                                        {
-                                            lastPoint = currCurve.GetEndPoint(1);
-                                            sameSense = true;
-                                            first = false;
-                                        }
-                                        else
-                                        {
-                                            if (lastPoint.IsAlmostEqualTo(currCurve.GetEndPoint(1)))
-                                            {
-                                                sameSense = false;
-                                                lastPoint = currCurve.GetEndPoint(0);
-                                            }
-                                            else
-                                            {
-                                                sameSense = true;
-                                                lastPoint = currCurve.GetEndPoint(1);
-                                            }
-                                        }
+                            faceToEdges.Add(face, new List<Edge>());
+                        }
+                        IList<Edge> edges = faceToEdges[face];
+                        edges.Add(edge);
+                    }
                                     }
 
-                                    // if the Curve is a line, do the following
-                                    edgeCurve = CreateEdgeCurveFromCurve(file, exporterIFC, currCurve, edgeStart, edgeEnd, sameSense);
-                                    if (IFCAnyHandleUtil.IsNullOrHasNoValue(edgeCurve))
+                // Second phase: create IfcFaceOuterBound, IfcFaceInnerBound, IfcAdvancedFace and IfcAdvancedBrep
+                foreach (Face face in geomSolid.Faces)
+                                    {
+                    // List of created IfcEdgeLoops of this face
+                    IList<IFCAnyHandle> edgeLoopList = new List<IFCAnyHandle>();
+                    // List of created IfcOrientedEdge in one loop
+                    IList<IFCAnyHandle> orientedEdgeList = new List<IFCAnyHandle>();
+                    IFCAnyHandle surface = null;
+                    IList<HashSet<IFCAnyHandle>> boundsCollection = new List<HashSet<IFCAnyHandle>>();
+
+                    // calculate sameSense by getting a point on the surface and compute the normal of the face and the surface at that point
+                    // if these two vectors agree, then sameSense is true.
+                    // The point we use to test will be the start point of the first edge in the first loop of this face
+                    bool sameSenseAF = true;
+                    EdgeArrayArray faceEdgeLoops = face.EdgeLoops;
+                    if (faceEdgeLoops == null || faceEdgeLoops.Size == 0)
+                                        {
+                        return null;
+                                        }
+                    EdgeArray firstEdgeLoop = faceEdgeLoops.get_Item(0);
+                    if (firstEdgeLoop == null)
+                                        {
+                        return null;
+                    }
+                    Edge firstEdge = firstEdgeLoop.get_Item(0);
+                    UV pointToTest = firstEdge.EvaluateOnFace(0, face);
+                    // Compute the normal of the FACE at pointToTest
+                    XYZ faceNormal = face.ComputeNormal(pointToTest);
+                    // Compute the normal of the SURFACE at pointToTest
+                    Transform testPointDerivatives = face.ComputeDerivatives(pointToTest);
+                    XYZ surfaceNormal = testPointDerivatives.BasisZ;
+                    if (!faceNormal.IsAlmostEqualTo(surfaceNormal))
+                                            {
+                        sameSenseAF = false;
+                                            }
+
+                    Dictionary<EdgeArray, IList<EdgeArray>> sortedEdgeLoop = GeometryUtil.SortEdgeLoop(faceEdgeLoops, face);
+                    // check that we get back the same number of edgeloop
+                    int numberOfSortedEdgeLoop = 0;
+                    foreach (KeyValuePair<EdgeArray, IList<EdgeArray>> pair in sortedEdgeLoop) 
+                                            {
+                        numberOfSortedEdgeLoop += 1 + pair.Value.Count;
+                                            }
+
+                    if (numberOfSortedEdgeLoop != face.EdgeLoops.Size) 
+                    {
+                        return null;
+                                        }
+
+                    foreach (KeyValuePair<EdgeArray, IList<EdgeArray>> pair in sortedEdgeLoop) 
+                    {
+                        if (pair.Key == null || pair.Value == null)
+                            return null;
+
+                        HashSet<IFCAnyHandle> bounds = new HashSet<IFCAnyHandle>();
+                        
+                        // Append the outerloop at the beginning of the list of inner loop
+                        pair.Value.Insert(0, pair.Key);
+
+                        // Process each inner loop
+                        foreach (EdgeArray edgeArray in pair.Value) 
+                        {
+                            // Map each edge in this loop back to its corresponding edge curve and then calculate its orientation to create IfcOrientedEdge
+                            foreach (Edge edge in edgeArray)
+                            {
+                                if (!edgeToIfcEdgeCurve.ContainsKey(edge))
+                                {
+                                    // The reason why edgeToIfcEdgeCurve cannot find edge is that either we haven't created the IfcOrientedEdge
+                                    // corresponding to that edge OR we already have but the dictionary cannot find the edge as its key because 
+                                    // Face.EdgeLoop and geomSolid.Edges return different pointers for the same edge. This can be avoided if 
+                                    // Equals() method is implemented for Edge
+                                    return null;
+                                    }
+
+                                IFCAnyHandle edgeCurve = edgeToIfcEdgeCurve[edge];
+                                bool orientation = true;
+
+                                Curve currCurve = edge.AsCurve();
+                                Curve curveInCurrentFace = edge.AsCurveFollowingFace(face);
+
+                                if (currCurve == null || curveInCurrentFace == null)
+                                {
+                                    return null;
+                                }
+
+                                // if the curve length is 0, ignore it.
+                                if (currCurve.ApproximateLength == 0) 
+                                {
                                         continue;
+                                }
+
+                                // if the curve is unbound, it means that the solid may be corrupted, we shouldn't process it anymore
+                                if (!currCurve.IsBound) 
+                                {
+                                    return null;
+                                }
+
+                                if (currCurve.GetEndPoint(0).IsAlmostEqualTo(curveInCurrentFace.GetEndPoint(0)))
+                                {
+                                    orientation = true;
+                                }
+                                else
+                                {
+                                    orientation = false;
+                                }
 
                                     IFCAnyHandle orientedEdge = IFCInstanceExporter.CreateOrientedEdge(file, edgeCurve, orientation);
                                     orientedEdgeList.Add(orientedEdge);
                                 }
 
                                 IFCAnyHandle edgeLoop = IFCInstanceExporter.CreateEdgeLoop(file, orientedEdgeList);
-                                edgeLoopList.Add(edgeLoop);     // The list may contain outer edges and inner edges
-                            }
+                            edgeLoopList.Add(edgeLoop);
                        
-                            // Process the edgelooplist
-                            bool orientationFB = true; //temp
-                            HashSet<IFCAnyHandle> bounds = new HashSet<IFCAnyHandle>();
-                            IFCAnyHandle faceOuterBound = IFCInstanceExporter.CreateFaceOuterBound(file, edgeLoopList[0], orientationFB);
-                            bounds.Add(faceOuterBound);
-                            if (edgeLoopList.Count > 1)
+                            // EdgeLoopList has only 1 element indicates that this is the outer loop
+                            if (edgeLoopList.Count == 1)
                             {
-                                orientationFB = false; //temp
-                                // Process inner bound
-                                for (int ii = 1; ii < edgeLoopList.Count; ++ii)
-                                {
-                                    IFCAnyHandle faceBound = IFCInstanceExporter.CreateFaceBound(file, edgeLoopList[ii], orientationFB);
+                                IFCAnyHandle faceOuterBound = IFCInstanceExporter.CreateFaceOuterBound(file, edgeLoop, true);
+                            bounds.Add(faceOuterBound);
+                            }
+                            else
+                            {
+                                IFCAnyHandle faceBound = IFCInstanceExporter.CreateFaceBound(file, edgeLoop, false);
                                     bounds.Add(faceBound);
                                 }
+
+                            // After finishing processing one loop, clear orientedEdgeList
+                            orientedEdgeList.Clear();
                             }
-                            // We collect the list of Outerbounds (plus their innerbounds) here 
-                            //    to create multiple AdvancedFaces from the same face if there are multiple faceouterbound
                             boundsCollection.Add(bounds);
                         }
+
+                    edgeLoopList.Clear();
 
                         // process the face now
                         if (face is PlanarFace)
                         {
                             PlanarFace plFace = face as PlanarFace;
-                            IFCAnyHandle location = XYZtoIfcCartesianPoint(exporterIFC, plFace.Origin, true);
+                        IFCAnyHandle location = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, plFace.Origin, true);
+
+                        // Since there is no easy way to get the surface normal, we will calculate the face's normal and negate it if we know
+                        // the surface normal doesn't agree with the face normal based on the sameSense attribute that we calculate above
+                        XYZ zdir = plFace.Normal;
+                        if (!sameSenseAF) 
+                        {
+                            zdir = zdir.Negate();
+                        }
+                        XYZ xdir = plFace.get_Vector(0);
+
                             IList<double> zaxis = new List<double>();
                             IList<double> refdir = new List<double>();
-                            zaxis.Add(0.0);
-                            zaxis.Add(0.0);
-                            zaxis.Add(UnitUtil.ScaleLength(plFace.Normal.Z));
+                        zaxis.Add(zdir.X);
+                        zaxis.Add(zdir.Y);
+                        zaxis.Add(zdir.Z);
                             IFCAnyHandle axis = IFCInstanceExporter.CreateDirection(file, zaxis);
-                            refdir.Add(UnitUtil.ScaleLength(plFace.Normal.X));
-                            refdir.Add(0.0);
-                            refdir.Add(0.0);
+                        refdir.Add(xdir.X);
+                        refdir.Add(xdir.Y);
+                        refdir.Add(xdir.Z);
                             IFCAnyHandle refDirection = IFCInstanceExporter.CreateDirection(file, refdir);
                             IFCAnyHandle position = IFCInstanceExporter.CreateAxis2Placement3D(file, location, axis, refDirection);
                             surface = IFCInstanceExporter.CreatePlane(file, position);
@@ -1399,183 +1550,77 @@ namespace Revit.IFC.Export.Exporter
                         else if (face is CylindricalFace)
                         {
                             CylindricalFace cylFace = face as CylindricalFace;
+
                             // get radius-x and radius-y and the position of the origin
                             XYZ rad = UnitUtil.ScaleLength(cylFace.get_Radius(0));
                             double radius = rad.GetLength();
-                            IFCAnyHandle location = XYZtoIfcCartesianPoint(exporterIFC, cylFace.Origin, true);
+                        IFCAnyHandle location = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, cylFace.Origin, true);
+
+                        XYZ zdir = cylFace.Axis;
+                        XYZ xdir = rad.Normalize();
 
                             IList<double> zaxis = new List<double>();
                             IList<double> refdir = new List<double>();
-                            zaxis.Add(0.0);
-                            zaxis.Add(0.0);
-                            zaxis.Add(UnitUtil.ScaleLength(cylFace.Axis.Z));
+                        zaxis.Add(zdir.X);
+                        zaxis.Add(zdir.Y);
+                        zaxis.Add(zdir.Z);
                             IFCAnyHandle axis = IFCInstanceExporter.CreateDirection(file, zaxis);
-                            refdir.Add(UnitUtil.ScaleLength(cylFace.Axis.X));
-                            refdir.Add(0.0);
-                            refdir.Add(0.0);
+                        refdir.Add(xdir.X);
+                        refdir.Add(xdir.Y);
+                        refdir.Add(xdir.Z);
                             IFCAnyHandle refDirection = IFCInstanceExporter.CreateDirection(file, refdir);
+
                             IFCAnyHandle position = IFCInstanceExporter.CreateAxis2Placement3D(file, location, axis, refDirection);
                             surface = IFCInstanceExporter.CreateCylindricalSurface(file, position, radius);
                         }
-
                         else if (face is RevolvedFace)
                         {
                             RevolvedFace revFace = face as RevolvedFace;
-                            IFCAnyHandle sweptCurve;
+
+                        XYZ zdir = revFace.Axis;
+                        // Calculate the x-axis from the normal, which can be any vector that is perpendicular to it. The easiest is to rotate z 90 degree
+                        XYZ xdir;
+                        if (Math.Abs(zdir.X) > double.Epsilon)
+                            xdir = new XYZ(-zdir.Y, zdir.X, zdir.Z);
+                        else
+                            xdir = new XYZ(zdir.X, -zdir.Z, zdir.Y);
 
                             IList<double> zaxis = new List<double>();
                             IList<double> refdir = new List<double>();
-                            zaxis.Add(0.0);
-                            zaxis.Add(0.0);
-                            zaxis.Add(UnitUtil.ScaleLength(revFace.Axis.Z));
+                        zaxis.Add(zdir.X);
+                        zaxis.Add(zdir.Y);
+                        zaxis.Add(zdir.Z);
                             IFCAnyHandle axis = IFCInstanceExporter.CreateDirection(file, zaxis);
+                        refdir.Add(xdir.X);
+                        refdir.Add(xdir.Y);
+                        refdir.Add(xdir.Z);
+                        IFCAnyHandle refDirection = IFCInstanceExporter.CreateDirection(file, refdir);
 
-                            refdir.Add(UnitUtil.ScaleLength(revFace.Axis.X));
-                            refdir.Add(0.0);
-                            refdir.Add(0.0);
-
-                            IFCAnyHandle location = XYZtoIfcCartesianPoint(exporterIFC, revFace.Origin, true);
+                        IFCAnyHandle location = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, revFace.Origin, true);
 
                             Curve curve = revFace.Curve;
-                            // If the base curve is an Arc
-                            if (curve is Arc)
-                            {
-                                Arc curveArc = curve as Arc;
+                        IFCAnyHandle sweptCurve = CreateProfileCurveFromCurve(file, exporterIFC, curve);
+                        
+                        IFCAnyHandle axisPosition = IFCInstanceExporter.CreateAxis1Placement(file, location, axis);
+                        surface = IFCInstanceExporter.CreateSurfaceOfRevolution(file, sweptCurve, null, axisPosition);
+                    }
+                    else 
+                    {
+                        return null;
+                    }
 
-                                IFCAnyHandle curveLoc = XYZtoIfcCartesianPoint2D(exporterIFC, curveArc.Center, true);
-                                IList<double> direction = new List<double>();
-                                direction.Add(UnitUtil.ScaleLength(curveArc.XDirection.X));
-                                direction.Add(UnitUtil.ScaleLength(curveArc.YDirection.Y));
-                                IFCAnyHandle dir = IFCInstanceExporter.CreateDirection(file, direction);
-                                IFCAnyHandle position = IFCInstanceExporter.CreateAxis2Placement2D(file, curveLoc, null, dir);
-                                IFCAnyHandle circle = IFCInstanceExporter.CreateCircle(file, position, UnitUtil.ScaleLength(curveArc.Radius));
-                                bool unbounded = false;
-                                IFCAnyHandle edgeStart = null;
-                                IFCAnyHandle edgeEnd = null;
-                                if (curve.IsBound)
-                                {
-                                    edgeStart = XYZtoIfcCartesianPoint(exporterIFC, curveArc.GetEndPoint(0), true);
-                                    edgeEnd = XYZtoIfcCartesianPoint(exporterIFC, curveArc.GetEndPoint(1), true);
-                                    if (curveArc.GetEndPoint(0).IsAlmostEqualTo(curveArc.GetEndPoint(1)))
-                                        unbounded = true;
-                                }
-                                else
-                                {
-                                    unbounded = true;
-                                }
-
-                                IFCAnyHandle ifcCurve;
-                                string name = "ArcCurveBaseProfile";
-                                if (unbounded)
-                                    sweptCurve = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Curve, name, circle);
-                                else
-                                {
-                                    IFCData trim1data = IFCData.CreateIFCAnyHandle(edgeStart);
-                                    HashSet<IFCData> trim1 = new HashSet<IFCData>();
-                                    trim1.Add(trim1data);
-                                    IFCData trim2data = IFCData.CreateIFCAnyHandle(edgeEnd);
-                                    HashSet<IFCData> trim2 = new HashSet<IFCData>();
-                                    trim2.Add(trim2data);
-                                    bool senseAgreement = true;
-                                    ifcCurve = IFCInstanceExporter.CreateTrimmedCurve(file, circle, trim1, trim2, senseAgreement, IFCTrimmingPreference.Cartesian);
-                                    sweptCurve = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Curve, name, ifcCurve);
-                                }
-
-                            }
-                            // If the base curve is an Ellipse
-                            else if (curve is Ellipse)
-                            {
-                                Ellipse curveEllipse = curve as Ellipse;
-
-                                IFCAnyHandle curveLoc = XYZtoIfcCartesianPoint2D(exporterIFC, curveEllipse.Center, true);
-                                IList<double> direction = new List<double>();
-                                direction.Add(UnitUtil.ScaleLength(curveEllipse.XDirection.X));
-                                direction.Add(UnitUtil.ScaleLength(curveEllipse.YDirection.Y));
-                                IFCAnyHandle dir = IFCInstanceExporter.CreateDirection(file, direction);
-                                IFCAnyHandle position = IFCInstanceExporter.CreateAxis2Placement2D(file, curveLoc, null, dir);
-                                IFCAnyHandle ellipse = IFCInstanceExporter.CreateEllipse(file, position, UnitUtil.ScaleLength(curveEllipse.RadiusX), UnitUtil.ScaleLength(curveEllipse.RadiusY));
-                                bool unbounded = false;
-                                IFCAnyHandle edgeStart = null;
-                                IFCAnyHandle edgeEnd = null;
-                                try
-                                {
-                                    edgeStart = XYZtoIfcCartesianPoint(exporterIFC, curveEllipse.GetEndPoint(0), true);
-                                    edgeEnd = XYZtoIfcCartesianPoint(exporterIFC, curveEllipse.GetEndPoint(1), true);
-                                    if (curveEllipse.GetEndPoint(0).IsAlmostEqualTo(curveEllipse.GetEndPoint(1)))
-                                        unbounded = true;
-                                }
-                                catch (Exception e)
-                                {
-                                    if (e is Autodesk.Revit.Exceptions.ArgumentException)
-                                    {
-                                        unbounded = true;
-                                    }
-                                    else
-                                        throw new ArgumentException("Edge Vertex");
-                                }
-                                IFCAnyHandle ifcCurve;
-                                string name = "EllipseCurveBaseProfile";
-                                if (unbounded)
-                                    sweptCurve = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Curve, name, ellipse);
-                                else
-                                {
-                                    IFCData trim1data = IFCData.CreateIFCAnyHandle(edgeStart);
-                                    HashSet<IFCData> trim1 = new HashSet<IFCData>();
-                                    trim1.Add(trim1data);
-                                    IFCData trim2data = IFCData.CreateIFCAnyHandle(edgeEnd);
-                                    HashSet<IFCData> trim2 = new HashSet<IFCData>();
-                                    trim2.Add(trim2data);
-                                    bool senseAgreement = true;
-                                    ifcCurve = IFCInstanceExporter.CreateTrimmedCurve(file, ellipse, trim1, trim2, senseAgreement, IFCTrimmingPreference.Cartesian);
-                                    sweptCurve = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Curve, name, ifcCurve);
-                                }
-                            }
-                            // Any other type will be tessellated and is approximated using Polyline
-                            else
-                            {
-                                IList<XYZ> tessCurve = curve.Tessellate();
-                                IList<IFCAnyHandle> polylineVertices = new List<IFCAnyHandle>();
-                                foreach (XYZ vertex in tessCurve)
-                                {
-                                    IFCAnyHandle ifcVert = XYZtoIfcCartesianPoint(exporterIFC, vertex, true);
-                                    polylineVertices.Add(ifcVert);
-                                }
-                                string name = "TeseellatedBaseCurveProfile";
-                                IFCAnyHandle polyLine = IFCInstanceExporter.CreatePolyline(file, polylineVertices);
-                                sweptCurve = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Curve, name, polyLine);
-                            }
-
-                            IFCAnyHandle axisPosition = IFCInstanceExporter.CreateAxis1Placement(file, location, axis);
-                            surface = IFCInstanceExporter.CreateSurfaceOfRevolution(file, sweptCurve, null, axisPosition);
-                        }
-                        else if (face is ConicalFace)
+                    
+                    foreach (HashSet<IFCAnyHandle> faceBound in boundsCollection) 
                         {
-                            ConicalFace conFace = face as ConicalFace;
-                            return null;        // currently does not support this type of face
-                        }
-                        else if (face is RuledFace)
-                        {
-                            RuledFace ruledFace = face as RuledFace;
-                            return null;        // currently does not support this type of face
-                        }
-                        else if (face is HermiteFace)
-                        {
-                            HermiteFace hermFace = face as HermiteFace;
-                            return null;        // currently does not support this type of face
-                        }
-
-                        // create advancedFace
-                        bool sameSenseAF = true; // temp
-                        foreach (HashSet<IFCAnyHandle> theFaceBounds in boundsCollection)
-                        {
-                            IFCAnyHandle advancedFace = IFCInstanceExporter.CreateAdvancedFace(file, theFaceBounds, surface, sameSenseAF);
+                        IFCAnyHandle advancedFace = IFCInstanceExporter.CreateAdvancedFace(file, faceBound, surface, sameSenseAF);
                             cfsFaces.Add(advancedFace);
                         }
                     }
+
                     // create advancedBrep
                     IFCAnyHandle closedShell = IFCInstanceExporter.CreateClosedShell(file, cfsFaces);
                     advancedBrep = IFCInstanceExporter.CreateAdvancedBrep(file, closedShell);
-                }
+
                 return advancedBrep;
             }
             catch
@@ -1583,36 +1628,6 @@ namespace Revit.IFC.Export.Exporter
                 return null;
             }
         }
-
-        private static IFCAnyHandle XYZtoIfcCartesianPoint(ExporterIFC exporterIFC, XYZ thePoint, bool applyUnitScale)
-        {
-            IFCFile file = exporterIFC.GetFile();
-            XYZ vertexScaled = thePoint;
-            if (applyUnitScale)
-                vertexScaled = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, thePoint);
-
-            IList<double> coordPoint = new List<double>();
-            coordPoint.Add(vertexScaled.X);
-            coordPoint.Add(vertexScaled.Y);
-            coordPoint.Add(vertexScaled.Z);
-            IFCAnyHandle cartesianPoint = IFCInstanceExporter.CreateCartesianPoint(file, coordPoint);
-            return cartesianPoint;
-        }
-
-        private static IFCAnyHandle XYZtoIfcCartesianPoint2D(ExporterIFC exporterIFC, XYZ thePoint, bool applyUnitScale)
-        {
-            IFCFile file = exporterIFC.GetFile();
-            XYZ vertexScaled = thePoint;
-            if (applyUnitScale)
-                vertexScaled = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, thePoint);
-
-            IList<double> coordPoint = new List<double>();
-            coordPoint.Add(vertexScaled.X);
-            coordPoint.Add(vertexScaled.Y);
-            IFCAnyHandle cartesianPoint = IFCInstanceExporter.CreateCartesianPoint(file, coordPoint);
-            return cartesianPoint;
-        }
-
         /// <summary>
         /// Export Geometry in IFC4 Triangulated tessellation
         /// </summary>
@@ -1636,7 +1651,8 @@ namespace Revit.IFC.Export.Exporter
                     Solid solid = geomObject as Solid;
 
                     SolidOrShellTessellationControls tessellationControls = options.TessellationControls;
-                    tessellationControls.LevelOfDetail = ExporterCacheManager.ExportOptionsCache.TessellationLevelOfDetail;
+                   // Convert integer level of detail into a 0 to 1 scale.
+                    tessellationControls.LevelOfDetail = ((double) ExporterCacheManager.ExportOptionsCache.LevelOfDetail) / 4.0;
 
                     TriangulatedSolidOrShell solidFacetation =
                         SolidUtils.TessellateSolidOrShell(solid, tessellationControls);
@@ -1779,7 +1795,6 @@ namespace Revit.IFC.Export.Exporter
             //    return null;   // something wrong, cannot get triangles, return null
             //return triangulatedBody;
         }
-
         private static bool ExportBodyAsSolid(ExporterIFC exporterIFC, Element element, BodyExporterOptions options,
             IList<HashSet<IFCAnyHandle>> currentFaceHashSetList, GeometryObject geomObject)
         {
@@ -1797,11 +1812,23 @@ namespace Revit.IFC.Export.Exporter
                     if (exportedAsSolid)
                         return exportedAsSolid;
 
-                    SolidOrShellTessellationControls tessellationControls = options.TessellationControls;
+                    SolidOrShellTessellationControls tessellationControlsOrigin = options.TessellationControls;
+                    SolidOrShellTessellationControls tessellationControls = ExporterUtil.GetTessellationControl(element, tessellationControlsOrigin);
 
-                    TriangulatedSolidOrShell solidFacetation =
-                        SolidUtils.TessellateSolidOrShell(solid, tessellationControls);
+                    TriangulatedSolidOrShell solidFacetation = null;
 
+                    try
+                    {
+                        solidFacetation = SolidUtils.TessellateSolidOrShell(solid, tessellationControls);
+                    }
+                    catch
+                    {
+                        if (!tessellationControls.Equals(tessellationControlsOrigin))
+                        {
+                            //if tessellation with altered values fails, we use original values.
+                            solidFacetation = SolidUtils.TessellateSolidOrShell(solid, tessellationControlsOrigin);
+                        }
+                    }
                     // Only handle one solid or shell.
                     if (solidFacetation.ShellComponentCount == 1)
                     {
@@ -1877,7 +1904,190 @@ namespace Revit.IFC.Export.Exporter
                 return false;
             }
         }
+       
 
+#if CQ_IFC_EXPORT //IFCEX-44
+        /// <summary>
+        ///  Returns the tessellation controls with the right setings for an elbow,tee or cross.
+        /// </summary>
+        /// <param name="controls">The controls to be used in the tessellation</param>
+        /// <param name="lod">the level og detail (high/medium/low/extra low) high is autodesk default and will not change anything</param>
+        /// <param name="type">the type of the duct. </param>
+        /// <returns></returns>
+        private static SolidOrShellTessellationControls GetTessellationControlsForDuct(SolidOrShellTessellationControls controls, int lod, int type)
+        {
+            if (type == 5) //Elbow
+            {
+                switch (lod)
+                {
+                    case 1:
+                        controls.Accuracy = 0.81;
+                        controls.LevelOfDetail = 0.05;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.7;
+                        break;
+                    case 2:
+                        controls.Accuracy = 0.84;
+                        controls.LevelOfDetail = 0.4;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.25;
+                        break;
+                    case 3:
+                        controls.Accuracy = 0.74;
+                        controls.LevelOfDetail = 0.4;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.74;
+                        break;
+                    case 4:
+                        break;
+                }
+            }
+            else if (type == 6) //Tee
+            {
+                switch (lod)
+                {
+                    case 1:
+                        controls.Accuracy = 1.21;
+                        controls.LevelOfDetail = 0.05;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.7;
+                        break;
+                    case 2:
+                        controls.Accuracy = 0.84;
+                        controls.LevelOfDetail = 0.3;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.0;
+                        break;
+                    case 3:
+                        controls.Accuracy = 0.84;
+                        controls.LevelOfDetail = 0.4;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.54;
+                        break;
+                    case 4:
+                        break;
+                }
+            }
+            else if (type == 8) //Cross
+            {
+                switch (lod)
+                {
+                    case 1:
+                        controls.Accuracy = 0.81;
+                        controls.LevelOfDetail = 0.05;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.7;
+                        break;
+                    case 2:
+                        controls.Accuracy = 0.84;
+                        controls.LevelOfDetail = 0.2;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.8;
+                        break;
+                    case 3:
+                        controls.Accuracy = 0.81;
+                        controls.LevelOfDetail = 0.4;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.84;
+                        break;
+                    case 4:
+                        break;
+                }
+            }
+            return controls;
+        }
+
+        //IFCEX-83 
+        /// <summary>
+        ///  Returns the tessellation controls with the right setings for insulations for a duct of type elbow,tee or cross
+        /// </summary>
+        /// <param name="controls">The controls to be used in the tessellation</param>
+        /// <param name="lod">the level og detail (high/medium/low/extra low) high is autodesk default and will not change anything</param>
+        /// <param name="type">the type of the duct. </param>
+        /// <returns></returns>
+        private static SolidOrShellTessellationControls GetTessellationControlsForInsulation(SolidOrShellTessellationControls controls, int lod, int type)
+        {
+            if (type == 5) //Elbow
+            {
+                switch (lod)
+                {
+                    case 1:
+                        controls.Accuracy = 0.6;
+                        controls.LevelOfDetail = 0.1;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.2;
+                        break;
+                    case 2:
+                        controls.Accuracy = 0.6;
+                        controls.LevelOfDetail = 0.3;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.7;
+                        break;
+                    case 3:
+                        controls.Accuracy = 0.5;
+                        controls.LevelOfDetail = 0.4;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.35;
+                        break;
+                    case 4:
+                        break;
+                }
+            }
+            else if (type == 6) //Tee
+            {
+                switch (lod)
+                {
+                    case 1:
+                        controls.Accuracy = 0.6;
+                        controls.LevelOfDetail = 0.1;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.2;
+                        break;
+                    case 2:
+                        controls.Accuracy = 0.6;
+                        controls.LevelOfDetail = 0.2;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.9;
+                        break;
+                    case 3:
+                        controls.Accuracy = 0.5;
+                        controls.LevelOfDetail = 0.4;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.55;
+                        break;
+                    case 4:
+                        break;
+                }
+            }
+            else if (type == 8) //Cross
+            {
+                switch (lod)
+                {
+                    case 1:
+                        controls.Accuracy = 0.6;
+                        controls.LevelOfDetail = 0.1;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.2;
+                        break;
+                    case 2:
+                        controls.Accuracy = 0.6;
+                        controls.LevelOfDetail = 0.2;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.9;
+                        break;
+                    case 3:
+                        controls.Accuracy = 0.5;
+                        controls.LevelOfDetail = 0.4;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.55;
+                        break;
+                    case 4:
+                        break;
+                }
+            }
+            return controls;
+        }
+#endif
         // NOTE: the useMappedGeometriesIfPossible and useGroupsIfPossible options are experimental and do not yet work well.
         // In shipped code, these are always false, and should be kept false until API support routines are proved to be reliable.
         private static BodyData ExportBodyAsBRep(ExporterIFC exporterIFC, IList<GeometryObject> splitGeometryList, 
@@ -2169,7 +2379,6 @@ namespace Revit.IFC.Export.Exporter
                 }
             }
 
-
             if (bodyItems.Count == 0)
                 return bodyData;
 
@@ -2331,7 +2540,7 @@ namespace Revit.IFC.Export.Exporter
             bool tryToExportAsExtrusion = options.TryToExportAsExtrusion;
             bool canExportSolidModelRep = tryToExportAsExtrusion && ExporterCacheManager.ExportOptionsCache.CanExportSolidModelRep;
             
-            bool useCoarseTessellation = ExporterCacheManager.ExportOptionsCache.UseCoarseTessellation;
+            bool useCoarseTessellation = (ExporterCacheManager.ExportOptionsCache.LevelOfDetail < 4);
             bool allowAdvancedBReps = ExporterCacheManager.ExportOptionsCache.ExportAs4 && !ExporterUtil.IsReferenceView();
 
             // We will try to export as a swept solid if the option is set, and we are either exporting to a schema that allows it,

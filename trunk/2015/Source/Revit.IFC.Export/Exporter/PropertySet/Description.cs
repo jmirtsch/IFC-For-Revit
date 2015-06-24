@@ -50,7 +50,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <summary>
         /// The types of element appropriate for this property or quantity set.
         /// </summary>
-        List<IFCEntityType> m_IFCEntityTypes = new List<IFCEntityType>();
+        HashSet<IFCEntityType> m_IFCEntityTypes = new HashSet<IFCEntityType>();
 
         /// <summary>
         /// The object type of element appropriate for this property or quantity set.
@@ -195,7 +195,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <summary>
         /// The type of element appropriate for this property or quantity set.
         /// </summary>
-        public List<IFCEntityType> EntityTypes
+        public HashSet<IFCEntityType> EntityTypes
         {
             get
             {

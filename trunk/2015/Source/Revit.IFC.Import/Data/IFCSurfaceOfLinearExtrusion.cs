@@ -109,7 +109,7 @@ namespace Revit.IFC.Import.Data
             bool found = false;
             Depth = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(ifcSurface, "Depth", out found);
             if (!found)
-                IFCImportFile.TheLog.LogError(Id, "IfcSurfaceOfLinearExtrusion has no height, ignoring.", true);
+                Importer.TheLog.LogError(Id, "IfcSurfaceOfLinearExtrusion has no height, ignoring.", true);
         }
 
         protected IFCSurfaceOfLinearExtrusion(IFCAnyHandle surfaceOfLinearExtrusion)
@@ -126,7 +126,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSurfaceOfLinearExtrusion))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcSurfaceOfLinearExtrusion);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcSurfaceOfLinearExtrusion);
                 return null;
             }
 

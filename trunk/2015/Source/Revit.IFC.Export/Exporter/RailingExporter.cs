@@ -260,12 +260,13 @@ namespace Revit.IFC.Export.Exporter
                         IFCAnyHandle localPlacement = setter.LocalPlacement;
                         StairRampContainerInfo stairRampInfo = null;
                         ElementId hostId = GetStairOrRampHostId(exporterIFC, element as Railing);
+                        Transform inverseTrf = Transform.Identity;
                         if (hostId != ElementId.InvalidElementId)
                         {
                             stairRampInfo = ExporterCacheManager.StairRampContainerInfoCache.GetStairRampContainerInfo(hostId);
                             IFCAnyHandle stairRampLocalPlacement = stairRampInfo.LocalPlacements[0];
                             Transform relTrf = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(stairRampLocalPlacement, localPlacement);
-                            Transform inverseTrf = relTrf.Inverse;
+                            inverseTrf = relTrf.Inverse;
 
                             IFCAnyHandle railingLocalPlacement = ExporterUtil.CreateLocalPlacement(file, stairRampLocalPlacement,
                                 inverseTrf.Origin, inverseTrf.BasisZ, inverseTrf.BasisX);
@@ -333,13 +334,14 @@ namespace Revit.IFC.Export.Exporter
                             geomObjects.Add(mesh);
 
                         Transform boundingBoxTrf = (bodyData.OffsetTransform != null) ? bodyData.OffsetTransform.Inverse : Transform.Identity;
+                        boundingBoxTrf = inverseTrf.Multiply(boundingBoxTrf);
                         IFCAnyHandle boundingBoxRep = BoundingBoxExporter.ExportBoundingBox(exporterIFC, geomObjects, boundingBoxTrf);
                         if (boundingBoxRep != null)
                             representations.Add(boundingBoxRep);
 
                         IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
 
-                        IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                        IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
                         string instanceGUID = GUIDUtil.CreateGUID(element);
                         string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));

@@ -108,6 +108,11 @@ namespace Revit.IFC.Import.Data
             XYZ lcsX = (refDirectionXYZ - refDirectionXYZ.DotProduct(axisXYZ) * axisXYZ).Normalize();
             XYZ lcsY = axisXYZ.CrossProduct(lcsX).Normalize();
 
+            if (lcsX.IsZeroLength() || lcsY.IsZeroLength()) 
+            {
+                Importer.TheLog.LogError(placement.StepId, "Local transform contains 0 length vectors", true);
+            }
+
             lcs.BasisX = lcsX;
             lcs.BasisY = lcsY;
             lcs.BasisZ = axisXYZ;
@@ -130,7 +135,7 @@ namespace Revit.IFC.Import.Data
 
             if (!IFCAnyHandleUtil.IsSubTypeOf(ifcPlacement, IFCEntityType.IfcAxis1Placement))
             {
-                IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcPlacement, "IfcAxis1Placement", false);
+                Importer.TheLog.LogUnhandledSubTypeError(ifcPlacement, "IfcAxis1Placement", false);
                 transform = Transform.Identity;
             }
 
@@ -168,7 +173,7 @@ namespace Revit.IFC.Import.Data
                 transform = ProcessAxis2Placement3D(ifcPlacement);
             else
             {
-                IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcPlacement, "IfcAxis2Placement", false);
+                Importer.TheLog.LogUnhandledSubTypeError(ifcPlacement, "IfcAxis2Placement", false);
                 transform = Transform.Identity;
             }
 
@@ -197,7 +202,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcObjectPlacement))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcObjectPlacement);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcObjectPlacement);
                 return null;
             }
 

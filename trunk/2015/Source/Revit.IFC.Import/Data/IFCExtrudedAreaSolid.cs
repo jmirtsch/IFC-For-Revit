@@ -80,15 +80,14 @@ namespace Revit.IFC.Import.Data
                 {
                     Depth = -Depth;
                     Direction = -Direction;
-                    IFCImportFile.TheLog.LogWarning(solid.StepId, "negative extrusion depth is invalid, reversing direction.", false);
+               Importer.TheLog.LogWarning(solid.StepId, "negative extrusion depth is invalid, reversing direction.", false);
                 }
             }
 
             if (!found || !Application.IsValidThickness(Depth))
             {
-                string depthAsString = UnitFormatUtils.Format(IFCImportFile.TheFile.Document.GetUnits(), UnitType.UT_Length, Depth,
-                    true, false);
-                IFCImportFile.TheLog.LogError(solid.StepId, "extrusion depth of " + depthAsString + " is invalid, aborting.", true);
+            string depthAsString = IFCUnitUtil.FormatLengthAsString(Depth);
+            Importer.TheLog.LogError(solid.StepId, "extrusion depth of " + depthAsString + " is invalid, aborting.", true);
             }
         }
 
@@ -599,7 +598,7 @@ namespace Revit.IFC.Import.Data
         {
             if (Direction == null)
             {
-                IFCImportFile.TheLog.LogError(Id, "Error processing IfcExtrudedAreaSolid, can't create geometry.", false);
+            Importer.TheLog.LogError(Id, "Error processing IfcExtrudedAreaSolid, can't create geometry.", false);
                 return null;
             }
 
@@ -635,7 +634,7 @@ namespace Revit.IFC.Import.Data
                     if (extrusionLayers == null || extrusionLayers.Count == 0)
                     {
                         if (shouldWarn)
-                            IFCImportFile.TheLog.LogWarning(Id, "Couldn't process associated IfcMaterialLayerSetUsage, using body geometry instead.", false);
+                     Importer.TheLog.LogWarning(Id, "Couldn't process associated IfcMaterialLayerSetUsage, using body geometry instead.", false);
                         if (overrideMaterialId != ElementId.InvalidElementId)
                             solidOptions.MaterialId = overrideMaterialId;
                         extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, extrusionDirection, currDepth, solidOptions);
@@ -651,7 +650,7 @@ namespace Revit.IFC.Import.Data
                    if (shapeEditScope.MustCreateSolid())
                       throw ex;
 
-                   IFCImportFile.TheLog.LogError(Id, "Extrusion has an invalid definition for a solid; reverting to mesh.", false);
+               Importer.TheLog.LogError(Id, "Extrusion has an invalid definition for a solid; reverting to mesh.", false);
 
                    MeshFromGeometryOperationResult meshResult = TessellatedShapeBuilder.CreateMeshByExtrusion(
                       loops, extrusionDirection, currDepth, GetMaterialElementId(shapeEditScope));
@@ -702,7 +701,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSolid))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcExtrudedAreaSolid);
+            Importer.TheLog.LogNullError(IFCEntityType.IfcExtrudedAreaSolid);
                 return null;
             }
 

@@ -86,7 +86,7 @@ namespace Revit.IFC.Export.Exporter
                 {
                     string guid = GUIDUtil.CreateGUID();
                     HashSet<IFCAnyHandle> relatedElementIdSet = new HashSet<IFCAnyHandle>(relatedElementIds);
-                    IFCInstanceExporter.CreateRelAggregates(exporterIFC.GetFile(), guid, exporterIFC.GetOwnerHistoryHandle(), null, null, hostHandle, relatedElementIdSet);
+                    IFCInstanceExporter.CreateRelAggregates(exporterIFC.GetFile(), guid, ExporterCacheManager.OwnerHistoryHandle, null, null, hostHandle, relatedElementIdSet);
                 }
             }
         }
@@ -316,7 +316,7 @@ namespace Revit.IFC.Export.Exporter
 
                         IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
 
-                        IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                        IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
                         string partGUID = GUIDUtil.CreateGUID(partElement);
                         string partName = NamingUtil.GetNameOverride(partElement, NamingUtil.GetIFCName(partElement));

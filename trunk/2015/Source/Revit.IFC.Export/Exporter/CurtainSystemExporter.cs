@@ -321,7 +321,7 @@ namespace Revit.IFC.Export.Exporter
         private static void ExportBase(ExporterIFC exporterIFC, ICollection<ElementId> allSubElements, Element element, ProductWrapper wrapper)
         {
             IFCFile file = exporterIFC.GetFile();
-            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
             PlacementSetter setter = null;
 
@@ -664,7 +664,7 @@ namespace Revit.IFC.Export.Exporter
             string elemElementType = NamingUtil.GetOverrideStringValue(elementType, "IfcElementType", null);
 
             // Property sets will be set later.
-            wallType = IFCInstanceExporter.CreateCurtainWallType(exporterIFC.GetFile(), elemGUID, exporterIFC.GetOwnerHistoryHandle(),
+            wallType = IFCInstanceExporter.CreateCurtainWallType(exporterIFC.GetFile(), elemGUID, ExporterCacheManager.OwnerHistoryHandle,
                 elemName, elemDesc, elemApplicableOccurence, null, null, elemTag, elemElementType, (elemElementType != null) ? "USERDEFINED" : "NOTDEFINED");
 
             wrapper.RegisterHandleWithElementType(elementType as ElementType, wallType, null);

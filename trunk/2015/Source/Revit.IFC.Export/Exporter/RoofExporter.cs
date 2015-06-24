@@ -81,7 +81,7 @@ namespace Revit.IFC.Export.Exporter
                         bool exportSlab = ecData.ScaledLength > MathUtil.Eps();
 
                         string guid = GUIDUtil.CreateGUID(roof);
-                        IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                        IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                         string roofName = NamingUtil.GetNameOverride(roof, NamingUtil.GetIFCName(roof));
                         string roofDescription = NamingUtil.GetDescriptionOverride(roof, null);
                         string roofObjectType = NamingUtil.GetObjectTypeOverride(roof, NamingUtil.CreateIFCObjectName(exporterIFC, roof));
@@ -204,7 +204,7 @@ namespace Revit.IFC.Export.Exporter
                     {
                         using (IFCExtrusionCreationData extrusionCreationData = new IFCExtrusionCreationData())
                         {
-                            IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                             extrusionCreationData.SetLocalPlacement(localPlacement);
                             extrusionCreationData.ReuseLocalPlacement = true;
 
@@ -229,7 +229,7 @@ namespace Revit.IFC.Export.Exporter
                                 IList<IFCAnyHandle> elementHandles = new List<IFCAnyHandle>();
                                 elementHandles.Add(roofHandle);
 
-                                //only thing supported right now.
+                                // The profile curve loop is taken from the bottom face of the roof 
                                 XYZ extrusionDir = new XYZ(0, 0, 1);
 
                                 ElementId catId = CategoryUtil.GetSafeCategoryId(element);
@@ -325,7 +325,7 @@ namespace Revit.IFC.Export.Exporter
             {
                 using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, element))
                 {
-                    IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                    IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                     IFCAnyHandle localPlacement = setter.LocalPlacement;
 
                     IFCAnyHandle prodRepHnd = null;

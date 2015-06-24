@@ -179,7 +179,7 @@ namespace Revit.IFC.Export.Exporter
                     relativePlacement = ExporterUtil.CreateAxis2Placement3D(file);
 
                 IFCAnyHandle localPlacement = IFCInstanceExporter.CreateLocalPlacement(file, null, relativePlacement);
-                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                 string siteObjectType = NamingUtil.CreateIFCObjectName(exporterIFC, element);
 
                 ProjectInfo projectInfo = doc.ProjectInformation;

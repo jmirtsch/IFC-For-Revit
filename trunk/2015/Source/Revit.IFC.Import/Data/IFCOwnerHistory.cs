@@ -65,7 +65,7 @@ namespace Revit.IFC.Import.Data
             IFCAnyHandle owningApplication = IFCAnyHandleUtil.GetInstanceAttribute(ifcOwnerHistory, "OwningApplication");
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(owningApplication))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcApplication); 
+                Importer.TheLog.LogNullError(IFCEntityType.IfcApplication); 
                 return;
             }
 

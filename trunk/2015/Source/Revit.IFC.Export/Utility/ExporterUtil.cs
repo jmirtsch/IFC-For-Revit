@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Autodesk.Revit.DB.Mechanical;
 using Revit.IFC.Export.Exporter;
 using Revit.IFC.Export.Exporter.PropertySet;
 using Revit.IFC.Export.Toolkit;
@@ -188,7 +189,7 @@ namespace Revit.IFC.Export.Utility
         public static void RelateObjects(ExporterIFC exporterIFC, string optionalGUID, IFCAnyHandle relatingObject, ICollection<IFCAnyHandle> relatedObjects)
         {
             string guid = (optionalGUID != null) ? optionalGUID : GUIDUtil.CreateGUID();
-            IFCInstanceExporter.CreateRelAggregates(exporterIFC.GetFile(), guid, exporterIFC.GetOwnerHistoryHandle(), null, null, relatingObject, new HashSet<IFCAnyHandle>(relatedObjects));
+            IFCInstanceExporter.CreateRelAggregates(exporterIFC.GetFile(), guid, ExporterCacheManager.OwnerHistoryHandle, null, null, relatingObject, new HashSet<IFCAnyHandle>(relatedObjects));
         }
 
         /// <summary>
@@ -1006,7 +1007,7 @@ namespace Revit.IFC.Export.Utility
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction transaction = new IFCTransaction(file))
             {
-                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
                 string catName = CategoryUtil.GetCategoryName(element);
                 Color color = CategoryUtil.GetElementColor(element);
@@ -1055,14 +1056,14 @@ namespace Revit.IFC.Export.Utility
 
                 ElementType elemType = doc.GetElement(element.GetTypeId()) as ElementType;
 
-                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
                 ICollection<IFCAnyHandle> productSet = productWrapper.GetAllObjects();
                 IList<IList<PropertySetDescription>> psetsToCreate = ExporterCacheManager.ParameterCache.PropertySets;
 
                 // In some cases, like multi-story stairs and ramps, we may have the same Pset used for multiple levels.
                 // If ifcParams is null, re-use the property set.
-                ISet<string> locallyUsedGUIDs = new HashSet<string>();
+                ISet<string> locallyUsedGUIDs = new HashSet<string>();  
                 IDictionary<Tuple<Element, Element, string>, IFCAnyHandle> createdPropertySets =
                     new Dictionary<Tuple<Element, Element, string>, IFCAnyHandle>();
                 IDictionary<IFCAnyHandle, HashSet<IFCAnyHandle>> relDefinesByPropertiesMap =
@@ -1164,7 +1165,7 @@ namespace Revit.IFC.Export.Utility
 
                 ElementType elemType = doc.GetElement(element.GetTypeId()) as ElementType;
 
-                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
                 ICollection<IFCAnyHandle> productSet = productWrapper.GetAllObjects();
                 IList<IList<QuantityDescription>> quantitiesToCreate = ExporterCacheManager.ParameterCache.Quantities;
@@ -1566,6 +1567,266 @@ namespace Revit.IFC.Export.Utility
             }
 
             return IFCInstanceExporter.CreateCurveBoundedPlane(file, basisPlane, outerBound, innerBounds);
+        }
+        
+        /// <summary>
+        /// Creates a copy of the given SolidOrShellTessellationControls object
+        /// </summary>
+        /// <param name="tessellationControls">The given SolidOrShellTessellationControls object</param>
+        /// <returns>The copy of the input object</returns>
+        public static SolidOrShellTessellationControls CopyTessellationControls(SolidOrShellTessellationControls tessellationControls)
+        {
+            SolidOrShellTessellationControls newTessellationControls = new SolidOrShellTessellationControls();
+
+            if (tessellationControls.Accuracy > 0 && tessellationControls.Accuracy <= 30000)
+                newTessellationControls.Accuracy = tessellationControls.Accuracy;
+            if (tessellationControls.LevelOfDetail >= 0 && tessellationControls.LevelOfDetail <= 1)
+                newTessellationControls.LevelOfDetail = tessellationControls.LevelOfDetail;
+            if (tessellationControls.MinAngleInTriangle >= 0 && tessellationControls.MinAngleInTriangle < Math.PI/3)
+                newTessellationControls.MinAngleInTriangle = tessellationControls.MinAngleInTriangle;
+            if (tessellationControls.MinExternalAngleBetweenTriangles > 0 && tessellationControls.MinExternalAngleBetweenTriangles <= 30000)
+                newTessellationControls.MinExternalAngleBetweenTriangles = tessellationControls.MinExternalAngleBetweenTriangles;
+
+            return newTessellationControls;
+        }
+
+        /// <summary>
+        /// Get tessellation control information for the given element.
+        /// </summary>
+        /// <param name="element">The element</param>
+        /// <param name="tessellationControls">The origin tessellation control</param>
+        /// <remarks>This method doesn't alter tessellationControls</remarks>
+        public static SolidOrShellTessellationControls GetTessellationControl(Element element, SolidOrShellTessellationControls tessellationControls)
+        {
+            SolidOrShellTessellationControls copyTessellationControls = CopyTessellationControls(tessellationControls);
+
+            Document document = element.Document;
+            // For duct and insulation, we use a different set of levels of detail.
+            int LOD = ExporterCacheManager.ExportOptionsCache.LevelOfDetail;
+
+            Element elementType = null;
+
+            //Use the insulations host as the host will have the same shape as the insulation, and then triangulate the insulation. 
+            if (element as DuctInsulation != null)
+            {
+                ElementId hostId = (element as DuctInsulation).HostElementId;
+
+                Element hostElement = document.GetElement(hostId);
+
+                elementType = document.GetElement(hostElement.GetTypeId());
+
+            }
+            else
+            {
+                elementType = document.GetElement(element.GetTypeId());
+            }
+
+
+            if (elementType as FamilySymbol != null)
+            {
+                FamilySymbol symbol = elementType as FamilySymbol;
+                Family family = symbol.Family;
+                if (family != null)
+                {
+                    Parameter para = family.LookupParameter("Part Type");
+                    if (para != null)
+                    {
+                        if (element as DuctInsulation != null)
+                        {
+                            copyTessellationControls = GetTessellationControlsForInsulation(copyTessellationControls, LOD,
+                                                                                  para.AsInteger());
+                        }
+                        else
+                        {
+                            copyTessellationControls = GetTessellationControlsForDuct(copyTessellationControls, LOD,
+                                                                                  para.AsInteger());
+                        }
+                    }
+                }
+            }
+
+            return copyTessellationControls;
+        }
+
+        /// <summary>
+        ///  Returns the tessellation controls with the right setings for an elbow,tee or cross.
+        /// </summary>
+        /// <param name="controls">The controls to be used in the tessellation</param>
+        /// <param name="lod">the level og detail (high/medium/low/extra low) high is autodesk default and will not change anything</param>
+        /// <param name="type">the type of the duct. </param>
+        /// <returns></returns>
+        public static SolidOrShellTessellationControls GetTessellationControlsForDuct(SolidOrShellTessellationControls controls, int lod, int type)
+        {
+            if (type == 5) //Elbow
+            {
+                switch (lod)
+                {
+                    case 1:
+                        controls.Accuracy = 0.81;
+                        controls.LevelOfDetail = 0.05;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.7;
+                        break;
+                    case 2:
+                        controls.Accuracy = 0.84;
+                        controls.LevelOfDetail = 0.4;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.25;
+                        break;
+                    case 3:
+                        controls.Accuracy = 0.74;
+                        controls.LevelOfDetail = 0.4;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.74;
+                        break;
+                    case 4:
+                        break;
+                }
+            }
+            else if (type == 6) //Tee
+            {
+                switch (lod)
+                {
+                    case 1:
+                        controls.Accuracy = 1.21;
+                        controls.LevelOfDetail = 0.05;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.7;
+                        break;
+                    case 2:
+                        controls.Accuracy = 0.84;
+                        controls.LevelOfDetail = 0.3;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.0;
+                        break;
+                    case 3:
+                        controls.Accuracy = 0.84;
+                        controls.LevelOfDetail = 0.4;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.54;
+                        break;
+                    case 4:
+                        break;
+                }
+            }
+            else if (type == 8) //Cross
+            {
+                switch (lod)
+                {
+                    case 1:
+                        controls.Accuracy = 0.81;
+                        controls.LevelOfDetail = 0.05;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.7;
+                        break;
+                    case 2:
+                        controls.Accuracy = 0.84;
+                        controls.LevelOfDetail = 0.2;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.8;
+                        break;
+                    case 3:
+                        controls.Accuracy = 0.81;
+                        controls.LevelOfDetail = 0.4;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.84;
+                        break;
+                    case 4:
+                        break;
+                }
+            }
+            return controls;
+        }
+
+
+        /// <summary>
+        ///  Returns the tessellation controls with the right setings for insulations for a duct of type elbow,tee or cross
+        /// </summary>
+        /// <param name="controls">The controls to be used in the tessellation</param>
+        /// <param name="lod">the level og detail (high/medium/low/extra low) high is autodesk default and will not change anything</param>
+        /// <param name="type">the type of the duct. </param>
+        /// <returns></returns>
+        public static SolidOrShellTessellationControls GetTessellationControlsForInsulation(SolidOrShellTessellationControls controls, int lod, int type)
+        {
+            if (type == 5) //Elbow
+            {
+                switch (lod)
+                {
+                    case 1:
+                        controls.Accuracy = 0.6;
+                        controls.LevelOfDetail = 0.1;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.2;
+                        break;
+                    case 2:
+                        controls.Accuracy = 0.6;
+                        controls.LevelOfDetail = 0.3;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.7;
+                        break;
+                    case 3:
+                        controls.Accuracy = 0.5;
+                        controls.LevelOfDetail = 0.4;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.35;
+                        break;
+                    case 4:
+                        break;
+                }
+            }
+            else if (type == 6) //Tee
+            {
+                switch (lod)
+                {
+                    case 1:
+                        controls.Accuracy = 0.6;
+                        controls.LevelOfDetail = 0.1;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.2;
+                        break;
+                    case 2:
+                        controls.Accuracy = 0.6;
+                        controls.LevelOfDetail = 0.2;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.9;
+                        break;
+                    case 3:
+                        controls.Accuracy = 0.5;
+                        controls.LevelOfDetail = 0.4;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.55;
+                        break;
+                    case 4:
+                        break;
+                }
+            }
+            else if (type == 8) //Cross
+            {
+                switch (lod)
+                {
+                    case 1:
+                        controls.Accuracy = 0.6;
+                        controls.LevelOfDetail = 0.1;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 1.2;
+                        break;
+                    case 2:
+                        controls.Accuracy = 0.6;
+                        controls.LevelOfDetail = 0.2;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.9;
+                        break;
+                    case 3:
+                        controls.Accuracy = 0.5;
+                        controls.LevelOfDetail = 0.4;
+                        controls.MinAngleInTriangle = 0.13;
+                        controls.MinExternalAngleBetweenTriangles = 0.55;
+                        break;
+                    case 4:
+                        break;
+                }
+            }
+            return controls;
         }
     }
 }

@@ -176,7 +176,7 @@ namespace Revit.IFC.Import.Data
             else if (IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcNamedUnit))
                 ProcessIFCNamedUnit(item);
             else
-                IFCImportFile.TheLog.LogUnhandledSubTypeError(item, "IfcUnit", true);
+                Importer.TheLog.LogUnhandledSubTypeError(item, "IfcUnit", true);
         }
 
         /// <summary>
@@ -190,7 +190,7 @@ namespace Revit.IFC.Import.Data
             else if (IFCAnyHandleUtil.IsSubTypeOf(unitHnd, IFCEntityType.IfcConversionBasedUnit))
                 ProcessIFCConversionBasedUnit(unitHnd);
             else
-                IFCImportFile.TheLog.LogUnhandledSubTypeError(unitHnd, IFCEntityType.IfcNamedUnit, true);
+                Importer.TheLog.LogUnhandledSubTypeError(unitHnd, IFCEntityType.IfcNamedUnit, true);
         }
 
         private void InitPrefixToScaleFactor()
@@ -374,48 +374,74 @@ namespace Revit.IFC.Import.Data
             }
 
             ISet<Tuple<int, UnitType, string>> expectedTypes = new HashSet<Tuple<int, UnitType, string>>();
-
+            
             string unitType = IFCAnyHandleUtil.GetEnumerationAttribute(unitHnd, "UnitType");
-            if (string.Compare(unitType, "THERMALTRANSMITTANCEUNIT", true) == 0)
+            if (string.Compare(unitType, "LINEARVELOCITYUNIT", true) == 0)
             {
-                UnitType = UnitType.UT_HVAC_CoefficientOfHeatTransfer;
-                UnitSystem = UnitSystem.Metric;
-                UnitName = UnitName.DUT_WATTS_PER_SQUARE_METER_KELVIN;
+               UnitType = UnitType.UT_HVAC_Velocity;
+               UnitSystem = UnitSystem.Metric;
+               UnitName = UnitName.DUT_METERS_PER_SECOND;
+               UnitSymbol = UnitSymbolType.UST_M_PER_S;
 
-                // Support only kg / (K * s^3).
-                expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(1, UnitType.UT_Mass, null));
-                expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-1, UnitType.UT_HVAC_Temperature, null));
-                expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-3, UnitType.UT_Custom, "TIMEUNIT"));
+               // Support only m / s.
+               expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(1, UnitType.UT_Length, null));
+               expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-1, UnitType.UT_Custom, "TIMEUNIT"));
+            }
+            else if (string.Compare(unitType, "THERMALTRANSMITTANCEUNIT", true) == 0)
+            {
+               UnitType = UnitType.UT_HVAC_CoefficientOfHeatTransfer;
+               UnitSystem = UnitSystem.Metric;
+               UnitName = UnitName.DUT_WATTS_PER_SQUARE_METER_KELVIN;
+               UnitSymbol = UnitSymbolType.UST_WATT_PER_SQ_M_K;
+
+               // Support only kg / (K * s^3).
+               expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(1, UnitType.UT_Mass, null));
+               expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-1, UnitType.UT_HVAC_Temperature, null));
+               expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-3, UnitType.UT_Custom, "TIMEUNIT"));
             }
             else if (string.Compare(unitType, "VOLUMETRICFLOWRATEUNIT", true) == 0)
             {
-                UnitType = UnitType.UT_HVAC_Airflow;
-                UnitSystem = UnitSystem.Metric;
-                UnitName = UnitName.DUT_CUBIC_METERS_PER_SECOND;
+               UnitType = UnitType.UT_HVAC_Airflow;
+               UnitSystem = UnitSystem.Metric;
+               UnitName = UnitName.DUT_LITERS_PER_SECOND;
+               UnitSymbol = UnitSymbolType.UST_L_PER_S;
 
-                // Support only m^3 / s.
-                expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(3, UnitType.UT_Length, null));
-                expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-1, UnitType.UT_Custom, "TIMEUNIT"));
+               // Support only m^3 / s in the IFC file.
+               expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(3, UnitType.UT_Length, null));
+               expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-1, UnitType.UT_Custom, "TIMEUNIT"));
             }
             else if (string.Compare(unitType, "USERDEFINED", true) == 0)
             {
-                // Look at the sub-types to see what we support.
-                string userDefinedType = IFCImportHandleUtil.GetOptionalStringAttribute(unitHnd, "UserDefinedType", null);
-                if (!string.IsNullOrWhiteSpace(userDefinedType))
-                {
-                    if (string.Compare(userDefinedType, "Luminous Efficacy", true) == 0)
-                    {
-                        UnitType = UnitType.UT_Electrical_Efficacy;
-                        UnitSystem = UnitSystem.Metric;
-                        UnitName = UnitName.DUT_LUMENS_PER_WATT;
+               // Look at the sub-types to see what we support.
+               string userDefinedType = IFCImportHandleUtil.GetOptionalStringAttribute(unitHnd, "UserDefinedType", null);
+               if (!string.IsNullOrWhiteSpace(userDefinedType))
+               {
+                  if (string.Compare(userDefinedType, "Luminous Efficacy", true) == 0)
+                  {
+                     UnitType = UnitType.UT_Electrical_Efficacy;
+                     UnitSystem = UnitSystem.Metric;
+                     UnitName = UnitName.DUT_LUMENS_PER_WATT;
+                     UnitSymbol = UnitSymbolType.UST_LM_PER_W;
 
-                        // Support only lm / W.
-                        expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-1, UnitType.UT_Mass, null));
-                        expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-2, UnitType.UT_Length, null));
-                        expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(3, UnitType.UT_Custom, "TIMEUNIT"));
-                        expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(1, UnitType.UT_Electrical_Luminous_Flux, null));
-                    }
-                }
+                     // Support only lm / W.
+                     expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-1, UnitType.UT_Mass, null));
+                     expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-2, UnitType.UT_Length, null));
+                     expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(3, UnitType.UT_Custom, "TIMEUNIT"));
+                     expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(1, UnitType.UT_Electrical_Luminous_Flux, null));
+                  }
+                  else if (string.Compare(userDefinedType, "Friction Loss", true) == 0)
+                  {
+                     UnitType = UnitType.UT_HVAC_Friction;
+                     UnitSystem = UnitSystem.Metric;
+                     UnitName = UnitName.DUT_PASCALS_PER_METER;
+                     UnitSymbol = UnitSymbolType.UST_PASCAL_PER_M;
+
+                     // Support only Pa / m.
+                     expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-2, UnitType.UT_Length, null));
+                     expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(1, UnitType.UT_Mass, null));
+                     expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-2, UnitType.UT_Custom, "TIMEUNIT"));
+                  }
+               }
             }
 
             double scaleFactor = 1.0;
@@ -442,7 +468,7 @@ namespace Revit.IFC.Import.Data
                 }
             }
 
-            IFCImportFile.TheLog.LogUnhandledUnitTypeError(unitHnd, unitType);
+            Importer.TheLog.LogUnhandledUnitTypeError(unitHnd, unitType);
         }
         
         /// <summary>
@@ -573,15 +599,15 @@ namespace Revit.IFC.Import.Data
             }
             else
             {
-                IFCImportFile.TheLog.LogUnhandledUnitTypeError(unitHnd, unitType);
+                Importer.TheLog.LogUnhandledUnitTypeError(unitHnd, unitType);
             }
 
             if (unitName != null && !unitNameSupported)
             {
                 if (prefix != null)
-                    IFCImportFile.TheLog.LogError(unitHnd.StepId, "Unhandled type of " + unitType + ": " + prefix + unitName, false);
+                    Importer.TheLog.LogError(unitHnd.StepId, "Unhandled type of " + unitType + ": " + prefix + unitName, false);
                 else
-                    IFCImportFile.TheLog.LogError(unitHnd.StepId, "Unhandled type of " + unitType + ": " + unitName, false);
+                    Importer.TheLog.LogError(unitHnd.StepId, "Unhandled type of " + unitType + ": " + unitName, false);
             }
         }
 
@@ -659,7 +685,7 @@ namespace Revit.IFC.Import.Data
             else if (string.Compare(currencyType, "VND", true) == 0)
                 UnitSymbol = UnitSymbolType.UST_DONG;
             else
-                IFCImportFile.TheLog.LogWarning(Id, "Unhandled type of currency: " + currencyType, true);
+                Importer.TheLog.LogWarning(Id, "Unhandled type of currency: " + currencyType, true);
         }
 
         /// <summary>
@@ -796,7 +822,7 @@ namespace Revit.IFC.Import.Data
             }
             catch (InvalidOperationException ex)
             {
-                IFCImportFile.TheLog.LogError(unitHnd.StepId, ex.Message, false);
+                Importer.TheLog.LogError(unitHnd.StepId, ex.Message, false);
             }
 
             return null;

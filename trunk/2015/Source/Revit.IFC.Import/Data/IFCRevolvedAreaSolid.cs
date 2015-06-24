@@ -74,7 +74,7 @@ namespace Revit.IFC.Import.Data
             Angle = IFCImportHandleUtil.GetRequiredScaledAngleAttribute(solid, "Angle", out found);
             // TODO: IFCImportFile.TheFile.Document.Application.IsValidAngle(Angle)
             if (!found || Angle < MathUtil.Eps())
-                IFCImportFile.TheLog.LogError(solid.StepId, "revolve angle is invalid, aborting.", true);
+                Importer.TheLog.LogError(solid.StepId, "revolve angle is invalid, aborting.", true);
         }
 
         private XYZ GetValidXVectorFromLoop(CurveLoop curveLoop, XYZ zVec, XYZ origin)
@@ -141,7 +141,7 @@ namespace Revit.IFC.Import.Data
                 frameXVec = GetValidXVectorFromLoop(loops[0], frameZVec, frameOrigin);
                 if (frameXVec == null)
                 {
-                    IFCImportFile.TheLog.LogError(Id, "Couldn't generate valid frame for IfcRevolvedAreaSolid.", false);
+                    Importer.TheLog.LogError(Id, "Couldn't generate valid frame for IfcRevolvedAreaSolid.", false);
                     return null;
                 }
                 XYZ frameYVec = frameZVec.CrossProduct(frameXVec);
@@ -190,7 +190,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSolid))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcRevolvedAreaSolid);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcRevolvedAreaSolid);
                 return null;
             }
 

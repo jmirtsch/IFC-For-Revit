@@ -183,7 +183,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcRepresentationMap))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcRepresentationMap);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcRepresentationMap);
                 return null;
             }
 

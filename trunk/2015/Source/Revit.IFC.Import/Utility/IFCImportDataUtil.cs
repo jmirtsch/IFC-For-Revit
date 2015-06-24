@@ -45,7 +45,7 @@ namespace Revit.IFC.Import.Utility
         {
             if ((originalAssignment != null) && (!originalAssignment.IsEquivalentTo(layerAssignment)))
             {
-                IFCImportFile.TheLog.LogWarning(id, "Multiple inconsistent layer assignment items found for this item; using first one.", false);
+                Importer.TheLog.LogWarning(id, "Multiple inconsistent layer assignment items found for this item; using first one.", false);
                 return false;
             }
 

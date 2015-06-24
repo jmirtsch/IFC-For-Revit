@@ -93,7 +93,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcWindowPanelProperties))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcWindowPanelProperties);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcWindowPanelProperties);
                 return null;
             }
 

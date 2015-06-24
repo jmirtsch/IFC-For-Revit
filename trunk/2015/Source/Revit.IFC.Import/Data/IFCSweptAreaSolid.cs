@@ -88,7 +88,7 @@ namespace Revit.IFC.Import.Data
             CurveLoop currLoop = simpleSweptArea.OuterCurve;
             if (currLoop == null || currLoop.Count() == 0)
             {
-                IFCImportFile.TheLog.LogError(simpleSweptArea.Id, "No outer curve loop for profile, ignoring.", false);
+                Importer.TheLog.LogError(simpleSweptArea.Id, "No outer curve loop for profile, ignoring.", false);
                 return null;
             }
             loops.Add(IFCGeometryUtil.CreateTransformed(currLoop, sweptAreaPosition));
@@ -122,7 +122,7 @@ namespace Revit.IFC.Import.Data
             else
             {
                 // TODO: Support.
-                IFCImportFile.TheLog.LogError(Id, "SweptArea Profile #" + profile.Id + " not yet supported.", false);
+                Importer.TheLog.LogError(Id, "SweptArea Profile #" + profile.Id + " not yet supported.", false);
             }
         }
 
@@ -148,7 +148,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSweptAreaSolid))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcSweptAreaSolid);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcSweptAreaSolid);
                 return null;
             }
 
@@ -159,7 +159,7 @@ namespace Revit.IFC.Import.Data
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcSweptAreaSolid, IFCEntityType.IfcSurfaceCurveSweptAreaSolid))
                 return IFCSurfaceCurveSweptAreaSolid.ProcessIFCSurfaceCurveSweptAreaSolid(ifcSweptAreaSolid);
 
-            IFCImportFile.TheLog.LogUnhandledSubTypeError(ifcSweptAreaSolid, IFCEntityType.IfcSweptAreaSolid, true);
+            Importer.TheLog.LogUnhandledSubTypeError(ifcSweptAreaSolid, IFCEntityType.IfcSweptAreaSolid, true);
             return null;
         }
     }

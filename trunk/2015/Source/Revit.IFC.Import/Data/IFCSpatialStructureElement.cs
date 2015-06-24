@@ -30,222 +30,228 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents an IfcSpatialStructureElement.
-    /// </summary>
-    public class IFCSpatialStructureElement : IFCProduct
-    {
-        HashSet<IFCProduct> m_IFCProducts = null;
+   /// <summary>
+   /// Represents an IfcSpatialStructureElement.
+   /// </summary>
+   public class IFCSpatialStructureElement : IFCProduct
+   {
+      HashSet<IFCProduct> m_IFCProducts = null;
 
-        HashSet<IFCSystem> m_IFCSystems = null;
+      HashSet<IFCSystem> m_IFCSystems = null;
 
-        string m_LongName = null;
+      string m_LongName = null;
 
-        /// <summary>
-        /// The elements contained in this spatial structure element.
-        /// </summary>
-        public HashSet<IFCProduct> ContainedElements
-        {
-            get { return m_IFCProducts; }
-        }
+      /// <summary>
+      /// The elements contained in this spatial structure element.
+      /// </summary>
+      public HashSet<IFCProduct> ContainedElements
+      {
+         get { return m_IFCProducts; }
+      }
 
-        /// <summary>
-        /// The Systems for the associated spatial structure.
-        /// </summary>
-        public ICollection<IFCSystem> Systems
-        {
-            get 
+      /// <summary>
+      /// The Systems for the associated spatial structure.
+      /// </summary>
+      public ICollection<IFCSystem> Systems
+      {
+         get
+         {
+            if (m_IFCSystems == null)
+               m_IFCSystems = new HashSet<IFCSystem>();
+            return m_IFCSystems;
+         }
+      }
+
+      /// <summary>
+      /// The long name of the entity.
+      /// </summary>
+      public string LongName
+      {
+         get { return m_LongName; }
+         protected set { m_LongName = value; }
+      }
+
+      /// <summary>
+      /// Returns true if sub-elements should be grouped; false otherwise.
+      /// </summary>
+      public override bool GroupSubElements()
+      {
+         return false;
+      }
+
+      /// <summary>
+      /// Constructs an IFCSpatialStructureElement from the IfcSpatialStructureElement handle.
+      /// </summary>
+      /// <param name="ifcSpatialElement">The IfcSpatialStructureElement handle.</param>
+      protected IFCSpatialStructureElement(IFCAnyHandle ifcSpatialElement)
+      {
+         Process(ifcSpatialElement);
+      }
+
+      /// <summary>
+      /// Default constructor.
+      /// </summary>
+      protected IFCSpatialStructureElement()
+      {
+
+      }
+
+      /// <summary>
+      /// Creates or populates Revit elements based on the information contained in this class.
+      /// </summary>
+      /// <param name="doc">The document.</param>
+      protected override void TraverseSubElements(Document doc)
+      {
+         base.TraverseSubElements(doc);
+
+         if (ContainedElements != null)
+         {
+            foreach (IFCProduct containedElement in ContainedElements)
+               CreateElement(doc, containedElement);
+         }
+      }
+
+      /// <summary>
+      /// Creates or populates Revit element params based on the information contained in this class.
+      /// </summary>
+      /// <param name="doc">The document.</param>
+      /// <param name="element">The element.</param>
+      protected override void CreateParametersInternal(Document doc, Element element)
+      {
+         base.CreateParametersInternal(doc, element);
+
+
+         if (element != null)
+         {
+            // Set "ObjectTypeOverride" parameter.
+            string longName = LongName;
+            if (!string.IsNullOrWhiteSpace(longName))
             {
-                if (m_IFCSystems == null)
-                    m_IFCSystems = new HashSet<IFCSystem>();
-                return m_IFCSystems; 
+               string parameterName = "LongNameOverride";
+               if (element is ProjectInfo)
+                  parameterName = EntityType.ToString() + " " + parameterName;
+
+               IFCPropertySet.AddParameterString(doc, element, parameterName, longName, Id);
             }
-        }
+         }
+      }
 
-        /// <summary>
-        /// The long name of the entity.
-        /// </summary>
-        public string LongName
-        {
-            get { return m_LongName; }
-            protected set { m_LongName = value; }
-        }
+      /// <summary>
+      /// Processes IfcSpatialStructureElement attributes.
+      /// </summary>
+      /// <param name="ifcSpatialStructureElement">The IfcSpatialStructureElement handle.</param>
+      protected override void Process(IFCAnyHandle ifcSpatialStructureElement)
+      {
+         base.Process(ifcSpatialStructureElement);
 
-        /// <summary>
-        /// Returns true if sub-elements should be grouped; false otherwise.
-        /// </summary>
-        public override bool GroupSubElements()
-        {
-            return false;
-        }
+         LongName = IFCImportHandleUtil.GetOptionalStringAttribute(ifcSpatialStructureElement, "LongName", null);
 
-        /// <summary>
-        /// Constructs an IFCSpatialStructureElement from the IfcSpatialStructureElement handle.
-        /// </summary>
-        /// <param name="ifcSpatialElement">The IfcSpatialStructureElement handle.</param>
-        protected IFCSpatialStructureElement(IFCAnyHandle ifcSpatialElement)
-        {
-            Process(ifcSpatialElement);
-        }
-
-        /// <summary>
-        /// Default constructor.
-        /// </summary>
-        protected IFCSpatialStructureElement()
-        {
-
-        }
-
-        /// <summary>
-        /// Creates or populates Revit elements based on the information contained in this class.
-        /// </summary>
-        /// <param name="doc">The document.</param>
-        protected override void TraverseSubElements(Document doc)
-        {
-            base.TraverseSubElements(doc);
-
-            if (ContainedElements != null)
-            {
-                foreach (IFCProduct containedElement in ContainedElements)
-                    CreateElement(doc, containedElement);
-            }
-        }
-
-        /// <summary>
-        /// Creates or populates Revit element params based on the information contained in this class.
-        /// </summary>
-        /// <param name="doc">The document.</param>
-        /// <param name="element">The element.</param>
-        protected override void CreateParametersInternal(Document doc, Element element)
-        {
-            base.CreateParametersInternal(doc, element);
-
-            // TODO: Set the value in ProjectInfo if element is not created.
-            if (element != null)
-            {
-                // Set "ObjectTypeOverride" parameter.
-                string longName = LongName;
-                if (!string.IsNullOrWhiteSpace(longName))
-                    IFCPropertySet.AddParameterString(doc, element, "LongNameOverride", longName, Id);
-            }
-        }
-
-        /// <summary>
-        /// Processes IfcSpatialStructureElement attributes.
-        /// </summary>
-        /// <param name="ifcSpatialStructureElement">The IfcSpatialStructureElement handle.</param>
-        protected override void Process(IFCAnyHandle ifcSpatialStructureElement)
-        {
-            base.Process(ifcSpatialStructureElement); 
-            
-            LongName = IFCImportHandleUtil.GetOptionalStringAttribute(ifcSpatialStructureElement, "LongName", null);
-
-            HashSet<IFCAnyHandle> elemSet = 
-                IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcSpatialStructureElement, "ContainsElements");
-            if (elemSet != null)
-            {
-                if (m_IFCProducts == null)
-                    m_IFCProducts = new HashSet<IFCProduct>();
-
-                foreach (IFCAnyHandle elem in elemSet)
-                    ProcessIFCRelContainedInSpatialStructure(elem);
-            }
-
-            HashSet<IFCAnyHandle> systemSet =
-                IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcSpatialStructureElement, "ServicedBySystems");
-            if (systemSet != null)
-            {
-                foreach (IFCAnyHandle system in systemSet)
-                    ProcessIFCRelServicesBuildings(system);
-            }
-        }
-
-        /// <summary>
-        /// Finds contained elements.
-        /// </summary>
-        /// <param name="ifcRelHandle">The relation handle.</param>
-        void ProcessIFCRelContainedInSpatialStructure(IFCAnyHandle ifcRelHandle)
-        {
-            HashSet<IFCAnyHandle> elemSet = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcRelHandle, "RelatedElements");
-
-            if (elemSet == null)
-            {
-                IFCImportFile.TheLog.LogMissingRequiredAttributeError(ifcRelHandle, "RelatedElements", false);
-                return;
-            }
+         HashSet<IFCAnyHandle> elemSet =
+             IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcSpatialStructureElement, "ContainsElements");
+         if (elemSet != null)
+         {
+            if (m_IFCProducts == null)
+               m_IFCProducts = new HashSet<IFCProduct>();
 
             foreach (IFCAnyHandle elem in elemSet)
-            {
-                try
-                {
-                    IFCProduct product = IFCProduct.ProcessIFCProduct(elem);
-                    if (product != null)
-                    {
-                        product.ContainingStructure = this;
-                        m_IFCProducts.Add(product);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    IFCImportFile.TheLog.LogError(elem.StepId, ex.Message, false);
-                }
-            }
-        }
+               ProcessIFCRelContainedInSpatialStructure(elem);
+         }
 
-        /// <summary>
-        /// Finds contained systems.
-        /// </summary>
-        /// <param name="ifcRelHandle">The relation handle.</param>
-        void ProcessIFCRelServicesBuildings(IFCAnyHandle ifcRelHandle)
-        {
-            IFCAnyHandle relatingSystem = IFCAnyHandleUtil.GetInstanceAttribute(ifcRelHandle, "RelatingSystem");
+         HashSet<IFCAnyHandle> systemSet =
+             IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcSpatialStructureElement, "ServicedBySystems");
+         if (systemSet != null)
+         {
+            foreach (IFCAnyHandle system in systemSet)
+               ProcessIFCRelServicesBuildings(system);
+         }
+      }
 
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(relatingSystem))
-            {
-                IFCImportFile.TheLog.LogMissingRequiredAttributeError(ifcRelHandle, "RelatingSystem", false);
-                return;
-            }
+      /// <summary>
+      /// Finds contained elements.
+      /// </summary>
+      /// <param name="ifcRelHandle">The relation handle.</param>
+      void ProcessIFCRelContainedInSpatialStructure(IFCAnyHandle ifcRelHandle)
+      {
+         HashSet<IFCAnyHandle> elemSet = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcRelHandle, "RelatedElements");
 
-            IFCSystem system = IFCSystem.ProcessIFCSystem(relatingSystem);
-            if (system != null)
-                Systems.Add(system);
-        }
+         if (elemSet == null)
+         {
+            Importer.TheLog.LogMissingRequiredAttributeError(ifcRelHandle, "RelatedElements", false);
+            return;
+         }
 
-        /// <summary>
-        /// Processes IfcSpatialStructureElement handle.
-        /// </summary>
-        /// <param name="ifcSpatialStructureElement">The IfcSpatialStructureElement handle.</param>
-        /// <returns>The IFCSpatialStructureElement object.</returns>
-        public static IFCSpatialStructureElement ProcessIFCSpatialStructureElement(IFCAnyHandle ifcSpatialStructureElement)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSpatialStructureElement))
+         foreach (IFCAnyHandle elem in elemSet)
+         {
+            try
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcSpatialStructureElement);
-                return null;
+               IFCProduct product = IFCProduct.ProcessIFCProduct(elem);
+               if (product != null)
+               {
+                  product.ContainingStructure = this;
+                  m_IFCProducts.Add(product);
+               }
             }
+            catch (Exception ex)
+            {
+               Importer.TheLog.LogError(elem.StepId, ex.Message, false);
+            }
+         }
+      }
 
-            IFCEntity spatialStructureElement;
-            if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcSpatialStructureElement.StepId, out spatialStructureElement))
-                return (spatialStructureElement as IFCSpatialStructureElement);
+      /// <summary>
+      /// Finds contained systems.
+      /// </summary>
+      /// <param name="ifcRelHandle">The relation handle.</param>
+      void ProcessIFCRelServicesBuildings(IFCAnyHandle ifcRelHandle)
+      {
+         IFCAnyHandle relatingSystem = IFCAnyHandleUtil.GetInstanceAttribute(ifcRelHandle, "RelatingSystem");
 
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcSpatialStructureElement, IFCEntityType.IfcSpace))
-            {
-                return IFCSpace.ProcessIFCSpace(ifcSpatialStructureElement);
-            }
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcSpatialStructureElement, IFCEntityType.IfcBuildingStorey))
-            {
-                return IFCBuildingStorey.ProcessIFCBuildingStorey(ifcSpatialStructureElement);
-            }
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcSpatialStructureElement, IFCEntityType.IfcSite))
-            {
-                return IFCSite.ProcessIFCSite(ifcSpatialStructureElement);
-            }
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcSpatialStructureElement, IFCEntityType.IfcBuilding))
-            {
-                return IFCBuilding.ProcessIFCBuilding(ifcSpatialStructureElement);
-            }
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(relatingSystem))
+         {
+            Importer.TheLog.LogMissingRequiredAttributeError(ifcRelHandle, "RelatingSystem", false);
+            return;
+         }
 
-            return new IFCSpatialStructureElement(ifcSpatialStructureElement);
-        }
-    }
+         IFCSystem system = IFCSystem.ProcessIFCSystem(relatingSystem);
+         if (system != null)
+            Systems.Add(system);
+      }
+
+      /// <summary>
+      /// Processes IfcSpatialStructureElement handle.
+      /// </summary>
+      /// <param name="ifcSpatialStructureElement">The IfcSpatialStructureElement handle.</param>
+      /// <returns>The IFCSpatialStructureElement object.</returns>
+      public static IFCSpatialStructureElement ProcessIFCSpatialStructureElement(IFCAnyHandle ifcSpatialStructureElement)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSpatialStructureElement))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcSpatialStructureElement);
+            return null;
+         }
+
+         IFCEntity spatialStructureElement;
+         if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcSpatialStructureElement.StepId, out spatialStructureElement))
+            return (spatialStructureElement as IFCSpatialStructureElement);
+
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcSpatialStructureElement, IFCEntityType.IfcSpace))
+         {
+            return IFCSpace.ProcessIFCSpace(ifcSpatialStructureElement);
+         }
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcSpatialStructureElement, IFCEntityType.IfcBuildingStorey))
+         {
+            return IFCBuildingStorey.ProcessIFCBuildingStorey(ifcSpatialStructureElement);
+         }
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcSpatialStructureElement, IFCEntityType.IfcSite))
+         {
+            return IFCSite.ProcessIFCSite(ifcSpatialStructureElement);
+         }
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcSpatialStructureElement, IFCEntityType.IfcBuilding))
+         {
+            return IFCBuilding.ProcessIFCBuilding(ifcSpatialStructureElement);
+         }
+
+         return new IFCSpatialStructureElement(ifcSpatialStructureElement);
+      }
+   }
 }

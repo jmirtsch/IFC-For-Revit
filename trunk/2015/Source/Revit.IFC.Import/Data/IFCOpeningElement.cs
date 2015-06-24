@@ -99,7 +99,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcOpeningElement))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcOpeningElement);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcOpeningElement);
                 return null;
             }
 

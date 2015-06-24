@@ -9,7 +9,7 @@
 #
 # Data types supported: Area, Boolean, ClassificationReference, ColorTemperature, Count, Currency, 
 #	ElectricalCurrent, ElectricalEfficacy, ElectricalVoltage, Force, Frequency, Identifier, 
-#	Illuminance, Integer, Label, Length, Logical, LuminousFlux, LuminousIntensity, 
+#	Illuminance, Integer, Label, Length, LinearVelocity, Logical, LuminousFlux, LuminousIntensity, 
 #	NormalisedRatio, PlaneAngle, PositiveLength, PositivePlaneAngle, PositiveRatio, Power, 
 #	Pressure, Ratio, Real, Text, ThermalTransmittance, ThermodynamicTemperature, Volume, 
 #	VolumetricFlowRate

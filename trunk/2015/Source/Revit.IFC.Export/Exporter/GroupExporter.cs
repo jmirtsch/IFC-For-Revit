@@ -56,7 +56,7 @@ namespace Revit.IFC.Export.Exporter
                 IFCAnyHandle groupHnd = null;
 
                 string guid = GUIDUtil.CreateGUID(element);
-                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                 string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                 string description = NamingUtil.GetDescriptionOverride(element, null);
                 string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());

@@ -70,7 +70,7 @@ namespace Revit.IFC.Export.Exporter
                 IFCAnyHandle assemblyInstanceHnd = null;
 
                 string guid = GUIDUtil.CreateGUID(element);
-                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                 string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                 string description = NamingUtil.GetDescriptionOverride(element, null);
                 string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
@@ -92,7 +92,7 @@ namespace Revit.IFC.Export.Exporter
                     relatedBuildings.Add(ExporterCacheManager.BuildingHandle);
 
                     IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
-                        exporterIFC.GetOwnerHistoryHandle(), null, null, assemblyInstanceHnd, relatedBuildings);
+                        ExporterCacheManager.OwnerHistoryHandle, null, null, assemblyInstanceHnd, relatedBuildings);
                 }
                 else
                 {
@@ -243,7 +243,7 @@ namespace Revit.IFC.Export.Exporter
             {
                 using (PlacementSetter placementSetter = PlacementSetter.Create(exporterIFC, assemblyElem))
                 {
-                    IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                    IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                     IFCAnyHandle localPlacement = placementSetter.LocalPlacement;
 
                     string guid = GUIDUtil.CreateGUID(assemblyElem);

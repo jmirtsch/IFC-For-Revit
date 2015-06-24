@@ -66,20 +66,22 @@ namespace Revit.IFC.Import.Data
             if (Shells.Count == 0)
                 return null;
 
-            using (IFCImportShapeEditScope.IFCTargetSetter setter =
-                new IFCImportShapeEditScope.IFCTargetSetter(shapeEditScope, TessellatedShapeBuilderTarget.AnyGeometry, TessellatedShapeBuilderFallback.Mesh))
+            IList<GeometryObject> geomObjs = null;
+
+            using (BuilderScope bs = shapeEditScope.InitializeBuilder(IFCShapeBuilderType.TessellatedShapeBuilder))
             {
-                shapeEditScope.StartCollectingFaceSet();
+                TessellatedShapeBuilderScope tsBuilderScope = bs as TessellatedShapeBuilderScope;
+                tsBuilderScope.StartCollectingFaceSet();
 
                 foreach (IFCConnectedFaceSet faceSet in Shells)
                     faceSet.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
 
-                IList<GeometryObject> geomObjs = shapeEditScope.CreateGeometry(guid);
-                if (geomObjs == null || geomObjs.Count == 0)
-                    return null;
-
-                return geomObjs;
+                geomObjs = tsBuilderScope.CreateGeometry(guid);
             }
+            if (geomObjs == null || geomObjs.Count == 0)
+                return null;
+
+            return geomObjs;
         }
         
         override protected void Process(IFCAnyHandle ifcFaceBasedSurfaceModel)
@@ -138,7 +140,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcFaceBasedSurfaceModel))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcFaceBasedSurfaceModel);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcFaceBasedSurfaceModel);
                 return null;
             }
 

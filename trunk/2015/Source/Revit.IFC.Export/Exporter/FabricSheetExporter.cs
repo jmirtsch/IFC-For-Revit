@@ -36,25 +36,6 @@ namespace Revit.IFC.Export.Exporter
     /// </summary>
     class FabricSheetExporter
     {
-        private static IFCAnyHandle CreateSweptDiskSolid(ExporterIFC exporterIFC, IFCFile file, Curve centerCurve, double radius)
-        {
-            IList<Curve> curves = new List<Curve>();
-            double endParam = 0.0;
-            if (centerCurve is Arc || centerCurve is Ellipse)
-            {
-                if (centerCurve.IsBound)
-                    endParam = UnitUtil.ScaleAngle(centerCurve.GetEndParameter(1) - centerCurve.GetEndParameter(0));
-                else
-                    endParam = UnitUtil.ScaleAngle(2 * Math.PI);
-            }
-            else
-                endParam = 1.0;
-            curves.Add(centerCurve);
-
-            IFCAnyHandle compositeCurve = GeometryUtil.CreateCompositeCurve(exporterIFC, curves);
-            return IFCInstanceExporter.CreateSweptDiskSolid(file, compositeCurve, radius, null, 0, endParam);
-        }
-
         /// <summary>
         /// Exports a FabricArea as an IfcGroup.  There is no geometry to export.
         /// </summary>
@@ -79,7 +60,7 @@ namespace Revit.IFC.Export.Exporter
             using (IFCTransaction tr = new IFCTransaction(file))
             {
                 string guid = GUIDUtil.CreateGUID(element);
-                IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                 string revitObjectType = exporterIFC.GetFamilyName();
                 string name = NamingUtil.GetNameOverride(element, revitObjectType);
                 string description = NamingUtil.GetDescriptionOverride(element, null);
@@ -129,7 +110,7 @@ namespace Revit.IFC.Export.Exporter
                         ParameterUtil.GetElementIdValueFromElementOrSymbol(sheet, BuiltInParameter.MATERIAL_ID_PARAM, out materialId);
 
                         string guid = GUIDUtil.CreateGUID(sheet);
-                        IFCAnyHandle ownerHistory = exporterIFC.GetOwnerHistoryHandle();
+                        IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                         string revitObjectType = exporterIFC.GetFamilyName();
                         string name = NamingUtil.GetNameOverride(sheet, revitObjectType);
                         string description = NamingUtil.GetDescriptionOverride(sheet, null);
@@ -180,7 +161,7 @@ namespace Revit.IFC.Export.Exporter
                         IList<Curve> wireCenterlines = sheet.GetWireCenterlines(WireDistributionDirection.Major);
                         foreach (Curve wireCenterline in wireCenterlines)
                         {
-                            IFCAnyHandle bodyItem = CreateSweptDiskSolid(exporterIFC, file, wireCenterline, longitudinalBarNominalDiameter);
+                            IFCAnyHandle bodyItem = GeometryUtil.CreateSweptDiskSolid(exporterIFC, file, wireCenterline, longitudinalBarNominalDiameter, null);
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(bodyItem))
                                 bodyItems.Add(bodyItem);
                         }
@@ -188,7 +169,7 @@ namespace Revit.IFC.Export.Exporter
                         wireCenterlines = sheet.GetWireCenterlines(WireDistributionDirection.Minor);
                         foreach (Curve wireCenterline in wireCenterlines)
                         {
-                            IFCAnyHandle bodyItem = CreateSweptDiskSolid(exporterIFC, file, wireCenterline, transverseBarNominalDiameter);
+                            IFCAnyHandle bodyItem = GeometryUtil.CreateSweptDiskSolid(exporterIFC, file, wireCenterline, transverseBarNominalDiameter, null);
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(bodyItem))
                                 bodyItems.Add(bodyItem);
                         }

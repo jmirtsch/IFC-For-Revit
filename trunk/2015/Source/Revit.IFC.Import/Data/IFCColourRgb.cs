@@ -30,18 +30,16 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    public class IFCColourRgb : IFCEntity
+    /// <summary>
+    /// Class representing an IfcColourRgb entity.
+    /// </summary>
+    public class IFCColourRgb : IFCColourSpecification
     {
-        private string m_Name = null;
-
         private double m_NormalisedRed = 0.5;
 
         private double m_NormalisedGreen = 0.5;
 
         private double m_NormalisedBlue = 0.5;
-
-        // cached color value.
-        private Color m_Color = null;
 
         protected IFCColourRgb()
         {
@@ -75,29 +73,15 @@ namespace Revit.IFC.Import.Data
         }
         
         /// <summary>
-        /// Get the optional name of the color.
-        /// </summary>
-        public string Name
-        {
-            get { return m_Name; }
-            protected set { m_Name = value; }
-        }
-
-        /// <summary>
         /// Get the RGB associated to the color.
         /// </summary>
         /// <returns>The Color value.</returns>
-        public Color GetColor()
+        protected override Color CreateColor()
         {
-            if (m_Color == null)
-            {
-                byte red = (byte)(NormalisedRed * 255 + 0.5);
-                byte green = (byte)(NormalisedGreen * 255 + 0.5);
-                byte blue = (byte)(NormalisedBlue * 255 + 0.5);
-                m_Color = new Color(red, green, blue);
-            }
-
-            return m_Color;
+            byte red = (byte)(NormalisedRed * 255 + 0.5);
+            byte green = (byte)(NormalisedGreen * 255 + 0.5);
+            byte blue = (byte)(NormalisedBlue * 255 + 0.5);
+            return new Color(red, green, blue);
         }
 
         /// <summary>
@@ -105,17 +89,31 @@ namespace Revit.IFC.Import.Data
         /// </summary>
         /// <param name="factor">The normalised factor from 0 to 1.</param>
         /// <returns>The Color value.</returns>
-        public Color GetColor(double factor)
+        public Color GetScaledColor(double factor)
         {
-            if (m_Color == null)
+            if (factor < MathUtil.Eps())
             {
-                byte red = (byte)(NormalisedRed * 255 * factor + 0.5);
-                byte green = (byte)(NormalisedGreen * 255 * factor + 0.5);
-                byte blue = (byte)(NormalisedBlue * 255 * factor + 0.5);
-                m_Color = new Color(red, green, blue);
+                Importer.TheLog.LogWarning(Id, "Invalid negative scaling factor of " + factor + ", defaulting to black.", true);
+                return new Color(0, 0, 0);
             }
 
-            return m_Color;
+            Color origColor = GetColor();
+            if (origColor == null)
+            {
+                Importer.TheLog.LogError(Id, "Couldn't create color, default to grey.", false);
+                return new Color(127, 127, 127);
+            }
+            
+            if (factor > 1.0 + MathUtil.Eps())
+            {
+                Importer.TheLog.LogWarning(Id, "Invalid normalised scaling factor of " + factor + ", defaulting to original color", true);
+                return origColor;
+            }
+
+            byte red = (byte)(origColor.Red * 255 * factor + 0.5);
+            byte green = (byte)(origColor.Green * 255 * factor + 0.5);
+            byte blue = (byte)(origColor.Blue * 255 * factor + 0.5);
+            return new Color(red, green, blue);
         }
 
         override protected void Process(IFCAnyHandle item)
@@ -141,7 +139,7 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcColourRgb))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcColourRgb);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcColourRgb);
                 return null;
             }
 

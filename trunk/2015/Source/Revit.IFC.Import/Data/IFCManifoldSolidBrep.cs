@@ -35,8 +35,6 @@ namespace Revit.IFC.Import.Data
     {
         IFCClosedShell m_Outer = null;
 
-        ISet<IFCClosedShell> m_Inners = null;
-
         /// <summary>
         /// The outer shell of the solid.
         /// </summary>
@@ -46,19 +44,6 @@ namespace Revit.IFC.Import.Data
             protected set { m_Outer = value; }
         }
 
-        /// <summary>
-        /// The list of optional voids of the solid.
-        /// </summary>
-        public ISet<IFCClosedShell> Inners
-        {
-            get 
-            { 
-                if (m_Inners == null)
-                    m_Inners = new HashSet<IFCClosedShell>();
-                return m_Inners; 
-            }
-        }
-        
         protected IFCManifoldSolidBrep()
         {
         }
@@ -78,40 +63,49 @@ namespace Revit.IFC.Import.Data
                 return null;
 
             IList<GeometryObject> geomObjs = null;
+            bool canRevertToMesh = false;
             
-            shapeEditScope.StartCollectingFaceSet();
-            Outer.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
-            
-            bool closedFaceSet = false;
-            if (shapeEditScope.CreatedFacesCount == Outer.Faces.Count)
+            using (BuilderScope bs = shapeEditScope.InitializeBuilder(IFCShapeBuilderType.TessellatedShapeBuilder))
             {
-                geomObjs = shapeEditScope.CreateGeometry(guid);
-                closedFaceSet = true;
+                TessellatedShapeBuilderScope tsBuilderScope = bs as TessellatedShapeBuilderScope;
+
+                tsBuilderScope.StartCollectingFaceSet();
+                Outer.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
+
+                if (tsBuilderScope.CreatedFacesCount == Outer.Faces.Count)
+                {
+                    geomObjs = tsBuilderScope.CreateGeometry(guid);
+                }
+
+                canRevertToMesh = tsBuilderScope.CanRevertToMesh();
             }
+
 
             if (geomObjs == null || geomObjs.Count == 0)
             {
-                // Let's see if we can loosen the requirements a bit, and try again.
-                if (shapeEditScope.TargetGeometry == TessellatedShapeBuilderTarget.AnyGeometry &&
-                    shapeEditScope.FallbackGeometry == TessellatedShapeBuilderFallback.Mesh)
+                if (canRevertToMesh)
                 {
-                    using (IFCImportShapeEditScope.IFCTargetSetter targetSetter =
-                        new IFCImportShapeEditScope.IFCTargetSetter(shapeEditScope, TessellatedShapeBuilderTarget.Mesh, TessellatedShapeBuilderFallback.Salvage))
+                    using (IFCImportShapeEditScope.BuildPreferenceSetter setter =
+                        new IFCImportShapeEditScope.BuildPreferenceSetter(shapeEditScope, IFCImportShapeEditScope.BuildPreferenceType.AnyMesh))
                     {
-                        if (closedFaceSet)
-                            shapeEditScope.StartCollectingFaceSet();
-                        else
-                            shapeEditScope.ResetCreatedFacesCount();
-                        
-                        Outer.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
-
-                        // This needs to be in scope so that we keep the mesh tolerance for vertices.
-                        if (shapeEditScope.CreatedFacesCount != 0)
+                        using (BuilderScope newBuilderScope = shapeEditScope.InitializeBuilder(IFCShapeBuilderType.TessellatedShapeBuilder))
                         {
-                            if (shapeEditScope.CreatedFacesCount != Outer.Faces.Count)
-                                IFCImportFile.TheLog.LogWarning(Outer.Id, "Processing " + shapeEditScope.CreatedFacesCount + " valid faces out of " + Outer.Faces.Count + " total.", false);
+                            TessellatedShapeBuilderScope newTsBuilderScope = newBuilderScope as TessellatedShapeBuilderScope;
+                            // Let's see if we can loosen the requirements a bit, and try again.
+                            newTsBuilderScope.StartCollectingFaceSet();
 
-                            geomObjs = shapeEditScope.CreateGeometry(guid);
+                            Outer.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
+
+                            // This needs to be in scope so that we keep the mesh tolerance for vertices.
+                            if (newTsBuilderScope.CreatedFacesCount != 0)
+                            {
+                                if (newTsBuilderScope.CreatedFacesCount != Outer.Faces.Count)
+                                    Importer.TheLog.LogWarning
+                                        (Outer.Id, "Processing " + newTsBuilderScope.CreatedFacesCount + " valid faces out of " + Outer.Faces.Count + " total.", false);
+
+                                geomObjs = newTsBuilderScope.CreateGeometry(guid);
+                            }
+
                         }
                     }
                 }
@@ -120,8 +114,8 @@ namespace Revit.IFC.Import.Data
             if (geomObjs == null || geomObjs.Count == 0)
             {
                 // Couldn't use fallback, or fallback didn't work.
-                IFCImportFile.TheLog.LogWarning(Id, "Couldn't create any geometry.", false);
-               return null;
+                Importer.TheLog.LogWarning(Id, "Couldn't create any geometry.", false);
+                return null;
             }
 
             return geomObjs;
@@ -135,25 +129,7 @@ namespace Revit.IFC.Import.Data
             IFCAnyHandle ifcOuter = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcManifoldSolidBrep, "Outer", true);
             Outer = IFCClosedShell.ProcessIFCClosedShell(ifcOuter);
 
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcManifoldSolidBrep, IFCEntityType.IfcFacetedBrepWithVoids))
-            {
-                HashSet<IFCAnyHandle> ifcVoids = 
-                    IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcManifoldSolidBrep, "Voids");
-                if (ifcVoids != null)
-                {
-                    foreach (IFCAnyHandle ifcVoid in ifcVoids)
-                    {
-                        try
-                        {
-                            Inners.Add(IFCClosedShell.ProcessIFCClosedShell(ifcVoid));
-                        }
-                        catch
-                        {
-                            // LOG: WARNING: #: Invalid inner shell ifcVoid.StepId, ignoring.
-                        }
-                    }
-                }
-            }
+            
         }
 
         /// <summary>
@@ -181,11 +157,11 @@ namespace Revit.IFC.Import.Data
                         }
                     }
                     else
-                        IFCImportFile.TheLog.LogError(Outer.Id, "cannot create valid solid, ignoring.", false);
+                        Importer.TheLog.LogError(Outer.Id, "cannot create valid solid, ignoring.", false);
                 }
                 catch (Exception ex)
                 {
-                    IFCImportFile.TheLog.LogError(Outer.Id, ex.Message, false);
+                    Importer.TheLog.LogError(Outer.Id, ex.Message, false);
                 }
             }
         }
@@ -204,8 +180,17 @@ namespace Revit.IFC.Import.Data
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcManifoldSolidBrep))
             {
-                IFCImportFile.TheLog.LogNullError(IFCEntityType.IfcManifoldSolidBrep);
+                Importer.TheLog.LogNullError(IFCEntityType.IfcManifoldSolidBrep);
                 return null;
+            }
+
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcManifoldSolidBrep, IFCEntityType.IfcFacetedBrep))
+                return IFCFacetedBrep.ProcessIFCFacetedBrep(ifcManifoldSolidBrep);
+
+            if (IFCImportFile.TheFile.SchemaVersion > IFCSchemaVersion.IFC2x3 && IFCAnyHandleUtil.IsSubTypeOf(ifcManifoldSolidBrep, IFCEntityType.IfcAdvancedBrep))
+            {
+               Importer.TheLog.LogUnhandledSubTypeError(ifcManifoldSolidBrep, IFCEntityType.IfcManifoldSolidBrep, false);
+               return null;
             }
 
             IFCEntity manifoldSolidBrep;
