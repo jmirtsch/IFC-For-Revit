@@ -163,6 +163,9 @@ namespace Revit.IFC.Import.Data
                Curve = copyCurve.CreateReversed();
             }
          }
+
+         CurveLoop = new CurveLoop();
+         CurveLoop.Append(Curve);
       }
 
       private void GetTrimParameters(IFCData trim1, IFCData trim2, IFCCurve basisCurve, IFCTrimmingPreference trimPreference,

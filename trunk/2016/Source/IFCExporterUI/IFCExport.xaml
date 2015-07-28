@@ -4,22 +4,23 @@
         xmlns:p="clr-namespace:BIM.IFC.Export.UI.Properties"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
         xmlns:System="clr-namespace:System;assembly=mscorlib" Title="{x:Static p:Resources.IFCExport}" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" WindowStyle="SingleBorderWindow" ResizeMode="CanMinimize" Closing="Window_Closing" Height="511.106" Width="436">
-   <Grid Margin="10,10,0,0" Height="467" VerticalAlignment="Top" HorizontalAlignment="Left" Width="400" RenderTransformOrigin="0.5,0.409">
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" WindowStyle="SingleBorderWindow" ResizeMode="CanMinimize" Closing="Window_Closing" Height="330" Width="440">
+   <Grid Margin="10,0,0,0" Height="300" VerticalAlignment="Top" HorizontalAlignment="Left" Width="430" RenderTransformOrigin="0.5,0.409">
       <Grid.ColumnDefinitions>
-         <ColumnDefinition Width="12*" />
+         <ColumnDefinition />
+         <ColumnDefinition Width="12*"/>
          <ColumnDefinition Width="392*" />
       </Grid.ColumnDefinitions>
-      <ComboBox Height="23" HorizontalAlignment="Left" Margin="0,35,0,0" Name="currentSelectedSetup" VerticalAlignment="Top" Width="238" SelectionChanged="currentSelectedSetup_SelectionChanged" ItemsSource="{Binding}" DataContext="{Binding}" Grid.ColumnSpan="2" />
-      <TextBox Height="242" HorizontalAlignment="Left" Margin="0,187,0,0" Name="textBoxSetupDescription" ScrollViewer.VerticalScrollBarVisibility="Auto" VerticalAlignment="Top" Width="400" IsEnabled="True" IsReadOnly="True"  TextWrapping="WrapWithOverflow" TextChanged="textBoxSetupDescription_TextChanged" Grid.ColumnSpan="2" />
-      <Button Content="{x:Static p:Resources.ModifySetup}" Height="23" HorizontalAlignment="Left" Margin="231,35,0,0" Name="buttonEditSetup" VerticalAlignment="Top" Width="157" Click="buttonEditSetup_Click" Grid.Column="1" />
-      <Button Content="{x:Static p:Resources.Cancel}" Height="23" HorizontalAlignment="Right" Margin="0,434,0,0" Name="buttonCancel" VerticalAlignment="Top" Width="75" Click="buttonCancel_Click" Grid.Column="1" />
-      <Button Content="{x:Static p:Resources.Export}" Height="23" HorizontalAlignment="Left" Margin="220,434,0,0" Name="buttonNext" VerticalAlignment="Top" Width="75" Click="buttonNext_Click" IsDefault="True" Grid.Column="1" />
-      <Label Content="{x:Static p:Resources.CurrentSelectedSetup}" HorizontalAlignment="Left" Margin="0,10,0,0" Name="label1" Height="28" VerticalAlignment="Top" Grid.ColumnSpan="2" Width="180" />
-      <Button Content="{x:Static p:Resources.Assignments}" Height="23" HorizontalAlignment="Left" Margin="0,434,0,0" Name="buttonAssigment" VerticalAlignment="Top" Width="88" Click="buttonAssignment_Click" Grid.ColumnSpan="2" />
-      <TreeView Height="58" HorizontalAlignment="Left" Margin="0,91,0,0" ScrollViewer.VerticalScrollBarVisibility="Auto" x:Name="treeViewDocuments" VerticalAlignment="Top" Width="400" Grid.ColumnSpan="2" />
-      <Label Content="{x:Static p:Resources.ProjectToExport}" HorizontalAlignment="Left" Margin="0,63,0,0" x:Name="label1_Copy" Height="28" VerticalAlignment="Top" Grid.ColumnSpan="2" Width="180" />
-      <Label Content="{x:Static p:Resources.CurrentOptions}" HorizontalAlignment="Left" Margin="0,154,0,0" x:Name="label1_Copy1" Height="28" VerticalAlignment="Top" Grid.ColumnSpan="2" Width="180" />
+      <ComboBox Height="23" HorizontalAlignment="Left" Margin="0,35,0,0" Name="currentSelectedSetup" VerticalAlignment="Top" Width="238" SelectionChanged="currentSelectedSetup_SelectionChanged" ItemsSource="{Binding}" DataContext="{Binding}" Grid.ColumnSpan="3" />
+      <TextBox Height="28" HorizontalAlignment="Right" Margin="0,70,49.4,0" Name="textBoxSetupDescription" VerticalAlignment="Top" Width="311" IsEnabled="True" IsReadOnly="True"  TextWrapping="WrapWithOverflow" TextChanged="textBoxSetupDescription_TextChanged" Grid.Column="2" BorderThickness="0" VerticalContentAlignment="Center"/>
+      <Button Content="{x:Static p:Resources.ModifySetup}" Height="23" HorizontalAlignment="Left" Margin="232,35,0,0" Name="buttonEditSetup" VerticalAlignment="Top" Width="157" Click="buttonEditSetup_Click" Grid.Column="2" Grid.ColumnSpan="2" />
+      <Button Content="{x:Static p:Resources.Cancel}" Height="23" HorizontalAlignment="Right" Margin="0,225,30.4,0" Name="buttonCancel" VerticalAlignment="Top" Width="100" Click="buttonCancel_Click" Grid.Column="2" RenderTransformOrigin="-0.187,0.478" />
+      <Button Content="{x:Static p:Resources.Export}" Height="23" HorizontalAlignment="Left" Margin="175,225,0,0" Name="buttonNext" VerticalAlignment="Top" Width="100" Click="buttonNext_Click" IsDefault="True" Grid.Column="2" />
+      <Label Content="{x:Static p:Resources.CurrentSelectedSetup}" HorizontalAlignment="Left" Margin="0,10,0,0" Name="label1" Height="28" VerticalAlignment="Top" Grid.ColumnSpan="3" Width="180" />
+      <Button Content="{x:Static p:Resources.Assignments}" Height="23" HorizontalAlignment="Left" Margin="0,225,0,0" Name="buttonAssigment" VerticalAlignment="Top" Width="120" Click="buttonAssignment_Click" Grid.ColumnSpan="2" Grid.Column="1" />
+      <ListView Height="83" HorizontalAlignment="Left" Margin="0,125,30.4,0" ScrollViewer.VerticalScrollBarVisibility="Auto" x:Name="listViewDocuments" VerticalAlignment="Top" Width="400" Grid.ColumnSpan="3"/>
+      <Label Content="{x:Static p:Resources.ProjectToExport}" HorizontalAlignment="Left" Margin="0,100,0,0" x:Name="label1_Copy" Height="28" VerticalAlignment="Top" Grid.ColumnSpan="3" Width="180" />
+      <Label Content="{x:Static p:Resources.IFCVersionSelected}" HorizontalAlignment="Left" Margin="0,70,0,0" x:Name="label1_Copy1" Height="28" VerticalAlignment="Top" Grid.ColumnSpan="3" Width="80" VerticalContentAlignment="Top"/>
    </Grid>
 
    <Window.Resources>

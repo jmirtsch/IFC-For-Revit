@@ -176,9 +176,6 @@
   <data name="SplitWallsAndColumns" xml:space="preserve">
     <value>Split walls and columns</value>
   </data>
-  <data name="Use2DRoomBoundariesForRoomVolume" xml:space="preserve">
-    <value>Use 2D room boundaries for room volume</value>
-  </data>
   <data name="UseFamilyAndTypeNameForReferences" xml:space="preserve">
     <value>Use family and type name for references</value>
   </data>
@@ -546,9 +543,6 @@
   <data name="UseCoarseTessellationForBReps" xml:space="preserve">
     <value>Use coarse tessellation for some BReps and profiles</value>
   </data>
-  <data name="UseFamilyAndTypeNameForReference" xml:space="preserve">
-    <value>Use family and type name for reference</value>
-  </data>
   <data name="UserDefined" xml:space="preserve">
     <value>User Defined</value>
   </data>
@@ -641,5 +635,17 @@
   </data>
   <data name="IFCExportProcessGenericError" xml:space="preserve">
     <value>The IFC export process encountered an error.</value>
+  </data>
+  <data name="Use2DRoomBoundariesForRoomVolume" xml:space="preserve">
+    <value>Use 2D room boundaries for room volume</value>
+  </data>
+  <data name="UseFamilyAndTypeNameForReference" xml:space="preserve">
+    <value>Use family and type name for reference</value>
+  </data>
+  <data name="IFCVersionSelected" xml:space="preserve">
+    <value>IFC Version: </value>
+  </data>
+  <data name="DocNotSaved" xml:space="preserve">
+    <value>Document Not Saved</value>
   </data>
 </root>

@@ -209,13 +209,5 @@ namespace Revit.IFC.Import.Data
                     propertySetList.Set(propertySetsCreated);
             }
         }
-
-        /// <summary>
-        /// Cleans out the IFCEntity to save memory.
-        /// </summary>
-        public override void CleanEntity()
-        {
-            // Don't do anything; IfcTypeObjects will be accessed multiple times.
-        }
     }
 }

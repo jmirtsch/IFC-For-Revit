@@ -2180,7 +2180,9 @@ namespace Revit.IFC.Export.Toolkit
 
             IFCAnyHandle stairFlight = CreateInstance(file, IFCEntityType.IfcStairFlight);
             SetElement(stairFlight, guid, ownerHistory, name, description, objectType, objectPlacement, representation, elementTag);
-            IFCAnyHandleUtil.SetAttribute(stairFlight, "NumberOfRiser", numberOfRiser);
+
+            string numberOfRisersAttrName = (ExporterCacheManager.ExportOptionsCache.ExportAs4_ADD1) ? "NumberOfRisers" : "NumberOfRiser";
+            IFCAnyHandleUtil.SetAttribute(stairFlight, numberOfRisersAttrName, numberOfRiser);
             IFCAnyHandleUtil.SetAttribute(stairFlight, "NumberOfTreads", numberOfTreads);
             IFCAnyHandleUtil.SetAttribute(stairFlight, "RiserHeight", riserHeight);
             IFCAnyHandleUtil.SetAttribute(stairFlight, "TreadLength", treadLength);

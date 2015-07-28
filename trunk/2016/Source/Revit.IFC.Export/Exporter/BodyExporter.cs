@@ -1241,72 +1241,73 @@ namespace Revit.IFC.Export.Exporter
 
         private static IFCAnyHandle CreateEdgeCurveFromCurve(IFCFile file, ExporterIFC exporterIFC, Curve curve, IFCAnyHandle edgeStart, IFCAnyHandle edgeEnd, bool sameSense)
         {
-            bool allowAdvancedCurve = exporterIFC.FileVersion >= IFCVersion.IFC4;
-            IFCAnyHandle baseCurve = GeometryUtil.CreateIFCCurveFromRevitCurve(file, exporterIFC, curve, allowAdvancedCurve);
+           bool allowAdvancedCurve = ExporterCacheManager.ExportOptionsCache.ExportAs4;
+           IFCAnyHandle baseCurve = GeometryUtil.CreateIFCCurveFromRevitCurve(file, exporterIFC, curve, allowAdvancedCurve);
 
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(baseCurve))
-                return null;
+           if (IFCAnyHandleUtil.IsNullOrHasNoValue(baseCurve))
+              return null;
 
-            IFCAnyHandle edgeCurve = IFCInstanceExporter.CreateEdgeCurve(file, edgeStart, edgeEnd, baseCurve, sameSense);
-            return edgeCurve;
+           IFCAnyHandle edgeCurve = IFCInstanceExporter.CreateEdgeCurve(file, edgeStart, edgeEnd, baseCurve, sameSense);
+           return edgeCurve;
         }
 
         private static IFCAnyHandle CreateProfileCurveFromCurve(IFCFile file, ExporterIFC exporterIFC, Curve curve)
         {
-            bool allowAdvancedCurve = exporterIFC.FileVersion >= IFCVersion.IFC4;
-            IFCAnyHandle ifcCurve = GeometryUtil.CreateIFCCurveFromRevitCurve(file, exporterIFC, curve, allowAdvancedCurve);
-            IFCAnyHandle sweptCurve = null;
+           bool allowAdvancedCurve = ExporterCacheManager.ExportOptionsCache.ExportAs4;
+           IFCAnyHandle ifcCurve = GeometryUtil.CreateIFCCurveFromRevitCurve(file, exporterIFC, curve, allowAdvancedCurve);
+           IFCAnyHandle sweptCurve = null;
 
-            string name = curve.GetType().ToString() + "CurveBaseProfile";
+           string name = curve.GetType().ToString() + "CurveBaseProfile";
 
-            bool isBound = false;
-            
-            IFCAnyHandle edgeStart = null;
-            IFCAnyHandle edgeEnd = null;
+           bool isBound = false;
 
-            if (!curve.IsBound)
-            {
-                isBound = false;
-            }
-            else 
-            {
-                XYZ startPoint = curve.GetEndPoint(0);
-                XYZ endPoint = curve.GetEndPoint(1);
+           IFCAnyHandle edgeStart = null;
+           IFCAnyHandle edgeEnd = null;
 
-                if (startPoint.IsAlmostEqualTo(endPoint))
-                {
-                    isBound = false;
-                }
-                else
-                {
-                    edgeStart = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, curve.GetEndPoint(0), true);
-                    edgeEnd = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, curve.GetEndPoint(1), true);
-                    isBound = true;
-                }
-            }
+           if (!curve.IsBound)
+           {
+              isBound = false;
+           }
+           else
+           {
+              XYZ startPoint = curve.GetEndPoint(0);
+              XYZ endPoint = curve.GetEndPoint(1);
 
-            if (!isBound)
-            {
-                sweptCurve = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Curve, name, ifcCurve);
-            }
-            else 
-            {
-                IFCAnyHandle trimmedCurve = null;
+              if (startPoint.IsAlmostEqualTo(endPoint))
+              {
+                 isBound = false;
+              }
+              else
+              {
+                 edgeStart = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, curve.GetEndPoint(0), true);
+                 edgeEnd = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, curve.GetEndPoint(1), true);
+                 isBound = true;
+              }
+           }
 
-                IFCData trim1data = IFCData.CreateIFCAnyHandle(edgeStart);
-                HashSet<IFCData> trim1 = new HashSet<IFCData>();
-                trim1.Add(trim1data);
-                IFCData trim2data = IFCData.CreateIFCAnyHandle(edgeEnd);
-                HashSet<IFCData> trim2 = new HashSet<IFCData>();
-                trim2.Add(trim2data);
-                bool senseAgreement = true;
-                trimmedCurve = IFCInstanceExporter.CreateTrimmedCurve(file, ifcCurve, trim1, trim2, senseAgreement, IFCTrimmingPreference.Cartesian);
+           if (!isBound)
+           {
+              sweptCurve = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Curve, name, ifcCurve);
+           }
+           else
+           {
+              IFCAnyHandle trimmedCurve = null;
 
-                sweptCurve = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Curve, name, trimmedCurve);
-            }
+              IFCData trim1data = IFCData.CreateIFCAnyHandle(edgeStart);
+              HashSet<IFCData> trim1 = new HashSet<IFCData>();
+              trim1.Add(trim1data);
+              IFCData trim2data = IFCData.CreateIFCAnyHandle(edgeEnd);
+              HashSet<IFCData> trim2 = new HashSet<IFCData>();
+              trim2.Add(trim2data);
+              bool senseAgreement = true;
+              trimmedCurve = IFCInstanceExporter.CreateTrimmedCurve(file, ifcCurve, trim1, trim2, senseAgreement, IFCTrimmingPreference.Cartesian);
 
-            return sweptCurve;
+              sweptCurve = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Curve, name, trimmedCurve);
+           }
+
+           return sweptCurve;
         }
+
         /// <summary>
         /// Returns a handle for creation of an AdvancedBrep with AdvancedFace and assigns it to the file
         /// </summary>
@@ -1342,7 +1343,8 @@ namespace Revit.IFC.Export.Exporter
                 {
                     Curve currCurve = edge.AsCurve();
 
-                    bool isValidCurve = (currCurve is Line) || (currCurve is Arc) || (currCurve is HermiteSpline) || (currCurve is NurbSpline);
+                    // Since every curve accept cylindrical helix is supported, we may consider remove this check
+                    bool isValidCurve = (currCurve is Line) || (currCurve is Arc) || (currCurve is HermiteSpline) || (currCurve is NurbSpline) || (currCurve is Ellipse);
                     if (!isValidCurve)
                     {
                         return null;
@@ -1489,79 +1491,62 @@ namespace Revit.IFC.Export.Exporter
                         pair.Value.Insert(0, pair.Key);
 
                         // Process each inner loop
-                        foreach (EdgeArray edgeArray in pair.Value) 
+                        foreach (EdgeArray edgeArray in pair.Value)
                         {
-                            // Map each edge in this loop back to its corresponding edge curve and then calculate its orientation to create IfcOrientedEdge
-                            foreach (Edge edge in edgeArray)
-                            {
-                                if (!edgeToIfcEdgeCurve.ContainsKey(edge))
-                                {
-                                    // The reason why edgeToIfcEdgeCurve cannot find edge is that either we haven't created the IfcOrientedEdge
-                                    // corresponding to that edge OR we already have but the dictionary cannot find the edge as its key because 
-                                    // Face.EdgeLoop and geomSolid.Edges return different pointers for the same edge. This can be avoided if 
-                                    // Equals() method is implemented for Edge
-                                    return null;
-                                }
+                           // Map each edge in this loop back to its corresponding edge curve and then calculate its orientation to create IfcOrientedEdge
+                           foreach (Edge edge in edgeArray)
+                           {
+                              // The reason why edgeToIfcEdgeCurve cannot find edge is that either we haven't created the IfcOrientedEdge
+                              // corresponding to that edge OR we already have but the dictionary cannot find the edge as its key because 
+                              // Face.EdgeLoop and geomSolid.Edges return different pointers for the same edge. This can be avoided if 
+                              // Equals() method is implemented for Edge
+                              if (!edgeToIfcEdgeCurve.ContainsKey(edge))
+                                 return null;
 
-                                IFCAnyHandle edgeCurve = edgeToIfcEdgeCurve[edge];
-                                bool orientation = true;
+                              IFCAnyHandle edgeCurve = edgeToIfcEdgeCurve[edge];
 
-                                Curve currCurve = edge.AsCurve();
-                                Curve curveInCurrentFace = edge.AsCurveFollowingFace(face);
+                              Curve currCurve = edge.AsCurve();
+                              Curve curveInCurrentFace = edge.AsCurveFollowingFace(face);
 
-                                if (currCurve == null || curveInCurrentFace == null)
-                                {
-                                    return null;
-                                }
+                              if (currCurve == null || curveInCurrentFace == null)
+                                 return null;
 
-                                // if the curve length is 0, ignore it.
-                                if (currCurve.ApproximateLength == 0) 
-                                {
-                                    continue;
-                                }
+                              // if the curve length is 0, ignore it.
+                              if (MathUtil.IsAlmostZero(currCurve.ApproximateLength))
+                                 continue;
 
-                                // if the curve is unbound, it means that the solid may be corrupted, we shouldn't process it anymore
-                                if (!currCurve.IsBound) 
-                                {
-                                    return null;
-                                }
+                              // if the curve is unbound, it means that the solid may be corrupted, we shouldn't process it anymore
+                              if (!currCurve.IsBound)
+                                 return null;
+                              
+                              bool orientation = currCurve.GetEndPoint(0).IsAlmostEqualTo(curveInCurrentFace.GetEndPoint(0));
 
-                                if (currCurve.GetEndPoint(0).IsAlmostEqualTo(curveInCurrentFace.GetEndPoint(0)))
-                                {
-                                    orientation = true;
-                                }
-                                else
-                                {
-                                    orientation = false;
-                                }
+                              IFCAnyHandle orientedEdge = IFCInstanceExporter.CreateOrientedEdge(file, edgeCurve, orientation);
+                              orientedEdgeList.Add(orientedEdge);
+                           }
 
-                                IFCAnyHandle orientedEdge = IFCInstanceExporter.CreateOrientedEdge(file, edgeCurve, orientation);
-                                orientedEdgeList.Add(orientedEdge);
-                            }
+                           IFCAnyHandle edgeLoop = IFCInstanceExporter.CreateEdgeLoop(file, orientedEdgeList);
+                           edgeLoopList.Add(edgeLoop);
 
-                            IFCAnyHandle edgeLoop = IFCInstanceExporter.CreateEdgeLoop(file, orientedEdgeList);
-                            edgeLoopList.Add(edgeLoop);
+                           IFCAnyHandle faceBound = null;
 
-                            // EdgeLoopList has only 1 element indicates that this is the outer loop
-                            if (edgeLoopList.Count == 1)
-                            {
-                                IFCAnyHandle faceOuterBound = IFCInstanceExporter.CreateFaceOuterBound(file, edgeLoop, true);
-                                bounds.Add(faceOuterBound);
-                            }
-                            else
-                            {
-                                IFCAnyHandle faceBound = IFCInstanceExporter.CreateFaceBound(file, edgeLoop, false);
-                                bounds.Add(faceBound);
-                            }
+                           // EdgeLoopList has only 1 element indicates that this is the outer loop
+                           if (edgeLoopList.Count == 1)
+                              faceBound = IFCInstanceExporter.CreateFaceOuterBound(file, edgeLoop, true);
+                           else
+                              faceBound = IFCInstanceExporter.CreateFaceBound(file, edgeLoop, false);
 
-                            // After finishing processing one loop, clear orientedEdgeList
-                            orientedEdgeList.Clear();
+                           bounds.Add(faceBound);
+
+                           // After finishing processing one loop, clear orientedEdgeList
+                           orientedEdgeList.Clear();
                         }
                         boundsCollection.Add(bounds);
                     }
                     
                     edgeLoopList.Clear();
 
+                    // TODO: create a new face processing method to factor out this code
                     // process the face now
                     if (face is PlanarFace)
                     {

@@ -153,7 +153,7 @@ namespace Revit.IFC.Export.Exporter
       }
                   
         /// <summary>
-        /// Initialize user-defined property sets (from external file ParameterMappingTable.txt)
+        /// Initialize user-defined property sets (from external file)
         /// </summary>
         /// <param name="propertySets">List of Psets</param>
         /// <param name="fileVersion">file version - (not used)</param>

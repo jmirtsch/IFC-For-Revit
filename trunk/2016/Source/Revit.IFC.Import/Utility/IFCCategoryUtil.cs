@@ -305,6 +305,7 @@ namespace Revit.IFC.Import.Utility
             m_EntityTypeToCategory[IFCEntityType.IfcGeographicElement] = BuiltInCategory.OST_Site;
             m_EntityTypeToCategory[IFCEntityType.IfcGeographicElementType] = BuiltInCategory.OST_Site;
             m_EntityTypeToCategory[IFCEntityType.IfcGrid] = BuiltInCategory.OST_Grids;
+            m_EntityTypeToCategory[IFCEntityType.IfcJunctionBoxType] = BuiltInCategory.OST_ElectricalEquipment;
             m_EntityTypeToCategory[IFCEntityType.IfcLamp] = BuiltInCategory.OST_LightingDevices;
             m_EntityTypeToCategory[IFCEntityType.IfcLampType] = BuiltInCategory.OST_LightingDevices;
             m_EntityTypeToCategory[IFCEntityType.IfcLightFixture] = BuiltInCategory.OST_LightingFixtures;
@@ -381,6 +382,8 @@ namespace Revit.IFC.Import.Utility
             m_EntityTypeKey[IFCEntityType.IfcSlabType] = IFCEntityType.IfcSlab;
             m_EntityTypeKey[IFCEntityType.IfcValveType] = IFCEntityType.IfcValve;
 
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcCableSegmentType, "CABLESEGMENT")] = BuiltInCategory.OST_ElectricalEquipment;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcCableSegmentType, "CONDUCTORSEGMENT")] = BuiltInCategory.OST_ElectricalEquipment;
             m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumn, "[LoadBearing]")] = BuiltInCategory.OST_StructuralColumns;
             m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumn, "COLUMN")] = BuiltInCategory.OST_Columns;
             m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumn, "USERDEFINED")] = BuiltInCategory.OST_Columns;
@@ -395,8 +398,20 @@ namespace Revit.IFC.Import.Utility
             m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcElectricAppliance, "WASHINGMACHINE")] = BuiltInCategory.OST_ElectricalFixtures;
             m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcElectricAppliance, "USERDEFINED")] = BuiltInCategory.OST_ElectricalFixtures;
             m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcFireSuppressionTerminal, "SPRINKLER")] = BuiltInCategory.OST_Sprinklers;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcFlowController, "CIRCUITBREAKER")] = BuiltInCategory.OST_ElectricalEquipment;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcFlowSegment, "CABLESEGMENT")] = BuiltInCategory.OST_ElectricalEquipment;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcFlowSegment, "CONDUCTORSEGMENT")] = BuiltInCategory.OST_ElectricalEquipment;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcFlowTerminal, "AUDIOVISUALOUTLET")] = BuiltInCategory.OST_DataDevices;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcFlowTerminal, "COMMUNICATIONSOUTLET")] = BuiltInCategory.OST_DataDevices;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcFlowTerminal, "NOTDEFINED")] = BuiltInCategory.OST_GenericModel;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcFlowTerminal, "POWEROUTLET")] = BuiltInCategory.OST_ElectricalFixtures;
             m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcMember, "MULLION")] = BuiltInCategory.OST_CurtainWallMullions;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcOutletType, "AUDIOVISUALOUTLET")] = BuiltInCategory.OST_DataDevices;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcOutletType, "COMMUNICATIONSOUTLET")] = BuiltInCategory.OST_DataDevices; 
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcOutletType, "POWEROUTLET")] = BuiltInCategory.OST_ElectricalFixtures;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcOutletType, "NOTDEFINED")] = BuiltInCategory.OST_GenericModel; 
             m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcPlate, "CURTAIN_PANEL")] = BuiltInCategory.OST_CurtainWallPanels;
+            m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcProtectiveDeviceType, "CIRCUITBREAKER")] = BuiltInCategory.OST_ElectricalEquipment; 
             m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlab, "BASESLAB")] = BuiltInCategory.OST_StructuralFoundation;
             m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlab, "FLOOR")] = BuiltInCategory.OST_Floors;
             m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlab, "LANDING")] = BuiltInCategory.OST_StairsLandings;
@@ -715,19 +730,20 @@ namespace Revit.IFC.Import.Utility
                 if (entityType != IFCEntityType.IfcProject &&
                     entityType != IFCEntityType.IfcBuilding &&
                     entityType != IFCEntityType.IfcBuildingStorey &&
-                    entityType != IFCEntityType.IfcElementAssembly)
+                    entityType != IFCEntityType.IfcElementAssembly &&
+                    entityType != IFCEntityType.IfcSystem)
                 {
-                    string msg = "Setting IFC entity ";
-                    if (string.IsNullOrWhiteSpace(predefinedType))
-                        msg = entityType.ToString();
-                    else
-                        msg = entityType.ToString() + "." + predefinedType;
+                   string msg = "Setting IFC entity ";
+                   if (string.IsNullOrWhiteSpace(predefinedType))
+                      msg = entityType.ToString();
+                   else
+                      msg = entityType.ToString() + "." + predefinedType;
 
-                    if (typeEntityType.HasValue)
-                        msg += " (" + typeEntityType.Value.ToString() + ")";
+                   if (typeEntityType.HasValue)
+                      msg += " (" + typeEntityType.Value.ToString() + ")";
 
-                    msg += " to Generic Models.";
-                    Importer.TheLog.LogWarning(entity.Id, msg, true);
+                   msg += " to Generic Models.";
+                   Importer.TheLog.LogWarning(entity.Id, msg, true);
                 }
             }
 

@@ -78,12 +78,6 @@ namespace Revit.IFC.Import.Data
       IFCSchemaVersion m_SchemaVersion = IFCSchemaVersion.IFC2x3; // default
 
       /// <summary>
-      /// Importing large files can use a lot of RAM.  Setting this value to true would allow entities to be cleared after use,
-      /// allowing garbage collection to occur.
-      /// </summary>
-      public static bool CleanEntitiesAfterCreate { get; set; }
-
-      /// <summary>
       /// An element that keeps track of the created DirectShapeTypes, for geometry sharing.
       /// </summary>
       public DirectShapeLibrary ShapeLibrary
@@ -291,6 +285,37 @@ namespace Revit.IFC.Import.Data
          return true;
       }
 
+      private bool PostProcessReference()
+      {
+         // Go through our list of created items and post-process any handles not processed in the first pass.
+         int count = 0;
+         ISet<IFCEntity> alreadyProcessed = new HashSet<IFCEntity>();
+         // Processing an entity may result in a new entity being processed for the first time.  We'll have to post-process it also.
+         // Post-processing should be fast, and do nothing if called multiple times, so we won't bother 
+         do
+         {
+            int total = IFCImportFile.TheFile.EntityMap.Count;
+            List<IFCEntity> currentValues = IFCImportFile.TheFile.EntityMap.Values.ToList();
+            foreach (IFCEntity entity in currentValues)
+            {
+               if (alreadyProcessed.Contains(entity))
+                  continue;
+
+               entity.PostProcess();
+               count++;
+               Importer.TheLog.ReportPostProcessedEntity(count, total);
+            }
+
+            int newTotal = IFCImportFile.TheFile.EntityMap.Values.Count;
+            if (total == newTotal)
+               break;
+
+            alreadyProcessed.UnionWith(currentValues);
+         } while (true);
+
+         return true;
+      }
+
       /// <summary>
       /// Top-level function that processes an IFC file for reference.
       /// </summary>
@@ -313,6 +338,7 @@ namespace Revit.IFC.Import.Data
          // and INVERSE relationships. Unfortunately, the standard IFC 2x3 schema has a "bug" where one of the inverse relationships is missing. 
          // Normally we don't care all that much, but now we do. So if we don't allow using this inverse (because if we did, it would just constantly 
          // throw exceptions), we need another way to get the zones. This is the way.
+         // We are also using this to find IfcSystems that don't have the optional IfcRelServicesBuildings set.
          if (!IFCImportFile.TheFile.Options.AllowUseHasAssignments)
          {
             IList<IFCAnyHandle> zones = IFCImportFile.TheFile.GetInstances(IFCEntityType.IfcZone, false);
@@ -322,16 +348,21 @@ namespace Revit.IFC.Import.Data
                if (ifcZone != null)
                   OtherEntitiesToCreate.Add(ifcZone);
             }
+
+            IList<IFCAnyHandle> systems = IFCImportFile.TheFile.GetInstances(IFCEntityType.IfcSystem, false);
+            foreach (IFCAnyHandle system in systems)
+            {
+               IFCSystem ifcSystem = IFCSystem.ProcessIFCSystem(system);
+               if (ifcSystem != null)
+                  OtherEntitiesToCreate.Add(ifcSystem);
+            }
          }
 
-         return true;
+         return PostProcessReference();
       }
 
       private bool Process(string ifcFilePath, IFCImportOptions options, Document doc)
       {
-         // Manually set to false if necessary for debugging.
-         CleanEntitiesAfterCreate = true;
-
          TheFileName = ifcFilePath;
          TheBrepCounter = 0;
 
@@ -917,8 +948,18 @@ namespace Revit.IFC.Import.Data
          }
          else if (string.Compare(schemaName, "IFC4", true) == 0)
          {
-            modelOptions.SchemaFile = Path.Combine(RevitProgramPath, "EDM\\IFC4.exp");
-            schemaVersion = IFCSchemaVersion.IFC4;
+            // We will still temporarily support the old IFC4.exp file.
+            string ifc4Add1Path = Path.Combine(RevitProgramPath, "EDM\\IFC4_Add1.exp");
+            if (File.Exists(ifc4Add1Path))
+            {
+               modelOptions.SchemaFile = ifc4Add1Path;
+               schemaVersion = IFCSchemaVersion.IFC4Add1;
+            }
+            else
+            {
+               modelOptions.SchemaFile = Path.Combine(RevitProgramPath, "EDM\\IFC4.exp");
+               schemaVersion = IFCSchemaVersion.IFC4;
+            }
          }
          else
             throw new ArgumentException("Invalid or unsupported schema: " + schemaName);

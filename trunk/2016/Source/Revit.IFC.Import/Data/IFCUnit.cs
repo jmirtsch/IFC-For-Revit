@@ -276,6 +276,7 @@ namespace Revit.IFC.Import.Data
                         break;
                     case UnitType.UT_Volume:
                         supportedTypes[""] = new KeyValuePair<UnitName, UnitSymbolType>(UnitName.DUT_CUBIC_METERS, UnitSymbolType.UST_M_SUP_3);
+                        supportedTypes["DECI"] = new KeyValuePair<UnitName, UnitSymbolType>(UnitName.DUT_LITERS, UnitSymbolType.UST_L);
                         supportedTypes["CENTI"] = new KeyValuePair<UnitName, UnitSymbolType>(UnitName.DUT_CUBIC_CENTIMETERS, UnitSymbolType.UST_CM_SUP_3);
                         supportedTypes["MILLI"] = new KeyValuePair<UnitName, UnitSymbolType>(UnitName.DUT_CUBIC_MILLIMETERS, UnitSymbolType.UST_MM_SUP_3);
                         break;
@@ -350,125 +351,230 @@ namespace Revit.IFC.Import.Data
             return true;
         }
 
+       /// <summary>
+       /// A private container for ProcessIFCDerivedUnit to store expected type definitions for derived types.
+       /// </summary>
+        class DerivedUnitExpectedTypes
+        {
+           /// <summary>
+           /// DerivedUnitExpectedTypes constructor.
+           /// </summary>
+           public DerivedUnitExpectedTypes(UnitName unitName, UnitSymbolType unitSymbol)
+           {
+              UnitName = unitName;
+              UnitSymbol = unitSymbol;
+           }
+
+           /// <summary>
+           /// The set of expected types.
+           /// </summary>
+           public ISet<Tuple<int, UnitType, string>> ExpectedTypes
+           {
+              get { return m_ExpectedTypes; }
+           }
+
+           /// <summary>
+           /// The unit name of this set of expected types.
+           /// </summary>
+           public UnitName UnitName { get; protected set; }
+
+           /// <summary>
+           /// The unit symbol type of this set of expected types.
+           /// </summary>
+           public UnitSymbolType UnitSymbol { get; protected set; }
+
+           private ISet<Tuple<int, UnitType, string>> ExpectedTypesCopy()
+           {
+              ISet<Tuple<int, UnitType, string>> expectedTypesCopy = new HashSet<Tuple<int, UnitType, string>>();
+              foreach (Tuple<int, UnitType, string> expectedType in ExpectedTypes)
+              {
+                 expectedTypesCopy.Add(expectedType);
+              }
+              return expectedTypesCopy;
+           }
+
+           /// <summary>
+           /// Add a standard expected type.
+           /// </summary>
+           /// <param name="exponent">The exponent of the type.</param>
+           /// <param name="baseUnitType">The base unit type.</param>
+           public void AddExpectedType(int exponent, UnitType baseUnitType)
+           {
+              ExpectedTypes.Add(new Tuple<int, UnitType, string>(exponent, baseUnitType, null));
+           }
+
+           /// <summary>
+           /// Add a custom expected type.
+           /// </summary>
+           /// <param name="exponent">The exponent of the type.</param>
+           /// <param name="unitName">The name of the base unit.</param>
+           public void AddCustomExpectedType(int exponent, string unitName)
+           {
+              ExpectedTypes.Add(new Tuple<int, UnitType, string>(exponent, UnitType.UT_Custom, unitName));
+           }
+
+           public bool Matches(IList<KeyValuePair<IFCUnit, int>> derivedElementUnitHnds, out double scaleFactor)
+           {
+              scaleFactor = 1.0;
+
+              if (derivedElementUnitHnds.Count != ExpectedTypes.Count)
+                 return false;
+
+              ISet<Tuple<int, UnitType, string>> expectedTypes = ExpectedTypesCopy();
+
+              foreach (KeyValuePair<IFCUnit, int> derivedElementUnitHnd in derivedElementUnitHnds)
+              {
+                 int dimensionality = derivedElementUnitHnd.Value;
+                 Tuple<int, UnitType, string> currKey = new Tuple<int, UnitType, string>(dimensionality, derivedElementUnitHnd.Key.UnitType, derivedElementUnitHnd.Key.CustomUnitType);
+                 if (expectedTypes.Contains(currKey))
+                 {
+                    expectedTypes.Remove(currKey);
+                    scaleFactor *= Math.Pow(derivedElementUnitHnd.Key.ScaleFactor, dimensionality);
+                 }
+                 else
+                    break;
+              }
+
+              // Found all supported units.
+              if (expectedTypes.Count != 0)
+                 return false;
+
+              return true;
+           }
+
+           private ISet<Tuple<int, UnitType, string>> m_ExpectedTypes = new HashSet<Tuple<int, UnitType, string>>();
+        }
+
         /// <summary>
         /// Processes an IfcDerivedUnit.
         /// </summary>
         /// <param name="unitHnd">The unit handle.</param>
         void ProcessIFCDerivedUnit(IFCAnyHandle unitHnd)
         {
-            List<IFCAnyHandle> elements =
-                IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(unitHnd, "Elements");
+           List<IFCAnyHandle> elements =
+               IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(unitHnd, "Elements");
 
-            IList<KeyValuePair<IFCUnit, int>> derivedElementUnitHnds = new List<KeyValuePair<IFCUnit, int>>();
-            foreach (IFCAnyHandle subElement in elements)
-            {
-                IFCAnyHandle derivedElementUnitHnd = IFCImportHandleUtil.GetRequiredInstanceAttribute(subElement, "Unit", false);
-                IFCUnit subUnit = IFCAnyHandleUtil.IsNullOrHasNoValue(derivedElementUnitHnd) ? null : IFCUnit.ProcessIFCUnit(derivedElementUnitHnd);
-                if (subUnit != null)
-                {
-                    bool found;
-                    int exponent = IFCImportHandleUtil.GetRequiredIntegerAttribute(subElement, "Exponent", out found);
-                    if (found)
-                        derivedElementUnitHnds.Add(new KeyValuePair<IFCUnit, int>(subUnit, exponent));
-                }
-            }
+           IList<KeyValuePair<IFCUnit, int>> derivedElementUnitHnds = new List<KeyValuePair<IFCUnit, int>>();
+           foreach (IFCAnyHandle subElement in elements)
+           {
+              IFCAnyHandle derivedElementUnitHnd = IFCImportHandleUtil.GetRequiredInstanceAttribute(subElement, "Unit", false);
+              IFCUnit subUnit = IFCAnyHandleUtil.IsNullOrHasNoValue(derivedElementUnitHnd) ? null : IFCUnit.ProcessIFCUnit(derivedElementUnitHnd);
+              if (subUnit != null)
+              {
+                 bool found;
+                 int exponent = IFCImportHandleUtil.GetRequiredIntegerAttribute(subElement, "Exponent", out found);
+                 if (found)
+                    derivedElementUnitHnds.Add(new KeyValuePair<IFCUnit, int>(subUnit, exponent));
+              }
+           }
 
-            ISet<Tuple<int, UnitType, string>> expectedTypes = new HashSet<Tuple<int, UnitType, string>>();
-            
-            string unitType = IFCAnyHandleUtil.GetEnumerationAttribute(unitHnd, "UnitType");
-            if (string.Compare(unitType, "LINEARVELOCITYUNIT", true) == 0)
-            {
-               UnitType = UnitType.UT_HVAC_Velocity;
-               UnitSystem = UnitSystem.Metric;
-               UnitName = UnitName.DUT_METERS_PER_SECOND;
-               UnitSymbol = UnitSymbolType.UST_M_PER_S;
+           // the DerivedUnitExpectedTypes object is a description of one possible set of base units for a particular derived unit.
+           // The IList allows for possible different interpretations.  For example, Volumetric Flow Rate could be defined by m^3/s (length ^ 3 / time) or L/s (volume / time).
+           IList<DerivedUnitExpectedTypes> expectedTypesList = new List<DerivedUnitExpectedTypes>();
+           
+           string unitType = IFCAnyHandleUtil.GetEnumerationAttribute(unitHnd, "UnitType");
+           if (string.Compare(unitType, "LINEARVELOCITYUNIT", true) == 0)
+           {
+              UnitType = UnitType.UT_HVAC_Velocity;
+              UnitSystem = UnitSystem.Metric;
 
-               // Support only m / s.
-               expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(1, UnitType.UT_Length, null));
-               expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-1, UnitType.UT_Custom, "TIMEUNIT"));
-            }
-            else if (string.Compare(unitType, "THERMALTRANSMITTANCEUNIT", true) == 0)
-            {
-               UnitType = UnitType.UT_HVAC_CoefficientOfHeatTransfer;
-               UnitSystem = UnitSystem.Metric;
-               UnitName = UnitName.DUT_WATTS_PER_SQUARE_METER_KELVIN;
-               UnitSymbol = UnitSymbolType.UST_WATT_PER_SQ_M_K;
+              // Support only m / s.
+              DerivedUnitExpectedTypes expectedTypes = new DerivedUnitExpectedTypes(UnitName.DUT_METERS_PER_SECOND, UnitSymbolType.UST_M_PER_S);
+              expectedTypes.AddExpectedType(1, UnitType.UT_Length);
+              expectedTypes.AddCustomExpectedType(-1, "TIMEUNIT");
+              expectedTypesList.Add(expectedTypes);
+           }
+           else if (string.Compare(unitType, "THERMALTRANSMITTANCEUNIT", true) == 0)
+           {
+              UnitType = UnitType.UT_HVAC_CoefficientOfHeatTransfer;
+              UnitSystem = UnitSystem.Metric;
 
-               // Support only kg / (K * s^3).
-               expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(1, UnitType.UT_Mass, null));
-               expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-1, UnitType.UT_HVAC_Temperature, null));
-               expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-3, UnitType.UT_Custom, "TIMEUNIT"));
-            }
-            else if (string.Compare(unitType, "VOLUMETRICFLOWRATEUNIT", true) == 0)
-            {
-               UnitType = UnitType.UT_HVAC_Airflow;
-               UnitSystem = UnitSystem.Metric;
-               UnitName = UnitName.DUT_LITERS_PER_SECOND;
-               UnitSymbol = UnitSymbolType.UST_L_PER_S;
+              // Support W / (K * m^2) or kg / (K * s^3)
+              DerivedUnitExpectedTypes expectedTypesWinvKinvM2 = new DerivedUnitExpectedTypes(UnitName.DUT_WATTS_PER_SQUARE_METER_KELVIN, UnitSymbolType.UST_WATT_PER_SQ_M_K);
+              expectedTypesWinvKinvM2.AddExpectedType(1, UnitType.UT_HVAC_Power); // UT_Electrical_Wattage is similar, but UT_HVAC_Power is the one we map to.
+              expectedTypesWinvKinvM2.AddExpectedType(-1, UnitType.UT_HVAC_Temperature);
+              expectedTypesWinvKinvM2.AddExpectedType(-2, UnitType.UT_Length);
+              expectedTypesList.Add(expectedTypesWinvKinvM2);
 
-               // Support only m^3 / s in the IFC file.
-               expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(3, UnitType.UT_Length, null));
-               expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-1, UnitType.UT_Custom, "TIMEUNIT"));
-            }
-            else if (string.Compare(unitType, "USERDEFINED", true) == 0)
-            {
-               // Look at the sub-types to see what we support.
-               string userDefinedType = IFCImportHandleUtil.GetOptionalStringAttribute(unitHnd, "UserDefinedType", null);
-               if (!string.IsNullOrWhiteSpace(userDefinedType))
-               {
-                  if (string.Compare(userDefinedType, "Luminous Efficacy", true) == 0)
-                  {
-                     UnitType = UnitType.UT_Electrical_Efficacy;
-                     UnitSystem = UnitSystem.Metric;
-                     UnitName = UnitName.DUT_LUMENS_PER_WATT;
-                     UnitSymbol = UnitSymbolType.UST_LM_PER_W;
+              DerivedUnitExpectedTypes expectedTypesWinvKinvArea = new DerivedUnitExpectedTypes(UnitName.DUT_WATTS_PER_SQUARE_METER_KELVIN, UnitSymbolType.UST_WATT_PER_SQ_M_K);
+              expectedTypesWinvKinvArea.AddExpectedType(1, UnitType.UT_HVAC_Power); // UT_Electrical_Wattage is similar, but UT_HVAC_Power is the one we map to.
+              expectedTypesWinvKinvArea.AddExpectedType(-1, UnitType.UT_HVAC_Temperature);
+              expectedTypesWinvKinvArea.AddExpectedType(-1, UnitType.UT_Area);
+              expectedTypesList.Add(expectedTypesWinvKinvArea); 
+              
+              DerivedUnitExpectedTypes expectedTypes = new DerivedUnitExpectedTypes(UnitName.DUT_WATTS_PER_SQUARE_METER_KELVIN, UnitSymbolType.UST_WATT_PER_SQ_M_K);
+              expectedTypes.AddExpectedType(1, UnitType.UT_Mass);
+              expectedTypes.AddExpectedType(-1, UnitType.UT_HVAC_Temperature);
+              expectedTypes.AddCustomExpectedType(-3, "TIMEUNIT");
+              expectedTypesList.Add(expectedTypes);
+           }
+           else if (string.Compare(unitType, "VOLUMETRICFLOWRATEUNIT", true) == 0)
+           {
+              UnitType = UnitType.UT_HVAC_Airflow;
+              UnitSystem = UnitSystem.Metric;
 
-                     // Support only lm / W.
-                     expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-1, UnitType.UT_Mass, null));
-                     expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-2, UnitType.UT_Length, null));
-                     expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(3, UnitType.UT_Custom, "TIMEUNIT"));
-                     expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(1, UnitType.UT_Electrical_Luminous_Flux, null));
-                  }
-                  else if (string.Compare(userDefinedType, "Friction Loss", true) == 0)
-                  {
-                     UnitType = UnitType.UT_HVAC_Friction;
-                     UnitSystem = UnitSystem.Metric;
-                     UnitName = UnitName.DUT_PASCALS_PER_METER;
-                     UnitSymbol = UnitSymbolType.UST_PASCAL_PER_M;
+              // Support L / s or m^3 / s in the IFC file.
+         
+              // L / s
+              DerivedUnitExpectedTypes expectedTypesLPerS = new DerivedUnitExpectedTypes(UnitName.DUT_LITERS_PER_SECOND, UnitSymbolType.UST_L_PER_S);
+              expectedTypesLPerS.AddExpectedType(1, UnitType.UT_Volume);
+              expectedTypesLPerS.AddCustomExpectedType(-1, "TIMEUNIT");
+              expectedTypesList.Add(expectedTypesLPerS);
 
-                     // Support only Pa / m.
-                     expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-2, UnitType.UT_Length, null));
-                     expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(1, UnitType.UT_Mass, null));
-                     expectedTypes.Add(new Tuple<int, Autodesk.Revit.DB.UnitType, string>(-2, UnitType.UT_Custom, "TIMEUNIT"));
-                  }
-               }
-            }
+              // m^3 / s.
+              DerivedUnitExpectedTypes expectedTypes = new DerivedUnitExpectedTypes(UnitName.DUT_CUBIC_METERS_PER_SECOND, UnitSymbolType.UST_CU_M_PER_S);
+              expectedTypes.AddExpectedType(3, UnitType.UT_Length);
+              expectedTypes.AddCustomExpectedType(-1, "TIMEUNIT");
+              expectedTypesList.Add(expectedTypes);
+           }
+           else if (string.Compare(unitType, "USERDEFINED", true) == 0)
+           {
+              // Look at the sub-types to see what we support.
+              string userDefinedType = IFCImportHandleUtil.GetOptionalStringAttribute(unitHnd, "UserDefinedType", null);
+              if (!string.IsNullOrWhiteSpace(userDefinedType))
+              {
+                 if (string.Compare(userDefinedType, "Luminous Efficacy", true) == 0)
+                 {
+                    UnitType = UnitType.UT_Electrical_Efficacy;
+                    UnitSystem = UnitSystem.Metric;
 
-            double scaleFactor = 1.0;
-            if (derivedElementUnitHnds.Count == expectedTypes.Count)
-            {
-                foreach (KeyValuePair<IFCUnit, int> derivedElementUnitHnd in derivedElementUnitHnds)
-                {
-                    int dimensionality = derivedElementUnitHnd.Value;
-                    Tuple<int, UnitType, string> currKey = new Tuple<int, UnitType, string>(dimensionality, derivedElementUnitHnd.Key.UnitType, derivedElementUnitHnd.Key.CustomUnitType);
-                    if (expectedTypes.Contains(currKey))
-                    {
-                        expectedTypes.Remove(currKey);
-                        scaleFactor *= Math.Pow(derivedElementUnitHnd.Key.ScaleFactor, dimensionality);
-                    }
-                    else
-                        break;
-                }
-            
-                // Found all supported units.
-                if (expectedTypes.Count == 0)
-                {
-                    ScaleFactor = scaleFactor;
-                    return;
-                }
-            }
+                    // Support only lm / W.
+                    DerivedUnitExpectedTypes expectedTypes = new DerivedUnitExpectedTypes(UnitName.DUT_LUMENS_PER_WATT, UnitSymbolType.UST_LM_PER_W);
+                    expectedTypes.AddExpectedType(-1, UnitType.UT_Mass);
+                    expectedTypes.AddExpectedType(-2, UnitType.UT_Length);
+                    expectedTypes.AddCustomExpectedType(3, "TIMEUNIT");
+                    expectedTypes.AddExpectedType(1, UnitType.UT_Electrical_Luminous_Flux);
+                    expectedTypesList.Add(expectedTypes);
+                 }
+                 else if (string.Compare(userDefinedType, "Friction Loss", true) == 0)
+                 {
+                    UnitType = UnitType.UT_HVAC_Friction;
+                    UnitSystem = UnitSystem.Metric;
 
-            Importer.TheLog.LogUnhandledUnitTypeError(unitHnd, unitType);
+                    // Support only Pa / m.
+                    DerivedUnitExpectedTypes expectedTypes = new DerivedUnitExpectedTypes(UnitName.DUT_PASCALS_PER_METER, UnitSymbolType.UST_PASCAL_PER_M);
+                    expectedTypes.AddExpectedType(-2, UnitType.UT_Length);
+                    expectedTypes.AddExpectedType(1, UnitType.UT_Mass);
+                    expectedTypes.AddCustomExpectedType(-2, "TIMEUNIT");
+                    expectedTypesList.Add(expectedTypes);
+                 }
+              }
+           }
+
+           foreach (DerivedUnitExpectedTypes derivedUnitExpectedTypes in expectedTypesList)
+           {
+              double scaleFactor = 1.0;
+              if (derivedUnitExpectedTypes.Matches(derivedElementUnitHnds, out scaleFactor))
+              {
+                 // Found a match.
+                 UnitName = derivedUnitExpectedTypes.UnitName;
+                 UnitSymbol = derivedUnitExpectedTypes.UnitSymbol;
+                 ScaleFactor = scaleFactor;
+                 return;
+              }
+           }
+
+           Importer.TheLog.LogUnhandledUnitTypeError(unitHnd, unitType);
         }
         
         /// <summary>

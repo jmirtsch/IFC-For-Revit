@@ -31,174 +31,188 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    public class IFCHalfSpaceSolid : IFCRepresentationItem, IIFCBooleanOperand
-    {
-        IFCSurface m_BaseSurface = null;
+   public class IFCHalfSpaceSolid : IFCRepresentationItem, IIFCBooleanOperand
+   {
+      IFCSurface m_BaseSurface = null;
 
-        // for IfcPolygonalHalfSpaceSolid only.
-        IFCCurve m_BaseBoundingCurve = null;
-        Transform m_BaseBoundingCurveTransform = null;
+      // for IfcPolygonalHalfSpaceSolid only.
+      IFCCurve m_BaseBoundingCurve = null;
+      Transform m_BaseBoundingCurveTransform = null;
 
-        bool m_AgreementFlag = true;
+      bool m_AgreementFlag = true;
 
-        public IFCSurface BaseSurface
-        {
-            get { return m_BaseSurface; }
-            protected set { m_BaseSurface = value; }
-        }
+      public IFCSurface BaseSurface
+      {
+         get { return m_BaseSurface; }
+         protected set { m_BaseSurface = value; }
+      }
 
-        public IFCCurve BaseBoundingCurve
-        {
-            get { return m_BaseBoundingCurve; }
-            protected set { m_BaseBoundingCurve = value; }
-        }
+      public IFCCurve BaseBoundingCurve
+      {
+         get { return m_BaseBoundingCurve; }
+         protected set { m_BaseBoundingCurve = value; }
+      }
 
-        public Transform BaseBoundingCurveTransform
-        {
-            get { return m_BaseBoundingCurveTransform; }
-            protected set { m_BaseBoundingCurveTransform = value; }
-        }
-        
-        public bool AgreementFlag
-        {
-            get { return m_AgreementFlag; }
-            protected set { m_AgreementFlag = value; }
-        }
+      public Transform BaseBoundingCurveTransform
+      {
+         get { return m_BaseBoundingCurveTransform; }
+         protected set { m_BaseBoundingCurveTransform = value; }
+      }
 
-        protected IFCHalfSpaceSolid()
-        {
-        }
+      public bool AgreementFlag
+      {
+         get { return m_AgreementFlag; }
+         protected set { m_AgreementFlag = value; }
+      }
 
-        override protected void Process(IFCAnyHandle solid)
-        {
-            base.Process(solid);
+      protected IFCHalfSpaceSolid()
+      {
+      }
 
-            bool found = false;
-            bool agreementFlag = IFCImportHandleUtil.GetRequiredBooleanAttribute(solid, "AgreementFlag", out found);
-            if (found)
-                AgreementFlag = agreementFlag;
+      override protected void Process(IFCAnyHandle solid)
+      {
+         base.Process(solid);
 
-            IFCAnyHandle baseSurface = IFCImportHandleUtil.GetRequiredInstanceAttribute(solid, "BaseSurface", true);
-            BaseSurface = IFCSurface.ProcessIFCSurface(baseSurface);
-            if (!(BaseSurface is IFCPlane))
-                Importer.TheLog.LogUnhandledSubTypeError(baseSurface, IFCEntityType.IfcSurface, true);
+         bool found = false;
+         bool agreementFlag = IFCImportHandleUtil.GetRequiredBooleanAttribute(solid, "AgreementFlag", out found);
+         if (found)
+            AgreementFlag = agreementFlag;
 
-            if (IFCAnyHandleUtil.IsSubTypeOf(solid, IFCEntityType.IfcPolygonalBoundedHalfSpace))
-            {
-                IFCAnyHandle position = IFCImportHandleUtil.GetRequiredInstanceAttribute(solid, "Position", false);
-                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(position))
-                    BaseBoundingCurveTransform = IFCLocation.ProcessIFCAxis2Placement(position);
-                else
-                    BaseBoundingCurveTransform = Transform.Identity;
+         IFCAnyHandle baseSurface = IFCImportHandleUtil.GetRequiredInstanceAttribute(solid, "BaseSurface", true);
+         BaseSurface = IFCSurface.ProcessIFCSurface(baseSurface);
+         if (!(BaseSurface is IFCPlane))
+            Importer.TheLog.LogUnhandledSubTypeError(baseSurface, IFCEntityType.IfcSurface, true);
 
-                IFCAnyHandle boundaryCurveHandle = IFCImportHandleUtil.GetRequiredInstanceAttribute(solid, "PolygonalBoundary", true);
-                BaseBoundingCurve = IFCCurve.ProcessIFCCurve(boundaryCurveHandle);
-            }
-        }
-        
-        /// <summary>
-        /// Create geometry for an IfcHalfSpaceSolid.
-        /// </summary>
-        /// <param name="shapeEditScope">The shape edit scope.</param>
-        /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
-        /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        /// <returns>A list containing one geometry for the IfcHalfSpaceSolid.</returns>
-        protected virtual IList<GeometryObject> CreateGeometryInternal(
-              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
-        {
-            IFCPlane ifcPlane = BaseSurface as IFCPlane;
-            Plane plane = ifcPlane.Plane;
-            XYZ origin = plane.Origin;
-            XYZ xVec = plane.XVec;
-            XYZ yVec = plane.YVec;
+         if (IFCAnyHandleUtil.IsSubTypeOf(solid, IFCEntityType.IfcPolygonalBoundedHalfSpace))
+         {
+            IFCAnyHandle position = IFCImportHandleUtil.GetRequiredInstanceAttribute(solid, "Position", false);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(position))
+               BaseBoundingCurveTransform = IFCLocation.ProcessIFCAxis2Placement(position);
+            else
+               BaseBoundingCurveTransform = Transform.Identity;
 
-            // Set some huge boundaries for now.
-            const double largeCoordinateValue = 100000;
-            XYZ[] corners = new XYZ[4] {
+            IFCAnyHandle boundaryCurveHandle = IFCImportHandleUtil.GetRequiredInstanceAttribute(solid, "PolygonalBoundary", true);
+            BaseBoundingCurve = IFCCurve.ProcessIFCCurve(boundaryCurveHandle);
+         }
+      }
+
+      /// <summary>
+      /// Create geometry for an IfcHalfSpaceSolid.
+      /// </summary>
+      /// <param name="shapeEditScope">The shape edit scope.</param>
+      /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
+      /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
+      /// <param name="guid">The guid of an element for which represntation is being created.</param>
+      /// <returns>A list containing one geometry for the IfcHalfSpaceSolid.</returns>
+      protected virtual IList<GeometryObject> CreateGeometryInternal(
+            IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
+      {
+         IFCPlane ifcPlane = BaseSurface as IFCPlane;
+         Plane plane = ifcPlane.Plane;
+         XYZ origin = plane.Origin;
+         XYZ xVec = plane.XVec;
+         XYZ yVec = plane.YVec;
+
+         // Set some huge boundaries for now.
+         const double largeCoordinateValue = 100000;
+         XYZ[] corners = new XYZ[4] {
                 lcs.OfPoint((xVec * -largeCoordinateValue) + (yVec * -largeCoordinateValue) + origin),
                 lcs.OfPoint((xVec * largeCoordinateValue) + (yVec * -largeCoordinateValue) + origin),
                 lcs.OfPoint((xVec * largeCoordinateValue) + (yVec * largeCoordinateValue) + origin),
                 lcs.OfPoint((xVec * -largeCoordinateValue) + (yVec * largeCoordinateValue) + origin)
             };
 
-            IList<CurveLoop> loops = new List<CurveLoop>();
-            CurveLoop loop = new CurveLoop();
-            for (int ii = 0; ii < 4; ii++)
-            {
-                if (AgreementFlag)
-                    loop.Append(Line.CreateBound(corners[(5-ii)%4], corners[(4-ii)%4]));
-                else
-                    loop.Append(Line.CreateBound(corners[ii], corners[(ii+1)%4]));
-            }
-            loops.Add(loop);
+         IList<CurveLoop> loops = new List<CurveLoop>();
+         CurveLoop loop = new CurveLoop();
+         for (int ii = 0; ii < 4; ii++)
+         {
+            if (AgreementFlag)
+               loop.Append(Line.CreateBound(corners[(5 - ii) % 4], corners[(4 - ii) % 4]));
+            else
+               loop.Append(Line.CreateBound(corners[ii], corners[(ii + 1) % 4]));
+         }
+         loops.Add(loop);
 
-            XYZ normal = lcs.OfVector(AgreementFlag ? -plane.Normal : plane.Normal);
-            SolidOptions solidOptions = new SolidOptions(GetMaterialElementId(shapeEditScope), shapeEditScope.GraphicsStyleId);
-            Solid baseSolid = GeometryCreationUtilities.CreateExtrusionGeometry(loops, normal, largeCoordinateValue, solidOptions);
+         XYZ normal = lcs.OfVector(AgreementFlag ? -plane.Normal : plane.Normal);
+         SolidOptions solidOptions = new SolidOptions(GetMaterialElementId(shapeEditScope), shapeEditScope.GraphicsStyleId);
+         Solid baseSolid = GeometryCreationUtilities.CreateExtrusionGeometry(loops, normal, largeCoordinateValue, solidOptions);
 
-            if (BaseBoundingCurve != null)
-            {
-                CurveLoop polygonalBoundary = BaseBoundingCurve.CurveLoop;
+         if (BaseBoundingCurve != null)
+         {
+            CurveLoop polygonalBoundary = BaseBoundingCurve.CurveLoop;
 
-                Transform totalTransform = lcs.Multiply(BaseBoundingCurveTransform);
+            Transform totalTransform = lcs.Multiply(BaseBoundingCurveTransform);
 
-                // Make sure this bounding polygon extends below base of half-space soild.
-                Transform moveBaseTransform = Transform.Identity;
-                moveBaseTransform.Origin = new XYZ(0, 0, -largeCoordinateValue);
-                totalTransform = totalTransform.Multiply(moveBaseTransform);
+            // Make sure this bounding polygon extends below base of half-space soild.
+            Transform moveBaseTransform = Transform.Identity;
+            moveBaseTransform.Origin = new XYZ(0, 0, -largeCoordinateValue);
+            totalTransform = totalTransform.Multiply(moveBaseTransform);
 
-                CurveLoop transformedPolygonalBoundary = IFCGeometryUtil.CreateTransformed(polygonalBoundary, totalTransform);
-                IList<CurveLoop> boundingLoops = new List<CurveLoop>();
-                boundingLoops.Add(transformedPolygonalBoundary);
+            CurveLoop transformedPolygonalBoundary = IFCGeometryUtil.CreateTransformed(polygonalBoundary, totalTransform);
+            IList<CurveLoop> boundingLoops = new List<CurveLoop>();
+            boundingLoops.Add(transformedPolygonalBoundary);
 
-                Solid boundingSolid = GeometryCreationUtilities.CreateExtrusionGeometry(boundingLoops, totalTransform.BasisZ, 2.0 * largeCoordinateValue,
-                    solidOptions);
-                baseSolid = IFCGeometryUtil.ExecuteSafeBooleanOperation(Id, BaseBoundingCurve.Id, baseSolid, boundingSolid, BooleanOperationsType.Intersect);
-            }
+            Solid boundingSolid = GeometryCreationUtilities.CreateExtrusionGeometry(boundingLoops, totalTransform.BasisZ, 2.0 * largeCoordinateValue,
+                solidOptions);
+            baseSolid = IFCGeometryUtil.ExecuteSafeBooleanOperation(Id, BaseBoundingCurve.Id, baseSolid, boundingSolid, BooleanOperationsType.Intersect, null);
+         }
 
-            IList<GeometryObject> returnList = new List<GeometryObject>();
-            returnList.Add(baseSolid);
-            return returnList;
-        }
+         IList<GeometryObject> returnList = new List<GeometryObject>();
+         returnList.Add(baseSolid);
+         return returnList;
+      }
 
-        /// <summary>
-        /// Return geometry for a particular representation item.
-        /// </summary>
-        /// <param name="shapeEditScope">The shape edit scope.</param>
-        /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
-        /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        /// <returns>The created geometries.</returns>
-        public IList<GeometryObject> CreateGeometry(
-              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
-        {
-            return CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, guid);
-        }
-        
-        protected IFCHalfSpaceSolid(IFCAnyHandle solid)
-        {
-            Process(solid);
-        }
+      /// <summary>
+      /// Return geometry for a particular representation item.
+      /// </summary>
+      /// <param name="shapeEditScope">The shape edit scope.</param>
+      /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
+      /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
+      /// <param name="guid">The guid of an element for which represntation is being created.</param>
+      /// <returns>The created geometries.</returns>
+      public IList<GeometryObject> CreateGeometry(
+            IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
+      {
+         return CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, guid);
+      }
 
-        /// <summary>
-        /// Create an IFCHalfSpaceSolid object from a handle of type IfcHalfSpaceSolid.
-        /// </summary>
-        /// <param name="ifcHalfSpaceSolid">The IFC handle.</param>
-        /// <returns>The IFCHalfSpaceSolid object.</returns>
-        public static IFCHalfSpaceSolid ProcessIFCHalfSpaceSolid(IFCAnyHandle ifcHalfSpaceSolid)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcHalfSpaceSolid))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcHalfSpaceSolid);
-                return null;
-            }
+      /// <summary>
+      /// In case of a Boolean operation failure, provide a recommended direction to shift the geometry in for a second attempt.
+      /// </summary>
+      /// <param name="lcs">The local transform for this entity.</param>
+      /// <returns>An XYZ representing a unit direction vector, or null if no direction is suggested.</returns>
+      /// <remarks>If the 2nd attempt fails, a third attempt will be done with a shift in the opposite direction.</remarks>
+      public XYZ GetSuggestedShiftDirection(Transform lcs)
+      {
+         IFCPlane ifcPlane = BaseSurface as IFCPlane;
+         Plane plane = (ifcPlane != null) ? ifcPlane.Plane : null;
+         XYZ untransformedNorm = (plane != null) ? plane.Normal : null;
+         return (lcs == null) ? untransformedNorm : lcs.OfVector(untransformedNorm);
+      }
 
-            IFCEntity halfSpaceSolid;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcHalfSpaceSolid.StepId, out halfSpaceSolid))
-                halfSpaceSolid = new IFCHalfSpaceSolid(ifcHalfSpaceSolid);
+      protected IFCHalfSpaceSolid(IFCAnyHandle solid)
+      {
+         Process(solid);
+      }
 
-            return (halfSpaceSolid as IFCHalfSpaceSolid);
-        }
-    }
+      /// <summary>
+      /// Create an IFCHalfSpaceSolid object from a handle of type IfcHalfSpaceSolid.
+      /// </summary>
+      /// <param name="ifcHalfSpaceSolid">The IFC handle.</param>
+      /// <returns>The IFCHalfSpaceSolid object.</returns>
+      public static IFCHalfSpaceSolid ProcessIFCHalfSpaceSolid(IFCAnyHandle ifcHalfSpaceSolid)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcHalfSpaceSolid))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcHalfSpaceSolid);
+            return null;
+         }
+
+         IFCEntity halfSpaceSolid;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcHalfSpaceSolid.StepId, out halfSpaceSolid))
+            halfSpaceSolid = new IFCHalfSpaceSolid(ifcHalfSpaceSolid);
+
+         return (halfSpaceSolid as IFCHalfSpaceSolid);
+      }
+   }
 }

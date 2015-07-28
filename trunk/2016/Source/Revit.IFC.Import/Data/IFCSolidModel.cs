@@ -64,6 +64,18 @@ namespace Revit.IFC.Import.Data
             }
         }
 
+        /// <summary>
+        /// In case of a Boolean operation failure, provide a recommended direction to shift the geometry in for a second attempt.
+        /// </summary>
+        /// <param name="lcs">The local transform for this entity.</param>
+        /// <returns>An XYZ representing a unit direction vector, or null if no direction is suggested.</returns>
+        /// <remarks>If the 2nd attempt fails, a third attempt will be done with a shift in the opposite direction.</remarks>
+        public XYZ GetSuggestedShiftDirection(Transform lcs)
+        {
+           // Sub-classes may have a better guess.
+           return null;
+        }
+
         protected IFCSolidModel(IFCAnyHandle item)
         {
             Process(item);
