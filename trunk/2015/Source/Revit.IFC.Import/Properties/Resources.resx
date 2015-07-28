@@ -129,6 +129,9 @@
   <data name="IFCOpenReferenceFile" xml:space="preserve">
     <value>Open IFC Reference File</value>
   </data>
+  <data name="IFCPostProcessEntities" xml:space="preserve">
+    <value>IFC: Post-processing {0} entities out of {1}, {2}% done.</value>
+  </data>
   <data name="IFCProcessedEntities" xml:space="preserve">
     <value>IFC: Processed {0} entities.</value>
   </data>

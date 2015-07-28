@@ -639,4 +639,10 @@
   <data name="IFCExportProcessGenericError" xml:space="preserve">
     <value>Une erreur est survenue lors du processus d'export IFC.</value>
   </data>
+  <data name="IFCVersionSelected" xml:space="preserve">
+    <value>IFC Version:</value>
+  </data>
+  <data name="DocNotSaved" xml:space="preserve">
+    <value>Document Not Saved</value>
+  </data>
 </root>

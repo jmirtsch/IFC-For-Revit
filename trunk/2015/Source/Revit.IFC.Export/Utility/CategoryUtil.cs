@@ -163,78 +163,76 @@ namespace Revit.IFC.Export.Utility
         /// <returns>True if the element is external, false otherwise.</returns>
         public static bool IsElementExternal(Element element)
         {
-            if (element == null)
-                return false;
+           if (element == null)
+              return false;
 
-            Document document = element.Document;
-            
-            // Look for a parameter "IsExternal", potentially localized.
-            {
-                ElementId elementId = element.Id;
+           Document document = element.Document;
 
-                bool? maybeIsExternal = null;
-                if (!ExporterCacheManager.IsExternalParameterValueCache.TryGetValue(elementId, out maybeIsExternal))
-                {
-                    int intIsExternal = 0;
-                    string localExternalParamName = PropertySetEntryUtil.GetLocalizedIsExternal(ExporterCacheManager.LanguageType);
-                    if ((localExternalParamName != null) && (ParameterUtil.GetIntValueFromElementOrSymbol(element, localExternalParamName, out intIsExternal) != null))
-                        maybeIsExternal = (intIsExternal != 0);
+           // Look for a parameter "IsExternal", potentially localized.
+           {
+              ElementId elementId = element.Id;
 
-                    if (!maybeIsExternal.HasValue && (ExporterCacheManager.LanguageType != LanguageType.English_USA))
-                    {
-                        string externalParamName = PropertySetEntryUtil.GetLocalizedIsExternal(LanguageType.English_USA);
-                        if (ParameterUtil.GetIntValueFromElementOrSymbol(element, externalParamName, out intIsExternal) != null)
-                            maybeIsExternal = (intIsExternal != 0);
-                    }
+              bool? maybeIsExternal = null;
+              if (!ExporterCacheManager.IsExternalParameterValueCache.TryGetValue(elementId, out maybeIsExternal))
+              {
+                 int intIsExternal = 0;
+                 string localExternalParamName = PropertySetEntryUtil.GetLocalizedIsExternal(ExporterCacheManager.LanguageType);
+                 if ((localExternalParamName != null) && (ParameterUtil.GetIntValueFromElementOrSymbol(element, localExternalParamName, out intIsExternal) != null))
+                    maybeIsExternal = (intIsExternal != 0);
 
-                    ExporterCacheManager.IsExternalParameterValueCache.Add(new KeyValuePair<ElementId, bool?>(elementId, maybeIsExternal));
-                }
+                 if (!maybeIsExternal.HasValue && (ExporterCacheManager.LanguageType != LanguageType.English_USA))
+                 {
+                    string externalParamName = PropertySetEntryUtil.GetLocalizedIsExternal(LanguageType.English_USA);
+                    if (ParameterUtil.GetIntValueFromElementOrSymbol(element, externalParamName, out intIsExternal) != null)
+                       maybeIsExternal = (intIsExternal != 0);
+                 }
 
-                if (maybeIsExternal.HasValue)
-                    return maybeIsExternal.Value;
-            }
+                 ExporterCacheManager.IsExternalParameterValueCache.Add(new KeyValuePair<ElementId, bool?>(elementId, maybeIsExternal));
+              }
 
-            // Specific element types that know if they are external or not 
-            // Categories are used, and not types, to also support in-place families 
+              if (maybeIsExternal.HasValue)
+                 return maybeIsExternal.Value;
+           }
 
-            // Roofs are always external
-            ElementId categoryId = element.Category.Id;
-            if (categoryId == new ElementId(BuiltInCategory.OST_Roofs) ||
-                categoryId == new ElementId(BuiltInCategory.OST_MassExteriorWall))
-                return true;
+           // Many element types have the FUNCTION_PARAM parameter.  If this is set, use its value.
+           ElementType elementType = document.GetElement(element.GetTypeId()) as ElementType;
+           int elementFunction;
+           if ((elementType != null) && ParameterUtil.GetIntValueFromElement(elementType, BuiltInParameter.FUNCTION_PARAM, out elementFunction) != null)
+           {
+              // Note that the WallFunction enum value is the same for many different kinds of objects.
+              return elementFunction != ((int)WallFunction.Interior);
+           }
 
-            // Mass interior walls are always internal
-            if (categoryId == new ElementId(BuiltInCategory.OST_MassInteriorWall))
-                return false;
-            
-            // Wall types have the function parameter 
-            if (element is Wall)
-            {
-                ElementType wallType = document.GetElement(element.GetTypeId()) as ElementType;
-                int wallFunction;
-                if (ParameterUtil.GetIntValueFromElement(wallType, BuiltInParameter.FUNCTION_PARAM, out wallFunction) != null)
-                {
-                    return wallFunction != ((int)WallFunction.Interior);
-                }
-            }
+           // Specific element types that know if they are external or not if the built-in parameter isn't set.
+           // Categories are used, and not types, to also support in-place families 
+
+           // Roofs are always external
+           ElementId categoryId = element.Category.Id;
+           if (categoryId == new ElementId(BuiltInCategory.OST_Roofs) ||
+               categoryId == new ElementId(BuiltInCategory.OST_MassExteriorWall))
+              return true;
+
+           // Mass interior walls are always internal
+           if (categoryId == new ElementId(BuiltInCategory.OST_MassInteriorWall))
+              return false;
 
             // Family instances may be hosted on an external element
-            if (element is FamilyInstance)
-            {
-                FamilyInstance familyInstance = (FamilyInstance)element;
-                Element familyInstanceHost = familyInstance.Host;
-                if (familyInstanceHost == null)
-                {
-                    Reference familyInstanceHostReference = familyInstance.HostFace;
-                    if (familyInstanceHostReference != null)
-                        familyInstanceHost = document.GetElement(familyInstanceHostReference);
-                }
+           if (element is FamilyInstance)
+           {
+              FamilyInstance familyInstance = element as FamilyInstance;
+              Element familyInstanceHost = familyInstance.Host;
+              if (familyInstanceHost == null)
+              {
+                 Reference familyInstanceHostReference = familyInstance.HostFace;
+                 if (familyInstanceHostReference != null)
+                    familyInstanceHost = document.GetElement(familyInstanceHostReference);
+              }
 
-                if (familyInstanceHost != null)
-                    return IsElementExternal(familyInstanceHost);
-            }
+              if (familyInstanceHost != null)
+                 return IsElementExternal(familyInstanceHost);
+           }
 
-            return false;
+           return false;
         }
 
         /// <summary>

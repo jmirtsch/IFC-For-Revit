@@ -50,16 +50,6 @@ namespace Revit.IFC.Import.Data
          Process(ifcIFCSite);
       }
 
-      /// <summary>
-      /// Cleans out the IFCEntity to save memory.
-      /// </summary>
-      public override void CleanEntity()
-      {
-         base.CleanEntity();
-
-         m_LandTitleNumber = null;
-      }
-
       private double GetLatLongScale(int index)
       {
          switch (index)

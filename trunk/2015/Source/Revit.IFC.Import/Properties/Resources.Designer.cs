@@ -97,6 +97,15 @@ namespace Revit.IFC.Import.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to IFC: Post-processing {0} entities out of {1}, {2}% done..
+        /// </summary>
+        internal static string IFCPostProcessEntities {
+            get {
+                return ResourceManager.GetString("IFCPostProcessEntities", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to IFC: Processed {0} entities..
         /// </summary>
         internal static string IFCProcessedEntities {

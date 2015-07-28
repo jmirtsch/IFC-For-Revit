@@ -129,7 +129,115 @@ namespace Revit.IFC.Import.Data
                 EndParameter = endParameter;
             }
         }
-        
+
+        private IList<CurveLoop> CreateProfileCurveLoopsForDirectrix(Curve directrix, out double startParam)
+        {
+           startParam = 0.0;
+
+           if (directrix == null)
+              return null;
+
+           if (directrix.IsBound)
+              startParam = directrix.GetEndParameter(0);
+
+           Transform originTrf = directrix.ComputeDerivatives(startParam, false);
+
+           if (originTrf == null)
+              return null;
+
+           // The X-dir of the transform of the start of the directrix will form the normal of the disk.
+           Plane diskPlane = new Plane(originTrf.BasisX, originTrf.Origin);
+
+           IList<CurveLoop> profileCurveLoops = new List<CurveLoop>();
+
+           CurveLoop diskOuterCurveLoop = new CurveLoop();
+           diskOuterCurveLoop.Append(Arc.Create(diskPlane, Radius, 0, Math.PI));
+           diskOuterCurveLoop.Append(Arc.Create(diskPlane, Radius, Math.PI, 2.0 * Math.PI));
+           profileCurveLoops.Add(diskOuterCurveLoop);
+
+           if (InnerRadius.HasValue)
+           {
+              CurveLoop diskInnerCurveLoop = new CurveLoop();
+              diskInnerCurveLoop.Append(Arc.Create(diskPlane, InnerRadius.Value, 0, Math.PI));
+              diskInnerCurveLoop.Append(Arc.Create(diskPlane, InnerRadius.Value, Math.PI, 2.0 * Math.PI));
+              profileCurveLoops.Add(diskInnerCurveLoop);
+           }
+
+           return profileCurveLoops;
+        }
+
+        private IList<GeometryObject> SplitSweptDiskIntoValidPieces(CurveLoop trimmedDirectrixInWCS, IList<CurveLoop> profileCurveLoops, SolidOptions solidOptions)
+        {
+           // If we have 0 or 1 curves, there is nothing we can do here.
+           int numCurves = trimmedDirectrixInWCS.Count();
+           if (numCurves < 2)
+              return null;
+
+           // We will attempt to represent the original description in as few pieces as possible.  
+           IList<Curve> directrixCurves = new List<Curve>();
+           foreach (Curve directrixCurve in trimmedDirectrixInWCS)
+           {
+              if (directrixCurve == null)
+              {
+                 numCurves--;
+                 if (numCurves < 2)
+                    return null;
+                 continue;
+              }
+              directrixCurves.Add(directrixCurve);
+           }
+
+           IList<GeometryObject> sweptDiskPieces = new List<GeometryObject>();
+
+           // We will march along the directrix one curve at a time, trying to build a bigger piece of the sweep.  At the point that we throw an exception,
+           // we will take the last biggest piece and start over.
+           CurveLoop currentCurveLoop = new CurveLoop();
+           Solid bestSolidSoFar = null;
+           double pathAttachmentParam = directrixCurves[0].GetEndParameter(0);
+
+           for (int ii = 0; ii < numCurves; ii++)
+           {
+              currentCurveLoop.Append(directrixCurves[ii]);
+              try
+              {
+                 Solid currentSolid = GeometryCreationUtilities.CreateSweptGeometry(currentCurveLoop, 0, pathAttachmentParam, profileCurveLoops,
+                    solidOptions);
+                 bestSolidSoFar = currentSolid;
+              }
+              catch
+              {
+                 if (bestSolidSoFar != null)
+                 {
+                    sweptDiskPieces.Add(bestSolidSoFar);
+                    bestSolidSoFar = null;
+                 }
+              }
+
+              // This should only happen as a result of the catch loop above.  We want to protect against the case where one or more pieces of the sweep 
+              // are completely invalid.
+              while (bestSolidSoFar == null && (ii < numCurves))
+              {
+                 try
+                 {
+                    currentCurveLoop = new CurveLoop();
+                    currentCurveLoop.Append(directrixCurves[ii]);
+                    profileCurveLoops = CreateProfileCurveLoopsForDirectrix(directrixCurves[ii], out pathAttachmentParam);
+
+                    Solid currentSolid = GeometryCreationUtilities.CreateSweptGeometry(currentCurveLoop, 0, pathAttachmentParam, profileCurveLoops,
+                       solidOptions);
+                    bestSolidSoFar = currentSolid;
+                    break;
+                 }
+                 catch
+                 {
+                    ii++;
+                 }
+              }
+           }
+
+           return sweptDiskPieces;
+        }
+
         /// <summary>
         /// Return geometry for a particular representation item.
         /// </summary>
@@ -141,58 +249,54 @@ namespace Revit.IFC.Import.Data
         protected override IList<GeometryObject> CreateGeometryInternal(
               IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
-            Transform sweptDiskPosition = (lcs == null) ? Transform.Identity : lcs;
+           Transform sweptDiskPosition = (lcs == null) ? Transform.Identity : lcs;
 
-            CurveLoop baseProfileCurve = Directrix.GetCurveLoop();
-            if (baseProfileCurve == null)
-                return null;
+           CurveLoop baseProfileCurve = Directrix.GetCurveLoop();
+           if (baseProfileCurve == null)
+              return null;
 
-            CurveLoop trimmedDirectrix = IFCGeometryUtil.TrimCurveLoop(baseProfileCurve, StartParameter, EndParameter);
-            if (trimmedDirectrix == null)
-                return null;
+           CurveLoop trimmedDirectrix = IFCGeometryUtil.TrimCurveLoop(baseProfileCurve, StartParameter, EndParameter);
+           if (trimmedDirectrix == null)
+              return null;
 
-            CurveLoop trimmedDirectrixInLCS = IFCGeometryUtil.CreateTransformed(trimmedDirectrix, sweptDiskPosition);
+           CurveLoop trimmedDirectrixInWCS = IFCGeometryUtil.CreateTransformed(trimmedDirectrix, sweptDiskPosition);
 
-            // Create the disk.
-            Transform originTrf = null;
-            double startParam = 0.0; // If the directrix isn't bound, this arbitrary parameter will do.
-            foreach (Curve curve in trimmedDirectrixInLCS)
-            {
-                if (curve.IsBound)
-                    startParam = curve.GetEndParameter(0);
-                originTrf = curve.ComputeDerivatives(startParam, false);
-                break;
-            }
+           // Create the disk.
+           Curve firstCurve = null;
+           foreach (Curve curve in trimmedDirectrixInWCS)
+           {
+              firstCurve = curve;
+              break;
+           }
 
-            if (originTrf == null)
-                return null;
+           double startParam = 0.0;
+           IList<CurveLoop> profileCurveLoops = CreateProfileCurveLoopsForDirectrix(firstCurve, out startParam);
+           if (profileCurveLoops == null)
+              return null;
 
-            // The X-dir of the transform of the start of the directrix will form the normal of the disk.
-            Plane diskPlane = new Plane(originTrf.BasisX, originTrf.Origin);
+           SolidOptions solidOptions = new SolidOptions(GetMaterialElementId(shapeEditScope), shapeEditScope.GraphicsStyleId);
+           IList<GeometryObject> myObjs = new List<GeometryObject>();
+           
+           try
+           {
+              Solid sweptDiskSolid = GeometryCreationUtilities.CreateSweptGeometry(trimmedDirectrixInWCS, 0, startParam, profileCurveLoops,
+                 solidOptions);
+              if (sweptDiskSolid != null)
+                 myObjs.Add(sweptDiskSolid);
+           }
+           catch (Exception ex)
+           {
+              // If we can't create a solid, we will attempt to split the Solid into valid pieces (that will likely have some overlap).
+              if (ex.Message.Contains("self-intersections"))
+              {
+                 Importer.TheLog.LogWarning(Id, "The IfcSweptDiskSolid definition does not define a valid solid, likely due to self-intersections or other such problems; the profile probably extends too far toward the inner curvature of the sweep path. Creating the minimum number of solids possible to represent the geometry.", false);
+                 myObjs = SplitSweptDiskIntoValidPieces(trimmedDirectrixInWCS, profileCurveLoops, solidOptions);
+              }
+              else
+                 throw ex;
+           }
 
-            IList<CurveLoop> profileCurveLoops = new List<CurveLoop>();
-
-            CurveLoop diskOuterCurveLoop = new CurveLoop();
-            diskOuterCurveLoop.Append(Arc.Create(diskPlane, Radius, 0, Math.PI));
-            diskOuterCurveLoop.Append(Arc.Create(diskPlane, Radius, Math.PI, 2.0 * Math.PI));
-            profileCurveLoops.Add(diskOuterCurveLoop);
-            
-            if (InnerRadius.HasValue)
-            {
-                CurveLoop diskInnerCurveLoop = new CurveLoop();
-                diskInnerCurveLoop.Append(Arc.Create(diskPlane, InnerRadius.Value, 0, Math.PI));
-                diskInnerCurveLoop.Append(Arc.Create(diskPlane, InnerRadius.Value, Math.PI, 2.0 * Math.PI));
-                profileCurveLoops.Add(diskInnerCurveLoop);
-            }
-
-            SolidOptions solidOptions = new SolidOptions(GetMaterialElementId(shapeEditScope), shapeEditScope.GraphicsStyleId);
-            Solid sweptDiskSolid = GeometryCreationUtilities.CreateSweptGeometry(trimmedDirectrixInLCS, 0, startParam, profileCurveLoops,
-                solidOptions);
-
-            IList<GeometryObject> myObjs = new List<GeometryObject>();
-            if (sweptDiskSolid != null)
-                myObjs.Add(sweptDiskSolid);
-            return myObjs;
+           return myObjs;
         }
 
         /// <summary>

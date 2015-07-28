@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
    
-	<Product Id="C319065F-FBBD-4F90-B36D-764628D3DF77" Name="Revit IFC 2015" Language="1033" Version="15.4.0.0" Manufacturer="Autodesk" UpgradeCode="D125CBE4-F927-41EE-869F-8A39845EFAEA">
+	<Product Id="95E25D25-C2B8-4EFA-B999-D6172AFFB267" Name="Revit IFC 2015" Language="1033" Version="15.5.0.0" Manufacturer="Autodesk" UpgradeCode="D125CBE4-F927-41EE-869F-8A39845EFAEA">
 		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
 		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />

@@ -50,6 +50,9 @@
     <Compile Include="Data\IFCBooleanResult.cs" />
     <Compile Include="Data\IFCBoundedCurve.cs" />
     <Compile Include="Data\IFCBuilding.cs" />
+    <Compile Include="Data\IFCBuildingElement.cs" />
+    <Compile Include="Data\IFCBuildingElementComponent.cs" />
+    <Compile Include="Data\IFCBuildingElementPart.cs" />
     <Compile Include="Data\IFCBuildingStorey.cs" />
     <Compile Include="Data\IFCCartesianPointList3D.cs" />
     <Compile Include="Data\IFCCartesianTransformOperator.cs" />
@@ -70,6 +73,7 @@
     <Compile Include="Data\IFCElement.cs" />
     <Compile Include="Data\IFCElementarySurface.cs" />
     <Compile Include="Data\IFCElementAssembly.cs" />
+    <Compile Include="Data\IFCElementComponent.cs" />
     <Compile Include="Data\IFCElementQuantity.cs" />
     <Compile Include="Data\IFCElementType.cs" />
     <Compile Include="Data\IFCEllipse.cs" />
@@ -117,6 +121,7 @@
     <Compile Include="Data\IFCProduct.cs" />
     <Compile Include="Data\IFCProductRepresentation.cs" />
     <Compile Include="Data\IFCProfileDef.cs" />
+    <Compile Include="Data\IFCPropertyBoundedValue.cs" />
     <Compile Include="Data\IFCPropertySetDefinition.cs" />
     <Compile Include="Data\IFCRepresentation.cs" />
     <Compile Include="Data\IFCRepresentationContext.cs" />

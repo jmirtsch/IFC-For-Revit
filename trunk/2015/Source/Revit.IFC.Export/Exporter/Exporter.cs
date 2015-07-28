@@ -103,7 +103,7 @@ namespace Revit.IFC.Export.Exporter
 
         // Allow a derived class to add Element exporter routines.
         public delegate void ElementExporter(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document);
-        
+
         protected ElementExporter m_ElementExporter = null;
 
         // Allow a derived class to add property sets.
@@ -150,7 +150,7 @@ namespace Revit.IFC.Export.Exporter
 
             try
             {
-                statusBar = RevitStatusBar.Create();
+                
 
                 BeginExport(exporterIFC, document, filterView);
 
@@ -162,7 +162,7 @@ namespace Revit.IFC.Export.Exporter
             }
             finally
             {
-
+                
 #if CQ_IFC_EXPORT
                 if (null != progWindow)
                     progWindow.Close();
@@ -218,7 +218,7 @@ namespace Revit.IFC.Export.Exporter
             View filterView = exportOptionsCache.FilterViewForExport;
 
             bool exportIfBoundingBoxIsWithinViewExtent = (exportOptionsCache.ExportRoomsInView && (filterView != null) && filterView is View3D);
-            
+
             FilteredElementCollector spatialElementCollector;
             ICollection<ElementId> idsToExport = exportOptionsCache.ElementsForExport;
             if (idsToExport.Count > 0)
@@ -242,7 +242,7 @@ namespace Revit.IFC.Export.Exporter
 
             // if the view is 3D and section box is active, then set the section box
             BoundingBoxXYZ sectionBox = null;
-            if (exportIfBoundingBoxIsWithinViewExtent) 
+            if (exportIfBoundingBoxIsWithinViewExtent)
             {
                 View3D currentView = filterView as View3D;
                 sectionBox = currentView != null && currentView.IsSectionBoxActive ? currentView.GetSectionBox() : null;
@@ -251,7 +251,11 @@ namespace Revit.IFC.Export.Exporter
             int spatialElementCount = 1;
             foreach (Element element in spatialElementCollector)
             {
+               //display the spatialElementCount on the status bar for every 100th Element 
+               if ((spatialElementCount % 100) == 0)
+               {
                 statusBar.Set(String.Format(Resources.IFCProcessingSpatialElements, spatialElementCount, numOfSpatialElements));
+               }
                 spatialElementCount++;
                 if ((element == null) || (exportedSpaces != null && exportedSpaces.Contains(element.Id)))
                     continue;
@@ -290,7 +294,12 @@ namespace Revit.IFC.Export.Exporter
             int otherElementCollectorCount = 1;
             foreach (Element element in otherElementCollector)
             {
+
+               //display the count on the status bar for every 100th Element
+               if ((otherElementCollectorCount % 100) == 0)
+                {
                 statusBar.Set(String.Format(Resources.IFCProcessingNonSpatialElements, otherElementCollectorCount, numOfOtherElement));
+                }
                 otherElementCollectorCount++;
                 ExportElement(exporterIFC, element);
             }
@@ -327,7 +336,11 @@ namespace Revit.IFC.Export.Exporter
             int railingIndex = 1;
             foreach (ElementId elementId in ExporterCacheManager.RailingCache)
             {
+               //display the railingIndex on the status bar for every 100th Railing
+               if ((railingIndex % 100) == 0)
+               {
                 statusBar.Set(String.Format(Resources.IFCProcessingRailings, railingIndex, railingCollection.Count));
+               }
                 railingIndex++;
                 Element element = document.GetElement(elementId);
                 ExportElement(exporterIFC, element);
@@ -342,8 +355,18 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="exporterIFC">The exporterIFC class.</param>
         protected void ExportCachedFabricAreas(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
+           IDictionary<ElementId, HashSet<IFCAnyHandle>> fabricAreaCollection = ExporterCacheManager.FabricAreaHandleCache;
+
+           int fabricAreaIndex = 1;
+
             foreach (ElementId elementId in ExporterCacheManager.FabricAreaHandleCache.Keys)
             {
+               //display the fabricAreaIndex on the status bar for every 100th Fabric Area
+               if ((fabricAreaIndex % 100) == 0)
+               {
+                  statusBar.Set(String.Format(Resources.IFCProcessingFabricAreas, fabricAreaIndex, fabricAreaCollection.Count));
+               }
+                fabricAreaIndex++;
                 Element element = document.GetElement(elementId);
                 ExportElement(exporterIFC, element);
             }
@@ -356,8 +379,16 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="exporterIFC">The exporterIFC class.</param>
         protected void ExportTrusses(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
+           HashSet<ElementId> trussCollection = ExporterCacheManager.TrussCache;
+           int trussIndex = 1;
             foreach (ElementId elementId in ExporterCacheManager.TrussCache)
             {
+               //display the trussIndex on the status bar for every 100th Truss
+               if ((trussIndex % 100) == 0)
+               {
+                  statusBar.Set(String.Format(Resources.IFCProcessingTrusses, trussIndex, trussCollection.Count));
+               }
+               trussIndex++;
                 Element element = document.GetElement(elementId);
                 ExportElement(exporterIFC, element);
             }
@@ -370,8 +401,17 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="exporterIFC">The exporterIFC class.</param>
         protected void ExportBeamSystems(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
+           HashSet<ElementId> beamSystemCollection = ExporterCacheManager.BeamSystemCache;
+           int beamSystemIndex = 1;
+
             foreach (ElementId elementId in ExporterCacheManager.BeamSystemCache)
             {
+               //display the beamSystemIndex on the status bar for every 100th Beam System
+               if ((beamSystemIndex % 100) == 0)
+               {
+                  statusBar.Set(String.Format(Resources.IFCProcessingBeamSystems, beamSystemIndex, beamSystemCollection.Count));
+               }
+               beamSystemIndex++;
                 Element element = document.GetElement(elementId);
                 ExportElement(exporterIFC, element);
             }
@@ -384,8 +424,15 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="exporterIFC">The exporterIFC class.</param>
         protected void ExportZones(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
         {
+            HashSet<ElementId> zoneCollection = ExporterCacheManager.ZoneCache;
+            int zoneIndex = 1;
             foreach (ElementId elementId in ExporterCacheManager.ZoneCache)
             {
+               //display the zoneIndex on the status bar for every 100th Zone 
+               if ((zoneIndex % 100) == 0)
+               {
+                  statusBar.Set(String.Format(Resources.IFCProcessingExportZones, zoneIndex, zoneCollection.Count));
+               }
                 Element element = document.GetElement(elementId);
                 ExportElement(exporterIFC, element);
             }
@@ -776,9 +823,9 @@ namespace Revit.IFC.Export.Exporter
                         // could be gathered from the element.
                         bool exported = false;
                         if (IsMEPType(exporterIFC, element, exportType))
-                            exported = GenericMEPExporter.Export(exporterIFC, element, geomElem, exportType, ifcEnumType, productWrapper);
+                           exported = GenericMEPExporter.Export(exporterIFC, element, geomElem, exportType, ifcEnumType, productWrapper);
                         else if (ExportAsProxy(element, exportType))
-                            exported = ProxyElementExporter.Export(exporterIFC, element, geomElem, productWrapper);
+                           exported = ProxyElementExporter.Export(exporterIFC, element, geomElem, productWrapper);
                         else if ((element is HostObject) || (element is DirectShape))
                         {
                            // This is intended to work for any element.  However, there are some hidden elements that we likely want to ignore.
@@ -820,7 +867,15 @@ namespace Revit.IFC.Export.Exporter
             }
             else if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
             {
+                ExporterCacheManager.ExportOptionsCache.ExportAs4_ADD1 = true;
+                modelOptions.SchemaFile = Path.Combine(ExporterUtil.RevitProgramPath, "EDM\\IFC4_ADD1.exp");
+               
+               // If the IFC4_ADD1 file does not exists it takes the IFC4 file as its default.              
+               if (!File.Exists(modelOptions.SchemaFile))
+                {
                 modelOptions.SchemaFile = Path.Combine(ExporterUtil.RevitProgramPath, "EDM\\IFC4.exp");
+                   ExporterCacheManager.ExportOptionsCache.ExportAs4_ADD1 = false;
+                }
                 modelOptions.SchemaName = "IFC4";
             }
             else
@@ -855,6 +910,8 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="document">The document to export.</param>
         private void BeginExport(ExporterIFC exporterIFC, Document document, Autodesk.Revit.DB.View filterView)
         {
+            statusBar = RevitStatusBar.Create();
+
             // cache options
             ExportOptionsCache exportOptionsCache = ExportOptionsCache.Create(exporterIFC, document, filterView);
             ExporterCacheManager.ExportOptionsCache = exportOptionsCache;
@@ -916,7 +973,7 @@ namespace Revit.IFC.Export.Exporter
                 }
                 else
                     relativePlacement = ExporterUtil.CreateAxis2Placement3D(file);
-                
+
                 IFCAnyHandle buildingPlacement = IFCInstanceExporter.CreateLocalPlacement(file, null, relativePlacement);
 
                 CreateProject(exporterIFC, document, applicationHandle);
@@ -939,7 +996,7 @@ namespace Revit.IFC.Export.Exporter
                     buildingDescription = NamingUtil.GetOverrideStringValue(projectInfo, "BuildingDescription", null);
                     buildingLongName = NamingUtil.GetOverrideStringValue(projectInfo, "BuildingLongName", buildingName);
                 }
-                
+
                 IFCAnyHandle buildingAddress = CreateIFCAddress(file, document, projectInfo);
 
                 string buildingGUID = GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building);
@@ -1033,10 +1090,11 @@ namespace Revit.IFC.Export.Exporter
                     string description = NamingUtil.GetDescriptionOverride(level, null);
                     string longName = level.Name;
                     string levelGUID = GUIDUtil.GetLevelGUID(level);
+                    IFCElementComposition ifcComposition = LevelUtil.GetElementCompositionTypeOverride(level);
                     IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(file,
                         levelGUID, ExporterCacheManager.OwnerHistoryHandle,
                         levelName, description, objectType, placement,
-                        null, longName, Toolkit.IFCElementComposition.Element, elevation);
+                        null, longName, ifcComposition, elevation);
 
                     // Create classification reference when level has classification filed name assigned to it
                     ClassificationUtil.CreateClassification(exporterIFC, file, level, buildingStorey);
@@ -1095,13 +1153,13 @@ namespace Revit.IFC.Export.Exporter
         {
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
-                            
+
             using (IFCTransaction transaction = new IFCTransaction(file))
             {
                 // In some cases, like multi-story stairs and ramps, we may have the same Pset used for multiple levels.
                 // If ifcParams is null, re-use the property set.
                 ISet<string> locallyUsedGUIDs = new HashSet<string>();
-                
+
                 // Relate Ducts and Pipes to their coverings (insulations and linings)
                 foreach (ElementId ductOrPipeId in ExporterCacheManager.MEPCache.CoveredElementsCache)
                 {
@@ -1194,7 +1252,7 @@ namespace Revit.IFC.Export.Exporter
 
                         // We don't do this in RegisterAssemblyElement because we want to make sure that the IfcElementAssembly has been created.
                         ExporterCacheManager.ElementsInAssembliesCache.UnionWith(elementHandles);
-                    }                  
+                    }
                 }
 
                 // relate group elements to groups
@@ -1325,7 +1383,7 @@ namespace Revit.IFC.Export.Exporter
                         try
                         {
                             ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory,
-                                null, null, elements, propertySet);
+                                                            null, null, elements, propertySet);
                         }
                         catch
                         {
@@ -1358,7 +1416,7 @@ namespace Revit.IFC.Export.Exporter
 
                             // NOTE: Definition of RelConnectsPathElements has the connection information reversed
                             // with respect to the order of the paths.
-                            string connectionName = IFCAnyHandleUtil.GetStringAttribute(wallElementHandle, "GlobalId") + "|" 
+                            string connectionName = IFCAnyHandleUtil.GetStringAttribute(wallElementHandle, "GlobalId") + "|"
                                                         + IFCAnyHandleUtil.GetStringAttribute(otherElementHandle, "GlobalId");
                             string connectionType = "Structural";   // Assigned as Description
                             IFCInstanceExporter.CreateRelConnectsPathElements(file, GUIDUtil.CreateGUID(), ownerHistory,
@@ -1393,7 +1451,7 @@ namespace Revit.IFC.Export.Exporter
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.EnergyAnalysisProperySetHandle))
                             {
                                 ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
-                                    ownerHistory, null, null, zoneHnds, zoneInfo.EnergyAnalysisProperySetHandle);
+                                                                    ownerHistory, null, null, zoneHnds, zoneInfo.EnergyAnalysisProperySetHandle);
                             }
 
                             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(zoneInfo.ZoneCommonProperySetHandle))
@@ -1430,7 +1488,7 @@ namespace Revit.IFC.Export.Exporter
                             if (spaceOccupantInfo.SpaceOccupantProperySetHandle != null && spaceOccupantInfo.SpaceOccupantProperySetHandle.HasValue)
                             {
                                 ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(),
-                                    ownerHistory, null, null, spaceOccupantHandles, spaceOccupantInfo.SpaceOccupantProperySetHandle);
+                                                                  ownerHistory, null, null, spaceOccupantHandles, spaceOccupantInfo.SpaceOccupantProperySetHandle);
                             }
                         }
                     }
@@ -1465,10 +1523,10 @@ namespace Revit.IFC.Export.Exporter
                         string systemGUID = GUIDUtil.CreateGUID(systemElem);
                         IFCAnyHandle systemHandle = IFCInstanceExporter.CreateSystem(file, systemGUID,
                             ownerHistory, name, desc, objectType);
-                        
+
                         // Create classification reference when System has classification filed name assigned to it
                         ClassificationUtil.CreateClassification(exporterIFC, file, systemElem, systemHandle);
-                        
+
                         productWrapper.AddSystem(systemElem, systemHandle);
 
                         IFCAnyHandle relServicesBuildings = IFCInstanceExporter.CreateRelServicesBuildings(file, GUIDUtil.CreateGUID(),
@@ -1632,7 +1690,7 @@ namespace Revit.IFC.Export.Exporter
                     }
 
                     descriptions.Add(currentLine);
-                  
+
                 }
 
                 string projectNumber = (projectInfo != null) ? projectInfo.Number : null;
@@ -1707,6 +1765,9 @@ namespace Revit.IFC.Export.Exporter
                         file.Write(writeOptions);
                     }
                 }
+
+                // Display the message to the user when the IFC File has been completely exported 
+                statusBar.Set("IFC Export Complete");
             }
         }
 
@@ -1761,11 +1822,11 @@ namespace Revit.IFC.Export.Exporter
                     // If the ModelPath is actually a file path, then the model is not server based.
                     bool isAFilePath = centralModelPath is FilePath;
                     if (!isAFilePath)
-                {
-                   //This is just a temporary fix for SPR#226541, currently it's unable to get the FileInfo of a server based file stored at server.
-                   //Should server based file stored at server support this functionality and how to support will be tracked by SPR#226761. 
-                   return 0;
-                }
+                    {
+                        //This is just a temporary fix for SPR#226541, currently it's unable to get the FileInfo of a server based file stored at server.
+                        //Should server based file stored at server support this functionality and how to support will be tracked by SPR#226761. 
+                        return 0;
+                    }
                 }
                 FileInfo fileInfo = new FileInfo(pathName);
                 DateTime creationTimeUtc = fileInfo.CreationTimeUtc;
@@ -1806,10 +1867,16 @@ namespace Revit.IFC.Export.Exporter
         private HashSet<IFCAnyHandle> CreateContextInformation(ExporterIFC exporterIFC, Document doc)
         {
             HashSet<IFCAnyHandle> repContexts = new HashSet<IFCAnyHandle>();
-            double scaledPrecision = UnitUtil.ScaleLength(doc.Application.VertexTolerance/10.0);
+
+           // Make sure this precision value is in an acceptable range.
+           double initialPrecision = doc.Application.VertexTolerance / 10.0;
+           initialPrecision = Math.Min(initialPrecision, 1e-3);
+           initialPrecision = Math.Max(initialPrecision, 1e-8);
+
+           double scaledPrecision = UnitUtil.ScaleLength(initialPrecision);
             int exponent = Convert.ToInt32(Math.Log10(scaledPrecision));
             double precision = Math.Pow(10.0, exponent);
-            
+
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle origin = ExporterIFCUtils.GetGlobal3DOriginHandle();
             IFCAnyHandle wcs = IFCInstanceExporter.CreateAxis2Placement3D(file, origin, null, null);
@@ -2032,8 +2099,8 @@ namespace Revit.IFC.Export.Exporter
                 }
             }
 
-            int creationDate = (int) GetCreationDate(doc);
-            
+            int creationDate = (int)GetCreationDate(doc);
+
             IFCAnyHandle organization = IFCInstanceExporter.CreateOrganization(file, null, organizationName, organizationDescription,
                 null, null);
 
@@ -2052,7 +2119,7 @@ namespace Revit.IFC.Export.Exporter
 
             // As per IFC implementer's agreement, we get IfcProject.Name from ProjectInfo.Number and IfcProject.Longname from ProjectInfo.Name 
             string projectName = (projectInfo != null) ? projectInfo.Number : null;
-            string projectLongName = (projectInfo != null) ? projectInfo.Name :null;
+            string projectLongName = (projectInfo != null) ? projectInfo.Name : null;
 
             // Get project description if it is set in the Project info
             string projectObjectType = (projectInfo != null) ? NamingUtil.GetObjectTypeOverride(projectInfo, null) : null;
@@ -2081,7 +2148,7 @@ namespace Revit.IFC.Export.Exporter
             }
         }
 
-        private void CreateContact(IFCFile file, string category, string company, string department, string organizationCode, string contactFirstName, 
+        private void CreateContact(IFCFile file, string category, string company, string department, string organizationCode, string contactFirstName,
             string contactFamilyName, string postalBox, string town, string stateRegion, string postalCode, string country,
             IList<string> eMailAddressList, IList<string> telNoList, IList<string> addressLines)
         {
@@ -2116,7 +2183,7 @@ namespace Revit.IFC.Export.Exporter
 
             return null;
         }
-        
+
         /// <summary>
         /// Create IFC Address from the saved data obtained by the UI and saved in the extensible storage
         /// </summary>
@@ -2131,7 +2198,7 @@ namespace Revit.IFC.Export.Exporter
             if (savedAddress.GetSavedAddress(document, out savedAddressItem) == true)
             {
                 IFCAnyHandle postalAddress;
-                
+
                 // We have address saved in the extensible storage
                 List<string> addressLines = new List<string>();
                 if (!String.IsNullOrEmpty(savedAddressItem.AddressLine1))
@@ -2158,7 +2225,7 @@ namespace Revit.IFC.Export.Exporter
                 }
 
                 postalAddress = IFCInstanceExporter.CreatePostalAddress(file, addressPurpose, savedAddressItem.Description, savedAddressItem.UserDefinedPurpose,
-                   savedAddressItem.InternalLocation, addressLines, savedAddressItem.POBox, savedAddressItem.TownOrCity, savedAddressItem.RegionOrState, savedAddressItem.PostalCode, 
+                   savedAddressItem.InternalLocation, addressLines, savedAddressItem.POBox, savedAddressItem.TownOrCity, savedAddressItem.RegionOrState, savedAddressItem.PostalCode,
                    savedAddressItem.Country);
 
                 return postalAddress;
@@ -2430,6 +2497,9 @@ namespace Revit.IFC.Export.Exporter
                 {
                     case DisplayUnitType.DUT_CUBIC_METERS:
                         break;
+                    case DisplayUnitType.DUT_LITERS:
+                        volumePrefix = IFCSIPrefix.Deci;
+                        break;
                     case DisplayUnitType.DUT_CUBIC_CENTIMETERS:
                         volumePrefix = IFCSIPrefix.Centi;
                         break;
@@ -2592,9 +2662,24 @@ namespace Revit.IFC.Export.Exporter
                 unitSet.Add(thermalTransmittanceUnit);
             }
 
-            // Volumetric Flow Rate - support metric m^3/s only.
+            // Volumetric Flow Rate - support metric L/s or m^3/s only.
             {
                 ISet<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
+               IFCAnyHandle volumetricFlowRateLenUnit = null;
+               double volumetricFlowRateFactor = 1.0;
+
+               FormatOptions tempFormatOptions = doc.GetUnits().GetFormatOptions(UnitType.UT_HVAC_Airflow);
+               switch (tempFormatOptions.DisplayUnits)
+               {
+                  case DisplayUnitType.DUT_LITERS_PER_SECOND:
+                     volumetricFlowRateLenUnit = IFCInstanceExporter.CreateSIUnit(file, IFCUnit.LengthUnit, IFCSIPrefix.Deci, IFCSIUnitName.Metre);
+                     break;
+                  default:
+                     volumetricFlowRateLenUnit = lenSIBaseUnit;   // use m^3/s by default.
+                     volumetricFlowRateFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_CUBIC_METERS_PER_SECOND);
+                     break;
+               }
+
                 elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, lenSIBaseUnit, 3));
                 elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, timeSIUnit, -1));
 
@@ -2602,7 +2687,6 @@ namespace Revit.IFC.Export.Exporter
                     IFCDerivedUnitEnum.VolumetricFlowRateUnit, null);
                 unitSet.Add(volumetricFlowRateUnit);
 
-                double volumetricFlowRateFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_CUBIC_METERS_PER_SECOND);
                 ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_HVAC_Airflow, volumetricFlowRateUnit, volumetricFlowRateFactor, 0.0);
             }
 
@@ -2708,19 +2792,19 @@ namespace Revit.IFC.Export.Exporter
                unitSet.Add(linearVelocityUnit);
             }
 
-            // Currency - disallowed for IC2x3 Coordination View 2.0.  If we find a currency, export it as a real.
+           // Currency - disallowed for IC2x3 Coordination View 2.0.  If we find a currency, export it as a real.
             if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2)
             {
                 FormatOptions currencyFormatOptions = doc.GetUnits().GetFormatOptions(UnitType.UT_Currency);
                 UnitSymbolType ust = currencyFormatOptions.UnitSymbol;
 
                 IFCAnyHandle currencyUnit = null;
-                
+
                 // Some of these are guesses for IFC2x3, since multiple currencies may use the same symbol, 
                 // but no detail is given on which currency is being used.  For IFC4, we just use the label.
                 if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
                 {
-                    string currencyLabel = null; 
+                    string currencyLabel = null;
                     try
                     {
                         currencyLabel = LabelUtils.GetLabelFor(ust);
@@ -2733,44 +2817,44 @@ namespace Revit.IFC.Export.Exporter
                 }
                 else
                 {
-                IFCCurrencyType? currencyType = null;
+                    IFCCurrencyType? currencyType = null;
 
-                switch (ust)
-                {
-                    case UnitSymbolType.UST_DOLLAR:
-                        currencyType = IFCCurrencyType.USD;
-                        break;
-                    case UnitSymbolType.UST_EURO_PREFIX:
-                    case UnitSymbolType.UST_EURO_SUFFIX:
-                        currencyType = IFCCurrencyType.EUR;
-                        break;
-                    case UnitSymbolType.UST_POUND:
-                        currencyType = IFCCurrencyType.GBP;
-                        break;
-                    case UnitSymbolType.UST_CHINESE_HONG_KONG_SAR:
-                        currencyType = IFCCurrencyType.HKD;
-                        break;
-                    case UnitSymbolType.UST_KRONER:
-                        currencyType = IFCCurrencyType.NOK;
-                        break;
-                    case UnitSymbolType.UST_SHEQEL:
-                        currencyType = IFCCurrencyType.ILS;
-                        break;
-                    case UnitSymbolType.UST_YEN:
-                        currencyType = IFCCurrencyType.JPY;
-                        break;
-                    case UnitSymbolType.UST_WON:
-                        currencyType = IFCCurrencyType.KRW;
-                        break;
-                    case UnitSymbolType.UST_BAHT:
-                        currencyType = IFCCurrencyType.THB;
-                        break;
-                    case UnitSymbolType.UST_DONG:
-                        currencyType = IFCCurrencyType.VND;
-                        break;
-                }
+                    switch (ust)
+                    {
+                        case UnitSymbolType.UST_DOLLAR:
+                            currencyType = IFCCurrencyType.USD;
+                            break;
+                        case UnitSymbolType.UST_EURO_PREFIX:
+                        case UnitSymbolType.UST_EURO_SUFFIX:
+                            currencyType = IFCCurrencyType.EUR;
+                            break;
+                        case UnitSymbolType.UST_POUND:
+                            currencyType = IFCCurrencyType.GBP;
+                            break;
+                        case UnitSymbolType.UST_CHINESE_HONG_KONG_SAR:
+                            currencyType = IFCCurrencyType.HKD;
+                            break;
+                        case UnitSymbolType.UST_KRONER:
+                            currencyType = IFCCurrencyType.NOK;
+                            break;
+                        case UnitSymbolType.UST_SHEQEL:
+                            currencyType = IFCCurrencyType.ILS;
+                            break;
+                        case UnitSymbolType.UST_YEN:
+                            currencyType = IFCCurrencyType.JPY;
+                            break;
+                        case UnitSymbolType.UST_WON:
+                            currencyType = IFCCurrencyType.KRW;
+                            break;
+                        case UnitSymbolType.UST_BAHT:
+                            currencyType = IFCCurrencyType.THB;
+                            break;
+                        case UnitSymbolType.UST_DONG:
+                            currencyType = IFCCurrencyType.VND;
+                            break;
+                    }
 
-                if (currencyType.HasValue)
+                    if (currencyType.HasValue)
                         currencyUnit = IFCInstanceExporter.CreateMonetaryUnit2x3(file, currencyType.Value);
                 }
 
@@ -3041,7 +3125,7 @@ namespace Revit.IFC.Export.Exporter
                     {
                         IFCAnyHandle buildingStoreyHandle = levelInfo.GetBuildingStorey();
                         buildingStoreys.Add(buildingStoreyHandle);
-                    
+
                         // Add Property set, quantities and classification of Building Storey also to IFC
                         productWrapper.AddElement(level, buildingStoreyHandle, levelInfo, null, false);
 
