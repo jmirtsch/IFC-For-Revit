@@ -2954,12 +2954,29 @@ namespace Revit.IFC.Export.Utility
             else if (curve is Ellipse)
             {
                 Ellipse curveEllipse = curve as Ellipse;
-                IFCAnyHandle location = XYZtoIfcCartesianPoint2D(exporterIFC, curveEllipse.Center, true);
                 IList<double> direction = new List<double>();
-                direction.Add(UnitUtil.ScaleLength(curveEllipse.XDirection.X));
-                direction.Add(UnitUtil.ScaleLength(curveEllipse.YDirection.Y));
-                IFCAnyHandle dir = IFCInstanceExporter.CreateDirection(file, direction);
-                IFCAnyHandle position = IFCInstanceExporter.CreateAxis2Placement2D(file, location, null, dir);
+                XYZ ellipseNormal = curveEllipse.Normal;
+                XYZ ellipseXDirection = curveEllipse.XDirection;
+
+                IFCAnyHandle location3D = XYZtoIfcCartesianPoint(exporterIFC, curveEllipse.Center, true);
+
+                IFCAnyHandle axis = null;
+                IList<double> axisList = new List<double>();
+                axisList.Add(UnitUtil.ScaleLength(ellipseNormal.X));
+                axisList.Add(UnitUtil.ScaleLength(ellipseNormal.Y));
+                axisList.Add(UnitUtil.ScaleLength(ellipseNormal.Z));
+                axis = IFCInstanceExporter.CreateDirection(file, axisList);
+
+                // Create the x-direction
+                IFCAnyHandle refDirection = null;
+                IList<double> refDirectionList = new List<double>();
+                refDirectionList.Add(UnitUtil.ScaleLength(ellipseXDirection.X));
+                refDirectionList.Add(UnitUtil.ScaleLength(ellipseXDirection.Y));
+                refDirectionList.Add(UnitUtil.ScaleLength(ellipseXDirection.Z));
+                refDirection = IFCInstanceExporter.CreateDirection(file, refDirectionList);
+
+                IFCAnyHandle position = IFCInstanceExporter.CreateAxis2Placement3D(file, location3D, axis, refDirection);
+
                 ifcCurve = IFCInstanceExporter.CreateEllipse(file, position, UnitUtil.ScaleLength(curveEllipse.RadiusX), UnitUtil.ScaleLength(curveEllipse.RadiusY));
             }
             else if (allowAdvancedCurve && curve is NurbSpline)

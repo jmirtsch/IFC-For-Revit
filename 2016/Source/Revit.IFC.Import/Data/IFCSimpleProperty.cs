@@ -23,8 +23,9 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
-using Revit.IFC.Common.Utility;
 using Revit.IFC.Common.Enums;
+using Revit.IFC.Common.Utility;
+using Revit.IFC.Import.Enums;
 using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
@@ -37,7 +38,7 @@ namespace Revit.IFC.Import.Data
         /// <summary>
         /// The property values.
         /// </summary>
-        List<IFCPropertyValue> m_IFCPropertyValues = new List<IFCPropertyValue>();
+        IList<IFCPropertyValue> m_IFCPropertyValues = new List<IFCPropertyValue>();
 
         /// <summary>
         /// The unit.
@@ -60,7 +61,7 @@ namespace Revit.IFC.Import.Data
         {
             int numValues = (IFCPropertyValues != null) ? IFCPropertyValues.Count : 0;
             if (numValues == 0)
-                return "";
+                return string.Empty;
 
             string propertyValue = IFCPropertyValues[0].ValueAsString();
             for (int ii = 1; ii < numValues; ii++)
@@ -76,7 +77,7 @@ namespace Revit.IFC.Import.Data
         /// <summary>
         /// The property values.
         /// </summary>
-        public List<IFCPropertyValue> IFCPropertyValues
+        public IList<IFCPropertyValue> IFCPropertyValues
         {
             get { return m_IFCPropertyValues; }
         }
@@ -97,20 +98,21 @@ namespace Revit.IFC.Import.Data
         /// <returns>The IFCSimpleProperty object.</returns>
         override protected void Process(IFCAnyHandle simpleProperty)
         {
-            base.Process(simpleProperty);
+           base.Process(simpleProperty);
 
-            Name = IFCImportHandleUtil.GetRequiredStringAttribute(simpleProperty, "Name", true);
-            
-            if (IFCAnyHandleUtil.IsSubTypeOf(simpleProperty, IFCEntityType.IfcPropertySingleValue))
-                ProcessIFCPropertySingleValue(simpleProperty);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(simpleProperty, IFCEntityType.IfcPropertyEnumeratedValue))
-                ProcessIFCPropertyEnumeratedValue(simpleProperty);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(simpleProperty, IFCEntityType.IfcPropertyReferenceValue))
-                ProcessIFCPropertyReferenceValue(simpleProperty);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(simpleProperty, IFCEntityType.IfcPropertyListValue))
-                ProcessIFCPropertyListValue(simpleProperty);
-            else
-                Importer.TheLog.LogUnhandledSubTypeError(simpleProperty, "IfcSimpleProperty", true);
+           Name = IFCImportHandleUtil.GetRequiredStringAttribute(simpleProperty, "Name", true);
+
+           // IfcPropertyBoundedValue has already been split off into its own class.  Need to do the same with the rest here.
+           if (IFCAnyHandleUtil.IsSubTypeOf(simpleProperty, IFCEntityType.IfcPropertySingleValue))
+              ProcessIFCPropertySingleValue(simpleProperty);
+           else if (IFCAnyHandleUtil.IsSubTypeOf(simpleProperty, IFCEntityType.IfcPropertyEnumeratedValue))
+              ProcessIFCPropertyEnumeratedValue(simpleProperty);
+           else if (IFCAnyHandleUtil.IsSubTypeOf(simpleProperty, IFCEntityType.IfcPropertyReferenceValue))
+              ProcessIFCPropertyReferenceValue(simpleProperty);
+           else if (IFCAnyHandleUtil.IsSubTypeOf(simpleProperty, IFCEntityType.IfcPropertyListValue))
+              ProcessIFCPropertyListValue(simpleProperty);
+           else if (!IFCAnyHandleUtil.IsSubTypeOf(simpleProperty, IFCEntityType.IfcPropertyBoundedValue))
+              Importer.TheLog.LogUnhandledSubTypeError(simpleProperty, "IfcSimpleProperty", true);
         }
         
         /// <summary>
@@ -126,12 +128,10 @@ namespace Revit.IFC.Import.Data
                 return null;
             }
 
-            if (!IFCAnyHandleUtil.IsSubTypeOf(ifcSimpleProperty, IFCEntityType.IfcSimpleProperty))
-            {
-                //LOG: ERROR: Not an IfcSimpleProperty.
-                return null;
-            }
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcSimpleProperty, IFCEntityType.IfcPropertyBoundedValue))
+               return IFCPropertyBoundedValue.ProcessIFCPropertyBoundedValue(ifcSimpleProperty);
 
+            // Other subclasses are handled below for now.
             IFCEntity simpleProperty;
             if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcSimpleProperty.StepId, out simpleProperty))
                 return (simpleProperty as IFCSimpleProperty);
@@ -148,7 +148,7 @@ namespace Revit.IFC.Import.Data
             IFCPropertyValues.Add(new IFCPropertyValue(this, propertySingleValue.GetAttribute("NominalValue")));
             ProcessIFCSimplePropertyUnit(this, propertySingleValue);
         }
-
+       
         /// <summary>
         /// Processes an IFC property list value.
         /// </summary>
@@ -191,15 +191,15 @@ namespace Revit.IFC.Import.Data
         /// </summary>
         /// <param name="ifcSimpleProperty">The simple property.</param>
         /// <param name="simplePropertyHandle">The simple property handle.</param>
-        static void ProcessIFCSimplePropertyUnit(IFCSimpleProperty ifcSimpleProperty, IFCAnyHandle simplePropertyHandle)
+        static protected void ProcessIFCSimplePropertyUnit(IFCSimpleProperty ifcSimpleProperty, IFCAnyHandle simplePropertyHandle)
         {
             IFCAnyHandle ifcUnitHandle = IFCImportHandleUtil.GetOptionalInstanceAttribute(simplePropertyHandle, "Unit");
             IFCUnit ifcUnit = (ifcUnitHandle != null) ? IFCUnit.ProcessIFCUnit(ifcUnitHandle) : null;
             if (ifcUnit == null)
             {
-                if (ifcSimpleProperty.m_IFCPropertyValues.Count > 0)
+                if (ifcSimpleProperty.IFCPropertyValues.Count > 0)
                 {
-                    IFCPropertyValue propertyValue = ifcSimpleProperty.m_IFCPropertyValues[0];
+                    IFCPropertyValue propertyValue = ifcSimpleProperty.IFCPropertyValues[0];
                     if (propertyValue != null && propertyValue.HasValue() &&
                         (propertyValue.Type == IFCDataPrimitiveType.Integer) || (propertyValue.Type == IFCDataPrimitiveType.Double))
                     {

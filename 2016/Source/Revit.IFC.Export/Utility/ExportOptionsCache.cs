@@ -36,13 +36,17 @@ namespace Revit.IFC.Export.Utility
     public class ExportOptionsCache
     {
         private GUIDOptions m_GUIDOptions;
+        private bool m_ExportAs4_ADD1;
 
-        /// <summary>
+        
+        
         /// Private default constructor.
         /// </summary>
         private ExportOptionsCache()
-        { }
-
+        {
+           m_ExportAs4_ADD1 = false;
+        }
+       
 
         /// <summary>
         /// de-serialize vector passed from UI trough options 
@@ -554,6 +558,23 @@ namespace Revit.IFC.Export.Utility
             {
                 return FileVersion == IFCVersion.IFC4;
             }
+        }
+
+        /// <summary>
+        /// Identifies if the schema used is IFC4 Addendum 1 in place of IFC4 for version 4.
+        /// </summary>
+        public bool ExportAs4_ADD1
+        {
+           get
+           {
+              return m_ExportAs4_ADD1;
+           }
+
+           set
+           {
+              m_ExportAs4_ADD1 = value;
+           }
+
         }
 
         /// <summary>

@@ -87,10 +87,14 @@ namespace Revit.IFC.Import.Data
                     continue;
 
                 // This lets us create a copy of the space geometry with the Zone graphics style.
-                IFCSpace spaceClone = IFCSpace.CreateSpaceClone(objDef as IFCSpace, this);
-                CreateElement(doc, spaceClone);
-                foreach (IFCSolidInfo solidGeom in spaceClone.Solids)
-                    geomObjs.Add(solidGeom.GeometryObject);
+                IList<IFCSolidInfo> solids = IFCElement.CloneElementGeometry(doc, objDef as IFCProduct, this, false);
+                if (solids != null)
+                {
+                   foreach (IFCSolidInfo solidGeom in solids)
+                   {
+                      geomObjs.Add(solidGeom.GeometryObject);
+                   }
+                }
             }
 
             DirectShape zoneElement = IFCElementUtil.CreateElement(doc, CategoryId, GlobalId, geomObjs);

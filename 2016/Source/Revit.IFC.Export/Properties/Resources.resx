@@ -117,13 +117,28 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="IFCProcessingAreaSchemes" xml:space="preserve">
+    <value>IFC Export: Processing Area Schemes: {0} of {1}</value>
+  </data>
+  <data name="IFCProcessingBeamSystems" xml:space="preserve">
+    <value>IFC Export: Processing Beam Systems: {0} of {1}</value>
+  </data>
+  <data name="IFCProcessingExportZones" xml:space="preserve">
+    <value>IFC Export: Processing Export Zones: {0} of {1}</value>
+  </data>
+  <data name="IFCProcessingFabricAreas" xml:space="preserve">
+    <value>IFC Export: Processing Fabric Areas: {0} of {1}</value>
+  </data>
   <data name="IFCProcessingNonSpatialElements" xml:space="preserve">
-    <value>Processing Non Spatial Elements: {0} of {1}</value>
+    <value>IFC Export: Processing Non Spatial Elements: {0} of {1}</value>
   </data>
   <data name="IFCProcessingRailings" xml:space="preserve">
-    <value>Processing Ralings: {0} of {1}</value>
+    <value>IFC Export: Processing Processing Ralings: {0} of {1}</value>
   </data>
   <data name="IFCProcessingSpatialElements" xml:space="preserve">
-    <value>Processing Spatial Elements: {0} of {1}</value>
+    <value>IFC Export: Processing Spatial Elements: {0} of {1}</value>
+  </data>
+  <data name="IFCProcessingTrusses" xml:space="preserve">
+    <value>IFC Export: Processing Trusses: {0} of {1}</value>
   </data>
 </root>

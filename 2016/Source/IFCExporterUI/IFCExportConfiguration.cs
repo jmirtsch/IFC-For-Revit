@@ -477,101 +477,17 @@ namespace BIM.IFC.Export.UI
             options.AddOption("ExportRoomsInView", ExportRoomsInView.ToString());
         }
 
-        /// <summary>
-        /// Adds a description line to the StringBuilder if the value of the option matches "valueToMatch".
-        /// </summary>
-        /// <param name="builder">The StringBuilder.</param>
-        /// <param name="resourceString">The resource as a stting.</param>
-        /// <param name="value">The value of the option associated with the resource.</param>
-        /// <param name="valueToMatch">The boolean value to match - value must equal this to add the description line to the StringBuilder.</param>
-        private void ConditionalAddLine(StringBuilder builder, string resourceString, bool value, bool valueToMatch)
-        {
-            if (value == valueToMatch)
-                builder.AppendLine(GetDescriptionLine(resourceString, value));
-        }
 
         /// <summary>
-        /// The description of the configuration.
+        /// Identifies the version selected by the user.
         /// </summary>
-        public String Description
+        public String FileVersionDescription
         {
-            get
-            {
-                StringBuilder builder = new StringBuilder();
-
-                IFCVersionAttributes versionAttributes = new IFCVersionAttributes(IFCVersion);
-                builder.AppendLine(GetDescriptionLine(Resources.FileVersion, versionAttributes.ToString()));
-
-                IFCFileFormatAttributes fileFormatAttributes = new IFCFileFormatAttributes(IFCFileType);
-                builder.AppendLine(GetDescriptionLine(Resources.FileType, fileFormatAttributes.ToString()));
-
-                IFCSpaceBoundariesAttributes spaceBoundaryAttributes = new IFCSpaceBoundariesAttributes(SpaceBoundaries);
-                builder.AppendLine(GetDescriptionLine(Resources.SpaceBoundaries, spaceBoundaryAttributes.ToString()));
-
-                IFCPhaseAttributes phaseAttributes = new IFCPhaseAttributes(ActivePhaseId);
-                builder.AppendLine(GetDescriptionLine(Resources.ActivePhase, phaseAttributes.ToString()));
-
-                IFCExportedPropertySets exportedPropertySets = 
-                    new IFCExportedPropertySets(ExportInternalRevitPropertySets, ExportIFCCommonPropertySets, ExportSchedulesAsPsets, ExportUserDefinedPsets);
-                builder.AppendLine(GetDescriptionLine(Resources.PropertySets, exportedPropertySets.ToString()));
-
-                if (ExportUserDefinedPsets)
-                   builder.AppendLine(GetDescriptionLine(Resources.ExportUserDefinedPsetsFileName, ExportUserDefinedPsetsFileName));
-
-                // Sort by "do" and "don't"
-                for (int pass = 0; pass < 2; pass++)
-                {
-                    bool valueToMatch = (pass == 0);
-
-                    ConditionalAddLine(builder, Resources.ExportBaseQuantities, ExportBaseQuantities, valueToMatch);
-                    ConditionalAddLine(builder, Resources.SplitWallsAndColumns, SplitWallsAndColumns, valueToMatch);
-                    ConditionalAddLine(builder, Resources.ExportPlanViewElements, Export2DElements, valueToMatch);
-
-                    ConditionalAddLine(builder, Resources.ExportVisibleElementsInView, VisibleElementsOfCurrentView, valueToMatch);
-                    ConditionalAddLine(builder, Resources.UseActiveViewForGeometry, UseActiveViewGeometry, valueToMatch);
-                    ConditionalAddLine(builder, Resources.ExportLinkedFiles, ExportLinkedFiles, valueToMatch);
-                    ConditionalAddLine(builder, Resources.ExportPartsAsBuildingElements, ExportPartsAsBuildingElements, valueToMatch);
-                    ConditionalAddLine(builder, Resources.ExportBoundingBox, ExportBoundingBox, valueToMatch);
-                    ConditionalAddLine(builder, Resources.ExportSolidModelRep, ExportBoundingBox, valueToMatch);
-
-                    ConditionalAddLine(builder, Resources.UseFamilyAndTypeNameForReferences, UseFamilyAndTypeNameForReference, valueToMatch);
-                    ConditionalAddLine(builder, Resources.Use2DRoomBoundariesForRoomVolume, Use2DRoomBoundaryForVolume, valueToMatch);
-                    ConditionalAddLine(builder, Resources.IncludeIfcSiteElevation, IncludeSiteElevation, valueToMatch);
-                    ConditionalAddLine(builder, Resources.StoreIFCGUID, StoreIFCGUID, valueToMatch);
- 
-                    ConditionalAddLine(builder, Resources.ExportRoomsInView, ExportRoomsInView, valueToMatch);
-                    bool exportSpecificSchedules = ExportSpecificSchedules.HasValue ? ExportSpecificSchedules.Value : false;
-                    ConditionalAddLine(builder, Resources.ExportSpecificSchedules, exportSpecificSchedules, valueToMatch);
-                }
-
-                return builder.ToString();
-            }
-        }
-
-        /// <summary>
-        /// Gets the one line of description string from the resource via a label and the value.
-        /// </summary>
-        /// <param name="label">The label in the resource.</param>
-        /// <param name="value">The value in the resource.</param>
-        /// <returns>The description line.</returns>
-        private static String GetDescriptionLine(String label, object value)
-        {
-            if (value is bool)
-            {
-                if ((bool) value)
-                    return String.Format("{0}", label);
-                else
- {
-                    // A small hack for western languages: remove the uppercase from the start of the sentence.
-                    char startChar = label.First();
-                    if (startChar >= 'A' && startChar <= 'Z')
-                        startChar = (char) ((int)startChar + 32);
-                    string newLabel = startChar + label.Substring(1);
-                    return String.Format(Properties.Resources.Dont, newLabel);
-                }
-            }
-            else
-                return String.Format("{0}: {1}", label, value.ToString());
+           get
+           {
+              IFCVersionAttributes versionAttributes = new IFCVersionAttributes(IFCVersion);
+              return versionAttributes.ToString();
+           }
         }
 
         /// <summary>

@@ -31,173 +31,204 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents an IfcPort.
-    /// </summary>
-    public abstract class IFCPort : IFCProduct
-    {
-        private IFCElement m_ContainedIn = null;
+   /// <summary>
+   /// Represents an IfcPort.
+   /// </summary>
+   public abstract class IFCPort : IFCProduct
+   {
+      private IFCAnyHandle m_ContainedInHandle = null;
 
-        private IFCPort m_ConnectedFrom = null; 
-        
-        private IFCPort m_ConnectedTo = null;
+      private IFCAnyHandle m_ConnectedFromHandle = null;
 
-        /// <summary>
-        /// The IFCElement that contains this port.
-        /// </summary>
-        public IFCElement ContainedIn 
-        {
-            get { return m_ContainedIn; }
-            protected set { m_ContainedIn = value; }
-        }
+      private IFCAnyHandle m_ConnectedToHandle = null;
 
-        /// <summary>
-        /// The IFCPort connected to this port.  Ports are required to be connected in pairs.
-        /// Either ConnectedFrom or ConnectedTo will be null.
-        /// </summary>
-        public IFCPort ConnectedFrom
-        {
-            get { return m_ConnectedFrom; }
-            protected set { m_ConnectedFrom = value; }
-        }
-        
-        /// <summary>
-        /// The IFCPort connected to this port.  Ports are required to be connected in pairs.
-        /// Either ConnectedFrom or ConnectedTo will be null.
-        /// </summary>
-        public IFCPort ConnectedTo
-        {
-            get { return m_ConnectedTo; }
-            protected set { m_ConnectedTo = value; }
-        }
+      private IFCElement m_ContainedIn = null;
 
-        /// <summary>
-        /// Default constructor.
-        /// </summary>
-        protected IFCPort()
-        {
+      private IFCPort m_ConnectedFrom = null;
 
-        }
+      private IFCPort m_ConnectedTo = null;
 
-        /// <summary>
-        /// Processes IfcPort attributes.
-        /// </summary>
-        /// <param name="ifcPort">The IfcPort handle.</param>
-        protected override void Process(IFCAnyHandle ifcPort)
-        {
-            base.Process(ifcPort);
-
-            //IFCAnyHandle ifcContainedIn = IFCImportHandleUtil.GetOptionalInstanceAttribute(ifcPort, "ContainedIn");
-            // ProcessIFCRelation.ProcessRelatedElement does a null check on the handle.
-            //ContainedIn = ProcessIFCRelation.ProcessRelatedElement(ifcContainedIn);
-
-            HashSet<IFCAnyHandle> containedIn = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcPort, "ContainedIn");
-            if (containedIn != null && containedIn.Count != 0)
+      /// <summary>
+      /// The IFCElement that contains this port.
+      /// </summary>
+      public IFCElement ContainedIn
+      {
+         get 
+         {
+            if (m_ContainedIn == null && m_ContainedInHandle != null)
             {
-                // ProcessIFCRelation.ProcessRelatedElement does a null check on the handle.
-                ContainedIn = ProcessIFCRelation.ProcessRelatedElement(containedIn.First());
+               m_ContainedIn = ProcessIFCRelation.ProcessRelatedElement(m_ContainedInHandle);
+               m_ContainedInHandle = null;
+            }
+            return m_ContainedIn; 
+         }
+      }
+
+      /// <summary>
+      /// The IFCPort connected to this port.  Ports are required to be connected in pairs.
+      /// Either ConnectedFrom or ConnectedTo will be null.
+      /// </summary>
+      public IFCPort ConnectedFrom
+      {
+         get 
+         {
+            if (m_ConnectedFrom == null && m_ConnectedFromHandle != null)
+            {
+               m_ConnectedFrom = ProcessIFCRelation.ProcessRelatingPort(m_ConnectedFromHandle);
+               m_ConnectedFromHandle = null;
+            }
+            return m_ConnectedFrom; 
+         }
+      }
+
+      /// <summary>
+      /// The IFCPort connected to this port.  Ports are required to be connected in pairs.
+      /// Either ConnectedFrom or ConnectedTo will be null.
+      /// </summary>
+      public IFCPort ConnectedTo
+      {
+         get 
+         {
+            if (m_ConnectedTo == null && m_ConnectedToHandle != null)
+            {
+               m_ConnectedTo = ProcessIFCRelation.ProcessRelatingPort(m_ConnectedToHandle);
+               m_ConnectedToHandle = null;
+            }
+            return m_ConnectedTo; 
+         }
+      }
+
+      /// <summary>
+      /// Default constructor.
+      /// </summary>
+      protected IFCPort()
+      {
+
+      }
+
+      /// <summary>
+      /// Processes IfcPort attributes.
+      /// </summary>
+      /// <param name="ifcPort">The IfcPort handle.</param>
+      protected override void Process(IFCAnyHandle ifcPort)
+      {
+         base.Process(ifcPort);
+
+         // We will delay processing the containment information to the PostProcess stp.  For complicated systems, creating all of these
+         // during the standard Process step may result in a stack overflow.
+
+         HashSet<IFCAnyHandle> containedIn = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcPort, "ContainedIn");
+         if (containedIn != null && containedIn.Count != 0)
+         {
+            m_ContainedInHandle = containedIn.First();
+         }
+
+         HashSet<IFCAnyHandle> connectedFrom = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcPort, "ConnectedFrom");
+         if (connectedFrom != null && connectedFrom.Count != 0)
+         {
+            m_ConnectedFromHandle = connectedFrom.First();
+         }
+
+         HashSet<IFCAnyHandle> connectedTo = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcPort, "ConnectedTo");
+         if (connectedTo != null && connectedTo.Count != 0)
+         {
+            m_ConnectedToHandle = connectedTo.First();
+         }
+      }
+
+      /// <summary>
+      /// Post-process IfcPort attributes.
+      /// </summary>
+      public override void PostProcess()
+      {
+         base.PostProcess();
+
+         // Force ContainedIn, ConnectedFrom and ConnectedTo to be created in the respective getters.
+
+         IFCElement containedIn = ContainedIn;
+
+         IFCPort connectedFrom = ConnectedFrom;
+
+         IFCPort connectedTo = ConnectedTo;
+      }
+
+      /// <summary>
+      /// Creates or populates Revit element params based on the information contained in this class.
+      /// </summary>
+      /// <param name="doc">The document.</param>
+      /// <param name="element">The element.</param>
+      protected override void CreateParametersInternal(Document doc, Element element)
+      {
+         base.CreateParametersInternal(doc, element);
+
+         if (element != null)
+         {
+            if (ContainedIn != null)
+            {
+               string guid = ContainedIn.GlobalId;
+               if (!string.IsNullOrWhiteSpace(guid))
+                  IFCPropertySet.AddParameterString(doc, element, "IfcElement ContainedIn IfcGUID", guid, Id);
+
+               string name = ContainedIn.Name;
+               if (!string.IsNullOrWhiteSpace(name))
+                  IFCPropertySet.AddParameterString(doc, element, "IfcElement ContainedIn Name", name, Id);
             }
 
-            HashSet<IFCAnyHandle> connectedFrom = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcPort, "ConnectedFrom");
-            if (connectedFrom != null && connectedFrom.Count != 0)
+            if (ConnectedFrom != null)
             {
-                // ProcessIFCRelation.ProcessRelatedElement does a null check on the handle.
-                ConnectedFrom = ProcessIFCRelation.ProcessRelatingPort(connectedFrom.First());
+               string guid = ConnectedFrom.GlobalId;
+               if (!string.IsNullOrWhiteSpace(guid))
+                  IFCPropertySet.AddParameterString(doc, element, "IfcPort ConnectedFrom IfcGUID", guid, Id);
+
+               string name = ConnectedFrom.Name;
+               if (!string.IsNullOrWhiteSpace(name))
+                  IFCPropertySet.AddParameterString(doc, element, "IfcPort ConnectedFrom Name", name, Id);
             }
 
-            HashSet<IFCAnyHandle> connectedTo = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcPort, "ConnectedTo");
-            if (connectedTo != null && connectedTo.Count != 0)
+            if (ConnectedTo != null)
             {
-                // ProcessIFCRelation.ProcessRelatedElement does a null check on the handle.
-                ConnectedTo = ProcessIFCRelation.ProcessRelatedPort(connectedTo.First());
+               string guid = ConnectedTo.GlobalId;
+               if (!string.IsNullOrWhiteSpace(guid))
+                  IFCPropertySet.AddParameterString(doc, element, "IfcPort ConnectedTo IfcGUID", guid, Id);
+
+               string name = ConnectedTo.Name;
+               if (!string.IsNullOrWhiteSpace(name))
+                  IFCPropertySet.AddParameterString(doc, element, "IfcPort ConnectedTo Name", name, Id);
             }
-        }
+         }
+      }
 
-        /// <summary>
-        /// Creates or populates Revit element params based on the information contained in this class.
-        /// </summary>
-        /// <param name="doc">The document.</param>
-        /// <param name="element">The element.</param>
-        protected override void CreateParametersInternal(Document doc, Element element)
-        {
-            base.CreateParametersInternal(doc, element);
-
-            if (element != null)
-            {
-                if (ContainedIn != null)
-                {
-                    string guid = ContainedIn.GlobalId;
-                    if (!string.IsNullOrWhiteSpace(guid))
-                        IFCPropertySet.AddParameterString(doc, element, "IfcElement ContainedIn IfcGUID", guid, Id);
-
-                    string name = ContainedIn.Name;
-                    if (!string.IsNullOrWhiteSpace(name))
-                        IFCPropertySet.AddParameterString(doc, element, "IfcElement ContainedIn Name", name, Id);
-                }
-
-                if (ConnectedFrom != null)
-                {
-                    string guid = ConnectedFrom.GlobalId;
-                    if (!string.IsNullOrWhiteSpace(guid))
-                        IFCPropertySet.AddParameterString(doc, element, "IfcPort ConnectedFrom IfcGUID", guid, Id);
-
-                    string name = ConnectedFrom.Name;
-                    if (!string.IsNullOrWhiteSpace(name))
-                        IFCPropertySet.AddParameterString(doc, element, "IfcPort ConnectedFrom Name", name, Id);
-                }
-
-                if (ConnectedTo != null)
-                {
-                    string guid = ConnectedTo.GlobalId;
-                    if (!string.IsNullOrWhiteSpace(guid))
-                        IFCPropertySet.AddParameterString(doc, element, "IfcPort ConnectedTo IfcGUID", guid, Id);
-
-                    string name = ConnectedTo.Name;
-                    if (!string.IsNullOrWhiteSpace(name))
-                        IFCPropertySet.AddParameterString(doc, element, "IfcPort ConnectedTo Name", name, Id);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Processes an IfcPort object.
-        /// </summary>
-        /// <param name="ifcPort">The IfcPort handle.</param>
-        /// <returns>The IFCPort object.</returns>
-        public static IFCPort ProcessIFCPort(IFCAnyHandle ifcPort)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPort))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcPort);
-                return null;
-            }
-
-            try
-            {
-                IFCEntity cachedPort;
-                if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcPort.StepId, out cachedPort))
-                    return (cachedPort as IFCPort);
-
-                if (IFCAnyHandleUtil.IsSubTypeOf(ifcPort, IFCEntityType.IfcDistributionPort))
-                    return IFCDistributionPort.ProcessIFCDistributionPort(ifcPort);
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message != "Don't Import")
-                    Importer.TheLog.LogError(ifcPort.StepId, ex.Message, false);
-                return null;
-            }
-
-            Importer.TheLog.LogUnhandledSubTypeError(ifcPort, IFCEntityType.IfcPort, false);
+      /// <summary>
+      /// Processes an IfcPort object.
+      /// </summary>
+      /// <param name="ifcPort">The IfcPort handle.</param>
+      /// <returns>The IFCPort object.</returns>
+      public static IFCPort ProcessIFCPort(IFCAnyHandle ifcPort)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPort))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcPort);
             return null;
-        }
+         }
 
-        /// <summary>
-        /// Cleans out the IFCEntity to save memory.
-        /// </summary>
-        public override void CleanEntity()
-        {
-            // Don't do anything; IfcPorts will be accessed multiple times.
-        }
-    }
+         try
+         {
+            IFCEntity cachedPort;
+            if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcPort.StepId, out cachedPort))
+               return (cachedPort as IFCPort);
+
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcPort, IFCEntityType.IfcDistributionPort))
+               return IFCDistributionPort.ProcessIFCDistributionPort(ifcPort);
+         }
+         catch (Exception ex)
+         {
+            if (ex.Message != "Don't Import")
+               Importer.TheLog.LogError(ifcPort.StepId, ex.Message, false);
+            return null;
+         }
+
+         Importer.TheLog.LogUnhandledSubTypeError(ifcPort, IFCEntityType.IfcPort, false);
+         return null;
+      }
+   }
 }

@@ -141,7 +141,7 @@ namespace Revit.IFC.Import.Data
             if (this is IFCSimpleProperty)
             {
                 IFCSimpleProperty simpleProperty = this as IFCSimpleProperty;
-                List<IFCPropertyValue> propertyValues = simpleProperty.IFCPropertyValues;
+                IList<IFCPropertyValue> propertyValues = simpleProperty.IFCPropertyValues;
                 if (propertyValues != null && propertyValues.Count == 1)
                 {
                     // If the value isn't set, skip it.  We won't warn.

@@ -23,20 +23,28 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Geometry
 {
-    /// <summary>
-    /// Interface that contains shared functions for IfcBooleanOperand
-    /// </summary>
-    public interface IIFCBooleanOperand
-    {
-        /// <summary>
-        /// Return geometry for a particular representation item.
-        /// </summary>
-        /// <param name="shapeEditScope">The geometry creation scope.</param>
-        /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
-        /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        /// <returns>Zero or more created Solids.</returns>
-        IList<GeometryObject> CreateGeometry(
-              IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid);
-    }
+   /// <summary>
+   /// Interface that contains shared functions for IfcBooleanOperand
+   /// </summary>
+   public interface IIFCBooleanOperand
+   {
+      /// <summary>
+      /// Return geometry for a particular representation item.
+      /// </summary>
+      /// <param name="shapeEditScope">The geometry creation scope.</param>
+      /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
+      /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
+      /// <param name="guid">The guid of an element for which represntation is being created.</param>
+      /// <returns>Zero or more created Solids.</returns>
+      IList<GeometryObject> CreateGeometry(
+            IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid);
+
+      /// <summary>
+      /// In case of a Boolean operation failure, provide a recommended direction to shift the geometry in for a second attempt.
+      /// </summary>
+      /// <param name="lcs">The local transform for this entity.</param>
+      /// <returns>An XYZ representing a unit direction vector, or null if no direction is suggested.</returns>
+      /// <remarks>If the 2nd attempt fails, a third attempt will be done with a shift in the opposite direction.</remarks>
+      XYZ GetSuggestedShiftDirection(Transform lcs);
+   }
 }

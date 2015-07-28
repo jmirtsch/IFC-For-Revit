@@ -44,14 +44,6 @@ namespace Revit.IFC.Import.Data
       }
 
       /// <summary>
-      /// Cleans out the IFCEntity to save memory.
-      /// </summary>
-      public override void CleanEntity()
-      {
-         base.CleanEntity();
-      }
-
-      /// <summary>
       /// Processes IfcBuilding attributes.
       /// </summary>
       /// <param name="ifcIFCBuilding">The IfcBuilding handle.</param>

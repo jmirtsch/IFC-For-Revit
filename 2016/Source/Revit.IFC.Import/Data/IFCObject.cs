@@ -136,20 +136,6 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
-        /// Cleans out the IFCEntity to save memory.
-        /// </summary>
-        public override void CleanEntity()
-        {
-            base.CleanEntity();
-        
-            m_ObjectType = null;
-
-            m_IFCPropertySets = null;
-
-            m_IFCTypeObjects = null;
-        }
-
-        /// <summary>
         /// Gets the predefined type from the IfcObject, depending on the file version and entity type.
         /// </summary>
         /// <param name="ifcObjectDefinition">The associated handle.</param>
