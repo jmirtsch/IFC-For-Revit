@@ -51,7 +51,7 @@ namespace BIM.IFC.Export.UI
         /// <summary>
         /// The file to store the previous window bounds.
         /// </summary>
-        string m_SettingFile = "IFCExportSettings_v16.txt";  // update the file when resize window bounds.
+        string m_SettingFile = "IFCExportSettings_v17.txt";  // update the file when resize window bounds.
 
         /// <summary>
         /// The list of documents to export as chosen by the user.
@@ -139,26 +139,27 @@ namespace BIM.IFC.Export.UI
            RestorePreviousWindow();
 
            UpdateCurrentSelectedSetupCombo(selectedConfigName);
-           UpdateOpenedProjectsTreeView(app);
+           UpdateOpenedProjectsListView(app);
 
            Title = "IFC Export (" + IFCUISettings.GetAssemblyVersion() + ")";
        }
 
        private CheckBox createCheckBoxForDocument(Document doc, int id)
        {
-           string docPathName = null;
-
            CheckBox cb = new CheckBox();
 
+           cb.Content = doc.Title;
            if (!String.IsNullOrEmpty(doc.PathName))
            {
               // If the user saves the file, the path where the document is saved is displayed
-              // along with the parantheses, else it remains empty and is not displayed with the name of the
-              // document
-              docPathName = " (" + doc.PathName + ")";
+              // with a ToolTip, else it displays a message that the file is not saved.
+              cb.ToolTip = doc.PathName;
            }
-
-           cb.Content = doc.Title + docPathName;
+           else
+           {
+              cb.ToolTip = Properties.Resources.DocNotSaved;
+           }
+           ToolTipService.SetShowOnDisabled(cb, true);
            cb.SetValue(AutomationProperties.AutomationIdProperty, "projectToExportCheckBox" + id);
            return cb;
        }
@@ -168,19 +169,19 @@ namespace BIM.IFC.Export.UI
           return (doc != null && !doc.IsFamilyDocument && !doc.IsLinked);
        }
 
-       private void UpdateOpenedProjectsTreeView(Autodesk.Revit.UI.UIApplication app)
+       private void UpdateOpenedProjectsListView(Autodesk.Revit.UI.UIApplication app)
        {
-           DocumentSet docSet = app.Application.Documents;
+          DocumentSet docSet = app.Application.Documents;
 
-           Document activeDocument = app.ActiveUIDocument.Document;
-           List<CheckBox> checkBoxes = new List<CheckBox>();
+          Document activeDocument = app.ActiveUIDocument.Document;
+          List<CheckBox> checkBoxes = new List<CheckBox>();
           int exportDocumentCount = 0;
 
           OrderedDocuments = null;
-           foreach (Document doc in docSet)
-           {
+          foreach (Document doc in docSet)
+          {
              if (CanExportDocument(doc))
-               {
+             {
                 // Count the number of Documents which can be exported
                 exportDocumentCount++;
              }
@@ -193,30 +194,28 @@ namespace BIM.IFC.Export.UI
                 CheckBox cb = createCheckBoxForDocument(doc, OrderedDocuments.Count);
 
                 // Add the active document as the top item.
-                   if (doc.Equals(activeDocument))
-                   {
-                       // This should only be hit once
-                       cb.IsChecked = true;
-                       checkBoxes.Insert(0, cb);
+                if (doc.Equals(activeDocument))
+                {
+                   // This should only be hit once
+                   cb.IsChecked = true;
+                   checkBoxes.Insert(0, cb);
 
                    if (exportDocumentCount == 1)
                    {
-
                       // If a single project is to be exported, make it read only
                       cb.IsEnabled = false;
-
                    }
                    OrderedDocuments.Insert(0, doc);
-                   }
-                   else
-                   {
-                       checkBoxes.Add(cb);
+                }
+                else
+                {
+                   checkBoxes.Add(cb);
                    OrderedDocuments.Add(doc);
-                   }
-               }
-           }
+                }
+             }
+          }
 
-           this.treeViewDocuments.ItemsSource = checkBoxes;
+          this.listViewDocuments.ItemsSource = checkBoxes;
        }
        
        /// <summary>
@@ -321,7 +320,7 @@ namespace BIM.IFC.Export.UI
         /// <param name="args">Event arguments that contains the event data.</param>
         private void buttonNext_Click(object sender, RoutedEventArgs args)
         {
-           List<CheckBox> cbList = this.treeViewDocuments.Items.Cast<CheckBox>().ToList();
+           List<CheckBox> cbList = this.listViewDocuments.Items.Cast<CheckBox>().ToList();
 
            int count = 0;
            foreach (CheckBox cb in cbList)
@@ -329,7 +328,7 @@ namespace BIM.IFC.Export.UI
               if ((bool)cb.IsChecked)
                  DocumentsToExport.Add(OrderedDocuments[count]);
               count++;
-              }
+           }
 
            if (DocumentsToExport.Count == 0)
            {
@@ -365,8 +364,8 @@ namespace BIM.IFC.Export.UI
                 if (!IFCPhaseAttributes.Validate(selectedConfig.ActivePhaseId))
                     selectedConfig.ActivePhaseId = ElementId.InvalidElementId;
             
-                // change description
-                textBoxSetupDescription.Text = selectedConfig.Description;  
+                // Display the IFC Version 
+                textBoxSetupDescription.Text = selectedConfig.FileVersionDescription;  
             }  
         }
 

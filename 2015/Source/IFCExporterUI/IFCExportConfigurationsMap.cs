@@ -165,7 +165,6 @@ namespace BIM.IFC.Export.UI
                         Entity configEntity = storedSetup.GetEntity(m_schema);
                         IFCExportConfiguration configuration = IFCExportConfiguration.CreateDefaultConfiguration();
                         configuration.Name = configEntity.Get<String>(s_setupName);
-                        //configuration.Description = configEntity.Get<String>(s_setupDescription);
                         configuration.IFCVersion = (IFCVersion)configEntity.Get<int>(s_setupVersion);
                         configuration.IFCFileType = (IFCFileFormat)configEntity.Get<int>(s_setupFileFormat);
                         configuration.SpaceBoundaries = configEntity.Get<int>(s_setupSpaceBoundaries);
@@ -226,7 +225,6 @@ namespace BIM.IFC.Export.UI
         private const String s_configMapField = "MapField";
         // The following are the keys in the MapFied in new schema. For old schema, they are simple fields.
         private const String s_setupName = "Name";
-        private const String s_setupDescription = "Description";
         private const String s_setupVersion = "Version";
         private const String s_setupFileFormat = "FileFormat";
         private const String s_setupSpaceBoundaries = "SpaceBoundaryLevel";
@@ -348,7 +346,6 @@ namespace BIM.IFC.Export.UI
                    Entity mapEntity = new Entity(m_mapSchema);
                    IDictionary<string, string> mapData = new Dictionary<string, string>();
                    mapData.Add(s_setupName, configuration.Name);
-                   mapData.Add(s_setupDescription, configuration.Description);
                    mapData.Add(s_setupVersion, configuration.IFCVersion.ToString());
                    mapData.Add(s_setupFileFormat, configuration.IFCFileType.ToString());
                    mapData.Add(s_setupSpaceBoundaries, configuration.SpaceBoundaries.ToString());

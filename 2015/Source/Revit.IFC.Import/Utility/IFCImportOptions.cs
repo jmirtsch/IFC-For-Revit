@@ -55,6 +55,25 @@ namespace Revit.IFC.Import.Utility
          }
       }
 
+      /// <summary>
+      /// A class to allow for temporarily disabling logging within a scope.  Intended for use with the "using" keyword.
+      /// </summary>
+      public class TemporaryDisableLogging : IDisposable
+      {
+         private bool m_OriginalDisableLogging = false;
+
+         public TemporaryDisableLogging()
+         {
+            m_OriginalDisableLogging = Importer.TheLog.LoggingEnabled;
+            Importer.TheLog.LoggingEnabled = false;
+         }
+
+         public void Dispose()
+         {
+            Importer.TheLog.LoggingEnabled = m_OriginalDisableLogging;
+         }
+      }
+
       private IFCImportIntent m_Intent = IFCImportIntent.Reference;
 
       private IFCImportAction m_Action = IFCImportAction.Open;

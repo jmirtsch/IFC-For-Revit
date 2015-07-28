@@ -196,6 +196,65 @@ working on expanding and eventually removing this limit, and we will be tracking
 
 <div class="versionset">
 
+<div class="version">15.5.0.0</div><div class="versioninfo-bullet">
+
+<br><p>General:
+
+<ul>
+<li>This is the Revit 2015 equivalent of IFC2x3 Coordination View 2.0 import certified version of Revit for Link IFC, as seen <a href=http://www.buildingsmart.org/compliance/certified-software/>on the buildingSMART site</a>.  At the time of this writing, it incorrectly lists "Autodesk Revit Architecture" as being import certified instead of "Autodesk Revit".  Note that Revit 2016, not Revit 2015, was certified.
+<li>Both Link and Export will use the IFC4 Addendum 1 schema instead of the IFC4 schema if the IFC4_ADD1.EXP is loaded in the EDM sub-folder of your Revit executable folder.
+</ul>
+
+<p>New Export Functionality:
+
+<ul>
+<li>Allow setting of IfcBuildingStorey element composition type via IfcElementCompositionType shared parameter for levels.
+<li>IFC4: handle elliptical edges for IFC4 Design Transfer View export.
+<li>Support export of volumes as liters (a.k.a cubic decimeters)
+<li>Support export of volumetric flow rates as liters per second (a.k.a. cubic decimeters per second).
+</ul>
+
+<p>New Export UI Functionality:
+
+<ul>
+<li>Better progress messages in the status bar.
+<li>Remove list of "Current Options" from the starting UI dialog; only display the IFC Schema and MVD as "IFC Version"
+<li>Remove path from "Projects to Export" list; the path is now a tooltip.
+</ul>
+
+<p>Export Bug Fixes:
+
+<ul>
+<li>Correctly toggle between SLIDING_TO_LEFT / SLIDING_TO_RIGHT for flipped doors.
+<li>Use the element type "Function" parameter when setting the "IsExternal" common property for all element types, not just wall types.
+</ul>
+
+<p>New Import Functionality:
+
+<ul>
+<li>Add "IfcElement HasPorts Name" and "IfcElement HasPorts IfcGUID" parameters to show port information for elements.  There will be multiple shared parameters created if the element has multiple ports.
+<li>Add support for more thermal transmittance units.
+<li>Entities that are decomposed by IfcBuildingElementPart will now be visible if either the top level category or the Parts category is enabled by default.
+<li>If attempting to create an IfcShellBasedSurfaceModel as a Solid results in any dropped faces, import it as a Mesh instead.
+<li>Improve import of IfcSweptDiskSolid when the geometric description of the entity would create a self-intersecting surface.  In this case, create the minimum number of solids possible to import as much as the geometry as possible.
+<li>Read in IfcSystems that aren't associated to the building via a IfcRelServicesBuildings relation.
+<li>Read in IfcPropertyBoundedValues (including support for IFC4 version).
+<li>Support import of volumes as liters.
+<li>Support import of volumetric flow rates as liters per second.
+</ul>
+
+<p>Import Bug Fixes:
+
+<ul>
+<li>Add a message to the log file if we skip importing an IfcProduct that neither has geometry nor is decomposed by other entities.
+<li>Fix a potential crash if a file contains a large number of elements in system joined by ports.
+<li>Improve log message when an entity can't be imported because it has no geometry.
+<li>Improve log message when an entity can't create all of the facets of its tessellated geometric representation.
+<li>Move some MEP entities from Generic Models category to the appropriate categories by default.
+</ul>
+
+</div>
+
 <div class="version">15.4.0.0</div><div class="versioninfo-bullet">
 
 <br><p>General:

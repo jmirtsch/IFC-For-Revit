@@ -321,24 +321,25 @@ namespace Revit.IFC.Import.Data
          TraverseSubElements(doc);
       }
 
-      /// <summary>
-      /// Cleans out the IFCEntity to save memory.
-      /// </summary>
-      public override void CleanEntity()
+      private IList<GeometryObject> GetOrCloneGeometry(Document doc, IFCObjectDefinition objectDefinition)
       {
-         base.CleanEntity();
+         if (!(objectDefinition is IFCBuildingElementPart))
+            return objectDefinition.CreatedGeometry;
 
-         m_ComposedObjectDefinitions = null;
+         // In the case of IFCBuildingElementPart, we want the container to have a copy of the geometry in the category of the parent,
+         // as otherwise the geometry will be controlled by default by the Parts category instead of the parent category.
+         IList<IFCSolidInfo> clonedGeometry = IFCElement.CloneElementGeometry(doc, objectDefinition as IFCProduct, this, false);
+         if (clonedGeometry == null)
+            return null;
 
-         m_AssignmentGroups = null;
+         IList<GeometryObject> geomObjs = new List<GeometryObject>();
 
-         m_PredefinedType = null;
+         foreach (IFCSolidInfo solid in clonedGeometry)
+         {
+            geomObjs.Add(solid.GeometryObject);
+         }
 
-         m_MaterialSelect = null;
-
-         m_TheMaterial = null;
-
-         m_TheMaterialIsSet = false;
+         return geomObjs;
       }
 
       /// <summary>
@@ -348,8 +349,10 @@ namespace Revit.IFC.Import.Data
       protected virtual void TraverseSubElements(Document doc)
       {
          IList<ElementId> subElementIds = new List<ElementId>();
-         List<GeometryObject> geomObjs = new List<GeometryObject>();
-         List<Curve> footprintCurves = new List<Curve>();
+
+         // These two should only be populated if GroupSubElements() is true.
+         List<GeometryObject> groupedSubElementGeometries = new List<GeometryObject>();
+         List<Curve> groupedSubElementFootprintCurves = new List<Curve>();
 
          if (ComposedObjectDefinitions != null)
          {
@@ -359,9 +362,16 @@ namespace Revit.IFC.Import.Data
                if (objectDefinition.CreatedElementId != ElementId.InvalidElementId)
                {
                   subElementIds.Add(objectDefinition.CreatedElementId);
-                  geomObjs.AddRange(objectDefinition.CreatedGeometry);
-                  if (objectDefinition is IFCProduct)
-                     footprintCurves.AddRange((objectDefinition as IFCProduct).FootprintCurves);
+
+                  if (GroupSubElements())
+                  {
+                     IList<GeometryObject> subGeometries = GetOrCloneGeometry(doc, objectDefinition);
+                     if (subGeometries != null)
+                        groupedSubElementGeometries.AddRange(subGeometries);
+
+                     if (objectDefinition is IFCProduct)
+                        groupedSubElementFootprintCurves.AddRange((objectDefinition as IFCProduct).FootprintCurves);
+                  }
                }
             }
          }
@@ -376,19 +386,19 @@ namespace Revit.IFC.Import.Data
                // We aren't yet actually grouping the elements.  DirectShape doesn't support grouping, and
                // the Group element doesn't support adding parameters.  For now, we will create a DirectShape that "forgets"
                // the association, which is good enough for link.
-               DirectShape directShape = IFCElementUtil.CreateElement(doc, CategoryId, GlobalId, geomObjs);
+               DirectShape directShape = IFCElementUtil.CreateElement(doc, CategoryId, GlobalId, groupedSubElementGeometries);
                //Group group = doc.Create.NewGroup(subElementIds);
 
                if (directShape != null)
                {
                   CreatedElementId = directShape.Id;
-                  CreatedGeometry = geomObjs;
+                  CreatedGeometry = groupedSubElementGeometries;
 
-                  if (footprintCurves.Count != 0 && this is IFCProduct)
+                  if (groupedSubElementFootprintCurves.Count != 0 && this is IFCProduct)
                   {
                      using (IFCImportShapeEditScope planViewScope = IFCImportShapeEditScope.Create(doc, this as IFCProduct))
                      {
-                        planViewScope.AddPlanViewCurves(footprintCurves, Id);
+                        planViewScope.AddPlanViewCurves(groupedSubElementFootprintCurves, Id);
                         planViewScope.SetPlanViewRep(directShape);
                      }
                   }
@@ -804,9 +814,6 @@ namespace Revit.IFC.Import.Data
                objDef.CreateParameters(doc);
                createdElementId = objDef.CreatedElementId;
                Importer.TheLog.AddCreatedEntity(doc, objDef);
-
-               if (IFCImportFile.CleanEntitiesAfterCreate)
-                  objDef.CleanEntity();
             }
          }
          catch (Exception ex)

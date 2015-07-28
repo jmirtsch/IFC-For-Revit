@@ -84,42 +84,5 @@ namespace Revit.IFC.Import.Data
 
             return new IFCFeatureElement(ifcFeatureElement);
         }
-
-        /// <summary>
-        /// Create a simplified copy of a IFCFeatureElement, intended explicitly for the purpose of voiding a particular IFCElement.
-        /// </summary>
-        /// <param name="original">The IFCFeatureElement we are partially copying.</param>
-        /// <param name="parentEntity">The IFCElement we are voiding.</param>
-        /// <returns>A new IFCFeatureElement that is a minimal copy of original with influence by parentEntity.</returns>
-        public static IFCFeatureElement CreateOpeningClone(IFCFeatureElement original, IFCElement parentEntity)
-        {
-            IFCFeatureElement clone = new IFCFeatureElement();
-
-            // Note that the GlobalId is left to null here; this allows us to later decide not to create a DirectShape for the result.
-
-            // Get the ObjectLocation and ProductRepresentation from the original entity, which is all we need to create geometry.
-            clone.ObjectLocation = original.ObjectLocation;
-            clone.ProductRepresentation = original.ProductRepresentation;
-
-            // Get the EntityType and PredefinedType from the parent to ensure that it "matches" the category and graphics style of the parent.
-            clone.EntityType = parentEntity.EntityType;
-            clone.PredefinedType = parentEntity.PredefinedType;
-
-            // Copy the material of the parent entity to try to match the color of the opening faces.  
-            // This will work nicely if the parent entity is one material.
-            IFCMaterial parentMaterial = parentEntity.GetTheMaterial();
-            if (parentMaterial != null)
-                clone.MaterialSelect = parentMaterial;
-
-            return clone;
-        }
-
-        /// <summary>
-        /// Cleans out the IFCEntity to save memory.
-        /// </summary>
-        public override void CleanEntity()
-        {
-            // Don't do anything; IfcFeatureElements will be accessed multiple times, and potentially cloned.
-        }
     }
 }

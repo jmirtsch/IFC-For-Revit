@@ -78,18 +78,6 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
-        /// Cleans out the IFCEntity to save memory.
-        /// </summary>
-        public virtual void CleanEntity()
-        {
-            GlobalId = null;
-            // m_Name will not be nullified because this information is needed for creating ifcContainedInHost parameter for doors and windows.
-            // m_Name = null;
-            m_Description = null;
-            m_OwnerHistory = null;
-        }
-        
-        /// <summary>
         /// The global id.
         /// </summary>
         public string GlobalId

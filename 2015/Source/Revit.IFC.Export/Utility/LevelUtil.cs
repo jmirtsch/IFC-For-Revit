@@ -23,6 +23,7 @@ using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Common.Utility;
+using Revit.IFC.Export.Toolkit;
 
 namespace Revit.IFC.Export.Utility
 {
@@ -351,5 +352,29 @@ namespace Revit.IFC.Export.Utility
             }
          }
       }
+
+      /// <summary>
+      /// Gets IFCElementComposition types having "COMPLEX","ELEMENT","PARTIAL" values for levels
+      /// </summary>
+      /// <param name="element">The element </param>
+      public static IFCElementComposition GetElementCompositionTypeOverride(Element element)
+      {      
+         string nameOverride = "IfcElementCompositionType";
+
+         // If the IfcElementCompositionType is not set by the user, 
+         // it sets the value to .ELEMENT by default
+         string overrideValue = NamingUtil.GetOverrideStringValue(element, nameOverride, "Element");
+
+         IFCElementComposition ifcElementCompositionType;
+         
+         if (Enum.TryParse<IFCElementComposition>(overrideValue, true, out ifcElementCompositionType))
+         {
+            return ifcElementCompositionType;
+         }
+
+         return IFCElementComposition.Element;   
+    
+      }
+
    }
 }

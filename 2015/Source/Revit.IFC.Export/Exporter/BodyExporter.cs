@@ -1198,7 +1198,7 @@ namespace Revit.IFC.Export.Exporter
 
         private static IFCAnyHandle CreateEdgeCurveFromCurve(IFCFile file, ExporterIFC exporterIFC, Curve curve, IFCAnyHandle edgeStart, IFCAnyHandle edgeEnd, bool sameSense)
         {
-            bool allowAdvancedCurve = exporterIFC.FileVersion >= IFCVersion.IFC4;
+           bool allowAdvancedCurve = ExporterCacheManager.ExportOptionsCache.ExportAs4;
             IFCAnyHandle baseCurve = GeometryUtil.CreateIFCCurveFromRevitCurve(file, exporterIFC, curve, allowAdvancedCurve);
 
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(baseCurve))
@@ -1209,8 +1209,8 @@ namespace Revit.IFC.Export.Exporter
         }
 
         private static IFCAnyHandle CreateProfileCurveFromCurve(IFCFile file, ExporterIFC exporterIFC, Curve curve)
-            {
-            bool allowAdvancedCurve = exporterIFC.FileVersion >= IFCVersion.IFC4;
+        {
+           bool allowAdvancedCurve = ExporterCacheManager.ExportOptionsCache.ExportAs4;
             IFCAnyHandle ifcCurve = GeometryUtil.CreateIFCCurveFromRevitCurve(file, exporterIFC, curve, allowAdvancedCurve);
             IFCAnyHandle sweptCurve = null;
 
@@ -1222,9 +1222,9 @@ namespace Revit.IFC.Export.Exporter
             IFCAnyHandle edgeEnd = null;
 
             if (!curve.IsBound)
-                {
+            {
                 isBound = false;
-                }
+            }
             else 
             {
                 XYZ startPoint = curve.GetEndPoint(0);
@@ -1233,9 +1233,9 @@ namespace Revit.IFC.Export.Exporter
                 if (startPoint.IsAlmostEqualTo(endPoint))
                 {
                     isBound = false;
-            }
+                }
                 else
-            {
+                {
                     edgeStart = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, curve.GetEndPoint(0), true);
                     edgeEnd = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, curve.GetEndPoint(1), true);
                     isBound = true;
@@ -1246,7 +1246,7 @@ namespace Revit.IFC.Export.Exporter
             {
                 sweptCurve = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Curve, name, ifcCurve);
             }
-            else
+            else 
             {
                 IFCAnyHandle trimmedCurve = null;
 
@@ -1260,10 +1260,11 @@ namespace Revit.IFC.Export.Exporter
                 trimmedCurve = IFCInstanceExporter.CreateTrimmedCurve(file, ifcCurve, trim1, trim2, senseAgreement, IFCTrimmingPreference.Cartesian);
 
                 sweptCurve = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Curve, name, trimmedCurve);
-                }
+            }
 
             return sweptCurve;
         }
+
         /// <summary>
         /// Returns a handle for creation of an AdvancedBrep with AdvancedFace and assigns it to the file
         /// </summary>
@@ -1290,23 +1291,24 @@ namespace Revit.IFC.Export.Exporter
                 {
                     return null;
                 }
-                    HashSet<IFCAnyHandle> cfsFaces = new HashSet<IFCAnyHandle>();
-                    Solid geomSolid = geomObject as Solid;
-                    FaceArray faces = geomSolid.Faces;
+                HashSet<IFCAnyHandle> cfsFaces = new HashSet<IFCAnyHandle>();
+                Solid geomSolid = geomObject as Solid;
+                FaceArray faces = geomSolid.Faces;
 
                 // Return null if encounter any edge that is not Line, Arc, HermiteSpline or NurbSpline or any face that is not PlanarFace or CylindricalFace
                 foreach (Edge edge in geomSolid.Edges) 
-                    {
+                {
                     Curve currCurve = edge.AsCurve();
 
-                    bool isValidCurve = (currCurve is Line) || (currCurve is Arc) || (currCurve is HermiteSpline) || (currCurve is NurbSpline);
+                    // Since every curve accept cylindrical helix is supported, we may consider remove this check
+                    bool isValidCurve = (currCurve is Line) || (currCurve is Arc) || (currCurve is HermiteSpline) || (currCurve is NurbSpline) || (currCurve is Ellipse);
                     if (!isValidCurve)
                     {
                         return null;
                     }
 
                     if (currCurve == null)
-                        {
+                    {
                         return null;
                     }
 
@@ -1314,9 +1316,9 @@ namespace Revit.IFC.Export.Exporter
                     // have a test to reject all open shells here.
                     // we check that geomSolid is an actual solid and not an open shell by verifying that each edge is shared by exactly 2 faces.
                     for (int ii = 0; ii < 2; ii++)
-                            {
+                    {
                         if (edge.GetFace(ii) == null)
-                                {
+                        {
                             return null;
                         }
                     }
@@ -1344,17 +1346,17 @@ namespace Revit.IFC.Export.Exporter
                     XYZ endPoint = currCurve.GetEndPoint(1);
                     IFCFuzzyXYZ fuzzyStartPoint = new IFCFuzzyXYZ(startPoint);
                     IFCFuzzyXYZ fuzzyEndPoint = new IFCFuzzyXYZ(endPoint);
-                                    IFCAnyHandle edgeStart = null;
-                                    IFCAnyHandle edgeEnd = null;
+                    IFCAnyHandle edgeStart = null;
+                    IFCAnyHandle edgeEnd = null;
 
                     if (vertices.ContainsKey(fuzzyStartPoint))
-                                    {
+                    {
                         edgeStart = vertices[fuzzyStartPoint];
                     }
                     else
                     {
                         IFCAnyHandle edgeStartCP = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, currCurve.GetEndPoint(0), true);
-                                        edgeStart = IFCInstanceExporter.CreateVertexPoint(file, edgeStartCP);
+                        edgeStart = IFCInstanceExporter.CreateVertexPoint(file, edgeStartCP);
                         vertices.Add(fuzzyStartPoint, edgeStart);
                     }
 
@@ -1365,9 +1367,9 @@ namespace Revit.IFC.Export.Exporter
                     else
                     {
                         IFCAnyHandle edgeEndCP = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, currCurve.GetEndPoint(1), true);
-                                        edgeEnd = IFCInstanceExporter.CreateVertexPoint(file, edgeEndCP);
+                        edgeEnd = IFCInstanceExporter.CreateVertexPoint(file, edgeEndCP);
                         vertices.Add(fuzzyEndPoint, edgeEnd);
-                                    }
+                    }
 
                     IFCAnyHandle edgeCurve = CreateEdgeCurveFromCurve(file, exporterIFC, currCurve, edgeStart, edgeEnd, true);
 
@@ -1378,17 +1380,17 @@ namespace Revit.IFC.Export.Exporter
                     {
                         face = edge.GetFace(ii);
                         if (!faceToEdges.ContainsKey(face))
-                                    {
+                        {
                             faceToEdges.Add(face, new List<Edge>());
                         }
                         IList<Edge> edges = faceToEdges[face];
                         edges.Add(edge);
                     }
-                                    }
+                }
 
                 // Second phase: create IfcFaceOuterBound, IfcFaceInnerBound, IfcAdvancedFace and IfcAdvancedBrep
                 foreach (Face face in geomSolid.Faces)
-                                    {
+                {
                     // List of created IfcEdgeLoops of this face
                     IList<IFCAnyHandle> edgeLoopList = new List<IFCAnyHandle>();
                     // List of created IfcOrientedEdge in one loop
@@ -1402,12 +1404,12 @@ namespace Revit.IFC.Export.Exporter
                     bool sameSenseAF = true;
                     EdgeArrayArray faceEdgeLoops = face.EdgeLoops;
                     if (faceEdgeLoops == null || faceEdgeLoops.Size == 0)
-                                        {
+                    {
                         return null;
-                                        }
+                    }
                     EdgeArray firstEdgeLoop = faceEdgeLoops.get_Item(0);
                     if (firstEdgeLoop == null)
-                                        {
+                    {
                         return null;
                     }
                     Edge firstEdge = firstEdgeLoop.get_Item(0);
@@ -1418,22 +1420,22 @@ namespace Revit.IFC.Export.Exporter
                     Transform testPointDerivatives = face.ComputeDerivatives(pointToTest);
                     XYZ surfaceNormal = testPointDerivatives.BasisZ;
                     if (!faceNormal.IsAlmostEqualTo(surfaceNormal))
-                                            {
+                    {
                         sameSenseAF = false;
-                                            }
+                    }
 
                     Dictionary<EdgeArray, IList<EdgeArray>> sortedEdgeLoop = GeometryUtil.SortEdgeLoop(faceEdgeLoops, face);
                     // check that we get back the same number of edgeloop
                     int numberOfSortedEdgeLoop = 0;
                     foreach (KeyValuePair<EdgeArray, IList<EdgeArray>> pair in sortedEdgeLoop) 
-                                            {
+                    {
                         numberOfSortedEdgeLoop += 1 + pair.Value.Count;
-                                            }
+                    }
 
                     if (numberOfSortedEdgeLoop != face.EdgeLoops.Size) 
                     {
                         return null;
-                                        }
+                    }
 
                     foreach (KeyValuePair<EdgeArray, IList<EdgeArray>> pair in sortedEdgeLoop) 
                     {
@@ -1451,78 +1453,61 @@ namespace Revit.IFC.Export.Exporter
                             // Map each edge in this loop back to its corresponding edge curve and then calculate its orientation to create IfcOrientedEdge
                             foreach (Edge edge in edgeArray)
                             {
-                                if (!edgeToIfcEdgeCurve.ContainsKey(edge))
-                                {
                                     // The reason why edgeToIfcEdgeCurve cannot find edge is that either we haven't created the IfcOrientedEdge
                                     // corresponding to that edge OR we already have but the dictionary cannot find the edge as its key because 
                                     // Face.EdgeLoop and geomSolid.Edges return different pointers for the same edge. This can be avoided if 
                                     // Equals() method is implemented for Edge
+                              if (!edgeToIfcEdgeCurve.ContainsKey(edge))
                                     return null;
-                                    }
 
                                 IFCAnyHandle edgeCurve = edgeToIfcEdgeCurve[edge];
-                                bool orientation = true;
 
                                 Curve currCurve = edge.AsCurve();
                                 Curve curveInCurrentFace = edge.AsCurveFollowingFace(face);
 
                                 if (currCurve == null || curveInCurrentFace == null)
-                                {
                                     return null;
-                                }
 
                                 // if the curve length is 0, ignore it.
-                                if (currCurve.ApproximateLength == 0) 
-                                {
-                                        continue;
-                                }
+                              if (MathUtil.IsAlmostZero(currCurve.ApproximateLength))
+                                    continue;
 
                                 // if the curve is unbound, it means that the solid may be corrupted, we shouldn't process it anymore
                                 if (!currCurve.IsBound) 
-                                {
                                     return null;
-                                }
 
-                                if (currCurve.GetEndPoint(0).IsAlmostEqualTo(curveInCurrentFace.GetEndPoint(0)))
-                                {
-                                    orientation = true;
-                                }
-                                else
-                                {
-                                    orientation = false;
-                                }
+                              bool orientation = currCurve.GetEndPoint(0).IsAlmostEqualTo(curveInCurrentFace.GetEndPoint(0));
 
-                                    IFCAnyHandle orientedEdge = IFCInstanceExporter.CreateOrientedEdge(file, edgeCurve, orientation);
-                                    orientedEdgeList.Add(orientedEdge);
-                                }
+                                IFCAnyHandle orientedEdge = IFCInstanceExporter.CreateOrientedEdge(file, edgeCurve, orientation);
+                                orientedEdgeList.Add(orientedEdge);
+                            }
 
-                                IFCAnyHandle edgeLoop = IFCInstanceExporter.CreateEdgeLoop(file, orientedEdgeList);
+                            IFCAnyHandle edgeLoop = IFCInstanceExporter.CreateEdgeLoop(file, orientedEdgeList);
                             edgeLoopList.Add(edgeLoop);
-                       
+
+                           IFCAnyHandle faceBound = null;
+
                             // EdgeLoopList has only 1 element indicates that this is the outer loop
                             if (edgeLoopList.Count == 1)
-                            {
-                                IFCAnyHandle faceOuterBound = IFCInstanceExporter.CreateFaceOuterBound(file, edgeLoop, true);
-                            bounds.Add(faceOuterBound);
-                            }
+                              faceBound = IFCInstanceExporter.CreateFaceOuterBound(file, edgeLoop, true);
                             else
-                            {
-                                IFCAnyHandle faceBound = IFCInstanceExporter.CreateFaceBound(file, edgeLoop, false);
-                                    bounds.Add(faceBound);
-                                }
+                              faceBound = IFCInstanceExporter.CreateFaceBound(file, edgeLoop, false);
+
+                                bounds.Add(faceBound);
 
                             // After finishing processing one loop, clear orientedEdgeList
                             orientedEdgeList.Clear();
-                            }
-                            boundsCollection.Add(bounds);
                         }
-
+                        boundsCollection.Add(bounds);
+                    }
+                    
                     edgeLoopList.Clear();
 
-                        // process the face now
-                        if (face is PlanarFace)
-                        {
-                            PlanarFace plFace = face as PlanarFace;
+                    // TODO: create a new face processing method to factor out this code
+                    // process the face now
+                    if (face is PlanarFace)
+                    {
+                        PlanarFace plFace = face as PlanarFace;
                         IFCAnyHandle location = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, plFace.Origin, true);
 
                         // Since there is no easy way to get the surface normal, we will calculate the face's normal and negate it if we know
@@ -1534,48 +1519,48 @@ namespace Revit.IFC.Export.Exporter
                         }
                         XYZ xdir = plFace.get_Vector(0);
 
-                            IList<double> zaxis = new List<double>();
-                            IList<double> refdir = new List<double>();
+                        IList<double> zaxis = new List<double>();
+                        IList<double> refdir = new List<double>();
                         zaxis.Add(zdir.X);
                         zaxis.Add(zdir.Y);
                         zaxis.Add(zdir.Z);
-                            IFCAnyHandle axis = IFCInstanceExporter.CreateDirection(file, zaxis);
+                        IFCAnyHandle axis = IFCInstanceExporter.CreateDirection(file, zaxis);
                         refdir.Add(xdir.X);
                         refdir.Add(xdir.Y);
                         refdir.Add(xdir.Z);
-                            IFCAnyHandle refDirection = IFCInstanceExporter.CreateDirection(file, refdir);
-                            IFCAnyHandle position = IFCInstanceExporter.CreateAxis2Placement3D(file, location, axis, refDirection);
-                            surface = IFCInstanceExporter.CreatePlane(file, position);
-                        }
-                        else if (face is CylindricalFace)
-                        {
-                            CylindricalFace cylFace = face as CylindricalFace;
+                        IFCAnyHandle refDirection = IFCInstanceExporter.CreateDirection(file, refdir);
+                        IFCAnyHandle position = IFCInstanceExporter.CreateAxis2Placement3D(file, location, axis, refDirection);
+                        surface = IFCInstanceExporter.CreatePlane(file, position);
+                    }
+                    else if (face is CylindricalFace)
+                    {
+                        CylindricalFace cylFace = face as CylindricalFace;
 
-                            // get radius-x and radius-y and the position of the origin
-                            XYZ rad = UnitUtil.ScaleLength(cylFace.get_Radius(0));
-                            double radius = rad.GetLength();
+                        // get radius-x and radius-y and the position of the origin
+                        XYZ rad = UnitUtil.ScaleLength(cylFace.get_Radius(0));
+                        double radius = rad.GetLength();
                         IFCAnyHandle location = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, cylFace.Origin, true);
 
                         XYZ zdir = cylFace.Axis;
                         XYZ xdir = rad.Normalize();
 
-                            IList<double> zaxis = new List<double>();
-                            IList<double> refdir = new List<double>();
+                        IList<double> zaxis = new List<double>();
+                        IList<double> refdir = new List<double>();
                         zaxis.Add(zdir.X);
                         zaxis.Add(zdir.Y);
                         zaxis.Add(zdir.Z);
-                            IFCAnyHandle axis = IFCInstanceExporter.CreateDirection(file, zaxis);
+                        IFCAnyHandle axis = IFCInstanceExporter.CreateDirection(file, zaxis);
                         refdir.Add(xdir.X);
                         refdir.Add(xdir.Y);
                         refdir.Add(xdir.Z);
-                            IFCAnyHandle refDirection = IFCInstanceExporter.CreateDirection(file, refdir);
+                        IFCAnyHandle refDirection = IFCInstanceExporter.CreateDirection(file, refdir);
 
-                            IFCAnyHandle position = IFCInstanceExporter.CreateAxis2Placement3D(file, location, axis, refDirection);
-                            surface = IFCInstanceExporter.CreateCylindricalSurface(file, position, radius);
-                        }
-                        else if (face is RevolvedFace)
-                        {
-                            RevolvedFace revFace = face as RevolvedFace;
+                        IFCAnyHandle position = IFCInstanceExporter.CreateAxis2Placement3D(file, location, axis, refDirection);
+                        surface = IFCInstanceExporter.CreateCylindricalSurface(file, position, radius);
+                    }
+                    else if (face is RevolvedFace)
+                    {
+                        RevolvedFace revFace = face as RevolvedFace;
 
                         XYZ zdir = revFace.Axis;
                         // Calculate the x-axis from the normal, which can be any vector that is perpendicular to it. The easiest is to rotate z 90 degree
@@ -1585,12 +1570,12 @@ namespace Revit.IFC.Export.Exporter
                         else
                             xdir = new XYZ(zdir.X, -zdir.Z, zdir.Y);
 
-                            IList<double> zaxis = new List<double>();
-                            IList<double> refdir = new List<double>();
+                        IList<double> zaxis = new List<double>();
+                        IList<double> refdir = new List<double>();
                         zaxis.Add(zdir.X);
                         zaxis.Add(zdir.Y);
                         zaxis.Add(zdir.Z);
-                            IFCAnyHandle axis = IFCInstanceExporter.CreateDirection(file, zaxis);
+                        IFCAnyHandle axis = IFCInstanceExporter.CreateDirection(file, zaxis);
                         refdir.Add(xdir.X);
                         refdir.Add(xdir.Y);
                         refdir.Add(xdir.Z);
@@ -1598,7 +1583,7 @@ namespace Revit.IFC.Export.Exporter
 
                         IFCAnyHandle location = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, revFace.Origin, true);
 
-                            Curve curve = revFace.Curve;
+                        Curve curve = revFace.Curve;
                         IFCAnyHandle sweptCurve = CreateProfileCurveFromCurve(file, exporterIFC, curve);
                         
                         IFCAnyHandle axisPosition = IFCInstanceExporter.CreateAxis1Placement(file, location, axis);
@@ -1611,15 +1596,15 @@ namespace Revit.IFC.Export.Exporter
 
                     
                     foreach (HashSet<IFCAnyHandle> faceBound in boundsCollection) 
-                        {
+                    {
                         IFCAnyHandle advancedFace = IFCInstanceExporter.CreateAdvancedFace(file, faceBound, surface, sameSenseAF);
-                            cfsFaces.Add(advancedFace);
-                        }
+                        cfsFaces.Add(advancedFace);
                     }
+                }
 
-                    // create advancedBrep
-                    IFCAnyHandle closedShell = IFCInstanceExporter.CreateClosedShell(file, cfsFaces);
-                    advancedBrep = IFCInstanceExporter.CreateAdvancedBrep(file, closedShell);
+                // create advancedBrep
+                IFCAnyHandle closedShell = IFCInstanceExporter.CreateClosedShell(file, cfsFaces);
+                advancedBrep = IFCInstanceExporter.CreateAdvancedBrep(file, closedShell);
 
                 return advancedBrep;
             }

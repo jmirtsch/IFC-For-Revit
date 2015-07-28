@@ -150,6 +150,10 @@ namespace Revit.IFC.Export.Utility
                 return "SINGLE_SWING_RIGHT";
             else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(orig, "SingleSwingRight"))
                 return "SINGLE_SWING_LEFT";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(orig, "SlidingToLeft"))
+               return "SLIDING_TO_RIGHT";
+            else if (NamingUtil.IsEqualIgnoringCaseSpacesAndUnderscores(orig, "SlidingToRight"))
+               return "SLIDING_TO_LEFT";
             else
                 return orig;
         }

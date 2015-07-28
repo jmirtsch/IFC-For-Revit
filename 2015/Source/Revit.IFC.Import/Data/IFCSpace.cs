@@ -61,29 +61,6 @@ namespace Revit.IFC.Import.Data
         {
 
         }
-
-        /// <summary>
-        /// Create a simplified copy of a IFCSpace, intended explicitly for the purpose of copying the geometry for an IFCZone with a different graphics style.
-        /// </summary>
-        /// <param name="original">The IFCSpace we are partially copying.</param>
-        /// <param name="parentEntity">The IFCZone we are going to add the geometry to.</param>
-        /// <returns>A new IFCSpace that is a minimal copy of original with influence by parentEntity.</returns>
-        public static IFCSpace CreateSpaceClone(IFCSpace original, IFCZone parentEntity)
-        {
-            IFCSpace clone = new IFCSpace();
-
-            // Note that the GlobalId is left to null here; this allows us to later decide not to create a DirectShape for the result.
-
-            // Get the ObjectLocation and ProductRepresentation from the original entity, which is all we need to create geometry.
-            clone.ObjectLocation = original.ObjectLocation;
-            clone.ProductRepresentation = original.ProductRepresentation;
-
-            // Get the EntityType and PredefinedType from the parent to ensure that it "matches" the category and graphics style of the parent.
-            clone.EntityType = parentEntity.EntityType;
-            clone.PredefinedType = parentEntity.PredefinedType;
-
-            return clone;
-        }
         
         /// <summary>
         /// Creates or populates Revit element params based on the information contained in this class.
