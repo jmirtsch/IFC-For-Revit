@@ -156,22 +156,29 @@ namespace Revit.IFC.Export.Exporter
             if (exportParts && !PartExporter.CanExportElementInPartExport(floorElement, floorElement.LevelId, false))
                 return;
 
+         IFCFile file = exporterIFC.GetFile();
+         
             string ifcEnumType;
             IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, floorElement, out ifcEnumType);
 
-            IFCFile file = exporterIFC.GetFile();
+         using (IFCTransaction tr = new IFCTransaction(file))
+         {
+            bool canExportAsContainerOrWithExtrusionAnalyzer = (!exportParts && (floorElement is Floor));
+            
             IList<IFCAnyHandle> slabHnds = new List<IFCAnyHandle>();
             IList<IFCAnyHandle> brepSlabHnds = new List<IFCAnyHandle>();
             IList<IFCAnyHandle> nonBrepSlabHnds = new List<IFCAnyHandle>();
                         
-            using (IFCTransaction tr = new IFCTransaction(file))
-            {
                 using (IFCTransformSetter transformSetter = IFCTransformSetter.Create())
                 {
                     using (PlacementSetter placementSetter = PlacementSetter.Create(exporterIFC, floorElement))
                     {
                         IFCAnyHandle localPlacement = placementSetter.LocalPlacement;
                         IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
+
+                  // The routine ExportExtrudedSlabOpenings is called if exportedAsInternalExtrusion is true, and it requires having a valid level association.
+                  // Disable calling ExportSlabAsExtrusion if we can't handle potential openings.
+                  bool canExportAsInternalExtrusion = placementSetter.LevelInfo != null;
                         bool exportedAsInternalExtrusion = false;
 
                         ElementId catId = CategoryUtil.GetSafeCategoryId(floorElement);
@@ -184,7 +191,7 @@ namespace Revit.IFC.Export.Exporter
 
                         IList<IFCAnyHandle> localPlacements = new List<IFCAnyHandle>();
 
-                        if (!exportParts && (floorElement is Floor))
+                  if (canExportAsContainerOrWithExtrusionAnalyzer)
                         {
                             Floor floor = floorElement as Floor;
 
@@ -238,7 +245,7 @@ namespace Revit.IFC.Export.Exporter
                         }
                      
                         // Use internal routine as backup that handles openings.
-                        if (prodReps.Count == 0)
+                  if (prodReps.Count == 0 && canExportAsInternalExtrusion)
                         {
                             exportedAsInternalExtrusion = ExporterIFCUtils.ExportSlabAsExtrusion(exporterIFC, floorElement,
                                 geometryElement, transformSetter, localPlacement, out localPlacements, out prodReps,

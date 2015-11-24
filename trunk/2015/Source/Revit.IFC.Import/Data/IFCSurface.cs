@@ -69,17 +69,8 @@ namespace Revit.IFC.Import.Data
                 return IFCElementarySurface.ProcessIFCElementarySurface(ifcSurface);
             else if (IFCAnyHandleUtil.IsSubTypeOf(ifcSurface, IFCEntityType.IfcSweptSurface))
                 return IFCSweptSurface.ProcessIFCSweptSurface(ifcSurface);
-            
-            Importer.TheLog.LogUnhandledSubTypeError(ifcSurface, IFCEntityType.IfcSurface, true);
-            return null;
-        }
 
-        /// <summary>
-        /// Returns the surface which defines the internal shape of the face
-        /// </summary>
-        /// <returns>The surface which defines the internal shape of the face</returns>
-        public virtual Plane GetSurface()
-        {
+            Importer.TheLog.LogUnhandledSubTypeError(ifcSurface, IFCEntityType.IfcSurface, true);
             return null;
         }
     }

@@ -134,7 +134,7 @@ namespace Revit.IFC.Import.Data
             if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcSurfaceOfLinearExtrusion.StepId, out surfaceOfLinearExtrusion))
                 surfaceOfLinearExtrusion = new IFCSurfaceOfLinearExtrusion(ifcSurfaceOfLinearExtrusion);
 
-            return surfaceOfLinearExtrusion as IFCSurfaceOfLinearExtrusion;
+         return (surfaceOfLinearExtrusion as IFCSurfaceOfLinearExtrusion);
         }
     }
 }

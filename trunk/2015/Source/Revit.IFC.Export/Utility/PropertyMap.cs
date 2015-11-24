@@ -209,8 +209,13 @@ namespace Revit.IFC.Export.Utility
         /// <returns>file name</returns>
         private static string GetFilename()
         {
-            string directory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            return directory + @"\ParameterMappingTable.txt";
+           string fileName = ExporterCacheManager.ExportOptionsCache.SelectedParametermappingTableName;
+           if (string.IsNullOrWhiteSpace(fileName))
+           {
+              string directory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+              fileName = directory + @"\ParameterMappingTable.txt";
+           }
+           return fileName;
         }
 
         /// <summary>

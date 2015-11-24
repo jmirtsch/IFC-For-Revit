@@ -43,7 +43,7 @@ namespace Revit.IFC.Export.Exporter
         /// The representation item for a swept solid exported as a BRep.  Either this or the representation item will be used.
         /// </summary>
         HashSet<IFCAnyHandle> m_Facets = null;
-        
+
         /// <summary>
         /// Enumeration value of the representation type used by SweptSolidExporter in its final form
         /// </summary>
@@ -67,13 +67,13 @@ namespace Revit.IFC.Export.Exporter
         {
             return (repType == m_RepresentationType);
         }
-        
+
         /// <summary>
         /// Check whether the representation type used is of a specific type but with string value (of the enum) as an input
         /// </summary>
         /// <param name="repTypeStr">the string value of the enum to be checked/compared to</param>
         /// <returns>true/false</returns>
-        public bool isSpecificRepresentationType (string repTypeStr)
+        public bool isSpecificRepresentationType(string repTypeStr)
         {
             ShapeRepresentationType inputEnum;
             Enum.TryParse(repTypeStr, out inputEnum);
@@ -175,7 +175,7 @@ namespace Revit.IFC.Export.Exporter
                     if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
                     {
                         // Use tessellated geometry in IFC Reference View
-                        if (ExporterUtil.IsReferenceView())
+                        if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
                         {
                             // TODO: Create CreateSimpleSweptSolidAsTessellation routine that takes advantage of the superior tessellation of this class.
                             BodyExporterOptions options = new BodyExporterOptions(false);
@@ -273,7 +273,7 @@ namespace Revit.IFC.Export.Exporter
             // We are constructing the profile plane so that the normal matches the curve tangent, and the X matches the curve normal.
             XYZ profilePlaneXDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, directrixDirs.BasisZ.Normalize());
             XYZ profilePlaneYDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, -directrixDirs.BasisY.Normalize());
-            XYZ profilePlaneZDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC,  directrixDirs.BasisX.Normalize());
+            XYZ profilePlaneZDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, directrixDirs.BasisX.Normalize());
 
             Transform profileCurveTransform = Transform.CreateTranslation(origin);
             profileCurveTransform.BasisX = profilePlaneXDir;
@@ -296,6 +296,7 @@ namespace Revit.IFC.Export.Exporter
             // We are constructing the profile plane so that the normal matches the curve tangent, and the X matches the curve normal.
             XYZ profilePlaneXDir = curveZDir;
             XYZ profilePlaneYDir = curveXDir;
+            XYZ profilePlaneZDir = curveYDir;
 
             axisPlane = new Plane(curveXDir, curveYDir, startPoint);
 
@@ -324,7 +325,7 @@ namespace Revit.IFC.Export.Exporter
 
             bool isBound = directrix.IsBound;
             double originalStartParam = isBound ? directrix.GetEndParameter(0) : 0.0;
-        
+
             Plane axisPlane, profilePlane;
             CreateAxisAndProfileCurvePlanes(directrix, originalStartParam, out axisPlane, out profilePlane);
 
@@ -365,7 +366,7 @@ namespace Revit.IFC.Export.Exporter
 
             // Should this be moved up?  Check.
             Plane scaledAxisPlane = GeometryUtil.GetScaledPlane(exporterIFC, axisPlane);
-            
+
             IFCFile file = exporterIFC.GetFile();
 
             IFCAnyHandle solidAxis = ExporterUtil.CreateAxis(file, scaledAxisPlane.Origin, scaledAxisPlane.Normal, scaledAxisPlane.XVec);
@@ -512,7 +513,7 @@ namespace Revit.IFC.Export.Exporter
             // Tessellate the Directrix.  This only works for bound Directrix curves. Unfortunately, we get XYZ values, which we will have to convert
             // back to parameter values to get the local transform.
             IList<double> tessellatedDirectrixParameters = CreateRoughParametricTessellation(directrix);
-            
+
             // Create all of the other outlines by transformng the first tessellated outline to the current transform.
             Transform profilePlaneTrf = Transform.CreateTranslation(ExporterIFCUtils.TransformAndScalePoint(exporterIFC, profilePlane.Origin));
             profilePlaneTrf.BasisX = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, profilePlane.XVec);
@@ -580,7 +581,7 @@ namespace Revit.IFC.Export.Exporter
             for (int ii = 0; ii < 2; ii++)
             {
                 int faceIndex = (ii == 0) ? 0 : facetVertexHandles.Count - 1;
-                
+
                 int numLoops = facetVertexHandles[faceIndex].Count;
                 HashSet<IFCAnyHandle> faceBounds = new HashSet<IFCAnyHandle>();
 
@@ -603,7 +604,7 @@ namespace Revit.IFC.Export.Exporter
                         IFCInstanceExporter.CreateFaceBound(file, polyLoop, true);
                     faceBounds.Add(faceBound);
                 }
-                
+
                 IFCAnyHandle face = IFCInstanceExporter.CreateFace(file, faceBounds);
                 facetHnds.Add(face);
             }

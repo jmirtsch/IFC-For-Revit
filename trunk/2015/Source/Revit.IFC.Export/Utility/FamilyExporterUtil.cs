@@ -306,19 +306,24 @@ namespace Revit.IFC.Export.Exporter
                     }
                 case IFCExportType.IfcMechanicalFastenerType:
                     {
-                        double? nominalDiameter = null;
-                        double? nominalLength = null;
+                       double? nominalDiameter = null;
+                       double? nominalLength = null;
 
-                        double nominalDiameterVal, nominalLengthVal;
-                        if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalDiameter", out nominalDiameterVal) != null)
-                            nominalDiameter = UnitUtil.ScaleLength(nominalDiameterVal);
-                        if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalLength", out nominalLengthVal) != null)
-                            nominalLength = UnitUtil.ScaleLength(nominalLengthVal);
+                       double nominalDiameterVal, nominalLengthVal;
+                       if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalDiameter", out nominalDiameterVal) != null)
+                          nominalDiameter = UnitUtil.ScaleLength(nominalDiameterVal);
+                       if (ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "NominalLength", out nominalLengthVal) != null)
+                          nominalLength = UnitUtil.ScaleLength(nominalLengthVal);
 
-                        instanceHandle = IFCInstanceExporter.CreateMechanicalFastener(file, instanceGUID, ownerHistory,
-                           instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag,
-                           nominalDiameter, nominalLength);
-                        break;
+                       string ifcEnumType;
+                       IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, familyInstance, out ifcEnumType);
+
+                       string preDefinedType = string.IsNullOrWhiteSpace(ifcEnumType) ? "NOTDEFINED" : ifcEnumType;
+
+                       instanceHandle = IFCInstanceExporter.CreateMechanicalFastener(file, instanceGUID, ownerHistory,
+                          instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag,
+                          nominalDiameter, nominalLength, preDefinedType);
+                       break;
                     }
                 case IFCExportType.IfcRailingType:
                     {
@@ -1193,20 +1198,37 @@ namespace Revit.IFC.Export.Exporter
             return IFCAssemblyPlace.NotDefined;
         }
 
-        public static List<GeometryObject> RemoveSolidsAndMeshesSetToDontExport(Document doc, ExporterIFC exporterIFC, IList<Solid> solids, IList<Mesh> polyMeshes)
+      /// <summary>
+      /// Create a list of geometry objects to export from an initial list of solids and meshes, excluding invisible and not exported categories.
+      /// </summary>
+      /// <param name="doc">The document.</param>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="solids">The list of solids, possibly empty.</param>
+      /// <param name="meshes">The list of meshes, possibly empty.</param>
+      /// <returns>The combined list of solids and meshes that are visible given category export settings and view visibility settings.</returns>
+      public static List<GeometryObject> RemoveInvisibleSolidsAndMeshes(Document doc, ExporterIFC exporterIFC, IList<Solid> solids, IList<Mesh> meshes)
         {
             List<GeometryObject> geomObjectsIn = new List<GeometryObject>();
             geomObjectsIn.AddRange(solids);
-            geomObjectsIn.AddRange(polyMeshes);
+         geomObjectsIn.AddRange(meshes);
 
             List<GeometryObject> geomObjectsOut = new List<GeometryObject>();
+
+         View filterView = ExporterCacheManager.ExportOptionsCache.FilterViewForExport;
 
             foreach (GeometryObject obj in geomObjectsIn)
             {
                 GraphicsStyle gStyle = doc.GetElement(obj.GraphicsStyleId) as GraphicsStyle;
                 if (gStyle != null)
                 {
-                    ElementId catId = gStyle.GraphicsStyleCategory.Id;
+               Category graphicsStyleCategory = gStyle.GraphicsStyleCategory;
+               if (graphicsStyleCategory != null)
+               {
+                  if (!ElementFilteringUtil.IsCategoryVisible(graphicsStyleCategory, filterView))
+                     continue;
+
+                  ElementId catId = graphicsStyleCategory.Id;
+
                     string ifcClassName = ExporterUtil.GetIFCClassNameFromExportTable(exporterIFC, catId);
                     if (!string.IsNullOrEmpty(ifcClassName))
                     {
@@ -1219,11 +1241,11 @@ namespace Revit.IFC.Export.Exporter
                         }
                     }
                 }
+            }
                 geomObjectsOut.Add(obj);
             }
 
             return geomObjectsOut;
         }
-
     }
 }

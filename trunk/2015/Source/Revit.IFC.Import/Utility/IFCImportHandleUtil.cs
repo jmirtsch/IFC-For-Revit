@@ -394,12 +394,12 @@ namespace Revit.IFC.Import.Utility
         }
 
         /// <summary>
-        /// Get attribute of type List of List of Entity 
+        /// Get attribute of type IList of IList of Entity 
         /// </summary>
         /// <param name="handle">The handle</param>
         /// <param name="name">attribute name</param>
-        /// <returns>List of List of Entity</returns>
-        public static List<List<IFCAnyHandle>> GetListOfListOfInstancettribute(IFCAnyHandle handle, string name)
+        /// <returns>IList of IList of Entity</returns>
+        public static IList<IList<IFCAnyHandle>> GetListOfListOfInstanceAttribute(IFCAnyHandle handle, string name)
         {
             if (handle == null)
                 throw new ArgumentNullException("handle");
@@ -407,7 +407,7 @@ namespace Revit.IFC.Import.Utility
             if (!handle.HasValue)
                 throw new ArgumentException("Invalid handle.");
 
-            List<List<IFCAnyHandle>> outerList = null;
+            IList<IList<IFCAnyHandle>> outerList = null;
 
             IFCData ifcData = handle.GetAttribute(name);
 
@@ -416,7 +416,7 @@ namespace Revit.IFC.Import.Utility
                 IFCAggregate outer = ifcData.AsAggregate();
                 if (outer != null)
                 {
-                    outerList = new List<List<IFCAnyHandle>>();
+                    outerList = new List<IList<IFCAnyHandle>>();
 
                     foreach (IFCData outerVal in outer)
                     {
@@ -424,7 +424,7 @@ namespace Revit.IFC.Import.Utility
 
                         if (inner != null)
                         {
-                            List<IFCAnyHandle> innerList = new List<IFCAnyHandle>();
+                            IList<IFCAnyHandle> innerList = new List<IFCAnyHandle>();
                             foreach (IFCData innerVal in inner)
                             {
                                 innerList.Add(innerVal.AsInstance());

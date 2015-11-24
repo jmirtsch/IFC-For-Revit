@@ -74,7 +74,7 @@ namespace Revit.IFC.Export.Exporter
                     return;
 
                 FilledRegionType filledRegionType = filledRegion.Document.GetElement(filledRegion.GetTypeId()) as FilledRegionType;
-                Color color = filledRegionType != null ? filledRegionType.Color : new Color(0, 0, 0);
+                Color color = filledRegionType != null ? CategoryUtil.GetSafeColor(filledRegionType.Color) : new Color(0, 0, 0);
                 ElementId fillPatternId = filledRegionType != null ? filledRegionType.FillPatternId : ElementId.InvalidElementId;
                 ElementId categoryId = CategoryUtil.GetSafeCategoryId(filledRegion);
 

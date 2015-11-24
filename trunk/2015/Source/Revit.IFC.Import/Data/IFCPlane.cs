@@ -79,14 +79,5 @@ namespace Revit.IFC.Import.Data
 
             return plane as IFCPlane;
         }
-
-        /// <summary>
-        /// Returns the surface which defines the internal shape of the face
-        /// </summary>
-        /// <returns>The surface which defines the internal shape of the face</returns>
-        public override Plane GetSurface()
-        {
-            return Plane;
-        }
     }
 }

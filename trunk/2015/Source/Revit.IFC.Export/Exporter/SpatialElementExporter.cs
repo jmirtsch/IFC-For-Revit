@@ -102,7 +102,7 @@ namespace Revit.IFC.Export.Exporter
                         Document document = spatialElement.Document;
                         ElementId levelId = spatialElement.LevelId;
                         IFCLevelInfo levelInfo = exporterIFC.GetLevelInfo(levelId);
-                        double baseHeightNonScaled = levelInfo.Elevation;
+                  double baseHeightNonScaled = (levelInfo != null) ? levelInfo.Elevation : 0.0;
 
                         try
                         {
@@ -906,8 +906,9 @@ namespace Revit.IFC.Export.Exporter
             double bottomOffset;
             ParameterUtil.GetDoubleValueFromElement(spatialElement, BuiltInParameter.ROOM_LOWER_OFFSET, out bottomOffset);
 
+         double elevation = (levelInfo != null) ? levelInfo.Elevation : 0.0;
             XYZ zDir = new XYZ(0, 0, 1);
-            XYZ orig = new XYZ(0, 0, levelInfo.Elevation + bottomOffset);
+         XYZ orig = new XYZ(0, 0, elevation + bottomOffset);
 
             Plane plane = new Plane(zDir, orig); // room calculated as level offset.
 
@@ -1019,7 +1020,7 @@ namespace Revit.IFC.Export.Exporter
             // Find Ceiling as a Space boundary and keep the relationship in a cache for use later
             bool ret = GetCeilingSpaceBoundary(spatialElement, out results);
 
-            if (!MathUtil.IsAlmostZero(dArea) && !(ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE) &&
+         if (!MathUtil.IsAlmostZero(dArea) && !(ExporterCacheManager.ExportOptionsCache.ExportAsCOBIE) &&
                 !ExporterCacheManager.ExportOptionsCache.ExportAs2x3CoordinationView2 && !ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities)
             {
                 bool isDesignGrossArea = (string.Compare(spatialElementName, "GSA Design Gross Area") > 0);
@@ -1027,7 +1028,7 @@ namespace Revit.IFC.Export.Exporter
             }
 
             // Export Classifications for SpatialElement for GSA/COBIE.
-            if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
+         if (ExporterCacheManager.ExportOptionsCache.ExportAsCOBIE)
             {
                 ProjectInfo projectInfo = document.ProjectInformation;
                 if (projectInfo != null)
@@ -1295,7 +1296,7 @@ namespace Revit.IFC.Export.Exporter
         {
             IFCAnyHandle roomHandle = productWrapper.GetElementOfType(IFCEntityType.IfcSpace);
 
-            bool exportToCOBIE = ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE;
+         bool exportToCOBIE = ExporterCacheManager.ExportOptionsCache.ExportAsCOBIE;
 
             string name;
             if (ParameterUtil.GetStringValueFromElement(element.Id, "Occupant", out name) != null)
@@ -1454,7 +1455,7 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="productWrapper">The ProductWrapper.</param>
         static void CreateZoneInfos(ExporterIFC exporterIFC, IFCFile file, Element element, ProductWrapper productWrapper)
         {
-            bool exportToCOBIE = ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE;
+         bool exportToCOBIE = ExporterCacheManager.ExportOptionsCache.ExportAsCOBIE;
 
             // Extra zone information, since Revit doesn't have architectural zones.
             int val = 0;

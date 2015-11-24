@@ -26,6 +26,7 @@ using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Common.Utility;
 using Revit.IFC.Common.Enums;
 using Revit.IFC.Import.Utility;
+using Revit.IFC.Import.Enums;
 
 using UnitName = Autodesk.Revit.DB.DisplayUnitType;
 
@@ -761,18 +762,23 @@ namespace Revit.IFC.Import.Data
         /// <param name="monetaryUnitHnd">The monetary unit handle.</param>
         void ProcessIFCMonetaryUnit(IFCAnyHandle monetaryUnitHnd)
         {
-            string currencyType = IFCAnyHandleUtil.GetEnumerationAttribute(monetaryUnitHnd, "Currency");
+            string currencyType = (IFCImportFile.TheFile.SchemaVersion < IFCSchemaVersion.IFC4) ?
+               IFCAnyHandleUtil.GetEnumerationAttribute(monetaryUnitHnd, "Currency") :
+               IFCImportHandleUtil.GetOptionalStringAttribute(monetaryUnitHnd, "Currency", string.Empty);
 
             UnitType = UnitType.UT_Currency;
             UnitName = UnitName.DUT_CURRENCY;
 
             UnitSymbol = UnitSymbolType.UST_NONE;
             if ((string.Compare(currencyType, "CAD", true) == 0) ||
-                (string.Compare(currencyType, "USD", true) == 0))
+                (string.Compare(currencyType, "USD", true) == 0) ||
+                (string.Compare(currencyType, "$", true) == 0))
                 UnitSymbol = UnitSymbolType.UST_DOLLAR;
-            else if (string.Compare(currencyType, "EUR", true) == 0)
+            else if ((string.Compare(currencyType, "EUR", true) == 0) ||
+               (string.Compare(currencyType, "€", true) == 0))
                 UnitSymbol = UnitSymbolType.UST_EURO_PREFIX;
-            else if (string.Compare(currencyType, "GBP", true) == 0)
+            else if ((string.Compare(currencyType, "GBP", true) == 0) ||
+               (string.Compare(currencyType, "£", true) == 0))
                 UnitSymbol = UnitSymbolType.UST_POUND;
             else if (string.Compare(currencyType, "HKD", true) == 0)
                 UnitSymbol = UnitSymbolType.UST_CHINESE_HONG_KONG_SAR;
@@ -782,11 +788,13 @@ namespace Revit.IFC.Import.Data
                 UnitSymbol = UnitSymbolType.UST_KRONER;
             else if (string.Compare(currencyType, "ILS", true) == 0)
                 UnitSymbol = UnitSymbolType.UST_SHEQEL;
-            else if (string.Compare(currencyType, "JPY", true) == 0)
+            else if ((string.Compare(currencyType, "JPY", true) == 0) ||
+                (string.Compare(currencyType, "¥", true) == 0))
                 UnitSymbol = UnitSymbolType.UST_YEN;
             else if (string.Compare(currencyType, "KRW", true) == 0)
                 UnitSymbol = UnitSymbolType.UST_WON;
-            else if (string.Compare(currencyType, "THB", true) == 0)
+            else if ((string.Compare(currencyType, "THB", true) == 0) ||
+                (string.Compare(currencyType, "฿", true) == 0))
                 UnitSymbol = UnitSymbolType.UST_BAHT;
             else if (string.Compare(currencyType, "VND", true) == 0)
                 UnitSymbol = UnitSymbolType.UST_DONG;
