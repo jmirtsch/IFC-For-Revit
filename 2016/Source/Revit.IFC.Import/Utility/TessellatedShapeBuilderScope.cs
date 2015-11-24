@@ -227,11 +227,17 @@ namespace Revit.IFC.Import.Utility
         /// <summary>
         /// Add one loop of vertices that will define a boundary loop of the current face.
         /// </summary>
-        public void AddLoopVertices(IList<XYZ> loopVertices)
+        /// <param name="id">The id of the IFCEntity, for error reporting.</param>
+        /// <param name="loopVertices">The list of vertices.</param>
+        /// <returns>True if the operation succeeded, false oherwise.</returns>
+        public bool AddLoopVertices(int id, IList<XYZ> loopVertices)
         {
             int vertexCount = (loopVertices == null) ? 0 : loopVertices.Count;
             if (vertexCount < 3)
-                throw new InvalidOperationException("Too few distinct loop vertices, ignoring.");
+            {
+               Importer.TheLog.LogComment(id, "Too few distinct loop vertices, ignoring.", false);
+               return false;
+            }
 
             IList<XYZ> adjustedLoopVertices = new List<XYZ>();
             IDictionary<IFCFuzzyXYZ, int> createdVertices = new SortedDictionary<IFCFuzzyXYZ, int>();
@@ -248,7 +254,8 @@ namespace Revit.IFC.Import.Utility
                     if (((createdVertexIndex == 0) && (ii == vertexCount - 1)) || (createdVertexIndex == numCreated - 1))
                         continue;
 
-                    throw new InvalidOperationException("Loop is self-intersecting, ignoring.");
+                    Importer.TheLog.LogComment(id, "Loop is self-intersecting, ignoring.", false);
+                    return false;
                 }
 
                 XYZ adjustedXYZ;
@@ -262,9 +269,13 @@ namespace Revit.IFC.Import.Utility
 
             // Checking start and end points should be covered above.
             if (numCreated < 3)
-                throw new InvalidOperationException("Loop has less than 3 distinct vertices, ignoring.");
+            {
+               Importer.TheLog.LogComment(id, "Loop has less than 3 distinct vertices, ignoring.", false);
+               return false;
+            }
 
             m_TessellatedFaceBoundary.Add(adjustedLoopVertices);
+            return true;
         }
 
         private void ClearTessellatedShapeBuilder()

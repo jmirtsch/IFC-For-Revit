@@ -169,7 +169,7 @@ namespace Revit.IFC.Export.Utility
             }
             protected set { m_ExportUserDefinedPsetsFileName = value; }
         }
-        
+
         /// <summary>
         /// Private default constructor.
         /// </summary>
@@ -188,7 +188,7 @@ namespace Revit.IFC.Export.Utility
 
             PropertySetOptions propertySetOptions = new PropertySetOptions();
 
-            propertySetOptions.m_ExportInternalRevit = (cache.FileVersion != IFCVersion.IFC2x3CV2);
+            propertySetOptions.m_ExportInternalRevit = (!cache.ExportAs2x3CoordinationView2);
 
             // "Revit property sets" override
             propertySetOptions.ExportInternalRevitOverride = ExportOptionsCache.GetNamedBooleanOption(options, "ExportInternalRevitPropertySets");
@@ -198,7 +198,7 @@ namespace Revit.IFC.Export.Utility
 
             // "ExportSchedulesAsPsets" override
             propertySetOptions.ExportSchedulesAsPsetsOverride = ExportOptionsCache.GetNamedBooleanOption(options, "ExportSchedulesAsPsets");
-            
+
             // "ExportUserDefinedPsets" override
             propertySetOptions.ExportUserDefinedPsetsOverride = ExportOptionsCache.GetNamedBooleanOption(options, "ExportUserDefinedPsets");
 
@@ -207,7 +207,7 @@ namespace Revit.IFC.Export.Utility
 
             // "ExportSpecificSchedules" overrid
             propertySetOptions.ExportSpecificSchedulesOverride = ExportOptionsCache.GetNamedBooleanOption(options, "ExportSpecificSchedules");
-           
+
             return propertySetOptions;
         }
     }

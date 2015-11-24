@@ -83,10 +83,15 @@ namespace Revit.IFC.Import.Data
         /// <summary>
         /// Returns the surface which defines the internal shape of the face
         /// </summary>
+        /// <param name="lcs">The local coordinate system for the surface.  Can be null.</param>
         /// <returns>The surface which defines the internal shape of the face</returns>
-        public override Surface GetSurface()
+        public override Surface GetSurface(Transform lcs)
         {
-            return Plane;
+           if (lcs == null || Plane == null)
+               return Plane;
+
+           // Make a new copy of the plane.
+           return new Plane(lcs.OfVector(Plane.Normal), lcs.OfPoint(Plane.Origin));
         }
     }
 }

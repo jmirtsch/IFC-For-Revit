@@ -77,8 +77,9 @@ namespace Revit.IFC.Import.Data
         /// <summary>
         /// Returns the surface which defines the internal shape of the face
         /// </summary>
+        /// <param name="lcs">The local coordinate system for the surface.  Can be null.</param>
         /// <returns>The surface which defines the internal shape of the face</returns>
-        public virtual Surface GetSurface()
+        public virtual Surface GetSurface(Transform lcs)
         {
             return null;
         }

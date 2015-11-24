@@ -261,7 +261,7 @@ namespace Revit.IFC.Export.Exporter
                 Element elemToUse = (inElement.Id.IntegerValue < outElement.Id.IntegerValue) ? inElement : outElement;
                 string guid = GUIDUtil.CreateGUID();
                 IFCAnyHandle realizingElement = null;
-                string connectionName = IFCAnyHandleUtil.GetStringAttribute(portIn, "GlobalId") + "|" + IFCAnyHandleUtil.GetStringAttribute(portOut, "GlobalId");
+                string connectionName = ExporterUtil.GetGlobalId(portIn) + "|" + ExporterUtil.GetGlobalId(portOut);
                 string connectionType = "Flow";   // Assigned as Description
                 IFCInstanceExporter.CreateRelConnectsPorts(ifcFile, guid, ownerHistory, connectionName, connectionType, portIn, portOut, realizingElement);
                 AddConnectionInternal(inElement.Id, outElement.Id);

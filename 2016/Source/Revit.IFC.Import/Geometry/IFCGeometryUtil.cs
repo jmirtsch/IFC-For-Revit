@@ -569,34 +569,5 @@ namespace Revit.IFC.Import.Geometry
       }
 
       /// <summary>
-      /// Creates a new surface, after transforming it to the local coordinate system
-      /// </summary>
-      /// <param name="surface">The given surface</param>
-      /// <param name="lcs">The given transform</param>
-      /// <returns>A new surface which is a result of applying lcs to surface</returns>
-      /// <remarks>This routine doesn't transform the original surface, 
-      ///          the transform is applied on a shallow copy of the given surface and the result of that transformation is returned</remarks>
-      public static Surface GetTransformedSurface(Surface surface, Transform lcs)
-      {
-         if (surface == null)
-            return null;
-
-         if (lcs == null)
-            lcs = Transform.Identity;
-
-         // This method only supports plane for now
-         if (surface is Plane)
-         {
-            Plane plane = surface as Plane;
-            XYZ normal = plane.Normal;
-            XYZ origin = plane.Origin;
-
-            XYZ copiedNormal = new XYZ(normal.X, normal.Y, normal.Z);
-            XYZ copiedOrigin = new XYZ(origin.X, origin.Y, origin.Z);
-            return new Plane(lcs.OfVector(copiedNormal), lcs.OfPoint(copiedOrigin));
-         }
-         else
-             return null;
-      }
    }
 }

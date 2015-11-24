@@ -577,6 +577,9 @@ namespace Revit.IFC.Import.Utility
                }
             }
 
+            WriteLine("");
+            WriteLine("Importer Version: " + IFCImportOptions.ImporterVersion);
+            
             m_LogFile.Close();
          }
 
