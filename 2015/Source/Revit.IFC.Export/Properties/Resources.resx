@@ -117,28 +117,40 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ConicalFaceProfileCurve" xml:space="preserve">
+    <value>Conical Face Profile Curve</value>
+  </data>
+  <data name="IFCExportComplete" xml:space="preserve">
+    <value>IFC Export Complete</value>
+  </data>
   <data name="IFCProcessingAreaSchemes" xml:space="preserve">
-    <value>IFC Export: Processing Area Schemes: {0} of {1}</value>
+    <value>IFC Export: Processing Area Schemes: {0} of {1} (Area Scheme ID: {2})</value>
   </data>
   <data name="IFCProcessingBeamSystems" xml:space="preserve">
-    <value>IFC Export: Processing Beam Systems: {0} of {1}</value>
+    <value>IFC Export: Processing Beam Systems: {0} of {1} (Beam System ID: {2})</value>
   </data>
   <data name="IFCProcessingExportZones" xml:space="preserve">
-    <value>IFC Export: Processing Export Zones: {0} of {1}</value>
+    <value>IFC Export: Processing Export Zones: {0} of {1} (Export Zone ID: {2})</value>
   </data>
   <data name="IFCProcessingFabricAreas" xml:space="preserve">
-    <value>IFC Export: Processing Fabric Areas: {0} of {1}</value>
+    <value>IFC Export: Processing Fabric Areas: {0} of {1} (Fabric Area ID: {2})</value>
   </data>
   <data name="IFCProcessingNonSpatialElements" xml:space="preserve">
-    <value>IFC Export: Processing Non Spatial Elements: {0} of {1}</value>
+    <value>IFC Export: Processing Non Spatial Elements: {0} of {1} (Element ID: {2})</value>
   </data>
   <data name="IFCProcessingRailings" xml:space="preserve">
-    <value>IFC Export: Processing Processing Ralings: {0} of {1}</value>
+    <value>IFC Export: Processing Railings: {0} of {1} (Railing ID: {2})</value>
   </data>
   <data name="IFCProcessingSpatialElements" xml:space="preserve">
-    <value>IFC Export: Processing Spatial Elements: {0} of {1}</value>
+    <value>IFC Export: Processing Spatial Elements: {0} of {1} (Element ID: {2})</value>
   </data>
   <data name="IFCProcessingTrusses" xml:space="preserve">
-    <value>IFC Export: Processing Trusses: {0} of {1}</value>
+    <value>IFC Export: Processing Trusses: {0} of {1} (Truss ID: {2})</value>
+  </data>
+  <data name="RevolvedFaceProfileCurve" xml:space="preserve">
+    <value>Revolved Face Profile Curve</value>
+  </data>
+  <data name="RuledFaceProfileCurve" xml:space="preserve">
+    <value>Ruled Face Profile Curve</value>
   </data>
 </root>

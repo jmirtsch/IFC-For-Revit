@@ -282,7 +282,7 @@ namespace Revit.IFC.Export.Exporter
                                         slabExtrusionCreationData.ScaledLength = scaledExtrusionDepth;
                                         slabExtrusionCreationData.ScaledArea = UnitUtil.ScaleArea(areas[numLoop]);
                                         slabExtrusionCreationData.ScaledOuterPerimeter = UnitUtil.ScaleLength(curveLoops[0].GetExactLength());
-                                        slabExtrusionCreationData.Slope = UnitUtil.ScaleAngle(Math.Acos(Math.Abs(planeDirs[numLoop].Z)));
+                                        slabExtrusionCreationData.Slope = UnitUtil.ScaleAngle(MathUtil.SafeAcos(Math.Abs(planeDirs[numLoop].Z)));
 
                                         productWrapper.AddElement(null, slabHnd, setter, slabExtrusionCreationData, false);
                                         elementHandles.Add(slabHnd);

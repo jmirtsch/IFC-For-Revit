@@ -37,16 +37,16 @@ namespace Revit.IFC.Export.Utility
     {
         private GUIDOptions m_GUIDOptions;
         private bool m_ExportAs4_ADD1;
+        private IFCVersion m_FileVersion;
 
-        
-        
+
         /// Private default constructor.
         /// </summary>
         private ExportOptionsCache()
         {
-           m_ExportAs4_ADD1 = false;
+            m_ExportAs4_ADD1 = false;
         }
-       
+
 
         /// <summary>
         /// de-serialize vector passed from UI trough options 
@@ -146,7 +146,7 @@ namespace Revit.IFC.Export.Utility
             }
             return ids;
         }
-        
+
         /// <summary>
         /// Creates a new export options cache from the data in the ExporterIFC passed from Revit.
         /// </summary>
@@ -167,16 +167,16 @@ namespace Revit.IFC.Export.Utility
             cache.ExportPartsAsBuildingElementsOverride = null;
             cache.ExportAllLevels = false;
             cache.ExportAnnotationsOverride = null;
-             
+
             // There is a bug in the native code that doesn't allow us to cast the filterView to any sub-type of View.  Work around this by re-getting the element pointer.
             if (filterView != null)
                 cache.FilterViewForExport = filterView.Document.GetElement(filterView.Id) as View;
             else
                 cache.FilterViewForExport = null;
-            
+
             cache.ExportBoundingBoxOverride = null;
             cache.IncludeSiteElevation = false;
-            
+
             cache.PropertySetOptions = PropertySetOptions.Create(exporterIFC, cache);
 
             String use2DRoomBoundary = Environment.GetEnvironmentVariable("Use2DRoomBoundaryForRoomVolumeCalculationOnIFCExport");
@@ -222,7 +222,7 @@ namespace Revit.IFC.Export.Utility
             if (options.TryGetValue("SingleElement", out singleElementValue))
             {
                 ElementId elementId = ParseElementId(singleElementValue);
-                
+
                 List<ElementId> ids = new List<ElementId>();
                 ids.Add(elementId);
                 cache.ElementsForExport = ids;
@@ -264,19 +264,19 @@ namespace Revit.IFC.Export.Utility
             // UseCoarseTessellation = true -> 1, UseCoarseTessellation = false -> 4
             // TessellationLevelOfDetail * 4 = LevelOfDetail
             // TessellationLevelOfDetail takes precedence over UseCoarseTessellation.
-            
+
             cache.LevelOfDetail = 2;   // Default: Low
-            
+
             bool? useCoarseTessellation = GetNamedBooleanOption(options, "UseCoarseTessellation");
             if (useCoarseTessellation.HasValue)
-               cache.LevelOfDetail = useCoarseTessellation.Value ? 1 : 4;
-            
+                cache.LevelOfDetail = useCoarseTessellation.Value ? 1 : 4;
+
             double? tessellationLOD = GetNamedDoubleOption(options, "TessellationLevelOfDetail");
             if (tessellationLOD.HasValue)
             {
-               cache.LevelOfDetail = (int)(tessellationLOD.Value * 4.0 + 0.5);
-               // Ensure LOD is between 1 to 4, inclusive.
-               cache.LevelOfDetail = Math.Min(Math.Max(cache.LevelOfDetail, 1), 4);
+                cache.LevelOfDetail = (int)(tessellationLOD.Value * 4.0 + 0.5);
+                // Ensure LOD is between 1 to 4, inclusive.
+                cache.LevelOfDetail = Math.Min(Math.Max(cache.LevelOfDetail, 1), 4);
             }
 
             /// Allow exporting a mix of extrusions and BReps as a solid model, if possible.
@@ -285,7 +285,7 @@ namespace Revit.IFC.Export.Utility
 
             // Set the phase we are exporting
             cache.ActivePhaseId = ElementId.InvalidElementId;
-            
+
             String activePhaseElementValue;
             if (options.TryGetValue("ActivePhase", out activePhaseElementValue))
                 cache.ActivePhaseId = ParseElementId(activePhaseElementValue);
@@ -331,6 +331,8 @@ namespace Revit.IFC.Export.Utility
             ParseFileType(options, cache);
 
             cache.SelectedConfigName = GetNamedStringOption(options, "ConfigName");
+
+            cache.SelectedParametermappingTableName = GetNamedStringOption(options, "ExportUserDefinedParameterMappingFileName");
 
             bool? bExportLinks = GetNamedBooleanOption(options, "ExportingLinks");
             cache.ExportingLink = (bExportLinks.HasValue && bExportLinks.Value == true);
@@ -385,9 +387,9 @@ namespace Revit.IFC.Export.Utility
                 bool option;
                 if (Boolean.TryParse(optionString, out option))
                     return option;
-                
+
                 // TODO: consider logging this error later and handling results better.
-                throw new Exception("Option '" + optionName +"' could not be parsed to boolean");
+                throw new Exception("Option '" + optionName + "' could not be parsed to boolean");
             }
             return null;
         }
@@ -456,7 +458,7 @@ namespace Revit.IFC.Export.Utility
         /// <param name="options">The collection of named options for IFC export.</param>
         /// <param name="cache">The export options cache.</param>
         private static void ParseFileType(IDictionary<String, String> options, ExportOptionsCache cache)
-        {            
+        {
             String fileTypeString;
             if (options.TryGetValue("FileType", out fileTypeString))
             {
@@ -500,11 +502,19 @@ namespace Revit.IFC.Export.Utility
 
         /// <summary>
         /// The file version.
+        /// Used in ExportIntializer to define the Property Sets.
+        /// Try not to use it outside of ExportOptionsCache except to initialize the Property Sets.
         /// </summary>
         public IFCVersion FileVersion
         {
-            get;
-            set;
+            get
+            {
+                return m_FileVersion;
+            }
+            set
+            {
+                m_FileVersion = value;
+            }
         }
 
         /// <summary>
@@ -515,7 +525,7 @@ namespace Revit.IFC.Export.Utility
             get;
             set;
         }
-        
+
         /// <summary>
         /// Identifies if the file version being exported is 2x2.
         /// </summary>
@@ -534,7 +544,7 @@ namespace Revit.IFC.Export.Utility
         {
             get
             {
-                return FileVersion == IFCVersion.IFC2x3CV2;
+                return (FileVersion == IFCVersion.IFC2x3CV2);
             }
         }
 
@@ -545,10 +555,10 @@ namespace Revit.IFC.Export.Utility
         {
             get
             {
-                return ((FileVersion == IFCVersion.IFC2x3CV2) || (FileVersion == IFCVersion.IFC4));
+                return (FileVersion == IFCVersion.IFC2x3CV2) || (FileVersion == IFCVersion.IFC4);
             }
         }
-        
+
         /// <summary>
         /// Identifies if the file version being exported is 4.
         /// </summary>
@@ -556,7 +566,7 @@ namespace Revit.IFC.Export.Utility
         {
             get
             {
-                return FileVersion == IFCVersion.IFC4;
+                return (FileVersion == IFCVersion.IFC4);
             }
         }
 
@@ -565,16 +575,57 @@ namespace Revit.IFC.Export.Utility
         /// </summary>
         public bool ExportAs4_ADD1
         {
+            get
+            {
+                return m_ExportAs4_ADD1;
+            }
+
+            set
+            {
+                m_ExportAs4_ADD1 = value;
+            }
+
+        }
+
+        public bool ExportAs2x3
+        {
+            get
+            {
+                return ((FileVersion == IFCVersion.IFC2x3) || (FileVersion == IFCVersion.IFCCOBIE) || (FileVersion == IFCVersion.IFC2x3CV2));
+            }
+        }
+
+        public bool ExportAsCOBIE
+        {
+            get
+            {
+                return (FileVersion == IFCVersion.IFCCOBIE);
+            }
+        }
+
+        public bool ExportAs4ReferenceView
+        {
+            get
+            {
+                return (String.Compare(SelectedConfigName, "IFC4 Reference View") == 0);
+            }
+        }
+
+        public bool ExportAs4DesignTransferView
+        {
+            get
+            {
+                 return (String.Compare(SelectedConfigName, "IFC4 Design Transfer View") == 0);
+            }
+        }
+
+        public bool ExportAs2x3FMHandoverView
+        {
            get
            {
-              return m_ExportAs4_ADD1;
+              return ((String.Compare(SelectedConfigName, "IFC2x3 Basic FM Handover View") == 0)
+                 || (String.Compare(SelectedConfigName, "IFC2x3 Extended FM Handover View") == 0));
            }
-
-           set
-           {
-              m_ExportAs4_ADD1 = value;
-           }
-
         }
 
         /// <summary>
@@ -593,7 +644,7 @@ namespace Revit.IFC.Export.Utility
         {
             get
             {
-                if (ExportAnnotationsOverride != null) 
+                if (ExportAnnotationsOverride != null)
                     return (bool)ExportAnnotationsOverride;
                 return (!ExportAs2x2 && !ExportAsCoordinationView2);
             }
@@ -678,7 +729,7 @@ namespace Revit.IFC.Export.Utility
             }
         }
 
-        
+
         /// <summary>
         /// Cache variable for the ExportBoundingBox override (if set independently via the UI)
         /// </summary>
@@ -723,7 +774,7 @@ namespace Revit.IFC.Export.Utility
             get;
             set;
         }
-        
+
         /// <summary>
         /// Cache variable for the Alternate UI version override (if export from Alternate UI)
         /// </summary>
@@ -846,6 +897,15 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
+        /// Select export Config Name from the UI
+        /// </summary>
+        public String SelectedParametermappingTableName
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
         /// Allow exporting a mix of extrusions and BReps as a solid model, if possible.
         /// </summary>
         public bool CanExportSolidModelRep { get; set; }
@@ -905,7 +965,7 @@ namespace Revit.IFC.Export.Utility
 
             return m_LinkInstanceInfos[idx].Item1;
         }
-        
+
         /// <summary>
         /// Gets the transform corresponding to the given index.
         /// </summary>
@@ -942,6 +1002,26 @@ namespace Revit.IFC.Export.Utility
         {
             get;
             set;
+        }
+
+        /// <summary>
+        /// Checks if using IFCBCA - Building Code Authority code checking.
+        /// </summary>
+        /// <param name="exportOptionsCache">The export options cache.</param>
+        /// <returns>True if it is, false otherwise.</returns>
+        public bool DoCodeChecking()
+        {
+            switch (FileVersion)
+            {
+                case IFCVersion.IFC2x2:
+                    {
+                        return WallAndColumnSplitting;
+                    }
+                case IFCVersion.IFCBCA:
+                    return true;
+                default:
+                    return false;
+            }
         }
     }
 }

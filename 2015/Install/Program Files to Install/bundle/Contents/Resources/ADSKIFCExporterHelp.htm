@@ -196,6 +196,57 @@ working on expanding and eventually removing this limit, and we will be tracking
 
 <div class="versionset">
 
+<div class="version">15.6.0.0</div><div class="versioninfo-bullet">
+
+<br><p>General:
+
+<ul>
+<li>Added some minor export performance tweaks.
+<li>Added IFC4 Design Transfer View as an option.  With this option, Revit will attempt to create IfcAdvancedBReps in some cases.
+<li>The import log file now contains the importer version at the end.
+</ul>
+
+<p>New Export Functionality:
+
+<ul>
+<li>Display the element id for each element as it is exported.
+<li>Create IfcGroups for multiple IfcReinforcingBars created by one rebar element in Revit.
+<li>(IFC4) Add support for ConicalFace and fix RevolvedFace for IfcAdvancedBRep.
+<li>(IFC4) Reuse IfcCartesianPoints when exporting an IfcAdvancedBRep.
+</ul>
+
+<p>Export Bug Fixes:
+
+<ul>
+<li>Associate some entities with IfcBuilding if they have no other spatial containment, or there are no levels.
+<li>Correctly export DirectShapes of Ramp, Stairs, or certain MEP categories.
+<li>Correctly relate IfcAssembly to IfcBuildingStorey in certain cases.
+<li>Export some elements with geometry that couldn't be correctly split into multiple solids.
+<li>Fix crash in certain cases where we can't create a valid tessellation for a face.
+<li>Fix crash when exporting certain vertical roofs.
+<li>Fix crash when exporting elements with no bounding box when splitting elements by level.
+<li>Fix crash when exporting filled regions with invalid color definitions.
+<li>Fix the name of IfcArbitraryClosedProfileDef entities.
+<li>Never export curtain wall panels independent of their curtain walls.
+<li>Remove invisible geometry when exporting families when exporting elements in the current view.
+<li>(IFC4) Correct export of IfcMechanicalFastener.
+</ul>
+
+<p>New Import Functionality:
+
+<ul>
+<li>Add support for extra currency types.
+<li>Allow import of unbounded grid lines, with a warning and an arbitrary length.
+</ul>
+
+<p>Import Bug Fixes:
+
+<ul>
+<li>The IfcSweptSurface "Position" attribute is now optional.
+</ul>
+
+</div>
+
 <div class="version">15.5.0.0</div><div class="versioninfo-bullet">
 
 <br><p>General:

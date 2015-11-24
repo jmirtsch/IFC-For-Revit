@@ -76,7 +76,7 @@ namespace Revit.IFC.Export.Utility
         {
             XYZ normal = new XYZ(0, 0, 1);
             XYZ origin = XYZ.Zero;
-            return new Plane(normal, origin);
+         return new Plane(normal, origin);
         }
 
         /// <summary>
@@ -87,14 +87,15 @@ namespace Revit.IFC.Export.Utility
         /// <returns>The scaled plane.</returns>
         public static Plane GetScaledPlane(ExporterIFC exporterIFC, Plane unscaledPlane)
         {
-            if (exporterIFC == null || unscaledPlane == null)
-                throw new ArgumentNullException();
+           if (exporterIFC == null || unscaledPlane == null)
+              throw new ArgumentNullException();
 
-            XYZ scaledOrigin = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, unscaledPlane.Origin);
-            XYZ scaledXDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, unscaledPlane.XVec);
-            XYZ scaledYDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, unscaledPlane.YVec);
+           XYZ scaledOrigin = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, unscaledPlane.Origin);
+           XYZ scaledXDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, unscaledPlane.XVec);
+           XYZ scaledYDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, unscaledPlane.YVec);
+           XYZ scaledNorm = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, unscaledPlane.Normal);
 
-            return new Plane(scaledXDir, scaledYDir, scaledOrigin);
+           return new Plane(scaledXDir, scaledYDir, scaledOrigin);
         }
 
         /// <summary>
@@ -112,6 +113,7 @@ namespace Revit.IFC.Export.Utility
 
             XYZ scaledXDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, unscaledXVec);
             XYZ scaledYDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, unscaledYVec);
+         XYZ scaledNorm = scaledXDir.CrossProduct(scaledYDir);
             XYZ scaledOrigin = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, unscaledOrigin);
 
             return new Plane(scaledXDir, scaledYDir, scaledOrigin);
@@ -168,7 +170,7 @@ namespace Revit.IFC.Export.Utility
         static public double GetSimpleExtrusionSlope(XYZ extrusionDirection, IFCExtrusionBasis axis)
         {
             double zOff = (axis == IFCExtrusionBasis.BasisZ) ? (1.0 - Math.Abs(extrusionDirection[2])) : Math.Abs(extrusionDirection[2]);
-            double scaledAngle = UnitUtil.ScaleAngle(Math.Asin(zOff));
+         double scaledAngle = UnitUtil.ScaleAngle(MathUtil.SafeAsin(zOff));
             return scaledAngle;
         }
 
@@ -1022,7 +1024,7 @@ namespace Revit.IFC.Export.Utility
                     XYZ projScaledY= ExporterIFCUtils.TransformAndScaleVector(exporterIFC, extrusionBasePlane.YVec);
                     XYZ projScaledNorm = projScaledX.CrossProduct(projScaledY);
                     
-                    Plane projScaledPlane = new Plane(projScaledX, projScaledY, projScaledOrigin);
+               Plane projScaledPlane = new Plane(projScaledX, projScaledY, projScaledOrigin);
 
                     IList<UV> polylinePts = TransformAndProjectCurveLoopToPlane(exporterIFC, outerBoundary, projScaledPlane);
                     polylinePts.Add(polylinePts[0]);
@@ -1126,7 +1128,7 @@ namespace Revit.IFC.Export.Utility
                     XYZ faceOrigin = planarFace.Origin;
                     XYZ faceNormal = planarFace.ComputeNormal(faceOriginUV);
 
-                    Plane plane = new Plane(faceNormal, faceOrigin);
+               Plane plane = new Plane(faceNormal, faceOrigin);
                     outerCurveLoopPlanes.Add(plane);
 
                     if (!curveLoop.IsCounterclockwise(faceNormal))
@@ -2257,7 +2259,10 @@ namespace Revit.IFC.Export.Utility
         /// <remarks>This calls the internal SolidUtils.SplitVolumes routine, but does additional cleanup work to properly dispose of stale data.</remarks>
         public static IList<Solid> SplitVolumes(Solid solid)
         {
-            IList<Solid> splitVolumes = SolidUtils.SplitVolumes(solid);
+         IList<Solid> splitVolumes = null;
+         try
+         {
+            splitVolumes = SolidUtils.SplitVolumes(solid);
             foreach (Solid currSolid in splitVolumes)
             {
                 // The geometry element created by SplitVolumes is a copy which will have its own allocated
@@ -2265,6 +2270,13 @@ namespace Revit.IFC.Export.Utility
                 // for details)
                 ExporterCacheManager.AllocatedGeometryObjectCache.AddGeometryObject(currSolid);
             }
+         }
+         catch
+         {
+            // Split volumes can fail; in this case, we'll export the original solid.
+            splitVolumes = new List<Solid>();
+            splitVolumes.Add(solid);
+         }
             return splitVolumes;
         }
 
@@ -2525,8 +2537,8 @@ namespace Revit.IFC.Export.Utility
         public static IFCAnyHandle GetIndexedTriangles(IFCFile file, List<List<XYZ>> triangleList)
         {
             List<XYZ> vertList = new List<XYZ>();
-            List<List<double>> coordList = new List<List<double>>();
-            List<List<int>> triIndex = new List<List<int>>();
+         IList<IList<double>> coordList = new List<IList<double>>();
+         IList<IList<int>> triIndex = new List<IList<int>>();
 
             if (triangleList.Count == 0)
                 return null;
@@ -2693,8 +2705,17 @@ namespace Revit.IFC.Export.Utility
 
                         // If this edge is the last edge in the loop, then both of its end point will already be in the loop, hence we need an extra
                         // check to avoid adding redundant points.
+                  double distEndToStart = tessellatedEdge[tessellatedEdge.Count - 1].DistanceTo(tessellatedLoop[0]);
+                  double distStartToStart = tessellatedEdge[0].DistanceTo(tessellatedLoop[0]);
+                  double distEndToEnd = tessellatedEdge[tessellatedEdge.Count - 1].DistanceTo(tessellatedLoop[tessellatedLoop.Count - 1]);
+                  double distStartToEnd = tessellatedEdge[0].DistanceTo(tessellatedLoop[tessellatedLoop.Count - 1]);
 
-                        if (tessellatedEdge[tessellatedEdge.Count - 1].IsAlmostEqualTo(tessellatedLoop[0])) 
+                  double minDist = Math.Min(Math.Min(distEndToStart, distStartToStart), Math.Min(distEndToEnd, distStartToEnd));
+                  double uvTol = ExporterCacheManager.Document.Application.VertexTolerance;
+                  if (minDist > uvTol)
+                     throw new InvalidOperationException("Disconnected edge loop");
+
+                  if (MathUtil.IsAlmostEqual(distEndToStart, minDist))
                         {
                             // if the last point of the edge is the first point of the loop, then remove that last point, and
                             // append the loop to this edge
@@ -2706,7 +2727,7 @@ namespace Revit.IFC.Export.Utility
                             tessellatedEdge.AddRange(tessellatedLoop);
                             tessellatedLoop = tessellatedEdge;
                         }
-                        else if (tessellatedEdge[0].IsAlmostEqualTo(tessellatedLoop[0])) 
+                  else if (MathUtil.IsAlmostEqual(distStartToStart, minDist))
                         {
                             // if the first point of the edge is the first point of the loop, we reverse the edge, remove the last point (which used to be 
                             // the first one), and append the loop to this edge
@@ -2719,7 +2740,7 @@ namespace Revit.IFC.Export.Utility
                             tessellatedEdge.AddRange(tessellatedLoop);
                             tessellatedLoop = tessellatedEdge;
                         }
-                        else if (tessellatedEdge[tessellatedEdge.Count - 1].IsAlmostEqualTo(tessellatedLoop[tessellatedLoop.Count - 1])) 
+                  else if (MathUtil.IsAlmostEqual(distEndToEnd, minDist))
                         {
                             // if the last point of the edge is the last point of the loop, we remove that point and append the reversed edge to the loop
                             tessellatedEdge.Reverse();
@@ -2730,7 +2751,7 @@ namespace Revit.IFC.Export.Utility
                             }
                             tessellatedLoop.AddRange(tessellatedEdge);
                         }
-                        else if (tessellatedEdge[0].IsAlmostEqualTo(tessellatedLoop[tessellatedLoop.Count - 1]))
+                  else if (MathUtil.IsAlmostEqual(distStartToEnd, minDist))
                         {
                             // if the last point of the loop is the first point of the edge, then we remove that point and append the edge to the loop
                             tessellatedEdge.RemoveAt(0);
@@ -2742,7 +2763,7 @@ namespace Revit.IFC.Export.Utility
                         }
                         else 
                         {
-                            throw new InvalidOperationException("Disconnected edge loop");
+                     throw new InvalidOperationException("Unexpected case.");
                         }
                     }
                 }
@@ -2895,8 +2916,12 @@ namespace Revit.IFC.Export.Utility
         /// <param name="curve">The curve that needs to convert to IFCCurve</param>
         /// <param name="allowAdvancedCurve">indicates whether (TRUE) we want to convert "advanced" curve type 
         ///                                  like Hermite or NURBS to IfcCurve or (FALSE) we want to tessellate them</param>
+      /// <param name="cartesianPoints">A map of already created cartesian points, to avoid duplication.</param>
         /// <returns>The handle representing the IFCCurve</returns>
-        public static IFCAnyHandle CreateIFCCurveFromRevitCurve(IFCFile file, ExporterIFC exporterIFC, Curve curve, bool allowAdvancedCurve) 
+      /// <remarks>This cartesianPoints map caches certain 3D points computed by this function that are related to the 
+      /// curve, such as the start point of a line and the center of an arc.  It uses the cached values when possible.</remarks>
+      public static IFCAnyHandle CreateIFCCurveFromRevitCurve(IFCFile file, ExporterIFC exporterIFC, Curve curve, bool allowAdvancedCurve,
+         IDictionary<IFCFuzzyXYZ, IFCAnyHandle> cartesianPoints)
         {
             IFCAnyHandle ifcCurve = null;
 
@@ -2907,12 +2932,9 @@ namespace Revit.IFC.Export.Utility
                 if (curve.IsBound)
                 {
                     Line curveLine = curve as Line;
-                    IFCAnyHandle point = XYZtoIfcCartesianPoint(exporterIFC, curveLine.GetEndPoint(0), true);
-                    IList<double> direction = new List<double>();
-                    direction.Add(UnitUtil.ScaleLength(curveLine.Direction.X));
-                    direction.Add(UnitUtil.ScaleLength(curveLine.Direction.Y));
-                    direction.Add(UnitUtil.ScaleLength(curveLine.Direction.Z));
-                    IFCAnyHandle vector = IFCInstanceExporter.CreateVector(file, direction, curveLine.Direction.GetLength());
+               IFCAnyHandle point = XYZtoIfcCartesianPoint(exporterIFC, curveLine.GetEndPoint(0), cartesianPoints);
+               IFCAnyHandle vector = VectorToIfcVector(exporterIFC, curveLine.Direction);
+
                     ifcCurve = IFCInstanceExporter.CreateLine(file, point, vector);
                 }
             }
@@ -2929,23 +2951,13 @@ namespace Revit.IFC.Export.Utility
                     // encounter invalid curve, return null
                     return null;
                 }
-                IFCAnyHandle location3D = XYZtoIfcCartesianPoint(exporterIFC, curveArcCenter, true);
+            IFCAnyHandle location3D = XYZtoIfcCartesianPoint(exporterIFC, curveArcCenter, cartesianPoints);
 
                 // Create the z-direction
-                IFCAnyHandle axis = null;
-                IList<double> axisList = new List<double>();
-                axisList.Add(UnitUtil.ScaleLength(curveArcNormal.X));
-                axisList.Add(UnitUtil.ScaleLength(curveArcNormal.Y));
-                axisList.Add(UnitUtil.ScaleLength(curveArcNormal.Z));
-                axis = IFCInstanceExporter.CreateDirection(file, axisList);
+            IFCAnyHandle axis = VectorToIfcDirection(exporterIFC, curveArcNormal);
 
                 // Create the x-direction
-                IFCAnyHandle refDirection = null;
-                IList<double> refDirectionList = new List<double>();
-                refDirectionList.Add(UnitUtil.ScaleLength(curveArcXDirection.X));
-                refDirectionList.Add(UnitUtil.ScaleLength(curveArcXDirection.Y));
-                refDirectionList.Add(UnitUtil.ScaleLength(curveArcXDirection.Z));
-                refDirection = IFCInstanceExporter.CreateDirection(file, refDirectionList);
+            IFCAnyHandle refDirection = VectorToIfcDirection(exporterIFC, curveArcXDirection);
 
                 IFCAnyHandle position3D = IFCInstanceExporter.CreateAxis2Placement3D(file, location3D, axis, refDirection);
                 ifcCurve = IFCInstanceExporter.CreateCircle(file, position3D, UnitUtil.ScaleLength(curveArc.Radius));
@@ -2958,22 +2970,12 @@ namespace Revit.IFC.Export.Utility
                 XYZ ellipseNormal = curveEllipse.Normal;
                 XYZ ellipseXDirection = curveEllipse.XDirection;
 
-                IFCAnyHandle location3D = XYZtoIfcCartesianPoint(exporterIFC, curveEllipse.Center, true);
+            IFCAnyHandle location3D = XYZtoIfcCartesianPoint(exporterIFC, curveEllipse.Center, cartesianPoints);
 
-                IFCAnyHandle axis = null;
-                IList<double> axisList = new List<double>();
-                axisList.Add(UnitUtil.ScaleLength(ellipseNormal.X));
-                axisList.Add(UnitUtil.ScaleLength(ellipseNormal.Y));
-                axisList.Add(UnitUtil.ScaleLength(ellipseNormal.Z));
-                axis = IFCInstanceExporter.CreateDirection(file, axisList);
+            IFCAnyHandle axis = VectorToIfcDirection(exporterIFC, ellipseNormal);
 
                 // Create the x-direction
-                IFCAnyHandle refDirection = null;
-                IList<double> refDirectionList = new List<double>();
-                refDirectionList.Add(UnitUtil.ScaleLength(ellipseXDirection.X));
-                refDirectionList.Add(UnitUtil.ScaleLength(ellipseXDirection.Y));
-                refDirectionList.Add(UnitUtil.ScaleLength(ellipseXDirection.Z));
-                refDirection = IFCInstanceExporter.CreateDirection(file, refDirectionList);
+            IFCAnyHandle refDirection = VectorToIfcDirection(exporterIFC, ellipseXDirection);
 
                 IFCAnyHandle position = IFCInstanceExporter.CreateAxis2Placement3D(file, location3D, axis, refDirection);
 
@@ -2988,7 +2990,7 @@ namespace Revit.IFC.Export.Utility
                 IList<IFCAnyHandle> controlPointsInIfc = new List<IFCAnyHandle>();
                 foreach (XYZ xyz in controlPoints)
                 {
-                    controlPointsInIfc.Add(XYZtoIfcCartesianPoint(exporterIFC, xyz, true));
+               controlPointsInIfc.Add(XYZtoIfcCartesianPoint(exporterIFC, xyz, cartesianPoints));
                 }
 
                 // Based on IFC4 specification, curveForm is for information only, leave it as UNSPECIFIED for now.
@@ -3049,7 +3051,7 @@ namespace Revit.IFC.Export.Utility
                 IList<IFCAnyHandle> polylineVertices = new List<IFCAnyHandle>();
                 foreach (XYZ vertex in tessCurve)
                 {
-                    IFCAnyHandle ifcVert = XYZtoIfcCartesianPoint(exporterIFC, vertex, true);
+               IFCAnyHandle ifcVert = XYZtoIfcCartesianPoint(exporterIFC, vertex, cartesianPoints);
                     polylineVertices.Add(ifcVert);
                 }
                 ifcCurve = IFCInstanceExporter.CreatePolyline(file, polylineVertices);
@@ -3062,42 +3064,56 @@ namespace Revit.IFC.Export.Utility
         /// </summary>
         /// <param name="exporterIFC">The exporter</param>
         /// <param name="thePoint">The point</param>
-        /// <param name="applyUnitScale">indicates if we want to convert the point from global Revit coordinates to IFC current coordinates, including scale</param>
-        /// <returns>The hanlde representing IfcCartesianPoint3D</returns>
-        public static IFCAnyHandle XYZtoIfcCartesianPoint(ExporterIFC exporterIFC, XYZ thePoint, bool applyUnitScale)
+      /// <param name="cartesianPoints">A map of already created IfcCartesianPoints.  This argument may be null.</param>
+      /// <returns>The handle representing IfcCartesianPoint</returns>
+      public static IFCAnyHandle XYZtoIfcCartesianPoint(ExporterIFC exporterIFC, XYZ thePoint, IDictionary<IFCFuzzyXYZ, IFCAnyHandle> cartesianPoints)
         {
             IFCFile file = exporterIFC.GetFile();
-            XYZ vertexScaled = thePoint;
-            if (applyUnitScale)
-                vertexScaled = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, thePoint);
+         XYZ vertexScaled = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, thePoint);
+         IFCFuzzyXYZ fuzzyVertexScaled = (cartesianPoints != null) ? new IFCFuzzyXYZ(vertexScaled) : null;
 
-            IList<double> coordPoint = new List<double>();
-            coordPoint.Add(vertexScaled.X);
-            coordPoint.Add(vertexScaled.Y);
-            coordPoint.Add(vertexScaled.Z);
-            IFCAnyHandle cartesianPoint = IFCInstanceExporter.CreateCartesianPoint(file, coordPoint);
+         IFCAnyHandle cartesianPoint = null;
+         if (fuzzyVertexScaled != null && cartesianPoints.TryGetValue(fuzzyVertexScaled, out cartesianPoint))
+            return cartesianPoint;
+
+         cartesianPoint = ExporterUtil.CreateCartesianPoint(file, vertexScaled);
+         if (fuzzyVertexScaled != null)
+            cartesianPoints[fuzzyVertexScaled] = cartesianPoint;
+
             return cartesianPoint;
         }
 
         /// <summary>
-        /// Converts the given XYZ point to IfcCartesianPoint2D
+      /// Converts the given XYZ vector to IfcDirection
         /// </summary>
         /// <param name="exporterIFC">The exporter</param>
-        /// <param name="thePoint">The point</param>
-        /// <param name="applyUnitScale">indicates if we want to convert the point from global Revit coordinates to IFC current coordinates, including scale</param>
-        /// <returns>The hanlde representing IfcCartesianPoint2D</returns>
-        public static IFCAnyHandle XYZtoIfcCartesianPoint2D(ExporterIFC exporterIFC, XYZ thePoint, bool applyUnitScale)
+      /// <param name="theVector">The vector</param>
+      /// <returns>The hanlde representing IfcDirection</returns>
+      public static IFCAnyHandle VectorToIfcDirection(ExporterIFC exporterIFC, XYZ theVector)
         {
             IFCFile file = exporterIFC.GetFile();
-            XYZ vertexScaled = thePoint;
-            if (applyUnitScale)
-                vertexScaled = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, thePoint);
+         XYZ vectorScaled = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, theVector);
 
-            IList<double> coordPoint = new List<double>();
-            coordPoint.Add(vertexScaled.X);
-            coordPoint.Add(vertexScaled.Y);
-            IFCAnyHandle cartesianPoint = IFCInstanceExporter.CreateCartesianPoint(file, coordPoint);
-            return cartesianPoint;
+         IFCAnyHandle direction = ExporterUtil.CreateDirection(file, vectorScaled);
+         return direction;
+      }
+
+      /// <summary>
+      /// Converts the given XYZ vector to IfcVector
+      /// </summary>
+      /// <param name="exporterIFC">The exporter</param>
+      /// <param name="theVector">The vector</param>
+      /// <returns>The hanlde representing IfcVector</returns>
+      public static IFCAnyHandle VectorToIfcVector(ExporterIFC exporterIFC, XYZ theVector)
+      {
+         IFCFile file = exporterIFC.GetFile();
+         XYZ vectorScaled = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, theVector);
+
+         double lineLength = UnitUtil.ScaleLength(theVector.GetLength());
+
+         IFCAnyHandle vector = ExporterUtil.CreateVector(file, vectorScaled, lineLength);
+         return vector;
         }
+
     }
 }

@@ -131,7 +131,7 @@ namespace Revit.IFC.Export.Exporter
                             continue;
 
                         bool almostZeroWidth = MathUtil.IsAlmostZero(widths[ii]);
-                        if (ExporterCacheManager.ExportOptionsCache.FileVersion != IFCVersion.IFC4 && almostZeroWidth)
+                        if (!ExporterCacheManager.ExportOptionsCache.ExportAs4 && almostZeroWidth)
                             continue;
 
                         if (almostZeroWidth)
@@ -308,7 +308,7 @@ namespace Revit.IFC.Export.Exporter
                 if (matId != ElementId.InvalidElementId)
                     return matId;
                 else
-                    return CategoryUtil.GetBaseMaterialIdForElement(hostObject);;
+                    return CategoryUtil.GetBaseMaterialIdForElement(hostObject); ;
             }
 
             return ElementId.InvalidElementId;

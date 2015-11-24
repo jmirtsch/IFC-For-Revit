@@ -112,9 +112,8 @@ namespace Revit.IFC.Export.Exporter
                               IList<Mesh> polyMeshes = solidMeshCapsule.GetMeshes();
 
                               IList<GeometryObject> geomObjects =
-                                  FamilyExporterUtil.RemoveSolidsAndMeshesSetToDontExport(element.Document,
-                                                                                          exporterIFC, solids,
-                                                                                          polyMeshes);
+                               FamilyExporterUtil.RemoveInvisibleSolidsAndMeshes(element.Document,
+                               exporterIFC, solids, polyMeshes);
 
                               if (geomObjects.Count == 0 && (solids.Count > 0 || polyMeshes.Count > 0))
                                  return false;
@@ -180,6 +179,10 @@ namespace Revit.IFC.Export.Exporter
             IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
             ElementId typeId = element.GetTypeId();
             ElementType type = element.Document.GetElement(typeId) as ElementType;
+         IFCAnyHandle styleHandle = null;
+
+         if (type != null)
+         {
             FamilyTypeInfo currentTypeInfo = ExporterCacheManager.TypeObjectsCache.Find(typeId, false);
 
             bool found = currentTypeInfo.IsValid();
@@ -195,7 +198,7 @@ namespace Revit.IFC.Export.Exporter
                 HashSet<IFCAnyHandle> propertySetsOpt = new HashSet<IFCAnyHandle>();
                 IList<IFCAnyHandle> repMapListOpt = new List<IFCAnyHandle>();
 
-                IFCAnyHandle styleHandle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, typeGUID, typeName,
+               styleHandle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, typeGUID, typeName,
                     typeDescription, applicableOccurance, propertySetsOpt, repMapListOpt, typeElemId, typeName, element, type);
                 if (!IFCAnyHandleUtil.IsNullOrHasNoValue(styleHandle))
                 {
@@ -203,6 +206,12 @@ namespace Revit.IFC.Export.Exporter
                     ExporterCacheManager.TypeObjectsCache.Register(typeId, false, currentTypeInfo);
                 }
             }
+            else
+            {
+               styleHandle = currentTypeInfo.Style;
+            }
+         }
+
             string instanceGUID = GUIDUtil.CreateGUID(element);
             string instanceName = NamingUtil.GetIFCName(element);
             string objectType = NamingUtil.CreateIFCObjectName(exporterIFC, element);
@@ -250,8 +259,8 @@ namespace Revit.IFC.Export.Exporter
 
             OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, element, extraParams, null, exporterIFC, localPlacementToUse, setter, productWrapper);
 
-            if (currentTypeInfo.IsValid())
-                ExporterCacheManager.TypeRelationsCache.Add(currentTypeInfo.Style, instanceHandle);
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(styleHandle))
+            ExporterCacheManager.TypeRelationsCache.Add(styleHandle, instanceHandle);
 
             PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper.GetAllObjects());
 

@@ -114,6 +114,14 @@ namespace Revit.IFC.Import.Data
 
         private bool AreLinesEqual(Line line1, Line line2)
         {
+         if (!line1.IsBound || !line2.IsBound)
+         {
+            // Two unbound lines are equal if they are going in the same direction and the origin
+            // of one lies on the other one.
+            return line1.Direction.IsAlmostEqualTo(line2.Direction) &&
+               MathUtil.IsAlmostZero(line1.Project(line2.Origin).Distance);
+         }
+
             for (int ii = 0; ii < 2; ii++)
             {
                 if (line1.GetEndPoint(0).IsAlmostEqualTo(line2.GetEndPoint(ii)) &&
@@ -352,6 +360,12 @@ namespace Revit.IFC.Import.Data
                 IsValidForCreation = false;
                 return;
             }
+
+         if (!curve.IsBound)
+         {
+            curve.MakeBound(-100, 100);
+            Importer.TheLog.LogWarning(AxisCurve.Id, "Creating arbitrary bounds for unbounded grid line.", false);
+         }
 
             // Grid.create can throw, so catch the exception if it does.
             try
