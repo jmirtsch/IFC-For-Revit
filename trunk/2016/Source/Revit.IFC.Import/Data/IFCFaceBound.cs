@@ -137,7 +137,7 @@ namespace Revit.IFC.Import.Data
            {
               try
               {
-                 tsBuilderScope.AddLoopVertices(validVertices);
+                 tsBuilderScope.AddLoopVertices(Id, validVertices);
               }
               catch (InvalidOperationException ex)
               {

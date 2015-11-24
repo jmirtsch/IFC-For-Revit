@@ -115,7 +115,7 @@ namespace Revit.IFC.Export.Utility
                 ExporterCacheManager.PresentationLayerSetCache.AddRepresentationToLayer(ifcCADLayer, newShapeRepresentation);
             else
                 exporterIFC.RegisterShapeForPresentationLayer(element, categoryId, newShapeRepresentation);
-            
+
             return newShapeRepresentation;
         }
 
@@ -142,7 +142,7 @@ namespace Revit.IFC.Export.Utility
             ExporterCacheManager.PresentationLayerSetCache.AddRepresentationToLayer(ifcCADLayer, newShapeRepresentation);
             return newShapeRepresentation;
         }
-        
+
         /// <summary>
         /// Creates a shape representation and register it to shape representation layer.
         /// </summary>
@@ -228,7 +228,7 @@ namespace Revit.IFC.Export.Utility
         /// <param name="bodyItems">Set of geometric representation items that are defined for this representation.</param>
         /// <param name="originalShapeRepresentation">The original shape representation.</param>
         /// <returns>The handle.</returns>
-        public static IFCAnyHandle CreateSweptSolidRep(ExporterIFC exporterIFC, Element element, ElementId categoryId, IFCAnyHandle contextOfItems, 
+        public static IFCAnyHandle CreateSweptSolidRep(ExporterIFC exporterIFC, Element element, ElementId categoryId, IFCAnyHandle contextOfItems,
             ISet<IFCAnyHandle> bodyItems, IFCAnyHandle originalRepresentation)
         {
             string identifierOpt = "Body";	// this is by IFC2x2 convention, not temporary
@@ -350,7 +350,7 @@ namespace Revit.IFC.Export.Utility
             string identifierOpt = null;
             if (exportAsFacetationOrMesh)
             {
-                if (ExporterCacheManager.ExportOptionsCache.FileVersion == IFCVersion.IFCCOBIE)
+                if (ExporterCacheManager.ExportOptionsCache.ExportAsCOBIE)
                     identifierOpt = ShapeRepresentationType.Mesh.ToString(); // IFC GSA convention
                 else
                     identifierOpt = ShapeRepresentationType.Facetation.ToString(); // IFC2x2+ convention
@@ -491,7 +491,7 @@ namespace Revit.IFC.Export.Utility
         /// <remarks>allowOffsetTransform should only be set to true if no other associated geometry is going to be exported.  Otherwise,
         /// there could be an offset between this geometry and the other, non-transformed, geometry.</remarks>
         public static IFCAnyHandle CreateAppropriateProductDefinitionShape(ExporterIFC exporterIFC, Element element, ElementId categoryId,
-            GeometryElement geometryElement, BodyExporterOptions bodyExporterOptions, IList<IFCAnyHandle> extraReps, 
+            GeometryElement geometryElement, BodyExporterOptions bodyExporterOptions, IList<IFCAnyHandle> extraReps,
             IFCExtrusionCreationData extrusionCreationData, bool allowOffsetTransform)
         {
             BodyData bodyData;
@@ -514,7 +514,7 @@ namespace Revit.IFC.Export.Utility
         /// <param name="bodyData">The body data.</param>
         /// <returns>The handle.</returns>
         public static IFCAnyHandle CreateAppropriateProductDefinitionShape(ExporterIFC exporterIFC, Element element, ElementId categoryId,
-            GeometryElement geometryElement, BodyExporterOptions bodyExporterOptions, IList<IFCAnyHandle> extraReps, 
+            GeometryElement geometryElement, BodyExporterOptions bodyExporterOptions, IList<IFCAnyHandle> extraReps,
             IFCExtrusionCreationData extrusionCreationData, out BodyData bodyData)
         {
             bodyData = null;
@@ -539,7 +539,7 @@ namespace Revit.IFC.Export.Utility
                 geometryList.Add(geometryElement);
             else
                 bodyExporterOptions.TryToExportAsExtrusion = true;
-           
+
             bodyData = BodyExporter.ExportBody(exporterIFC, element, categoryId, ElementId.InvalidElementId, geometryList,
                 bodyExporterOptions, extrusionCreationData);
             IFCAnyHandle bodyRep = bodyData.RepresentationHnd;
@@ -651,7 +651,7 @@ namespace Revit.IFC.Export.Utility
             ISet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
             bodyItems.Add(extrusionHnd);
 
-            IFCAnyHandle contextOfItems = exporterIFC.Get3DContextHandle("Body"); 
+            IFCAnyHandle contextOfItems = exporterIFC.Get3DContextHandle("Body");
             IFCAnyHandle shapeRepHnd = CreateSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItems, null);
 
             IList<IFCAnyHandle> shapeReps = new List<IFCAnyHandle>();

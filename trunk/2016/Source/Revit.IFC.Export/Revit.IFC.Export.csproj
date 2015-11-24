@@ -274,9 +274,7 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Interface\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project=".\Revit.IFC.Export.props" />
   <PropertyGroup>
     <PostBuildEvent>call $(SolutionDir)SignFile.bat $(TargetPath)

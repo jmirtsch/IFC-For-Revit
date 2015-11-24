@@ -65,7 +65,7 @@ namespace Revit.IFC.Export.Exporter
             IFCAnyHandle surface;
 
             // Use tessellated geometry for surface in IFC Reference View
-            if (ExporterUtil.IsReferenceView())
+            if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
             {
                 BodyExporterOptions options = new BodyExporterOptions(false);
                 surface = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, element, options, geometryElement);
@@ -99,7 +99,7 @@ namespace Revit.IFC.Export.Exporter
 
             ElementId catId = CategoryUtil.GetSafeCategoryId(element);
 
-            bodyRep = RepresentationUtil.CreateSurfaceRep(exporterIFC, element, catId, exporterIFC.Get3DContextHandle("Body"), surfaceItems, 
+            bodyRep = RepresentationUtil.CreateSurfaceRep(exporterIFC, element, catId, exporterIFC.Get3DContextHandle("Body"), surfaceItems,
                 exportAsFacetation, bodyRep);
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRep))
                 return false;
@@ -109,7 +109,7 @@ namespace Revit.IFC.Export.Exporter
             {
                 HashSet<IFCAnyHandle> boundaryRepresentationSet = new HashSet<IFCAnyHandle>();
                 boundaryRepresentationSet.UnionWith(boundaryRepresentations);
-                boundaryRep = RepresentationUtil.CreateBoundaryRep(exporterIFC, element, catId, exporterIFC.Get3DContextHandle("FootPrint"), boundaryRepresentationSet, 
+                boundaryRep = RepresentationUtil.CreateBoundaryRep(exporterIFC, element, catId, exporterIFC.Get3DContextHandle("FootPrint"), boundaryRepresentationSet,
                     boundaryRep);
             }
 

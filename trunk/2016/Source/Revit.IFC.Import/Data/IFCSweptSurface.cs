@@ -60,7 +60,10 @@ namespace Revit.IFC.Import.Data
             IFCAnyHandle sweptCurve = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcSurface, "SweptCurve", true);
             SweptCurve = IFCProfile.ProcessIFCProfile(sweptCurve);
 
-            IFCAnyHandle position = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcSurface, "Position", true);
+         IFCAnyHandle position = IFCImportHandleUtil.GetOptionalInstanceAttribute(ifcSurface, "Position");
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(position))
+            Position = Transform.Identity;
+         else
             Position = IFCLocation.ProcessIFCAxis2Placement(position);
         }
 

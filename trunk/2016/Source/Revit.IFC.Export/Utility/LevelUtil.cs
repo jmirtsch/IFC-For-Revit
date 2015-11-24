@@ -178,9 +178,9 @@ namespace Revit.IFC.Export.Utility
       /// If the parameter is not set, or the distance is negative, 0 is returned.
       /// This is not set in IFCLevelInfo as we want this calculation to be done in .NET code.
       /// </summary>
-      /// <param name="level">
-      /// The Level.
-      /// </param>
+      /// <param name="doc">The document.</param>
+      /// <param name="levelId">The element id of the level.</param>
+      /// <param name="levelInfo">The associated level information object.</param>
       public static double CalculateDistanceToNextLevel(Document doc, ElementId levelId, IFCLevelInfo levelInfo)
       {
          double height = 0.0;
@@ -274,6 +274,9 @@ namespace Revit.IFC.Export.Utility
             return;
 
          BoundingBoxXYZ boundingBox = element.get_BoundingBox(null);
+         if (boundingBox == null)
+            return;
+
          {
             IFCRange zSpan = new IFCRange(boundingBox.Min.Z, boundingBox.Max.Z);
             if (zSpan.Start < zSpan.End)

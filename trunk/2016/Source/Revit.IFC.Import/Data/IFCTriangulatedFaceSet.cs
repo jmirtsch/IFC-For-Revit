@@ -167,15 +167,8 @@ namespace Revit.IFC.Import.Data
                     }
                     else
                     {
-                        try
-                        {
-                            tsBuilderScope.AddLoopVertices(validVertices);
-                        }
-                        catch (InvalidOperationException ex)
-                        {
-                            Importer.TheLog.LogComment(Id, ex.Message, false);
+                        if (!tsBuilderScope.AddLoopVertices(Id, validVertices))
                             bPotentiallyAbortFace = true;
-                        }
                     }
 
                     if (bPotentiallyAbortFace)

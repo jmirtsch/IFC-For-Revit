@@ -323,6 +323,28 @@ namespace Revit.IFC.Export.Exporter
             return typeStyle;
         }
 
+        private static bool CanHaveInsulationOrLining(IFCExportType exportType, ElementId categoryId)
+        {
+           // This is intended to reduce the number of exceptions thrown in GetLiningIds and GetInsulationIds.
+           // There may still be some exceptions thrown as the category list below is still too large for GetLiningIds.
+           if (exportType != IFCExportType.IfcDuctFittingType && exportType != IFCExportType.IfcPipeFittingType &&
+              exportType != IFCExportType.IfcDuctSegmentType && exportType != IFCExportType.IfcPipeSegmentType)
+              return false;
+
+           int catIdAsInt = categoryId.IntegerValue;
+           if ((catIdAsInt == (int)BuiltInCategory.OST_DuctAccessory) ||
+              (catIdAsInt == (int)BuiltInCategory.OST_DuctCurves) ||
+              (catIdAsInt == (int)BuiltInCategory.OST_DuctFitting) ||
+              (catIdAsInt == (int)BuiltInCategory.OST_FlexDuctCurves) ||
+              (catIdAsInt == (int)BuiltInCategory.OST_FlexPipeCurves) ||
+              (catIdAsInt == (int)BuiltInCategory.OST_PipeAccessory) ||
+              (catIdAsInt == (int)BuiltInCategory.OST_PipeCurves) ||
+              (catIdAsInt == (int)BuiltInCategory.OST_PipeFitting))
+              return true;
+
+           return false;
+        }
+
         /// <summary>
         /// Exports a family instance as a mapped item.
         /// </summary>
@@ -450,7 +472,7 @@ namespace Revit.IFC.Export.Exporter
 
                             if (hasSolidsOrMeshesInSymbol)
                             {
-                                geomObjects = FamilyExporterUtil.RemoveSolidsAndMeshesSetToDontExport(doc, exporterIFC, solids, polyMeshes);
+                               geomObjects = FamilyExporterUtil.RemoveInvisibleSolidsAndMeshes(doc, exporterIFC, solids, polyMeshes);
                                 if ((geomObjects.Count == 0))
                                     return; // no proper visible split geometry to export.
                             }
@@ -704,8 +726,7 @@ namespace Revit.IFC.Export.Exporter
                         {
                             ExporterCacheManager.MEPCache.Register(familyInstance, instanceHandle);
                             // For ducts and pipes, check later if there is an associated duct or pipe.
-                            if (exportType == IFCExportType.IfcDuctFittingType || exportType == IFCExportType.IfcPipeFittingType ||
-                                exportType == IFCExportType.IfcDuctSegmentType || exportType == IFCExportType.IfcPipeSegmentType)
+                            if (CanHaveInsulationOrLining(exportType, categoryId))
                                 ExporterCacheManager.MEPCache.CoveredElementsCache.Add(familyInstance.Id);
                         }
 

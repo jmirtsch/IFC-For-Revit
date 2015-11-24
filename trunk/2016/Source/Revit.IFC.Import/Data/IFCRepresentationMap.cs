@@ -164,7 +164,8 @@ namespace Revit.IFC.Import.Data
 
                         //IFCImportFile.TheFile.ShapeLibrary.AddDefinition(Id.ToString(), mappedItems);
 
-                        DirectShapeType directShapeType = DirectShapeType.Create(IFCImportFile.TheFile.Document, Id.ToString(), shapeEditScope.CategoryId);
+                        Document doc = IFCImportFile.TheFile.Document;
+                        DirectShapeType directShapeType = DirectShapeType.Create(doc, Id.ToString(), shapeEditScope.CategoryId);
                         directShapeType.SetShape(mappedSolids);
                         shapeEditScope.SetPlanViewRep(directShapeType);
 

@@ -437,7 +437,7 @@ namespace Revit.IFC.Common.Utility
         /// <param name="handle">the handle</param>
         /// <param name="name">The attribute name</param>
         /// <param name="values">The values</param>
-        public static void SetAttribute(IFCAnyHandle handle, string name, List<List<double>> values, 
+        public static void SetAttribute(IFCAnyHandle handle, string name, IList<IList<double>> values, 
             int? outerListMin, int? outerListMax, int? innerListMin, int? innerListMax)
         {
             if (String.IsNullOrEmpty(name))
@@ -489,45 +489,46 @@ namespace Revit.IFC.Common.Utility
         /// <param name="outerListMax">the the array list upper bound for the outer list</param>
         /// <param name="innerListMin">the the array list lower bound for the inner list</param>
         /// <param name="innerListMax">the the array list upper bound for the inner list</param>
-        public static void SetAttribute(IFCAnyHandle handle, string name, List<List<int>> values,
+        public static void SetAttribute(IFCAnyHandle handle, string name, IList<IList<int>> values,
                     int? outerListMin, int? outerListMax, int? innerListMin, int? innerListMax)
         {
-            if (String.IsNullOrEmpty(name))
-                throw new ArgumentException("The name is empty.", "name");
+           if (String.IsNullOrEmpty(name))
+              throw new ArgumentException("The name is empty.", "name");
 
-            if (values != null)
-            {
-                if (outerListMax != null)
-                    if (values.Count > outerListMax)
-                        throw new ArgumentException("The outer List is larger than max. bound");
-                if (outerListMin != null)
-                    if (values.Count < outerListMin)
-                        throw new ArgumentException("The outer List is less than min. bound");
+           if (values != null)
+           {
+              if (outerListMax != null)
+                 if (values.Count > outerListMax)
+                    throw new ArgumentException("The outer List is larger than max. bound");
+              if (outerListMin != null)
+                 if (values.Count < outerListMin)
+                    throw new ArgumentException("The outer List is less than min. bound");
 
-                IFCAggregate outerList = handle.CreateAggregateAttribute(name);
+              IFCAggregate outerList = handle.CreateAggregateAttribute(name);
 
-                foreach (List<int> valuesItem in values)
-                {
-                    if (innerListMax != null)
-                        if (valuesItem.Count > innerListMax)
-                            throw new ArgumentException("The inner List is larger than max. bound");
-                    if (innerListMin != null)
-                        if (valuesItem.Count < innerListMin)
-                            throw new ArgumentException("The inner List is less than min. bound");
+              foreach (IList<int> valuesItem in values)
+              {
+                 if (innerListMax != null)
+                    if (valuesItem.Count > innerListMax)
+                       throw new ArgumentException("The inner List is larger than max. bound");
+                 if (innerListMin != null)
+                    if (valuesItem.Count < innerListMin)
+                       throw new ArgumentException("The inner List is less than min. bound");
 
-                    IFCAggregate innerList = outerList.AddAggregate();
+                 IFCAggregate innerList = outerList.AddAggregate();
 
-                    foreach (int Ivalue in valuesItem)
+                 foreach (int Ivalue in valuesItem)
+                 {
+                    try
                     {
-                        try
-                        {
-                            innerList.Add(IFCData.CreateInteger(Ivalue));
-                        }
-                        catch { }
+                       innerList.Add(IFCData.CreateInteger(Ivalue));
                     }
-                }
-                // SetAttribute(handle, name, val);
-            }
+                    catch
+                    {
+                    }
+                 }
+              }
+           }
         }
 
         /// <summary>
@@ -540,7 +541,7 @@ namespace Revit.IFC.Common.Utility
         /// <param name="outerListMax">the the array list upper bound for the outer list</param>
         /// <param name="innerListMin">the the array list lower bound for the inner list</param>
         /// <param name="innerListMax">the the array list upper bound for the inner list</param>
-        public static void SetAttribute(IFCAnyHandle handle, string name, List<List<IFCAnyHandle>> values,
+        public static void SetAttribute(IFCAnyHandle handle, string name, IList<IList<IFCAnyHandle>> values,
             int? outerListMin, int? outerListMax, int? innerListMin, int? innerListMax)
         {
             if (String.IsNullOrEmpty(name))

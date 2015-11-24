@@ -1218,25 +1218,28 @@ namespace Revit.IFC.Export.Utility
 
                 List<BuiltInCategory> excludedCategories = new List<BuiltInCategory>();
 
-
                 // Native Revit types without match in API
+                excludedCategories.Add(BuiltInCategory.OST_ConduitCenterLine);
+                excludedCategories.Add(BuiltInCategory.OST_ConduitFittingCenterLine);
+                excludedCategories.Add(BuiltInCategory.OST_DecalElement);
+                //excludedCategories.Add(BuiltInCategory.OST_Parts);
+                //excludedCategories.Add(BuiltInCategory.OST_RvtLinks);
+                excludedCategories.Add(BuiltInCategory.OST_DuctCurvesCenterLine);
+                excludedCategories.Add(BuiltInCategory.OST_DuctFittingCenterLine);
+                excludedCategories.Add(BuiltInCategory.OST_FlexDuctCurvesCenterLine);
+                excludedCategories.Add(BuiltInCategory.OST_FlexPipeCurvesCenterLine);
+                excludedCategories.Add(BuiltInCategory.OST_IOS_GeoLocations);
+                excludedCategories.Add(BuiltInCategory.OST_PipeCurvesCenterLine);
+                excludedCategories.Add(BuiltInCategory.OST_PipeFittingCenterLine);
                 excludedCategories.Add(BuiltInCategory.OST_Property);
                 excludedCategories.Add(BuiltInCategory.OST_SiteProperty);
                 excludedCategories.Add(BuiltInCategory.OST_SitePropertyLineSegment);
+                excludedCategories.Add(BuiltInCategory.OST_TopographyContours);
                 excludedCategories.Add(BuiltInCategory.OST_Viewports);
                 excludedCategories.Add(BuiltInCategory.OST_Views);
-                excludedCategories.Add(BuiltInCategory.OST_IOS_GeoLocations);
-                //excludedCategories.Add(BuiltInCategory.OST_RvtLinks);
-                excludedCategories.Add(BuiltInCategory.OST_DecalElement);
-                //excludedCategories.Add(BuiltInCategory.OST_Parts);
-                excludedCategories.Add(BuiltInCategory.OST_DuctCurvesCenterLine);
-                excludedCategories.Add(BuiltInCategory.OST_DuctFittingCenterLine);
-                excludedCategories.Add(BuiltInCategory.OST_PipeCurvesCenterLine);
-                excludedCategories.Add(BuiltInCategory.OST_PipeFittingCenterLine);
-                excludedCategories.Add(BuiltInCategory.OST_ConduitCenterLine);
-                excludedCategories.Add(BuiltInCategory.OST_ConduitFittingCenterLine);
-                excludedCategories.Add(BuiltInCategory.OST_FlexDuctCurvesCenterLine);
-                excludedCategories.Add(BuiltInCategory.OST_FlexPipeCurvesCenterLine);
+
+                // Exclude elements with no category. 
+                excludedCategories.Add(BuiltInCategory.INVALID);
 
                 ElementMulticategoryFilter excludedCategoryFilter = new ElementMulticategoryFilter(excludedCategories, true);
 
@@ -1295,20 +1298,28 @@ namespace Revit.IFC.Export.Utility
             m_CategoryVisibilityCache.Clear();
         }
 
-        private static bool CheckIsCategoryHidden(Element element)
+        /// <summary>
+        /// Checks if a category is visible for certain view.
+        /// </summary>
+        /// <param name="category">The category.</param>
+        /// <param name="filterView">The view.</param>
+        /// <returns>True if the category is visible, false otherwise.</returns>
+        public static bool IsCategoryVisible(Category category, View filterView)
         {
-            bool value = false;
-            Category category = element.Category;
-            if (category == null)
-                return value;
+           // This routine is generally used to decide whether or not to export geometry assigned to a praticular category.
+           // Default behavior is to return true, even for a null category.  In general, we want to err on the side of showing geometry over hiding it.
+           if (category == null || filterView == null)
+              return true;
 
-            if (m_CategoryVisibilityCache.TryGetValue(category.Id, out value))
-                return value;
+           bool isVisible = false;
+           if (m_CategoryVisibilityCache.TryGetValue(category.Id, out isVisible))
+              return isVisible;
 
-            View filterView = ExporterCacheManager.ExportOptionsCache.FilterViewForExport;
-            value = (category.get_AllowsVisibilityControl(filterView) && !category.get_Visible(filterView));
-            m_CategoryVisibilityCache[category.Id] = value;
-            return value;
+           // The category will be visible if either we don't allow visibility controls (default: true), or
+           // we do allow visibility controls and the category is visible in the view.
+           isVisible = (!category.get_AllowsVisibilityControl(filterView) || category.get_Visible(filterView));
+           m_CategoryVisibilityCache[category.Id] = isVisible;
+           return isVisible;
         }
 
         /// <summary>
@@ -1327,7 +1338,7 @@ namespace Revit.IFC.Export.Utility
                 return false;
 
             Category category = element.Category;
-            hidden = CheckIsCategoryHidden(element);
+            hidden = !IsCategoryVisible(category, filterView);
             if (hidden)
                 return false;
 

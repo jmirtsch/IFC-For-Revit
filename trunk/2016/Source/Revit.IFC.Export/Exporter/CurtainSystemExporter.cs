@@ -58,7 +58,7 @@ namespace Revit.IFC.Export.Exporter
 
             string overrideCADLayer = null;
             ParameterUtil.GetStringValueFromElementOrSymbol(wallElement, "IFCCadLayer", out overrideCADLayer);
-            
+
             using (ExporterStateManager.CADLayerOverrideSetter layerSetter = new ExporterStateManager.CADLayerOverrideSetter(overrideCADLayer))
             {
                 HashSet<ElementId> alreadyVisited = new HashSet<ElementId>();  // just in case.
@@ -211,7 +211,7 @@ namespace Revit.IFC.Export.Exporter
 
 
                 // Export tessellated geometry when IFC4 Reference View is selected
-                if (ExporterUtil.IsReferenceView())
+                if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
                 {
                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(false);
                     IFCAnyHandle triFaceSet = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, subElem, bodyExporterOptions, geomElem);
@@ -222,7 +222,7 @@ namespace Revit.IFC.Export.Exporter
                     }
                 }
                 // Export AdvancedFace before use fallback BREP
-                else if (ExporterUtil.IsDesignTransferView())
+                else if (ExporterCacheManager.ExportOptionsCache.ExportAs4DesignTransferView)
                 {
                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(false);
                     IFCAnyHandle advancedBRep = BodyExporter.ExportBodyAsAdvancedBrep(exporterIFC, subElem, bodyExporterOptions, geomElem);
@@ -251,9 +251,9 @@ namespace Revit.IFC.Export.Exporter
             IFCAnyHandle shapeRep;
 
             // Use tessellated geometry in Reference View
-            if (ExporterUtil.IsReferenceView() && !useFallbackBREP)
+            if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView && !useFallbackBREP)
                 shapeRep = RepresentationUtil.CreateTessellatedRep(exporterIFC, wallElement, catId, contextOfItems, bodyItems, null);
-            else if (ExporterUtil.IsDesignTransferView() && !useFallbackBREP)
+            else if (ExporterCacheManager.ExportOptionsCache.ExportAs4DesignTransferView && !useFallbackBREP)
                 shapeRep = RepresentationUtil.CreateAdvancedBRepRep(exporterIFC, wallElement, catId, contextOfItems, bodyItems, null);
             else
                 shapeRep = RepresentationUtil.CreateBRepRep(exporterIFC, wallElement, catId, contextOfItems, bodyItems);
@@ -421,7 +421,7 @@ namespace Revit.IFC.Export.Exporter
                 ElementId hostPanelId = ElementId.InvalidElementId;
                 if (element is Panel)
                     hostPanelId = (element as Panel).FindHostPanel();
-    
+
                 if (hostPanelId != ElementId.InvalidElementId)
                     visiblePanelIds.Add(hostPanelId);
                 else
@@ -547,7 +547,7 @@ namespace Revit.IFC.Export.Exporter
             //for now, it is sufficient to check its category.
             return (CategoryUtil.GetSafeCategoryId(element) == new ElementId(BuiltInCategory.OST_Curtain_Systems));
         }
-            
+
         /// <summary>
         /// Checks if the wall is legacy curtain wall.
         /// </summary>
@@ -668,7 +668,7 @@ namespace Revit.IFC.Export.Exporter
                 elemName, elemDesc, elemApplicableOccurence, null, null, elemTag, elemElementType, (elemElementType != null) ? "USERDEFINED" : "NOTDEFINED");
 
             wrapper.RegisterHandleWithElementType(elementType as ElementType, wallType, null);
-            
+
             ExporterCacheManager.WallTypeCache[typeElemId] = wallType;
             ExporterCacheManager.TypeRelationsCache.Add(wallType, elementHandle);
         }
