@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2013  Autodesk, Inc.
+// Copyright (C) 2013-2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,83 +17,78 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
-using Revit.IFC.Export.Exporter.PropertySet;
 using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter
 {
-    /// <summary>
-    /// Provides methods to export a Revit element as IfcCovering of type INSULATION.
-    /// </summary>
-    class InsulationExporter
-    {
-        /// <summary>
-        /// Exports an element as a covering of type insulation.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="element">The element.</param>
-        /// <param name="geometryElement">The geometry element.</param>
-        /// <param name="productWrapper">The ProductWrapper.</param>
-        /// <returns>True if exported successfully, false otherwise.</returns>
-        protected static bool ExportInsulation(ExporterIFC exporterIFC, Element element,
-            GeometryElement geometryElement, ProductWrapper productWrapper)
-        {
-            if (element == null || geometryElement == null)
-                return false;
+   /// <summary>
+   /// Provides methods to export a Revit element as IfcCovering of type INSULATION.
+   /// </summary>
+   class InsulationExporter
+   {
+      /// <summary>
+      /// Exports an element as a covering of type insulation.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="element">The element.</param>
+      /// <param name="geometryElement">The geometry element.</param>
+      /// <param name="productWrapper">The ProductWrapper.</param>
+      /// <returns>True if exported successfully, false otherwise.</returns>
+      protected static bool ExportInsulation(ExporterIFC exporterIFC, Element element,
+          GeometryElement geometryElement, ProductWrapper productWrapper)
+      {
+         if (element == null || geometryElement == null)
+            return false;
 
-            IFCFile file = exporterIFC.GetFile();
+         IFCFile file = exporterIFC.GetFile();
 
-            using (IFCTransaction tr = new IFCTransaction(file))
+         using (IFCTransaction tr = new IFCTransaction(file))
+         {
+            using (PlacementSetter placementSetter = PlacementSetter.Create(exporterIFC, element))
             {
-                using (PlacementSetter placementSetter = PlacementSetter.Create(exporterIFC, element))
-                {
-                    using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
-                    {
-                        ecData.SetLocalPlacement(placementSetter.LocalPlacement);
+               using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
+               {
+                  ecData.SetLocalPlacement(placementSetter.LocalPlacement);
 
-                        ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
+                  ElementId categoryId = CategoryUtil.GetSafeCategoryId(element);
 
-                        BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                        IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, element,
-                            categoryId, geometryElement, bodyExporterOptions, null, ecData, true);
+                  BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
+                  IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, element,
+                      categoryId, geometryElement, bodyExporterOptions, null, ecData, true);
 
-                        if (IFCAnyHandleUtil.IsNullOrHasNoValue(representation))
-                        {
-                            ecData.ClearOpenings();
-                            return false;
-                        }
+                  if (IFCAnyHandleUtil.IsNullOrHasNoValue(representation))
+                  {
+                     ecData.ClearOpenings();
+                     return false;
+                  }
 
-                        string guid = GUIDUtil.CreateGUID(element);
-                        IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
-                        string revitObjectType = exporterIFC.GetFamilyName();
-                        string name = NamingUtil.GetNameOverride(element, revitObjectType);
-                        string description = NamingUtil.GetDescriptionOverride(element, null);
-                        string objectType = NamingUtil.GetObjectTypeOverride(element, revitObjectType);
+                  string guid = GUIDUtil.CreateGUID(element);
+                  IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
+                  string revitObjectType = exporterIFC.GetFamilyName();
+                  string name = NamingUtil.GetNameOverride(element, revitObjectType);
+                  string description = NamingUtil.GetDescriptionOverride(element, null);
+                  string objectType = NamingUtil.GetObjectTypeOverride(element, revitObjectType);
 
-                        IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
-                        string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
+                  IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
+                  string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
-                        IFCAnyHandle insulation = IFCInstanceExporter.CreateCovering(file, guid,
-                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag, "Insulation");
-                        ExporterCacheManager.ElementToHandleCache.Register(element.Id, insulation);
+                  IFCAnyHandle insulation = IFCInstanceExporter.CreateCovering(file, guid,
+                      ownerHistory, name, description, objectType, localPlacement, representation, elementTag, "Insulation");
+                  ExporterCacheManager.ElementToHandleCache.Register(element.Id, insulation);
 
-                        productWrapper.AddElement(element, insulation, placementSetter.LevelInfo, ecData, true);
+                  productWrapper.AddElement(element, insulation, placementSetter.LevelInfo, ecData, true);
 
-                        ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element);
-                        CategoryUtil.CreateMaterialAssociation(exporterIFC, insulation, matId);
-                    }
-                }
-                tr.Commit();
-                return true;
+                  ElementId matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element);
+                  CategoryUtil.CreateMaterialAssociation(exporterIFC, insulation, matId);
+               }
             }
-        }
-    }
+            tr.Commit();
+            return true;
+         }
+      }
+   }
 }

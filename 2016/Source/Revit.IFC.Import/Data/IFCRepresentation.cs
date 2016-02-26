@@ -194,7 +194,7 @@ namespace Revit.IFC.Import.Data
             HashSet<IFCAnyHandle> items =
                 IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcRepresentation, "Items");
 
-            LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(ifcRepresentation);
+            LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(ifcRepresentation, true);
 
             foreach (IFCAnyHandle item in items)
             {

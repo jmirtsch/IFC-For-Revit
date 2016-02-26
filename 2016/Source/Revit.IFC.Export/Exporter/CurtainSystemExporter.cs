@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2015  Autodesk, Inc.
+// Copyright (C) 2012-2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,13 +19,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
-using Revit.IFC.Export.Exporter.PropertySet;
 using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter
@@ -213,7 +210,7 @@ namespace Revit.IFC.Export.Exporter
                 // Export tessellated geometry when IFC4 Reference View is selected
                 if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
                 {
-                    BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(false);
+               BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(false, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
                     IFCAnyHandle triFaceSet = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, subElem, bodyExporterOptions, geomElem);
                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(triFaceSet))
                     {
@@ -224,7 +221,7 @@ namespace Revit.IFC.Export.Exporter
                 // Export AdvancedFace before use fallback BREP
                 else if (ExporterCacheManager.ExportOptionsCache.ExportAs4DesignTransferView)
                 {
-                    BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(false);
+               BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(false, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
                     IFCAnyHandle advancedBRep = BodyExporter.ExportBodyAsAdvancedBrep(exporterIFC, subElem, bodyExporterOptions, geomElem);
                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(advancedBRep))
                     {

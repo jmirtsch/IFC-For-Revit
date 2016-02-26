@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2015  Autodesk, Inc.
+// Copyright (C) 2012-2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,8 +19,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.DB.IFC;
@@ -569,7 +567,7 @@ namespace Revit.IFC.Export.Exporter
                   BodyData bodyData;
                   ElementId categoryId = CategoryUtil.GetSafeCategoryId(stair);
 
-                  BodyExporterOptions bodyExporterOptions = new BodyExporterOptions();
+                  BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
                   IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
                       stair, categoryId, stairsGeom, bodyExporterOptions, null, ecData, out bodyData);
 
@@ -680,7 +678,7 @@ namespace Revit.IFC.Export.Exporter
 
                      GeometryElement runGeometryElement = run.get_Geometry(geomOptions);
 
-                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
                      BodyData bodyData = BodyExporter.ExportBody(exporterIFC, run, categoryId, ElementId.InvalidElementId, runGeometryElement,
                          bodyExporterOptions, ecData);
 
@@ -779,7 +777,7 @@ namespace Revit.IFC.Export.Exporter
 
                      GeometryElement landingGeometryElement = landing.get_Geometry(geomOptions);
 
-                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
                      BodyData bodyData = BodyExporter.ExportBody(exporterIFC, landing, categoryId, ElementId.InvalidElementId, landingGeometryElement,
                          bodyExporterOptions, ecData);
 
@@ -877,7 +875,7 @@ namespace Revit.IFC.Export.Exporter
 
                      GeometryElement supportGeometryElement = support.get_Geometry(geomOptions);
                      BodyData bodyData;
-                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
                      IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
                          support, categoryId, supportGeometryElement, bodyExporterOptions, null, ecData, out bodyData);
 
@@ -1008,8 +1006,7 @@ namespace Revit.IFC.Export.Exporter
 
                   for (int ii = 0; ii < runCount; ii++)
                   {
-                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                     bodyExporterOptions.TessellationLevel = BodyExporter.GetTessellationLevel();
+                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.Medium);
 
                      IList<GeometryObject> geometriesOfARun = geometriesOfRuns[ii];
                      BodyData bodyData = BodyExporter.ExportBody(exporterIFC, legacyStair, categoryId, ElementId.InvalidElementId, geometriesOfARun,
@@ -1018,7 +1015,7 @@ namespace Revit.IFC.Export.Exporter
                      IFCAnyHandle bodyRep = bodyData.RepresentationHnd;
                      if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRep))
                         continue;
-                     
+
                      HashSet<IFCAnyHandle> flightHnds = new HashSet<IFCAnyHandle>();
                      List<IFCAnyHandle> representations = new List<IFCAnyHandle>();
                      if ((ii < walkingLineCount) && !IFCAnyHandleUtil.IsNullOrHasNoValue(walkingLineReps[ii]))
@@ -1089,7 +1086,7 @@ namespace Revit.IFC.Export.Exporter
                   {
                      using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                      {
-                        BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+                        BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
                         bodyExporterOptions.TessellationLevel = BodyExporterOptions.BodyTessellationLevel.Coarse;
                         IList<GeometryObject> geometriesOfALanding = geometriesOfLandings[ii];
                         BodyData bodyData = BodyExporter.ExportBody(exporterIFC, legacyStair, categoryId, ElementId.InvalidElementId, geometriesOfALanding,
@@ -1144,7 +1141,7 @@ namespace Revit.IFC.Export.Exporter
                   {
                      using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                      {
-                        BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+                        BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
                         bodyExporterOptions.TessellationLevel = BodyExporterOptions.BodyTessellationLevel.Coarse;
                         GeometryObject geometryOfStringer = geometriesOfStringer[ii];
                         BodyData bodyData = BodyExporter.ExportBody(exporterIFC, legacyStair, categoryId, ElementId.InvalidElementId, geometryOfStringer,

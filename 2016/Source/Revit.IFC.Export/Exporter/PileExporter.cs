@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2015  Autodesk, Inc.
+// Copyright (C) 2012-2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,100 +17,94 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
-using Revit.IFC.Export.Exporter.PropertySet;
 using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter
 {
-    /// <summary>
-    /// Provides methods to export Pile elements.
-    /// </summary>
-    class PileExporter
-    {
-        /// <summary>
-        /// Exports an element to IfcPile.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="element">The element.</param>
-        /// <param name="geometryElement">The geometry element.</param>
-        /// <param name="ifcEnumType">The string value represents the IFC type.</param>
-        /// <param name="productWrapper">The ProductWrapper.</param>
-        public static void ExportPile(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement,
-           string ifcEnumType, ProductWrapper productWrapper)
-        {
-            // export parts or not
-            bool exportParts = PartExporter.CanExportParts(element);
-            if (exportParts && !PartExporter.CanExportElementInPartExport(element, element.LevelId, false))
-                return;
+   /// <summary>
+   /// Provides methods to export Pile elements.
+   /// </summary>
+   class PileExporter
+   {
+      /// <summary>
+      /// Exports an element to IfcPile.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="element">The element.</param>
+      /// <param name="geometryElement">The geometry element.</param>
+      /// <param name="ifcEnumType">The string value represents the IFC type.</param>
+      /// <param name="productWrapper">The ProductWrapper.</param>
+      public static void ExportPile(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement,
+         string ifcEnumType, ProductWrapper productWrapper)
+      {
+         // export parts or not
+         bool exportParts = PartExporter.CanExportParts(element);
+         if (exportParts && !PartExporter.CanExportElementInPartExport(element, element.LevelId, false))
+            return;
 
-            IFCFile file = exporterIFC.GetFile();
+         IFCFile file = exporterIFC.GetFile();
 
-            using (IFCTransaction tr = new IFCTransaction(file))
+         using (IFCTransaction tr = new IFCTransaction(file))
+         {
+            using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, element))
             {
-                using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, element))
-                {
-                    using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
-                    {                      
-                        ecData.SetLocalPlacement(setter.LocalPlacement);
-                      
-                        IFCAnyHandle prodRep = null;
-                        ElementId matId = ElementId.InvalidElementId;
-                        if (!exportParts)
-                        {
-                            ElementId catId = CategoryUtil.GetSafeCategoryId(element);
+               using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
+               {
+                  ecData.SetLocalPlacement(setter.LocalPlacement);
+
+                  IFCAnyHandle prodRep = null;
+                  ElementId matId = ElementId.InvalidElementId;
+                  if (!exportParts)
+                  {
+                     ElementId catId = CategoryUtil.GetSafeCategoryId(element);
 
 
-                            matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element);
-                            BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                            prodRep = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
-                               element, catId, geometryElement, bodyExporterOptions, null, ecData, true);
-                            if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodRep))
-                            {
-                                ecData.ClearOpenings();
-                                return;
-                            }
-                        }
+                     matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(geometryElement, exporterIFC, element);
+                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
+                     prodRep = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
+                        element, catId, geometryElement, bodyExporterOptions, null, ecData, true);
+                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(prodRep))
+                     {
+                        ecData.ClearOpenings();
+                        return;
+                     }
+                  }
 
-                        string instanceGUID = GUIDUtil.CreateGUID(element);
-                        string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-                        string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
-                        string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
-                        string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
-                        string pileType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
+                  string instanceGUID = GUIDUtil.CreateGUID(element);
+                  string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
+                  string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
+                  string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
+                  string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
+                  string pileType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
 
-                        IFCAnyHandle pile = IFCInstanceExporter.CreatePile(file, instanceGUID, ExporterCacheManager.OwnerHistoryHandle,
-                            instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(), prodRep, instanceTag, pileType, null);
+                  IFCAnyHandle pile = IFCInstanceExporter.CreatePile(file, instanceGUID, ExporterCacheManager.OwnerHistoryHandle,
+                      instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(), prodRep, instanceTag, pileType, null);
 
-                        if (exportParts)
-                        {
-                            PartExporter.ExportHostPart(exporterIFC, element, pile, productWrapper, setter, setter.LocalPlacement, null);
-                        }
-                        else
-                        {
-                            if (matId != ElementId.InvalidElementId)
-                            {
-                                CategoryUtil.CreateMaterialAssociation(exporterIFC, pile, matId);
-                            }
-                        }
+                  if (exportParts)
+                  {
+                     PartExporter.ExportHostPart(exporterIFC, element, pile, productWrapper, setter, setter.LocalPlacement, null);
+                  }
+                  else
+                  {
+                     if (matId != ElementId.InvalidElementId)
+                     {
+                        CategoryUtil.CreateMaterialAssociation(exporterIFC, pile, matId);
+                     }
+                  }
 
-                        productWrapper.AddElement(element, pile, setter, ecData, true);
+                  productWrapper.AddElement(element, pile, setter, ecData, true);
 
-                        OpeningUtil.CreateOpeningsIfNecessary(pile, element, ecData, null,
-                            exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);
-                    }
-                }
-
-                tr.Commit();
+                  OpeningUtil.CreateOpeningsIfNecessary(pile, element, ecData, null,
+                      exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);
+               }
             }
-        }
 
-    }
+            tr.Commit();
+         }
+      }
+   }
 }

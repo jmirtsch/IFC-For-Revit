@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2015  Autodesk, Inc.
+// Copyright (C) 2012-2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,8 +19,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Utility;
@@ -232,19 +230,20 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="exporterIFC">The exporterIFC class.</param>
         /// <param name="element">The beam element.T</param>
         /// <param name="catId">The category id.</param>
-        /// <param name="solids">The list of Solids representing the beam's geometry, in addition to the meshes below.</param>
-        /// <param name="meshes">The list of Meshes representing the beam's geometry, in addition to the solids above.</param>
+      /// <param name="geomObjects">The list of solids and meshes representing the beam's geometry.
         /// <param name="axisInfo">The beam axis information.</param>
         /// <returns>The BeamBodyAsExtrusionInfo class which contains the created handle (if any) and other information, or null.</returns>
         private static BeamBodyAsExtrusionInfo CreateBeamGeometryAsExtrusion(ExporterIFC exporterIFC, Element element, ElementId catId,
-            IList<Solid> solids, IList<Mesh> meshes, BeamAxisInfo axisInfo)
+            IList<GeometryObject> geomObjects, BeamAxisInfo axisInfo)
         {
             // If we have a beam with a Linear location line that only has one solid geometry,
             // we will try to use the ExtrusionAnalyzer to generate an extrusion with 0 or more clippings.
             // This code is currently limited in that it will not process beams with openings, so we
             // use other methods below if this one fails.
-            if (solids.Count != 1 || meshes.Count != 0 || axisInfo == null || !(axisInfo.Axis is Line))
+         if (geomObjects == null || geomObjects.Count != 1 || (!(geomObjects[0] is Solid)) || axisInfo == null || !(axisInfo.Axis is Line))
                 return null;
+
+         Solid solid = geomObjects[0] as Solid;
 
             BeamBodyAsExtrusionInfo info = new BeamBodyAsExtrusionInfo();
             info.DontExport = false;
@@ -257,7 +256,7 @@ namespace Revit.IFC.Export.Exporter
             XYZ beamDirection = orientTrf.BasisX;
             Plane beamExtrusionPlane = new Plane(orientTrf.BasisY, orientTrf.BasisZ, orientTrf.Origin);
             info.RepresentationHandle = ExtrusionExporter.CreateExtrusionWithClipping(exporterIFC, element,
-                catId, solids[0], beamExtrusionPlane, beamDirection, null, out completelyClipped);
+                catId, solid, beamExtrusionPlane, beamDirection, null, out completelyClipped);
             if (completelyClipped)
             {
                 info.DontExport = true;
@@ -271,7 +270,7 @@ namespace Revit.IFC.Export.Exporter
                 IFCExtrusionBasis bestAxis = (Math.Abs(beamDirection[0]) > Math.Abs(beamDirection[1])) ?
                     IFCExtrusionBasis.BasisX : IFCExtrusionBasis.BasisY;
                 info.Slope = GeometryUtil.GetSimpleExtrusionSlope(beamDirection, bestAxis);
-                ElementId materialId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(solids[0], exporterIFC, element);
+            ElementId materialId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(solid, exporterIFC, element);
                 if (materialId != ElementId.InvalidElementId)
                     info.Materials.Add(materialId);
             }
@@ -280,6 +279,40 @@ namespace Revit.IFC.Export.Exporter
         }
 
         /// <summary>
+      /// Determines the beam geometry to export after removing invisible geometry.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="element">The beam element to be exported.</param>
+      /// <param name="geometryElement">The geometry element that contains the beam geometry.</param>
+      /// <param name="dontExport">An output value that says that the element shouldn't be exported at all.</param>
+      private static IList<GeometryObject> BeamGeometryToExport(ExporterIFC exporterIFC, Element element,
+         GeometryElement geometryElement, out bool dontExport)
+      {
+         dontExport = true;
+         if (element == null || geometryElement == null)
+            return null;
+
+         IList<GeometryObject> visibleGeomObjects = new List<GeometryObject>();
+         {
+            SolidMeshGeometryInfo solidMeshInfo = GeometryUtil.GetSplitSolidMeshGeometry(geometryElement);
+
+            IList<Solid> solids = solidMeshInfo.GetSolids();
+            IList<Mesh> meshes = solidMeshInfo.GetMeshes();
+
+            visibleGeomObjects = FamilyExporterUtil.RemoveInvisibleSolidsAndMeshes(element.Document, exporterIFC, solids, meshes);
+
+            // If we found solids and meshes, and they are all invisible, don't export the beam.
+            // If we didn't find solids and meshes, we won't export the beam with ExportBeamAsStandardElement, but will allow the generic
+            // family export routine to work.
+            if ((visibleGeomObjects == null || visibleGeomObjects.Count == 0) && (solids.Count > 0 || meshes.Count > 0))
+               return null;
+         }
+
+         dontExport = false;
+         return visibleGeomObjects;
+      }
+
+      /// <summary>
         /// Exports a beam to IFC beam if it has an axis representation and only one Solid as its geometry, ideally as an extrusion, potentially with clippings and openings.
         /// </summary>
         /// <param name="exporterIFC">The ExporterIFC object.</param>
@@ -299,11 +332,11 @@ namespace Revit.IFC.Export.Exporter
            Element element, GeometryElement geometryElement, ProductWrapper productWrapper, out bool dontExport)
         {
             dontExport = true;
-            if (geometryElement == null)
+         IList<GeometryObject> geomObjects = BeamGeometryToExport(exporterIFC, element, geometryElement, out dontExport);
+         if (dontExport)
                 return null;
 
             IFCAnyHandle beam = null;
-            dontExport = false;
             IFCFile file = exporterIFC.GetFile();
 
             using (IFCTransaction transaction = new IFCTransaction(file))
@@ -318,8 +351,6 @@ namespace Revit.IFC.Export.Exporter
                 using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, element, null, orientTrf))
                 {
                     IFCAnyHandle localPlacement = setter.LocalPlacement;
-                    SolidMeshGeometryInfo solidMeshInfo = GeometryUtil.GetSplitSolidMeshGeometry(geometryElement);
-
                     using (IFCExtrusionCreationData extrusionCreationData = new IFCExtrusionCreationData())
                     {
                         extrusionCreationData.SetLocalPlacement(localPlacement);
@@ -331,9 +362,6 @@ namespace Revit.IFC.Export.Exporter
                         else
                             extrusionCreationData.PossibleExtrusionAxes = IFCExtrusionAxes.TryXY;
 
-                        IList<Solid> solids = solidMeshInfo.GetSolids();
-                        IList<Mesh> meshes = solidMeshInfo.GetMeshes();
-
                         ElementId catId = CategoryUtil.GetSafeCategoryId(element);
 
                         // There may be an offset to make the local coordinate system
@@ -344,7 +372,7 @@ namespace Revit.IFC.Export.Exporter
                         ICollection<ElementId> materialIds = null;
 
                         // The representation handle generated from one of the methods below.
-                        BeamBodyAsExtrusionInfo extrusionInfo = CreateBeamGeometryAsExtrusion(exporterIFC, element, catId, solids, meshes, axisInfo);
+                  BeamBodyAsExtrusionInfo extrusionInfo = CreateBeamGeometryAsExtrusion(exporterIFC, element, catId, geomObjects, axisInfo);
                         if (extrusionInfo != null && extrusionInfo.DontExport)
                         {
                             dontExport = true;
@@ -365,11 +393,11 @@ namespace Revit.IFC.Export.Exporter
                             // SweptSolidExporter can still have an Axis representation.
                             BodyData bodyData = null;
 
-                            BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                            if (solids.Count == 1 && meshes.Count == 0)
+                     BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
+                     if (geomObjects != null && geomObjects.Count == 1 && geomObjects[0] is Solid)
                             {
                                 bodyData = BodyExporter.ExportBody(exporterIFC, element, catId, ElementId.InvalidElementId,
-                                    solids, meshes, bodyExporterOptions, extrusionCreationData);
+                            geomObjects[0], bodyExporterOptions, extrusionCreationData);
 
                                 repHnd = bodyData.RepresentationHnd;
                                 materialIds = bodyData.MaterialIds;

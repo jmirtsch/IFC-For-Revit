@@ -2743,14 +2743,19 @@ namespace Revit.IFC.Export.Toolkit
       /// <param name="name">The name.</param>
       /// <param name="description">The description.</param>
       /// <param name="objectType">The object type.</param>
+      /// <param name="longName">The long name, valid for IFC4+ schemas.</param>
       /// <returns>The handle.</returns>
       public static IFCAnyHandle CreateZone(IFCFile file, string guid, IFCAnyHandle ownerHistory,
-          string name, string description, string objectType)
+          string name, string description, string objectType, string longName)
       {
          ValidateGroup(guid, ownerHistory, name, description, objectType);
 
          IFCAnyHandle zone = CreateInstance(file, IFCEntityType.IfcZone);
          SetGroup(zone, guid, ownerHistory, name, description, objectType);
+
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+            IFCAnyHandleUtil.SetAttribute(zone, "LongName", longName);
+
          return zone;
       }
 
@@ -2873,7 +2878,7 @@ namespace Revit.IFC.Export.Toolkit
       /// <param name="hasProperties">The collection of properties.</param>
       /// <returns>The handle.</returns>
       public static IFCAnyHandle CreatePropertySet(IFCFile file, string guid, IFCAnyHandle ownerHistory,
-          string name, string description, HashSet<IFCAnyHandle> hasProperties)
+          string name, string description, ISet<IFCAnyHandle> hasProperties)
       {
          IFCAnyHandleUtil.ValidateSubTypeOf(hasProperties, false, IFCEntityType.IfcProperty);
          ValidatePropertySetDefinition(guid, ownerHistory, name, description);

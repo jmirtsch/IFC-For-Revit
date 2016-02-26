@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2015  Autodesk, Inc.
+// Copyright (C) 2012-2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,10 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Exporter;
@@ -76,8 +73,7 @@ namespace Revit.IFC.Export.Utility
                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionHandle))
                         continue;
 
-                    IFCAnyHandle styledItemHnd = BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document,
-                        extrusionHandle, ElementId.InvalidElementId);
+               BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document, extrusionHandle, ElementId.InvalidElementId);
 
                     HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
                     bodyItems.Add(extrusionHandle);
@@ -334,7 +330,7 @@ namespace Revit.IFC.Export.Utility
                 extrusionCreationData.PossibleExtrusionAxes = IFCExtrusionAxes.TryCustom;
             }
 
-            BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
             BodyData bodyData = BodyExporter.ExportBody(exporterIFC, insertElement, catId, ElementId.InvalidElementId,
                 solid, bodyExporterOptions, extrusionCreationData);
 
