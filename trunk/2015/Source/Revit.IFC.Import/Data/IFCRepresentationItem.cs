@@ -83,7 +83,7 @@ namespace Revit.IFC.Import.Data
         {
             base.Process(item);
 
-            LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(item);
+            LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(item, false);
 
             List<IFCAnyHandle> styledByItems = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(item, "StyledByItem");
             if (styledByItems != null && styledByItems.Count > 0)

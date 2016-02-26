@@ -795,20 +795,21 @@ namespace Revit.IFC.Export.Utility
 
         private static BoundingBoxXYZ ComputeApproximateCurveLoopBBoxForOpening(CurveLoop curveLoop, Plane plane)
         {
-            Transform trf = null;
-            Transform trfInv = null;
+           Transform trf = null;
+           Transform trfInv = null;
+
+           if (plane != null)
+           {
+              trf = Transform.Identity;
+              trf.BasisX = plane.XVec;
+              trf.BasisY = plane.YVec;
+              trf.BasisZ = plane.Normal;
+              trf.Origin = plane.Origin;
+              trfInv = trf.Inverse;
+           }
 
             XYZ ll = null;
             XYZ ur = null;
-            if (plane != null)
-            {
-                trf = Transform.Identity;
-                trf.BasisX = plane.XVec;
-                trf.BasisY = plane.YVec;
-                trf.BasisZ = plane.Normal;
-                trf.Origin = plane.Origin;
-                trfInv = trf.Inverse;
-            }
 
             bool init = false;
             foreach (Curve curve in curveLoop)
@@ -1006,8 +1007,8 @@ namespace Revit.IFC.Export.Utility
             }
 
             XYZ cutXDir = XYZ.BasisZ;
-            XYZ cutOrig = XYZ.Zero;
             XYZ cutYDir = cutDir.CrossProduct(cutXDir);
+            XYZ cutOrig = XYZ.Zero;
             plane = new Plane(cutXDir, cutYDir, cutOrig);
 
             // now move to origin in this coordinate system.
@@ -1027,7 +1028,7 @@ namespace Revit.IFC.Export.Utility
 
             Element doorWindowElement = doc.GetElement(insertId);
 
-            IFCAnyHandle openingRepHnd = RepresentationUtil.CreateExtrudedProductDefShape(exporterIFC, doorWindowElement, catId, 
+            IFCAnyHandle openingRepHnd = RepresentationUtil.CreateExtrudedProductDefShape(exporterIFC, doorWindowElement, catId,
                 oCutLoopList, plane, cutDir, depth);
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(openingRepHnd))
                 return null;
@@ -1052,7 +1053,7 @@ namespace Revit.IFC.Export.Utility
                 using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
                 {
                     double height = 0.0, width = 0.0;
-                    if (ExtrusionExporter.ComputeHeightWidthOfCurveLoop(tmpCutLoop, plane, out height, out width))
+                    if (GeometryUtil.ComputeHeightWidthOfCurveLoop(tmpCutLoop, plane, out height, out width))
                     {
                         extraParams.ScaledHeight = UnitUtil.ScaleLength(height);
                         extraParams.ScaledWidth = UnitUtil.ScaleLength(width);

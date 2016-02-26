@@ -312,11 +312,11 @@ namespace Revit.IFC.Export.Exporter
                 }
 
                 if (IFCAnyHandleUtil.IsNullOrHasNoValue(typeStyle))
-                        {
-                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap2dHnd))
-                                typeInfo.Map2DHandle = repMap2dHnd;
-                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap3dHnd))
-                                typeInfo.Map3DHandle = repMap3dHnd;
+                {
+                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap2dHnd))
+                        typeInfo.Map2DHandle = repMap2dHnd;
+                    if (!IFCAnyHandleUtil.IsNullOrHasNoValue(repMap3dHnd))
+                        typeInfo.Map3DHandle = repMap3dHnd;
                 }
             }
 
@@ -507,7 +507,7 @@ namespace Revit.IFC.Export.Exporter
                             BodyData bodyData = null;
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRepresentation))
                             {
-                                BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(tryToExportAsExtrusion);
+                                BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(tryToExportAsExtrusion, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
                                 bodyData = BodyExporter.ExportBody(exporterIFC, familyInstance, categoryId, ElementId.InvalidElementId,
                                     geomObjects, bodyExporterOptions, extraParams);
                                 typeInfo.MaterialIds = bodyData.MaterialIds;
@@ -960,9 +960,14 @@ namespace Revit.IFC.Export.Exporter
            switch (exportType)
             {
                 // standard building elements
-                case IFCExportType.IfcBeam:
-                    BeamExporter.ExportBeam(exporterIFC, element, geometryElement, productWrapper);
-                    return true;
+               case IFCExportType.IfcBeam:
+                  {
+                     // We will say that we exported the beam if either we generated an IfcBeam, or if we determined that there
+                     // was nothing to export, either because the beam had no geometry to export, or it was completely clipped.
+                     bool dontExport;
+                     IFCAnyHandle beamHnd = BeamExporter.ExportBeamAsStandardElement(exporterIFC, element, geometryElement, productWrapper, out dontExport);
+                     return (dontExport || !IFCAnyHandleUtil.IsNullOrHasNoValue(beamHnd));
+                  }
                 case IFCExportType.IfcBuildingElementProxy:
                 case IFCExportType.IfcBuildingElementProxyType:
                     {

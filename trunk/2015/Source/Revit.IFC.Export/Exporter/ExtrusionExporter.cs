@@ -666,7 +666,7 @@ namespace Revit.IFC.Export.Exporter
         private static IList<CurveLoop> CoarsenCurveLoops(IList<CurveLoop> origCurveLoops)
         {
             // Coarsen loop unless we are at the Highest level of detail.
-            if (ExporterCacheManager.ExportOptionsCache.LevelOfDetail >= 4)
+           if (ExporterCacheManager.ExportOptionsCache.LevelOfDetail == ExportOptionsCache.ExportTessellationLevel.High)
                 return origCurveLoops;
 
             IList<CurveLoop> modifiedLoops = new List<CurveLoop>();
@@ -1187,8 +1187,8 @@ namespace Revit.IFC.Export.Exporter
                 // Handle Tessellation here for Reference View export. If all are extrusions, it should not get in here
                 if (mustUseTessellation)
                 {
-                    BodyExporterOptions options = new BodyExporterOptions(true);
-                    Document document = element.Document;
+                   BodyExporterOptions options = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
+                   Document document = element.Document;
                     ElementId materialId = ElementId.InvalidElementId;
                     materialIds.Clear();
                     extrusionBodyItems.Clear();

@@ -178,7 +178,7 @@ namespace Revit.IFC.Export.Exporter
                         if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
                         {
                             // TODO: Create CreateSimpleSweptSolidAsTessellation routine that takes advantage of the superior tessellation of this class.
-                            BodyExporterOptions options = new BodyExporterOptions(false);
+                            BodyExporterOptions options = new BodyExporterOptions(false, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
                             sweptSolidExporter.RepresentationItem = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, element, options, geomObject);
                             sweptSolidExporter.RepresentationType = ShapeRepresentationType.Tessellation;
                         }

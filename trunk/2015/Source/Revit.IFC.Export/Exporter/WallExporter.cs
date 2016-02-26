@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2012  Autodesk, Inc.
+// Copyright (C) 2012-2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,8 +19,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
-using Autodesk.Revit;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Utility;
@@ -443,8 +441,7 @@ namespace Revit.IFC.Export.Exporter
             }
 
             ElementId matId = HostObjectExporter.GetFirstLayerMaterialId(wallElement);
-            IFCAnyHandle styledItemHnd = BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, wallElement.Document,
-                baseBodyItemHnd, matId);
+         BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, wallElement.Document, baseBodyItemHnd, matId);
 
             HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
             bodyItems.Add(bodyItemHnd);
@@ -452,7 +449,7 @@ namespace Revit.IFC.Export.Exporter
             // Check whether wall has opening. If it has, exporting it in the Reference View will need to be in a tessellated geometry that includes the opening cut
             IList<IFCOpeningData> openingDataList = ExporterIFCUtils.GetOpeningData(exporterIFC, wallElement, wallLCS, range);
             bool wallHasOpening = openingDataList.Count > 0;
-            BodyExporterOptions options = new BodyExporterOptions(true);
+         BodyExporterOptions options = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
 
             IFCAnyHandle contextOfItemsBody = exporterIFC.Get3DContextHandle("Body");
             if (!hasClipping)
@@ -589,19 +586,21 @@ namespace Revit.IFC.Export.Exporter
         public static IFCAnyHandle ExportWallBase(ExporterIFC exporterIFC, Element element, IList<IList<IFCConnectedWallData>> connectedWalls,
             GeometryElement geometryElement, ProductWrapper origWrapper, ElementId overrideLevelId, IFCRange range)
         {
+         if (element == null)
+            return null;
+
             // Check cases where we choose not to export early.
             ElementId catId = CategoryUtil.GetSafeCategoryId(element);
 
+         // We have special case code below depending on what the original element type is.  We care if:
+         // 1. The element is a Wall: we can get Wall-specific information from it.
+         // 2. The element is a HostObject: we can get a list of materials from it.
+         // 3. The element is a FamilyInstance: we can get in-place family information from it.
+         // All other elements will be treated generically.
             Wall wallElement = element as Wall;
-            FamilyInstance famInstWallElem = element as FamilyInstance;
-            FaceWall faceWall = element as FaceWall;
-
             bool exportingWallElement = (wallElement != null);
-            bool exportingFamilyInstance = (famInstWallElem != null);
-            bool exportingFaceWall = (faceWall != null);
 
-            if (!exportingWallElement && !exportingFamilyInstance && !exportingFaceWall)
-                return null;
+         bool exportingHostObject = element is HostObject;
 
             if (exportingWallElement && IsWallCompletelyClipped(wallElement, exporterIFC, range))
                 return null;
@@ -620,7 +619,7 @@ namespace Revit.IFC.Export.Exporter
 
             if (!exportParts)
             {
-                if (exportingWallElement || exportingFaceWall)
+            if (!(element is FamilyInstance))
                 {
                     GetSolidsAndMeshes(geometryElement, range, ref solids, ref meshes);
                     if (solids.Count == 0 && meshes.Count == 0)
@@ -628,6 +627,8 @@ namespace Revit.IFC.Export.Exporter
                 }
                 else
                 {
+               FamilyInstance famInstWallElem = element as FamilyInstance;
+
                     GeometryElement geomElemToUse = GetGeometryFromInplaceWall(famInstWallElem);
                     if (geomElemToUse != null)
                     {
@@ -831,7 +832,7 @@ namespace Revit.IFC.Export.Exporter
                         {
                             bool isCompletelyClipped;
                             bodyRep = TryToCreateAsExtrusion(exporterIFC, wallElement, connectedWalls, solids, meshes, baseWallElevation,
-                                catId, centerCurve, trimmedCurve, wallLCS, depth, zSpan, range, setter,
+                         catId, centerCurve, trimmedCurve, wallLCS, depth, zSpan, range, setter,
                                 out cutPairOpenings, out isCompletelyClipped, out scaledFootprintArea, out scaledLength);
                             if (isCompletelyClipped)
                                 return null;
@@ -848,7 +849,7 @@ namespace Revit.IFC.Export.Exporter
                                 extraParams.PossibleExtrusionAxes = IFCExtrusionAxes.TryZ;   // only allow vertical extrusions!
                                 extraParams.AreInnerRegionsOpenings = true;
 
-                                BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+                        BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
 
                                 // Swept solids are not natively exported as part of CV2.0.  
                                 // We have removed the UI toggle for this, so that it is by default false, but keep for possible future use.
@@ -1046,7 +1047,7 @@ namespace Revit.IFC.Export.Exporter
                                 if (!exportParts)
                                 {
                                     // Only export one material for 2x2; for future versions, export the whole list.
-                                    if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2 || exportingFamilyInstance)
+                           if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2 || !exportingHostObject)
                                     {
                                         matId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(solids, meshes, element);
                                         if (matId != ElementId.InvalidElementId)
@@ -1055,7 +1056,7 @@ namespace Revit.IFC.Export.Exporter
 
                                     if (exportingInplaceOpenings)
                                     {
-                                        OpeningUtil.AddOpeningsToElement(exporterIFC, wallHnd, famInstWallElem, null, 0.0, range, setter, localPlacement, localWrapper);
+                              OpeningUtil.AddOpeningsToElement(exporterIFC, wallHnd, element, null, 0.0, range, setter, localPlacement, localWrapper);
                                     }
 
                                     if (exportedBodyDirectly)
@@ -1069,13 +1070,9 @@ namespace Revit.IFC.Export.Exporter
 
                             ElementId wallLevelId = (validRange) ? setter.LevelId : ElementId.InvalidElementId;
 
-                            if ((exportingWallElement || exportingFaceWall) && !exportParts)
+                     if (!exportParts && exportingHostObject)
                             {
-                                HostObject hostObject = null;
-                                if (exportingWallElement)
-                                    hostObject = wallElement;
-                                else
-                                    hostObject = faceWall;
+                        HostObject hostObject = element as HostObject;
                                 if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x2 || exportedAsWallWithAxis)
                                     HostObjectExporter.ExportHostObjectMaterials(exporterIFC, hostObject, localWrapper.GetAnElement(),
                                         geometryElement, localWrapper, wallLevelId, Toolkit.IFCLayerSetDirection.Axis2, !exportedAsWallWithAxis);

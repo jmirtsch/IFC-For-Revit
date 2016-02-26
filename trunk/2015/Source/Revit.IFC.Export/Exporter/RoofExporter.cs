@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2012  Autodesk, Inc.
+// Copyright (C) 2012-2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,14 +19,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Autodesk.Revit;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
-using Revit.IFC.Export.Exporter.PropertySet;
 using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter
@@ -67,7 +63,7 @@ namespace Revit.IFC.Export.Exporter
 
                         ElementId categoryId = CategoryUtil.GetSafeCategoryId(roof);
 
-                        BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
+                  BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
                         BodyData bodyData;
                         IFCAnyHandle representation = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, roof,
                             categoryId, geometryElement, bodyExporterOptions, null, ecData, out bodyData);
@@ -256,7 +252,7 @@ namespace Revit.IFC.Export.Exporter
                                         curveLoops.Add(roofCurveloops[numLoop]);
                                         double slope = Math.Abs(planeDirs[numLoop].Z);
                                         double scaledExtrusionDepth = scaledDepth * slope;
-                                        IFCAnyHandle shapeRep = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, curveLoops, plane, extrusionDir, scaledExtrusionDepth);
+                              IFCAnyHandle shapeRep = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, curveLoops, plane, extrusionDir, scaledExtrusionDepth);
                                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(shapeRep))
                                             return null;
 

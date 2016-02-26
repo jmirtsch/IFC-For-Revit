@@ -133,7 +133,7 @@ namespace Revit.IFC.Export.Toolkit
     enum IFCReinforcingBarSubElements
     {
         BarStart = 5,
-        BarEnd = BarStart + 255
+        BarEnd = BarStart + 1023
     }
 
     enum IFCRoofSubElements

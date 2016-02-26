@@ -147,6 +147,9 @@
   <data name="IFCProcessingTrusses" xml:space="preserve">
     <value>IFC Export: Processing Trusses: {0} of {1} (Truss ID: {2})</value>
   </data>
+  <data name="PropertySetTypeSuffix" xml:space="preserve">
+    <value>(Type)</value>
+  </data>
   <data name="RevolvedFaceProfileCurve" xml:space="preserve">
     <value>Revolved Face Profile Curve</value>
   </data>

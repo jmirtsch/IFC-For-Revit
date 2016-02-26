@@ -33,6 +33,14 @@ namespace Revit.IFC.Import.Data
    /// <summary>
    /// Represents an IfcProject.
    /// </summary>
+   /// <remarks>In IFC4, IfcProject inherits from IfcContext, which in turn inherits from IfcObjectDefinition.
+   /// In IFC2x3, IfcProject inherits from IfcObject, which in turn inherits from IfcObjectDefintion.
+   /// In addition, in IFC4, all of the IfcProject specific attributes are at the IfcContext level.
+   /// For now, we will:
+   /// 1. Keep IfcProject inheriting from IfcObject, and make IfcObject aware that some attributes are not appropriate for IfcProject.
+   /// 2. Keep IfcContext attributes at the IfcProject level.
+   /// Note also that "LongName" and "Phase" are not yet supported, and that the content of "RepresentationContexts" is stored directly
+   /// in IfcProject.</remarks>
    public class IFCProject : IFCObject
    {
       private IList<double> m_TrueNorthDirection = null;
