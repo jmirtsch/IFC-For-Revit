@@ -119,6 +119,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet
 
                 parseClassificationCode(paramClassificationCode, classificationCodeFieldName, out classificationName, out classificationCode, out classificationDescription);
 
+            // If classificationName is empty, there is no classification to export.
+            if (String.IsNullOrEmpty(classificationName))
+               continue;
+
                 IFCAnyHandle classification;
                 if (!ExporterCacheManager.ClassificationCache.ClassificationHandles.TryGetValue(classificationName, out classification))
                 {
@@ -179,43 +183,56 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             //          <classification code> : <classification description>
             //          [<Classification name>] <classification code>
             //          [<Classification name>] <classification code> : <classification description>
-
-            // Will be nice to use a single Regular expression if I have mastered the use of the regular expression. For now use simple Split method
+         // Note that the classification code can contain brackets and colons without specifying the classification name and description if the following syntax is used:
+         //          []<classification code>:
 
             classificationName = null;
             classificationCode = null;
             classificationDescription = null;
-            int noCodepart = 0;
+         int numCodeparts = 0;
 
             if (string.IsNullOrWhiteSpace(paramClassificationCode))
-                return noCodepart;     // do nothing if it is empty
-            string[] splitResult1 = paramClassificationCode.Split(new Char[] { '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
-            if (splitResult1.Length > 1)
+            return numCodeparts;     // do nothing if it is empty
+
+         // Only remove the left bracket if it is the first non-empty character in the string, and if there is a corresponding right bracket.
+         string parsedParamClassificationCode = paramClassificationCode.Trim();
+         if (parsedParamClassificationCode[0] == '[')
+         {
+            int rightBracket = parsedParamClassificationCode.IndexOf("]");
+            if (rightBracket > 0)
             {
                 // found [<classification Name>]
-                classificationName = splitResult1[0].Trim();
-                noCodepart++;
+               if (rightBracket > 1)
+                  classificationName = parsedParamClassificationCode.Substring(1, rightBracket - 1);
+               parsedParamClassificationCode = parsedParamClassificationCode.Substring(rightBracket + 1);
+               numCodeparts++;
             }
+         }
 
-            splitResult1 = splitResult1[splitResult1.Length - 1].Split(new Char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-            classificationCode = splitResult1[0].Trim();
-            noCodepart++;
-
-            if (splitResult1.Length > 1)
+         // Now search for the last colon, for the description override.  Note that we allow the classification name to have a colon in it if the last character is a colon.
+         int colon = parsedParamClassificationCode.LastIndexOf(":");
+         if (colon >= 0)
             {
-                classificationDescription = splitResult1[1].Trim();
-                noCodepart++;
+            if (colon < parsedParamClassificationCode.Count() - 1)
+            {
+               classificationDescription = parsedParamClassificationCode.Substring(colon + 1).Trim();
+               numCodeparts++;
             }
+            parsedParamClassificationCode = parsedParamClassificationCode.Substring(0, colon);
+            }
+
+         classificationCode = parsedParamClassificationCode.Trim();
+         numCodeparts++;
 
             if (String.IsNullOrEmpty(classificationName))
-                {
+            {
                 // No Classification Name specified, look for Classification Name assignment from the cache (from UI)
                 if (!ExporterCacheManager.ClassificationCache.FieldNameToClassificationNames.TryGetValue(classificationCodeFieldName, out classificationName))
                     classificationName = "Default Classification";
             }
             
-            return noCodepart;
-                }
+         return numCodeparts;
+        }
 
         /// <summary>
         /// Create a new classification reference and associate it with the Element (ElemHnd)
@@ -248,10 +265,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="classificationReference">The classification reference to be associated with</param>
         public static void AssociateClassificationReference(ExporterIFC exporterIFC, IFCFile file, IFCAnyHandle elemHnd, IFCAnyHandle classificationReference)
         {
-                HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
-                relatedObjects.Add(elemHnd);
+            HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
+            relatedObjects.Add(elemHnd);
 
-                IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
+            IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
                ExporterCacheManager.OwnerHistoryHandle, classificationReference.GetAttribute("ReferencedSource").ToString() + " Classification", "", relatedObjects, classificationReference);
 
         }

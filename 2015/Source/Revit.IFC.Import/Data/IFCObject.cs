@@ -30,319 +30,299 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents an IfcObject.
-    /// </summary>
-    public abstract class IFCObject : IFCObjectDefinition
-    {
-        /// <summary>
-        /// Store the entity types of elements that have no predefined type.
-        /// </summary>
-        private static HashSet<IFCEntityType> m_sNoPredefinedType = null;
+   /// <summary>
+   /// Represents an IfcObject.
+   /// </summary>
+   public abstract class IFCObject : IFCObjectDefinition
+   {
+      /// <summary>
+      /// Store the entity types of elements that have no predefined type.
+      /// </summary>
+      private static HashSet<IFCEntityType> m_sNoPredefinedType = null;
 
-        private static HashSet<IFCEntityType> m_sPredefinedTypePreIFC4 = null;
+      private static HashSet<IFCEntityType> m_sPredefinedTypePreIFC4 = null;
 
-        private string m_ObjectType = null;
+      private string m_ObjectType = null;
 
-        private IDictionary<string, IFCPropertySetDefinition> m_IFCPropertySets = null;
+      private IDictionary<string, IFCPropertySetDefinition> m_IFCPropertySets = null;
 
-        private HashSet<IFCTypeObject> m_IFCTypeObjects = null;
+      private HashSet<IFCTypeObject> m_IFCTypeObjects = null;
 
-        private static bool HasPredefinedType(IFCEntityType type)
-        {
-            // These entities have no predefined type field.
-            if (m_sNoPredefinedType == null)
+      private static bool HasPredefinedType(IFCEntityType type)
+      {
+         // These entities have no predefined type field.
+         if (m_sNoPredefinedType == null)
+         {
+            m_sNoPredefinedType = new HashSet<IFCEntityType>();
+            m_sNoPredefinedType.Add(IFCEntityType.IfcProject);
+            m_sNoPredefinedType.Add(IFCEntityType.IfcSite);
+            m_sNoPredefinedType.Add(IFCEntityType.IfcBuilding);
+            m_sNoPredefinedType.Add(IFCEntityType.IfcBuildingStorey);
+            m_sNoPredefinedType.Add(IFCEntityType.IfcGroup);
+            m_sNoPredefinedType.Add(IFCEntityType.IfcSystem);
+         }
+
+         if (m_sNoPredefinedType.Contains(type))
+            return false;
+
+         if (IFCImportFile.TheFile.SchemaVersion < IFCSchemaVersion.IFC4)
+         {
+            // Before IFC4, these are the only objects that have a predefined type that we support.
+            // Note that this is just a list of entity types that are dealt with generically; other types may override the base function.
+            if (m_sPredefinedTypePreIFC4 == null)
             {
-                m_sNoPredefinedType = new HashSet<IFCEntityType>();
-                m_sNoPredefinedType.Add(IFCEntityType.IfcProject);
-                m_sNoPredefinedType.Add(IFCEntityType.IfcSite);
-                m_sNoPredefinedType.Add(IFCEntityType.IfcBuilding);
-                m_sNoPredefinedType.Add(IFCEntityType.IfcBuildingStorey);
-                m_sNoPredefinedType.Add(IFCEntityType.IfcGroup);
-                m_sNoPredefinedType.Add(IFCEntityType.IfcSystem);
+               m_sPredefinedTypePreIFC4 = new HashSet<IFCEntityType>();
+               m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcCovering);
+               m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcDistributionPort);
+               m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcFooting);
+               m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcPile);
+               m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcRailing);
+               m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcRamp);
+               m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcRoof);
+               m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcSlab);
+               m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcStair);
+               m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcTendon);
             }
 
-            if (m_sNoPredefinedType.Contains(type))
-                return false;
+            if (!m_sPredefinedTypePreIFC4.Contains(type))
+               return false;
+         }
 
-            if (IFCImportFile.TheFile.SchemaVersion < IFCSchemaVersion.IFC4)
-            {
-                // Before IFC4, these are the only objects that have a predefined type that we support.
-                // Note that this is just a list of entity types that are dealt with generically; other types may override the base function.
-                if (m_sPredefinedTypePreIFC4 == null)
-                {
-                    m_sPredefinedTypePreIFC4 = new HashSet<IFCEntityType>();
-                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcCovering);
-                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcDistributionPort);
-                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcFooting);
-                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcPile);
-                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcRailing);
-                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcRamp);
-                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcRoof);
-                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcSlab);
-                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcStair);
-                    m_sPredefinedTypePreIFC4.Add(IFCEntityType.IfcTendon);
-                }
+         return true;
+      }
 
-                if (!m_sPredefinedTypePreIFC4.Contains(type))
-                    return false;
-            }
+      /// <summary>
+      /// The object type.
+      /// </summary>
+      public string ObjectType
+      {
+         get { return m_ObjectType; }
+         protected set { m_ObjectType = value; }
+      }
 
-            return true;
-        }
+      /// <summary>
+      /// The property sets.
+      /// </summary>
+      public IDictionary<string, IFCPropertySetDefinition> PropertySets
+      {
+         get
+         {
+            if (m_IFCPropertySets == null)
+               m_IFCPropertySets = new Dictionary<string, IFCPropertySetDefinition>();
+            return m_IFCPropertySets;
+         }
+      }
 
-        /// <summary>
-        /// The object type.
-        /// </summary>
-        public string ObjectType
-        {
-            get { return m_ObjectType; }
-        }
+      /// <summary>
+      /// The type objects.
+      /// </summary>
+      /// <remarks>IFC Where rule for IfcObject states that we expect at most 1 item in this set.</remarks>
+      public HashSet<IFCTypeObject> TypeObjects
+      {
+         get
+         {
+            if (m_IFCTypeObjects == null)
+               m_IFCTypeObjects = new HashSet<IFCTypeObject>();
+            return m_IFCTypeObjects;
+         }
+      }
 
-        /// <summary>
-        /// The property sets.
-        /// </summary>
-        public IDictionary<string, IFCPropertySetDefinition> PropertySets
-        {
-            get 
-            {
-                if (m_IFCPropertySets == null)
-                    m_IFCPropertySets = new Dictionary<string, IFCPropertySetDefinition>();
-                return m_IFCPropertySets; 
-            }
-        }
+      /// <summary>
+      /// Creates or populates Revit elements based on the information contained in this class.
+      /// </summary>
+      /// <param name="doc">The document.</param>
+      protected override void Create(Document doc)
+      {
+         base.Create(doc);
+      }
 
-        /// <summary>
-        /// The type objects.
-        /// </summary>
-        /// <remarks>IFC Where rule for IfcObject states that we expect at most 1 item in this set.</remarks>
-        public HashSet<IFCTypeObject> TypeObjects
-        {
-            get 
-            {
-                if (m_IFCTypeObjects == null)
-                    m_IFCTypeObjects = new HashSet<IFCTypeObject>();
-                return m_IFCTypeObjects; 
-            }
-        }
-
-        /// <summary>
-        /// Creates or populates Revit elements based on the information contained in this class.
-        /// </summary>
-        /// <param name="doc">The document.</param>
-        protected override void Create(Document doc)
-        {
-            base.Create(doc);
-        }
-
-        /// <summary>
-        /// Gets the predefined type from the IfcObject, depending on the file version and entity type.
-        /// </summary>
-        /// <param name="ifcObjectDefinition">The associated handle.</param>
-        /// <returns>The predefined type, if any.</returns>
-        /// <remarks>Some entities use other fields as predefined type, including IfcDistributionPort ("FlowDirection") and IfcSpace (pre-IFC4).</remarks>
-        protected override string GetPredefinedType(IFCAnyHandle ifcObjectDefinition)
-        {
-            // Not all entity types have any predefined type; check against a hard-coded list here.
-            if (!HasPredefinedType(EntityType))
-                return null;
-
-            // "PredefinedType" is the default name of the field.
-            // For IFC2x3, some entities have a "ShapeType" instead of a "PredefinedType", which we will check below.
-            string predefinedTypeName = "PredefinedType";
-
-            if (EntityType == IFCEntityType.IfcDistributionPort)
-                predefinedTypeName = "FlowDirection";
-            else if (IFCImportFile.TheFile.SchemaVersion < IFCSchemaVersion.IFC4)
-            {
-                // The following have "PredefinedType", but are out of scope for now:
-                // IfcCostSchedule, IfcOccupant, IfcProjectOrder, IfcProjectOrderRecord, IfcServiceLifeFactor
-                // IfcStructuralAnalysisModel, IfcStructuralCurveMember, IfcStructuralLoadGroup, IfcStructuralSurfaceMember
-                if ((EntityType == IFCEntityType.IfcRamp) ||
-                    (EntityType == IFCEntityType.IfcRoof) ||
-                    (EntityType == IFCEntityType.IfcStair))
-                    predefinedTypeName = "ShapeType";
-            }
-
-            try
-            {
-                return IFCAnyHandleUtil.GetEnumerationAttribute(ifcObjectDefinition, predefinedTypeName);
-            }
-            catch
-            {
-            }
-
+      /// <summary>
+      /// Gets the predefined type from the IfcObject, depending on the file version and entity type.
+      /// </summary>
+      /// <param name="ifcObjectDefinition">The associated handle.</param>
+      /// <returns>The predefined type, if any.</returns>
+      /// <remarks>Some entities use other fields as predefined type, including IfcDistributionPort ("FlowDirection") and IfcSpace (pre-IFC4).</remarks>
+      protected override string GetPredefinedType(IFCAnyHandle ifcObjectDefinition)
+      {
+         // Not all entity types have any predefined type; check against a hard-coded list here.
+         if (!HasPredefinedType(EntityType))
             return null;
-        }
 
-        /// <summary>
-        /// Processes IfcObject attributes.
-        /// </summary>
-        /// <param name="ifcObject">The IfcObject handle.</param>
-        protected override void Process(IFCAnyHandle ifcObject)
-        {
-            base.Process(ifcObject);
+         // "PredefinedType" is the default name of the field.
+         // For IFC2x3, some entities have a "ShapeType" instead of a "PredefinedType", which we will check below.
+         string predefinedTypeName = "PredefinedType";
 
-            m_ObjectType = IFCAnyHandleUtil.GetStringAttribute(ifcObject, "ObjectType");
+         if (EntityType == IFCEntityType.IfcDistributionPort)
+            predefinedTypeName = "FlowDirection";
+         else if (IFCImportFile.TheFile.SchemaVersion < IFCSchemaVersion.IFC4)
+         {
+            // The following have "PredefinedType", but are out of scope for now:
+            // IfcCostSchedule, IfcOccupant, IfcProjectOrder, IfcProjectOrderRecord, IfcServiceLifeFactor
+            // IfcStructuralAnalysisModel, IfcStructuralCurveMember, IfcStructuralLoadGroup, IfcStructuralSurfaceMember
+            if ((EntityType == IFCEntityType.IfcRamp) ||
+                (EntityType == IFCEntityType.IfcRoof) ||
+                (EntityType == IFCEntityType.IfcStair))
+               predefinedTypeName = "ShapeType";
+         }
 
-            HashSet<IFCAnyHandle> isDefinedByHandles = IFCAnyHandleUtil.GetAggregateInstanceAttribute
-                <HashSet<IFCAnyHandle>>(ifcObject, "IsDefinedBy");
+         try
+         {
+            return IFCAnyHandleUtil.GetEnumerationAttribute(ifcObjectDefinition, predefinedTypeName);
+         }
+         catch
+         {
+         }
 
-            if (isDefinedByHandles != null)
+         return null;
+      }
+
+      /// <summary>
+      /// Processes IfcObject attributes.
+      /// </summary>
+      /// <param name="ifcObject">The IfcObject handle.</param>
+      protected override void Process(IFCAnyHandle ifcObject)
+      {
+         base.Process(ifcObject);
+
+         ObjectType = IFCAnyHandleUtil.GetStringAttribute(ifcObject, "ObjectType");
+
+         HashSet<IFCAnyHandle> isDefinedByHandles = IFCAnyHandleUtil.GetAggregateInstanceAttribute
+             <HashSet<IFCAnyHandle>>(ifcObject, "IsDefinedBy");
+
+         // IFC4 adds "IsDeclaredBy" and "IsTypedBy" inverse attributes. We'll read in "IsTypedBy" and
+         // group this wih "IsDefinedBy" together, although we may later decide to split them up for performance reasons.
+         // Note that IcProject in IFC4 inherits from IfcContext, not IfcObject (as it did in IFC2x3).  Currently, the
+         // only difference between the two is that IfcObject supports "IsDeclaredBy" and "IsTypedBy", and that IfcContext
+         // contains the attributes of IfcProject from IFC2x3.  We'll keep the attributes at the IfcProject level for now
+         // and protect against reading "IsTypedBy" here.
+         if (IFCImportFile.TheFile.SchemaVersion >= IFCSchemaVersion.IFC4 && !IFCAnyHandleUtil.IsSubTypeOf(ifcObject, IFCEntityType.IfcProject))
+         {
+            HashSet<IFCAnyHandle> isTypedBy = IFCAnyHandleUtil.GetAggregateInstanceAttribute
+             <HashSet<IFCAnyHandle>>(ifcObject, "IsTypedBy");
+            if (isTypedBy != null)
+               isDefinedByHandles.UnionWith(isTypedBy);
+         }
+
+         if (isDefinedByHandles != null)
+         {
+            IFCPropertySetDefinition.ResetCounters();
+            foreach (IFCAnyHandle isDefinedByHandle in isDefinedByHandles)
             {
-                IFCPropertySetDefinition.ResetCounters();
-                foreach (IFCAnyHandle isDefinedByHandle in isDefinedByHandles)
-                {
-                    if (IFCAnyHandleUtil.IsSubTypeOf(isDefinedByHandle, IFCEntityType.IfcRelDefinesByProperties))
-                    {
-                        ProcessIFCRelDefinesByProperties(isDefinedByHandle);
-                    }
-                    else if (IFCAnyHandleUtil.IsSubTypeOf(isDefinedByHandle, IFCEntityType.IfcRelDefinesByType))
-                    {
-                        ProcessIFCRelDefinesByType(isDefinedByHandle);
-                    }
-                    else
-                        Importer.TheLog.LogUnhandledSubTypeError(isDefinedByHandle, IFCEntityType.IfcRelDefines, false);
-                }
+               if (IFCAnyHandleUtil.IsSubTypeOf(isDefinedByHandle, IFCEntityType.IfcRelDefinesByProperties))
+               {
+                  ProcessIFCRelation.ProcessIFCRelDefinesByProperties(isDefinedByHandle, PropertySets);
+               }
+               else if (IFCAnyHandleUtil.IsSubTypeOf(isDefinedByHandle, IFCEntityType.IfcRelDefinesByType))
+               {
+                  ProcessIFCRelDefinesByType(isDefinedByHandle);
+               }
+               else
+                  Importer.TheLog.LogUnhandledSubTypeError(isDefinedByHandle, IFCEntityType.IfcRelDefines, false);
             }
-        }
+         }
+      }
 
-        /// <summary>
-        /// Processes IfcRelDefinesByProperties.
-        /// </summary>
-        /// <param name="ifcRelDefinesByProperties">The IfcRelDefinesByProperties handle.</param>
-        void ProcessIFCRelDefinesByProperties(IFCAnyHandle ifcRelDefinesByProperties)
-        {
-            IFCAnyHandle propertySetDefinition = IFCAnyHandleUtil.GetInstanceAttribute(ifcRelDefinesByProperties, "RelatingPropertyDefinition");
+      /// <summary>
+      /// Processes IfcRelDefinesByType.
+      /// </summary>
+      /// <param name="ifcRelDefinesByType">The IfcRelDefinesByType handle.</param>
+      void ProcessIFCRelDefinesByType(IFCAnyHandle ifcRelDefinesByType)
+      {
+         IFCAnyHandle typeObject = IFCAnyHandleUtil.GetInstanceAttribute(ifcRelDefinesByType, "RelatingType");
 
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(propertySetDefinition))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcPropertySetDefinition);
-                return;
-            }
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(typeObject))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcTypeObject);
+            return;
+         }
 
-            IFCPropertySetDefinition ifcPropertySet = IFCPropertySetDefinition.ProcessIFCPropertySetDefinition(propertySetDefinition);
+         if (!IFCAnyHandleUtil.IsSubTypeOf(typeObject, IFCEntityType.IfcTypeObject))
+         {
+            Importer.TheLog.LogUnhandledSubTypeError(typeObject, IFCEntityType.IfcTypeObject, false);
+            return;
+         }
 
-            if (ifcPropertySet != null)
-            {
-                int propertySetNumber = 1;
-                string propertySetName = ifcPropertySet.Name;
+         IFCTypeObject ifcTypeObject = IFCTypeObject.ProcessIFCTypeObject(typeObject);
 
-                while (true)
-                {
-                    string name = (propertySetNumber == 1) ? propertySetName : propertySetName + " " + propertySetNumber.ToString();
-                    if (PropertySets.ContainsKey(name))
-                        propertySetNumber++;
-                    else
-                    {
-                        PropertySets[name] = ifcPropertySet;
-                        break;
-                    }
-                }
-            }
-        }
+         if (ifcTypeObject != null)
+            TypeObjects.Add(ifcTypeObject);
+      }
 
-        /// <summary>
-        /// Processes IfcRelDefinesByType.
-        /// </summary>
-        /// <param name="ifcRelDefinesByType">The IfcRelDefinesByType handle.</param>
-        void ProcessIFCRelDefinesByType(IFCAnyHandle ifcRelDefinesByType)
-        {
-            IFCAnyHandle typeObject = IFCAnyHandleUtil.GetInstanceAttribute(ifcRelDefinesByType, "RelatingType");
-
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(typeObject))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcTypeObject);
-                return;
-            }
-
-            if (!IFCAnyHandleUtil.IsSubTypeOf(typeObject, IFCEntityType.IfcTypeObject))
-            {
-                Importer.TheLog.LogUnhandledSubTypeError(typeObject, IFCEntityType.IfcTypeObject,false);
-                return;
-            }
-
-            IFCTypeObject ifcTypeObject = IFCTypeObject.ProcessIFCTypeObject(typeObject);
-
-            if (ifcTypeObject != null)
-                TypeObjects.Add(ifcTypeObject);
-        }
-
-        /// <summary>
-        /// Processes IfcObject handle.
-        /// </summary>
-        /// <param name="ifcObject">The IfcObject handle.</param>
-        /// <returns>The IfcObject object.</returns>
-        public static IFCObject ProcessIFCObject(IFCAnyHandle ifcObject)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcObject))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcObject);
-                return null;
-            }
-
-            IFCEntity cachedObject;
-            if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcObject.StepId, out cachedObject))
-                return (cachedObject as IFCObject); 
-            
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcObject, IFCEntityType.IfcProduct))
-            {
-                return IFCProduct.ProcessIFCProduct(ifcObject);
-            }
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcObject, IFCEntityType.IfcProject))
-            {
-                return IFCProject.ProcessIFCProject(ifcObject);
-            }
-
-            Importer.TheLog.LogUnhandledSubTypeError(ifcObject, IFCEntityType.IfcObject, true);
+      /// <summary>
+      /// Processes IfcObject handle.
+      /// </summary>
+      /// <param name="ifcObject">The IfcObject handle.</param>
+      /// <returns>The IfcObject object.</returns>
+      public static IFCObject ProcessIFCObject(IFCAnyHandle ifcObject)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcObject))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcObject);
             return null;
-        }
+         }
 
-        /// <summary>
-        /// Creates or populates Revit element params based on the information contained in this class.
-        /// </summary>
-        /// <param name="doc">The document.</param>
-        /// <param name="element">The element.</param>
-        protected override void CreateParametersInternal(Document doc, Element element)
-        {
-            base.CreateParametersInternal(doc, element);
+         IFCEntity cachedObject;
+         if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcObject.StepId, out cachedObject))
+            return (cachedObject as IFCObject);
 
-            if (element != null)
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcObject, IFCEntityType.IfcProduct))
+         {
+            return IFCProduct.ProcessIFCProduct(ifcObject);
+         }
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcObject, IFCEntityType.IfcProject))
+         {
+            return IFCProject.ProcessIFCProject(ifcObject);
+         }
+
+         Importer.TheLog.LogUnhandledSubTypeError(ifcObject, IFCEntityType.IfcObject, true);
+         return null;
+      }
+
+      /// <summary>
+      /// Creates or populates Revit element params based on the information contained in this class.
+      /// </summary>
+      /// <param name="doc">The document.</param>
+      /// <param name="element">The element.</param>
+      protected override void CreateParametersInternal(Document doc, Element element)
+      {
+         base.CreateParametersInternal(doc, element);
+
+         if (element != null)
+         {
+            // Set "ObjectTypeOverride" parameter.
+            string objectTypeOverride = ObjectType;
+            if (!string.IsNullOrWhiteSpace(objectTypeOverride))
+               IFCPropertySet.AddParameterString(doc, element, "ObjectTypeOverride", objectTypeOverride, Id);
+         }
+      }
+
+      /// <summary>
+      /// Create property sets for a given element.
+      /// </summary>
+      /// <param name="doc">The document.</param>
+      /// <param name="element">The element being created.</param>
+      /// <param name="propertySetsCreated">A concatenated string of property sets created, used to filter schedules.</returns>
+      public override void CreatePropertySets(Document doc, Element element, string propertySetsCreated)
+      {
+         if (PropertySets != null && PropertySets.Count > 0)
+         {
+            IFCParameterSetByGroup parameterGroupMap = IFCParameterSetByGroup.Create(element);
+            foreach (IFCPropertySetDefinition propertySet in PropertySets.Values)
             {
-                // Set "ObjectTypeOverride" parameter.
-                string objectTypeOverride = ObjectType;
-                if (!string.IsNullOrWhiteSpace(objectTypeOverride))
-                    IFCPropertySet.AddParameterString(doc, element, "ObjectTypeOverride", objectTypeOverride, Id);
+               KeyValuePair<string, bool> newPropertySetCreated = propertySet.CreatePropertySet(doc, element, parameterGroupMap);
+               if (!newPropertySetCreated.Value || string.IsNullOrWhiteSpace(newPropertySetCreated.Key))
+                  continue;
+
+               if (propertySetsCreated == null)
+                  propertySetsCreated = newPropertySetCreated.Key;
+               else
+                  propertySetsCreated += ";" + newPropertySetCreated.Key;
             }
-        }
 
-        /// <summary>
-        /// Create property sets for a given element.
-        /// </summary>
-        /// <param name="doc">The document.</param>
-        /// <param name="element">The element being created.</param>
-        /// <param name="propertySetsCreated">A concatenated string of property sets created, used to filter schedules.</returns>
-        public override void CreatePropertySets(Document doc, Element element, string propertySetsCreated)
-        {
-            if (PropertySets != null && PropertySets.Count > 0)
-            {
-                IFCParameterSetByGroup parameterGroupMap = IFCParameterSetByGroup.Create(element);
-                foreach (IFCPropertySetDefinition propertySet in PropertySets.Values)
-                {
-                    KeyValuePair<string, bool> newPropertySetCreated = propertySet.CreatePropertySet(doc, element, parameterGroupMap);
-                    if (!newPropertySetCreated.Value || string.IsNullOrWhiteSpace(newPropertySetCreated.Key))
-                        continue;
-
-                    if (propertySetsCreated == null)
-                        propertySetsCreated = newPropertySetCreated.Key;
-                    else
-                        propertySetsCreated += ";" + newPropertySetCreated.Key;
-                }
-
-                Parameter propertySetList = element.LookupParameter("IfcPropertySetList");
-                if (propertySetList != null)
-                    propertySetList.Set(propertySetsCreated);
-            }
-        }
-    }
+            Parameter propertySetList = element.LookupParameter("IfcPropertySetList");
+            if (propertySetList != null)
+               propertySetList.Set(propertySetsCreated);
+         }
+      }
+   }
 }

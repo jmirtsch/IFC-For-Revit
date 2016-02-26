@@ -1125,7 +1125,7 @@ namespace Revit.IFC.Export.Utility
                   IFCAnyHandle propertySet = null;
                   if ((ifcParams != null) || (!createdPropertySets.TryGetValue(propertySetKey, out propertySet)))
                   {
-                     HashSet<IFCAnyHandle> props = currDesc.ProcessEntries(file, exporterIFC, ifcParams, elementToUse, elemTypeToUse);
+                     ISet<IFCAnyHandle> props = currDesc.ProcessEntries(file, exporterIFC, ifcParams, elementToUse, elemTypeToUse);
                      if (props.Count > 0)
                      {
                         int subElementIndex = CheckElementTypeValidityForSubIndex(currDesc, prodHnd, element);
@@ -1167,8 +1167,7 @@ namespace Revit.IFC.Export.Utility
 
             foreach (KeyValuePair<IFCAnyHandle, HashSet<IFCAnyHandle>> relDefinesByProperties in relDefinesByPropertiesMap)
             {
-               ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null,
-                   relDefinesByProperties.Value, relDefinesByProperties.Key);
+               ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relDefinesByProperties.Value, relDefinesByProperties.Key);
             }
 
             transaction.Commit();
@@ -1598,16 +1597,15 @@ namespace Revit.IFC.Export.Utility
       /// Get tessellation control information for the given element.
       /// </summary>
       /// <param name="element">The element</param>
-      /// <param name="tessellationControls">The origin tessellation control</param>
-      /// <remarks>This method doesn't alter tessellationControls</remarks>
+      /// <param name="tessellationControls">The original tessellation control.</param>
+      /// <returns>For some elements, a modified version of the tessellationControls input arugment.  
+      /// By default, returns a copy of the original tessellationControls input argument.</returns>
+      /// <remarks>This method doesn't alter the tessellationControls input argument.</remarks>
       public static SolidOrShellTessellationControls GetTessellationControl(Element element, SolidOrShellTessellationControls tessellationControls)
       {
          SolidOrShellTessellationControls copyTessellationControls = CopyTessellationControls(tessellationControls);
 
          Document document = element.Document;
-         // For duct and insulation, we use a different set of levels of detail.
-         int LOD = ExporterCacheManager.ExportOptionsCache.LevelOfDetail;
-
          Element elementType = null;
 
          //Use the insulations host as the host will have the same shape as the insulation, and then triangulate the insulation. 
@@ -1637,13 +1635,15 @@ namespace Revit.IFC.Export.Utility
                {
                   if (element as DuctInsulation != null)
                   {
-                     copyTessellationControls = GetTessellationControlsForInsulation(copyTessellationControls, LOD,
-                                                                           para.AsInteger());
+                     copyTessellationControls = GetTessellationControlsForInsulation(copyTessellationControls, 
+                        ExporterCacheManager.ExportOptionsCache.LevelOfDetail,
+                        para.AsInteger());
                   }
                   else
                   {
-                     copyTessellationControls = GetTessellationControlsForDuct(copyTessellationControls, LOD,
-                                                                           para.AsInteger());
+                     copyTessellationControls = GetTessellationControlsForDuct(copyTessellationControls, 
+                        ExporterCacheManager.ExportOptionsCache.LevelOfDetail,
+                        para.AsInteger());
                   }
                }
             }
@@ -1653,37 +1653,40 @@ namespace Revit.IFC.Export.Utility
       }
 
       /// <summary>
-      ///  Returns the tessellation controls with the right setings for an elbow,tee or cross.
+      /// Returns the tessellation controls with the right setings for an elbow, tee or cross.
       /// </summary>
       /// <param name="controls">The controls to be used in the tessellation</param>
-      /// <param name="lod">the level og detail (high/medium/low/extra low) high is autodesk default and will not change anything</param>
+      /// <param name="lod">The level of detail.  </param>
       /// <param name="type">the type of the duct. </param>
-      /// <returns></returns>
-      public static SolidOrShellTessellationControls GetTessellationControlsForDuct(SolidOrShellTessellationControls controls, int lod, int type)
+      /// <returns>The new SolidOrShellTessellationControls based on the controls input argument.</returns>
+      public static SolidOrShellTessellationControls GetTessellationControlsForDuct(SolidOrShellTessellationControls controls, 
+         ExportOptionsCache.ExportTessellationLevel lod, 
+         int type)
       {
+         // Note that we make no changes of the level of detail is set to High.
          if (type == 5) //Elbow
          {
             switch (lod)
             {
-               case 1:
+               case ExportOptionsCache.ExportTessellationLevel.ExtraLow:
                   controls.Accuracy = 0.81;
                   controls.LevelOfDetail = 0.05;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 1.7;
                   break;
-               case 2:
+               case ExportOptionsCache.ExportTessellationLevel.Low:
                   controls.Accuracy = 0.84;
                   controls.LevelOfDetail = 0.4;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 1.25;
                   break;
-               case 3:
+               case ExportOptionsCache.ExportTessellationLevel.Medium:
                   controls.Accuracy = 0.74;
                   controls.LevelOfDetail = 0.4;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 0.74;
                   break;
-               case 4:
+               case ExportOptionsCache.ExportTessellationLevel.High:
                   break;
             }
          }
@@ -1691,25 +1694,25 @@ namespace Revit.IFC.Export.Utility
          {
             switch (lod)
             {
-               case 1:
+               case ExportOptionsCache.ExportTessellationLevel.ExtraLow:
                   controls.Accuracy = 1.21;
                   controls.LevelOfDetail = 0.05;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 1.7;
                   break;
-               case 2:
+               case ExportOptionsCache.ExportTessellationLevel.Low:
                   controls.Accuracy = 0.84;
                   controls.LevelOfDetail = 0.3;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 1.0;
                   break;
-               case 3:
+               case ExportOptionsCache.ExportTessellationLevel.Medium:
                   controls.Accuracy = 0.84;
                   controls.LevelOfDetail = 0.4;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 0.54;
                   break;
-               case 4:
+               case ExportOptionsCache.ExportTessellationLevel.High:
                   break;
             }
          }
@@ -1717,25 +1720,25 @@ namespace Revit.IFC.Export.Utility
          {
             switch (lod)
             {
-               case 1:
+               case ExportOptionsCache.ExportTessellationLevel.ExtraLow:
                   controls.Accuracy = 0.81;
                   controls.LevelOfDetail = 0.05;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 1.7;
                   break;
-               case 2:
+               case ExportOptionsCache.ExportTessellationLevel.Low:
                   controls.Accuracy = 0.84;
                   controls.LevelOfDetail = 0.2;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 0.8;
                   break;
-               case 3:
+               case ExportOptionsCache.ExportTessellationLevel.Medium:
                   controls.Accuracy = 0.81;
                   controls.LevelOfDetail = 0.4;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 0.84;
                   break;
-               case 4:
+               case ExportOptionsCache.ExportTessellationLevel.High:
                   break;
             }
          }
@@ -1747,34 +1750,36 @@ namespace Revit.IFC.Export.Utility
       ///  Returns the tessellation controls with the right setings for insulations for a duct of type elbow,tee or cross
       /// </summary>
       /// <param name="controls">The controls to be used in the tessellation</param>
-      /// <param name="lod">the level og detail (high/medium/low/extra low) high is autodesk default and will not change anything</param>
+      /// <param name="lod">The level of detail.  </param>
       /// <param name="type">the type of the duct. </param>
-      /// <returns></returns>
-      public static SolidOrShellTessellationControls GetTessellationControlsForInsulation(SolidOrShellTessellationControls controls, int lod, int type)
+      /// <returns>The new SolidOrShellTessellationControls based on the controls input argument.</returns>
+      public static SolidOrShellTessellationControls GetTessellationControlsForInsulation(SolidOrShellTessellationControls controls,
+         ExportOptionsCache.ExportTessellationLevel lod, 
+         int type)
       {
          if (type == 5) //Elbow
          {
             switch (lod)
             {
-               case 1:
+               case ExportOptionsCache.ExportTessellationLevel.ExtraLow:
                   controls.Accuracy = 0.6;
                   controls.LevelOfDetail = 0.1;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 1.2;
                   break;
-               case 2:
+               case ExportOptionsCache.ExportTessellationLevel.Low:
                   controls.Accuracy = 0.6;
                   controls.LevelOfDetail = 0.3;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 0.7;
                   break;
-               case 3:
+               case ExportOptionsCache.ExportTessellationLevel.Medium:
                   controls.Accuracy = 0.5;
                   controls.LevelOfDetail = 0.4;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 0.35;
                   break;
-               case 4:
+               case ExportOptionsCache.ExportTessellationLevel.High:
                   break;
             }
          }
@@ -1782,25 +1787,25 @@ namespace Revit.IFC.Export.Utility
          {
             switch (lod)
             {
-               case 1:
+               case ExportOptionsCache.ExportTessellationLevel.ExtraLow:
                   controls.Accuracy = 0.6;
                   controls.LevelOfDetail = 0.1;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 1.2;
                   break;
-               case 2:
+               case ExportOptionsCache.ExportTessellationLevel.Low:
                   controls.Accuracy = 0.6;
                   controls.LevelOfDetail = 0.2;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 0.9;
                   break;
-               case 3:
+               case ExportOptionsCache.ExportTessellationLevel.Medium:
                   controls.Accuracy = 0.5;
                   controls.LevelOfDetail = 0.4;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 0.55;
                   break;
-               case 4:
+               case ExportOptionsCache.ExportTessellationLevel.High:
                   break;
             }
          }
@@ -1808,25 +1813,25 @@ namespace Revit.IFC.Export.Utility
          {
             switch (lod)
             {
-               case 1:
+               case ExportOptionsCache.ExportTessellationLevel.ExtraLow:
                   controls.Accuracy = 0.6;
                   controls.LevelOfDetail = 0.1;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 1.2;
                   break;
-               case 2:
+               case ExportOptionsCache.ExportTessellationLevel.Low:
                   controls.Accuracy = 0.6;
                   controls.LevelOfDetail = 0.2;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 0.9;
                   break;
-               case 3:
+               case ExportOptionsCache.ExportTessellationLevel.Medium:
                   controls.Accuracy = 0.5;
                   controls.LevelOfDetail = 0.4;
                   controls.MinAngleInTriangle = 0.13;
                   controls.MinExternalAngleBetweenTriangles = 0.55;
                   break;
-               case 4:
+               case ExportOptionsCache.ExportTessellationLevel.High:
                   break;
             }
          }

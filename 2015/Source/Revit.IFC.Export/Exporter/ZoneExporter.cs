@@ -31,59 +31,60 @@ using Revit.IFC.Export.Exporter.PropertySet;
 
 namespace Revit.IFC.Export.Exporter
 {
-    /// <summary>
-    /// Provides methods to export a Revit element as IfcZone.
-    /// </summary>
-    class ZoneExporter
-    {
-        /// <summary>
-        /// Exports an element as a zone.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="element">The element.</param>
-        /// <param name="productWrapper">The ProductWrapper.</param>
-        public static void ExportZone(ExporterIFC exporterIFC, Zone element,
-            ProductWrapper productWrapper)
-        {
-            if (element == null)
-                return;
+   /// <summary>
+   /// Provides methods to export a Revit element as IfcZone.
+   /// </summary>
+   class ZoneExporter
+   {
+      /// <summary>
+      /// Exports an element as a zone.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="element">The element.</param>
+      /// <param name="productWrapper">The ProductWrapper.</param>
+      public static void ExportZone(ExporterIFC exporterIFC, Zone element,
+          ProductWrapper productWrapper)
+      {
+         if (element == null)
+            return;
 
-            HashSet<IFCAnyHandle> spaceHnds = new HashSet<IFCAnyHandle>();
-            
-            SpaceSet spaces = element.Spaces;
-            foreach (Space space in spaces)
-            {
-                if (space == null)
-                    continue;
+         HashSet<IFCAnyHandle> spaceHnds = new HashSet<IFCAnyHandle>();
 
-                IFCAnyHandle spaceHnd = ExporterCacheManager.SpaceInfoCache.FindSpaceHandle(space.Id);
-                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(spaceHnd))
-                    spaceHnds.Add(spaceHnd);
-            }
+         SpaceSet spaces = element.Spaces;
+         foreach (Space space in spaces)
+         {
+            if (space == null)
+               continue;
 
-            if (spaceHnds.Count == 0)
-                return;
+            IFCAnyHandle spaceHnd = ExporterCacheManager.SpaceInfoCache.FindSpaceHandle(space.Id);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(spaceHnd))
+               spaceHnds.Add(spaceHnd);
+         }
 
-            IFCFile file = exporterIFC.GetFile();
+         if (spaceHnds.Count == 0)
+            return;
 
-            using (IFCTransaction tr = new IFCTransaction(file))
-            {
-                string guid = GUIDUtil.CreateGUID(element);
-                IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
-                string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-                string description = NamingUtil.GetDescriptionOverride(element, null);
-                string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
+         IFCFile file = exporterIFC.GetFile();
 
-                IFCAnyHandle zoneHnd = IFCInstanceExporter.CreateZone(file, guid, ownerHistory, name, description, objectType);
+         using (IFCTransaction tr = new IFCTransaction(file))
+         {
+            string guid = GUIDUtil.CreateGUID(element);
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
+            string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
+            string description = NamingUtil.GetDescriptionOverride(element, null);
+            string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
+            string longName = NamingUtil.GetLongNameOverride(element, null);
 
-                productWrapper.AddElement(element, zoneHnd);
+            IFCAnyHandle zoneHnd = IFCInstanceExporter.CreateZone(file, guid, ownerHistory, name, description, objectType, longName);
 
-                string relAssignsGuid = GUIDUtil.CreateSubElementGUID(element, (int) IFCZoneSubElements.RelAssignsToGroup);
-                IFCInstanceExporter.CreateRelAssignsToGroup(file, relAssignsGuid, ownerHistory, null, null, spaceHnds, null, zoneHnd);
+            productWrapper.AddElement(element, zoneHnd);
 
-                tr.Commit();
-                return;
-            }
-        }
-    }
+            string relAssignsGuid = GUIDUtil.CreateSubElementGUID(element, (int)IFCZoneSubElements.RelAssignsToGroup);
+            IFCInstanceExporter.CreateRelAssignsToGroup(file, relAssignsGuid, ownerHistory, null, null, spaceHnds, null, zoneHnd);
+
+            tr.Commit();
+            return;
+         }
+      }
+   }
 }

@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2012  Autodesk, Inc.
+// Copyright (C) 2012-2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -18,8 +18,6 @@
 //
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
 using System.Diagnostics;
 
@@ -35,6 +33,15 @@ namespace Revit.IFC.Export.Utility
     /// </summary>
     public class ExportOptionsCache
     {
+      public enum ExportTessellationLevel
+      {
+         ExtraLow = 1,
+         Low = 2,
+         Medium = 3,
+         High = 4
+      }
+
+
         private GUIDOptions m_GUIDOptions;
         private bool m_ExportAs4_ADD1;
         private IFCVersion m_FileVersion;
@@ -265,18 +272,19 @@ namespace Revit.IFC.Export.Utility
             // TessellationLevelOfDetail * 4 = LevelOfDetail
             // TessellationLevelOfDetail takes precedence over UseCoarseTessellation.
 
-            cache.LevelOfDetail = 2;   // Default: Low
+         cache.LevelOfDetail = ExportTessellationLevel.Low;
 
             bool? useCoarseTessellation = GetNamedBooleanOption(options, "UseCoarseTessellation");
             if (useCoarseTessellation.HasValue)
-                cache.LevelOfDetail = useCoarseTessellation.Value ? 1 : 4;
+            cache.LevelOfDetail = useCoarseTessellation.Value ? ExportTessellationLevel.ExtraLow : ExportTessellationLevel.High;
 
             double? tessellationLOD = GetNamedDoubleOption(options, "TessellationLevelOfDetail");
             if (tessellationLOD.HasValue)
             {
-                cache.LevelOfDetail = (int)(tessellationLOD.Value * 4.0 + 0.5);
+            int levelOfDetail = (int)(tessellationLOD.Value * 4.0 + 0.5);
                 // Ensure LOD is between 1 to 4, inclusive.
-                cache.LevelOfDetail = Math.Min(Math.Max(cache.LevelOfDetail, 1), 4);
+            levelOfDetail = Math.Min(Math.Max(levelOfDetail, 1), 4);
+            cache.LevelOfDetail = (ExportTessellationLevel) levelOfDetail;
             }
 
             /// Allow exporting a mix of extrusions and BReps as a solid model, if possible.
@@ -621,11 +629,11 @@ namespace Revit.IFC.Export.Utility
 
         public bool ExportAs2x3FMHandoverView
         {
-           get
-           {
+            get
+            {
               return ((String.Compare(SelectedConfigName, "IFC2x3 Basic FM Handover View") == 0)
                  || (String.Compare(SelectedConfigName, "IFC2x3 Extended FM Handover View") == 0));
-           }
+            }
         }
 
         /// <summary>
@@ -767,9 +775,8 @@ namespace Revit.IFC.Export.Utility
 
         /// <summary>
         /// The level of detail to use when exporting geometry.  Different elements will use this differently.
-        /// 1 = Extra Low, 2 = Low, 3 = Medium, 4 = High.
         /// </summary>
-        public int LevelOfDetail
+      public ExportTessellationLevel LevelOfDetail
         {
             get;
             set;

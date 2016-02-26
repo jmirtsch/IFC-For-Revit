@@ -26,59 +26,63 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate load bearing value for a slab.
-    /// </summary>
-    class SlabLoadBearingCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static SlabLoadBearingCalculator s_Instance = new SlabLoadBearingCalculator();
+   /// <summary>
+   /// A calculation class to calculate load bearing value for a slab.
+   /// </summary>
+   class SlabLoadBearingCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static SlabLoadBearingCalculator s_Instance = new SlabLoadBearingCalculator();
 
-        /// <summary>
-        /// The SlabLoadBearingCalculator instance.
-        /// </summary>
-        public static SlabLoadBearingCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// A boolean variable to keep the calculated value.
+      /// </summary>
+      private bool m_LoadBearing = true;
 
-        /// <summary>
-        /// Calculates load bearing value for a beam.
-        /// </summary>
-        /// <remarks>
-        /// Slabs always having True LoadBearing.
-        /// </remarks>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
+      /// <summary>
+      /// The SlabLoadBearingCalculator instance.
+      /// </summary>
+      public static SlabLoadBearingCalculator Instance
+      {
+         get { return s_Instance; }
+      }
+
+      /// <summary>
+      /// Calculates load bearing value for a slab.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
+      /// <param name="element">The element to calculate the value.</param>
+      /// <param name="elementType">The element type.</param>
+      /// <returns>
+      /// True if the value is successfully calculated, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         if (element == null)
+            return false;
+
+         Parameter parameter = element.get_Parameter(BuiltInParameter.FLOOR_PARAM_IS_STRUCTURAL);
+         if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Integer)
+         {
+            m_LoadBearing = (parameter.AsInteger() != 0) ? true : false;
             return true;
-        }
+         }
 
-        /// <summary>
-        /// Gets the calculated boolean value.
-        /// </summary>
-        /// <returns>
-        /// The boolean value.
-        /// </returns>
-        public override bool GetBooleanValue()
-        {
-            return true;
-        }
-    }
+         return false;
+      }
+
+      /// <summary>
+      /// Gets the calculated boolean value.
+      /// </summary>
+      /// <returns>
+      /// The boolean value.
+      /// </returns>
+      public override bool GetBooleanValue()
+      {
+         return m_LoadBearing;
+      }
+   }
 }

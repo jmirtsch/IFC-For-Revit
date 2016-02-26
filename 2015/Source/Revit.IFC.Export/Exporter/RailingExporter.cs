@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2012  Autodesk, Inc.
+// Copyright (C) 2012-2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,14 +19,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
-using Revit.IFC.Export.Exporter.PropertySet;
 using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter
@@ -300,8 +297,7 @@ namespace Revit.IFC.Export.Exporter
 
                         ElementId catId = CategoryUtil.GetSafeCategoryId(element);
                         BodyData bodyData = null;
-                        BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                        bodyExporterOptions.TessellationLevel = BodyExporter.GetTessellationLevel();
+                        BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.Medium);
                         //bodyExporterOptions.UseGroupsIfPossible = true;
                         //bodyExporterOptions.UseMappedGeometriesIfPossible = true;
 

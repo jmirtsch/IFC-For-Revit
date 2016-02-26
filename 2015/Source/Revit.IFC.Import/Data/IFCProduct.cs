@@ -444,6 +444,9 @@ namespace Revit.IFC.Import.Data
 
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcProduct, IFCEntityType.IfcGrid))
                return IFCGrid.ProcessIFCGrid(ifcProduct);
+
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcProduct, IFCEntityType.IfcProxy))
+               return IFCProxy.ProcessIFCProxy(ifcProduct);
          }
          catch (Exception ex)
          {
