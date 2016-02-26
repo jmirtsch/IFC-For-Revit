@@ -70,7 +70,7 @@ namespace BIM.IFC.Export.UI
 
          // Register execution override
          RevitCommandId commandId = RevitCommandId.LookupCommandId("ID_EXPORT_IFC");
-         m_ifcCommandBinding = application.CreateAddInCommandBinding(commandId);
+             m_ifcCommandBinding = application.CreateAddInCommandBinding(commandId);
          m_ifcCommandBinding.Executed += OnIFCExport;
 
          return Result.Succeeded;
@@ -142,9 +142,9 @@ namespace BIM.IFC.Export.UI
                title = Path.GetFileNameWithoutExtension(title);
          }
          catch
-         {
+      {
             title = null;
-         }
+      }
 
          if (exportedFileNames != null && exportedFileNames.Contains(title))
             title += "-" + Guid.NewGuid().ToString();
@@ -211,9 +211,9 @@ namespace BIM.IFC.Export.UI
                // This shouldn't happen, but just to be safe.
                if (docsToExport == 0)
                   return;
-
+                
                bool multipleFiles = docsToExport > 1;
-
+               
                // prompt for the file name
                SaveFileDialog fileDialog = new SaveFileDialog();
                fileDialog.AddExtension = true;
@@ -238,9 +238,9 @@ namespace BIM.IFC.Export.UI
                fileDialog.DefaultExt = defaultExt;
                fileDialog.Filter = mainWindow.GetFileFilter();
                fileDialog.InitialDirectory = defaultDirectory;
-
+                
                bool? fileDialogResult = fileDialog.ShowDialog();
-
+                
                // If user chooses to continue
                if (fileDialogResult.HasValue && fileDialogResult.Value)
                {
@@ -251,7 +251,7 @@ namespace BIM.IFC.Export.UI
                   String fullName = fileDialog.FileName;
                   String path = Path.GetDirectoryName(fullName);
                   String fileName = multipleFiles ? string.Empty : Path.GetFileName(fullName);
-
+ 
                   // This option should be rarely used, and is only for consistency with old files.  As such, it is set by environment variable only.
                   String use2009GUID = Environment.GetEnvironmentVariable("Assign2009GUIDToBuildingStoriesOnIFCExport");
                   bool use2009BuildingStoreyGUIDs = (use2009GUID != null && use2009GUID == "1");
@@ -294,8 +294,8 @@ namespace BIM.IFC.Export.UI
                      IFCExportOptions exportOptions = new IFCExportOptions();
                      
                      ElementId activeViewId = GenerateActiveViewIdFromDocument(document);
+                  selectedConfig.ActiveViewId = selectedConfig.UseActiveViewGeometry ? activeViewId.IntegerValue : -1;
                      selectedConfig.UpdateOptions(exportOptions, activeViewId);
-                     selectedConfig.ActiveViewId = selectedConfig.UseActiveViewGeometry ? activeViewId.IntegerValue : -1;
 
                      bool result = document.Export(path, fileName, exportOptions);
 

@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2015  Autodesk, Inc.
+// Copyright (C) 2012-2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,8 +19,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.DB;
 using Revit.IFC.Common.Utility;
@@ -178,7 +176,7 @@ namespace Revit.IFC.Export.Exporter
                         if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
                         {
                             // TODO: Create CreateSimpleSweptSolidAsTessellation routine that takes advantage of the superior tessellation of this class.
-                            BodyExporterOptions options = new BodyExporterOptions(false);
+                     BodyExporterOptions options = new BodyExporterOptions(false, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
                             sweptSolidExporter.RepresentationItem = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, element, options, geomObject);
                             sweptSolidExporter.RepresentationType = ShapeRepresentationType.Tessellation;
                         }
@@ -366,7 +364,7 @@ namespace Revit.IFC.Export.Exporter
 
             // Should this be moved up?  Check.
             Plane scaledAxisPlane = GeometryUtil.GetScaledPlane(exporterIFC, axisPlane);
-
+         
             IFCFile file = exporterIFC.GetFile();
 
             IFCAnyHandle solidAxis = ExporterUtil.CreateAxis(file, scaledAxisPlane.Origin, scaledAxisPlane.Normal, scaledAxisPlane.XVec);

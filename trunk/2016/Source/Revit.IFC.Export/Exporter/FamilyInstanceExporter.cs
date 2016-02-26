@@ -508,7 +508,7 @@ namespace Revit.IFC.Export.Exporter
                             BodyData bodyData = null;
                             if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyRepresentation))
                             {
-                                BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(tryToExportAsExtrusion);
+                                BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(tryToExportAsExtrusion, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
                                 bodyData = BodyExporter.ExportBody(exporterIFC, familyInstance, categoryId, ElementId.InvalidElementId,
                                     geomObjects, bodyExporterOptions, extraParams);
                                 typeInfo.MaterialIds = bodyData.MaterialIds;

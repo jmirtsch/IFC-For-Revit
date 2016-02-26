@@ -732,8 +732,11 @@ namespace Revit.IFC.Import.Data
             bool elementIsType = (element is ElementType);
             BuiltInParameter ifcGUIDId = GetGUIDParameter(element, elementIsType);
             Parameter guidParam = element.get_Parameter(ifcGUIDId);
-            if (guidParam != null && !guidParam.IsReadOnly)
-               guidParam.Set(GlobalId);
+            if (guidParam != null)
+            {
+               if(!guidParam.IsReadOnly)
+                  guidParam.Set(GlobalId);
+            }
             else
                ExporterIFCUtils.AddValueString(element, new ElementId(ifcGUIDId), GlobalId);
 

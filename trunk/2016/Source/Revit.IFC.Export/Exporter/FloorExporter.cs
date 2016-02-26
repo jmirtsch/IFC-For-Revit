@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2015  Autodesk, Inc.
+// Copyright (C) 2012-2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,8 +19,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
-using Autodesk.Revit;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.DB.Structure;
@@ -75,8 +73,7 @@ namespace Revit.IFC.Export.Exporter
 
                         ElementId catId = CategoryUtil.GetSafeCategoryId(slabElement);
 
-                        BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                        bodyExporterOptions.TessellationLevel = BodyExporter.GetTessellationLevel();
+                        BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.Medium);
                         BodyData bodyData;
                         prodDefHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
                             slabElement, catId, geometryElement, bodyExporterOptions, null, ecData, out bodyData);
@@ -157,14 +154,14 @@ namespace Revit.IFC.Export.Exporter
             return;
 
          IFCFile file = exporterIFC.GetFile();
-         
+
          string ifcEnumType;
          IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, floorElement, out ifcEnumType);
 
          using (IFCTransaction tr = new IFCTransaction(file))
          {
             bool canExportAsContainerOrWithExtrusionAnalyzer = (!exportParts && (floorElement is Floor));
-            
+
             if (canExportAsContainerOrWithExtrusionAnalyzer)
             {
                // Try to export the Floor slab as a container.  If that succeeds, we are done.
@@ -274,8 +271,7 @@ namespace Revit.IFC.Export.Exporter
                   {
                      using (IFCExtrusionCreationData ecData = new IFCExtrusionCreationData())
                      {
-                        BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                        bodyExporterOptions.TessellationLevel = BodyExporter.GetTessellationLevel();
+                        BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.Medium);
                         BodyData bodyData;
                         IFCAnyHandle prodDefHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC,
                             floorElement, catId, geometryElement, bodyExporterOptions, null, ecData, out bodyData);

@@ -1423,7 +1423,7 @@ namespace Revit.IFC.Export.Exporter
                   if (zoneInfo != null)
                   {
                      IFCAnyHandle zoneHandle = IFCInstanceExporter.CreateZone(file, GUIDUtil.CreateGUID(), ownerHistory,
-                         zoneName, zoneInfo.Description, zoneInfo.ObjectType);
+                         zoneName, zoneInfo.Description, zoneInfo.ObjectType, zoneInfo.LongName);
                      IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(), ownerHistory,
                          relAssignsToGroupName, null, zoneInfo.RoomHandles, null, zoneHandle);
 

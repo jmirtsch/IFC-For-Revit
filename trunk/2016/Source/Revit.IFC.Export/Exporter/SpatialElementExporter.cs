@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2015  Autodesk, Inc.
+// Copyright (C) 2012-2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -19,9 +19,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Autodesk.Revit;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Analysis;
 using Autodesk.Revit.DB.IFC;
@@ -944,8 +941,7 @@ namespace Revit.IFC.Export.Exporter
                IFCAnyHandle repHnd = null;
                if (!ExporterCacheManager.ExportOptionsCache.Use2DRoomBoundaryForRoomVolumeCreation && geomElem != null)
                {
-                  BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true);
-                  bodyExporterOptions.TessellationLevel = BodyExporter.GetTessellationLevel();
+                  BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.Medium);
                   repHnd = RepresentationUtil.CreateAppropriateProductDefinitionShape(exporterIFC, spatialElement,
                       catId, geomElem, bodyExporterOptions, null, extraParams, false);
                   if (IFCAnyHandleUtil.IsNullOrHasNoValue(repHnd))
@@ -956,8 +952,7 @@ namespace Revit.IFC.Export.Exporter
                   IFCAnyHandle shapeRep = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, curveLoops, plane, zDir, scaledRoomHeight);
                   if (IFCAnyHandleUtil.IsNullOrHasNoValue(shapeRep))
                      return false;
-                  IFCAnyHandle styledItemHnd = BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document,
-                      shapeRep, ElementId.InvalidElementId);
+                  BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document, shapeRep, ElementId.InvalidElementId);
 
                   HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
                   bodyItems.Add(shapeRep);
@@ -1462,6 +1457,7 @@ namespace Revit.IFC.Export.Exporter
          string basePropZoneName = "ZoneName";
          string basePropZoneObjectType = "ZoneObjectType";
          string basePropZoneDescription = "ZoneDescription";
+         string basePropZoneLongName = "ZoneLongName";
          string basePropZoneClassificationCode = "ZoneClassificationCode";
 
          // While a room may contain multiple zones, only one can have the extra parameters.  We will allow the first zone encountered
@@ -1471,12 +1467,13 @@ namespace Revit.IFC.Export.Exporter
 
          while (++val < 1000)   // prevent infinite loop.
          {
-            string propZoneName, propZoneObjectType, propZoneDescription, propZoneClassificationCode;
+            string propZoneName, propZoneObjectType, propZoneDescription, propZoneLongName, propZoneClassificationCode;
             if (val == 1)
             {
                propZoneName = basePropZoneName;
                propZoneObjectType = basePropZoneObjectType;
                propZoneDescription = basePropZoneDescription;
+               propZoneLongName = basePropZoneLongName;
                propZoneClassificationCode = basePropZoneClassificationCode;
             }
             else
@@ -1484,12 +1481,14 @@ namespace Revit.IFC.Export.Exporter
                propZoneName = basePropZoneName + " " + val;
                propZoneObjectType = basePropZoneObjectType + " " + val;
                propZoneDescription = basePropZoneDescription + " " + val;
+               propZoneLongName = basePropZoneLongName + " " + val;
                propZoneClassificationCode = basePropZoneClassificationCode + " " + val;
             }
 
             string zoneName;
             string zoneObjectType;
             string zoneDescription;
+            string zoneLongName;
             string zoneClassificationCode;
             IFCAnyHandle zoneClassificationReference;
 
@@ -1504,6 +1503,8 @@ namespace Revit.IFC.Export.Exporter
                ParameterUtil.GetStringValueFromElementOrSymbol(element, propZoneObjectType, out zoneObjectType);
 
                ParameterUtil.GetStringValueFromElementOrSymbol(element, propZoneDescription, out zoneDescription);
+
+               ParameterUtil.GetStringValueFromElementOrSymbol(element, propZoneLongName, out zoneLongName);
 
                ParameterUtil.GetStringValueFromElementOrSymbol(element, propZoneClassificationCode, out zoneClassificationCode);
                string classificationName, classificationCode, classificationDescription;
@@ -1531,16 +1532,18 @@ namespace Revit.IFC.Export.Exporter
                if (zoneInfo == null)
                {
                   IFCAnyHandle zoneCommonPropertySetHandle = CreateZoneCommonPSet(exporterIFC, file, element);
-                  zoneInfo = new ZoneInfo(zoneObjectType, zoneDescription, roomHandle, classificationHandles, energyAnalysisPSetHnd, zoneCommonPropertySetHandle);
+                  zoneInfo = new ZoneInfo(zoneObjectType, zoneDescription, zoneLongName, roomHandle, classificationHandles, energyAnalysisPSetHnd, zoneCommonPropertySetHandle);
                   ExporterCacheManager.ZoneInfoCache.Register(zoneName, zoneInfo);
                }
                else
                {
-                  // if description and object type were empty, overwrite.
+                  // if description, long name or object type were empty, overwrite.
                   if (!String.IsNullOrEmpty(zoneObjectType) && String.IsNullOrEmpty(zoneInfo.ObjectType))
                      zoneInfo.ObjectType = zoneObjectType;
                   if (!String.IsNullOrEmpty(zoneDescription) && String.IsNullOrEmpty(zoneInfo.Description))
                      zoneInfo.Description = zoneDescription;
+                  if (!String.IsNullOrEmpty(zoneLongName) && String.IsNullOrEmpty(zoneInfo.LongName))
+                     zoneInfo.LongName = zoneLongName;
 
                   zoneInfo.RoomHandles.Add(roomHandle);
                   foreach (KeyValuePair<string, IFCAnyHandle> classificationReference in classificationHandles)

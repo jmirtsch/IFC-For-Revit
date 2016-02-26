@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2015  Autodesk, Inc.
+// Copyright (C) 2012-2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -17,13 +17,8 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB;
-using Autodesk.Revit.DB.IFC;
-using Revit.IFC.Export.Toolkit;
+using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter
 {
@@ -83,7 +78,7 @@ namespace Revit.IFC.Export.Exporter
         /// <summary>
         /// Constructs a default BodyExporterOptions object.
         /// </summary>
-        public BodyExporterOptions() { }
+      private BodyExporterOptions() { }
 
         /// <summary>
         /// Constructs a copy of a BodyExporterOptions object.
@@ -103,12 +98,16 @@ namespace Revit.IFC.Export.Exporter
         /// <summary>
         /// Constructs a BodyExporterOptions object with the tryToExportAsExtrusion parameter overridden.
         /// </summary>
-        /// <param name="tryToExportAsExtrusion">
-        /// Export as extrusion if possible.
-        /// </param>
-        public BodyExporterOptions(bool tryToExportAsExtrusion)
+      /// <param name="tryToExportAsExtrusion">Export as extrusion if possible.</param>
+      /// <param name="coarseThreshhold">The ExportOptionsCache LevelOfDetail value to force coarse vs. default tessellation at.</param>
+      /// <remarks>The LevelOfDetail goes ExtraLow, Low, Medium, High.  Setting coarseThreshhold to a value of ExtraLow will force
+      /// coarse tessellation for only ExtraLow level of detail.  Setting it to Medium will force coarse tessellation for all but High
+      /// level of detail.</remarks>
+      public BodyExporterOptions(bool tryToExportAsExtrusion, ExportOptionsCache.ExportTessellationLevel coarseThreshhold)
         {
             TryToExportAsExtrusion = tryToExportAsExtrusion;
+         if (ExporterCacheManager.ExportOptionsCache.LevelOfDetail <= coarseThreshhold)
+            TessellationLevel = BodyTessellationLevel.Coarse;
         }
 
         /// <summary>

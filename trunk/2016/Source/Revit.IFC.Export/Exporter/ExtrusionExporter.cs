@@ -1,6 +1,6 @@
 ﻿//
 // BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
-// Copyright (C) 2015  Autodesk, Inc.
+// Copyright (C) 2012-2016  Autodesk, Inc.
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Autodesk.Revit;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Utility;
@@ -666,7 +664,7 @@ namespace Revit.IFC.Export.Exporter
         private static IList<CurveLoop> CoarsenCurveLoops(IList<CurveLoop> origCurveLoops)
         {
             // Coarsen loop unless we are at the Highest level of detail.
-            if (ExporterCacheManager.ExportOptionsCache.LevelOfDetail >= 4)
+         if (ExporterCacheManager.ExportOptionsCache.LevelOfDetail == ExportOptionsCache.ExportTessellationLevel.High)
                 return origCurveLoops;
 
             IList<CurveLoop> modifiedLoops = new List<CurveLoop>();
@@ -1187,7 +1185,7 @@ namespace Revit.IFC.Export.Exporter
                 // Handle Tessellation here for Reference View export. If all are extrusions, it should not get in here
                 if (mustUseTessellation)
                 {
-                    BodyExporterOptions options = new BodyExporterOptions(true);
+               BodyExporterOptions options = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
                     Document document = element.Document;
                     ElementId materialId = ElementId.InvalidElementId;
                     materialIds.Clear();
@@ -1431,18 +1429,18 @@ namespace Revit.IFC.Export.Exporter
             }
         }
 
-        /// <summary>
-        /// Creates an extrusion with potential clipping from a solid representation of an element.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC class.</param>
-        /// <param name="element">The element.</param>
-        /// <param name="catId">The category of the element and/or the solid geometry.</param>
-        /// <param name="solid">The solid geometry.</param>
+      /// <summary>
+      /// Creates an extrusion with potential clipping from a solid representation of an element.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC class.</param>
+      /// <param name="element">The element.</param>
+      /// <param name="catId">The category of the element and/or the solid geometry.</param>
+      /// <param name="solid">The solid geometry.</param>
         /// <param name="plane">The extrusion base plane.</param>
-        /// <param name="projDir">The projection direction.</param>
-        /// <param name="range">The upper and lower limits of the extrusion, in the projection direction.</param>
-        /// <param name="completelyClipped">Returns true if the extrusion is completely outside the range.</param>
-        /// <returns>The extrusion handle.</returns>
+      /// <param name="projDir">The projection direction.</param>
+      /// <param name="range">The upper and lower limits of the extrusion, in the projection direction.</param>
+      /// <param name="completelyClipped">Returns true if the extrusion is completely outside the range.</param>
+      /// <returns>The extrusion handle.</returns>
         public static IFCAnyHandle CreateExtrusionWithClipping(ExporterIFC exporterIFC, Element element, ElementId catId,
             Solid solid, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped)
         {
@@ -1455,20 +1453,20 @@ namespace Revit.IFC.Export.Exporter
         }
 
 
-        /// <summary>
-        /// Creates an extrusion with potential clipping from a list of solids corresponding to an element.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC class.</param>
-        /// <param name="element">The element.</param>
-        /// <param name="catId">The category of the element and/or the solid geometry.</param>
-        /// <param name="solids">The list of solid geometries.</param>
+      /// <summary>
+      /// Creates an extrusion with potential clipping from a list of solids corresponding to an element.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC class.</param>
+      /// <param name="element">The element.</param>
+      /// <param name="catId">The category of the element and/or the solid geometry.</param>
+      /// <param name="solids">The list of solid geometries.</param>
         /// <param name="plane">The extrusion base plane.</param>
-        /// <param name="projDir">The projection direction.</param>
-        /// <param name="range">The upper and lower limits of the extrusion, in the projection direction.</param>
-        /// <param name="completelyClipped">Returns true if the extrusion is completely outside the range.</param>
-        /// <param name="materialIds">The material ids of the solid geometry.</param>
-        /// <returns>The extrusion handle.</returns>
-        public static IFCAnyHandle CreateExtrusionWithClipping(ExporterIFC exporterIFC, Element element, ElementId catId,
+      /// <param name="projDir">The projection direction.</param>
+      /// <param name="range">The upper and lower limits of the extrusion, in the projection direction.</param>
+      /// <param name="completelyClipped">Returns true if the extrusion is completely outside the range.</param>
+      /// <param name="materialIds">The material ids of the solid geometry.</param>
+      /// <returns>The extrusion handle.</returns>
+      public static IFCAnyHandle CreateExtrusionWithClipping(ExporterIFC exporterIFC, Element element, ElementId catId,
             IList<Solid> solids, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped, out HashSet<ElementId> materialIds)
         {
             HandleAndAnalyzer handleAndAnalyzer = CreateExtrusionWithClippingBase(exporterIFC, element, catId,
@@ -1476,19 +1474,19 @@ namespace Revit.IFC.Export.Exporter
             return handleAndAnalyzer.Handle;
         }
 
-        /// <summary>
-        /// Creates an extrusion with potential clipping from a solid corresponding to an element, and supplies ExtrusionCreationData for the result.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC class.</param>
-        /// <param name="element">The element.</param>
-        /// <param name="catId">The category of the element and/or the solid geometry.</param>
-        /// <param name="solid">The solid geometry.</param>
+      /// <summary>
+      /// Creates an extrusion with potential clipping from a solid corresponding to an element, and supplies ExtrusionCreationData for the result.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC class.</param>
+      /// <param name="element">The element.</param>
+      /// <param name="catId">The category of the element and/or the solid geometry.</param>
+      /// <param name="solid">The solid geometry.</param>
         /// <param name="plane">The extrusion base plane.</param>
-        /// <param name="projDir">The projection direction.</param>
-        /// <param name="range">The upper and lower limits of the extrusion, in the projection direction.</param>
-        /// <param name="completelyClipped">Returns true if the extrusion is completely outside the range.</param>
-        /// <returns>The extrusion handle.</returns>
-        public static HandleAndData CreateExtrusionWithClippingAndProperties(ExporterIFC exporterIFC,
+      /// <param name="projDir">The projection direction.</param>
+      /// <param name="range">The upper and lower limits of the extrusion, in the projection direction.</param>
+      /// <param name="completelyClipped">Returns true if the extrusion is completely outside the range.</param>
+      /// <returns>The extrusion handle.</returns>
+      public static HandleAndData CreateExtrusionWithClippingAndProperties(ExporterIFC exporterIFC,
             Element element, ElementId catId, Solid solid, Plane plane, XYZ projDir, IFCRange range, out bool completelyClipped)
         {
             IList<Solid> solids = new List<Solid>();
@@ -1550,16 +1548,16 @@ namespace Revit.IFC.Export.Exporter
             return IFCInstanceExporter.CreateSurfaceOfLinearExtrusion(file, sweptCurve, surfaceAxis, direction, scaledExtrusionSize);
         }
 
-        /// <summary>
-        /// Creates an IfcConnectionSurfaceGeometry given a base 2D curve, a direction and a length.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC class.</param>
-        /// <param name="baseCurve">The curve to be extruded.</param>
+      /// <summary>
+      /// Creates an IfcConnectionSurfaceGeometry given a base 2D curve, a direction and a length.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC class.</param>
+      /// <param name="baseCurve">The curve to be extruded.</param>
         /// <param name="extrusionPlane">The plane of the baseCurve, where the normal of the plane is the direction of the extrusion.</param>
-        /// <param name="scaledExtrusionSize">The length of the extrusion, in IFC unit scale.</param>
-        /// <param name="unscaledBaseHeight">The Z value of the base level for the surface, in Revit unit scale.</param>
-        /// <returns>The extrusion handle.</returns>
-        /// <remarks>Note that scaledExtrusionSize and unscaledBaseHeight are in potentially different scaling units.</remarks>
+      /// <param name="scaledExtrusionSize">The length of the extrusion, in IFC unit scale.</param>
+      /// <param name="unscaledBaseHeight">The Z value of the base level for the surface, in Revit unit scale.</param>
+      /// <returns>The extrusion handle.</returns>
+      /// <remarks>Note that scaledExtrusionSize and unscaledBaseHeight are in potentially different scaling units.</remarks>
         public static IFCAnyHandle CreateConnectionSurfaceGeometry(ExporterIFC exporterIFC, Curve baseCurve, Plane extrusionPlane,
             double scaledExtrusionSize, double unscaledBaseHeight)
         {

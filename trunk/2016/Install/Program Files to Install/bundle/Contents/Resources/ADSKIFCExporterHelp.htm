@@ -104,6 +104,7 @@ The export alternate interface is loaded when users access the Export functional
 
 <p><strong>Export only elements visible in view</strong>: Checked to export only the visible elements of the current view (based on filtering and/or element and category hiding), unchecked to export the entire model.  
 <p><strong>Export rooms in 3D views</strong>: If the "export only elements visible in view" is checked, checking this option will export all of the rooms that are contained inside the section box of the selected 3D view.  If there is no active section box, all rooms will be exported.
+<p><strong>Use active view when creating geometry</strong>: When checked, export the view specific geometry associated with the active view, instead of the model geometry.  This is applicable to 3D views only.  This option can be used, e.g., to export detailed cable trays instead of their rectangular representation.</p>
 <p><strong>Export Bounding Box</strong>: Checked to export bounding box representations, Unchecked to exclude them.  This is the the default for GSA export.</p>
 <p><strong>Export Linked Files as Separate IFCs</strong>: Checked to export any Revit links in the project as separate IFCs, unchecked to exclude them.  Each linked instance in the file will export as a separate IFC file with the right positioning relative to the host file.  Multiple instances of the same linked document will export as separate files, identical except for their position and orientation.  Note that linked IFC files will be re-exported, so may suffer data loss on roundtrip.
 
@@ -195,6 +196,48 @@ working on expanding and eventually removing this limit, and we will be tracking
 <h2 id="VersionHistory" name="VersionHistory">Version History</h2>
 
 <div class="versionset">
+
+<div class="version">16.4.0.0</div><div class="versioninfo-bullet">
+
+<p>New Export Functionality:
+
+<ul>
+<li>Append "(Type)" to all internal Revit type property sets, to avoid having multiple property sets with the same name assigned to the same IFC entity.
+<li>Changed how the classification code is parsed so that classifications can have brackets and colons in them.
+<li>"Extra Low" level of detail now applies to all faceted BRep geometry, allowing many more files to export without hitting the size limit.
+<li>If a user-defined property set contains the same property name more than once, take the last non-empty value (don't duplicate the property name).
+<li>Rebar elements can generate up to 1024 consistent GUIDs for individual IfcReinforcementBars, up from 256.
+<li>(IFC4) Zones can now have a long name, set by the "ZoneLongName" shared parameter for non-MEP zones, and the "IfcLongName" parameter for MEP zones.
+</ul>
+
+<p>Export Bug Fixes:
+
+<ul>
+<li>Don't create orphaned IfcStyledItems.
+<li>Don't export invisible geometry in beams.
+<li>Export DirectShapes of Walls category.
+<li>Export elements with empty custom classification field values.
+<li>Floors exported as IfcSlabs correctly report if they are load bearing or not, using either the "LoadBearing" shared parameter or the Structural built-in parameter, in that order.
+<li>Improve performance in certain cases where we can't create a valid tessellation for a face.
+<li>The "Use active view to generate geometry" option now works correctly.
+<li>(IFC4) Correct the orientation of some IfcAdvancedBRep faces.
+</ul>
+
+<p>New Import Functionality:
+
+<ul>
+<li>Import IfcProxy as Generic Models.
+</ul>
+
+Import Bug Fixes:
+
+<ul>
+<li>Fix how the IFC GUID is set for certain elements.
+<li>Fix the orientation of some imported objects where part of the local placement needs to be calculated.
+<li>(IFC4) Read in some missing relations caused by "IsDefinedBy" split into 3 inverse attributes.
+</ul>
+
+</div>
 
 <div class="version">16.3.0.0</div><div class="versioninfo-bullet">
 

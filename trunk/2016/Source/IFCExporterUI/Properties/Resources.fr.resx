@@ -645,4 +645,7 @@
   <data name="DocNotSaved" xml:space="preserve">
     <value>Document Not Saved</value>
   </data>
+  <data name="ExportSpecificSchedules" xml:space="preserve">
+    <value>Exporter seulement les nomenclatures contenant IFC, Pset ou Common dans leur titre</value>
+  </data>
 </root>

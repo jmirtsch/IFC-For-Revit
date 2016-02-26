@@ -129,6 +129,7 @@
     <Compile Include="Data\IFCProfileDef.cs" />
     <Compile Include="Data\IFCPropertyBoundedValue.cs" />
     <Compile Include="Data\IFCPropertySetDefinition.cs" />
+    <Compile Include="Data\IFCProxy.cs" />
     <Compile Include="Data\IFCRepresentation.cs" />
     <Compile Include="Data\IFCRepresentationContext.cs" />
     <Compile Include="Data\IFCRepresentationItem.cs" />
