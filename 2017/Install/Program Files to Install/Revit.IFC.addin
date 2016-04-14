@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="DBApplication">
+    <Name>BIM IFC Exporter</Name>
+    <Assembly>Revit.IFC.Export.dll</Assembly>
+    <ClientId>52B83408-FB13-4E92-B2CF-A28F56AAD90B</ClientId>
+    <FullClassName>Revit.IFC.Export.Exporter.ExporterApplication</FullClassName>
+	<VendorId>IFCX</VendorId>
+	<VendorDescription>IFC Exporter for Revit, http://sourceforge.net/projects/ifcexporter/</VendorDescription>
+  </AddIn>
+  <AddIn Type="DBApplication">
+    <Name>BIM IFC Importer</Name>
+    <Assembly>Revit.IFC.Import.dll</Assembly>
+    <ClientId>4D8F4129-CFC0-4F6F-A32C-0EBE50035F9A</ClientId>
+    <FullClassName>Revit.IFC.Import.ImporterApplication</FullClassName>
+	<VendorId>IFCX</VendorId>
+	<VendorDescription>IFC Importer for Revit, http://sourceforge.net/projects/ifcexporter/</VendorDescription>
+  </AddIn>
+</RevitAddIns>
