@@ -194,6 +194,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// Linear Velocity
         /// </summary>
         LinearVelocity,
+      /// <summary>
+      /// Mass Density
+      /// </summary>
+      MassDensity,
     }
 
     /// <summary>
@@ -802,6 +806,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                             case ParameterType.Stress:
                                 pse.PropertyType = PropertyType.Pressure;
                                 break;
+                     case ParameterType.MassDensity:
+                        pse.PropertyType = PropertyType.MassDensity;
+                        break;
                             case ParameterType.PipingVolume:
                             case ParameterType.ReinforcementVolume:
                             case ParameterType.SectionModulus:
@@ -1033,6 +1040,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                             ifcPropertyName, valueType);
                         break;
                     }
+            case PropertyType.MassDensity:
+               {
+                  propHnd = PropertyUtil.CreateMassDensityPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                      ifcPropertyName, valueType);
+                  break;
+               }
+
                 case PropertyType.Illuminance:
                     {
                         propHnd = PropertyUtil.CreateIlluminancePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,

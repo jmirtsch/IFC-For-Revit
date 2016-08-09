@@ -83,8 +83,11 @@ namespace Revit.IFC.Import.Data
         {
             base.Process(item);
 
-            LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(item, false);
+         LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(item, false);
 
+         // IFC2x has a different representation for styled items which we don't support.
+         if (IFCImportFile.TheFile.SchemaVersion >= IFCSchemaVersion.IFC2x2)
+         {
             List<IFCAnyHandle> styledByItems = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(item, "StyledByItem");
             if (styledByItems != null && styledByItems.Count > 0)
             {
@@ -114,6 +117,7 @@ namespace Revit.IFC.Import.Data
                 }
             }
         }
+      }
 
         /// <summary>
         /// Deal with missing "LayerAssignments" in IFC2x3 EXP file.
@@ -183,11 +187,13 @@ namespace Revit.IFC.Import.Data
                 return IFCShellBasedSurfaceModel.ProcessIFCShellBasedSurfaceModel(ifcRepresentationItem);
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcSolidModel))
                 return IFCSolidModel.ProcessIFCSolidModel(ifcRepresentationItem);
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcStyledItem))
+
+         if (IFCImportFile.TheFile.SchemaVersion >= IFCSchemaVersion.IFC2x2 && IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcStyledItem))
                 return IFCStyledItem.ProcessIFCStyledItem(ifcRepresentationItem);
 
-            if (IFCImportFile.TheFile.SchemaVersion > IFCSchemaVersion.IFC2x3 && IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcTriangulatedFaceSet))
+         if (IFCImportFile.TheFile.SchemaVersion >= IFCSchemaVersion.IFC4 && IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcTriangulatedFaceSet))
                 return IFCTriangulatedFaceSet.ProcessIFCTriangulatedFaceSet(ifcRepresentationItem);
+
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcTopologicalRepresentationItem))
                 return IFCTopologicalRepresentationItem.ProcessIFCTopologicalRepresentationItem(ifcRepresentationItem);
 

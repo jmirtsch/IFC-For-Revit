@@ -121,7 +121,7 @@
     <value>Exporter les quantités de base</value>
   </data>
   <data name="ExportPlanViewElements" xml:space="preserve">
-    <value>Exporter les éléments de vues en plan</value>
+    <value>Exporter les éléments de vues en plan 2D</value>
   </data>
   <data name="ExportRevitPropertySets" xml:space="preserve">
     <value>Exporter les jeux de propriétés Revit</value>
@@ -168,13 +168,16 @@
     <value>2ème étage</value>
   </data>
   <data name="SpaceBoundariesNone" xml:space="preserve">
-    <value>Aucunes</value>
+    <value>Aucun</value>
   </data>
   <data name="SpaceBoundariesUnrecognized" xml:space="preserve">
     <value>Niveau de la limite d'espace non reconnue</value>
   </data>
   <data name="SplitWallsAndColumns" xml:space="preserve">
     <value>Scinder murs et poteaux</value>
+  </data>
+    <data name="SplitWallsAndColumnsByLevel" xml:space="preserve">
+    <value>Scinder les murs et poteaux par niveaux</value>
   </data>
   <data name="Use2DRoomBoundariesForRoomVolume" xml:space="preserve">
     <value>Utiliser des contours de pièces 2D pour le volume de la pièce</value>
@@ -197,17 +200,11 @@
   <data name="ExportBoundingBox" xml:space="preserve">
     <value>Exporter la zone de définition</value>
   </data>
-  <data name="ExportSolidModelRep" xml:space="preserve">
-    <value>Exporter les modèles solides si possible</value>
-  </data>
   <data name="ExportSchedulesAsPsets" xml:space="preserve">
     <value>Exporter les nomenclatures en tant que jeux de propriétés</value>
   </data>
-  <data name="ExportUserDefinedPsets" xml:space="preserve">
-    <value>Exporter les jeux de propriétés définis par l'utilisateur</value>
-  </data>
   <data name="IncludeIfcSiteElevation" xml:space="preserve">
-    <value>Inclure IFCSITE dans le plan masse de placement d'origine</value>
+    <value>Inclure l'élévation de l'IFCSITE dans l'origine de placement du plan masse</value>
   </data>
   <data name="UseCoarseTessellation" xml:space="preserve">
     <value>Utiliser une triangulation basique pour certains Breps</value>
@@ -228,7 +225,7 @@
     <value>Interne Revit seulement</value>
   </data>
   <data name="PropertySetsNone" xml:space="preserve">
-    <value>Aucunes</value>
+    <value>Aucun</value>
   </data>
   <data name="PropertySetsRevitPlusIFC" xml:space="preserve">
     <value>Interne Revit, IFC Common</value>
@@ -316,10 +313,10 @@
     <value>L'(les) instance(s) liée(s) étaient homotétiées pour les ids: {0}.</value>
   </data>
   <data name="IFCExport" xml:space="preserve">
-    <value>Export IFC</value>
+    <value>Exporter IFC</value>
   </data>
   <data name="Classification" xml:space="preserve">
-    <value>Classification</value>
+    <value>Réglages classification...</value>
   </data>
   <data name="DistributionPoint" xml:space="preserve">
     <value>Point de distribution</value>
@@ -346,7 +343,7 @@
     <value>Défini par l'utilisateur</value>
   </data>
   <data name="Address" xml:space="preserve">
-    <value>Adresse</value>
+    <value>Adresse du projet...</value>
   </data>
   <data name="AddressLine1" xml:space="preserve">
     <value>Adresse 1</value>
@@ -402,9 +399,6 @@
   <data name="DocumentationLocation" xml:space="preserve">
     <value>Emplacement documentation</value>
   </data>
-  <data name="Dont" xml:space="preserve">
-    <value>Ne pas {0}</value>
-  </data>
   <data name="Edition" xml:space="preserve">
     <value>Edition</value>
   </data>
@@ -412,10 +406,10 @@
     <value>Date d'édition</value>
   </data>
   <data name="Export" xml:space="preserve">
-    <value>Export…</value>
+    <value>Exporter…</value>
   </data>
   <data name="ExportElementsVisibleInView" xml:space="preserve">
-    <value>Exporter uniquement les éléments visibles  dans la vue</value>
+    <value>Exporter uniquement les éléments visibles  dans la vue actuelle</value>
   </data>
   <data name="ExportInternalRevitPropertySets" xml:space="preserve">
     <value>Exporter les jeux de propriétés internes Revit</value>
@@ -424,7 +418,7 @@
     <value>Exporter les nomenclatures comme des jeux de propriétés</value>
   </data>
   <data name="ExportSolidModelsWhenPossible" xml:space="preserve">
-    <value>Exporter les modèles solides si possible</value>
+    <value>Autoriser l'utilisation de représentation de "modèles solides" mixtes</value>
   </data>
   <data name="ExportUserDefinedPropertySets" xml:space="preserve">
     <value>Exporter les jeux de propriétés définis par l'utilisateur</value>
@@ -487,7 +481,7 @@
     <value>Coordonnées internes</value>
   </data>
   <data name="ModifySetup" xml:space="preserve">
-    <value>Modification des réglages…</value>
+    <value>Modifier réglages…</value>
   </data>
   <data name="Name" xml:space="preserve">
     <value>Nom</value>
@@ -511,7 +505,7 @@
     <value>Nom d'origine</value>
   </data>
   <data name="PhaseToExport" xml:space="preserve">
-    <value>Phaser pour l'export</value>
+    <value>Phase pour export</value>
   </data>
   <data name="POBox" xml:space="preserve">
     <value>Boite postale</value>
@@ -531,8 +525,8 @@
   <data name="SourcePublisher" xml:space="preserve">
     <value>Source (Editeur)</value>
   </data>
-  <data name="SplitWallsAndColumnsByLevel" xml:space="preserve">
-    <value>Scinder les murs et poteaux par niveaux</value>
+  <data name="SplitWallsColumsDuctsByLevel" xml:space="preserve">
+    <value>Scinder les murs, poteaux, gaines par niveau</value>
   </data>
   <data name="State" xml:space="preserve">
     <value>Etat</value>
@@ -541,7 +535,7 @@
     <value>Version d'interface alternative d'export inconnue</value>
   </data>
   <data name="UpdateExportSetups" xml:space="preserve">
-    <value>Mettre à jour adresse de projet</value>
+    <value>Mettre à jour paramétrages d'exports</value>
   </data>
   <data name="UpdateProjectInformation" xml:space="preserve">
     <value>Mettre à jour informations du projet</value>
@@ -568,7 +562,7 @@
     <value>...La valeur sera définie au moment de l'export</value>
   </data>
   <data name="ClassificationAltName" xml:space="preserve">
-    <value>Le nom de paramètre partagé alternatif optionnel pour cette classification (default: ClassificationCode)</value>
+    <value>Le nom de paramètre partagé alternatif optionnel pour cette classification (défaut: ClassificationCode)</value>
   </data>
   <data name="ClassificationSystemEdition" xml:space="preserve">
     <value>Numéro d'Edition du système de classification</value>
@@ -586,13 +580,13 @@
     <value>Crée un nouveau réglage.</value>
   </data>
   <data name="DeleteSelectedSetup" xml:space="preserve">
-    <value>Supprime le réglage sophistiqué.</value>
+    <value>Supprime le réglage sélectionné.</value>
   </data>
   <data name="Next" xml:space="preserve">
     <value>Suivant...</value>
   </data>
   <data name="RenameSelectedSetup" xml:space="preserve">
-    <value>Renommez le réglage sophistiqué.</value>
+    <value>Renommez le réglage sélectionné.</value>
   </data>
   <data name="SaveSetupAndClose" xml:space="preserve">
     <value>Enregistrer réglages &amp;amp; Fermer</value>
@@ -601,7 +595,7 @@
     <value>Général</value>
   </data>
   <data name="ExportRoomsInView" xml:space="preserve">
-    <value>Exporter les pièces dans la vue</value>
+    <value>Exporter les pièces dans les vues 3D</value>
   </data>
   <data name="UseActiveViewForGeometry" xml:space="preserve">
     <value>Utiliser la vue active pour la création de la géométrie</value>
@@ -628,24 +622,82 @@
     <value>Projet</value>
   </data>
   <data name="CurrentOptions" xml:space="preserve">
-    <value>Options actuelle:</value>
+    <value>Options actuelles:</value>
   </data>
   <data name="ProjectToExport" xml:space="preserve">
-    <value>Projets d'exporter:</value>
+    <value>Projets à exporter:</value>
   </data>
   <data name="SelectOneOrMoreProjects" xml:space="preserve">
-    <value>S'il vous plaît sélectionner au moins un projet d'exporter.</value>
+    <value>Sélectionner au moins un projet à exporter SVP.</value>
   </data>
   <data name="IFCExportProcessGenericError" xml:space="preserve">
     <value>Une erreur est survenue lors du processus d'export IFC.</value>
   </data>
   <data name="IFCVersionSelected" xml:space="preserve">
-    <value>IFC Version:</value>
+    <value>Version IFC:</value>
   </data>
   <data name="DocNotSaved" xml:space="preserve">
-    <value>Document Not Saved</value>
+    <value>Document non sauvegardé</value>
+  </data>
+  <data name="IFC2x3FM" xml:space="preserve">
+    <value>IFC2x3 Extended FM Handover View</value>
+  </data>
+  <data name="IFC4DTV" xml:space="preserve">
+    <value>IFC4 Design Transfer View</value>
+  </data>
+  <data name="IFC4RV" xml:space="preserve">
+    <value>IFC4 Reference View</value>
+  </data>
+  <data name="Help" xml:space="preserve">
+    <value>Comment puis-je spécifier une configuration d'export?</value>
   </data>
   <data name="ExportSpecificSchedules" xml:space="preserve">
     <value>Exporter seulement les nomenclatures contenant IFC, Pset ou Common dans leur titre</value>
+  </data>
+  <data name="AdditionalContent" xml:space="preserve">
+    <value>Contenu additionnel</value>
+  </data>
+  <data name="AddressInformation" xml:space="preserve">
+    <value>Adresse du projet</value>
+  </data>
+  <data name="ClassificationSetting" xml:space="preserve">
+    <value>Paramétrages de classification</value>
+  </data>
+  <data name="ExportUserDefinedParameterMappingTable" xml:space="preserve">
+    <value>Exporter table de correspondance de paramètre</value>
+  </data>
+  <data name="FileHeaderInformation" xml:space="preserve">
+    <value>Information d'en-tête de fichier…</value>
+  </data>
+  <data name="FileName" xml:space="preserve">
+    <value>Nom du fichier:</value>
+  </data>
+  <data name="IFCXMLZIPFiles" xml:space="preserve">
+    <value>Industry Foundation Classes XML zippé (.ifczip)|*.ifczip</value>
+  </data>
+  <data name="LevelOfDetail" xml:space="preserve">
+    <value>Niveau de détail</value>
+  </data>
+  <data name="ModifySetupTitle" xml:space="preserve">
+    <value>Modifier réglages</value>
+  </data>
+  <data name="FileExists" xml:space="preserve">
+    <value>{0} existe déjà.  Voulez-vous le remplacer ?</value>
+  </data>
+  <data name="Setup" xml:space="preserve">
+    <value>Setup</value>
+    <comment>NOTE: This needs to be localized as {0} Paramétrage</comment>
+  </data>
+  <data name="UserDefinedParameterMappingTable" xml:space="preserve">
+    <value>Table de correspondance de paramètres d’export</value>
+  </data>
+  <data name="ValidPathExists" xml:space="preserve">
+    <value>Le chemin d’accès n’existe pas</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>v.</value>
+  </data>
+  <data name="ExportIFC" xml:space="preserve">
+    <value>Exporter IFC</value>
   </data>
 </root>

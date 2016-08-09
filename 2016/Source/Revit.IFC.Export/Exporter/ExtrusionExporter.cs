@@ -661,112 +661,114 @@ namespace Revit.IFC.Export.Exporter
             return (plane != null);
         }
 
+        private static CurveLoop CoarsenCurveLoop(CurveLoop origCurveLoop)
+        {
+           // We don't really know if the original CurveLoop is valid, so attempting to create a copy may result in exceptions.
+           // Protect against this for each individual loop.
+           try
+           {
+              if (origCurveLoop.Count() <= 24)
+                 return origCurveLoop;
+
+              bool modified = false;
+              XYZ lastFirstPt = null;
+              Line lastLine = null;
+
+              IList<Curve> newCurves = new List<Curve>();
+              foreach (Curve curve in origCurveLoop)
+              {
+                 // Set lastLine to be the first line in the loop, if it exists.
+                 // In addition, Revit may have legacy curve segments that are too short.  Don't process them.
+                 if (!(curve is Line))
+                 {
+                    // Break the polyline, if it existed.
+                    if (lastLine != null)
+                       newCurves.Add(lastLine);
+
+                    lastLine = null;
+                    lastFirstPt = null;
+                    newCurves.Add(curve);
+                    continue;
+                 }
+
+                 if (lastLine == null)
+                 {
+                    lastLine = curve as Line;
+                    lastFirstPt = lastLine.GetEndPoint(0);
+                    continue;
+                 }
+
+                 // If we are here, we have two lines in a row.  See if they are almost collinear.
+                 XYZ currLastPt = curve.GetEndPoint(1);
+
+                 Line combinedLine = null;
+
+                 // If the combined curve is too short, don't merge.
+                 if (currLastPt.DistanceTo(lastFirstPt) > ExporterCacheManager.Document.Application.ShortCurveTolerance)
+                 {
+                    combinedLine = Line.CreateBound(lastFirstPt, currLastPt);
+
+                    XYZ currMidPt = curve.GetEndPoint(0);
+                    IntersectionResult result = combinedLine.Project(currMidPt);
+
+                    // If the absolute distance is greater than 1", or 1% of either line length, use both.
+                    double dist = result.Distance;
+                    if ((dist > 1.0 / 12.0) || (dist / (lastLine.Length) > 0.01) || (dist / (curve.Length) > 0.01))
+                       combinedLine = null;
+                 }
+
+                 if (combinedLine == null)
+                 {
+                    newCurves.Add(lastLine);
+
+                    lastLine = curve as Line;
+                    lastFirstPt = lastLine.GetEndPoint(0);
+
+                    continue;
+                 }
+
+                 // The combined line is now the last line.
+                 lastLine = combinedLine;
+                 modified = true;
+              }
+
+              if (modified)
+              {
+                 if (lastLine != null)
+                    newCurves.Add(lastLine);
+
+                 CurveLoop modifiedCurveLoop = new CurveLoop();
+                 foreach (Curve modifiedCurve in newCurves)
+                    modifiedCurveLoop.Append(modifiedCurve);
+
+                 return modifiedCurveLoop;
+              }
+              else
+              {
+                 return origCurveLoop;
+              }
+           }
+           catch
+           {
+              // If we run into any trouble, use the original loop.  
+              // TODO: this may end up failing in the ValidateCurves check that follows, so we may just skip entirely.
+              return origCurveLoop;
+           }
+        }
+
         private static IList<CurveLoop> CoarsenCurveLoops(IList<CurveLoop> origCurveLoops)
         {
-            // Coarsen loop unless we are at the Highest level of detail.
-         if (ExporterCacheManager.ExportOptionsCache.LevelOfDetail == ExportOptionsCache.ExportTessellationLevel.High)
-                return origCurveLoops;
+           // Coarsen loop unless we are at the Highest level of detail.
+           if (ExporterCacheManager.ExportOptionsCache.LevelOfDetail == ExportOptionsCache.ExportTessellationLevel.High)
+              return origCurveLoops;
 
-            IList<CurveLoop> modifiedLoops = new List<CurveLoop>();
-            foreach (CurveLoop curveLoop in origCurveLoops)
-            {
-                // We don't really know if the original CurveLoop is valid, so attempting to create a copy may result in exceptions.
-                // Protect against this for each individual loop.
-                try
-                {
-                    if (curveLoop.Count() <= 24)
-                    {
-                        modifiedLoops.Add(curveLoop);
-                        continue;
-                    }
+           IList<CurveLoop> modifiedLoops = new List<CurveLoop>();
+           foreach (CurveLoop curveLoop in origCurveLoops)
+           {
+              modifiedLoops.Add(CoarsenCurveLoop(curveLoop));
+           }
 
-                    bool modified = false;
-                    XYZ lastFirstPt = null;
-                    Line lastLine = null;
-
-                    IList<Curve> newCurves = new List<Curve>();
-                    foreach (Curve curve in curveLoop)
-                    {
-                        // Set lastLine to be the first line in the loop, if it exists.
-                        // In addition, Revit may have legacy curve segments that are too short.  Don't process them.
-                        if (!(curve is Line))
-                        {
-                            // Break the polyline, if it existed.
-                            if (lastLine != null)
-                                newCurves.Add(lastLine);
-
-                            lastLine = null;
-                            lastFirstPt = null;
-                            newCurves.Add(curve);
-                            continue;
-                        }
-
-                        if (lastLine == null)
-                        {
-                            lastLine = curve as Line;
-                            lastFirstPt = lastLine.GetEndPoint(0);
-                            continue;
-                        }
-
-                        // If we are here, we have two lines in a row.  See if they are almost collinear.
-                        XYZ currLastPt = curve.GetEndPoint(1);
-
-                        Line combinedLine = null;
-
-                        // If the combined curve is too short, don't merge.
-                        if (currLastPt.DistanceTo(lastFirstPt) > ExporterCacheManager.Document.Application.ShortCurveTolerance)
-                        {
-                            combinedLine = Line.CreateBound(lastFirstPt, currLastPt);
-
-                            XYZ currMidPt = curve.GetEndPoint(0);
-                            IntersectionResult result = combinedLine.Project(currMidPt);
-
-                            // If the absolute distance is greater than 1", or 1% of either line length, use both.
-                            double dist = result.Distance;
-                            if ((dist > 1.0 / 12.0) || (dist / (lastLine.Length) > 0.01) || (dist / (curve.Length) > 0.01))
-                                combinedLine = null;
-                        }
-
-                        if (combinedLine == null)
-                        {
-                            newCurves.Add(lastLine);
-
-                            lastLine = curve as Line;
-                            lastFirstPt = lastLine.GetEndPoint(0);
-
-                            continue;
-                        }
-
-                        // The combined line is now the last line.
-                        lastLine = combinedLine;
-                        modified = true;
-                    }
-
-                    if (modified)
-                    {
-                        if (lastLine != null)
-                            newCurves.Add(lastLine);
-
-                        CurveLoop modifiedCurveLoop = new CurveLoop();
-                        foreach (Curve modifiedCurve in newCurves)
-                            modifiedCurveLoop.Append(modifiedCurve);
-
-                        modifiedLoops.Add(modifiedCurveLoop);
-                    }
-                    else
-                    {
-                        modifiedLoops.Add(curveLoop);
-                    }
-                }
-                catch
-                {
-                    // If we run into any trouble, use the original loop.  
-                    // TODO: this may end up failing in the ValidateCurves check that follows, so we may just skip entirely.
-                    modifiedLoops.Add(curveLoop);
-                }
-            }
-
-            return modifiedLoops;
+           return modifiedLoops;
         }
 
         /// <summary>
@@ -778,63 +780,82 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="plane">The plane of the boundary curves.</param>
         /// <param name="extrDirVec">The direction of the extrusion.</param>
         /// <param name="scaledExtrusionSize">The thickness of the extrusion, perpendicular to the plane.</param>
+        /// <param name="allowExportingOnlyOuterLoop">If this arugment is true, we'll allow exporting the extrusion if only the outer boundary is valid.</param>
         /// <returns>The IfcExtrudedAreaSolid handle.</returns>
-        /// <remarks>If the curveLoop plane normal is not the same as the plane direction, only tesellated boundaries are supported.</remarks> 
+        /// <remarks>If the curveLoop plane normal is not the same as the plane direction, only tesellated boundaries are supported.
+        /// The allowExportingOnlyOuterLoop is generally false, as its initial scope is intended for use with rooms, areas, and spaces.
+        /// It could be extended with appropriate testing.</remarks> 
         public static IFCAnyHandle CreateExtrudedSolidFromCurveLoop(ExporterIFC exporterIFC, string profileName, IList<CurveLoop> origCurveLoops,
-            Plane plane, XYZ extrDirVec, double scaledExtrusionSize)
+            Plane plane, XYZ extrDirVec, double scaledExtrusionSize, bool allowExportingOnlyOuterLoop)
         {
-            IFCAnyHandle extrudedSolidHnd = null;
+           IFCAnyHandle extrudedSolidHnd = null;
 
-            if (scaledExtrusionSize < MathUtil.Eps())
-                return extrudedSolidHnd;
+           if (scaledExtrusionSize < MathUtil.Eps())
+              return extrudedSolidHnd;
 
-            IFCFile file = exporterIFC.GetFile();
+           IFCFile file = exporterIFC.GetFile();
 
-            // we need to figure out the plane of the curve loops and modify the extrusion direction appropriately.
-            // assumption: first curve loop defines the plane.
-            int sz = origCurveLoops.Count;
-            if (sz == 0)
-                return extrudedSolidHnd;
+           // we need to figure out the plane of the curve loops and modify the extrusion direction appropriately.
+           // assumption: first curve loop defines the plane.
+           int origCurveLoopCount = origCurveLoops.Count;
+           if (origCurveLoopCount == 0)
+              return extrudedSolidHnd;
 
-            XYZ planeXDir = plane.XVec;
-            XYZ planeYDir = plane.YVec;
-            XYZ planeZDir = plane.Normal;
-            XYZ planeOrig = plane.Origin;
+           XYZ planeXDir = plane.XVec;
+           XYZ planeYDir = plane.YVec;
+           XYZ planeZDir = plane.Normal;
+           XYZ planeOrig = plane.Origin;
 
-            double slantFactor = Math.Abs(planeZDir.DotProduct(extrDirVec));
-            if (MathUtil.IsAlmostZero(slantFactor))
-                return extrudedSolidHnd;
+           double slantFactor = Math.Abs(planeZDir.DotProduct(extrDirVec));
+           if (MathUtil.IsAlmostZero(slantFactor))
+              return extrudedSolidHnd;
 
-            // Reduce the number of line segments in the curveloops from highly tessellated polylines, if applicable.
-            IList<CurveLoop> curveLoops = CoarsenCurveLoops(origCurveLoops);
+           // Reduce the number of line segments in the curveloops from highly tessellated polylines, if applicable.
+           IList<CurveLoop> curveLoops = CoarsenCurveLoops(origCurveLoops);
+           if (curveLoops == null)
+              return extrudedSolidHnd;
 
-            // Check that curve loops are valid.
-            curveLoops = ExporterIFCUtils.ValidateCurveLoops(curveLoops, extrDirVec);
-            if (curveLoops.Count == 0)
-                return extrudedSolidHnd;
+           // Check that curve loops are valid.
+           curveLoops = ExporterIFCUtils.ValidateCurveLoops(curveLoops, extrDirVec);
+           if (curveLoops.Count == 0)
+           {
+              if (!allowExportingOnlyOuterLoop || origCurveLoopCount <= 1)
+                 return extrudedSolidHnd;
 
-            scaledExtrusionSize /= slantFactor;
+              CurveLoop coarseCurveLoop = CoarsenCurveLoop(origCurveLoops[0]);
+              if (coarseCurveLoop == null)
+                 return extrudedSolidHnd;
 
-            IFCAnyHandle sweptArea = CreateSweptArea(exporterIFC, profileName, curveLoops, plane, extrDirVec);
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(sweptArea))
-                return extrudedSolidHnd;
+              curveLoops.Clear();
+              curveLoops.Add(coarseCurveLoop);
+              curveLoops = ExporterIFCUtils.ValidateCurveLoops(curveLoops, extrDirVec);
 
-            IList<double> relExtrusionDirList = new List<double>();
-            relExtrusionDirList.Add(extrDirVec.DotProduct(planeXDir));
-            relExtrusionDirList.Add(extrDirVec.DotProduct(planeYDir));
-            relExtrusionDirList.Add(extrDirVec.DotProduct(planeZDir));
+              // We check again in case we succeeded above.
+              if (curveLoops.Count == 0)
+                 return extrudedSolidHnd;
+           }
 
-            XYZ scaledXDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, planeXDir);
-            XYZ scaledZDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, planeZDir);
-            XYZ scaledOrig = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, planeOrig);
+           scaledExtrusionSize /= slantFactor;
 
-            IFCAnyHandle solidAxis = ExporterUtil.CreateAxis(file, scaledOrig, scaledZDir, scaledXDir);
-            IFCAnyHandle extrusionDirection = ExporterUtil.CreateDirection(file, relExtrusionDirList);
+           IFCAnyHandle sweptArea = CreateSweptArea(exporterIFC, profileName, curveLoops, plane, extrDirVec);
+           if (IFCAnyHandleUtil.IsNullOrHasNoValue(sweptArea))
+              return extrudedSolidHnd;
 
-            extrudedSolidHnd = IFCInstanceExporter.CreateExtrudedAreaSolid(file, sweptArea, solidAxis, extrusionDirection, scaledExtrusionSize);
-            return extrudedSolidHnd;
+           IList<double> relExtrusionDirList = new List<double>();
+           relExtrusionDirList.Add(extrDirVec.DotProduct(planeXDir));
+           relExtrusionDirList.Add(extrDirVec.DotProduct(planeYDir));
+           relExtrusionDirList.Add(extrDirVec.DotProduct(planeZDir));
+
+           XYZ scaledXDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, planeXDir);
+           XYZ scaledZDir = ExporterIFCUtils.TransformAndScaleVector(exporterIFC, planeZDir);
+           XYZ scaledOrig = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, planeOrig);
+
+           IFCAnyHandle solidAxis = ExporterUtil.CreateAxis(file, scaledOrig, scaledZDir, scaledXDir);
+           IFCAnyHandle extrusionDirection = ExporterUtil.CreateDirection(file, relExtrusionDirList);
+
+           extrudedSolidHnd = IFCInstanceExporter.CreateExtrudedAreaSolid(file, sweptArea, solidAxis, extrusionDirection, scaledExtrusionSize);
+           return extrudedSolidHnd;
         }
-
         /// <summary>
         /// Creates an IfcProfileDef for a swept area.
         /// </summary>
@@ -934,7 +955,7 @@ namespace Revit.IFC.Export.Exporter
                             profileName = type.Name;
                     }
                     IFCAnyHandle extrudedSolid = CreateExtrudedSolidFromCurveLoop(exporterIFC, profileName, extrusionLoops,
-                        plane, extrusionDir, extrusionSize);
+                        plane, extrusionDir, extrusionSize, false);
                     return extrudedSolid;
                 }
             }
@@ -1335,7 +1356,7 @@ namespace Revit.IFC.Export.Exporter
                 {
                     // For creating the actual extrusion, we want to use the calculated extrusion plane, not the input plane.
                     IFCAnyHandle extrusionBodyItemHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, profileName,
-                        extrusionBoundaryLoops, extrusionBasePlane, projDir, scaledExtrusionDepth);
+                        extrusionBoundaryLoops, extrusionBasePlane, projDir, scaledExtrusionDepth, false);
                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionBodyItemHnd))
                     {
                         retVal.BaseExtrusions.Add(extrusionBodyItemHnd);

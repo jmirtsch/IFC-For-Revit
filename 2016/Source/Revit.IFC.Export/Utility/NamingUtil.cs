@@ -290,7 +290,7 @@ namespace Revit.IFC.Export.Utility
             ElementType elementType = (isType ? element : element.Document.GetElement(element.GetTypeId())) as ElementType;
             if (elementType != null)
             {
-                familyName = ExporterIFCUtils.GetFamilyName(elementType);
+                familyName = elementType.FamilyName;
                 if (familyName == "???")
                     familyName = "";
             }
@@ -332,7 +332,7 @@ namespace Revit.IFC.Export.Utility
                 elementType = element.Document.GetElement(element.GetTypeId()) as ElementType;
 
             if (elementType != null)
-                familyName = ExporterIFCUtils.GetFamilyName(elementType);
+                familyName = elementType.FamilyName;
 
             if (familyName != "")
             {

@@ -165,7 +165,7 @@ namespace Revit.IFC.Export.Exporter
                     sweptSolidExporter.RepresentationType = ShapeRepresentationType.SweptSolid;
                     Plane plane = new Plane(sweptAnalyzer.ProfileFace.FaceNormal, sweptAnalyzer.ProfileFace.Origin);
                     sweptSolidExporter.RepresentationItem = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, profileName, faceBoundaries, plane,
-                        line.Direction, UnitUtil.ScaleLength(line.Length));
+                        line.Direction, UnitUtil.ScaleLength(line.Length), false);
                 }
                 else
                 {

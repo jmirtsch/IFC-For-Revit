@@ -1745,7 +1745,7 @@ namespace Revit.IFC.Export.Utility
             origCurveLoops.Add(curveLoop1);
 
             double scaledPlanesDistance = UnitUtil.ScaleLength(planesDistance);
-            IFCAnyHandle extrusionHandle = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, origCurveLoops, plane1, extDir, scaledPlanesDistance);
+            IFCAnyHandle extrusionHandle = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, origCurveLoops, plane1, extDir, scaledPlanesDistance, false);
 
             IFCAnyHandle booleanBodyItemHnd = IFCInstanceExporter.CreateBooleanResult(exporterIFC.GetFile(), IFCBooleanOperator.Difference,
                 origBodyRepHnd, extrusionHandle);

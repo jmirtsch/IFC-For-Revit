@@ -19,10 +19,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Architecture;
+using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Common.Utility;
+using Revit.IFC.Export.Exporter;
 using Revit.IFC.Export.Toolkit;
 
 namespace Revit.IFC.Export.Utility
@@ -218,32 +220,70 @@ namespace Revit.IFC.Export.Utility
       }
 
       /// <summary>
-      /// Returns the base level of an element as specified in its parameters.
+      /// Returns the base level of an element.  The method used to find the base level depends on the element type.
       /// </summary>
-      /// <remarks>
-      /// Only implemented for Walls and FamilyInstances.
-      /// </remarks>
-      private static ElementId GetBaseLevelIdForElement(Element element)
+      public static ElementId GetBaseLevelIdForElement(Element elem)
       {
-         BuiltInParameter paramId = BuiltInParameter.INVALID;
-
-         if (element is FamilyInstance)
+         // If the element is view specific, use the level of the parent view.
+         if (elem.ViewSpecific)
          {
-            paramId = BuiltInParameter.FAMILY_BASE_LEVEL_PARAM;
-         }
-         else if (element is Wall)
-         {
-            paramId = BuiltInParameter.WALL_BASE_CONSTRAINT;
+            ElementId viewId = elem.OwnerViewId;
+            ElementId viewSpecificlevelId;
+            if (ExporterCacheManager.DBViewsToExport.TryGetValue(viewId, out viewSpecificlevelId))
+               return viewSpecificlevelId;
          }
 
-         if (paramId != BuiltInParameter.INVALID)
+         // Some elements will have a parameter that defines the base level.  Find it if possible.
+         IList<BuiltInParameter> priortizedParameterList = new List<BuiltInParameter>();
+         Element elemToCheck = elem;
+
+         if (elem is Wall)
          {
-            Parameter nextLevelParameter = element.get_Parameter(paramId);
-            if (nextLevelParameter != null)
-               return nextLevelParameter.AsElementId();
+            priortizedParameterList.Add(BuiltInParameter.WALL_BASE_CONSTRAINT);
+         }
+         else if (elem is FamilyInstance)
+         {
+            // If this is a nested family, check the top-level instance for the level parameter information.
+            elemToCheck = (elem as FamilyInstance).SuperComponent;
+            if (elemToCheck == null)
+               elemToCheck = elem;
+
+            // Inplace wall parameter.
+            priortizedParameterList.Add(BuiltInParameter.FAMILY_BASE_LEVEL_PARAM);
+
+            // There are two Family-related parameters for non-inplace walls: INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM and INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM.
+            // We prioritize INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM over INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM.
+            priortizedParameterList.Add(BuiltInParameter.INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM);
+            priortizedParameterList.Add(BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM);
+         }
+         else if (elem is Truss)
+            priortizedParameterList.Add(BuiltInParameter.TRUSS_ELEMENT_REFERENCE_LEVEL_PARAM);
+         else if (elem is Stairs || StairsExporter.IsLegacyStairs(elem))
+            priortizedParameterList.Add(BuiltInParameter.STAIRS_BASE_LEVEL_PARAM);
+         else if (elem is ExtrusionRoof)
+            priortizedParameterList.Add(BuiltInParameter.ROOF_CONSTRAINT_LEVEL_PARAM);
+
+         // If the level parameter was found, use it.  Otherwise, try asking the element directly.
+         foreach (BuiltInParameter levelParameterVal in priortizedParameterList)
+         {
+            Parameter levelParameter = elemToCheck.get_Parameter(levelParameterVal);
+            if (levelParameter != null && levelParameter.StorageType == StorageType.ElementId)
+            {
+               ElementId levelId = levelParameter.AsElementId();
+               if (levelId != ElementId.InvalidElementId)
+                  return levelId;
+            }
          }
 
-         return ElementId.InvalidElementId;
+         // Didn't find a parameter; try asking the element directly.
+         if (elem is MEPCurve)
+         {
+            Level level = (elem as MEPCurve).ReferenceLevel;
+            if (level != null)
+               return level.Id;
+         }
+
+         return elem.LevelId;
       }
 
       /// <summary>
