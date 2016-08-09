@@ -31,317 +31,330 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    public enum IFCRepresentationIdentifier
-    {
-        Axis,
-        Body,
-        Box,
-        FootPrint,
-        Style,
-        Unhandled
-    }
+   public enum IFCRepresentationIdentifier
+   {
+      Axis,
+      Body,
+      Box,
+      FootPrint,
+      Style,
+      Unhandled
+   }
 
-    /// <summary>
-    /// Represents an IfcRepresentation.
-    /// </summary>
-    public class IFCRepresentation : IFCEntity
-    {
-        protected IFCRepresentationContext m_RepresentationContext = null;
+   /// <summary>
+   /// Represents an IfcRepresentation.
+   /// </summary>
+   public class IFCRepresentation : IFCEntity
+   {
+      protected IFCRepresentationContext m_RepresentationContext = null;
 
-        protected IFCRepresentationIdentifier m_Identifier = IFCRepresentationIdentifier.Unhandled;
+      protected IFCRepresentationIdentifier m_Identifier = IFCRepresentationIdentifier.Unhandled;
 
-        protected string m_RepresentationType = null;
+      protected string m_RepresentationType = null;
 
-        protected IList<IFCRepresentationItem> m_RepresentationItems = null;
+      protected IList<IFCRepresentationItem> m_RepresentationItems = null;
 
-        // Special holder for "Box" representation type only.
-        protected BoundingBoxXYZ m_BoundingBox = null;
+      // Special holder for "Box" representation type only.
+      protected BoundingBoxXYZ m_BoundingBox = null;
 
-        protected IFCPresentationLayerAssignment m_LayerAssignment = null;
+      protected IFCPresentationLayerAssignment m_LayerAssignment = null;
 
-        /// <summary>
-        /// The related IfcRepresentationContext.
-        /// </summary>
-        public IFCRepresentationContext Context
-        {
-            get { return m_RepresentationContext; }
-            protected set { m_RepresentationContext = value; }
-        }
+      /// <summary>
+      /// The related IfcRepresentationContext.
+      /// </summary>
+      public IFCRepresentationContext Context
+      {
+         get { return m_RepresentationContext; }
+         protected set { m_RepresentationContext = value; }
+      }
 
-        /// <summary>
-        /// The optional representation identifier.
-        /// </summary>
-        public IFCRepresentationIdentifier Identifier
-        {
-            get { return m_Identifier; }
-            protected set { m_Identifier = value; }
-        }
+      /// <summary>
+      /// The optional representation identifier.
+      /// </summary>
+      public IFCRepresentationIdentifier Identifier
+      {
+         get { return m_Identifier; }
+         protected set { m_Identifier = value; }
+      }
 
-        /// <summary>
-        /// The optional representation type.
-        /// </summary>
-        public string Type
-        {
-            get { return m_RepresentationType; }
-            protected set { m_RepresentationType = value; }
-        }
-        
-        /// <summary>
-        /// The bounding box, only valid for "Box" representation type.
-        /// </summary>
-        public BoundingBoxXYZ BoundingBox
-        {
-            get { return m_BoundingBox; }
-            protected set { m_BoundingBox = value; }
-        }
+      /// <summary>
+      /// The optional representation type.
+      /// </summary>
+      public string Type
+      {
+         get { return m_RepresentationType; }
+         protected set { m_RepresentationType = value; }
+      }
 
-        /// <summary>
-        /// The representations of the product.
-        /// </summary>
-        public IList<IFCRepresentationItem> RepresentationItems
-        {
-            get
+      /// <summary>
+      /// The bounding box, only valid for "Box" representation type.
+      /// </summary>
+      public BoundingBoxXYZ BoundingBox
+      {
+         get { return m_BoundingBox; }
+         protected set { m_BoundingBox = value; }
+      }
+
+      /// <summary>
+      /// The representations of the product.
+      /// </summary>
+      public IList<IFCRepresentationItem> RepresentationItems
+      {
+         get
+         {
+            if (m_RepresentationItems == null)
+               m_RepresentationItems = new List<IFCRepresentationItem>();
+            return m_RepresentationItems;
+         }
+      }
+
+      /// <summary>
+      /// The associated layer assignment of the representation item, if any.
+      /// </summary>
+      public IFCPresentationLayerAssignment LayerAssignment
+      {
+         get { return m_LayerAssignment; }
+         protected set { m_LayerAssignment = value; }
+      }
+
+      /// <summary>
+      /// Default constructor.
+      /// </summary>
+      protected IFCRepresentation()
+      {
+
+      }
+
+      private IFCRepresentationIdentifier GetRepresentationIdentifier(string identifier, IFCAnyHandle ifcRepresentation)
+      {
+         // Sorted by order of expected occurences.
+         if ((string.Compare(identifier, "Body", true) == 0) ||
+             string.IsNullOrWhiteSpace(identifier))
+            return IFCRepresentationIdentifier.Body;
+         if (string.Compare(identifier, "Axis", true) == 0)
+            return IFCRepresentationIdentifier.Axis;
+         if (string.Compare(identifier, "Box", true) == 0)
+            return IFCRepresentationIdentifier.Box;
+         if ((string.Compare(identifier, "FootPrint", true) == 0) ||
+             (string.Compare(identifier, "Annotation", true) == 0) ||
+             (string.Compare(identifier, "Profile", true) == 0) ||
+             (string.Compare(identifier, "Plan", true) == 0))
+            return IFCRepresentationIdentifier.FootPrint;
+         if (string.Compare(identifier, "Style", true) == 0 ||
+             IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentation, IFCEntityType.IfcStyledRepresentation))
+            return IFCRepresentationIdentifier.Style;
+
+         Importer.TheLog.LogWarning(ifcRepresentation.StepId, "Found unknown representation type: " + identifier, false);
+
+
+         return IFCRepresentationIdentifier.Unhandled;
+      }
+
+      private bool NotAllowedInRepresentation(IFCAnyHandle item)
+      {
+         switch (Identifier)
+         {
+            case IFCRepresentationIdentifier.Axis:
+               return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcCurve));
+            case IFCRepresentationIdentifier.Body:
+               return false;
+            case IFCRepresentationIdentifier.Box:
+               return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcBoundingBox));
+            case IFCRepresentationIdentifier.FootPrint:
+               return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcCurve) ||
+                   IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcGeometricSet) ||
+                   IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcMappedItem));
+            case IFCRepresentationIdentifier.Style:
+               return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcStyledItem));
+         }
+
+         return false;
+      }
+
+      /// <summary>
+      /// Processes IfcRepresentation attributes.
+      /// </summary>
+      /// <param name="ifcRepresentation">The IfcRepresentation handle.</param>
+      override protected void Process(IFCAnyHandle ifcRepresentation)
+      {
+         base.Process(ifcRepresentation);
+
+         IFCAnyHandle representationContext = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcRepresentation, "ContextOfItems", false);
+         if (representationContext != null)
+            Context = IFCRepresentationContext.ProcessIFCRepresentationContext(representationContext);
+
+         string identifier = IFCImportHandleUtil.GetOptionalStringAttribute(ifcRepresentation, "RepresentationIdentifier", null);
+         Identifier = GetRepresentationIdentifier(identifier, ifcRepresentation);
+
+         Type = IFCImportHandleUtil.GetOptionalStringAttribute(ifcRepresentation, "RepresentationType", null);
+
+         HashSet<IFCAnyHandle> items =
+             IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcRepresentation, "Items");
+
+         LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(ifcRepresentation, true);
+
+         foreach (IFCAnyHandle item in items)
+         {
+            IFCRepresentationItem repItem = null;
+            try
             {
-                if (m_RepresentationItems == null)
-                    m_RepresentationItems = new List<IFCRepresentationItem>();
-                return m_RepresentationItems;
-            }
-        }
+               if (NotAllowedInRepresentation(item))
+               {
+                  IFCEntityType entityType = IFCAnyHandleUtil.GetEntityType(item);
+                  Importer.TheLog.LogWarning(item.StepId, "Ignoring unhandled representation item of type " + entityType.ToString() + " in " +
+                      Identifier.ToString() + " representation.", true);
+                  continue;
+               }
 
-        /// <summary>
-        /// The associated layer assignment of the representation item, if any.
-        /// </summary>
-        public IFCPresentationLayerAssignment LayerAssignment
-        {
-            get { return m_LayerAssignment; }
-            protected set { m_LayerAssignment = value; }
-        }
-        
-        /// <summary>
-        /// Default constructor.
-        /// </summary>
-        protected IFCRepresentation()
-        {
-
-        }
-
-        private IFCRepresentationIdentifier GetRepresentationIdentifier(string identifier, IFCAnyHandle ifcRepresentation)
-        {
-            // Sorted by order of expected occurences.
-            if ((string.Compare(identifier, "Body", true) == 0) ||
-                string.IsNullOrWhiteSpace(identifier))
-                return IFCRepresentationIdentifier.Body;
-            if (string.Compare(identifier, "Axis", true) == 0)
-                return IFCRepresentationIdentifier.Axis;
-            if (string.Compare(identifier, "Box", true) == 0)
-                return IFCRepresentationIdentifier.Box;
-            if ((string.Compare(identifier, "FootPrint", true) == 0) ||
-                (string.Compare(identifier, "Annotation", true) == 0) ||
-                (string.Compare(identifier, "Profile", true) == 0) ||
-                (string.Compare(identifier, "Plan", true) == 0))
-                return IFCRepresentationIdentifier.FootPrint;
-            if (string.Compare(identifier, "Style", true) == 0 ||
-                IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentation, IFCEntityType.IfcStyledRepresentation))
-                return IFCRepresentationIdentifier.Style;
-
-            return IFCRepresentationIdentifier.Unhandled;
-        }
-
-        private bool NotAllowedInRepresentation(IFCAnyHandle item)
-        {
-            switch (Identifier)
-            {
-                case IFCRepresentationIdentifier.Axis:
-                    return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcCurve));
-                case IFCRepresentationIdentifier.Body:
-                    return (IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcCurve) ||
-                        IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcGeometricSet));
-                case IFCRepresentationIdentifier.Box:
-                    return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcBoundingBox));
-                case IFCRepresentationIdentifier.FootPrint:
-                    return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcCurve) ||
-                        IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcGeometricSet) ||
-                        IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcMappedItem));
-                case IFCRepresentationIdentifier.Style:
-                    return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcStyledItem));
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Processes IfcRepresentation attributes.
-        /// </summary>
-        /// <param name="ifcRepresentation">The IfcRepresentation handle.</param>
-        override protected void Process(IFCAnyHandle ifcRepresentation)
-        {
-            base.Process(ifcRepresentation);
-
-            IFCAnyHandle representationContext = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcRepresentation, "ContextOfItems", false);
-            if (representationContext != null)
-                Context = IFCRepresentationContext.ProcessIFCRepresentationContext(representationContext);
-
-            string identifier = IFCImportHandleUtil.GetOptionalStringAttribute(ifcRepresentation, "RepresentationIdentifier", null);
-            Identifier = GetRepresentationIdentifier(identifier, ifcRepresentation);
-            
-            // Don't read in Box represenation unless options allow it.
-            bool isBoundingBox = (Identifier == IFCRepresentationIdentifier.Box);
-            if (isBoundingBox && !IFCImportFile.TheFile.Options.ProcessBoundingBoxGeometry)
-                throw new InvalidOperationException("BoundingBox not imported with ProcessBoundingBoxGeometry=false");
-
-            Type = IFCImportHandleUtil.GetOptionalStringAttribute(ifcRepresentation, "RepresentationType", null);
-
-            HashSet<IFCAnyHandle> items =
-                IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcRepresentation, "Items");
-
-            LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(ifcRepresentation, true);
-
-            foreach (IFCAnyHandle item in items)
-            {
-                IFCRepresentationItem repItem = null;
-                try
-                {
-                    if (NotAllowedInRepresentation(item))
-                    {
-                        IFCEntityType entityType = IFCAnyHandleUtil.GetEntityType(item);
-                        Importer.TheLog.LogWarning(item.StepId, "Ignoring unhandled representation item of type " + entityType.ToString() + " in " +
-                            Identifier.ToString() + " representation.", true);
+               // Special processing for bounding boxes - only IfcBoundingBox allowed.
+               if (IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcBoundingBox))
+               {
+                  // Don't read in Box represenation unless options allow it.
+                  if (IFCImportFile.TheFile.Options.ProcessBoundingBoxGeometry == IFCProcessBBoxOptions.Never)
+                     Importer.TheLog.LogWarning(item.StepId, "BoundingBox not imported with ProcessBoundingBoxGeometry=Never", false);
+                  else
+                  {
+                     if (BoundingBox != null)
+                     {
+                        Importer.TheLog.LogWarning(item.StepId, "Found second IfcBoundingBox representation item, ignoring.", false);
                         continue;
-                    }
-
-                    // Special processing for bounding boxes - only IfcBoundingBox allowed.
-                    if (isBoundingBox)
-                    {
-                        BoundingBox = ProcessBoundingBox(item);
-                        if (BoundingBox != null)
-                            break;
-                    }
-                    else
-                        repItem = IFCRepresentationItem.ProcessIFCRepresentationItem(item);
-                }
-                catch (Exception ex)
-                {
-                    Importer.TheLog.LogError(item.StepId, ex.Message, false);
-                }
-                if (repItem != null)
-                    RepresentationItems.Add(repItem);
+                     }
+                     BoundingBox = ProcessBoundingBox(item);
+                  }
+               }
+               else
+                  repItem = IFCRepresentationItem.ProcessIFCRepresentationItem(item);
             }
-        }
+            catch (Exception ex)
+            {
+               Importer.TheLog.LogError(item.StepId, ex.Message, false);
+            }
+            if (repItem != null)
+               RepresentationItems.Add(repItem);
+         }
+      }
 
-        /// <summary>
-        /// Deal with missing "LayerAssignments" in IFC2x3 EXP file.
-        /// </summary>
-        /// <param name="layerAssignment">The layer assignment to add to this representation.</param>
-        public void PostProcessLayerAssignment(IFCPresentationLayerAssignment layerAssignment)
-        {
-            if (LayerAssignment == null)
-                LayerAssignment = layerAssignment;
-            else
-                IFCImportDataUtil.CheckLayerAssignmentConsistency(LayerAssignment, layerAssignment, Id);
-        }
+      /// <summary>
+      /// Deal with missing "LayerAssignments" in IFC2x3 EXP file.
+      /// </summary>
+      /// <param name="layerAssignment">The layer assignment to add to this representation.</param>
+      public void PostProcessLayerAssignment(IFCPresentationLayerAssignment layerAssignment)
+      {
+         if (LayerAssignment == null)
+            LayerAssignment = layerAssignment;
+         else
+            IFCImportDataUtil.CheckLayerAssignmentConsistency(LayerAssignment, layerAssignment, Id);
+      }
 
-        /// <summary>
-        /// Default constructor.
-        /// </summary>
-        protected IFCRepresentation(IFCAnyHandle representation)
-        {
-            Process(representation);
-        }
+      /// <summary>
+      /// Default constructor.
+      /// </summary>
+      protected IFCRepresentation(IFCAnyHandle representation)
+      {
+         Process(representation);
+      }
 
-        private void CreateBoxShape(IFCImportShapeEditScope shapeEditScope, Transform scaledLcs)
-        {
+      private void CreateBoxShape(IFCImportShapeEditScope shapeEditScope, Transform scaledLcs)
+      {
+         using (IFCImportShapeEditScope.IFCContainingRepresentationSetter repSetter = new IFCImportShapeEditScope.IFCContainingRepresentationSetter(shapeEditScope, this))
+         {
+            // Get the material and graphics style based in the "Box" sub-category of Generic Models.  
+            // We will create the sub-category if this is our first time trying to use it.
+            // Note that all bounding boxes are controlled by a sub-category of Generic Models.  We may revisit that decision later.
+            // Note that we hard-wire the identifier to "Box" because older files may have bounding box items in an obsolete representation.
+            SolidOptions solidOptions = null;
+            Category bboxCategory = IFCCategoryUtil.GetSubCategoryForRepresentation(shapeEditScope.Document, Id, IFCRepresentationIdentifier.Box);
+            if (bboxCategory != null)
+            {
+               ElementId materialId = (bboxCategory.Material == null) ? ElementId.InvalidElementId : bboxCategory.Material.Id;
+               GraphicsStyle graphicsStyle = bboxCategory.GetGraphicsStyle(GraphicsStyleType.Projection);
+               ElementId gstyleId = (graphicsStyle == null) ? ElementId.InvalidElementId : graphicsStyle.Id;
+               solidOptions = new SolidOptions(materialId, gstyleId);
+            }
+
+            Solid bboxSolid = IFCGeometryUtil.CreateSolidFromBoundingBox(scaledLcs, BoundingBox, solidOptions);
+            if (bboxSolid != null)
+            {
+               IFCSolidInfo bboxSolidInfo = IFCSolidInfo.Create(Id, bboxSolid);
+               shapeEditScope.AddGeometry(bboxSolidInfo);
+            }
+         }
+         return;
+      }
+
+      /// <summary>
+      /// Create geometry for a particular representation.
+      /// </summary>
+      /// <param name="shapeEditScope">The geometry creation scope.</param>
+      /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
+      /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
+      /// <param name="guid">The guid of an element for which represntation is being created.</param>
+      public void CreateShape(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
+      {
+         // Special handling for Box representation.  We may decide to create an IFCBoundingBox class and stop this special treatment.
+         if (BoundingBox != null)
+            CreateBoxShape(shapeEditScope, scaledLcs);
+
+         if (LayerAssignment != null)
+            LayerAssignment.Create(shapeEditScope);
+
+         // There is an assumption here that Process() weeded out any items that are invalid for this representation.
+         using (IFCImportShapeEditScope.IFCMaterialStack stack = new IFCImportShapeEditScope.IFCMaterialStack(shapeEditScope, null, LayerAssignment))
+         {
             using (IFCImportShapeEditScope.IFCContainingRepresentationSetter repSetter = new IFCImportShapeEditScope.IFCContainingRepresentationSetter(shapeEditScope, this))
             {
-                // Get the material and graphics style based in the "Box" sub-category of Generic Models.  
-                // We will create the sub-category if this is our first time trying to use it.
-                // Note that all bounding boxes are controlled by a sub-category of Generic Models.  We may revisit that decision later.
-                SolidOptions solidOptions = null;
-                Category bboxCategory = IFCCategoryUtil.GetSubCategoryForRepresentation(shapeEditScope.Document, Id, Identifier);
-                if (bboxCategory != null)
-                {
-                    ElementId materialId = (bboxCategory.Material == null) ? ElementId.InvalidElementId : bboxCategory.Material.Id;
-                    GraphicsStyle graphicsStyle = bboxCategory.GetGraphicsStyle(GraphicsStyleType.Projection);
-                    ElementId gstyleId = (graphicsStyle == null) ? ElementId.InvalidElementId : graphicsStyle.Id;
-                    solidOptions = new SolidOptions(materialId, gstyleId);
-                }
-
-                Solid bboxSolid = IFCGeometryUtil.CreateSolidFromBoundingBox(scaledLcs, BoundingBox, solidOptions);
-                if (bboxSolid != null)
-                {
-                    IFCSolidInfo bboxSolidInfo = IFCSolidInfo.Create(Id, bboxSolid);
-                    shapeEditScope.AddGeometry(bboxSolidInfo);
-                }
+               foreach (IFCRepresentationItem representationItem in RepresentationItems)
+               {
+                  representationItem.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
+               }
             }
-            return;
-        }
+         }
+      }
 
-        /// <summary>
-        /// Create geometry for a particular representation.
-        /// </summary>
-        /// <param name="shapeEditScope">The geometry creation scope.</param>
-        /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
-        /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        public void CreateShape(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
-        {
-            // Special handling for Box representation.  We may decide to create an IFCBoundingBox class and stop this special treatment.
-            if (Identifier == IFCRepresentationIdentifier.Box)
-            {
-                CreateBoxShape(shapeEditScope, scaledLcs);
-                return;
-            }
+      // TODO: this function should be moved to IFCBoundingBox.cs now that they are fully supported.
+      static private BoundingBoxXYZ ProcessBoundingBox(IFCAnyHandle boundingBoxHnd)
+      {
+         IFCAnyHandle lowerLeftHnd = IFCAnyHandleUtil.GetInstanceAttribute(boundingBoxHnd, "Corner");
+         XYZ minXYZ = IFCPoint.ProcessScaledLengthIFCCartesianPoint(lowerLeftHnd);
 
-            if (LayerAssignment != null)
-                LayerAssignment.Create(shapeEditScope);
+         bool found = false;
+         double xDim = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(boundingBoxHnd, "XDim", out found);
+         if (!found)
+            return null;
 
-            // There is an assumption here that Process() weeded out any items that are invalid for this representation.
-            using (IFCImportShapeEditScope.IFCMaterialStack stack = new IFCImportShapeEditScope.IFCMaterialStack(shapeEditScope, null, LayerAssignment))
-            {
-                using (IFCImportShapeEditScope.IFCContainingRepresentationSetter repSetter = new IFCImportShapeEditScope.IFCContainingRepresentationSetter(shapeEditScope, this))
-                {
-                    foreach (IFCRepresentationItem representationItem in RepresentationItems)
-                    {
-                        representationItem.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
-                    }
-                }
-            }
-        }
+         double yDim = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(boundingBoxHnd, "YDim", out found);
+         if (!found)
+            return null;
 
-        // TODO: this function should be moved to IFCBoundingBox.cs now that they are fully supported.
-        static private BoundingBoxXYZ ProcessBoundingBox(IFCAnyHandle boundingBoxHnd)
-        {
-            IFCAnyHandle lowerLeftHnd = IFCAnyHandleUtil.GetInstanceAttribute(boundingBoxHnd, "Corner");
-            XYZ minXYZ = IFCPoint.ProcessScaledLengthIFCCartesianPoint(lowerLeftHnd);
+         double zDim = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(boundingBoxHnd, "ZDim", out found);
+         if (!found)
+            return null;
 
-            double xDim = IFCAnyHandleUtil.GetDoubleAttribute(boundingBoxHnd, "XDim").Value;
-            double yDim = IFCAnyHandleUtil.GetDoubleAttribute(boundingBoxHnd, "YDim").Value;
-            double zDim = IFCAnyHandleUtil.GetDoubleAttribute(boundingBoxHnd, "ZDim").Value;
+         XYZ maxXYZ = new XYZ(minXYZ.X + xDim, minXYZ.Y + yDim, minXYZ.Z + zDim);
+         BoundingBoxXYZ boundingBox = new BoundingBoxXYZ();
+         boundingBox.set_Bounds(0, minXYZ);
+         boundingBox.set_Bounds(1, maxXYZ);
+         return boundingBox;
+      }
 
-            XYZ maxXYZ = new XYZ(minXYZ.X + xDim, minXYZ.Y + yDim, minXYZ.Z + zDim);
-            BoundingBoxXYZ boundingBox = new BoundingBoxXYZ();
-            boundingBox.set_Bounds(0, minXYZ);
-            boundingBox.set_Bounds(1, maxXYZ);
-            return boundingBox;
-        }
+      /// <summary>
+      /// Processes an IfcRepresentation object.
+      /// </summary>
+      /// <param name="ifcRepresentation">The IfcRepresentation handle.</param>
+      /// <returns>The IFCRepresentation object.</returns>
+      public static IFCRepresentation ProcessIFCRepresentation(IFCAnyHandle ifcRepresentation)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcRepresentation))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcRepresentation);
+            return null;
+         }
 
-        /// <summary>
-        /// Processes an IfcRepresentation object.
-        /// </summary>
-        /// <param name="ifcRepresentation">The IfcRepresentation handle.</param>
-        /// <returns>The IFCRepresentation object.</returns>
-        public static IFCRepresentation ProcessIFCRepresentation(IFCAnyHandle ifcRepresentation)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcRepresentation))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcRepresentation);
-                return null;
-            }
+         IFCEntity representation;
+         if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcRepresentation.StepId, out representation))
+            return (representation as IFCRepresentation);
 
-            IFCEntity representation;
-            if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcRepresentation.StepId, out representation))
-                return (representation as IFCRepresentation);
-
-            return new IFCRepresentation(ifcRepresentation);
-        }
-    }
+         return new IFCRepresentation(ifcRepresentation);
+      }
+   }
 }

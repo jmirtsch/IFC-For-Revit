@@ -19,14 +19,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Architecture;
-using Autodesk.Revit.DB.Structure;
 using Revit.IFC.Common.Utility;
-using Revit.IFC.Export.Exporter;
 using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Toolkit
@@ -89,49 +85,6 @@ namespace Revit.IFC.Export.Toolkit
          protected set { m_LevelInfo = value; }
       }
 
-      public static ElementId GetBaseLevelIdForElement(Element elem)
-      {
-         if (elem.ViewSpecific)
-         {
-            ElementId viewId = elem.OwnerViewId;
-            ElementId viewSpecificlevelId;
-            if (ExporterCacheManager.DBViewsToExport.TryGetValue(viewId, out viewSpecificlevelId))
-               return viewSpecificlevelId;
-         }
-
-         Parameter levelParameter = null;
-         if (elem is FamilyInstance)
-         {
-            // If this is a nested family, check the top-level instance for the level parameter information.
-            Element elemToCheck = (elem as FamilyInstance).SuperComponent;
-            if (elemToCheck == null)
-               elemToCheck = elem;
-
-            // There are two Family-related parameters: INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM and INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM.
-            // We prioritize INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM over INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM.
-            levelParameter = elemToCheck.get_Parameter(BuiltInParameter.INSTANCE_SCHEDULE_ONLY_LEVEL_PARAM);
-            if (levelParameter != null && levelParameter.StorageType == StorageType.ElementId)
-            {
-               ElementId levelId = levelParameter.AsElementId();
-               if (levelId != ElementId.InvalidElementId)
-                  return levelId;
-            }
-
-            levelParameter = elemToCheck.get_Parameter(BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM);
-         }
-         else if (elem is Truss)
-            levelParameter = elem.get_Parameter(BuiltInParameter.TRUSS_ELEMENT_REFERENCE_LEVEL_PARAM);
-         else if (elem is Stairs || StairsExporter.IsLegacyStairs(elem))
-            levelParameter = elem.get_Parameter(BuiltInParameter.STAIRS_BASE_LEVEL_PARAM);
-         else if (elem is ExtrusionRoof)
-            levelParameter = elem.get_Parameter(BuiltInParameter.ROOF_CONSTRAINT_LEVEL_PARAM);
-
-         if (levelParameter != null && levelParameter.StorageType == StorageType.ElementId)
-            return levelParameter.AsElementId();
-         else
-            return elem.LevelId;
-      }
-
       /// <summary>
       ///    Creates a new placement setter instance for the given element.
       /// </summary>
@@ -140,7 +93,7 @@ namespace Revit.IFC.Export.Toolkit
       /// <returns>The placement setter.</returns>
       public static PlacementSetter Create(ExporterIFC exporterIFC, Element elem)
       {
-         return new PlacementSetter(exporterIFC, elem, null, null, GetBaseLevelIdForElement(elem));
+         return new PlacementSetter(exporterIFC, elem, null, null, LevelUtil.GetBaseLevelIdForElement(elem));
       }
 
       /// <summary>
@@ -153,7 +106,7 @@ namespace Revit.IFC.Export.Toolkit
       /// Optional, can be <see langword="null"/>.</param>
       public static PlacementSetter Create(ExporterIFC exporterIFC, Element elem, Transform instanceOffsetTrf, Transform orientationTrf)
       {
-         return new PlacementSetter(exporterIFC, elem, instanceOffsetTrf, orientationTrf, GetBaseLevelIdForElement(elem));
+         return new PlacementSetter(exporterIFC, elem, instanceOffsetTrf, orientationTrf, LevelUtil.GetBaseLevelIdForElement(elem));
       }
 
       /// <summary>
@@ -169,7 +122,7 @@ namespace Revit.IFC.Export.Toolkit
       public static PlacementSetter Create(ExporterIFC exporterIFC, Element elem, Transform instanceOffsetTrf, Transform orientationTrf, ElementId overrideLevelId)
       {
          if (overrideLevelId == null || overrideLevelId == ElementId.InvalidElementId)
-            overrideLevelId = GetBaseLevelIdForElement(elem);
+            overrideLevelId = LevelUtil.GetBaseLevelIdForElement(elem);
          return new PlacementSetter(exporterIFC, elem, instanceOffsetTrf, orientationTrf, overrideLevelId);
       }
 

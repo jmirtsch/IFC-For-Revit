@@ -315,6 +315,7 @@ namespace Revit.IFC.Import.Utility
          m_EntityTypeToCategory[IFCEntityType.IfcMember] = BuiltInCategory.OST_StructuralFraming;
          m_EntityTypeToCategory[IFCEntityType.IfcMemberType] = BuiltInCategory.OST_StructuralFraming;
          m_EntityTypeToCategory[IFCEntityType.IfcOpeningElement] = BuiltInCategory.OST_GenericModel;
+         m_EntityTypeToCategory[IFCEntityType.IfcOutletType] = BuiltInCategory.OST_ElectricalFixtures;
          m_EntityTypeToCategory[IFCEntityType.IfcPile] = BuiltInCategory.OST_StructuralFoundation;
          m_EntityTypeToCategory[IFCEntityType.IfcPileType] = BuiltInCategory.OST_StructuralFoundation;
          m_EntityTypeToCategory[IFCEntityType.IfcPipeFitting] = BuiltInCategory.OST_PipeFitting;
@@ -323,6 +324,7 @@ namespace Revit.IFC.Import.Utility
          m_EntityTypeToCategory[IFCEntityType.IfcPipeSegmentType] = BuiltInCategory.OST_PipeCurves;
          m_EntityTypeToCategory[IFCEntityType.IfcPlate] = BuiltInCategory.OST_StructuralFraming;
          m_EntityTypeToCategory[IFCEntityType.IfcPlateType] = BuiltInCategory.OST_StructuralFraming;
+         m_EntityTypeToCategory[IFCEntityType.IfcProtectiveDeviceType] = BuiltInCategory.OST_SpecialityEquipment;
          m_EntityTypeToCategory[IFCEntityType.IfcProxy] = BuiltInCategory.OST_GenericModel;
          m_EntityTypeToCategory[IFCEntityType.IfcPump] = BuiltInCategory.OST_MechanicalEquipment;
          m_EntityTypeToCategory[IFCEntityType.IfcPumpType] = BuiltInCategory.OST_MechanicalEquipment;
@@ -786,7 +788,7 @@ namespace Revit.IFC.Import.Utility
       public static Category GetSubCategoryForRepresentation(Document doc, int entityId, IFCRepresentationIdentifier repId)
       {
          if (repId == IFCRepresentationIdentifier.Body || repId == IFCRepresentationIdentifier.Unhandled)
-            throw new InvalidOperationException("Incorrect IFCRepresentationIdentifier: " + repId.ToString());
+            return null;
 
          Category category = Importer.TheCache.GenericModelsCategory;
          if (category == null)

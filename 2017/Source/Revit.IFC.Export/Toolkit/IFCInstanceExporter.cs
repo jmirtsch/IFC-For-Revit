@@ -7780,7 +7780,7 @@ namespace Revit.IFC.Export.Toolkit
       /// <param name="name">The name.</param>
       /// <param name="description">The description.</param>
       /// <param name="relatingOpeningElement">The opening element.</param>
-      /// <param name="relatedBuildingElement">The building element that fills or partially filles the opening.</param>
+      /// <param name="relatedBuildingElement">The building element that fills or partially fills the opening.</param>
       /// <returns>The handle.</returns>
       public static IFCAnyHandle CreateRelFillsElement(IFCFile file, string guid, IFCAnyHandle ownerHistory, string name, string description,
           IFCAnyHandle relatingOpeningElement, IFCAnyHandle relatedBuildingElement)

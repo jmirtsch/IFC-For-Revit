@@ -412,7 +412,7 @@ namespace Revit.IFC.Export.Exporter
          using (IFCTransaction tr = new IFCTransaction(file))
          {
             baseBodyItemHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, boundaryLoops, wallLCS,
-                extrusionDir, scaledDepth);
+                extrusionDir, scaledDepth, false);
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(baseBodyItemHnd))
                return null;
 
@@ -437,7 +437,7 @@ namespace Revit.IFC.Export.Exporter
          if (IFCAnyHandleUtil.IsNullOrHasNoValue(bodyItemHnd))
          {
             baseBodyItemHnd = bodyItemHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, originalBoundaryLoops, wallLCS,
-                 extrusionDir, scaledDepth);
+                 extrusionDir, scaledDepth, false);
          }
 
          ElementId matId = HostObjectExporter.GetFirstLayerMaterialId(wallElement);
@@ -691,7 +691,7 @@ namespace Revit.IFC.Export.Exporter
                Document doc = element.Document;
 
                double baseWallElevation = 0.0;
-               ElementId baseLevelId = PlacementSetter.GetBaseLevelIdForElement(element);
+               ElementId baseLevelId = LevelUtil.GetBaseLevelIdForElement(element);
                if (baseLevelId != ElementId.InvalidElementId)
                {
                   Element baseLevel = doc.GetElement(baseLevelId);

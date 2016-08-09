@@ -193,39 +193,64 @@ namespace Revit.IFC.Export.Utility
          if (IFCAnyHandleUtil.IsNullOrHasNoValue(DoorWindowHnd))
             return;
 
+         bool foundOpening = false;
+         bool foundHeight = false;
+         bool foundWidth = false;
+         bool? isDoorOrWindowOpening = null;
+
          foreach (DoorWindowOpeningInfo openingInfo in doorWindowOpeningInfoList)
          {
-            IFCFile file = exporterIFC.GetFile();
-            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
+            // If we've updated the door/window placement, and set its height and width, there's nothing more to do here.
+            if (foundOpening && foundHeight && foundWidth)
+               break;
 
-            IFCAnyHandle openingHnd = openingInfo.OpeningHnd;
-            double openingHeight = openingInfo.OpeningHeight;
-            double openingWidth = openingInfo.OpeningWidth;
-
-            // update original door.
-            string relGUID = GUIDUtil.CreateGUID();
-            IFCInstanceExporter.CreateRelFillsElement(file, relGUID, ownerHistory, null, null, openingHnd, DoorWindowHnd);
-
-            IFCAnyHandle openingPlacement = IFCAnyHandleUtil.GetObjectPlacement(openingHnd);
-            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(openingPlacement))
+            // update original door or window to be relative to the first opening we find.
+            // We only allow one IfcRelFillsElement per door or window, so only do this for the first opening.
+            if (!foundOpening)
             {
-               IFCAnyHandle origObjectPlacement = IFCAnyHandleUtil.GetObjectPlacement(DoorWindowHnd);
-               Transform relTransform = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(origObjectPlacement, openingPlacement);
+               IFCFile file = exporterIFC.GetFile();
+               IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
-               IFCAnyHandle newLocalPlacement = ExporterUtil.CreateLocalPlacement(file, openingPlacement,
-                   relTransform.Origin, relTransform.BasisZ, relTransform.BasisX);
+               IFCAnyHandle openingHnd = openingInfo.OpeningHnd;
 
-               IFCAnyHandleUtil.SetAttribute(DoorWindowHnd, "ObjectPlacement", newLocalPlacement);
-               origObjectPlacement.Delete();
+               foundOpening = true;
+               string relGUID = GUIDUtil.CreateGUID();
+               IFCInstanceExporter.CreateRelFillsElement(file, relGUID, ownerHistory, null, null, openingHnd, DoorWindowHnd);
+
+               IFCAnyHandle openingPlacement = IFCAnyHandleUtil.GetObjectPlacement(openingHnd);
+               if (!IFCAnyHandleUtil.IsNullOrHasNoValue(openingPlacement))
+               {
+                  IFCAnyHandle origObjectPlacement = IFCAnyHandleUtil.GetObjectPlacement(DoorWindowHnd);
+                  Transform relTransform = ExporterIFCUtils.GetRelativeLocalPlacementOffsetTransform(origObjectPlacement, openingPlacement);
+
+                  IFCAnyHandle newLocalPlacement = ExporterUtil.CreateLocalPlacement(file, openingPlacement,
+                      relTransform.Origin, relTransform.BasisZ, relTransform.BasisX);
+
+                  IFCAnyHandleUtil.SetAttribute(DoorWindowHnd, "ObjectPlacement", newLocalPlacement);
+                  origObjectPlacement.Delete();
+               }
             }
 
-            if (IFCAnyHandleUtil.IsTypeOf(DoorWindowHnd, IFCEntityType.IfcDoor) ||
-                IFCAnyHandleUtil.IsTypeOf(DoorWindowHnd, IFCEntityType.IfcWindow))
+            // The first entry for a particular door may not have the height or width set, so keep looking until we find an entry that does.
+            if (!isDoorOrWindowOpening.HasValue)
+               isDoorOrWindowOpening = IFCAnyHandleUtil.IsTypeOf(DoorWindowHnd, IFCEntityType.IfcDoor) || IFCAnyHandleUtil.IsTypeOf(DoorWindowHnd, IFCEntityType.IfcWindow);
+
+            if (!(foundHeight && foundWidth) && isDoorOrWindowOpening.Value)
             {
+               double openingHeight = openingInfo.OpeningHeight;
+               double openingWidth = openingInfo.OpeningWidth;
+
                if (openingHeight > MathUtil.Eps())
+               {
+                  foundHeight = true;
                   IFCAnyHandleUtil.SetAttribute(DoorWindowHnd, "OverallHeight", UnitUtil.ScaleLength(openingHeight));
+               }
+
                if (openingWidth > MathUtil.Eps())
+               {
+                  foundWidth = true;
                   IFCAnyHandleUtil.SetAttribute(DoorWindowHnd, "OverallWidth", UnitUtil.ScaleLength(openingWidth));
+               }
             }
          }
       }

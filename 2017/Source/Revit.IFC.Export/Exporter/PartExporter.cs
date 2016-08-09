@@ -63,9 +63,12 @@ namespace Revit.IFC.Export.Exporter
                List<KeyValuePair<Part, IFCRange>> splitPartRangeList = new List<KeyValuePair<Part, IFCRange>>();
                splitPartRangeList = ExporterCacheManager.HostPartsCache.Find(hostElement.Id, overrideLevelId);
 
-               foreach (KeyValuePair<Part, IFCRange> partRange in splitPartRangeList)
+               if (splitPartRangeList != null)
                {
-                  PartExporter.ExportPart(exporterIFC, partRange.Key, subWrapper, placementSetter, originalPlacement, partRange.Value, ifcExtrusionAxes, hostElement, overrideLevelId, false);
+                  foreach (KeyValuePair<Part, IFCRange> partRange in splitPartRangeList)
+                  {
+                     PartExporter.ExportPart(exporterIFC, partRange.Key, subWrapper, placementSetter, originalPlacement, partRange.Value, ifcExtrusionAxes, hostElement, overrideLevelId, false);
+                  }
                }
             }
             else

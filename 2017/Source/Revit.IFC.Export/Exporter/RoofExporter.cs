@@ -276,7 +276,7 @@ namespace Revit.IFC.Export.Exporter
 
                               double scaledDepth = UnitUtil.ScaleLength(hostObjectSubcomponent.Depth);
                               double scaledExtrusionDepth = scaledDepth * slope;
-                              IFCAnyHandle shapeRep = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, curveLoops, lcs, extrusionDir, scaledExtrusionDepth);
+                              IFCAnyHandle shapeRep = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, curveLoops, lcs, extrusionDir, scaledExtrusionDepth, false);
                               if (IFCAnyHandleUtil.IsNullOrHasNoValue(shapeRep))
                                  return null;
 
