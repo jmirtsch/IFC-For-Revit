@@ -31,6 +31,13 @@ using Revit.IFC.Import.Data;
 
 namespace Revit.IFC.Import.Utility
 {
+   public enum IFCProcessBBoxOptions
+   {
+      Never,
+      NoOtherGeometry,
+      Always
+   }
+
    /// <summary>
    /// Utilities for keeping track of supported import options.
    /// </summary>
@@ -82,7 +89,7 @@ namespace Revit.IFC.Import.Utility
 
       private bool m_CreateLinkInstanceOnly = false;
 
-      private bool m_ProcessBoundingBoxGeometry = true;
+      private IFCProcessBBoxOptions m_ProcessBoundingBoxGeometry = IFCProcessBBoxOptions.NoOtherGeometry;
 
       private bool m_Process3DGeometry = true;
 
@@ -203,7 +210,7 @@ namespace Revit.IFC.Import.Utility
       /// <summary>
       /// If true, process bounding box geometry found in the file.  If false, ignore.
       /// </summary>
-      public bool ProcessBoundingBoxGeometry
+      public IFCProcessBBoxOptions ProcessBoundingBoxGeometry
       {
          get { return m_ProcessBoundingBoxGeometry; }
          protected set { m_ProcessBoundingBoxGeometry = value; }
@@ -331,9 +338,19 @@ namespace Revit.IFC.Import.Utility
          if (process3DGeometry.HasValue)
             Process3DGeometry = process3DGeometry.Value;
 
+         // We have two Boolean options that control how we process bounding box geometry.  They work together as follows:
+         // 1. AlwaysProcessBoundingBoxGeometry set to true: always import the bounding box geometry.
+         // 2. If AlwaysProcessBoundingBoxGeometry is not set, or set to false:
+         // 2a. If ProcessBoundingBoxGeometry is not set or set to true, import the bounding box geometry if there is no other representation available.
+         // 2b. If ProcessBoundingBoxGeometry is set to false, completely ignore the bounding box geometry.
          bool? processBoundingBoxGeometry = GetNamedBooleanOption(options, "ProcessBoundingBoxGeometry");
-         if (processBoundingBoxGeometry.HasValue)
-            ProcessBoundingBoxGeometry = processBoundingBoxGeometry.Value;
+         bool? alwaysProcessBoundingBoxGeometry = GetNamedBooleanOption(options, "AlwaysProcessBoundingBoxGeometry");
+         if (alwaysProcessBoundingBoxGeometry.HasValue && alwaysProcessBoundingBoxGeometry.Value)
+            ProcessBoundingBoxGeometry = IFCProcessBBoxOptions.Always;
+         else if (processBoundingBoxGeometry.HasValue)
+            ProcessBoundingBoxGeometry = processBoundingBoxGeometry.Value ? IFCProcessBBoxOptions.NoOtherGeometry : IFCProcessBBoxOptions.Never;
+         else
+            ProcessBoundingBoxGeometry = IFCProcessBBoxOptions.NoOtherGeometry;
 
          bool? verboseLogging = GetNamedBooleanOption(options, "VerboseLogging");
          if (verboseLogging.HasValue)

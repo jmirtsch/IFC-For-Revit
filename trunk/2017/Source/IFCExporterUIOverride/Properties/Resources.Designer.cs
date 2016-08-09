@@ -430,15 +430,6 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Don&apos;t {0}.
-        /// </summary>
-        public static string Dont {
-            get {
-                return ResourceManager.GetString("Dont", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Edition.
         /// </summary>
         public static string Edition {
@@ -585,15 +576,6 @@ namespace BIM.IFC.Export.UI.Properties {
         /// <summary>
         ///   Looks up a localized string similar to Allow use of mixed &quot;Solid Model&quot; representation.
         /// </summary>
-        public static string ExportSolidModelRep {
-            get {
-                return ResourceManager.GetString("ExportSolidModelRep", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Allow use of mixed &quot;Solid Model&quot; representation.
-        /// </summary>
         public static string ExportSolidModelsWhenPossible {
             get {
                 return ResourceManager.GetString("ExportSolidModelsWhenPossible", resourceCulture);
@@ -628,15 +610,6 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Export user-defined property sets.
-        /// </summary>
-        public static string ExportUserDefinedPsets {
-            get {
-                return ResourceManager.GetString("ExportUserDefinedPsets", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to User-defined property set file name.
         /// </summary>
         public static string ExportUserDefinedPsetsFileName {
@@ -664,8 +637,7 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0} already exists. 
-        ///Do you want to replace it?.
+        ///   Looks up a localized string similar to {0} already exists. Do you want to replace it?.
         /// </summary>
         public static string FileExists {
             get {
@@ -1493,15 +1465,6 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to SaveAs.
-        /// </summary>
-        public static string SaveAs {
-            get {
-                return ResourceManager.GetString("SaveAs", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Save Setup &amp;amp; Close.
         /// </summary>
         public static string SaveSetupAndClose {
@@ -1601,38 +1564,11 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Split walls and columns.
-        /// </summary>
-        public static string SplitWallsAndColumns {
-            get {
-                return ResourceManager.GetString("SplitWallsAndColumns", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Split walls and columns by level.
-        /// </summary>
-        public static string SplitWallsAndColumnsByLevel {
-            get {
-                return ResourceManager.GetString("SplitWallsAndColumnsByLevel", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Split Walls, Columns, Ducts by Level.
         /// </summary>
         public static string SplitWallsColumsDuctsByLevel {
             get {
                 return ResourceManager.GetString("SplitWallsColumsDuctsByLevel", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to *.
-        /// </summary>
-        public static string Star {
-            get {
-                return ResourceManager.GetString("Star", resourceCulture);
             }
         }
         
@@ -1795,15 +1731,6 @@ namespace BIM.IFC.Export.UI.Properties {
         public static string UseRoomBoundariesForRoomVolume {
             get {
                 return ResourceManager.GetString("UseRoomBoundariesForRoomVolume", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Enter a valid file name.
-        /// </summary>
-        public static string ValidFileName {
-            get {
-                return ResourceManager.GetString("ValidFileName", resourceCulture);
             }
         }
         

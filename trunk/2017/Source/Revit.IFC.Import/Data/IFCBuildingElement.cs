@@ -62,6 +62,11 @@ namespace Revit.IFC.Import.Data
          base.Process(ifcBuildingElement);
       }
 
+      private static bool SchemaSupportsBuildingElementComponentAsSubType()
+      {
+         return (IFCImportFile.TheFile.SchemaVersion >= IFCSchemaVersion.IFC2x2 && IFCImportFile.TheFile.SchemaVersion <= IFCSchemaVersion.IFC2x3);
+      }
+
       /// <summary>
       /// Processes an IFCBuildingElement object.
       /// </summary>
@@ -82,7 +87,7 @@ namespace Revit.IFC.Import.Data
 
          IFCBuildingElement newIFCBuildingElement = null;
          // other subclasses not handled yet.
-         if (IFCImportFile.TheFile.SchemaVersion <= IFCSchemaVersion.IFC2x3 && IFCAnyHandleUtil.IsSubTypeOf(ifcBuildingElement, IFCEntityType.IfcBuildingElementComponent))
+         if (SchemaSupportsBuildingElementComponentAsSubType() && IFCAnyHandleUtil.IsSubTypeOf(ifcBuildingElement, IFCEntityType.IfcBuildingElementComponent))
             newIFCBuildingElement = IFCBuildingElementComponent.ProcessIFCBuildingElementComponent(ifcBuildingElement);
          else
             newIFCBuildingElement = new IFCBuildingElement(ifcBuildingElement);

@@ -194,6 +194,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// Linear Velocity
         /// </summary>
         LinearVelocity,
+      /// <summary>
+      /// Mass Density
+      /// </summary>
+      MassDensity,
     }
 
     /// <summary>
@@ -802,6 +806,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                             case ParameterType.Stress:
                                 pse.PropertyType = PropertyType.Pressure;
                                 break;
+                     case ParameterType.MassDensity:
+                        pse.PropertyType = PropertyType.MassDensity;
+                        break;
                             case ParameterType.PipingVolume:
                             case ParameterType.ReinforcementVolume:
                             case ParameterType.SectionModulus:
@@ -850,14 +857,14 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="elementType">
         /// The element type of which this property is created for.
         /// </param>
-        /// <param name="handle">
-        /// The handle for which this property is created for.
-        /// </param>
+      /// <param name="handle">
+      /// The handle for which this property is created for.
+      /// </param>
         /// <returns>
         /// Then created property handle.
         /// </returns>
         public IFCAnyHandle ProcessEntry(IFCFile file, ExporterIFC exporterIFC,
-           IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType, IFCAnyHandle handle)
+         IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType, IFCAnyHandle handle)
         {
             IFCAnyHandle propHnd = null;
 
@@ -868,7 +875,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
 
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
             {
-                propHnd = CreatePropertyFromCalculator(file, exporterIFC, extrusionCreationData, element, elementType, handle);
+            propHnd = CreatePropertyFromCalculator(file, exporterIFC, extrusionCreationData, element, elementType, handle);
             }
             return propHnd;
         }
@@ -1035,6 +1042,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                             ifcPropertyName, valueType);
                         break;
                     }
+            case PropertyType.MassDensity:
+               {
+                  propHnd = PropertyUtil.CreateMassDensityPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                      ifcPropertyName, valueType);
+                  break;
+               }
+
                 case PropertyType.Illuminance:
                     {
                         propHnd = PropertyUtil.CreateIlluminancePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
@@ -1127,18 +1141,18 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
         /// <param name="element">The element.</param>
         /// <param name="elementType">The element type.</param>
-        /// <param name="handle">The handle for which we calculate the property.</param>
+      /// <param name="handle">The handle for which we calculate the property.</param>
         /// <returns>The property handle.</returns>
         IFCAnyHandle CreatePropertyFromCalculator(IFCFile file, ExporterIFC exporterIFC,
-           IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType, IFCAnyHandle handle)
+         IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType, IFCAnyHandle handle)
         {
             IFCAnyHandle propHnd = null;
 
-            if (PropertyCalculator == null)
-                return propHnd;
-            
-            if (PropertyCalculator.GetParameterFromSubelementCache(element, handle) ||
-                PropertyCalculator.Calculate(exporterIFC, extrusionCreationData, element, elementType))
+         if (PropertyCalculator == null)
+            return propHnd;
+
+         if (PropertyCalculator.GetParameterFromSubelementCache(element, handle) ||
+             PropertyCalculator.Calculate(exporterIFC, extrusionCreationData, element, elementType))
             {
                 PropertyType propertyType = PropertyType;
                 PropertyValueType valueType = PropertyValueType;

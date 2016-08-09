@@ -134,9 +134,11 @@ namespace Revit.IFC.Import.Data
             }
          }
 
+         // "HasPorts" is new to IFC2x2.
          // For IFC4, "HasPorts" has moved to IfcDistributionElement.  We'll keep the check here, but we will only check it
          // if we are exporting before IFC4 or if we have an IfcDistributionElement handle.
-         bool checkPorts = (IFCImportFile.TheFile.SchemaVersion < IFCSchemaVersion.IFC4 || IFCAnyHandleUtil.IsSubTypeOf(ifcElement, IFCEntityType.IfcDistributionElement));
+         bool checkPorts = (IFCImportFile.TheFile.SchemaVersion > IFCSchemaVersion.IFC2x2) &&
+            (IFCImportFile.TheFile.SchemaVersion < IFCSchemaVersion.IFC4 || IFCAnyHandleUtil.IsSubTypeOf(ifcElement, IFCEntityType.IfcDistributionElement));
 
          if (checkPorts)
          {

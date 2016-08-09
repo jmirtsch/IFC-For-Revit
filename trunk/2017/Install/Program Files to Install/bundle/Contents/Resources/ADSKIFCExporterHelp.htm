@@ -197,6 +197,48 @@ working on expanding and eventually removing this limit, and we will be tracking
 
 <div class="versionset">
 
+<div class="version">17.2.0.0</div><div class="versioninfo-bullet">
+
+<p>General:
+
+<ul>
+<li>Finished French localization.
+</ul>
+
+New Export Functionality:
+
+<ul>
+<li>Use "Reference Level" as the base level of the element when exporting certain MEP components.
+<li>Support export of mass density units.
+</ul>
+
+<p>Export Bug Fixes:
+
+<ul>
+<li>Export rooms and areas even if they have improperly closed internal boundaries.  Note that the IfcSpace created may then be missing expected interior holes.
+<li>Fix error when exporting some 0 height walls when they have associated parts.
+<li>Only associate a door or window with one opening, even if the door or window is inserted into multiple walls, as per the IFC standard.
+</ul>
+
+<p>New Import Functionality:
+
+<ul>
+<li>Add an API option that allows for always reading in bounding box information, even if the entity has a Body representation.
+<li>Allow reading in curve information that's not contained in the Axis representation, to allow for wireframe import.
+<li>Map IfcOutletType and IfcProtectiveDeviceType to Electrical Fixtures and Specialty Equipment, respectively.
+<li>Improved support for IFC2x and IFC2x2 files.
+<li>Support proper scaling of mass density units.
+</ul>
+
+<p>Import Bug Fixes:
+
+<ul>
+<li>Don't complain about missing IfcOwnerHistory for IFC4 files.
+<li>Properly scale metric bounding boxes so that they are the correct size.
+<li>Stop ignoring some IfcGroups (and IfcSystems) that weren't included in the structure as Revit previously expected.
+</ul>
+
+</div>
 <div class="version">17.1.0.0</div><div class="versioninfo-bullet">
 
 <p>New Export Functionality:

@@ -77,9 +77,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
                 if (ExporterCacheManager.ExportOptionsCache.NamingOptions.UseFamilyAndTypeNameForReference || String.IsNullOrEmpty(elementType.Name))
                 {
                     if (!String.IsNullOrEmpty(elementType.Name))
-                        m_ReferenceName = String.Format("{0}:{1}", ExporterIFCUtils.GetFamilyName(elementType), element.Name);
+                        m_ReferenceName = String.Format("{0}:{1}", elementType.FamilyName, element.Name);
                     else
-                        m_ReferenceName = ExporterIFCUtils.GetFamilyName(elementType);
+                        m_ReferenceName = elementType.FamilyName;
                 }
                 else
                     m_ReferenceName = elementType.Name;
