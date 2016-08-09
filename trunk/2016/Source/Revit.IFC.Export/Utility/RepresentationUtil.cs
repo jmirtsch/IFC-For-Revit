@@ -643,7 +643,7 @@ namespace Revit.IFC.Export.Utility
             IFCFile file = exporterIFC.GetFile();
 
             IFCAnyHandle extrusionHnd = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, null, curveLoops, plane,
-                extrDirVec, extrusionSize);
+                extrDirVec, extrusionSize, false);
 
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionHnd))
                 return null;

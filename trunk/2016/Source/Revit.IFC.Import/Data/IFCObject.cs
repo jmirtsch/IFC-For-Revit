@@ -273,6 +273,10 @@ namespace Revit.IFC.Import.Data
          {
             return IFCProject.ProcessIFCProject(ifcObject);
          }
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcObject, IFCEntityType.IfcGroup))
+         {
+            return IFCGroup.ProcessIFCGroup(ifcObject);
+         }
 
          Importer.TheLog.LogUnhandledSubTypeError(ifcObject, IFCEntityType.IfcObject, true);
          return null;

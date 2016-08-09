@@ -2337,7 +2337,7 @@ namespace Revit.IFC.Export.Exporter
       }
 
       /// <summary>
-      /// Creates the IfcUnitAssignment.
+      /// Creates the IfcUnitAssignment.  This is a long list of units that we correctly translate from our internal units to known units.
       /// </summary>
       /// <param name="exporterIFC">The IFC exporter object.</param>
       /// <param name="doc">The document provides ProjectUnit and DisplayUnitSystem.</param>
@@ -2603,6 +2603,20 @@ namespace Revit.IFC.Export.Exporter
             // If we are exporting to GSA standard, we will override kg with pound below.
             if (!exportToCOBIE)
                unitSet.Add(massSIUnit);      // created above, so unique.
+         }
+
+         // Mass density - support metric kg/(m^3) only.
+         {
+            ISet<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
+            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, massSIUnit, 1));
+            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, lenSIBaseUnit, -3));
+
+            IFCAnyHandle massDensityUnit = IFCInstanceExporter.CreateDerivedUnit(file, elements,
+                IFCDerivedUnitEnum.MassDensityUnit, null);
+            unitSet.Add(massDensityUnit);
+
+            double massDensityFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_KILOGRAMS_PER_CUBIC_METER);
+            ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_MassDensity, massDensityUnit, massDensityFactor, 0.0);
          }
 
          // Time -- support seconds only.

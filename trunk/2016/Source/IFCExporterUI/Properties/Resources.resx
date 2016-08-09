@@ -194,14 +194,8 @@
   <data name="ExportBoundingBox" xml:space="preserve">
     <value>Export bounding box</value>
   </data>
-  <data name="ExportSolidModelRep" xml:space="preserve">
-    <value>Allow use of mixed "Solid Model" representation</value>
-  </data>
   <data name="ExportSchedulesAsPsets" xml:space="preserve">
     <value>Export schedules as property sets</value>
-  </data>
-  <data name="ExportUserDefinedPsets" xml:space="preserve">
-    <value>Export user-defined property sets</value>
   </data>
   <data name="IncludeIfcSiteElevation" xml:space="preserve">
     <value>Include IFCSITE elevation in the site local placement origin</value>
@@ -216,7 +210,7 @@
     <value>IFC 4 Coordination View 2.0</value>
   </data>
   <data name="PropertySets" xml:space="preserve">
-    <value>Export property sets</value>
+    <value>Property Sets</value>
   </data>
   <data name="PropertySetsIFCCommon" xml:space="preserve">
     <value>IFC common only</value>
@@ -316,7 +310,7 @@
     <value>IFC export</value>
   </data>
   <data name="Address" xml:space="preserve">
-    <value>Address</value>
+    <value>Project Address...</value>
   </data>
   <data name="AddressLine1" xml:space="preserve">
     <value>Address line 1</value>
@@ -355,7 +349,7 @@
     <value>City</value>
   </data>
   <data name="Classification" xml:space="preserve">
-    <value>Classification</value>
+    <value>Classification Settings...</value>
   </data>
   <data name="ClassificationFieldName" xml:space="preserve">
     <value>Classification field name</value>
@@ -364,7 +358,7 @@
     <value>Country</value>
   </data>
   <data name="CurrentSelectedSetup" xml:space="preserve">
-    <value>Current selected setup</value>
+    <value>Current selected setup:</value>
   </data>
   <data name="DeleteOldSetups" xml:space="preserve">
     <value>Delete old IFC export setups</value>
@@ -378,9 +372,6 @@
   <data name="DocumentationLocation" xml:space="preserve">
     <value>Documentation location</value>
   </data>
-  <data name="Dont" xml:space="preserve">
-    <value>Don't {0}</value>
-  </data>
   <data name="Edition" xml:space="preserve">
     <value>Edition</value>
   </data>
@@ -388,10 +379,10 @@
     <value>Edition date</value>
   </data>
   <data name="Export" xml:space="preserve">
-    <value>Export…</value>
+    <value>Export</value>
   </data>
   <data name="ExportElementsVisibleInView" xml:space="preserve">
-    <value>Export only elements visible in view</value>
+    <value>Export only elements visible in current view</value>
   </data>
   <data name="ExportInternalRevitPropertySets" xml:space="preserve">
     <value>Export internal Revit property sets</value>
@@ -409,7 +400,7 @@
     <value>File description</value>
   </data>
   <data name="FileHeader" xml:space="preserve">
-    <value>File header</value>
+    <value>File Header</value>
   </data>
   <data name="FileSchema" xml:space="preserve">
     <value>File schema</value>
@@ -436,7 +427,7 @@
     <value>Unrecognized file type option</value>
   </data>
   <data name="IFCVersion" xml:space="preserve">
-    <value>IFC Version</value>
+    <value>IFC version</value>
   </data>
   <data name="IFCXML" xml:space="preserve">
     <value>IFC XML</value>
@@ -647,5 +638,65 @@
   </data>
   <data name="DocNotSaved" xml:space="preserve">
     <value>Document Not Saved</value>
+  </data>
+  <data name="ExportUserDefinedParameterMappingTable" xml:space="preserve">
+    <value>Export parameter mapping table</value>
+  </data>
+  <data name="UserDefinedParameterMappingTable" xml:space="preserve">
+    <value>Custom parameter mapping table</value>
+  </data>
+  <data name="IFC2x3FM" xml:space="preserve">
+    <value>IFC2x3 Extended FM Handover View</value>
+  </data>
+  <data name="IFC4DTV" xml:space="preserve">
+    <value>IFC4 Design Transfer View</value>
+  </data>
+  <data name="IFC4RV" xml:space="preserve">
+    <value>IFC4 Reference View</value>
+  </data>
+  <data name="FileName" xml:space="preserve">
+    <value>File name:</value>
+  </data>
+  <data name="ValidPathExists" xml:space="preserve">
+    <value>Path does not exist</value>
+  </data>
+  <data name="FileExists" xml:space="preserve">
+    <value>{0} already exists. Do you want to replace it?</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>v.</value>
+  </data>
+  <data name="FileHeaderInformation" xml:space="preserve">
+    <value>File Header Information...</value>
+  </data>
+  <data name="LevelOfDetail" xml:space="preserve">
+    <value>Level of Detail</value>
+  </data>
+  <data name="SplitWallsColumsDuctsByLevel" xml:space="preserve">
+    <value>Split Walls, Columns, Ducts by Level</value>
+  </data>
+  <data name="IFCXMLZIPFiles" xml:space="preserve">
+    <value>Zipped Industry Foundation Classes XML(.ifczip)|*.ifczip</value>
+  </data>
+  <data name="AdditionalContent" xml:space="preserve">
+    <value>Additional Content</value>
+  </data>
+  <data name="AddressInformation" xml:space="preserve">
+    <value>Project Address</value>
+  </data>
+  <data name="ClassificationSetting" xml:space="preserve">
+    <value>Classification Settings</value>
+  </data>
+  <data name="ModifySetupTitle" xml:space="preserve">
+    <value>Modify Setup</value>
+  </data>
+  <data name="Setup" xml:space="preserve">
+    <value>Setup</value>
+  </data>
+  <data name="Help" xml:space="preserve">
+    <value>How do I specify an export setup?</value>
+  </data>
+  <data name="ExportIFC" xml:space="preserve">
+    <value>Export IFC</value>
   </data>
 </root>

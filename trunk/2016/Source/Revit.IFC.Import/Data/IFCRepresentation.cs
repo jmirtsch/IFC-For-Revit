@@ -144,6 +144,9 @@ namespace Revit.IFC.Import.Data
                 IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentation, IFCEntityType.IfcStyledRepresentation))
                 return IFCRepresentationIdentifier.Style;
 
+         Importer.TheLog.LogWarning(ifcRepresentation.StepId, "Found unknown representation type: " + identifier, false);
+
+
             return IFCRepresentationIdentifier.Unhandled;
         }
 
@@ -154,8 +157,7 @@ namespace Revit.IFC.Import.Data
                 case IFCRepresentationIdentifier.Axis:
                     return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcCurve));
                 case IFCRepresentationIdentifier.Body:
-                    return (IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcCurve) ||
-                        IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcGeometricSet));
+               return false;
                 case IFCRepresentationIdentifier.Box:
                     return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcBoundingBox));
                 case IFCRepresentationIdentifier.FootPrint:
@@ -166,7 +168,7 @@ namespace Revit.IFC.Import.Data
                     return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcStyledItem));
             }
 
-            return true;
+         return false;
         }
 
         /// <summary>
@@ -184,17 +186,12 @@ namespace Revit.IFC.Import.Data
             string identifier = IFCImportHandleUtil.GetOptionalStringAttribute(ifcRepresentation, "RepresentationIdentifier", null);
             Identifier = GetRepresentationIdentifier(identifier, ifcRepresentation);
             
-            // Don't read in Box represenation unless options allow it.
-            bool isBoundingBox = (Identifier == IFCRepresentationIdentifier.Box);
-            if (isBoundingBox && !IFCImportFile.TheFile.Options.ProcessBoundingBoxGeometry)
-                throw new InvalidOperationException("BoundingBox not imported with ProcessBoundingBoxGeometry=false");
-
             Type = IFCImportHandleUtil.GetOptionalStringAttribute(ifcRepresentation, "RepresentationType", null);
 
             HashSet<IFCAnyHandle> items =
                 IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcRepresentation, "Items");
 
-            LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(ifcRepresentation, true);
+         LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(ifcRepresentation, true);
 
             foreach (IFCAnyHandle item in items)
             {
@@ -210,11 +207,20 @@ namespace Revit.IFC.Import.Data
                     }
 
                     // Special processing for bounding boxes - only IfcBoundingBox allowed.
-                    if (isBoundingBox)
+               if (IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcBoundingBox))
                     {
+                  // Don't read in Box represenation unless options allow it.
+                  if (IFCImportFile.TheFile.Options.ProcessBoundingBoxGeometry == IFCProcessBBoxOptions.Never)
+                     Importer.TheLog.LogWarning(item.StepId, "BoundingBox not imported with ProcessBoundingBoxGeometry=Never", false);
+                  else
+                  {
+                     if (BoundingBox != null)
+                     {
+                        Importer.TheLog.LogWarning(item.StepId, "Found second IfcBoundingBox representation item, ignoring.", false);
+                        continue;
+                     }
                         BoundingBox = ProcessBoundingBox(item);
-                        if (BoundingBox != null)
-                            break;
+                  }
                     }
                     else
                         repItem = IFCRepresentationItem.ProcessIFCRepresentationItem(item);
@@ -255,8 +261,9 @@ namespace Revit.IFC.Import.Data
                 // Get the material and graphics style based in the "Box" sub-category of Generic Models.  
                 // We will create the sub-category if this is our first time trying to use it.
                 // Note that all bounding boxes are controlled by a sub-category of Generic Models.  We may revisit that decision later.
+            // Note that we hard-wire the identifier to "Box" because older files may have bounding box items in an obsolete representation.
                 SolidOptions solidOptions = null;
-                Category bboxCategory = IFCCategoryUtil.GetSubCategoryForRepresentation(shapeEditScope.Document, Id, Identifier);
+            Category bboxCategory = IFCCategoryUtil.GetSubCategoryForRepresentation(shapeEditScope.Document, Id, IFCRepresentationIdentifier.Box);
                 if (bboxCategory != null)
                 {
                     ElementId materialId = (bboxCategory.Material == null) ? ElementId.InvalidElementId : bboxCategory.Material.Id;
@@ -285,11 +292,8 @@ namespace Revit.IFC.Import.Data
         public void CreateShape(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
         {
             // Special handling for Box representation.  We may decide to create an IFCBoundingBox class and stop this special treatment.
-            if (Identifier == IFCRepresentationIdentifier.Box)
-            {
+         if (BoundingBox != null)
                 CreateBoxShape(shapeEditScope, scaledLcs);
-                return;
-            }
 
             if (LayerAssignment != null)
                 LayerAssignment.Create(shapeEditScope);
@@ -313,9 +317,18 @@ namespace Revit.IFC.Import.Data
             IFCAnyHandle lowerLeftHnd = IFCAnyHandleUtil.GetInstanceAttribute(boundingBoxHnd, "Corner");
             XYZ minXYZ = IFCPoint.ProcessScaledLengthIFCCartesianPoint(lowerLeftHnd);
 
-            double xDim = IFCAnyHandleUtil.GetDoubleAttribute(boundingBoxHnd, "XDim").Value;
-            double yDim = IFCAnyHandleUtil.GetDoubleAttribute(boundingBoxHnd, "YDim").Value;
-            double zDim = IFCAnyHandleUtil.GetDoubleAttribute(boundingBoxHnd, "ZDim").Value;
+         bool found = false;
+         double xDim = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(boundingBoxHnd, "XDim", out found);
+         if (!found)
+            return null;
+
+         double yDim = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(boundingBoxHnd, "YDim", out found);
+         if (!found)
+            return null;
+
+         double zDim = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(boundingBoxHnd, "ZDim", out found);
+         if (!found)
+            return null;
 
             XYZ maxXYZ = new XYZ(minXYZ.X + xDim, minXYZ.Y + yDim, minXYZ.Z + zDim);
             BoundingBoxXYZ boundingBox = new BoundingBoxXYZ();

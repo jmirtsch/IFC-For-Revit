@@ -275,6 +275,10 @@ namespace Revit.IFC.Import.Data
                         supportedTypes[""] = new KeyValuePair<UnitName, UnitSymbolType>(UnitName.DUT_KILOGRAMS_MASS, UnitSymbolType.UST_KGM);    // Even if unit is grams, display kg.
                         supportedTypes["KILO"] = new KeyValuePair<UnitName, UnitSymbolType>(UnitName.DUT_KILOGRAMS_MASS, UnitSymbolType.UST_KGM);
                         break;
+               case UnitType.UT_MassDensity:
+                  supportedTypes[""] = new KeyValuePair<UnitName, UnitSymbolType>(UnitName.DUT_KILOGRAMS_PER_CUBIC_METER, UnitSymbolType.UST_KG_PER_CU_M);    // Even if unit is grams, display kg.
+                  supportedTypes["KILO"] = new KeyValuePair<UnitName, UnitSymbolType>(UnitName.DUT_KILOGRAMS_PER_CUBIC_METER, UnitSymbolType.UST_KG_PER_CU_M);
+                  break;
                     case UnitType.UT_Volume:
                         supportedTypes[""] = new KeyValuePair<UnitName, UnitSymbolType>(UnitName.DUT_CUBIC_METERS, UnitSymbolType.UST_M_SUP_3);
                         supportedTypes["DECI"] = new KeyValuePair<UnitName, UnitSymbolType>(UnitName.DUT_LITERS, UnitSymbolType.UST_L);
@@ -316,7 +320,6 @@ namespace Revit.IFC.Import.Data
                 // length ^ 3
                 case UnitType.UT_Volume:
                     return (scaleFactor * scaleFactor * scaleFactor) * volumeFactor;
-                // Misc. units
                 case UnitType.UT_Mass:
                     return (scaleFactor / 1000.0);   // Standard internal scale is kg.
                 default:
@@ -528,6 +531,19 @@ namespace Revit.IFC.Import.Data
               expectedTypes.AddCustomExpectedType(-1, "TIMEUNIT");
               expectedTypesList.Add(expectedTypes);
            }
+         else if (string.Compare(unitType, "MASSDENSITYUNIT", true) == 0)
+         {
+            UnitType = UnitType.UT_MassDensity;
+            UnitSystem = UnitSystem.Metric;
+
+            // Support kg / m^3 in the IFC file.
+
+            // kg / m^3.
+            DerivedUnitExpectedTypes expectedTypes = new DerivedUnitExpectedTypes(UnitName.DUT_KILOGRAMS_PER_CUBIC_METER, UnitSymbolType.UST_KG_PER_CU_M);
+            expectedTypes.AddExpectedType(1, UnitType.UT_Mass);
+            expectedTypes.AddExpectedType(-3, UnitType.UT_Length);
+            expectedTypesList.Add(expectedTypes);
+         }
            else if (string.Compare(unitType, "USERDEFINED", true) == 0)
            {
               // Look at the sub-types to see what we support.
@@ -762,23 +778,23 @@ namespace Revit.IFC.Import.Data
         /// <param name="monetaryUnitHnd">The monetary unit handle.</param>
         void ProcessIFCMonetaryUnit(IFCAnyHandle monetaryUnitHnd)
         {
-            string currencyType = (IFCImportFile.TheFile.SchemaVersion < IFCSchemaVersion.IFC4) ?
-               IFCAnyHandleUtil.GetEnumerationAttribute(monetaryUnitHnd, "Currency") :
-               IFCImportHandleUtil.GetOptionalStringAttribute(monetaryUnitHnd, "Currency", string.Empty);
+         string currencyType = (IFCImportFile.TheFile.SchemaVersion < IFCSchemaVersion.IFC4) ?
+            IFCAnyHandleUtil.GetEnumerationAttribute(monetaryUnitHnd, "Currency") :
+            IFCImportHandleUtil.GetOptionalStringAttribute(monetaryUnitHnd, "Currency", string.Empty);
 
             UnitType = UnitType.UT_Currency;
             UnitName = UnitName.DUT_CURRENCY;
 
             UnitSymbol = UnitSymbolType.UST_NONE;
             if ((string.Compare(currencyType, "CAD", true) == 0) ||
-                (string.Compare(currencyType, "USD", true) == 0) ||
-                (string.Compare(currencyType, "$", true) == 0))
+             (string.Compare(currencyType, "USD", true) == 0) ||
+             (string.Compare(currencyType, "$", true) == 0))
                 UnitSymbol = UnitSymbolType.UST_DOLLAR;
-            else if ((string.Compare(currencyType, "EUR", true) == 0) ||
-               (string.Compare(currencyType, "€", true) == 0))
+         else if ((string.Compare(currencyType, "EUR", true) == 0) ||
+            (string.Compare(currencyType, "€", true) == 0))
                 UnitSymbol = UnitSymbolType.UST_EURO_PREFIX;
-            else if ((string.Compare(currencyType, "GBP", true) == 0) ||
-               (string.Compare(currencyType, "£", true) == 0))
+         else if ((string.Compare(currencyType, "GBP", true) == 0) ||
+            (string.Compare(currencyType, "£", true) == 0))
                 UnitSymbol = UnitSymbolType.UST_POUND;
             else if (string.Compare(currencyType, "HKD", true) == 0)
                 UnitSymbol = UnitSymbolType.UST_CHINESE_HONG_KONG_SAR;
@@ -788,13 +804,13 @@ namespace Revit.IFC.Import.Data
                 UnitSymbol = UnitSymbolType.UST_KRONER;
             else if (string.Compare(currencyType, "ILS", true) == 0)
                 UnitSymbol = UnitSymbolType.UST_SHEQEL;
-            else if ((string.Compare(currencyType, "JPY", true) == 0) ||
-                (string.Compare(currencyType, "¥", true) == 0))
+         else if ((string.Compare(currencyType, "JPY", true) == 0) ||
+             (string.Compare(currencyType, "¥", true) == 0))
                 UnitSymbol = UnitSymbolType.UST_YEN;
             else if (string.Compare(currencyType, "KRW", true) == 0)
                 UnitSymbol = UnitSymbolType.UST_WON;
-            else if ((string.Compare(currencyType, "THB", true) == 0) ||
-                (string.Compare(currencyType, "฿", true) == 0))
+         else if ((string.Compare(currencyType, "THB", true) == 0) ||
+             (string.Compare(currencyType, "฿", true) == 0))
                 UnitSymbol = UnitSymbolType.UST_BAHT;
             else if (string.Compare(currencyType, "VND", true) == 0)
                 UnitSymbol = UnitSymbolType.UST_DONG;
