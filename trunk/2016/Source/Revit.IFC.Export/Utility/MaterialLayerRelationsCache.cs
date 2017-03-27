@@ -26,9 +26,9 @@ using Autodesk.Revit.DB.IFC;
 namespace Revit.IFC.Export.Utility
 {
     /// <summary>
-    /// Used to keep a cache of the IfcRoot handles mapping to a IfcMaterialLayerSetUsage handle.
+    /// Used to keep a cache of the IfcRoot handles mapping to a IfcMaterial___SetUsage handle. It includes IfcMaterialLayerSetUsage, IfcMaterialProfileSetUsage in IFC4
     /// </summary>
-    public class MaterialLayerRelationsCache : Dictionary<IFCAnyHandle, HashSet<IFCAnyHandle>>
+    public class MaterialSetUsageCache : Dictionary<IFCAnyHandle, HashSet<IFCAnyHandle>>
     {
         /// <summary>
         /// Adds the IfcRoot handle to the dictionary.

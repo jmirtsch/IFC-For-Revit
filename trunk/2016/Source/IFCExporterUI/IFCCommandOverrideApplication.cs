@@ -228,8 +228,9 @@ namespace BIM.IFC.Export.UI
                      defaultDirectory = Path.GetDirectoryName(revitFilePath);
                   }
                }
-
-               if (defaultDirectory == null)
+               
+  
+               if ((defaultDirectory == null) || (!System.IO.Directory.Exists(defaultDirectory)))
                   defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
                string defaultExt = mainWindow.GetFileExtension();

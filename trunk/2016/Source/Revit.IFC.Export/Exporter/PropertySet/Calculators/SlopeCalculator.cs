@@ -51,35 +51,38 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
             get { return s_Instance; }
         }
 
-        /// <summary>
-        /// Calculates slope value.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
-        /// <param name="element">The element to calculate the value.</param>
-        /// <param name="elementType">The element type.</param>
-        /// <returns>True if the operation succeed, false otherwise.</returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            // We may have an extrusionCreationData that doesn't have anything set.  We will check this by seeing if there is a valid length set.
-            if (extrusionCreationData == null || MathUtil.IsAlmostZero(extrusionCreationData.ScaledLength))
-            {
-                // Try looking for parameters that we can calculate slope from.
-                double startParamHeight;
-                if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.STRUCTURAL_BEAM_END0_ELEVATION, out startParamHeight) == null)
-                    return false;
-                double endParamHeight;
-                if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.STRUCTURAL_BEAM_END1_ELEVATION, out endParamHeight) == null)
-                    return false;
-                double length;
-                if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.INSTANCE_LENGTH_PARAM, out length) == null)
-                    return false;
-                m_Slope = UnitUtil.ScaleAngle(Math.Atan2(Math.Abs(endParamHeight - startParamHeight), length));
-                return true;
-            }
+      /// <summary>
+      /// Calculates slope value.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
+      /// <param name="element">The element to calculate the value.</param>
+      /// <param name="elementType">The element type.</param>
+      /// <returns>True if the operation succeed, false otherwise.</returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         // We may have an extrusionCreationData that doesn't have anything set.  We will check this by seeing if there is a valid length set.
+         if (extrusionCreationData == null || MathUtil.IsAlmostZero(extrusionCreationData.ScaledLength))
+         {
+            // Try looking for parameters that we can calculate slope from.
+            double startParamHeight;
+            if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.STRUCTURAL_BEAM_END0_ELEVATION, out startParamHeight) == null)
+               return false;
+            double endParamHeight;
+            if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.STRUCTURAL_BEAM_END1_ELEVATION, out endParamHeight) == null)
+               return false;
+            double length;
+            if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.INSTANCE_LENGTH_PARAM, out length) == null)
+               return false;
+            m_Slope = UnitUtil.ScaleAngle(Math.Atan2(Math.Abs(endParamHeight - startParamHeight), length));
+            return true;
+         }
+         else
+         {
             m_Slope = extrusionCreationData.Slope;
             return true;
-        }
+         }
+      }
 
         /// <summary>
         /// Gets the calculated double value.

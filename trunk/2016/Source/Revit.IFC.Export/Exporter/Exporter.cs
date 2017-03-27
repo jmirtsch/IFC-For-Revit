@@ -851,15 +851,24 @@ namespace Revit.IFC.Export.Exporter
          }
          else if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            ExporterCacheManager.ExportOptionsCache.ExportAs4_ADD1 = true;
-            modelOptions.SchemaFile = Path.Combine(ExporterUtil.RevitProgramPath, "EDM\\IFC4_ADD1.exp");
+            modelOptions.SchemaFile = Path.Combine(ExporterUtil.RevitProgramPath, "EDM\\IFC4_ADD2.exp");
 
-            // If the IFC4_ADD1 file does not exists it takes the IFC4 file as its default.              
             if (!File.Exists(modelOptions.SchemaFile))
             {
-               modelOptions.SchemaFile = Path.Combine(ExporterUtil.RevitProgramPath, "EDM\\IFC4.exp");
-               ExporterCacheManager.ExportOptionsCache.ExportAs4_ADD1 = false;
+               modelOptions.SchemaFile = Path.Combine(ExporterUtil.RevitProgramPath, "EDM\\IFC4_ADD1.exp");
+
+               // If the IFC4_ADD1 file does not exists it takes the IFC4 file as its default.              
+               if (!File.Exists(modelOptions.SchemaFile))
+               {
+                  modelOptions.SchemaFile = Path.Combine(ExporterUtil.RevitProgramPath, "EDM\\IFC4.exp");
+                  ExporterCacheManager.ExportOptionsCache.ExportAs4_ADD1 = false;
+               }
+               else
+                  ExporterCacheManager.ExportOptionsCache.ExportAs4_ADD1 = true;
             }
+            else
+               ExporterCacheManager.ExportOptionsCache.ExportAs4_ADD2 = true;
+
             modelOptions.SchemaName = "IFC4";
          }
          else
@@ -1080,7 +1089,7 @@ namespace Revit.IFC.Export.Exporter
                    levelName, description, objectType, placement,
                    null, longName, ifcComposition, elevation);
 
-               // Create classification reference when level has classification filed name assigned to it
+               // Create classification reference when level has classification field name assigned to it
                ClassificationUtil.CreateClassification(exporterIFC, file, level, buildingStorey);
 
                if (prevBuildingStorey == null)

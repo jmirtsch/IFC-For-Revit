@@ -102,9 +102,9 @@ namespace Revit.IFC.Import.Data
             double endParameter = IFCImportHandleUtil.GetOptionalDoubleAttribute(solid, "EndParam", -1.0);
             if (!MathUtil.IsAlmostEqual(endParameter, -1.0))
             {
-                if (endParameter < StartParameter + MathUtil.Eps())
-                   Importer.TheLog.LogError(solid.StepId, "IfcSurfaceCurveSweptAreaSolid swept curve end parameter less than or equal to start parameter, aborting.", true);
-                EndParameter = endParameter;
+               if (endParameter < StartParameter + MathUtil.Eps())
+                  Importer.TheLog.LogError(solid.StepId, "IfcSurfaceCurveSweptAreaSolid swept curve end parameter less than or equal to start parameter, aborting.", true);
+               EndParameter = endParameter;
             }
         }
 
@@ -128,42 +128,53 @@ namespace Revit.IFC.Import.Data
             if (trimmedDirectrix == null)
                 return null;
 
-            CurveLoop trimmedDirectrixInLCS = IFCGeometryUtil.CreateTransformed(trimmedDirectrix, objectPosition);
+         double startParam = 0.0; // If the directrix isn't bound, this arbitrary parameter will do.
+         Transform originTrf0 = null;
+         Curve firstCurve0 = trimmedDirectrix.First();
+         if (firstCurve0.IsBound)
+            startParam = firstCurve0.GetEndParameter(0);
+         originTrf0 = firstCurve0.ComputeDerivatives(startParam, false);
+         if (originTrf0 == null)
+            return null;
 
-            // Create the sweep.
-            double startParam = 0.0; // If the directrix isn't bound, this arbitrary parameter will do.
-            Transform originTrf = null;
-            Curve firstCurve = trimmedDirectrixInLCS.First();
-            if (firstCurve.IsBound)
-                startParam = firstCurve.GetEndParameter(0);
-            originTrf = firstCurve.ComputeDerivatives(startParam, false);
+         // Note: the computation of the reference Surface Local Transform must be done before the directrix is transform to LCS (because the ref surface isn't)
+         //     and therefore the origin is at the start of the curve should be the start of the directrix that lies on the surface.
+         //     This is needed to transform the swept area that must be perpendicular to the start of the directrix curve
 
-            if (originTrf == null)
-                return null;
+         Transform referenceSurfaceLocalTransform = ReferenceSurface.GetTransformAtPoint(originTrf0.Origin);
 
-            Transform referenceSurfaceLocalTransform = ReferenceSurface.GetTransformAtPoint(originTrf.Origin);
-            Transform referenceSurfaceTransform = objectPosition.Multiply(referenceSurfaceLocalTransform);
+         CurveLoop trimmedDirectrixInLCS = IFCGeometryUtil.CreateTransformed(trimmedDirectrix, objectPosition);
 
-            Transform profileCurveLoopsTransform = Transform.CreateTranslation(originTrf.Origin);
-            profileCurveLoopsTransform.BasisX = referenceSurfaceTransform.BasisZ;
-            profileCurveLoopsTransform.BasisZ = originTrf.BasisX.Normalize();
-            profileCurveLoopsTransform.BasisY = profileCurveLoopsTransform.BasisZ.CrossProduct(profileCurveLoopsTransform.BasisX);
+         // Create the sweep.
+         Transform originTrf = null;
+         Curve firstCurve = trimmedDirectrixInLCS.First();
+         //if (firstCurve.IsBound)
+         //    startParam = firstCurve.GetEndParameter(0);
+         originTrf = firstCurve.ComputeDerivatives(startParam, false);
 
-            ISet<IList<CurveLoop>> profileCurveLoops = GetTransformedCurveLoops(profileCurveLoopsTransform);
-            if (profileCurveLoops == null || profileCurveLoops.Count == 0)
-                return null;
+         //Transform referenceSurfaceLocalTransform = ReferenceSurface.GetTransformAtPoint(originTrf.Origin);
+         Transform referenceSurfaceTransform = objectPosition.Multiply(referenceSurfaceLocalTransform);
 
-            SolidOptions solidOptions = new SolidOptions(GetMaterialElementId(shapeEditScope), shapeEditScope.GraphicsStyleId);
-            IList<GeometryObject> myObjs = new List<GeometryObject>();
-            foreach (IList<CurveLoop> loops in profileCurveLoops)
-            {
-                GeometryObject myObj = GeometryCreationUtilities.CreateSweptGeometry(trimmedDirectrixInLCS, 0, startParam, loops, solidOptions);
-                if (myObj != null)
-                    myObjs.Add(myObj);
-            }
+         Transform profileCurveLoopsTransform = Transform.CreateTranslation(originTrf.Origin);
+         profileCurveLoopsTransform.BasisX = referenceSurfaceTransform.BasisZ;
+         profileCurveLoopsTransform.BasisZ = originTrf.BasisX.Normalize();
+         profileCurveLoopsTransform.BasisY = profileCurveLoopsTransform.BasisZ.CrossProduct(profileCurveLoopsTransform.BasisX);
 
-            return myObjs;
-        }
+         ISet<IList<CurveLoop>> profileCurveLoops = GetTransformedCurveLoops(profileCurveLoopsTransform);
+         if (profileCurveLoops == null || profileCurveLoops.Count == 0)
+               return null;
+
+         SolidOptions solidOptions = new SolidOptions(GetMaterialElementId(shapeEditScope), shapeEditScope.GraphicsStyleId);
+         IList<GeometryObject> myObjs = new List<GeometryObject>();
+         foreach (IList<CurveLoop> loops in profileCurveLoops)
+         {
+               GeometryObject myObj = GeometryCreationUtilities.CreateSweptGeometry(trimmedDirectrixInLCS, 0, startParam, loops, solidOptions);
+               if (myObj != null)
+                  myObjs.Add(myObj);
+         }
+
+         return myObjs;
+      }
 
         /// <summary>
         /// Create geometry for a particular representation item.

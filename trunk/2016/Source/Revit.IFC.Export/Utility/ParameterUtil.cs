@@ -749,5 +749,48 @@ namespace Revit.IFC.Export.Utility
             
             return null;
         }
-    }
+
+      /// <summary>
+      /// This method returns a special parameter for Offset found in the FamilySymbol that influence the CurtainWall Panel position.
+      /// </summary>
+      /// <param name="the familySymbol"></param>
+      /// <returns>maximum Offset value if there are more than one parameters of the same name</returns>
+      public static double getSpecialOffsetParameter(FamilySymbol familySymbol)
+      {
+         // This method is isolated here so that it can adopt localized parameter name as necessary
+
+         string offsetParameterName = "Offset";
+         double maxOffset = 0.0;
+
+         // In case there are more than one parameter of the same name, we will get one value that is the largest
+         IList<Parameter> offsetParams = familySymbol.GetParameters(offsetParameterName);
+         foreach (Parameter offsetP in offsetParams)
+         {
+            double offset = offsetP.AsDouble();
+            if (offset > maxOffset)
+               maxOffset = offset;
+         }
+         return maxOffset;
+      }
+
+      public static double getSpecialThicknessParameter(FamilySymbol familySymbol)
+      {
+         // This method is isolated here so that it can adopt localized parameter name as necessary
+
+         string thicknessParameterName = "Thickness";
+         double thickestValue = 0.0;
+
+         IList<Parameter> thicknessParams = familySymbol.GetParameters(thicknessParameterName);
+
+         foreach (Parameter thicknessP in thicknessParams)
+         {
+            // If happens there are more than 1 param with the same name, we will arbitrary choose the thickest value
+            double thickness = thicknessP.AsDouble();
+            if (thickness > thickestValue)
+               thickestValue = thickness;
+         }
+         return thickestValue;
+      }
+
+   }
 }

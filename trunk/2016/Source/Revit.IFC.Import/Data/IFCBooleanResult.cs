@@ -148,7 +148,7 @@ namespace Revit.IFC.Import.Data
          }
 
          IList<GeometryObject> secondSolids = null;
-         if (SecondOperand != null)
+         if ((firstSolids != null || BooleanOperator == IFCBooleanOperator.Union) && (SecondOperand != null))
          {
             try
             {
@@ -181,7 +181,8 @@ namespace Revit.IFC.Import.Data
          IList<GeometryObject> resultSolids = null;
          if (firstSolids == null)
          {
-            resultSolids = secondSolids;
+            if (BooleanOperator == IFCBooleanOperator.Union)
+               resultSolids = secondSolids;
          }
          else if (secondSolids == null || BooleanOperator == null)
          {

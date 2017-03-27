@@ -658,5 +658,174 @@ namespace Revit.IFC.Export.Utility
             shapeReps.Add(shapeRepHnd);
             return IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
         }
+
+        /// <summary>
+        /// Checking the the geometry representation of a product contains representations that fulfill the requirements for "StandardCase"
+        /// </summary>
+        /// <param name="exportType">the export type of the element</param>
+        /// <param name="productHnd">IfcProduct handle</param>
+        /// <returns>true if it fulfills the StandardCase requirements</returns>
+        public static bool representationForStandardCaseFromProduct(IFCExportType exportType, IFCAnyHandle productHnd)
+        {
+            List<IFCAnyHandle> representationHnds = IFCAnyHandleUtil.GetRepresentations(IFCAnyHandleUtil.GetRepresentation(productHnd));
+            return representationForStandardCases(exportType, representationHnds);
+        }
+
+      /// <summary>
+      /// Check the content of IfcRepresentation for geometries that fulfill the requirements for StandardCase
+      /// </summary>
+      /// <param name="exportType">element export type</param>
+      /// <param name="representationHnds">List of IfcRepresentations</param>
+      /// <returns>true if the IfcRepresentation (Body) contains the suitable geometry for various types</returns>
+      public static bool representationForStandardCases(IFCExportType exportType, List<IFCAnyHandle> representationHnds)
+      {
+         if (representationHnds.Count == 0)
+            return false;
+
+         foreach (IFCAnyHandle repHnd in representationHnds)
+         {
+            IFCAnyHandleUtil.ValidateSubTypeOf(repHnd, false, Common.Enums.IFCEntityType.IfcRepresentation);
+            string repIdent = IFCAnyHandleUtil.GetRepresentationIdentifier(repHnd);
+            if (repIdent.Equals("Body"))
+            {
+               HashSet<IFCAnyHandle> repItems = null;
+               string repType = IFCAnyHandleUtil.GetRepresentationType(repHnd);
+               if (repType.Equals("SweptSolid") || repType.Equals("AdvancedSweptSolid") || repType.Equals("Clipping"))
+                  repItems = IFCAnyHandleUtil.GetItems(repHnd);
+               else if (repType.Equals("MappedRepresentation"))
+               {
+                  // It is a MappedRepresentation, get IfcRepresentation from the source
+                  HashSet<IFCAnyHandle> mappedRepItems = IFCAnyHandleUtil.GetItems(repHnd);
+                  foreach (IFCAnyHandle mappedRepItem in mappedRepItems)
+                  {
+                     IFCAnyHandle mappingSource = IFCAnyHandleUtil.GetInstanceAttribute(mappedRepItem, "MappingSource");
+                     IFCAnyHandle mappedRep = IFCAnyHandleUtil.GetInstanceAttribute(mappingSource, "MappedRepresentation");
+                     repItems = IFCAnyHandleUtil.GetItems(mappedRep);
+                  }
+               }
+               else
+                  return false;
+
+               int validGeomCount = 0;
+               foreach (IFCAnyHandle repItem in repItems)
+               {
+                  if (IFCAnyHandleUtil.IsTypeOf(repItem, Common.Enums.IFCEntityType.IfcExtrudedAreaSolid))
+                  {
+                     validGeomCount++;
+                     continue;
+                  }
+
+                  // IfcOpeningStandardCase only allows IfcExtrudedAreaSolid
+                  if (exportType == IFCExportType.IfcOpeningElement)
+                     continue;
+
+                  // For IfcBooleanClippingResult, we must ensure the that at least one of the leaf is an ExtrudedAreaSolid (should be the base, but we have no way to know)
+                  if (IFCAnyHandleUtil.IsTypeOf(repItem, Common.Enums.IFCEntityType.IfcBooleanClippingResult))
+                  {
+                     IFCAnyHandle firstOperand = IFCAnyHandleUtil.GetInstanceAttribute(repItem, "FirstOperand");
+                     IFCAnyHandle secondOperand = IFCAnyHandleUtil.GetInstanceAttribute(repItem, "SecondOperand");
+                     if (booleanResultLeafIsTypeOf(firstOperand, Common.Enums.IFCEntityType.IfcExtrudedAreaSolid)
+                         || booleanResultLeafIsTypeOf(secondOperand, Common.Enums.IFCEntityType.IfcExtrudedAreaSolid)) 
+                     {
+                        validGeomCount++;
+                        continue;
+                     }
+                  }
+
+                  if ((exportType == IFCExportType.IfcBeamType
+                        || exportType == IFCExportType.IfcColumnType
+                        || exportType == IFCExportType.IfcMemberType)
+                      && (IFCAnyHandleUtil.IsTypeOf(repItem, Common.Enums.IFCEntityType.IfcSurfaceCurveSweptAreaSolid)
+                        || IFCAnyHandleUtil.IsTypeOf(repItem, Common.Enums.IFCEntityType.IfcFixedReferenceSweptAreaSolid)
+                        || IFCAnyHandleUtil.IsTypeOf(repItem, Common.Enums.IFCEntityType.IfcExtrudedAreaSolidTapered)
+                        || IFCAnyHandleUtil.IsTypeOf(repItem, Common.Enums.IFCEntityType.IfcRevolvedAreaSolid)))
+                  {
+                     validGeomCount++;
+                     continue;
+                  }
+               }
+
+               // If the valid geometry count is equel to the the number of representation items, it is a valid geometry for Ifc*StandardCase
+               if ((validGeomCount == repItems.Count) && (validGeomCount > 0))
+                  return true;
+            }
+         }
+         return false;
+      }
+
+        private static bool booleanResultLeafIsTypeOf(IFCAnyHandle booleanResultOperand, Common.Enums.IFCEntityType entityType)
+        {
+            bool firstOpLeafOfType = false;
+            bool secondOpLeafOfType = false;
+
+            // It is already a leaf and it is of the right type
+            if (IFCAnyHandleUtil.IsTypeOf(booleanResultOperand, entityType))
+                return true;
+
+            if (IFCAnyHandleUtil.IsTypeOf(booleanResultOperand, Common.Enums.IFCEntityType.IfcBooleanClippingResult))
+            {
+                IFCAnyHandle firstOperand = IFCAnyHandleUtil.GetInstanceAttribute(booleanResultOperand, "FirstOperand");
+                if (IFCAnyHandleUtil.IsTypeOf(firstOperand, Common.Enums.IFCEntityType.IfcBooleanClippingResult))
+                {
+                    firstOpLeafOfType = booleanResultLeafIsTypeOf(firstOperand, entityType);
+                }
+                else
+                {
+                    if (IFCAnyHandleUtil.IsTypeOf(firstOperand, entityType))
+                        firstOpLeafOfType = true;
+                }
+
+                IFCAnyHandle secondOperand = IFCAnyHandleUtil.GetInstanceAttribute(booleanResultOperand, "SecondOperand");
+                if (IFCAnyHandleUtil.IsTypeOf(secondOperand, Common.Enums.IFCEntityType.IfcBooleanClippingResult))
+                {
+                    secondOpLeafOfType = booleanResultLeafIsTypeOf(secondOperand, entityType);
+                }
+                else
+                {
+                    if (IFCAnyHandleUtil.IsTypeOf(secondOperand, entityType))
+                        secondOpLeafOfType = true;
+                }
+
+            }
+            return (firstOpLeafOfType || secondOpLeafOfType);
+        }
+
+      public static int dimOfRepresentationContext(IFCAnyHandle rep)
+      {
+         if (rep == null)
+            throw new ArgumentNullException("representation");
+
+         if (!rep.HasValue)
+            throw new ArgumentException("Invalid handle.");
+
+         IFCAnyHandle theRep;
+         if (IFCAnyHandleUtil.IsSubTypeOf(rep, Common.Enums.IFCEntityType.IfcRepresentationMap))
+         {
+            theRep = IFCAnyHandleUtil.GetInstanceAttribute(rep, "MappedRepresentation");
+            if (theRep == null)
+               return 0;
+         }
+         else if (IFCAnyHandleUtil.IsSubTypeOf(rep, Common.Enums.IFCEntityType.IfcRepresentation))
+         {
+            theRep = rep;
+         }
+         else
+            throw new ArgumentException("The operation is not valid for this handle.");
+
+         IFCAnyHandle context = IFCAnyHandleUtil.GetContextOfItems(theRep);
+         if (IFCAnyHandleUtil.IsTypeOf(context, Common.Enums.IFCEntityType.IfcGeometricRepresentationSubContext))
+         {
+            string targetViewEnum = IFCAnyHandleUtil.GetEnumerationAttribute(context, "TargetView");
+            if (targetViewEnum.Equals("MODEL_VIEW"))
+               return 3;
+            if (targetViewEnum.Equals("PLAN_VIEW") || targetViewEnum.Equals("SKETCH_VIEW") || targetViewEnum.Equals("REFLECTED_PLAN_VIEW")
+                  || targetViewEnum.Equals("SECTION_VIEW") || targetViewEnum.Equals("ELEVATION_VIEW"))
+               return 2;
+            if (targetViewEnum.Equals("GRAPH_VIEW"))
+               return 1;
+         }
+
+         return 0;
+      }
     }
 }

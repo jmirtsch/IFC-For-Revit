@@ -106,16 +106,8 @@ namespace Revit.IFC.Import.Data
          Process(ifcElement);
       }
 
-      /// <summary>
-      /// Processes IfcElement attributes.
-      /// </summary>
-      /// <param name="ifcElement">The IfcElement handle.</param>
-      protected override void Process(IFCAnyHandle ifcElement)
+      private void ProcessOpenings(IFCAnyHandle ifcElement)
       {
-         base.Process(ifcElement);
-
-         m_Tag = IFCAnyHandleUtil.GetStringAttribute(ifcElement, "Tag");
-
          ICollection<IFCAnyHandle> hasOpenings = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcElement, "HasOpenings");
          if (hasOpenings != null)
          {
@@ -133,6 +125,20 @@ namespace Revit.IFC.Import.Data
                }
             }
          }
+      }
+
+      /// <summary>
+      /// Processes IfcElement attributes.
+      /// </summary>
+      /// <param name="ifcElement">The IfcElement handle.</param>
+      protected override void Process(IFCAnyHandle ifcElement)
+      {
+         base.Process(ifcElement);
+
+         m_Tag = IFCAnyHandleUtil.GetStringAttribute(ifcElement, "Tag");
+
+         if (IFCImportFile.TheFile.SchemaVersion > IFCSchemaVersion.IFC2x || IFCAnyHandleUtil.IsSubTypeOf(ifcElement, IFCEntityType.IfcBuildingElement))
+            ProcessOpenings(ifcElement);
 
          // "HasPorts" is new to IFC2x2.
          // For IFC4, "HasPorts" has moved to IfcDistributionElement.  We'll keep the check here, but we will only check it

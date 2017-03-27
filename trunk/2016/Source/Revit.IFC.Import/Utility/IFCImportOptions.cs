@@ -21,13 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB.IFC;
-using Revit.IFC.Common.Enums;
-using Revit.IFC.Common.Utility;
-using Revit.IFC.Import.Enums;
-using Revit.IFC.Import.Data;
 
 namespace Revit.IFC.Import.Utility
 {
@@ -92,6 +86,10 @@ namespace Revit.IFC.Import.Utility
       private IFCProcessBBoxOptions m_ProcessBoundingBoxGeometry = IFCProcessBBoxOptions.NoOtherGeometry;
 
       private bool m_Process3DGeometry = true;
+
+      private bool m_CreateDuplicateZoneGeometry = true;
+
+      private bool m_CreateDuplicateContainerGeometry = true;
 
       private string m_RevitLinkFileName = null;
 
@@ -226,9 +224,31 @@ namespace Revit.IFC.Import.Utility
       }
 
       /// <summary>
-      /// If true, process the HasAssignments INVERSE attribute.  If false, ignore.
-      /// This is necessary because the default IFC2x3_TC1 EXPRESS schema file is (incorrectly) missing this inverse attribute.
+      /// If true, the Zone DirectShape contains the geometry of all of its contained spaces.
+      /// If false, the Zone DirectShape contains no geometry.
       /// </summary>
+      public bool CreateDuplicateZoneGeometry
+      {
+         get { return m_CreateDuplicateZoneGeometry; }
+         protected set { m_CreateDuplicateZoneGeometry = value; }
+      }
+
+      /// <summary>
+      /// If true, DirectShapes created from IFC entities that are containers contain the geometry of all of its contained entities.
+      /// If false, the DirectShape contains no geometry.
+      /// Note: IFC entities can either have their own geometry, or aggregate entities that have geometry.  The second class of objects
+      /// are called containers.
+      /// </summary>
+      public bool CreateDuplicateContainerGeometry
+      {
+         get { return m_CreateDuplicateContainerGeometry; }
+         protected set { m_CreateDuplicateContainerGeometry = value; }
+      }
+      
+      /// <summary>
+       /// If true, process the HasAssignments INVERSE attribute.  If false, ignore.
+       /// This is necessary because the default IFC2x3_TC1 EXPRESS schema file is (incorrectly) missing this inverse attribute.
+       /// </summary>
       public bool AllowUseHasAssignments
       {
          get { return m_AllowUseHasAssignments; }
@@ -351,6 +371,15 @@ namespace Revit.IFC.Import.Utility
             ProcessBoundingBoxGeometry = processBoundingBoxGeometry.Value ? IFCProcessBBoxOptions.NoOtherGeometry : IFCProcessBBoxOptions.Never;
          else
             ProcessBoundingBoxGeometry = IFCProcessBBoxOptions.NoOtherGeometry;
+
+         // The following 2 options control whether containers will get a copy of the geometry of its contained parts.  We have two options,
+         // one for Zones, and one for generic containers.  These are currently API-only options.
+         bool? createDuplicateZoneGeometry = GetNamedBooleanOption(options, "CreateDuplicateZoneGeometry");
+         if (createDuplicateZoneGeometry.HasValue)
+            CreateDuplicateZoneGeometry = createDuplicateZoneGeometry.Value;
+         bool? createDuplicateContainerGeometry = GetNamedBooleanOption(options, "CreateDuplicateContainerGeometry");
+         if (createDuplicateContainerGeometry.HasValue)
+            CreateDuplicateContainerGeometry = createDuplicateContainerGeometry.Value;
 
          bool? verboseLogging = GetNamedBooleanOption(options, "VerboseLogging");
          if (verboseLogging.HasValue)

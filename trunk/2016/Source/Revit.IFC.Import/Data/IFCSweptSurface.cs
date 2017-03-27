@@ -33,11 +33,11 @@ namespace Revit.IFC.Import.Data
 {
     public abstract class IFCSweptSurface : IFCSurface
     {
-        IFCProfile m_Profile = null;
+      IFCProfileDef m_Profile = null;
 
         Transform m_Position = null;
 
-        public IFCProfile SweptCurve
+      public IFCProfileDef SweptCurve
         {
             get { return m_Profile; }
             protected set { m_Profile = value; }
@@ -58,7 +58,7 @@ namespace Revit.IFC.Import.Data
             base.Process(ifcSurface);
 
             IFCAnyHandle sweptCurve = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcSurface, "SweptCurve", true);
-            SweptCurve = IFCProfile.ProcessIFCProfile(sweptCurve);
+         SweptCurve = IFCProfileDef.ProcessIFCProfileDef(sweptCurve);
 
          IFCAnyHandle position = IFCImportHandleUtil.GetOptionalInstanceAttribute(ifcSurface, "Position");
          if (IFCAnyHandleUtil.IsNullOrHasNoValue(position))

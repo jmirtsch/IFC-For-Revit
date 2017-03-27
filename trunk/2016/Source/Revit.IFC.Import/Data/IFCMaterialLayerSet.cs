@@ -100,9 +100,14 @@ namespace Revit.IFC.Import.Data
 
             foreach (IFCAnyHandle ifcMaterialLayer in ifcMaterialLayers)
             {
-                IFCMaterialLayer materialLayer = IFCMaterialLayer.ProcessIFCMaterialLayer(ifcMaterialLayer);
-                if (materialLayer != null)
-                    MaterialLayers.Add(materialLayer);
+               IFCMaterialLayer materialLayer = null;
+               if (materialLayer is IFCMaterialLayerWithOffsets)
+                  materialLayer = IFCMaterialLayerWithOffsets.ProcessIFCMaterialLayerWithOffsets(ifcMaterialLayer);
+               else
+                  materialLayer = IFCMaterialLayer.ProcessIFCMaterialLayer(ifcMaterialLayer);
+
+               if (materialLayer != null)
+                  MaterialLayers.Add(materialLayer);
             }
 
             LayerSetName = IFCImportHandleUtil.GetOptionalStringAttribute(ifcMaterialLayerSet, "LayerSetName", null);
