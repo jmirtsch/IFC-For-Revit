@@ -65,7 +65,7 @@ namespace Revit.IFC.Export.Exporter
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
          {
             BodyExporterOptions options = new BodyExporterOptions(false, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
-            surface = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, element, options, geometryElement);
+            surface = BodyExporter.ExportBodyAsTessellatedFaceSet(exporterIFC, element, options, geometryElement);
          }
          else
          {

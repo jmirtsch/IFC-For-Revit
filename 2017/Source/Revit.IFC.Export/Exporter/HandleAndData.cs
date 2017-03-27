@@ -24,6 +24,7 @@ using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Toolkit;
+using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter
 {
@@ -56,5 +57,15 @@ namespace Revit.IFC.Export.Exporter
         /// The handles that represent the base extrusions inside the final shape representation.
         /// </summary>
         public IList<IFCAnyHandle> BaseExtrusions = null;
+
+        /// <summary>
+        /// A handle for the Footprint representation
+        /// </summary>
+        public IFCAnyHandle FootprintRepHandle = null;
+
+         /// <summary>
+         /// A Dictionary for Material Profile
+         /// </summary>
+         public MaterialAndProfile materialAndProfile = null;
     }
 }

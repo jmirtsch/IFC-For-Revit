@@ -90,7 +90,19 @@
     <Compile Include="Exporter\PileExporter.cs" />
     <Compile Include="Exporter\PipeInsulationExporter.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamLoadBearingCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\BeamMemberSpanCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\CrossSectionAreaCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\DoorAreaCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\GrossAreaCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\GrossSurfaceAreaCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\GrossVolumeCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\GrossWeightCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\LengthCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\NetSurfaceAreaCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\NetVolumeCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\NetWeightCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\OuterSurfaceAreaCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\StructuralMemberRollCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\WindowAreaCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ColumnLoadBearingCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\CoveringFinishCalculator.cs" />
@@ -109,7 +121,6 @@
     <Compile Include="Exporter\PropertySet\Calculators\ProvisionForVoidShapeCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ProvisionForVoidWidthCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SlopeCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\BeamSpanCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ExtendToStructureCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ExternalCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\LoadBearingCalculator.cs" />
@@ -117,7 +128,6 @@
     <Compile Include="Exporter\PropertySet\Calculators\RailingHeightCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\RampFlightSlopeCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\RoofProjectedAreaCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SlabGrossAreaCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpaceConcealCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpaceTemperatureCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpecificZoneCalculator.cs" />
@@ -134,7 +144,6 @@
     <Compile Include="Exporter\PropertySet\QuantityDescription.cs" />
     <Compile Include="Exporter\PropertySet\QuantityEntry.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ReferenceCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SlabGrossVolumeCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SlabLoadBearingCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SlabPerimeterCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SlabWidthCalculator.cs" />
@@ -222,6 +231,8 @@
     <Compile Include="Utility\LevelInfoCache.cs" />
     <Compile Include="Utility\LevelUtil.cs" />
     <Compile Include="Utility\LogicalPropertyInfoCache.cs" />
+    <Compile Include="Utility\MaterialAndProfile.cs" />
+    <Compile Include="Utility\MaterialConstituentSetCache.cs" />
     <Compile Include="Utility\MEPCache.cs" />
     <Compile Include="Utility\NamingOptions.cs" />
     <Compile Include="Utility\NamingUtil.cs" />
@@ -243,6 +254,7 @@
     <Compile Include="Utility\StairRampContainerInfoCache.cs" />
     <Compile Include="Utility\StringPropertyInfoCache.cs" />
     <Compile Include="Utility\SystemsCache.cs" />
+    <Compile Include="Utility\TriangleMergeUtil.cs" />
     <Compile Include="Utility\TypePropertyInfoCache.cs" />
     <Compile Include="Utility\UnitsCache.cs" />
     <Compile Include="Utility\UnitUtil.cs" />

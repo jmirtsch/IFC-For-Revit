@@ -57,7 +57,7 @@ namespace Revit.IFC.Import.Data
                 Importer.TheLog.LogNullError(IFCEntityType.IfcBoundedCurve);
                 return null;
             }
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcBoundedCurve, IFCEntityType.IfcBSplineCurve))
+            if (IFCImportFile.TheFile.SchemaVersion > IFCSchemaVersion.IFC2x && IFCAnyHandleUtil.IsSubTypeOf(ifcBoundedCurve, IFCEntityType.IfcBSplineCurve))
                 return IFCBSplineCurve.ProcessIFCBSplineCurve(ifcBoundedCurve);
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcBoundedCurve, IFCEntityType.IfcCompositeCurve))
                 return IFCCompositeCurve.ProcessIFCCompositeCurve(ifcBoundedCurve);

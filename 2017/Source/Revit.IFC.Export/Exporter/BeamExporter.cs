@@ -92,9 +92,14 @@ namespace Revit.IFC.Export.Exporter
          public IFCAnyHandle RepresentationHandle { get; set; }
 
          /// <summary>
-         /// The set of material ids for the beam.  This should usually only contain one material id.
+         /// The set of material ids for the beam.  This should usually only contain one material id. (Probably will be deprecated, replaced with MaterialProfile)
          /// </summary>
          public ICollection<ElementId> Materials { get; set; }
+
+          /// <summary>
+          /// The material profile set for the extruded Beam
+          /// </summary>
+         public MaterialAndProfile materialAndProfile { get; set; }
 
          /// <summary>
          /// The calculated slope of the beam along its axis, relative to the XY plane.
@@ -256,9 +261,14 @@ namespace Revit.IFC.Export.Exporter
          XYZ beamDirection = orientTrf.BasisX;
          XYZ planeXVec = orientTrf.BasisY.Normalize();
          XYZ planeYVec = orientTrf.BasisZ.Normalize();
+
+         MaterialAndProfile materialAndProfile = null;
+         IFCAnyHandle footPrintHnd = null;
+
          Plane beamExtrusionBasePlane = GeometryUtil.CreatePlaneByXYVectorsAtOrigin(planeXVec, planeYVec);
          info.RepresentationHandle = ExtrusionExporter.CreateExtrusionWithClipping(exporterIFC, element,
-             catId, solid, beamExtrusionBasePlane, orientTrf.Origin, beamDirection, null, out completelyClipped);
+             catId, solid, beamExtrusionBasePlane, orientTrf.Origin, beamDirection, null, out completelyClipped,
+             out footPrintHnd, out materialAndProfile, addInfo:GenerateAdditionalInfo.GenerateProfileDef);
          if (completelyClipped)
          {
             info.DontExport = true;
@@ -276,6 +286,9 @@ namespace Revit.IFC.Export.Exporter
             if (materialId != ElementId.InvalidElementId)
                info.Materials.Add(materialId);
          }
+
+         if (materialAndProfile != null)
+             info.materialAndProfile = materialAndProfile;
 
          return info;
       }
@@ -315,6 +328,49 @@ namespace Revit.IFC.Export.Exporter
       }
 
       /// <summary>
+      /// Creates a new IfcBeamType and relates it to the current element.
+      /// </summary>
+      /// <param name="exporterIFC">The exporter.</param>
+      /// <param name="wrapper">The ProductWrapper class.</param>
+      /// <param name="elementHandle">The element handle.</param>
+      /// <param name="element">The element.</param>
+      /// <param name="overrideMaterialId">The material id used for the element type.</param>
+      public static void ExportBeamType(ExporterIFC exporterIFC, ProductWrapper wrapper, IFCAnyHandle elementHandle, Element element, string predefinedType)
+      {
+         if (elementHandle == null || element == null)
+            return;
+
+         Document doc = element.Document;
+         ElementId typeElemId = element.GetTypeId();
+         Element elementType = doc.GetElement(typeElemId);
+         if (elementType == null)
+            return;
+
+         IFCAnyHandle beamType = ExporterCacheManager.ElementToHandleCache.Find(typeElemId);
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(beamType))
+         {
+            ExporterCacheManager.TypeRelationsCache.Add(beamType, elementHandle);
+            return;
+         }
+
+         string elemGUID = GUIDUtil.CreateGUID(elementType);
+         string elemName = NamingUtil.GetNameOverride(elementType, NamingUtil.GetIFCName(elementType));
+         string elemDesc = NamingUtil.GetDescriptionOverride(elementType, null);
+         string elemTag = NamingUtil.GetTagOverride(elementType, NamingUtil.CreateIFCElementId(elementType));
+         string elemApplicableOccurence = NamingUtil.GetOverrideStringValue(elementType, "IfcApplicableOccurence", null);
+         string elemElementType = NamingUtil.GetOverrideStringValue(elementType, "IfcElementType", null);
+
+         // Property sets will be set later.
+         beamType = IFCInstanceExporter.CreateBeamType(exporterIFC.GetFile(), elemGUID, ExporterCacheManager.OwnerHistoryHandle,
+            elemName, elemDesc, elemApplicableOccurence, null, null, elemTag, elemElementType, GetBeamType(elementType, predefinedType));
+
+         wrapper.RegisterHandleWithElementType(elementType as ElementType, beamType, null);
+
+         ExporterCacheManager.TypeRelationsCache.Add(beamType, elementHandle);
+         ExporterCacheManager.ElementToHandleCache.Register(typeElemId, beamType);
+      }
+
+      /// <summary>
       /// Exports a beam to IFC beam if it has an axis representation and only one Solid as its geometry, ideally as an extrusion, potentially with clippings and openings.
       /// </summary>
       /// <param name="exporterIFC">The ExporterIFC object.</param>
@@ -340,6 +396,8 @@ namespace Revit.IFC.Export.Exporter
 
          IFCAnyHandle beam = null;
          IFCFile file = exporterIFC.GetFile();
+         MaterialAndProfile materialAndProfile = null;
+         IFCAnyHandle materialProfileSet = null;
 
          using (IFCTransaction transaction = new IFCTransaction(file))
          {
@@ -396,6 +454,8 @@ namespace Revit.IFC.Export.Exporter
                      BodyData bodyData = null;
 
                      BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
+                     bodyExporterOptions.CollectMaterialAndProfile = true;
+
                      if (geomObjects != null && geomObjects.Count == 1 && geomObjects[0] is Solid)
                      {
                         bodyData = BodyExporter.ExportBody(exporterIFC, element, catId, ElementId.InvalidElementId,
@@ -404,6 +464,7 @@ namespace Revit.IFC.Export.Exporter
                         repHnd = bodyData.RepresentationHnd;
                         materialIds = bodyData.MaterialIds;
                         offsetTransform = bodyData.OffsetTransform;
+                        materialAndProfile = bodyData.materialAndProfile;
                      }
                   }
 
@@ -412,6 +473,47 @@ namespace Revit.IFC.Export.Exporter
                      extrusionCreationData.ClearOpenings();
                      return null;
                   }
+
+                  // This code doesn't quite work yet, as it always creates a BeamType and doesn't deal with axes correctly.  Redo or remove.
+                  // Note that there is a call CreateBeamType below that does the right thing below.
+
+                  //IFCAnyHandle typeStyle = null;
+                  //FamilyInstance familyInstance = element as FamilyInstance;
+                  //if (familyInstance != null)
+                  //{
+                     //FamilySymbol originalFamilySymbol = ExporterIFCUtils.GetOriginalSymbol(familyInstance);
+                     //FamilySymbol familySymbol = familyInstance.Symbol;
+                     //if (originalFamilySymbol != null && familySymbol != null)
+                     //{
+                        //IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
+
+                        //string familyName = familySymbol.Name;
+                        //string revitObjectType = familyName;
+                        //string symId = NamingUtil.CreateIFCElementId(originalFamilySymbol);
+                        //string guid = GUIDUtil.CreateGUID(originalFamilySymbol);
+
+                        //string gentypeName = NamingUtil.GetNameOverride(familySymbol, revitObjectType);
+                        //string gentypeDescription = NamingUtil.GetDescriptionOverride(familySymbol, null);
+                        //string gentypeApplicableOccurrence = NamingUtil.GetOverrideStringValue(familySymbol, "IfcApplicableOccurrence", null);
+                        //string gentypeTag = NamingUtil.GetTagOverride(familySymbol, symId);
+                        //string gentypeElementType = NamingUtil.GetOverrideStringValue(familySymbol, "IfcElementType", revitObjectType);
+
+                        //HashSet<IFCAnyHandle> propertySets = new HashSet<IFCAnyHandle>();
+
+                        //IList<IFCAnyHandle> repMapsHnd = new List<IFCAnyHandle>();
+
+                        //string beamType = "Beam";
+                        //typeStyle = IFCInstanceExporter.CreateBeamType(file, guid, ownerHistory, gentypeName,
+                            //gentypeDescription, gentypeApplicableOccurrence, propertySets, repMapsHnd, gentypeTag,
+                            //gentypeElementType, GetBeamType(familyInstance, beamType));
+
+                        //if (materialAndProfile != null)
+                        //{
+                           //materialProfileSet = CategoryUtil.GetOrCreateMaterialSet(exporterIFC, familySymbol, typeStyle, materialAndProfile);
+                           //CategoryUtil.CreateMaterialAssociation(exporterIFC, familySymbol, typeStyle, materialAndProfile);
+                        //}
+                     //}
+                  //}
 
                   IList<IFCAnyHandle> representations = new List<IFCAnyHandle>();
 
@@ -438,7 +540,13 @@ namespace Revit.IFC.Export.Exporter
                   beam = IFCInstanceExporter.CreateBeam(file, instanceGUID, ExporterCacheManager.OwnerHistoryHandle,
                       instanceName, instanceDescription, instanceObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, instanceTag, preDefinedType);
 
+                  IFCAnyHandle mpSetUsage;
+                  if (materialProfileSet != null)
+                     mpSetUsage = IFCInstanceExporter.CreateMaterialProfileSetUsage(file, materialProfileSet, null, null);
+
                   productWrapper.AddElement(element, beam, setter, extrusionCreationData, true);
+
+                  ExportBeamType(exporterIFC, productWrapper, beam, element, preDefinedType);
 
                   OpeningUtil.CreateOpeningsIfNecessary(beam, element, extrusionCreationData, offsetTransform, exporterIFC,
                       extrusionCreationData.GetLocalPlacement(), setter, productWrapper);
@@ -451,16 +559,35 @@ namespace Revit.IFC.Export.Exporter
                   PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, beam, element, typeInfo, null);
 
                   if (materialIds.Count != 0)
-                     CategoryUtil.CreateMaterialAssociations(exporterIFC, beam, materialIds);
+                     CategoryUtil.CreateMaterialAssociation(exporterIFC, beam, materialIds);
 
                   // Register the beam's IFC handle for later use by truss and beam system export.
                   ExporterCacheManager.ElementToHandleCache.Register(element.Id, beam);
+
+                   // TODO: To create IfcBeamType, IfcMaterialProfileSet, Usage
                }
             }
 
             transaction.Commit();
             return beam;
          }
+      }
+
+      static IFCBeamType GetBeamType(Element element, string beamType)
+      {
+          string value = null;
+          if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
+              value = beamType;
+
+          if (String.IsNullOrEmpty(value))
+              return IFCBeamType.Beam;
+
+          string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
+
+          if (String.Compare(newValue, "USERDEFINED", true) == 0)
+              return IFCBeamType.UserDefined;
+
+          return IFCBeamType.Beam;
       }
    }
 }

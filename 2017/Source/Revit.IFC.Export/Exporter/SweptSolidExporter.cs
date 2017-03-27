@@ -25,6 +25,7 @@ using Revit.IFC.Common.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Export.Utility;
 
+
 namespace Revit.IFC.Export.Exporter
 {
    /// <summary>
@@ -46,6 +47,11 @@ namespace Revit.IFC.Export.Exporter
       /// Enumeration value of the representation type used by SweptSolidExporter in its final form
       /// </summary>
       ShapeRepresentationType m_RepresentationType = ShapeRepresentationType.Undefined;
+
+       /// <summary>
+       /// Footprint representation handle
+       /// </summary>
+      IFCAnyHandle m_FootprintHandle = null;
 
       /// <summary>
       /// Return the enum of Representation type being used
@@ -96,6 +102,15 @@ namespace Revit.IFC.Export.Exporter
          protected set { m_Facets = value; }
       }
 
+       /// <summary>
+       /// Additional representation for the Footprint
+       /// </summary>
+       public IFCAnyHandle FootprintHandle
+      {
+          get { return m_FootprintHandle; }
+          set { m_FootprintHandle = value; }
+      }
+
       /// <summary>
       /// Determines if we can create a swept solid from the passed in geometry.
       /// </summary>
@@ -104,11 +119,11 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="solid">The solid.</param>
       /// <param name="normal">The optional normal of the plane that the path lies on.</param>
       /// <returns>If it is possible to create a swept solid, the SimpleSweptSolidAnalyzer that contains the information, otherwise null.</returns>
-      public static SimpleSweptSolidAnalyzer CanExportAsSweptSolid(ExporterIFC exporterIFC, Solid solid, XYZ normal)
+      public static SimpleSweptSolidAnalyzer CanExportAsSweptSolid(ExporterIFC exporterIFC, Solid solid, XYZ normal, GeometryObject potentialPathGeom = null)
       {
          try
          {
-            SimpleSweptSolidAnalyzer sweptAnalyzer = SimpleSweptSolidAnalyzer.Create(solid, normal);
+            SimpleSweptSolidAnalyzer sweptAnalyzer = SimpleSweptSolidAnalyzer.Create(solid, normal, potentialPathGeom);
             if (sweptAnalyzer == null)
                return null;
 
@@ -132,7 +147,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="solid">The solid.</param>
       /// <param name="normal">The normal of the plane that the path lies on.</param>
       /// <returns>The SweptSolidExporter.</returns>
-      public static SweptSolidExporter Create(ExporterIFC exporterIFC, Element element, SimpleSweptSolidAnalyzer sweptAnalyzer, GeometryObject geomObject)
+      public static SweptSolidExporter Create(ExporterIFC exporterIFC, Element element, SimpleSweptSolidAnalyzer sweptAnalyzer, GeometryObject geomObject, GenerateAdditionalInfo addInfo=GenerateAdditionalInfo.None)
       {
          try
          {
@@ -166,6 +181,10 @@ namespace Revit.IFC.Export.Exporter
                Transform lcs = GeometryUtil.CreateTransformFromPlanarFace(sweptAnalyzer.ProfileFace);
                sweptSolidExporter.RepresentationItem = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, profileName, faceBoundaries, lcs,
                    line.Direction, UnitUtil.ScaleLength(line.Length), false);
+                if ((addInfo & GenerateAdditionalInfo.GenerateFootprint) != 0)
+                {
+                    sweptSolidExporter.FootprintHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, faceBoundaries[0], lcs, line.Direction);
+                }
             }
             else
             {
@@ -177,13 +196,18 @@ namespace Revit.IFC.Export.Exporter
                   {
                      // TODO: Create CreateSimpleSweptSolidAsTessellation routine that takes advantage of the superior tessellation of this class.
                      BodyExporterOptions options = new BodyExporterOptions(false, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
-                     sweptSolidExporter.RepresentationItem = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, element, options, geomObject);
+                     sweptSolidExporter.RepresentationItem = BodyExporter.ExportBodyAsTessellatedFaceSet(exporterIFC, element, options, geomObject);
                      sweptSolidExporter.RepresentationType = ShapeRepresentationType.Tessellation;
                   }
                   else
                   {
                      sweptSolidExporter.RepresentationItem = CreateSimpleSweptSolid(exporterIFC, profileName, faceBoundaries, sweptAnalyzer.ReferencePlaneNormal, sweptAnalyzer.PathCurve);
                      sweptSolidExporter.RepresentationType = ShapeRepresentationType.AdvancedSweptSolid;
+                     if ((addInfo & GenerateAdditionalInfo.GenerateFootprint) != 0)
+                     {
+                         Transform lcs = GeometryUtil.CreateTransformFromPlanarFace(sweptAnalyzer.ProfileFace);
+                         sweptSolidExporter.FootprintHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, faceBoundaries[0], lcs, sweptAnalyzer.ReferencePlaneNormal);
+                     }
                   }
                }
                else
@@ -346,8 +370,28 @@ namespace Revit.IFC.Export.Exporter
          {
             // This effectively resets the start parameter to 0.0, and end parameter = length of curve.
             if (isBound)
-               endParam = UnitUtil.ScaleAngle(MathUtil.PutInRange(directrix.GetEndParameter(1), Math.PI, 2 * Math.PI) -
-                   MathUtil.PutInRange(originalStartParam, Math.PI, 2 * Math.PI));
+            {
+               // Put the parameters in range of [0, 2*Pi]
+               double inRangeStarParam = (directrix.GetEndParameter(0) % (2 * Math.PI));
+               double inRangeEndParam = (directrix.GetEndParameter(1) % (2 * Math.PI));
+               // We want the angle direction is anti-clockwise (+ direction), therefore we will always start with the smaller one
+               if (inRangeEndParam < inRangeStarParam)
+               {
+                  double tmp = inRangeStarParam;
+                  inRangeStarParam = inRangeEndParam;
+                  inRangeEndParam = tmp;
+               }
+               // If start param is negative, we will reset it to 0 and shift the end accordingly
+               if (inRangeStarParam < 0)
+               {
+                  double parRange = inRangeEndParam - inRangeStarParam;
+                  inRangeStarParam = 0.0;
+                  inRangeEndParam = parRange;
+               }
+               endParam = UnitUtil.ScaleAngle(inRangeEndParam);
+               //endParam = UnitUtil.ScaleAngle(MathUtil.PutInRange(directrix.GetEndParameter(1), Math.PI, 2 * Math.PI) -
+               //   MathUtil.PutInRange(originalStartParam, Math.PI, 2 * Math.PI));
+            }
             else
                endParam = 2.0 * Math.PI;
          }

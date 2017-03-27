@@ -35,6 +35,7 @@ namespace Revit.IFC.Import.Enums
         IFC2x2,
         IFC2x3,
         IFC4,  // This will be eventually obsoleted.
-        IFC4Add1
+        IFC4Add1,
+        IFC4Add2
     }
 }

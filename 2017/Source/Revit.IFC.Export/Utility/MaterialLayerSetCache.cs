@@ -28,12 +28,12 @@ using Revit.IFC.Common.Utility;
 namespace Revit.IFC.Export.Utility
 {
     /// <summary>
-    /// Used to keep a cache of the element ids mapping to a IfcMaterialLayerSet handle.
+    /// Used to keep a cache of the element ids mapping to a IfcMaterial___Set handle (includes IfcMaterialLayerSet, IfcMaterialProfileSet, IfcMaterialConstituentSet in IFC4).
     /// </summary>
-    public class MaterialLayerSetCache
+    public class MaterialSetCache
     {
         /// <summary>
-        /// The dictionary mapping from an ElementId to an IfcMaterialLayerSet handle. 
+        /// The dictionary mapping from an ElementId to an IfcMaterial___Set handle. 
         /// </summary>
         private Dictionary<ElementId, IFCAnyHandle> m_ElementIdToMatLayerSetDictionary = new Dictionary<ElementId, IFCAnyHandle>();
 
@@ -43,13 +43,13 @@ namespace Revit.IFC.Export.Utility
         private Dictionary<ElementId, IFCAnyHandle> m_ElementIdToMaterialHndDictionary = new Dictionary<ElementId, IFCAnyHandle>();
 
         /// <summary>
-        /// Finds the IfcMaterialLayerSet handle from the dictionary.
+        /// Finds the IfcMaterial___Set handle from the dictionary.
         /// </summary>
         /// <param name="id">
         /// The element id.
         /// </param>
         /// <returns>
-        /// The IfcMaterialLayerSet handle.
+        /// The IfcMaterial___Set handle.
         /// </returns>
         public IFCAnyHandle Find(ElementId id)
         {
@@ -62,13 +62,13 @@ namespace Revit.IFC.Export.Utility
         }
 
         /// <summary>
-        /// Adds the IfcMaterialLayerSet handle to the dictionary.
+        /// Adds the IfcMaterial___Set handle to the dictionary.
         /// </summary>
         /// <param name="elementId">
         /// The element elementId.
         /// </param>
         /// <param name="handle">
-        /// The IfcMaterialLayerSet handle.
+        /// The IfcMaterial___Set handle.
         /// </param>
         public void Register(ElementId elementId, IFCAnyHandle handle)
         {

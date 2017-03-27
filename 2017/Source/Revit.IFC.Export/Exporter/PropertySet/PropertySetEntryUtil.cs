@@ -228,5 +228,35 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "是否为无障碍设施");
             return ifcPSE;
         }
-    }
+
+        public static PropertySetEntry CreateSpanEntry()
+        {
+           PropertySetEntry ifcPSE = PropertySetEntry.CreatePositiveLength("Span");
+           ifcPSE.AddLocalizedParameterName(LanguageType.German, "Spannweite");
+           ifcPSE.AddLocalizedParameterName(LanguageType.French, "PorteeLibre");
+           ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "全長");
+           ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "跨度");
+           return ifcPSE;
+        }
+
+      public static PropertySetEntry CreateSlopeEntry()
+      {
+         PropertySetEntry ifcPSE = PropertySetEntry.CreatePlaneAngle("Slope");
+         ifcPSE.AddLocalizedParameterName(LanguageType.German, "Neigungswinkel");
+         ifcPSE.AddLocalizedParameterName(LanguageType.French, "Inclinaison");
+         ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "傾斜");
+         ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "坡度");
+         return ifcPSE;
+      }
+
+      public static PropertySetEntry CreateRollEntry()
+      {
+         PropertySetEntry ifcPSE = PropertySetEntry.CreatePlaneAngle("Roll");
+         ifcPSE.AddLocalizedParameterName(LanguageType.German, "Kippwinkel");
+         ifcPSE.AddLocalizedParameterName(LanguageType.French, "RotationAutourAxeLongitudinal");
+         ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "回転");
+         ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "转角");
+         return ifcPSE;
+      }
+   }
 }

@@ -49,6 +49,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// A volume quantity.
         /// </summary>
         Volume,
+        /// <summary>
+        /// A Weight quantity
+        /// </summary>
+        Weight
     }
 
     /// <summary>
@@ -182,7 +186,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                     case QuantityType.Volume:
                         quantityHnd = IFCInstanceExporter.CreateQuantityVolume(file, PropertyName, MethodOfMeasurement, null, val);
                         break;
-                    default:
+                     case QuantityType.Weight:
+                        quantityHnd = IFCInstanceExporter.CreateQuantityWeight(file, PropertyName, MethodOfMeasurement, null, val);
+                        break;
+                     default:
                         throw new InvalidOperationException("Missing case!");
                 }
             }

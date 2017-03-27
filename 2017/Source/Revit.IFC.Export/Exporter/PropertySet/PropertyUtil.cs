@@ -2565,7 +2565,17 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             quantityHnds.Add(quantityHnd);
          }
 
-         CreateAndRelateBaseQuantities(file, exporterIFC, elemHandle, quantityHnds);
+            string quantitySetName = string.Empty;
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+            {
+                if (IFCAnyHandleUtil.IsSubTypeOf(elemHandle, Common.Enums.IFCEntityType.IfcColumn))
+                    quantitySetName = "Qto_ColumnBaseQuantities";
+                if (IFCAnyHandleUtil.IsSubTypeOf(elemHandle, Common.Enums.IFCEntityType.IfcBeam))
+                    quantitySetName = "Qto_BeamBaseQuantities";
+                if (IFCAnyHandleUtil.IsSubTypeOf(elemHandle, Common.Enums.IFCEntityType.IfcMember))
+                    quantitySetName = "Qto_MemberBaseQuantities";
+            }
+            CreateAndRelateBaseQuantities(file, exporterIFC, elemHandle, quantityHnds, quantitySetName);
       }
 
       /// <summary>
@@ -2616,7 +2626,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             IFCAnyHandle quantityHnd = IFCInstanceExporter.CreateQuantityArea(file, "Area", null, null, extraParams.ScaledArea);
             quantityHnds.Add(quantityHnd);
          }
-         CreateAndRelateBaseQuantities(file, exporterIFC, openingElement, quantityHnds);
+
+        string quantitySetName = string.Empty;
+        if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+        {
+            quantitySetName = "Qto_OpeningElementBaseQuantities";
+        }
+        CreateAndRelateBaseQuantities(file, exporterIFC, openingElement, quantityHnds, quantitySetName);
       }
 
       /// <summary>
@@ -2699,7 +2715,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             quantityHnds.Add(quantityHnd);
          }
 
-         CreateAndRelateBaseQuantities(file, exporterIFC, wallHnd, quantityHnds);
+        string quantitySetName = string.Empty;
+        if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+        {
+            quantitySetName = "Qto_WallBaseQuantities";
+        }
+
+        CreateAndRelateBaseQuantities(file, exporterIFC, wallHnd, quantityHnds, quantitySetName);
       }
 
       /// <summary>
@@ -2709,12 +2731,14 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <param name="exporterIFC">The exporter.</param>
       /// <param name="elemHnd">The element handle.</param>
       /// <param name="quantityHnds">The quantity handles.</param>
-      static void CreateAndRelateBaseQuantities(IFCFile file, ExporterIFC exporterIFC, IFCAnyHandle elemHnd, HashSet<IFCAnyHandle> quantityHnds)
+      static void CreateAndRelateBaseQuantities(IFCFile file, ExporterIFC exporterIFC, IFCAnyHandle elemHnd, HashSet<IFCAnyHandle> quantityHnds, string quantitySetName=null)
       {
          if (quantityHnds.Count > 0)
          {
+            if (string.IsNullOrEmpty(quantitySetName))
+                quantitySetName = "BaseQuantities";
             IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
-            IFCAnyHandle quantity = IFCInstanceExporter.CreateElementQuantity(file, GUIDUtil.CreateGUID(), ownerHistory, "BaseQuantities", null, null, quantityHnds);
+            IFCAnyHandle quantity = IFCInstanceExporter.CreateElementQuantity(file, GUIDUtil.CreateGUID(), ownerHistory, quantitySetName, null, null, quantityHnds);
             HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
             relatedObjects.Add(elemHnd);
             ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, quantity);

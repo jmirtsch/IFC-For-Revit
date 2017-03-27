@@ -2484,6 +2484,8 @@ namespace Revit.IFC.Export.Utility
             foreach (XYZ point in points)
             {
                UV projectPoint = GeometryUtil.ProjectPointToXYPlaneOfLCS(lcs, projectDir, point);
+               if (projectPoint == null)
+                  return false;
                currPts.Add(UnitUtil.ScaleLength(projectPoint));
             }
 

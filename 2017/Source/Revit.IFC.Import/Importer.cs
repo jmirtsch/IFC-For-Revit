@@ -88,7 +88,7 @@ namespace Revit.IFC.Import
    /// <summary>
    /// This class implements the method of interface IIFCImporterServer to perform an import from IFC. 
    /// </summary>
-   class Importer : IIFCImporterServer
+   public class Importer : IIFCImporterServer
    {
       #region IIFCImporterServer Members
 
@@ -155,6 +155,7 @@ namespace Revit.IFC.Import
       static public IFCImportCache TheCache
       {
          get { return m_TheImporter.m_ImportCache; }
+         protected set { m_TheImporter.m_ImportCache = value; }
       }
 
       /// <summary>
@@ -163,6 +164,7 @@ namespace Revit.IFC.Import
       static public IFCImportLog TheLog
       {
          get { return m_TheImporter.m_ImportLog; }
+         protected set { m_TheImporter.m_ImportLog = value; }
       }
 
       static IFCImportOptions m_TheOptions = null;
@@ -176,7 +178,27 @@ namespace Revit.IFC.Import
          protected set { m_TheOptions = value; }
       }
 
-      private Document LoadLinkDoument(Document originalDocument, string linkedFileName)
+      /// <summary>
+      /// Allow for the creation of an Importer class for external API use.
+      /// </summary>
+      /// <param name="originalDocument">The document to import into.</param>
+      /// <param name="ifcFileName">The name of the IFC file.</param>
+      /// <param name="importOptions">The import options associated with this Importer.</param>
+      /// <returns>The Importer class.</returns>
+      public static Importer CreateImporter(Document originalDocument, string ifcFileName, IDictionary<string, string> importOptions)
+      {
+         if (originalDocument == null || ifcFileName == null || importOptions == null)
+            return null;
+
+         Importer importer = new Importer();
+         TheImporter = importer;
+         TheCache = IFCImportCache.Create(originalDocument, ifcFileName);
+         TheLog = IFCImportLog.CreateLog(ifcFileName, "log.html");
+         TheOptions = importer.m_ImportOptions = IFCImportOptions.Create(importOptions);
+         return importer;
+      }
+
+      private Document LoadLinkDocument(Document originalDocument, string linkedFileName)
       {
          if (!File.Exists(linkedFileName))
             return null;
@@ -264,7 +286,7 @@ namespace Revit.IFC.Import
          try
          {
             // Check to see if the Revit file already exists; if so, we will re-use it.
-            ifcDocument = LoadLinkDoument(originalDocument, linkedFileName);
+            ifcDocument = LoadLinkDocument(originalDocument, linkedFileName);
 
             // If it doesn't exist, create a new document.
             if (ifcDocument == null)
