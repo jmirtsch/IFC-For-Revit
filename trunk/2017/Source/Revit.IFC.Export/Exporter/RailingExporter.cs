@@ -357,7 +357,7 @@ namespace Revit.IFC.Export.Exporter
                         OpeningUtil.CreateOpeningsIfNecessary(railing, element, ecData, bodyData.OffsetTransform,
                             exporterIFC, ecData.GetLocalPlacement(), setter, productWrapper);
 
-                        CategoryUtil.CreateMaterialAssociations(exporterIFC, railing, bodyData.MaterialIds);
+                        CategoryUtil.CreateMaterialAssociation(exporterIFC, railing, bodyData.MaterialIds);
 
                         // Create multi-story duplicates of this railing.
                         if (stairRampInfo != null)
@@ -373,7 +373,7 @@ namespace Revit.IFC.Export.Exporter
                                     IFCAnyHandle railingHndCopy = CopyRailingHandle(exporterIFC, element, catId, railingLocalPlacement, railing);
                                     stairRampInfo.AddComponent(ii, railingHndCopy);
                                     productWrapper.AddElement(element, railingHndCopy, (IFCLevelInfo)null, ecData, false);
-                                    CategoryUtil.CreateMaterialAssociations(exporterIFC, railingHndCopy, bodyData.MaterialIds);
+                                    CategoryUtil.CreateMaterialAssociation(exporterIFC, railingHndCopy, bodyData.MaterialIds);
                                 }
                             }
 

@@ -92,6 +92,16 @@ namespace Revit.IFC.Export.Exporter
         private HashSet<ElementId> m_MaterialIds = new HashSet<ElementId>();
 
         /// <summary>
+        /// A handle for the Footprint representation
+        /// </summary>
+        private IFCAnyHandle m_FootprintOrProfileRepHandle = null;
+
+        /// <summary>
+        /// A Dictionary for Material Profile
+        /// </summary>
+        private MaterialAndProfile m_MaterialAndProfile = null;
+
+        /// <summary>
         /// Constructs a default BodyData object.
         /// </summary>
         public BodyData() { }
@@ -181,5 +191,27 @@ namespace Revit.IFC.Export.Exporter
         {
             MaterialIds.Add(matId);
         }
+
+        /// <summary>
+        /// Footprint Handle
+        /// </summary>
+        public IFCAnyHandle FootprintOrProfileHandle
+        {
+            get { return m_FootprintOrProfileRepHandle; }
+            set { m_FootprintOrProfileRepHandle = value; }
+        }
+
+         public MaterialAndProfile materialAndProfile
+         {
+            get
+            {
+               if (m_MaterialAndProfile == null)
+               {
+                  m_MaterialAndProfile = new MaterialAndProfile();
+               }
+               return m_MaterialAndProfile;
+            }
+            set { m_MaterialAndProfile = value; }
+         }
     }
 }

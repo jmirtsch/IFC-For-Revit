@@ -467,7 +467,7 @@ namespace Revit.IFC.Export.Exporter
                      geomList.Add(mesh);
                foreach (GeometryObject geom in geomList)
                {
-                  IFCAnyHandle triangulatedBodyItem = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, wallElement, options, geom);
+                  IFCAnyHandle triangulatedBodyItem = BodyExporter.ExportBodyAsTessellatedFaceSet(exporterIFC, wallElement, options, geom);
                   if (!IFCAnyHandleUtil.IsNullOrHasNoValue(triangulatedBodyItem))
                      bodyItems.Add(triangulatedBodyItem);
                }
@@ -497,7 +497,7 @@ namespace Revit.IFC.Export.Exporter
                      geomList.Add(mesh);
                foreach (GeometryObject geom in geomList)
                {
-                  IFCAnyHandle triangulatedBodyItem = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, wallElement, options, geom);
+                  IFCAnyHandle triangulatedBodyItem = BodyExporter.ExportBodyAsTessellatedFaceSet(exporterIFC, wallElement, options, geom);
                   if (!IFCAnyHandleUtil.IsNullOrHasNoValue(triangulatedBodyItem))
                      bodyItems.Add(triangulatedBodyItem);
                }
@@ -986,7 +986,7 @@ namespace Revit.IFC.Export.Exporter
                            if (exportAsWall)
                            {
                               wallHnd = IFCInstanceExporter.CreateWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                                      localPlacement, null, elemTag, ifcType);
+                                      localPlacement, prodRep, elemTag, ifcType);
                            }
                            else
                            {
@@ -1369,7 +1369,7 @@ namespace Revit.IFC.Export.Exporter
          else
          {
             // try to get material set from the cache
-            IFCAnyHandle materialLayerSet = ExporterCacheManager.MaterialLayerSetCache.Find(typeElemId);
+            IFCAnyHandle materialLayerSet = ExporterCacheManager.MaterialSetCache.Find(typeElemId);
             if (materialLayerSet != null)
                ExporterCacheManager.MaterialLayerRelationsCache.Add(materialLayerSet, wallType);
          }

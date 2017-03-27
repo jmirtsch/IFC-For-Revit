@@ -593,7 +593,7 @@ namespace Revit.IFC.Export.Exporter
                   components.Add(containedStairHnd);
                   componentExtrusionData.Add(ecData);
                   //productWrapper.AddElement(containedStairHnd, placementSetter.LevelInfo, ecData, false);
-                  CategoryUtil.CreateMaterialAssociations(exporterIFC, containedStairHnd, bodyData.MaterialIds);
+                  CategoryUtil.CreateMaterialAssociation(exporterIFC, containedStairHnd, bodyData.MaterialIds);
 
                   string guid = GUIDUtil.CreateGUID(stair);
                   IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
@@ -750,7 +750,7 @@ namespace Revit.IFC.Export.Exporter
                      componentHandles.Add(stairFlightHnd);
                      componentExtrusionData.Add(ecData);
 
-                     CategoryUtil.CreateMaterialAssociations(exporterIFC, stairFlightHnd, bodyData.MaterialIds);
+                     CategoryUtil.CreateMaterialAssociation(exporterIFC, stairFlightHnd, bodyData.MaterialIds);
 
                      productWrapper.AddElement(run, stairFlightHnd, placementSetter.LevelInfo, ecData, false);
 
@@ -849,7 +849,7 @@ namespace Revit.IFC.Export.Exporter
                      componentHandles.Add(landingHnd);
                      componentExtrusionData.Add(ecData);
 
-                     CategoryUtil.CreateMaterialAssociations(exporterIFC, landingHnd, bodyData.MaterialIds);
+                     CategoryUtil.CreateMaterialAssociation(exporterIFC, landingHnd, bodyData.MaterialIds);
 
                      productWrapper.AddElement(landing, landingHnd, placementSetter.LevelInfo, ecData, false);
                      ExporterCacheManager.HandleToElementCache.Register(landingHnd, landing.Id);
@@ -897,7 +897,7 @@ namespace Revit.IFC.Export.Exporter
                      componentHandles.Add(supportHnd);
                      componentExtrusionData.Add(ecData);
 
-                     CategoryUtil.CreateMaterialAssociations(exporterIFC, supportHnd, bodyData.MaterialIds);
+                     CategoryUtil.CreateMaterialAssociation(exporterIFC, supportHnd, bodyData.MaterialIds);
 
                      productWrapper.AddElement(support, supportHnd, placementSetter.LevelInfo, ecData, false);
 
@@ -1047,7 +1047,7 @@ namespace Revit.IFC.Export.Exporter
                         flightHnds.Add(flightHnd);
                         productWrapper.AddElement(null, flightHnd, placementSetter.LevelInfo, null, false);
                      }
-                     CategoryUtil.CreateMaterialAssociations(exporterIFC, flightHnd, bodyData.MaterialIds);
+                     CategoryUtil.CreateMaterialAssociation(exporterIFC, flightHnd, bodyData.MaterialIds);
 
                      components[0].Add(flightHnd);
                      for (int compIdx = 1; compIdx < numFlights; compIdx++)
@@ -1072,7 +1072,7 @@ namespace Revit.IFC.Export.Exporter
                         }
 
                         productWrapper.AddElement(null, flightHnd, placementSetter.LevelInfo, null, false);
-                        CategoryUtil.CreateMaterialAssociations(exporterIFC, flightHnd, bodyData.MaterialIds);
+                        CategoryUtil.CreateMaterialAssociation(exporterIFC, flightHnd, bodyData.MaterialIds);
                         flightHnds.Add(flightHnd);
                      }
                   }
@@ -1115,7 +1115,7 @@ namespace Revit.IFC.Export.Exporter
                         IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(file, GUIDUtil.CreateGUID(), ExporterCacheManager.OwnerHistoryHandle,
                             stairName, stairDescription, stairObjectType, landingLocalPlacement, shapeHnd, stairElementTag, "LANDING");
                         productWrapper.AddElement(null, slabHnd, placementSetter.LevelInfo, ecData, false);
-                        CategoryUtil.CreateMaterialAssociations(exporterIFC, slabHnd, bodyData.MaterialIds);
+                        CategoryUtil.CreateMaterialAssociation(exporterIFC, slabHnd, bodyData.MaterialIds);
 
                         components[0].Add(slabHnd);
                         for (int compIdx = 1; compIdx < numFlights; compIdx++)
@@ -1125,7 +1125,7 @@ namespace Revit.IFC.Export.Exporter
 
                            IFCAnyHandle newSlabHnd = IFCInstanceExporter.CreateSlab(file, GUIDUtil.CreateGUID(), ExporterCacheManager.OwnerHistoryHandle,
                                stairName, stairDescription, stairObjectType, newLocalPlacement, newProdRep, stairElementTag, "LANDING");
-                           CategoryUtil.CreateMaterialAssociations(exporterIFC, slabHnd, bodyData.MaterialIds);
+                           CategoryUtil.CreateMaterialAssociation(exporterIFC, slabHnd, bodyData.MaterialIds);
                            components[compIdx].Add(newSlabHnd);
                            productWrapper.AddElement(null, newSlabHnd, placementSetter.LevelInfo, ecData, false);
                         }
@@ -1166,7 +1166,7 @@ namespace Revit.IFC.Export.Exporter
 
                         productWrapper.AddElement(null, memberHnd, placementSetter.LevelInfo, ecData, false);
                         PropertyUtil.CreateBeamColumnMemberBaseQuantities(exporterIFC, memberHnd, null, ecData);
-                        CategoryUtil.CreateMaterialAssociations(exporterIFC, memberHnd, bodyData.MaterialIds);
+                        CategoryUtil.CreateMaterialAssociation(exporterIFC, memberHnd, bodyData.MaterialIds);
 
                         components[0].Add(memberHnd);
                         for (int compIdx = 1; compIdx < numFlights; compIdx++)
@@ -1176,7 +1176,7 @@ namespace Revit.IFC.Export.Exporter
 
                            IFCAnyHandle newMemberHnd = IFCInstanceExporter.CreateMember(file, GUIDUtil.CreateGUID(), ExporterCacheManager.OwnerHistoryHandle,
                                stairName, stairDescription, stairObjectType, newLocalPlacement, newProdRep, stairElementTag, "STRINGER");
-                           CategoryUtil.CreateMaterialAssociations(exporterIFC, memberHnd, bodyData.MaterialIds);
+                           CategoryUtil.CreateMaterialAssociation(exporterIFC, memberHnd, bodyData.MaterialIds);
                            components[compIdx].Add(newMemberHnd);
                            productWrapper.AddElement(null, newMemberHnd, placementSetter.LevelInfo, ecData, false);
                         }

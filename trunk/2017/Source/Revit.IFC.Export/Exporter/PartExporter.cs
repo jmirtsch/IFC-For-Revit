@@ -389,7 +389,7 @@ namespace Revit.IFC.Export.Exporter
                   //Add the exported part to exported cache.
                   TraceExportedParts(partElement, partExportLevel, standaloneExport || asBuildingElement ? ElementId.InvalidElementId : hostElement.Id);
 
-                  CategoryUtil.CreateMaterialAssociations(exporterIFC, ifcPart, bodyData.MaterialIds);
+                  CategoryUtil.CreateMaterialAssociation(exporterIFC, ifcPart, bodyData.MaterialIds);
 
                   transaction.Commit();
                }

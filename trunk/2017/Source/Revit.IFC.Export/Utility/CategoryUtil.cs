@@ -27,6 +27,7 @@ using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Common.Utility;
 using Revit.IFC.Export.Exporter.PropertySet;
 using Revit.IFC.Export.Toolkit;
+using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Export.Utility
 {
@@ -249,6 +250,35 @@ namespace Revit.IFC.Export.Utility
       }
 
       /// <summary>
+      /// Create material association with inputs of 2 IFCAnyHandle. It is used for example to create material relation between an instance and its material set usage
+      /// </summary>
+      /// <param name="exporterIFC">the exporter IFC</param>
+      /// <param name="instanceHnd">the instance handle</param>
+      /// <param name="materialSetHnd">the material usage handle, e.g. material set usage</param>
+      public static void CreateMaterialAssociation(ExporterIFC exporterIFC, IFCAnyHandle instanceHnd, IFCAnyHandle materialSetHnd)
+      {
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(materialSetHnd) && !IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHnd))
+         {
+            ExporterCacheManager.MaterialRelationsCache.Add(materialSetHnd, instanceHnd);
+         }
+      }
+
+      /// <summary>
+      /// Create or add into exsiting relation for a material set from a family symbol.
+      /// </summary>
+      /// <param name="exporterIFC">the exporter IFC</param>
+      /// <param name="familySymbol">the element family symbol</param>
+      /// <param name="typeStyle">the IFC type object created for the above family symbol</param>
+      /// <param name="materialAndProfile">a dictionary that keeps the association of the material elementid and the associated profile def</param>
+      public static void CreateMaterialAssociation(ExporterIFC exporterIFC, FamilySymbol familySymbol, IFCAnyHandle typeStyle, MaterialAndProfile materialAndProfile)
+      {
+         ElementId typeId = familySymbol.Id;
+         IFCAnyHandle materialSet = GetOrCreateMaterialSet(exporterIFC, familySymbol, typeStyle, materialAndProfile);
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(materialSet))
+            ExporterCacheManager.MaterialRelationsCache.Add(materialSet, typeStyle);
+      }
+
+      /// <summary>
       /// Creates an association between a material handle and an instance handle.
       /// </summary>
       /// <param name="exporterIFC">The ExporterIFC object.</param>
@@ -272,10 +302,13 @@ namespace Revit.IFC.Export.Utility
       /// <param name="exporterIFC">The ExporterIFC object.</param>
       /// <param name="instanceHandle">The IFC instance handle.</param>
       /// <param name="materialId">The list of material ids.</param>
-      public static void CreateMaterialAssociations(ExporterIFC exporterIFC, IFCAnyHandle instanceHandle, ICollection<ElementId> materialList)
+      public static void CreateMaterialAssociation(ExporterIFC exporterIFC, IFCAnyHandle instanceHandle, ICollection<ElementId> materialList)
       {
+         Document document = ExporterCacheManager.Document;
+
          // Create material association if any.
          IList<IFCAnyHandle> materials = new List<IFCAnyHandle>();
+         HashSet<IFCAnyHandle> constituentSet = new HashSet<IFCAnyHandle>();
          foreach (ElementId materialId in materialList)
          {
             if (materialId != ElementId.InvalidElementId)
@@ -283,6 +316,14 @@ namespace Revit.IFC.Export.Utility
                IFCAnyHandle matHnd = GetOrCreateMaterialHandle(exporterIFC, materialId);
                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(matHnd))
                   materials.Add(matHnd);
+
+               // in IFC4 we will create IfcConstituentSet instead of MaterialList, create the associated IfcConstituent here from IfcMaterial
+               if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+               {
+                  IFCAnyHandle constituentHnd = GetOrCreateMaterialConstituent(exporterIFC, materialId);
+                  if (!IFCAnyHandleUtil.IsNullOrHasNoValue(constituentHnd))
+                     constituentSet.Add(constituentHnd);
+               }
             }
          }
 
@@ -292,11 +333,27 @@ namespace Revit.IFC.Export.Utility
          if (materials.Count == 1)
          {
             ExporterCacheManager.MaterialRelationsCache.Add(materials[0], instanceHandle);
+            // Delete IfcMaterialConstituent that has been created if it turns out that there is only one material that can be defined
+            if (constituentSet.Count > 0)
+            {
+               foreach (IFCAnyHandle matC in constituentSet)
+               {
+                  matC.Delete();
+               }
+            }
             return;
          }
 
-         IFCAnyHandle materialListHnd = IFCInstanceExporter.CreateMaterialList(exporterIFC.GetFile(), materials);
-         ExporterCacheManager.MaterialRelationsCache.Add(materialListHnd, instanceHandle);
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         {
+            IFCAnyHandle materialConsituentSetHnd = GetOrCreateMaterialConstituentSet(exporterIFC, constituentSet);
+            ExporterCacheManager.MaterialRelationsCache.Add(materialConsituentSetHnd, instanceHandle);
+         }
+         else
+         {
+            IFCAnyHandle materialListHnd = IFCInstanceExporter.CreateMaterialList(exporterIFC.GetFile(), materials);
+            ExporterCacheManager.MaterialRelationsCache.Add(materialListHnd, instanceHandle);
+         }
       }
 
       public static IFCAnyHandle GetOrCreateMaterialStyle(Document document, ExporterIFC exporterIFC, ElementId materialId)
@@ -308,7 +365,7 @@ namespace Revit.IFC.Export.Utility
             if (material == null)
                return null;
 
-            string matName = material.Name;
+            string matName = NamingUtil.GetNameOverride(material, material.Name);
 
             Color color = GetSafeColor(material.Color);
             double blueVal = color.Blue / 255.0;
@@ -340,6 +397,38 @@ namespace Revit.IFC.Export.Utility
       }
 
       /// <summary>
+      /// Get or Create (if not yet exists) a handle for IfcMaterialConstituent. It points to an IfcMaterial
+      /// </summary>
+      /// <param name="exporterIFC"></param>
+      /// <param name="materialId"></param>
+      /// <returns>the Handle to IfcMaterialConstituent</returns>
+      public static IFCAnyHandle GetOrCreateMaterialConstituent(ExporterIFC exporterIFC, ElementId materialId)
+      {
+         Document document = ExporterCacheManager.Document;
+         //IFCAnyHandle materialConstituentHnd = ExporterCacheManager.MaterialConstituentCache.Find(materialId);
+         //if (IFCAnyHandleUtil.IsNullOrHasNoValue(materialConstituentHnd))
+         //{
+         IFCAnyHandle materialHnd = GetOrCreateMaterialHandle(exporterIFC, materialId);
+
+         string constituentName = "<Unnamed>";
+         string category = string.Empty;
+         if (materialId != ElementId.InvalidElementId)
+         {
+            Material material = document.GetElement(materialId) as Material;
+            if (material != null)
+            {
+               constituentName = material.Name;
+               category = material.Category.Name;
+            }
+         }
+
+         IFCAnyHandle materialConstituentHnd = IFCInstanceExporter.CreateMaterialConstituent(exporterIFC.GetFile(), materialHnd, name: constituentName, category: category);
+         //ExporterCacheManager.MaterialConstituentCache.Register(materialId, materialConstituentHnd);
+         //}
+         return materialConstituentHnd;
+      }
+
+      /// <summary>
       /// Gets material handle from material id or creates one if there is none.
       /// </summary>
       /// <param name="exporterIFC">The ExporterIFC object.</param>
@@ -356,10 +445,9 @@ namespace Revit.IFC.Export.Utility
             {
                Material material = document.GetElement(materialId) as Material;
                if (material != null)
-               {
-                  materialName = material.Name;
-               }
+                  materialName = NamingUtil.GetNameOverride(material, material.Name);
             }
+
             materialNameHandle = IFCInstanceExporter.CreateMaterial(exporterIFC.GetFile(), materialName);
 
             ExporterCacheManager.MaterialHandleCache.Register(materialId, materialNameHandle);
@@ -424,6 +512,43 @@ namespace Revit.IFC.Export.Utility
             }
          }
          return materialNameHandle;
+      }
+
+      public static IFCAnyHandle GetOrCreateMaterialSet(ExporterIFC exporterIFC, FamilySymbol familySymbol, IFCAnyHandle typeStyle, MaterialAndProfile materialAndProfile)
+      {
+         IFCFile file = exporterIFC.GetFile();
+         ElementId typeId = familySymbol.Id;
+         IFCAnyHandle materialSet = ExporterCacheManager.MaterialSetCache.Find(typeId);
+         if (materialSet == null && materialAndProfile != null)
+         {
+            IList<IFCAnyHandle> matProf = new List<IFCAnyHandle>();
+            foreach (KeyValuePair<ElementId, IFCAnyHandle> MnP in materialAndProfile.GetKeyValuePairs())
+            {
+               IFCAnyHandle materialHnd = CategoryUtil.GetOrCreateMaterialHandle(exporterIFC, MnP.Key);
+               if (materialHnd != null && ExporterCacheManager.ExportOptionsCache.ExportAs4)
+                  matProf.Add(IFCInstanceExporter.CreateMaterialProfile(file, MnP.Value, Material: materialHnd));
+            }
+
+            if (matProf.Count > 0)
+            {
+               materialSet = IFCInstanceExporter.CreateMaterialProfileSet(file, matProf, name: familySymbol.Name);
+               ExporterCacheManager.MaterialSetCache.Register(typeId, materialSet);
+            }
+         }
+
+         return materialSet;
+      }
+
+      public static IFCAnyHandle GetOrCreateMaterialConstituentSet(ExporterIFC exporterIFC, HashSet<IFCAnyHandle> constituentSet)
+      {
+         IFCAnyHandle constituentSetHnd = ExporterCacheManager.MaterialConstituentSetCache.Find(constituentSet);
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(constituentSetHnd))
+         {
+            constituentSetHnd = IFCInstanceExporter.CreateMaterialConstituentSet(exporterIFC.GetFile(), constituentSet, name: "MaterialConstituentSet");
+            ExporterCacheManager.MaterialConstituentSetCache.Register(constituentSet, constituentSetHnd);
+         }
+
+         return constituentSetHnd;
       }
    }
 }

@@ -6,7 +6,7 @@ using System.Text;
 namespace Revit.IFC.Common.Enums
 {
     /// <summary>
-    /// IFC entity types. Combining IFC2x3 and IFC4 entities. 
+    /// IFC entity types. Combining IFC2x3 and IFC4 (Add2) entities. 
     /// List of Entities for IFC2x is found in IFC2xEntityType.cs
     /// List of Entities for IFC4 is found in IFC4EntityType.cs
     /// </summary>
@@ -104,6 +104,7 @@ namespace Revit.IFC.Common.Enums
         IfcCalendarDate,
         IfcCartesianPoint,
         IfcCartesianPointList,
+        IfcCartesianPointList2D,
         IfcCartesianPointList3D,
         IfcCartesianTransformationOperator,
         IfcCartesianTransformationOperator2D,
@@ -389,10 +390,14 @@ namespace Revit.IFC.Common.Enums
         IfcHygroscopicMaterialProperties,
         IfcImageTexture,
         IfcIndexedColourMap,
+        IfcIndexedPolyCurve,
+        IfcIndexedPolygonalFace,
+        IfcIndexedPolygonalFaceWithVoids,
         IfcIndexedTextureMap,
         IfcIndexedTriangleTextureMap,
         IfcInterceptor,
         IfcInterceptorType,
+        IfcIntersectionCurve,
         IfcInventory,
         IfcIrregularTimeSeries,
         IfcIrregularTimeSeriesValue,
@@ -511,6 +516,7 @@ namespace Revit.IFC.Common.Enums
         IfcPointOnCurve,
         IfcPointOnSurface,
         IfcPolygonalBoundedHalfSpace,
+        IfcPolygonalFaceSet,
         IfcPolyline,
         IfcPolyLoop,
         IfcPort,
@@ -685,6 +691,7 @@ namespace Revit.IFC.Common.Enums
         IfcSanitaryTerminalType,
         IfcScheduleTimeControl,
         IfcSchedulingTime,
+        IfcSeamCurve,
         IfcSectionedSpine,
         IfcSectionProperties,
         IfcSectionReinforcementProperties,
@@ -725,6 +732,7 @@ namespace Revit.IFC.Common.Enums
         IfcSpatialZone,
         IfcSpatialZoneType,
         IfcSphere,
+        IfcSphericalSurface,
         IfcStackTerminal,
         IfcStackTerminalType,
         IfcStair,
@@ -780,6 +788,7 @@ namespace Revit.IFC.Common.Enums
         IfcSubContractResourceType,
         IfcSubedge,
         IfcSurface,
+        IfcSurfaceCurve,
         IfcSurfaceCurveSweptAreaSolid,
         IfcSurfaceFeature,
         IfcSurfaceOfLinearExtrusion,
@@ -839,6 +848,7 @@ namespace Revit.IFC.Common.Enums
         IfcTimeSeriesValue,
         IfcTopologicalRepresentationItem,
         IfcTopologyRepresentation,
+        IfcToroidalSurface,
         IfcTransformer,
         IfcTransformerType,
         IfcTransportElement,

@@ -139,6 +139,7 @@ namespace Revit.IFC.Import.Utility
                m_SubCategoryNameToMaterialData["IfcDistributionPort.Source"] = new KeyValuePair<Color, int>(new Color(0, 0, 255), 127);
                m_SubCategoryNameToMaterialData["IfcDistributionPort.Sink"] = new KeyValuePair<Color, int>(new Color(255, 0, 0), 127);
                m_SubCategoryNameToMaterialData["IfcOpeningElement"] = new KeyValuePair<Color, int>(new Color(255, 165, 0), 64);
+               m_SubCategoryNameToMaterialData["IfcOpeningStandardCase"] = new KeyValuePair<Color, int>(new Color(255, 165, 0), 64);
                m_SubCategoryNameToMaterialData["IfcSpace"] = new KeyValuePair<Color, int>(new Color(164, 232, 232), 64); // Default is "Internal".
                m_SubCategoryNameToMaterialData["IfcSpace.Internal"] = new KeyValuePair<Color, int>(new Color(164, 232, 232), 64); // Similar to "Light Sky Blue"
                m_SubCategoryNameToMaterialData["IfcSpace.External"] = new KeyValuePair<Color, int>(new Color(141, 184, 78), 64); // A nice shade of green.
@@ -257,6 +258,7 @@ namespace Revit.IFC.Import.Utility
          m_EntityTypeToCategory[IFCEntityType.IfcAirTerminalType] = BuiltInCategory.OST_DuctTerminal;
          m_EntityTypeToCategory[IFCEntityType.IfcAnnotation] = BuiltInCategory.OST_GenericAnnotation;
          m_EntityTypeToCategory[IFCEntityType.IfcBeam] = BuiltInCategory.OST_StructuralFraming;
+         m_EntityTypeToCategory[IFCEntityType.IfcBeamStandardCase] = BuiltInCategory.OST_StructuralFraming;
          m_EntityTypeToCategory[IFCEntityType.IfcBeamType] = BuiltInCategory.OST_StructuralFraming;
          m_EntityTypeToCategory[IFCEntityType.IfcBoiler] = BuiltInCategory.OST_MechanicalEquipment;
          m_EntityTypeToCategory[IFCEntityType.IfcBoilerType] = BuiltInCategory.OST_MechanicalEquipment;
@@ -269,6 +271,7 @@ namespace Revit.IFC.Import.Utility
          m_EntityTypeToCategory[IFCEntityType.IfcCableCarrierSegment] = BuiltInCategory.OST_CableTray;
          m_EntityTypeToCategory[IFCEntityType.IfcCableCarrierSegmentType] = BuiltInCategory.OST_CableTray;
          m_EntityTypeToCategory[IFCEntityType.IfcColumn] = BuiltInCategory.OST_Columns;
+         m_EntityTypeToCategory[IFCEntityType.IfcColumnStandardCase] = BuiltInCategory.OST_Columns;
          m_EntityTypeToCategory[IFCEntityType.IfcController] = BuiltInCategory.OST_SpecialityEquipment;
          m_EntityTypeToCategory[IFCEntityType.IfcControllerType] = BuiltInCategory.OST_SpecialityEquipment;
          m_EntityTypeToCategory[IFCEntityType.IfcCovering] = BuiltInCategory.OST_GenericModel;
@@ -280,6 +283,7 @@ namespace Revit.IFC.Import.Utility
          m_EntityTypeToCategory[IFCEntityType.IfcDistributionFlowElement] = BuiltInCategory.OST_MechanicalEquipment;
          m_EntityTypeToCategory[IFCEntityType.IfcDistributionPort] = BuiltInCategory.OST_GenericModel;
          m_EntityTypeToCategory[IFCEntityType.IfcDoor] = BuiltInCategory.OST_Doors;
+         m_EntityTypeToCategory[IFCEntityType.IfcDoorStandardCase] = BuiltInCategory.OST_Doors;
          m_EntityTypeToCategory[IFCEntityType.IfcDoorStyle] = BuiltInCategory.OST_Doors;
          m_EntityTypeToCategory[IFCEntityType.IfcDoorType] = BuiltInCategory.OST_Doors;
          m_EntityTypeToCategory[IFCEntityType.IfcDuctFitting] = BuiltInCategory.OST_DuctFitting;
@@ -313,8 +317,10 @@ namespace Revit.IFC.Import.Utility
          m_EntityTypeToCategory[IFCEntityType.IfcMechanicalFastener] = BuiltInCategory.OST_SpecialityEquipment;
          m_EntityTypeToCategory[IFCEntityType.IfcMechanicalFastenerType] = BuiltInCategory.OST_SpecialityEquipment;
          m_EntityTypeToCategory[IFCEntityType.IfcMember] = BuiltInCategory.OST_StructuralFraming;
+         m_EntityTypeToCategory[IFCEntityType.IfcMemberStandardCase] = BuiltInCategory.OST_StructuralFraming;
          m_EntityTypeToCategory[IFCEntityType.IfcMemberType] = BuiltInCategory.OST_StructuralFraming;
          m_EntityTypeToCategory[IFCEntityType.IfcOpeningElement] = BuiltInCategory.OST_GenericModel;
+         m_EntityTypeToCategory[IFCEntityType.IfcOpeningStandardCase] = BuiltInCategory.OST_GenericModel;
          m_EntityTypeToCategory[IFCEntityType.IfcOutletType] = BuiltInCategory.OST_ElectricalFixtures;
          m_EntityTypeToCategory[IFCEntityType.IfcPile] = BuiltInCategory.OST_StructuralFoundation;
          m_EntityTypeToCategory[IFCEntityType.IfcPileType] = BuiltInCategory.OST_StructuralFoundation;
@@ -323,6 +329,7 @@ namespace Revit.IFC.Import.Utility
          m_EntityTypeToCategory[IFCEntityType.IfcPipeSegment] = BuiltInCategory.OST_PipeCurves;
          m_EntityTypeToCategory[IFCEntityType.IfcPipeSegmentType] = BuiltInCategory.OST_PipeCurves;
          m_EntityTypeToCategory[IFCEntityType.IfcPlate] = BuiltInCategory.OST_StructuralFraming;
+         m_EntityTypeToCategory[IFCEntityType.IfcPlateStandardCase] = BuiltInCategory.OST_StructuralFraming;
          m_EntityTypeToCategory[IFCEntityType.IfcPlateType] = BuiltInCategory.OST_StructuralFraming;
          m_EntityTypeToCategory[IFCEntityType.IfcProtectiveDeviceType] = BuiltInCategory.OST_SpecialityEquipment;
          m_EntityTypeToCategory[IFCEntityType.IfcProxy] = BuiltInCategory.OST_GenericModel;
@@ -346,6 +353,7 @@ namespace Revit.IFC.Import.Utility
          m_EntityTypeToCategory[IFCEntityType.IfcSensorType] = BuiltInCategory.OST_SpecialityEquipment;
          m_EntityTypeToCategory[IFCEntityType.IfcSite] = BuiltInCategory.OST_Site;
          m_EntityTypeToCategory[IFCEntityType.IfcSlab] = BuiltInCategory.OST_GenericModel;
+         m_EntityTypeToCategory[IFCEntityType.IfcSlabStandardCase] = BuiltInCategory.OST_GenericModel;
          m_EntityTypeToCategory[IFCEntityType.IfcSlabType] = BuiltInCategory.OST_GenericModel;
          // Importing space geometry for the Reference intent should create a generic model, as the Rooms category should
          // be used for a real Revit room.
@@ -371,6 +379,7 @@ namespace Revit.IFC.Import.Utility
          m_EntityTypeToCategory[IFCEntityType.IfcWallStandardCase] = BuiltInCategory.OST_Walls;
          m_EntityTypeToCategory[IFCEntityType.IfcWallType] = BuiltInCategory.OST_Walls;
          m_EntityTypeToCategory[IFCEntityType.IfcWindow] = BuiltInCategory.OST_Windows;
+         m_EntityTypeToCategory[IFCEntityType.IfcWindowStandardCase] = BuiltInCategory.OST_Windows;
          m_EntityTypeToCategory[IFCEntityType.IfcWindowStyle] = BuiltInCategory.OST_Windows;
          m_EntityTypeToCategory[IFCEntityType.IfcWindowType] = BuiltInCategory.OST_Windows;
          m_EntityTypeToCategory[IFCEntityType.IfcZone] = BuiltInCategory.OST_GenericModel;
@@ -391,7 +400,10 @@ namespace Revit.IFC.Import.Utility
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumn, "COLUMN")] = BuiltInCategory.OST_Columns;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumn, "USERDEFINED")] = BuiltInCategory.OST_Columns;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumn, "NOTDEFINED")] = BuiltInCategory.OST_Columns;
-         m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcCovering, "CEILING")] = BuiltInCategory.OST_Ceilings;
+         m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumnStandardCase, "[LoadBearing]")] = BuiltInCategory.OST_StructuralColumns;
+         m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumnStandardCase, "COLUMN")] = BuiltInCategory.OST_Columns;
+         m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumnStandardCase, "USERDEFINED")] = BuiltInCategory.OST_Columns;
+         m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcColumnStandardCase, "NOTDEFINED")] = BuiltInCategory.OST_Columns; m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcCovering, "CEILING")] = BuiltInCategory.OST_Ceilings;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcCovering, "FLOORING")] = BuiltInCategory.OST_Floors;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcCovering, "ROOFING")] = BuiltInCategory.OST_Roofs;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcElectricAppliance, "DISHWASHER")] = BuiltInCategory.OST_PlumbingFixtures;
@@ -409,17 +421,22 @@ namespace Revit.IFC.Import.Utility
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcFlowTerminal, "NOTDEFINED")] = BuiltInCategory.OST_GenericModel;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcFlowTerminal, "POWEROUTLET")] = BuiltInCategory.OST_ElectricalFixtures;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcMember, "MULLION")] = BuiltInCategory.OST_CurtainWallMullions;
+         m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcMemberStandardCase, "MULLION")] = BuiltInCategory.OST_CurtainWallMullions;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcOutletType, "AUDIOVISUALOUTLET")] = BuiltInCategory.OST_DataDevices;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcOutletType, "COMMUNICATIONSOUTLET")] = BuiltInCategory.OST_DataDevices;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcOutletType, "POWEROUTLET")] = BuiltInCategory.OST_ElectricalFixtures;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcOutletType, "NOTDEFINED")] = BuiltInCategory.OST_GenericModel;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcPlate, "CURTAIN_PANEL")] = BuiltInCategory.OST_CurtainWallPanels;
+         m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcPlateStandardCase, "CURTAIN_PANEL")] = BuiltInCategory.OST_CurtainWallPanels;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcProtectiveDeviceType, "CIRCUITBREAKER")] = BuiltInCategory.OST_ElectricalEquipment;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlab, "BASESLAB")] = BuiltInCategory.OST_StructuralFoundation;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlab, "FLOOR")] = BuiltInCategory.OST_Floors;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlab, "LANDING")] = BuiltInCategory.OST_StairsLandings;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlab, "ROOF")] = BuiltInCategory.OST_Roofs;
-         m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcValve, "DRAWOFFCOCK")] = BuiltInCategory.OST_PlumbingFixtures;
+         m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlabStandardCase, "BASESLAB")] = BuiltInCategory.OST_StructuralFoundation;
+         m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlabStandardCase, "FLOOR")] = BuiltInCategory.OST_Floors;
+         m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlabStandardCase, "LANDING")] = BuiltInCategory.OST_StairsLandings;
+         m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcSlabStandardCase, "ROOF")] = BuiltInCategory.OST_Roofs; m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcValve, "DRAWOFFCOCK")] = BuiltInCategory.OST_PlumbingFixtures;
          m_EntityPredefinedTypeToCategory[new KeyValuePair<IFCEntityType, string>(IFCEntityType.IfcValve, "FAUCET")] = BuiltInCategory.OST_PlumbingFixtures;
       }
 
@@ -697,6 +714,7 @@ namespace Revit.IFC.Import.Utility
          switch (entityType)
          {
             case IFCEntityType.IfcColumn:
+            case IFCEntityType.IfcColumnStandardCase:
             case IFCEntityType.IfcColumnType:
                if (IsColumnLoadBearing(entity))
                   predefinedType = "[LoadBearing]";

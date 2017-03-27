@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics;
+using System.Globalization;
 
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
@@ -44,6 +45,7 @@ namespace Revit.IFC.Export.Utility
 
       private GUIDOptions m_GUIDOptions;
       private bool m_ExportAs4_ADD1;
+      private bool m_ExportAs4_ADD2;
       private IFCVersion m_FileVersion;
 
 
@@ -52,6 +54,7 @@ namespace Revit.IFC.Export.Utility
       private ExportOptionsCache()
       {
          m_ExportAs4_ADD1 = false;
+         m_ExportAs4_ADD2 = false;
       }
 
 
@@ -70,9 +73,12 @@ namespace Revit.IFC.Export.Utility
 
          try
          {
-            double valX = double.Parse(sList[0]); //parsing values
-            double valY = double.Parse(sList[1]);
-            double valZ = double.Parse(sList[2]);
+            // XYZ values are serialized in Revit using C++ format, which seems to use invariant culture.
+            // Better yet would be not to pass doubles as strings, but this is a fairly limited use and
+            // easily worked around here.
+            double valX = double.Parse(sList[0], CultureInfo.InvariantCulture); //parsing values
+            double valY = double.Parse(sList[1], CultureInfo.InvariantCulture);
+            double valZ = double.Parse(sList[2], CultureInfo.InvariantCulture);
             //if no exception then put it in return value
             retVal = new XYZ(valX, valY, valZ);
          }
@@ -591,6 +597,20 @@ namespace Revit.IFC.Export.Utility
          set
          {
             m_ExportAs4_ADD1 = value;
+         }
+
+      }
+
+      public bool ExportAs4_ADD2
+      {
+         get
+         {
+            return m_ExportAs4_ADD2;
+         }
+
+         set
+         {
+            m_ExportAs4_ADD2 = value;
          }
 
       }

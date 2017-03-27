@@ -24,7 +24,7 @@ using System.Text;
 namespace Revit.IFC.Common.Enums.IFC4
 {
     /// <summary>
-    /// IFC entity types.
+    /// IFC entity types (updated to IFC4-Add2)
     /// </summary>
     public enum IFCEntityType
     {
@@ -105,6 +105,7 @@ namespace Revit.IFC.Common.Enums.IFC4
         IfcCableSegmentType,
         IfcCartesianPoint,
         IfcCartesianPointList,
+        IfcCartesianPointList2D,
         IfcCartesianPointList3D,
         IfcCartesianTransformationOperator,
         IfcCartesianTransformationOperator2D,
@@ -222,6 +223,7 @@ namespace Revit.IFC.Common.Enums.IFC4
         IfcDoorLiningProperties,
         IfcDoorPanelProperties,
         IfcDoorStandardCase,
+        IfcDoorStyle,
         IfcDoorType,
         IfcDraughtingPreDefinedColour,
         IfcDraughtingPreDefinedCurveFont,
@@ -343,10 +345,14 @@ namespace Revit.IFC.Common.Enums.IFC4
         IfcHumidifierType,
         IfcImageTexture,
         IfcIndexedColourMap,
+        IfcIndexedPolyCurve,
+        IfcIndexedPolygonalFace,
+        IfcIndexedPolygonalFaceWithVoids,
         IfcIndexedTextureMap,
         IfcIndexedTriangleTextureMap,
         IfcInterceptor,
         IfcInterceptorType,
+        IfcIntersectionCurve,
         IfcInventory,
         IfcIrregularTimeSeries,
         IfcIrregularTimeSeriesValue,
@@ -456,6 +462,7 @@ namespace Revit.IFC.Common.Enums.IFC4
         IfcPointOnCurve,
         IfcPointOnSurface,
         IfcPolygonalBoundedHalfSpace,
+        IfcPolygonalFaceSet,
         IfcPolyline,
         IfcPolyLoop,
         IfcPort,
@@ -606,6 +613,7 @@ namespace Revit.IFC.Common.Enums.IFC4
         IfcSanitaryTerminal,
         IfcSanitaryTerminalType,
         IfcSchedulingTime,
+        IfcSeamCurve,
         IfcSectionedSpine,
         IfcSectionProperties,
         IfcSectionReinforcementProperties,
@@ -640,6 +648,7 @@ namespace Revit.IFC.Common.Enums.IFC4
         IfcSpatialZone,
         IfcSpatialZoneType,
         IfcSphere,
+        IfcSphericalSurface,
         IfcStackTerminal,
         IfcStackTerminalType,
         IfcStair,
@@ -690,6 +699,7 @@ namespace Revit.IFC.Common.Enums.IFC4
         IfcSubContractResourceType,
         IfcSubedge,
         IfcSurface,
+        IfcSurfaceCurve,
         IfcSurfaceCurveSweptAreaSolid,
         IfcSurfaceFeature,
         IfcSurfaceOfLinearExtrusion,
@@ -743,6 +753,7 @@ namespace Revit.IFC.Common.Enums.IFC4
         IfcTimeSeriesValue,
         IfcTopologicalRepresentationItem,
         IfcTopologyRepresentation,
+        IfcToroidalSurface,
         IfcTransformer,
         IfcTransformerType,
         IfcTransportElement,

@@ -92,17 +92,21 @@ namespace Revit.IFC.Export.Exporter
                               else
                               {
                                  IFCAnyHandle currLocalPlacement = currSetter.LocalPlacement;
-                                 MullionExporter.Export(exporterIFC, subElem as Mullion, geomElem, currLocalPlacement, currSetter,
-                                     productWrapper);
+                                 //MullionExporter.Export(exporterIFC, subElem as Mullion, geomElem, currLocalPlacement, currSetter,
+                                 //    productWrapper);
+                                 string ifcEnumType = "MULLION";
+                                 IFCExportType exportType = IFCExportType.IfcMemberType;
+                                 FamilyInstanceExporter.ExportFamilyInstanceAsMappedItem(exporterIFC, subElem as Mullion, exportType, ifcEnumType, productWrapper,
+                                     ElementId.InvalidElementId, null, currLocalPlacement);
                               }
                            }
                            else
                            {
+                              string ifcEnumType;
                               FamilyInstance subFamInst = subElem as FamilyInstance;
 
-                              string ifcEnumType;
                               IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, subElem, out ifcEnumType);
-                              if (exportType == IFCExportType.IfcCurtainWall)
+                              if (exportType == IFCExportType.IfcCurtainWallType)
                               {
                                  // By default, panels and mullions are set to the same category as their parent.  In this case,
                                  // ask to get the exportType from the category id, since we don't want to inherit the parent class.
@@ -110,7 +114,7 @@ namespace Revit.IFC.Export.Exporter
                                  exportType = ElementFilteringUtil.GetExportTypeFromCategoryId(catId, out ifcEnumType);
                               }
 
-
+             
                               if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
                               {
                                  if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.IfcPlateType) ||
@@ -211,7 +215,7 @@ namespace Revit.IFC.Export.Exporter
             if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
             {
                BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(false, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
-               IFCAnyHandle triFaceSet = BodyExporter.ExportBodyAsTriangulatedFaceSet(exporterIFC, subElem, bodyExporterOptions, geomElem);
+               IFCAnyHandle triFaceSet = BodyExporter.ExportBodyAsTessellatedFaceSet(exporterIFC, subElem, bodyExporterOptions, geomElem);
                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(triFaceSet))
                {
                   bodyItems.Add(triFaceSet);

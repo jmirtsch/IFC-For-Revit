@@ -30,13 +30,13 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    public class IFCProfile : IFCEntity
+   public class IFCProfileDef : IFCEntity
     {
         private string m_ProfileName = null;
 
         private IFCProfileType m_ProfileType;
 
-        protected IFCProfile()
+      protected IFCProfileDef()
         {
         }
 
@@ -68,11 +68,11 @@ namespace Revit.IFC.Import.Data
         }
 
         /// <summary>
-        /// Create an IFCProfile object from a handle of type IfcProfileDef.
+      /// Create an IFCProfileDef object from a handle of type IfcProfileDef.
         /// </summary>
         /// <param name="ifcProfileDef">The IFC handle.</param>
         /// <returns>The IFCProfileDef object.</returns>
-        public static IFCProfile ProcessIFCProfile(IFCAnyHandle ifcProfileDef)
+      public static IFCProfileDef ProcessIFCProfileDef(IFCAnyHandle ifcProfileDef)
         {
             if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcProfileDef))
             {
@@ -82,16 +82,13 @@ namespace Revit.IFC.Import.Data
 
             IFCEntity profileDef;
             if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcProfileDef.StepId, out profileDef))
-                return (profileDef as IFCProfile);
+            return (profileDef as IFCProfileDef);
 
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcProfileDef, IFCEntityType.IfcCompositeProfileDef))
                 return IFCCompositeProfile.ProcessIFCCompositeProfile(ifcProfileDef);
 
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcProfileDef, IFCEntityType.IfcDerivedProfileDef))
-            {
-                Importer.TheLog.LogUnhandledSubTypeError(ifcProfileDef, IFCEntityType.IfcDerivedProfileDef, false);
-                return null;
-            }
+            return IFCDerivedProfileDef.ProcessIFCDerivedProfileDef(ifcProfileDef);
 
             //if (IFCAnyHandleUtil.IsSubTypeOf(ifcProfileDef, IFCEntityType.IfcArbitraryOpenProfileDef))
             //if (IFCAnyHandleUtil.IsSubTypeOf(ifcProfileDef, IFCEntityType.IfcArbitraryClosedProfileDef))
@@ -104,11 +101,11 @@ namespace Revit.IFC.Import.Data
     /// <summary>
     /// Provides methods to process IfcProfileDef and its subclasses.
     /// </summary>
-    public class IFCCompositeProfile : IFCProfile
+   public class IFCCompositeProfile : IFCProfileDef
     {
         private string m_CompositeProfileDefLabel = null;
 
-        private IList<IFCProfile> m_Profiles = null;
+      private IList<IFCProfileDef> m_Profiles = null;
 
         /// <summary>
         /// Default constructor.
@@ -127,7 +124,7 @@ namespace Revit.IFC.Import.Data
             IList<IFCAnyHandle> profileHnds = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(profileDef, "Profiles");
             foreach (IFCAnyHandle profileHnd in profileHnds)
             {
-                IFCProfile subProfile = IFCProfile.ProcessIFCProfile(profileHnd);
+            IFCProfileDef subProfile = IFCProfileDef.ProcessIFCProfileDef(profileHnd);
                 if (subProfile != null)
                     Profiles.Add(subProfile);
             }
@@ -170,12 +167,12 @@ namespace Revit.IFC.Import.Data
         /// <summary>
         /// Get the list of contained profiles.
         /// </summary>
-        public IList<IFCProfile> Profiles
+      public IList<IFCProfileDef> Profiles
         {
             get
             {
                 if (m_Profiles == null)
-                    m_Profiles = new List<IFCProfile>();
+               m_Profiles = new List<IFCProfileDef>();
                 return m_Profiles;
             }
         }
@@ -310,18 +307,12 @@ namespace Revit.IFC.Import.Data
                 return;
 
             if (xDim < MathUtil.Eps())
-            {
-                Importer.TheLog.LogError(Id, "IfcRectangleProfileDef has invalid XDim: " + xDim + ", ignoring.", false);
-                return;
-            }
+            Importer.TheLog.LogError(Id, "IfcRectangleProfileDef has invalid XDim: " + xDim + ", ignoring.", true);
 
             if (yDim < MathUtil.Eps())
-            {
-                Importer.TheLog.LogError(Id, "IfcRectangleProfileDef has invalid YDim: " + yDim + ", ignoring.", false);
-                return;
-            }
+            Importer.TheLog.LogError(Id, "IfcRectangleProfileDef has invalid YDim: " + yDim + ", ignoring.", true);
 
-            if (IFCAnyHandleUtil.IsSubTypeOf(profileDef, IFCEntityType.IfcRectangleHollowProfileDef))
+         if (IFCImportFile.TheFile.SchemaVersion >= IFCSchemaVersion.IFC2x2 && IFCAnyHandleUtil.IsSubTypeOf(profileDef, IFCEntityType.IfcRectangleHollowProfileDef))
             {
                 ProcessIFCRectangleHollowProfileDef(profileDef, xDim, yDim);
                 return;
@@ -355,10 +346,7 @@ namespace Revit.IFC.Import.Data
                 return;
 
             if (radius < MathUtil.Eps())
-            {
-                Importer.TheLog.LogError(Id, "IfcCircleProfileDef has invalid radius: " + radius + ", ignoring.", false);
-                return;
-            }
+            Importer.TheLog.LogError(Id, "IfcCircleProfileDef has invalid radius: " + radius + ", ignoring.", true);
 
             // Some internal routines want CurveLoops with bounded components.  Split to avoid problems.
             OuterCurve = new CurveLoop();
@@ -1052,7 +1040,7 @@ namespace Revit.IFC.Import.Data
     /// <summary>
     /// Provides methods to process IfcProfileDef and its subclasses.
     /// </summary>
-    public class IFCSimpleProfile : IFCProfile
+   public class IFCSimpleProfile : IFCProfileDef
     {
         private CurveLoop m_OuterCurve = null;
 

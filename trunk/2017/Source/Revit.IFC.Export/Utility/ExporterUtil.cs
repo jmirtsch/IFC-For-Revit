@@ -1369,14 +1369,17 @@ namespace Revit.IFC.Export.Utility
                switch (familyInstance.StructuralType)
                {
                   case Autodesk.Revit.DB.Structure.StructuralType.Beam:
-                     exportType = IFCExportType.IfcBeam;
+                     exportType = IFCExportType.IfcBeamType;
                      break;
                   case Autodesk.Revit.DB.Structure.StructuralType.Brace:
                      exportType = IFCExportType.IfcMemberType;
                      enumTypeValue = "BRACE";
                      break;
                   case Autodesk.Revit.DB.Structure.StructuralType.Footing:
-                     exportType = IFCExportType.IfcFooting;
+                     exportType = IFCExportType.IfcFootingType;
+                     break;
+                  case Autodesk.Revit.DB.Structure.StructuralType.Column:
+                     exportType = IFCExportType.IfcColumnType;
                      break;
                }
             }
@@ -1838,6 +1841,178 @@ namespace Revit.IFC.Export.Utility
             }
          }
          return controls;
+      }
+
+      public static IFCAnyHandle CollectMaterialLayerSet(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper, out List<ElementId> matIds, out IFCAnyHandle primaryMaterialHnd)
+      {
+         ElementId typeElemId = element.GetTypeId();
+         matIds = new List<ElementId>();
+         IFCAnyHandle materialLayerSet = ExporterCacheManager.MaterialSetCache.Find(typeElemId);
+         // Roofs with no components are only allowed one material.  We will arbitrarily choose the thickest material.
+         primaryMaterialHnd = ExporterCacheManager.MaterialSetCache.FindPrimaryMaterialHnd(typeElemId);
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(materialLayerSet))
+         {
+            List<double> widths = new List<double>();
+            List<MaterialFunctionAssignment> functions = new List<MaterialFunctionAssignment>();
+
+            HostObjAttributes hostObjAttr = element.Document.GetElement(typeElemId) as HostObjAttributes;
+            if (hostObjAttr == null)
+            {
+               // It does not have the HostObjAttribute (where we will get the compound structure for material layer set.
+               // We will define a single material instead and create the material layer set of this single material if there is enough information (At least Material id and thickness) 
+               FamilyInstance familyInstance = element as FamilyInstance;
+               if (familyInstance == null)
+                  return null;
+               FamilySymbol familySymbol = familyInstance.Symbol;
+               ICollection<ElementId> famMatIds = familySymbol.GetMaterialIds(false);
+               if (famMatIds.Count == 0)
+               {
+                  // For some reason Plate type may not return any Material id
+                  ElementId baseMatId = CategoryUtil.GetBaseMaterialIdForElement(element);
+                  matIds.Add(baseMatId);
+                  // How to get the thickness? For CurtainWall Panel (PanelType), there is a builtin parameter CURTAINWALL_SYSPANEL_THICKNESS
+                  Parameter thicknessPar = familySymbol.get_Parameter(BuiltInParameter.CURTAIN_WALL_SYSPANEL_THICKNESS);
+                  if (thicknessPar != null)
+                     widths.Add(thicknessPar.AsDouble());
+                  else
+                     widths.Add(0.0);
+                  functions.Add(MaterialFunctionAssignment.None);
+               }
+               else
+               {
+                  foreach (ElementId matid in famMatIds)
+                  {
+                     matIds.Add(matid);
+                     // How to get the thickness? For CurtainWall Panel (PanelType), there is a builtin parameter CURTAINWALL_SYSPANEL_THICKNESS
+                     Parameter thicknessPar = familySymbol.get_Parameter(BuiltInParameter.CURTAIN_WALL_SYSPANEL_THICKNESS);
+                    if (thicknessPar == null)
+                    {
+                        widths.Add(ParameterUtil.getSpecialThicknessParameter(familySymbol));
+                    }
+                    else
+                        widths.Add(thicknessPar.AsDouble());
+
+                     functions.Add(MaterialFunctionAssignment.None);
+                  }
+               }
+            }
+            else
+            {
+               ElementId baseMatId = CategoryUtil.GetBaseMaterialIdForElement(element);
+               CompoundStructure cs = hostObjAttr.GetCompoundStructure();
+               if (cs != null)
+               {
+                  double scaledOffset = 0.0, scaledWallWidth = 0.0, wallHeight = 0.0;
+                  Wall wall = element as Wall;
+                  if (wall != null)
+                  {
+                     scaledWallWidth = UnitUtil.ScaleLength(wall.Width);
+                     scaledOffset = -scaledWallWidth / 2.0;
+                     BoundingBoxXYZ boundingBox = wall.get_BoundingBox(null);
+                     if (boundingBox != null)
+                        wallHeight = boundingBox.Max.Z - boundingBox.Min.Z;
+                  }
+
+                  //TODO: Vertically compound structures are not yet supported by export.
+                  if (!cs.IsVerticallyHomogeneous() && !MathUtil.IsAlmostZero(wallHeight))
+                     cs = cs.GetSimpleCompoundStructure(wallHeight, wallHeight / 2.0);
+
+                  for (int i = 0; i < cs.LayerCount; ++i)
+                  {
+                     ElementId matId = cs.GetMaterialId(i);
+                     if (matId != ElementId.InvalidElementId)
+                     {
+                        matIds.Add(matId);
+                     }
+                     else
+                     {
+                        matIds.Add(baseMatId);
+                     }
+                     widths.Add(cs.GetLayerWidth(i));
+                     // save layer function into ProductWrapper, 
+                     // it's used while exporting "Function" of Pset_CoveringCommon
+                     functions.Add(cs.GetLayerFunction(i));
+                  }
+               }
+
+               if (matIds.Count == 0)
+               {
+                  matIds.Add(baseMatId);
+                  widths.Add(cs != null ? cs.GetWidth() : 0);
+                  functions.Add(MaterialFunctionAssignment.None);
+               }
+            }
+
+            if (productWrapper != null)
+               productWrapper.ClearFinishMaterials();
+
+            // We can't create IfcMaterialLayers without creating an IfcMaterialLayerSet.  So we will simply collate here.
+            IList<IFCAnyHandle> materialHnds = new List<IFCAnyHandle>();
+            IList<int> widthIndices = new List<int>();
+            double thickestLayer = 0.0;
+            for (int ii = 0; ii < matIds.Count; ++ii)
+            {
+               // Require positive width for IFC2x3 and before, and non-negative width for IFC4.
+               if (widths[ii] < -MathUtil.Eps())
+                  continue;
+
+               bool almostZeroWidth = MathUtil.IsAlmostZero(widths[ii]);
+               if (!ExporterCacheManager.ExportOptionsCache.ExportAs4 && almostZeroWidth)
+                  continue;
+
+               if (almostZeroWidth)
+                  widths[ii] = 0.0;
+
+               IFCAnyHandle materialHnd = CategoryUtil.GetOrCreateMaterialHandle(exporterIFC, matIds[ii]);
+               if (primaryMaterialHnd == null || (widths[ii] > thickestLayer))
+               {
+                  primaryMaterialHnd = materialHnd;
+                  thickestLayer = widths[ii];
+               }
+
+               widthIndices.Add(ii);
+               materialHnds.Add(materialHnd);
+
+               if ((productWrapper != null) && (functions[ii] == MaterialFunctionAssignment.Finish1 || functions[ii] == MaterialFunctionAssignment.Finish2))
+               {
+                  productWrapper.AddFinishMaterial(materialHnd);
+               }
+            }
+
+            int numLayersToCreate = widthIndices.Count;
+            if (numLayersToCreate == 0)
+               return materialLayerSet;
+
+            IFCFile file = exporterIFC.GetFile();
+
+            //if (!containsBRepGeometry)
+            {
+               IList<IFCAnyHandle> layers = new List<IFCAnyHandle>(numLayersToCreate);
+
+               for (int ii = 0; ii < numLayersToCreate; ii++)
+               {
+                  int widthIndex = widthIndices[ii];
+                  double scaledWidth = UnitUtil.ScaleLength(widths[widthIndex]);
+                  IFCAnyHandle materialLayer = IFCInstanceExporter.CreateMaterialLayer(file, materialHnds[ii], scaledWidth, null);
+                  layers.Add(materialLayer);
+               }
+
+               string layerSetName = exporterIFC.GetFamilyName();
+               materialLayerSet = IFCInstanceExporter.CreateMaterialLayerSet(file, layers, layerSetName);
+
+               ExporterCacheManager.MaterialSetCache.Register(typeElemId, materialLayerSet);
+               ExporterCacheManager.MaterialSetCache.RegisterPrimaryMaterialHnd(typeElemId, primaryMaterialHnd);
+            }
+            //else
+            //{
+            //   foreach (IFCAnyHandle elemHnd in elemHnds)
+            //   {
+            //      CategoryUtil.CreateMaterialAssociation(exporterIFC, elemHnd, matIds);
+            //   }
+            //}
+         }
+
+         return materialLayerSet;
       }
    }
 }

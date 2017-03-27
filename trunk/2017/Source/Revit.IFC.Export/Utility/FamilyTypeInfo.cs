@@ -100,6 +100,8 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         double m_ScaledOuterPerimeter = 0.0;
 
+        MaterialAndProfile m_MaterialAndProfile = null;
+
         /// <summary>
         /// The associated handle to an IfcTypeProduct for the type.
         /// </summary>
@@ -197,5 +199,17 @@ namespace Revit.IFC.Export.Exporter
             get { return m_ScaledOuterPerimeter; }
             set { m_ScaledOuterPerimeter = value; }
         }
+
+        public MaterialAndProfile materialAndProfile
+        {
+            get
+            {
+                if (m_MaterialAndProfile == null)
+                    m_MaterialAndProfile = new MaterialAndProfile();
+                return m_MaterialAndProfile;
+            }
+            set { m_MaterialAndProfile = value; }
+        }
+
     }
 }
