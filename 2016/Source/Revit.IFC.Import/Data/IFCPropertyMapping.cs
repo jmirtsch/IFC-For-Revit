@@ -35,7 +35,9 @@ namespace Revit.IFC.Import.Data
         static string m_SpacePropertySet = "Pset_SpaceCommon";
         static string m_WallPropertySet = "Pset_WallCommon";
         static string m_BeamPropertySet = "Pset_BeamCommon";
-        static string m_RoofPropertySet = "Pset_RoofCommon";
+         static string m_ColumnPropertySet = "Pset_ColumnCommon";
+         static string m_MemberPropertySet = "Pset_MemberCommon";
+         static string m_RoofPropertySet = "Pset_RoofCommon";
         static string m_SlabPropertySet = "Pset_SlabCommon";
         static string m_RampPropertySet = "Pset_RampCommon";
         static string m_StairPropertySet = "Pset_StairCommon";
@@ -49,6 +51,11 @@ namespace Revit.IFC.Import.Data
             m_Parameters.Add(new Tuple<string, string>(m_WallPropertySet, "FireRating"), BuiltInParameter.FIRE_RATING);
 
             m_Parameters.Add(new Tuple<string, string>(m_BeamPropertySet, "FireRating"), BuiltInParameter.FIRE_RATING);
+            m_Parameters.Add(new Tuple<string, string>(m_BeamPropertySet, "Roll"), BuiltInParameter.STRUCTURAL_BEND_DIR_ANGLE);
+
+            m_Parameters.Add(new Tuple<string, string>(m_ColumnPropertySet, "Roll"), BuiltInParameter.STRUCTURAL_BEND_DIR_ANGLE);
+
+            m_Parameters.Add(new Tuple<string, string>(m_MemberPropertySet, "Roll"), BuiltInParameter.STRUCTURAL_BEND_DIR_ANGLE);
 
             m_Parameters.Add(new Tuple<string, string>(m_RoofPropertySet, "FireRating"), BuiltInParameter.FIRE_RATING);
 

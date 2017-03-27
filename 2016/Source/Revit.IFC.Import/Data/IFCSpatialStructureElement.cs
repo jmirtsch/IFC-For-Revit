@@ -157,12 +157,15 @@ namespace Revit.IFC.Import.Data
                ProcessIFCRelContainedInSpatialStructure(elem);
          }
 
-         HashSet<IFCAnyHandle> systemSet =
-             IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcSpatialStructureElement, "ServicedBySystems");
-         if (systemSet != null)
+         if (IFCImportFile.TheFile.SchemaVersion > IFCSchemaVersion.IFC2x || IFCAnyHandleUtil.IsSubTypeOf(ifcSpatialStructureElement, IFCEntityType.IfcBuilding))
          {
-            foreach (IFCAnyHandle system in systemSet)
-               ProcessIFCRelServicesBuildings(system);
+            HashSet<IFCAnyHandle> systemSet =
+             IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcSpatialStructureElement, "ServicedBySystems");
+            if (systemSet != null)
+            {
+               foreach (IFCAnyHandle system in systemSet)
+                  ProcessIFCRelServicesBuildings(system);
+            }
          }
       }
 

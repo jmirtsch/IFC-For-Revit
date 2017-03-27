@@ -191,7 +191,7 @@ namespace Revit.IFC.Import.Data
             HashSet<IFCAnyHandle> items =
                 IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcRepresentation, "Items");
 
-         LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(ifcRepresentation, true);
+            LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(ifcRepresentation, true);
 
             foreach (IFCAnyHandle item in items)
             {
@@ -208,14 +208,14 @@ namespace Revit.IFC.Import.Data
 
                     // Special processing for bounding boxes - only IfcBoundingBox allowed.
                if (IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcBoundingBox))
-                    {
+               {
                   // Don't read in Box represenation unless options allow it.
                   if (IFCImportFile.TheFile.Options.ProcessBoundingBoxGeometry == IFCProcessBBoxOptions.Never)
                      Importer.TheLog.LogWarning(item.StepId, "BoundingBox not imported with ProcessBoundingBoxGeometry=Never", false);
                   else
                   {
                      if (BoundingBox != null)
-                     {
+                    {
                         Importer.TheLog.LogWarning(item.StepId, "Found second IfcBoundingBox representation item, ignoring.", false);
                         continue;
                      }

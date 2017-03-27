@@ -60,6 +60,8 @@ namespace Revit.IFC.Import.Data
 
       private IList<GeometryObject> m_CreatedGeometry = null;
 
+      private IDictionary<string, object> m_AdditionalIntParameters = null;
+
       /// <summary>
       /// The category id corresponding to the element created for this IFCObjectDefinition.
       /// </summary>
@@ -155,6 +157,34 @@ namespace Revit.IFC.Import.Data
                name = material.Name;
                thickness = IFCUnitUtil.FormatLengthAsString(materialLayer.LayerThickness);
                result.Add(name + ": " + thickness);
+            }
+         }
+         else if (MaterialSelect is IFCMaterialProfileSetUsage)
+         {
+            IFCMaterialProfileSet materialProfileSet = (MaterialSelect as IFCMaterialProfileSetUsage).ForProfileSet;
+            IList<IFCMaterialProfile> materialProfiles;
+            IFCMaterial material;
+
+            if (materialProfileSet != null)
+               materialProfiles = materialProfileSet.MaterialProfileSet;
+            else
+               materialProfiles = new List<IFCMaterialProfile>();
+
+            foreach (IFCMaterialProfile materialProfile in materialProfiles)
+            {
+               if (materialProfile == null)
+                  continue;   // Skip if it is null
+               material = materialProfile.Material;
+               IFCProfileDef profile = materialProfile.Profile;
+               if (material == null)
+                  continue;
+               name = material.Name;
+               string profileName;
+               if (profile != null)
+                  profileName = profile.ProfileName;
+               else
+                  profileName = profile.ProfileType.ToString();
+               result.Add(name + " (" + profileName + ")");
             }
          }
          else
@@ -293,6 +323,19 @@ namespace Revit.IFC.Import.Data
       }
 
       /// <summary>
+      /// Get the Dictionary of additional internal parameters
+      /// </summary>
+      public IDictionary<string, object> AdditionalIntParameters
+      {
+         get
+         {
+            if (m_AdditionalIntParameters == null)
+               m_AdditionalIntParameters = new Dictionary<string, object>();
+            return m_AdditionalIntParameters;
+         }
+      }
+
+      /// <summary>
       /// Gets the predefined type from the entity, depending on the file version and entity type.
       /// </summary>
       /// <param name="ifcObjectDefinition">The associated handle.</param>
@@ -350,7 +393,7 @@ namespace Revit.IFC.Import.Data
       {
          IList<ElementId> subElementIds = new List<ElementId>();
 
-         // These two should only be populated if GroupSubElements() is true.
+         // These two should only be populated if GroupSubElements() is true and we are duplicating geometry for containers.
          List<GeometryObject> groupedSubElementGeometries = new List<GeometryObject>();
          List<Curve> groupedSubElementFootprintCurves = new List<Curve>();
 
@@ -363,7 +406,8 @@ namespace Revit.IFC.Import.Data
                {
                   subElementIds.Add(objectDefinition.CreatedElementId);
 
-                  if (GroupSubElements())
+                  // CreateDuplicateContainerGeometry is currently an API-only option (no UI), set to true by default.
+                  if (GroupSubElements() && Importer.TheOptions.CreateDuplicateContainerGeometry)
                   {
                      IList<GeometryObject> subGeometries = GetOrCloneGeometry(doc, objectDefinition);
                      if (subGeometries != null)
@@ -446,10 +490,12 @@ namespace Revit.IFC.Import.Data
          {
             foreach (IFCAnyHandle hasAssociation in hasAssociations)
             {
-               if (IFCAnyHandleUtil.IsSubTypeOf(hasAssociation, IFCEntityType.IfcRelAssociatesMaterial))
-                  ProcessIFCRelAssociatesMaterial(hasAssociation);
-               else
-                  Importer.TheLog.LogUnhandledSubTypeError(hasAssociation, IFCEntityType.IfcRelAssociates, false);
+                    if (IFCAnyHandleUtil.IsSubTypeOf(hasAssociation, IFCEntityType.IfcRelAssociatesMaterial))
+                        ProcessIFCRelAssociatesMaterial(hasAssociation);
+                    else if (IFCAnyHandleUtil.IsSubTypeOf(hasAssociation, IFCEntityType.IfcRelAssociatesClassification))
+                        ProcessRelAssociatesClassification(hasAssociation);
+                    else
+                        Importer.TheLog.LogUnhandledSubTypeError(hasAssociation, IFCEntityType.IfcRelAssociates, false);
             }
          }
 
@@ -481,26 +527,88 @@ namespace Revit.IFC.Import.Data
             return;
          }
 
-         // Deal with various types of IFCMaterialSelect.
-         if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterial))
-            MaterialSelect = IFCMaterial.ProcessIFCMaterial(ifcMaterialSelect);
-         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialLayer))
-            MaterialSelect = IFCMaterialLayer.ProcessIFCMaterialLayer(ifcMaterialSelect);
-         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialLayerSet))
-            MaterialSelect = IFCMaterialLayerSet.ProcessIFCMaterialLayerSet(ifcMaterialSelect);
-         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialLayerSetUsage))
-            MaterialSelect = IFCMaterialLayerSetUsage.ProcessIFCMaterialLayerSetUsage(ifcMaterialSelect);
-         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialList))
-            MaterialSelect = IFCMaterialList.ProcessIFCMaterialList(ifcMaterialSelect);
-         else
-            Importer.TheLog.LogUnhandledSubTypeError(ifcMaterialSelect, "IfcMaterialSelect", false);
+            // Deal with various types of IFCMaterialSelect.
+            if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterial))
+                MaterialSelect = IFCMaterial.ProcessIFCMaterial(ifcMaterialSelect);
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialLayer))
+                MaterialSelect = IFCMaterialLayer.ProcessIFCMaterialLayer(ifcMaterialSelect);
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialLayerSet))
+                MaterialSelect = IFCMaterialLayerSet.ProcessIFCMaterialLayerSet(ifcMaterialSelect);
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialLayerSetUsage))
+                MaterialSelect = IFCMaterialLayerSetUsage.ProcessIFCMaterialLayerSetUsage(ifcMaterialSelect);
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialList))
+                MaterialSelect = IFCMaterialList.ProcessIFCMaterialList(ifcMaterialSelect);
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialProfile))
+                MaterialSelect = IFCMaterialProfile.ProcessIFCMaterialProfile(ifcMaterialSelect);
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialProfileSet))
+                MaterialSelect = IFCMaterialProfileSet.ProcessIFCMaterialProfileSet(ifcMaterialSelect);
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialProfileSetUsage))
+            {
+                if (IFCAnyHandleUtil.IsTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialProfileSetUsageTapering))
+                    MaterialSelect = IFCMaterialProfileSetUsageTapering.ProcessIFCMaterialProfileSetUsageTapering(ifcMaterialSelect);
+                else
+                    MaterialSelect = IFCMaterialProfileSetUsage.ProcessIFCMaterialProfileSetUsage(ifcMaterialSelect);
+            }
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialConstituent))
+                MaterialSelect = IFCMaterialConstituent.ProcessIFCMaterialConstituent(ifcMaterialSelect);
+            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialConstituentSet))
+                MaterialSelect = IFCMaterialConstituentSet.ProcessIFCMaterialConstituentSet(ifcMaterialSelect);
+            else
+                Importer.TheLog.LogUnhandledSubTypeError(ifcMaterialSelect, "IfcMaterialSelect", false);
+      }
+
+      /// <summary>
+      /// Keep Classification assignment information for creation of parameters later on
+      /// </summary>
+      /// <param name="ifcRelAssociatesClassification"></param>
+      void ProcessRelAssociatesClassification(IFCAnyHandle ifcRelAssociatesClassification)
+      {
+         string classification = string.Empty;
+         string identification = string.Empty;
+         string classifItemName = string.Empty;
+         string paramValue = string.Empty;
+
+         IFCAnyHandle relClassification = IFCAnyHandleUtil.GetInstanceAttribute(ifcRelAssociatesClassification, "RelatingClassification");
+         if (IFCAnyHandleUtil.IsSubTypeOf(relClassification, IFCEntityType.IfcClassificationReference))
+         {
+            IFCAnyHandle refSource = IFCAnyHandleUtil.GetInstanceAttribute(relClassification, "ReferencedSource");
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(refSource))
+            {
+               classification = IFCAnyHandleUtil.GetStringAttribute(refSource, "Name");
+            }
+            classifItemName = IFCAnyHandleUtil.GetStringAttribute(relClassification, "Name");
+            string idParamName = "ItemReference";
+            if (IFCImportFile.TheFile.SchemaVersion >= IFCSchemaVersion.IFC4)
+               idParamName = "Identification";
+            identification = IFCAnyHandleUtil.GetStringAttribute(relClassification, idParamName);
+            if (string.IsNullOrEmpty(identification))
+               return;
+
+            if (!string.IsNullOrEmpty(classification))
+               paramValue = "[" + classification + "]";
+            paramValue += identification;
+            if (!string.IsNullOrEmpty(classifItemName))
+               paramValue += ":" + classifItemName;
+
+            string paramName = string.Empty;
+            for (int i = 0; i < 10; ++i)
+            {
+               paramName = "ClassificationCode";
+               if (i > 0)
+                  paramName = "ClassificationCode(" + i.ToString() + ")";
+               if (!AdditionalIntParameters.ContainsKey(paramName))
+                  break;
+            }
+            if (!string.IsNullOrEmpty(paramName))
+               AdditionalIntParameters.Add(paramName, paramValue);
+         }
       }
 
       /// <summary>
       /// Finds all related objects in IfcRelDecomposes.
       /// </summary>
       /// <param name="ifcRelDecomposes">The IfcRelDecomposes handle.</param>
-      void ProcessIFCRelDecomposes(IFCAnyHandle ifcRelDecomposes)
+        void ProcessIFCRelDecomposes(IFCAnyHandle ifcRelDecomposes)
       {
          ComposedObjectDefinitions.UnionWith(ProcessIFCRelation.ProcessRelatedObjects(this, ifcRelDecomposes));
       }
@@ -579,7 +687,7 @@ namespace Revit.IFC.Import.Data
       private bool CanSetRevitName(Element element)
       {
          // Grids have their name set by IFCGridAxis, which does not inherit from IfcObjectDefinition.
-         return (element != null && !(element is Grid));
+         return (element != null && !(element is Grid) && !(element is ProjectInfo));
       }
 
       /// <summary>
@@ -754,6 +862,22 @@ namespace Revit.IFC.Import.Data
             if (Decomposes != null && Decomposes is IFCElementAssembly)
             {
                IFCPropertySet.AddParameterString(doc, element, "IfcElementAssembly", Decomposes.Name, Id);
+            }
+
+            // Set additional parameters (if any), e.g. for Classification assignments
+            if (AdditionalIntParameters.Count > 0) 
+            {
+               foreach (KeyValuePair<string, object> parItem in AdditionalIntParameters)
+               {
+                  if (parItem.Value is string)
+                     IFCPropertySet.AddParameterString(doc, element, parItem.Key, (string) parItem.Value, Id);
+                  else if (parItem.Value is double)
+                     IFCPropertySet.AddParameterDouble(doc, element, parItem.Key, UnitType.UT_Custom, (double) parItem.Value, Id);
+                  else if (parItem.Value is int)
+                     IFCPropertySet.AddParameterInt(doc, element, parItem.Key, (int) parItem.Value, Id);
+                  else if (parItem.Value is bool)
+                     IFCPropertySet.AddParameterBoolean(doc, element, parItem.Key, (bool) parItem.Value, Id);
+               }
             }
          }
       }

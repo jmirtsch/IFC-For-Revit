@@ -567,6 +567,85 @@ namespace Revit.IFC.Import.Data
          return extrusionSolids;
       }
 
+      private GeometryObject CreateGeometryFromMateriaProfile(IFCImportShapeEditScope shapeEditScope, 
+         IList<CurveLoop> loops, XYZ extrusionDirection, double currDepth, SolidOptions solidOptions, out bool shouldWarn)
+      {
+         GeometryObject extrusionSolid = null;
+
+         try
+         {
+            shouldWarn = true;   // invalid input
+
+            IIFCMaterialSelect materialSelect = shapeEditScope.Creator.MaterialSelect;
+            if (materialSelect == null)
+               return null;
+
+            IFCMaterialProfileSetUsage matProfSetUsage = materialSelect as IFCMaterialProfileSetUsage;
+            if (matProfSetUsage == null)
+               return null;
+
+            IFCMaterialProfileSet matProfSet = matProfSetUsage.ForProfileSet;
+            if (matProfSet == null)
+               return null;
+
+            IList<IFCMaterialProfile> matProfList = matProfSet.MaterialProfileSet;
+            if (matProfList.Count == 0)
+               return null;
+
+            Transform transformByOffset = Transform.Identity;
+            IList<CurveLoop> newloops = new List<CurveLoop>();
+
+            ElementId materialId = null;
+            foreach (IFCMaterialProfile matProf in matProfList)
+            {
+               if (this.SweptArea.Id == matProf.Profile.Id)
+               {
+                  // This is the same id (same profile), use the material name for creation of this geometry
+                  IFCMaterial theMaterial = matProf.Material;
+                  if (theMaterial != null)
+                  {
+                     materialId = theMaterial.GetMaterialElementId();
+                     solidOptions.MaterialId = materialId;    // Override the original option if the profile has a specific material id
+                  }
+
+                  // Here we will handle special case if the Material Profile has Offset
+                  if (matProf is IFCMaterialProfileWithOffsets)
+                  {
+                     IFCMaterialProfileWithOffsets matProfOffset = matProf as IFCMaterialProfileWithOffsets;
+                     double startOffset = matProfOffset.OffsetValues[0];
+                     double endOffset = 0;
+                     if (matProfOffset.OffsetValues.Count > 1)
+                        endOffset = matProfOffset.OffsetValues[1];
+
+                     // To handle offset, we need to move the start point (extrusion position) to the startOffset value along the axis (extrusion direction)
+                     // For the end offset, we will have to re-calculate the extrusion
+                     currDepth = currDepth - startOffset + endOffset;
+                     transformByOffset.Origin += startOffset * extrusionDirection;
+                     foreach (CurveLoop loop in loops)
+                     {
+                        CurveLoop newLoop = CurveLoop.CreateViaTransform(loop, transformByOffset);
+                        newloops.Add(newLoop);
+                     }
+                  }
+                  break;
+               }
+            }
+
+            if (newloops.Count == 0)
+               extrusionSolid = GeometryCreationUtilities.CreateExtrusionGeometry(loops, extrusionDirection, currDepth, solidOptions);
+            else
+               extrusionSolid = GeometryCreationUtilities.CreateExtrusionGeometry(newloops, extrusionDirection, currDepth, solidOptions);
+         }
+         catch
+         {
+            // Ignore the specific exception, but let the user know there was a problem processing the IfcMaterialLayerSetUsage.
+            shouldWarn = true;
+            return null;
+         }
+
+         return extrusionSolid;
+      }
+
       /// <summary>
       /// Return geometry for a particular representation item.
       /// </summary>
@@ -611,21 +690,41 @@ namespace Revit.IFC.Import.Data
                // We may try to create separate extrusions, one per layer here.
                bool shouldWarn = false;
                ElementId overrideMaterialId = ElementId.InvalidElementId;
-               IList<GeometryObject> extrusionLayers = CreateGeometryFromMaterialLayerUsage(shapeEditScope, extrusionPosition, loops,
-                   extrusionDirection, currDepth, out overrideMaterialId, out shouldWarn);
 
-               if (extrusionLayers == null || extrusionLayers.Count == 0)
+               if (shapeEditScope.Creator.MaterialSelect != null)
                {
-                  if (shouldWarn)
-                     Importer.TheLog.LogWarning(Id, "Couldn't process associated IfcMaterialLayerSetUsage, using body geometry instead.", false);
-                  if (overrideMaterialId != ElementId.InvalidElementId)
-                     solidOptions.MaterialId = overrideMaterialId;
-                  extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, extrusionDirection, currDepth, solidOptions);
+                  if (shapeEditScope.Creator.MaterialSelect is IFCMaterialLayerSetUsage)
+                  {
+                     IList<GeometryObject> extrusionLayers = CreateGeometryFromMaterialLayerUsage(shapeEditScope, extrusionPosition, loops,
+                        extrusionDirection, currDepth, out overrideMaterialId, out shouldWarn);
+                     if (extrusionLayers == null || extrusionLayers.Count == 0)
+                     {
+                        if (shouldWarn)
+                           Importer.TheLog.LogWarning(Id, "Couldn't process associated IfcMaterialLayerSetUsage, using body geometry instead.", false);
+                        if (overrideMaterialId != ElementId.InvalidElementId)
+                           solidOptions.MaterialId = overrideMaterialId;
+                        extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, extrusionDirection, currDepth, solidOptions);
+                     }
+                     else
+                     {
+                        foreach (GeometryObject extrusionLayer in extrusionLayers)
+                           extrusions.Add(extrusionLayer);
+                     }
+                  }
+                  else if (shapeEditScope.Creator.MaterialSelect is IFCMaterialProfileSetUsage)
+                  {
+                     extrusionObject = CreateGeometryFromMateriaProfile(shapeEditScope, loops, extrusionDirection, currDepth, solidOptions, out shouldWarn);
+                     if (extrusionObject == null)
+                        extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, extrusionDirection, currDepth, solidOptions);
+                  }
+                  else
+                  {
+                     extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, extrusionDirection, currDepth, solidOptions);
+                  }
                }
                else
                {
-                  foreach (GeometryObject extrusionLayer in extrusionLayers)
-                     extrusions.Add(extrusionLayer);
+                  extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, extrusionDirection, currDepth, solidOptions);
                }
             }
             catch (Exception ex)

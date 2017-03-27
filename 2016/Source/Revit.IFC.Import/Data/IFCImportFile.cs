@@ -1,4 +1,4 @@
-﻿//
+﻿
 // Revit IFC Import library: this library works with Autodesk(R) Revit(R) to import IFC files.
 // Copyright (C) 2015  Autodesk, Inc.
 // 
@@ -949,11 +949,17 @@ namespace Revit.IFC.Import.Data
          else if (string.Compare(schemaName, "IFC4", true) == 0)
          {
             // We will still temporarily support the old IFC4.exp file.
-            string ifc4Add1Path = Path.Combine(RevitProgramPath, "EDM\\IFC4_Add1.exp");
-            if (File.Exists(ifc4Add1Path))
+            string ifc4Add1Path = Path.Combine(RevitProgramPath, "EDM\\IFC4_ADD1.exp");
+            string ifc4Add2Path = Path.Combine(RevitProgramPath, "EDM\\IFC4_ADD2.exp");
+            if (File.Exists(ifc4Add2Path))
             {
-               modelOptions.SchemaFile = ifc4Add1Path;
-               schemaVersion = IFCSchemaVersion.IFC4Add1;
+               modelOptions.SchemaFile = ifc4Add2Path;
+               schemaVersion = IFCSchemaVersion.IFC4Add2;
+            }
+            else if (File.Exists(ifc4Add1Path))
+            {
+                modelOptions.SchemaFile = ifc4Add1Path;
+                schemaVersion = IFCSchemaVersion.IFC4Add1;
             }
             else
             {

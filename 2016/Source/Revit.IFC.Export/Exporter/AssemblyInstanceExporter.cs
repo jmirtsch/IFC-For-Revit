@@ -112,6 +112,7 @@ namespace Revit.IFC.Export.Exporter
                   switch (exportAs)
                   {
                      case IFCExportType.IfcCurtainWall:
+                     case IFCExportType.IfcCurtainWallType:
                         assemblyInstanceHnd = IFCInstanceExporter.CreateCurtainWall(file, guid,
                             ownerHistory, name, description, objectType, localPlacement, representation, elementTag);
                         break;

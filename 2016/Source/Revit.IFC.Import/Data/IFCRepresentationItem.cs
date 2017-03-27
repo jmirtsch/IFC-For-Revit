@@ -83,7 +83,7 @@ namespace Revit.IFC.Import.Data
         {
             base.Process(item);
 
-         LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(item, false);
+            LayerAssignment = IFCPresentationLayerAssignment.GetTheLayerAssignment(item, false);
 
          // IFC2x has a different representation for styled items which we don't support.
          if (IFCImportFile.TheFile.SchemaVersion >= IFCSchemaVersion.IFC2x2)
@@ -193,6 +193,9 @@ namespace Revit.IFC.Import.Data
 
          if (IFCImportFile.TheFile.SchemaVersion >= IFCSchemaVersion.IFC4 && IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcTriangulatedFaceSet))
                 return IFCTriangulatedFaceSet.ProcessIFCTriangulatedFaceSet(ifcRepresentationItem);
+
+        if (IFCImportFile.TheFile.SchemaVersion >= IFCSchemaVersion.IFC4Add2 && IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcPolygonalFaceSet))
+            return IFCPolygonalFaceSet.ProcessIFCPolygonalFaceSet(ifcRepresentationItem);
 
             if (IFCAnyHandleUtil.IsSubTypeOf(ifcRepresentationItem, IFCEntityType.IfcTopologicalRepresentationItem))
                 return IFCTopologicalRepresentationItem.ProcessIFCTopologicalRepresentationItem(ifcRepresentationItem);

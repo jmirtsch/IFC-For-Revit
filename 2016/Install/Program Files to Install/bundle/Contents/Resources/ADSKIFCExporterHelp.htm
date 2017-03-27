@@ -197,6 +197,104 @@ working on expanding and eventually removing this limit, and we will be tracking
 
 <div class="versionset">
 
+<div class="version">16.6.0.0</div><div class="versioninfo-bullet">
+
+<p>General:
+
+<ul>
+<li>Minor improvements to the Importer class to make it easier for developers to create a custom Importer.
+<li>We now support the IFC4 Addendum 2 schema.  Specific improvements based on that will be listed below.  For this update, you will have to manually add the IFC4_Add2.exp file (included with this package), to the EDM subfolder of your Revit Program folder.  We will automate this in a future update.
+</ul>
+
+<p>New Export Functionality:
+
+<ul>
+<li>Allow overriding material names on export by using IfcName shared parameter.
+<li>Expand the use of types for many elements that didn't export types before, including beams (IfcBeamType), curtain walls (IfcCurtainWallType, and types for mullions and panels), and footings (IfcFootingType).
+<li>Improved ability to export some geometry as IfcSweptSolid.
+<li>Try to use axis information, if it exists, when exporting beams and members in addition to columns.
+<li>(IFC4) Better support beam, column, and member base quantities, including weight.
+<li>(IFC4) Collect material information for profiles for beams and columns.
+<li>(IFC4) Expand use of FootPrint representations to columns and slabs.
+<li>(IFC4) Expand use of IfcMaterialLayerSetUsage if the entity has a compound structure in Revit, as allowed by IFC.
+<li>(IFC4) No longer create StandardCase IFC entities, as these have been deprecated (including IfcWallStandardCase).
+<li>(IFC4) Support IfcMaterialConstituent and IfcMaterialProfileSet for a number of elements.
+<li>(IFC4) Use Built-in parameter "Structural_Bend_Dir_Angle" to get "Roll" property for PSet_BeamCommon and PSet_ColumnCommon.
+<li>(IFCAdd2) Support IfcPolygonalFaceSet.</ul>
+
+<p>Export Bug Fixes:
+
+<ul>
+<li>Allow exporting to IFC while using Collaboration for Revit where the default directory isn't local.
+<li>Better support for MEP type entities, that didn't always export correctly.
+<li>Correct the parameters of the directrix of some IfcSweptSolids.
+<li>Fix correct mapping of IfcBurnerType/IfcGasTerminalType and IfcElectricHeaterType/IfcSpaceHeaterType.
+<li>Fix creation of types for sub-entities of IfcDistributionCOntrolElement.
+<li>Fix offset problem when using the "Export Linked Files as Separate IFCs" option in locales where the decimal mark is not a point.
+<li>(IFC4) Correct names of IFC4 entity quantity sets.
+<li>(IFC4) Fix the name of IfcCommunicationsApplianceType.
+</ul>
+
+<p>New Import Functionality:
+
+<ul>
+<li>Add support for IfcDerivedProfileDef.
+<li>Support IfcRelClassification.
+<li>(IFC4) Support IfcMaterialProfile, IfcMaterialProfileSet, and IfcMaterialProfileSetUsage.
+<li>(IFC4) Support IfcMaterialConstituent and IfcMaterialConstituentSet.
+<li>(IFC4) Support IfcTessellatedFaceSet and IfcPolygonalFaceSet.
+<li>(IFC4) Improve mapping from Roll parameter to structreal bend direction angle.
+<li>(API only) Allow for two new options, CreateDuplicateZoneGeometry and CreateDuplicateContainerGeometry, that disable the duplication of geometry for zone elements and containers, respectively.
+</ul>
+
+Import Bug Fixes:
+
+<ul>
+<li>Better reporting when importing an IFC file with invalid rectangular or circular profiles (e.g., a 0 radius profile).
+<li>Don't show the void geometry when subtracting a void from an empty solid as a result of an IfcBooleanResult calculation.
+<li>Ensure that IFC2x schema files can still be imported.
+<li>Fix import of some IfcSurfaceCurveSweptAreaSolids.
+</ul>
+
+</div>
+
+<div class="version">16.5.0.0</div><div class="versioninfo-bullet">
+
+<p>New Export Functionality:
+
+<ul>
+<li>Use "Reference Level" as the base level of the element when exporting certain MEP components.
+<li>Support export of mass density units.
+</ul>
+
+<p>Export Bug Fixes:
+
+<ul>
+<li>Export rooms and areas even if they have improperly closed internal boundaries.  Note that the IfcSpace created may then be missing expected interior holes.
+<li>Fix error when exporting some 0 height walls when they have associated parts.
+<li>Only associate a door or window with one opening, even if the door or window is inserted into multiple walls, as per the IFC standard.
+</ul>
+
+<p>New Import Functionality:
+
+<ul>
+<li>Add an API option that allows for always reading in bounding box information, even if the entity has a Body representation.
+<li>Allow reading in curve information that's not contained in the Axis representation, to allow for wireframe import.
+<li>Map IfcOutletType and IfcProtectiveDeviceType to Electrical Fixtures and Specialty Equipment, respectively.
+<li>Improved support for IFC2x and IFC2x2 files.
+<li>Support proper scaling of mass density units.
+</ul>
+
+Import Bug Fixes:
+
+<ul>
+<li>Don't complain about missing IfcOwnerHistory for IFC4 files.
+<li>Properly scale metric bounding boxes so that they are the correct size.
+<li>Stop ignoring some IfcGroups (and IfcSystems) that weren't included in the structure as Revit previously expected.
+</ul>
+
+</div>
+
 <div class="version">16.4.0.0</div><div class="versioninfo-bullet">
 
 <p>New Export Functionality:

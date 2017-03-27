@@ -324,7 +324,7 @@ namespace Revit.IFC.Export.Exporter
             ExporterCacheManager.PresentationStyleAssignmentCache.Register(materialId, presStyleHnd);
          }
 
-         
+
          // Check if the IfcStyledItem has already been set for this representation item.  If so, don't set it
          // again.  This can happen in BodyExporter in certain cases where we call CreateSurfaceStyleForRepItem twice.
          HashSet<IFCAnyHandle> styledByItemHandles = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(repItemHnd, "StyledByItem");
@@ -1209,7 +1209,7 @@ namespace Revit.IFC.Export.Exporter
          return edgeCurve;
       }
 
-      private static IFCAnyHandle CreateProfileCurveFromCurve(IFCFile file, ExporterIFC exporterIFC, Curve curve, string profileName, 
+      private static IFCAnyHandle CreateProfileCurveFromCurve(IFCFile file, ExporterIFC exporterIFC, Curve curve, string profileName,
          IDictionary<IFCFuzzyXYZ, IFCAnyHandle> cartesianPoints)
       {
          bool allowAdvancedCurve = ExporterCacheManager.ExportOptionsCache.ExportAs4;
@@ -1299,10 +1299,10 @@ namespace Revit.IFC.Export.Exporter
             {
                Edge edge = edgeLoop.get_Item(jj);
                if (edge == null)
-                  continue;                              
+                  continue;
                // TO DO Find possibility to indicate short edges to skip. 
-//               if (< edge is too short>)               
-//                  continue;
+               //               if (< edge is too short>)               
+               //                  continue;
                revitTestUV = edge.EvaluateOnFace(0.5, face);
             }
          }
@@ -1324,7 +1324,7 @@ namespace Revit.IFC.Export.Exporter
          // This is the rotation direction at the test point for a right handed system
          XYZ tetsDeriv = axis.CrossProduct(testDir);
          // uDeriv is the actual rotation direction
-         return tetsDeriv.DotProduct(uDeriv) > 0.0; 
+         return tetsDeriv.DotProduct(uDeriv) > 0.0;
       }
 
       /// <summary>
@@ -1722,6 +1722,135 @@ namespace Revit.IFC.Export.Exporter
       }
 
       /// <summary>
+      /// Export Plannar Solid geometry as IfcPolygonalFaceSet (IFC4-Add2)
+      /// </summary>
+      /// <param name="exporterIFC">the exporterIFC</param>
+      /// <param name="element">the element</param>
+      /// <param name="options">exporter options</param>
+      /// <param name="geomObject">the geometry object of the element</param>
+      /// <returns>a handle to the created IFCPolygonalFaceSet</returns>
+      public static IList<IFCAnyHandle> ExportBodyAsPolygonalFaceSet(ExporterIFC exporterIFC, Element element, BodyExporterOptions options,
+                  GeometryObject geomObject)
+      {
+         IFCFile file = exporterIFC.GetFile();
+         Document document = element.Document;
+         IList<IFCAnyHandle> polygonalFaceSetList = null;
+
+         if (geomObject is Solid)
+         {
+            try
+            {
+               Solid solid = geomObject as Solid;
+
+               SolidOrShellTessellationControls tessellationControls = options.TessellationControls;
+               // Convert integer level of detail into a 0 to 1 scale.
+               tessellationControls.LevelOfDetail = ((double)ExporterCacheManager.ExportOptionsCache.LevelOfDetail) / 4.0;
+
+               TriangulatedSolidOrShell solidFacetation =
+                     SolidUtils.TessellateSolidOrShell(solid, tessellationControls);
+
+               for (int i = 0; i < solidFacetation.ShellComponentCount; ++i)
+               {
+                  TriangulatedShellComponent component = solidFacetation.GetShellComponent(i);
+                  //TriangulationInterface triInterface = new TriangulationInterfaceForTriangulatedShellComponent(component);
+
+                  IList<IFCAnyHandle> Faces = new List<IFCAnyHandle>();
+                  IList<IList<double>> coordList = new List<IList<double>>();
+
+                  //IList<TriOrQuadFacet> triQuadFacet = FacetingUtils.ConvertTrianglesToQuads(triInterface);
+
+                  // Collect all the vertices first from the component
+                  for (int j = 0; j < component.VertexCount; ++j)
+                  {
+                     List<double> vertCoord = new List<double>();
+
+                     XYZ vertex = component.GetVertex(j);
+                     XYZ vertexScaled = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, vertex);
+                     vertCoord.Add(vertexScaled.X);
+                     vertCoord.Add(vertexScaled.Y);
+                     vertCoord.Add(vertexScaled.Z);
+                     coordList.Add(vertCoord);
+                  }
+
+                  //foreach (TriOrQuadFacet facet in triQuadFacet)
+                  //{
+                  //   IList<int> indexedPolygonalFace = new List<int>();
+
+                  //   if (facet.NumberOfVertices >= 3)
+                  //   {
+                  //      for (int j = 0; j < facet.NumberOfVertices; ++j)
+                  //      {
+                  //         int vertexIndex = facet.GetVertexIndex(j) + 1;  // IFC starts the index from 1
+                  //         indexedPolygonalFace.Add(vertexIndex);
+                  //      }
+
+                  //      IFCAnyHandle indexedPolygonalFaceHnd = IFCInstanceExporter.CreateIndexedPolygonalFace(file, indexedPolygonalFace);
+                  //      Faces.Add(indexedPolygonalFaceHnd);
+                  //   }
+                  //}
+
+                  TriangleMergeUtil triMerge = new TriangleMergeUtil(component);
+                  triMerge.simplifyAndMergeFaces();
+                  for (int j = 0; j < triMerge.NoOfFaces; ++j)
+                  {
+                     bool faceWithHole = triMerge.NoOfHolesInFace(j) > 0;
+
+                     IList<int> outerBound = new List<int>();
+                     for (int k = 0; k < triMerge.IndexOuterboundOfFaceAt(j).Count; ++k)
+                     {
+                        outerBound.Add(triMerge.IndexOuterboundOfFaceAt(j)[k] + 1);   // IFC starts the index at 1
+                     }
+
+                     if (!faceWithHole)
+                     {
+                        IFCAnyHandle indexedPolygonalFaceHnd = IFCInstanceExporter.CreateIndexedPolygonalFace(file, outerBound);
+                        Faces.Add(indexedPolygonalFaceHnd);
+                     }
+                     else
+                     {
+                        IList<IList<int>> innerBounds = new List<IList<int>>();
+                        foreach(IList<int> inner in triMerge.IndexInnerBoundariesOfFaceAt(j))
+                        {
+                           IList<int> innerBound = new List<int>();
+                           foreach (int vIdx in inner)
+                              innerBound.Add(vIdx + 1);  // IFC starts the index from 1
+                           innerBounds.Add(innerBound);
+                        }
+                        IFCAnyHandle indexedPolygonalFaceHnd = IFCInstanceExporter.CreateIndexedPolygonalFaceWithVoids(file, outerBound, innerBounds);
+                        Faces.Add(indexedPolygonalFaceHnd);
+                     }
+                  }
+
+                  IFCAnyHandle coordinatesHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, coordList);
+                  IFCAnyHandle polygonalFaceSet = IFCInstanceExporter.CreatePolygonalFaceSet(file, coordinatesHnd, true, Faces, null);
+
+                  if (polygonalFaceSetList == null)
+                     polygonalFaceSetList = new List<IFCAnyHandle>();
+                  polygonalFaceSetList.Add(polygonalFaceSet);
+               }
+            }
+            catch
+            {
+               // Failed! Likely because of the tessellation failed. Try to create from the faceset instead
+               IFCAnyHandle triangulatedMesh = ExportSurfaceAsTriangulatedFaceSet(exporterIFC, element, options, geomObject);
+               if (polygonalFaceSetList == null)
+                  polygonalFaceSetList = new List<IFCAnyHandle>();
+               polygonalFaceSetList.Add(triangulatedMesh);
+            }
+         }
+         else
+         {
+            // It is not from Solid, so we will use the faces to export. It works for Surface export too
+            IFCAnyHandle triangulatedMesh = ExportSurfaceAsTriangulatedFaceSet(exporterIFC, element, options, geomObject);
+            if (polygonalFaceSetList == null)
+               polygonalFaceSetList = new List<IFCAnyHandle>();
+            polygonalFaceSetList.Add(triangulatedMesh);
+         }
+
+         return polygonalFaceSetList;
+      }
+
+      /// <summary>
       /// Export Geometry in IFC4 Triangulated tessellation
       /// </summary>
       /// <param name="exporterIFC">the exporter</param>
@@ -1729,13 +1858,13 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="options">the options</param>
       /// <param name="geomObject">geometry objects</param>
       /// <returns>returns a handle</returns>
-      public static IFCAnyHandle ExportBodyAsTriangulatedFaceSet(ExporterIFC exporterIFC, Element element, BodyExporterOptions options,
+      public static IList<IFCAnyHandle> ExportBodyAsTriangulatedFaceSet(ExporterIFC exporterIFC, Element element, BodyExporterOptions options,
                   GeometryObject geomObject)
       {
          IFCFile file = exporterIFC.GetFile();
          Document document = element.Document;
 
-         IFCAnyHandle triangulatedBody = null;
+         IList<IFCAnyHandle> triangulatedBodyList = new List<IFCAnyHandle>();
 
          if (geomObject is Solid)
          {
@@ -1796,24 +1925,59 @@ namespace Revit.IFC.Export.Exporter
                      IFCAnyHandle coordPointLists = IFCAnyHandleUtil.CreateInstance(file, IFCEntityType.IfcCartesianPointList3D);
                      IFCAnyHandleUtil.SetAttribute(coordPointLists, "CoordList", coordList, 1, null, 3, 3);
 
-                     triangulatedBody = IFCAnyHandleUtil.CreateInstance(file, IFCEntityType.IfcTriangulatedFaceSet);
+                     IFCAnyHandle triangulatedBody = IFCAnyHandleUtil.CreateInstance(file, IFCEntityType.IfcTriangulatedFaceSet);
                      IFCAnyHandleUtil.SetAttribute(triangulatedBody, "Coordinates", coordPointLists);
                      IFCAnyHandleUtil.SetAttribute(triangulatedBody, "CoordIndex", coordIdx, 1, null, 3, 3);
+
+                     triangulatedBodyList.Add(triangulatedBody);
                   }
                }
             }
             catch
             {
                // Failed! Likely because of the tessellation failed. Try to create from the faceset instead
-               return ExportSurfaceAsTriangulatedFaceSet(exporterIFC, element, options, geomObject);
+               IFCAnyHandle triangulatedMesh = ExportSurfaceAsTriangulatedFaceSet(exporterIFC, element, options, geomObject);
+               triangulatedBodyList.Add(triangulatedMesh);
             }
          }
          else
          {
             // It is not from Solid, so we will use the faces to export. It works for Surface export too
-            triangulatedBody = ExportSurfaceAsTriangulatedFaceSet(exporterIFC, element, options, geomObject);
+            IFCAnyHandle triangulatedMesh = ExportSurfaceAsTriangulatedFaceSet(exporterIFC, element, options, geomObject);
+            triangulatedBodyList.Add(triangulatedMesh);
          }
-         return triangulatedBody;
+
+         return triangulatedBodyList;
+      }
+
+      /// <summary>
+      /// Export Geometry in IFC4 tessellation. Internally will decide to try to export as an IfcPolygonalFaceSet only when the Solid is all plannar
+      /// </summary>
+      /// <param name="exporterIFC">the exporter</param>
+      /// <param name="element">the element</param>
+      /// <param name="options">the options</param>
+      /// <param name="geomObject">geometry objects</param>
+      /// <returns>returns a handle</returns>
+      public static IFCAnyHandle ExportBodyAsTessellatedFaceSet(ExporterIFC exporterIFC, Element element, BodyExporterOptions options,
+                  GeometryObject geomObject)
+      {
+         IList<IFCAnyHandle> tessellatedBodyList = null;
+         IFCAnyHandle tessellatedBody = null;
+
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4_ADD2)
+         {
+            tessellatedBodyList = ExportBodyAsPolygonalFaceSet(exporterIFC, element, options, geomObject);
+         }
+         else
+         {
+            tessellatedBodyList = ExportBodyAsTriangulatedFaceSet(exporterIFC, element, options, geomObject);
+         }
+
+         // We only handle one shell for now
+         if (tessellatedBodyList != null && tessellatedBodyList.Count > 0)
+            tessellatedBody = tessellatedBodyList[0];
+
+         return tessellatedBody;
       }
 
       /// <summary>
@@ -2125,13 +2289,13 @@ namespace Revit.IFC.Export.Exporter
                   hasAdvancedBrepGeometry = true;
                }
             }
-            
+
             // If we are using the Reference View, try a triangulated face set.
             // In theory, we could export a tessellated face set for geometry in the Design Transfer View that failed above.
             // However, FacetedBReps do hold more information (and aren't only triangles).
             if (!alreadyExported && canExportAsTessellatedFaceSet)
             {
-               IFCAnyHandle triangulatedBodyItem = ExportBodyAsTriangulatedFaceSet(exporterIFC, element, options, geomObject);
+               IFCAnyHandle triangulatedBodyItem = ExportBodyAsTessellatedFaceSet(exporterIFC, element, options, geomObject);
                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(triangulatedBodyItem))
                {
                   bodyItems.Add(triangulatedBodyItem);
@@ -2143,7 +2307,7 @@ namespace Revit.IFC.Export.Exporter
                if (!alreadyExported)
                   continue;
             }
-            
+
             // If the above options do not generate any body, do the traditional step for Brep
             if (!alreadyExported && (exportAsBReps || isCoarse))
                alreadyExported = ExportBodyAsSolid(exporterIFC, element, options, currentFaceHashSetList, geomObject);
@@ -2470,7 +2634,8 @@ namespace Revit.IFC.Export.Exporter
           ElementId overrideMaterialId,
           IList<GeometryObject> geometryList,
           BodyExporterOptions options,
-          IFCExtrusionCreationData exportBodyParams)
+          IFCExtrusionCreationData exportBodyParams,
+          GeometryObject potentialPathGeom = null)
       {
          BodyData bodyData = new BodyData();
          if (geometryList.Count == 0)
@@ -2532,6 +2697,9 @@ namespace Revit.IFC.Export.Exporter
          bool supportOffsetTransformForExtrusions = !(tryExtrusionAnalyzer || tryToExportAsSweptSolidAsTessellation);
          bool useOffsetTransformForExtrusions = (options.AllowOffsetTransform && supportOffsetTransformForExtrusions && (exportBodyParams != null));
 
+         MaterialAndProfile materialAndProfile = null;
+         HashSet<IFCAnyHandle> footprintHandleSet = new HashSet<IFCAnyHandle>();
+
          using (IFCTransaction tr = new IFCTransaction(file))
          {
             // generate "bottom corner" of bbox; create new local placement if passed in.
@@ -2540,6 +2708,8 @@ namespace Revit.IFC.Export.Exporter
             {
                if (useOffsetTransformForExtrusions)
                   bodyData.OffsetTransform = transformSetter.InitializeFromBoundingBox(exporterIFC, bbox, exportBodyParams, out unscaledTrfOrig);
+               else
+                  bodyData.OffsetTransform = Transform.Identity;
 
                // If we passed in an ExtrusionLocalCoordinateSystem, and we have 1 Solid, we will try to create an extrusion using the ExtrusionAnalyzer.
                // If we succeed, we will skip the rest of the routine, otherwise we will try with the backup extrusion method.
@@ -2556,42 +2726,55 @@ namespace Revit.IFC.Export.Exporter
                                         options.ExtrusionLocalCoordinateSystem.Origin);
                         XYZ extrusionDirection = options.ExtrusionLocalCoordinateSystem.BasisX;
 
+                        GenerateAdditionalInfo footprintOrProfile = GenerateAdditionalInfo.None;
+                        if (options.CollectFootprintHandle)
+                            footprintOrProfile |= GenerateAdditionalInfo.GenerateFootprint;
+                        if (options.CollectMaterialAndProfile)
+                            footprintOrProfile |= GenerateAdditionalInfo.GenerateProfileDef;
+
                         bool completelyClipped;
                         HandleAndData extrusionData = ExtrusionExporter.CreateExtrusionWithClippingAndProperties(exporterIFC, element,
                                     CategoryUtil.GetSafeCategoryId(element), geometryList[0] as Solid, extrusionPlane,
-                            extrusionDirection, null, out completelyClipped);
+                            extrusionDirection, null, out completelyClipped, addInfo:footprintOrProfile);
                         if (!completelyClipped && !IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionData.Handle) && extrusionData.BaseExtrusions != null && extrusionData.BaseExtrusions.Count == 1)
                         {
-                           HashSet<ElementId> materialIds = extrusionData.MaterialIds;
+                              HashSet<ElementId> materialIds = extrusionData.MaterialIds;
 
-                           // We skip setting and getting the material id from the exporter as unnecessary.
-                           ElementId matIdFromGeom = (materialIds != null && materialIds.Count > 0) ? materialIds.First() : ElementId.InvalidElementId;
-                           ElementId matId = (overrideMaterialId != ElementId.InvalidElementId) ? overrideMaterialId : matIdFromGeom;
+                              // We skip setting and getting the material id from the exporter as unnecessary.
+                              ElementId matIdFromGeom = (materialIds != null && materialIds.Count > 0) ? materialIds.First() : ElementId.InvalidElementId;
+                              ElementId matId = (overrideMaterialId != ElementId.InvalidElementId) ? overrideMaterialId : matIdFromGeom;
 
                            bodyItems.Add(extrusionData.BaseExtrusions[0]);
-                           materialIdsForExtrusions.Add(matId);
-                           if (matId != ElementId.InvalidElementId)
-                              bodyData.AddMaterial(matId);
-                           bodyData.RepresentationHnd = extrusionData.Handle;
-                           bodyData.ShapeRepresentationType = extrusionData.ShapeRepresentationType;
+                              materialIdsForExtrusions.Add(matId);
+                              if (matId != ElementId.InvalidElementId)
+                                 bodyData.AddMaterial(matId);
+                              bodyData.RepresentationHnd = extrusionData.Handle;
+                              bodyData.ShapeRepresentationType = extrusionData.ShapeRepresentationType;
+                           bodyData.materialAndProfile = extrusionData.materialAndProfile;
+                           bodyData.FootprintOrProfileHandle = extrusionData.FootprintRepHandle;
 
-                           if (exportBodyParams != null && extrusionData.Data != null)
-                           {
-                              exportBodyParams.Slope = extrusionData.Data.Slope;
-                              exportBodyParams.ScaledLength = extrusionData.Data.ScaledLength;
-                              exportBodyParams.ExtrusionDirection = extrusionData.Data.ExtrusionDirection;
+                              if (exportBodyParams != null && extrusionData.Data != null)
+                              {
+                                 exportBodyParams.Slope = extrusionData.Data.Slope;
+                                 exportBodyParams.ScaledLength = extrusionData.Data.ScaledLength;
+                                 exportBodyParams.ExtrusionDirection = extrusionData.Data.ExtrusionDirection;
 
-                              exportBodyParams.ScaledHeight = extrusionData.Data.ScaledHeight;
-                              exportBodyParams.ScaledWidth = extrusionData.Data.ScaledWidth;
+                                 exportBodyParams.ScaledHeight = extrusionData.Data.ScaledHeight;
+                                 exportBodyParams.ScaledWidth = extrusionData.Data.ScaledWidth;
 
-                              exportBodyParams.ScaledArea = extrusionData.Data.ScaledArea;
-                              exportBodyParams.ScaledInnerPerimeter = extrusionData.Data.ScaledInnerPerimeter;
-                              exportBodyParams.ScaledOuterPerimeter = extrusionData.Data.ScaledOuterPerimeter;
+                                 exportBodyParams.ScaledArea = extrusionData.Data.ScaledArea;
+                                 exportBodyParams.ScaledInnerPerimeter = extrusionData.Data.ScaledInnerPerimeter;
+                                 exportBodyParams.ScaledOuterPerimeter = extrusionData.Data.ScaledOuterPerimeter;
+                              }
+
+                              hasExtrusions = true;
+                           if ((footprintOrProfile & GenerateAdditionalInfo.GenerateFootprint) != 0)
+                               footprintHandleSet.Add(extrusionData.FootprintRepHandle);
+                           if ((footprintOrProfile & GenerateAdditionalInfo.GenerateProfileDef) != 0)
+                               materialAndProfile = extrusionData.materialAndProfile;
+
+                              extrusionTransaction.Commit();
                            }
-
-                           hasExtrusions = true;
-                           extrusionTransaction.Commit();
-                        }
                         else
                         {
                            extrusionTransaction.RollBack();
@@ -2698,6 +2881,20 @@ namespace Revit.IFC.Export.Exporter
 
                               IList<CurveLoop> curveLoops = extrusionLists[ii][0].GetLoops();
                               XYZ extrusionDirection = extrusionLists[ii][0].ExtrusionDirection;
+                              if (options.CollectFootprintHandle)
+                              {
+                                  // Must Check correctness for transform!!!!!
+                                 Plane offsetPlane = new Plane(bodyData.OffsetTransform.BasisX, bodyData.OffsetTransform.BasisY, bodyData.OffsetTransform.Origin);
+                                 footprintHandleSet.Add(GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, curveLoops[0], offsetPlane, extrusionDirection));
+                              }
+                               if (options.CollectMaterialAndProfile)
+                               {
+                                   // Get the handle to the extrusion Swept Area needed for creation of IfcMaterialProfile
+                                   IFCData extrArea = extrusionHandle.GetAttribute("SweptArea");
+                                    if (materialAndProfile == null)
+                                        materialAndProfile = new MaterialAndProfile();
+                                    materialAndProfile.Add(exporterIFC.GetMaterialIdForCurrentExportState(), extrArea.AsInstance());
+                               }
 
                               if (exportBodyParams != null)
                               {
@@ -2764,14 +2961,21 @@ namespace Revit.IFC.Export.Exporter
                      if (solid != null)
                      {
                         // TODO: give normal hint below if we have an idea.
-                        simpleSweptSolidAnalyzer = SweptSolidExporter.CanExportAsSweptSolid(exporterIFC, solid, null);
+                        XYZ directrixPlaneNormal = (potentialPathGeom != null && potentialPathGeom is Arc) ? (potentialPathGeom as Arc).Normal : null;
+                        if (directrixPlaneNormal == null)
+                           directrixPlaneNormal = (potentialPathGeom != null && potentialPathGeom is Ellipse) ? (potentialPathGeom as Ellipse).Normal : null;
+                        simpleSweptSolidAnalyzer = SweptSolidExporter.CanExportAsSweptSolid(exporterIFC, solid, directrixPlaneNormal, potentialPathGeom);
 
                         // If we are exporting as a BRep, we will keep the analyzer for later, if it isn't null.
                         if (simpleSweptSolidAnalyzer != null)
                         {
                            if (!tryToExportAsSweptSolidAsTessellation)
                            {
-                              SweptSolidExporter sweptSolidExporter = SweptSolidExporter.Create(exporterIFC, element, simpleSweptSolidAnalyzer, solid);
+                               GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None;
+                               if (options.CollectFootprintHandle)
+                                    addInfo |= GenerateAdditionalInfo.GenerateFootprint;
+
+                               SweptSolidExporter sweptSolidExporter = SweptSolidExporter.Create(exporterIFC, element, simpleSweptSolidAnalyzer, solid, addInfo:addInfo);
                               IFCAnyHandle sweptHandle = (sweptSolidExporter != null) ? sweptSolidExporter.RepresentationItem : null;
 
                               if (!IFCAnyHandleUtil.IsNullOrHasNoValue(sweptHandle))
@@ -2787,6 +2991,18 @@ namespace Revit.IFC.Export.Exporter
                                     hasExtrusions = true;
                                  else if (sweptSolidExporter.isSpecificRepresentationType(ShapeRepresentationType.AdvancedSweptSolid))
                                     hasSweptSolids = true;
+
+                                 if (options.CollectFootprintHandle)
+                                 {
+                                     if (sweptSolidExporter.FootprintHandle!= null)
+                                         footprintHandleSet.Add(sweptSolidExporter.FootprintHandle);
+                              }
+                                 if (options.CollectMaterialAndProfile)
+                                 {
+                                     // Get the handle to the extrusion Swept Area needed for creation of IfcMaterialProfile
+                                     IFCData extrArea = sweptHandle.GetAttribute("SweptArea");
+                                     materialAndProfile.Add(exporterIFC.GetMaterialIdForCurrentExportState(), extrArea.AsInstance());
+                                 }
                               }
                               else
                                  simpleSweptSolidAnalyzer = null;    // Didn't work for some reason.
@@ -2821,24 +3037,32 @@ namespace Revit.IFC.Export.Exporter
                            bodyData.RepresentationHnd =
                                RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
                            bodyData.ShapeRepresentationType = ShapeRepresentationType.SweptSolid;
+                           bodyData = saveMaterialAndFootprintInfo(exporterIFC, bodyData, materialAndProfile, footprintHandleSet, options.CollectFootprintHandle);
                         }
                         else if (hasSweptSolids && !hasExtrusions)
                         {
                            bodyData.RepresentationHnd =
                                RepresentationUtil.CreateAdvancedSweptSolidRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
                            bodyData.ShapeRepresentationType = ShapeRepresentationType.AdvancedSweptSolid;
+                           bodyData = saveMaterialAndFootprintInfo(exporterIFC, bodyData, materialAndProfile, footprintHandleSet, options.CollectFootprintHandle);
                         }
                         else if (hasRepresentationType == ShapeRepresentationType.Tessellation)
                         {
                            bodyData.RepresentationHnd =
                                RepresentationUtil.CreateTessellatedRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
                            bodyData.ShapeRepresentationType = ShapeRepresentationType.Tessellation;
+
+                           // If there is footprint information that won't be used for Tessellation, delete them 
+                           deleteOrphanedFootprintHnd(footprintHandleSet);
                         }
                         else
                         {
                            bodyData.RepresentationHnd =
                                RepresentationUtil.CreateSolidModelRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet);
                            bodyData.ShapeRepresentationType = ShapeRepresentationType.SolidModel;
+
+                           // Delete footprint representation instances if the solid is not of sweptarea type (that won't be exported as Ifc*StandardCase)
+                           deleteOrphanedFootprintHnd(footprintHandleSet);
                         }
                      }
 
@@ -2847,6 +3071,7 @@ namespace Revit.IFC.Export.Exporter
                      XYZ lpOrig = ((bodyData != null) && (bodyData.OffsetTransform != null)) ? bodyData.OffsetTransform.Origin : new XYZ();
                      transformSetter.CreateLocalPlacementFromOffset(exporterIFC, bbox, exportBodyParams, lpOrig, unscaledTrfOrig);
                      tr.Commit();
+                     
                      return bodyData;
                   }
                }
@@ -3011,6 +3236,53 @@ namespace Revit.IFC.Export.Exporter
 
          return ExportBody(exporterIFC, element, categoryId, overrideMaterialId, geomList,
              options, exportBodyParams);
+      }
+
+      static void deleteOrphanedFootprintHnd(HashSet<IFCAnyHandle> footprintHandleSet)
+      {
+         // Delete footprint representation instances if the solid is not of sweptarea type (that won't be exported as Ifc*StandardCase)
+         if (footprintHandleSet.Count > 0)
+         {
+            IList<IFCAnyHandle> footprints = footprintHandleSet.ToList();
+            for (int ii = 0; ii < footprints.Count; ++ii)
+               footprints[ii].Delete();
+         }
+      }
+
+      static BodyData saveMaterialAndFootprintInfo(ExporterIFC exporterIFC, BodyData bodyData, MaterialAndProfile materialAndProfile, HashSet<IFCAnyHandle> footprintHandleSet, bool collectFootprintOption)
+      {
+         if (materialAndProfile != null)
+            bodyData.materialAndProfile = materialAndProfile;
+         // Export of item with Footprint identifier only in IFC4
+         if ((ExporterCacheManager.ExportOptionsCache.ExportAs4) && (footprintHandleSet.Count > 0 && collectFootprintOption))
+         {
+            IFCAnyHandle contextOfItemFootprint = exporterIFC.Get3DContextHandle("FootPrint");
+            IFCAnyHandle footprintShapeRep = RepresentationUtil.CreateBaseShapeRepresentation(exporterIFC, contextOfItemFootprint, "FootPrint", "Curve2D", footprintHandleSet);
+            bodyData.FootprintOrProfileHandle = footprintShapeRep;
+         }
+
+         return bodyData;
+      }
+
+      static bool isAllPlanar(GeometryObject geom)
+      {
+         bool ret = true;
+
+         if (geom is Solid)
+         {
+            Solid solid = geom as Solid;
+            foreach (Face f in solid.Faces)
+            {
+               if (!(f is PlanarFace))
+               {
+                  ret = false;
+                  break;
+               }
+            }
+            return ret;
+         }
+         else
+            return false;
       }
    }
 }
