@@ -709,8 +709,28 @@ namespace Revit.IFC.Import.Data
          }
 
          ModelPath path = ModelPathUtils.ConvertUserVisiblePathToModelPath(originalIFCFileName);
-         ExternalResourceReference ifcResource = ExternalResourceReference.CreateLocalResource(originalDocument,
-            ExternalResourceTypes.BuiltInExternalResourceTypes.IFCLink, path, PathType.Relative);
+
+         // Relative path type only works if the model isn't in the cloud.  As such, we'll try again if the
+         // routine returns an exception.
+         ExternalResourceReference ifcResource = null;
+         for (int ii = 0; ii < 2; ii++)
+         {
+            PathType pathType = (ii == 0) ? PathType.Relative : PathType.Absolute;
+            try
+            {
+               ifcResource = ExternalResourceReference.CreateLocalResource(originalDocument,
+                  ExternalResourceTypes.BuiltInExternalResourceTypes.IFCLink, path, pathType);
+               break;
+            }
+            catch
+            {
+               ifcResource = null;
+            }
+         }
+
+         if (ifcResource == null)
+            Importer.TheLog.LogError(-1, "Couldn't create local IFC cached file.  Aborting import.", true);
+
 
          if (!doReloadFrom)
          {

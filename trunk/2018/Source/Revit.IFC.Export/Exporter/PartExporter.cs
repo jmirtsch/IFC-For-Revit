@@ -17,6 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Autodesk.Revit.DB;
@@ -212,6 +213,26 @@ namespace Revit.IFC.Export.Exporter
          Part part = partElement as Part;
          if (part == null)
             return;
+
+         if (!asBuildingElement)
+         {
+            // Check the intended IFC entity or type name is in the exclude list specified in the UI
+            Common.Enums.IFCEntityType elementClassTypeEnum;
+            if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcBuildingElementPart", out elementClassTypeEnum))
+               if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+                  return;
+         }
+         else
+         {
+            string ifcEnumType = null;
+            IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
+
+            // Check the intended IFC entity or type name is in the exclude list specified in the UI
+            Common.Enums.IFCEntityType elementClassTypeEnum;
+            if (Enum.TryParse<Common.Enums.IFCEntityType>(exportType.ToString(), out elementClassTypeEnum))
+               if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+                  return;
+         }
 
          PlacementSetter standalonePlacementSetter = null;
          bool standaloneExport = hostElement == null && !asBuildingElement;

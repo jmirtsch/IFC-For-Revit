@@ -75,108 +75,6 @@ namespace Revit.IFC.Export.Exporter
                   wallHeight = boundingBox.Max.Z - boundingBox.Min.Z;
             }
 
-            //ElementId typeElemId = hostObject.GetTypeId();
-            //IFCAnyHandle materialLayerSet = ExporterCacheManager.MaterialSetCache.Find(typeElemId);
-            //// Roofs with no components are only allowed one material.  We will arbitrarily choose the thickest material.
-            //IFCAnyHandle primaryMaterialHnd = ExporterCacheManager.MaterialSetCache.FindPrimaryMaterialHnd(typeElemId);
-            //if (IFCAnyHandleUtil.IsNullOrHasNoValue(materialLayerSet))
-            //{
-            //    HostObjAttributes hostObjAttr = hostObject.Document.GetElement(typeElemId) as HostObjAttributes;
-            //    if (hostObjAttr == null)
-            //        return true; //nothing to do
-
-            //    List<ElementId> matIds = new List<ElementId>();
-            //    List<double> widths = new List<double>();
-            //    List<MaterialFunctionAssignment> functions = new List<MaterialFunctionAssignment>();
-            //    ElementId baseMatId = CategoryUtil.GetBaseMaterialIdForElement(hostObject);
-            //    CompoundStructure cs = hostObjAttr.GetCompoundStructure();
-            //    if (cs != null)
-            //    {
-            //        //TODO: Vertically compound structures are not yet supported by export.
-            //        if (!cs.IsVerticallyHomogeneous() && !MathUtil.IsAlmostZero(wallHeight))
-            //            cs = cs.GetSimpleCompoundStructure(wallHeight, wallHeight / 2.0);
-
-            //        for (int i = 0; i < cs.LayerCount; ++i)
-            //        {
-            //            ElementId matId = cs.GetMaterialId(i);
-            //            if (matId != ElementId.InvalidElementId)
-            //            {
-            //                matIds.Add(matId);
-            //            }
-            //            else
-            //            {
-            //                matIds.Add(baseMatId);
-            //            }
-            //            widths.Add(cs.GetLayerWidth(i));
-            //            // save layer function into ProductWrapper, 
-            //            // it's used while exporting "Function" of Pset_CoveringCommon
-            //            functions.Add(cs.GetLayerFunction(i));
-            //        }
-            //    }
-
-            //    if (matIds.Count == 0)
-            //    {
-            //        matIds.Add(baseMatId);
-            //        widths.Add(cs != null ? cs.GetWidth() : 0);
-            //        functions.Add(MaterialFunctionAssignment.None);
-            //    }
-
-            //    // We can't create IfcMaterialLayers without creating an IfcMaterialLayerSet.  So we will simply collate here.
-            //    IList<IFCAnyHandle> materialHnds = new List<IFCAnyHandle>();
-            //    IList<int> widthIndices = new List<int>();
-            //    double thickestLayer = 0.0;
-            //    for (int ii = 0; ii < matIds.Count; ++ii)
-            //    {
-            //        // Require positive width for IFC2x3 and before, and non-negative width for IFC4.
-            //        if (widths[ii] < -MathUtil.Eps())
-            //            continue;
-
-            //        bool almostZeroWidth = MathUtil.IsAlmostZero(widths[ii]);
-            //        if (!ExporterCacheManager.ExportOptionsCache.ExportAs4 && almostZeroWidth)
-            //            continue;
-
-            //        if (almostZeroWidth)
-            //            widths[ii] = 0.0;
-
-            //        IFCAnyHandle materialHnd = CategoryUtil.GetOrCreateMaterialHandle(exporterIFC, matIds[ii]);
-            //        if (primaryMaterialHnd == null || (widths[ii] > thickestLayer))
-            //        {
-            //            primaryMaterialHnd = materialHnd;
-            //            thickestLayer = widths[ii];
-            //        }
-
-            //        widthIndices.Add(ii);
-            //        materialHnds.Add(materialHnd);
-
-            //        if ((productWrapper != null) && (functions[ii] == MaterialFunctionAssignment.Finish1 || functions[ii] == MaterialFunctionAssignment.Finish2))
-            //        {
-            //            productWrapper.AddFinishMaterial(materialHnd);
-            //        }
-            //    }
-
-            //    int numLayersToCreate = widthIndices.Count;
-            //    if (numLayersToCreate == 0)
-            //        return false;
-
-            //    if (!containsBRepGeometry)
-            //    {
-            //        IList<IFCAnyHandle> layers = new List<IFCAnyHandle>(numLayersToCreate);
-
-            //        for (int ii = 0; ii < numLayersToCreate; ii++)
-            //        {
-            //            int widthIndex = widthIndices[ii];
-            //            double scaledWidth = UnitUtil.ScaleLength(widths[widthIndex]);
-            //            IFCAnyHandle materialLayer = IFCInstanceExporter.CreateMaterialLayer(file, materialHnds[ii], scaledWidth, null);
-            //            layers.Add(materialLayer);
-            //        }
-
-            //        string layerSetName = exporterIFC.GetFamilyName();
-            //        materialLayerSet = IFCInstanceExporter.CreateMaterialLayerSet(file, layers, layerSetName);
-
-            //        ExporterCacheManager.MaterialSetCache.Register(typeElemId, materialLayerSet);
-            //        ExporterCacheManager.MaterialSetCache.RegisterPrimaryMaterialHnd(typeElemId, primaryMaterialHnd);
-            //    }
-
             List<ElementId> matIds;
             IFCAnyHandle primaryMaterialHnd;
             IFCAnyHandle materialLayerSet = ExporterUtil.CollectMaterialLayerSet(exporterIFC, hostObject, productWrapper, out matIds, out primaryMaterialHnd);
@@ -341,12 +239,12 @@ namespace Revit.IFC.Export.Exporter
          CompoundStructure cs = hostObjAttr.GetCompoundStructure();
          if (cs != null)
          {
-            for (int i = 0; i < cs.LayerCount; ++i)
+            for (int ii = 0; ii < cs.LayerCount; ++ii)
             {
-               MaterialFunctionAssignment function = cs.GetLayerFunction(i);
+               MaterialFunctionAssignment function = cs.GetLayerFunction(ii);
                if (function == MaterialFunctionAssignment.Finish1 || function == MaterialFunctionAssignment.Finish2)
                {
-                  ElementId matId = cs.GetMaterialId(i);
+                  ElementId matId = cs.GetMaterialId(ii);
                   if (matId != ElementId.InvalidElementId)
                   {
                      matIds.Add(matId);

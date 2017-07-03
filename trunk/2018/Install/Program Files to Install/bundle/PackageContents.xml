@@ -1,5 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<ApplicationPackage SchemaVersion="1.0" AutodeskProduct="Revit" ProductType="Application" Name="IFC Exporter for Revit" AppVersion="4.0.0.0" Description="This application seamlessly replaces the built-in IFC export capabilities of Revit 2015. " Author="Autodesk" Icon=".\Contents\Resources\IFCExporter.png" AppNameSpace="appstore.exchange.autodesk.com" OnlineDocumentation="http://www.autodesk.com" HelpFile=".\Contents\Resources\ADSKIFCExporterHelp.htm" ProductCode="{254DE637-077E-4181-9404-973E2884A926}" UpgradeCode="{dd4b2d31-c406-4d3a-bf53-ca0ca3e49c38}" SupportedLocales="Enu">
-  <CompanyDetails Name="Autodesk" Phone=" " Url="http://www.autodesk.com" Email="Revit.apps@autodesk.com" />
-  <RuntimeRequirements OS="Win32|Win64" Platform="Revit*" SeriesMin="2015" SeriesMax="2015" />
+<ApplicationPackage SchemaVersion="1.0" AutodeskProduct="Revit" ProductType="Application" Name="IFC For Revit 2018" AppVersion="18.1.0.0" Description="This application seamlessly replaces the built-in IFC capabilities of Revit 2018. " Author="Autodesk, Inc." Icon="./Contents/2018/Resource/IFC.ico" AppNameSpace="appstore.exchange.autodesk.com" OnlineDocumentation="http://www.autodesk.com" HelpFile="./Contents/2018/Resource/ADSKIFCExporterHelp.htm" ProductCode="{E0AAAE7D-610A-4793-98BC-AB75F379A4D1}" UpgradeCode="{9C2ACF1D-0801-4E78-B25F-AB68B24640D6}" SupportedLocales="Enu" FriendlyVersion="18.1.0.0">
+  <CompanyDetails Name="Autodesk, Inc." Phone=" " Url="http://www.autodesk.com" Email="Revit.apps@autodesk.com" />
+  <RuntimeRequirements OS="Win64" Platform="Revit" SeriesMin="2018" SeriesMax="2018" />
+  <Components Description="2018">
+    <RuntimeRequirements OS="Win64" Platform="Revit" SeriesMin="R2018" SeriesMax="R2018" />
+    <ComponentEntry AppName="IFC For Revit 2018" Version="18.1.0.0" ModuleName="./Contents/2018/IFCExporterUIOverride.addin" AppDescription="IFC For Revit 2018" />
+    <ComponentEntry AppName="IFC For Revit 2018" Version="18.1.0.0" ModuleName="./Contents/2018/Revit.IFC.addin" AppDescription="IFC For Revit 2018" />
+  </Components>
 </ApplicationPackage>

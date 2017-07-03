@@ -17,6 +17,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
+using System;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Utility;
@@ -47,6 +48,12 @@ namespace Revit.IFC.Export.Exporter
       {
          if (element == null || geometryElement == null)
             return null;
+
+         // Check the intended IFC entity or type name is in the exclude list specified in the UI
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcBuildingElementProxy", out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+               return null;
 
          IFCFile file = exporterIFC.GetFile();
          IFCAnyHandle buildingElementProxy = null;

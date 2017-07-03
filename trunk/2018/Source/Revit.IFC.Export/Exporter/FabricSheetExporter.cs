@@ -48,7 +48,13 @@ namespace Revit.IFC.Export.Exporter
             if (element == null)
                 return false;
 
-            HashSet<IFCAnyHandle> fabricSheetHandles = null;
+         // Check the intended IFC entity or type name is in the exclude list specified in the UI
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcGroup", out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+               return false;
+
+         HashSet<IFCAnyHandle> fabricSheetHandles = null;
             if (!ExporterCacheManager.FabricAreaHandleCache.TryGetValue(element.Id, out fabricSheetHandles))
                 return false;
 
@@ -93,7 +99,13 @@ namespace Revit.IFC.Export.Exporter
             if (sheet == null || geometryElement == null)
                 return false;
 
-            Document doc = sheet.Document;
+         // Check the intended IFC entity or type name is in the exclude list specified in the UI
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcReinforcingMesh", out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+               return false;
+
+         Document doc = sheet.Document;
             IFCFile file = exporterIFC.GetFile();
 
             using (IFCTransaction tr = new IFCTransaction(file))

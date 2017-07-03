@@ -197,6 +197,56 @@ working on expanding and eventually removing this limit, and we will be tracking
 
 <div class="versionset">
 
+<div class="version">18.2.0.0</div><div class="versioninfo-bullet">
+
+<p>General:
+
+<ul>
+<li>Added extra UI and functionality to make COBie IFC exports easier.  Specific improvements will be detailed below.
+<li>TODO: Some of the new fields will be localized to French in a future release.
+
+</ul>
+
+<p>New Export Functionality:
+
+<ul>
+<li>Allow curtain wall mullions to export as any supported IFC entity.
+<li>Allow families to export as IfcPile with corresponding IfcPileType.
+<li>Improve export of axis representations for structural elements.
+<li>When exporting schedules as property sets, individual schedules can be excluded from the export by setting the IfcExportAs shared parameter to "Don't Export".
+<li>(COBie) Add COBie Company Information tab in Modify Setup if COBie export is chosen.
+<li>(COBie) Add COBie Project Information tab in Modify Setup if COBie export is chosen.
+<li>(COBie) Improve entity naming for COBie export.
+<li>(COBie) Rename "IFC2x3 Extended FM Handover View" to "IFC2x3 COBie 2.4 Design Deliverable"
+<li>(IFC4) Improve export of material layers.
+<li>(IFC4) Modify Setup has an option to force triangulation only for tessellated outputs.
+
+
+</ul>
+
+<p>Export Bug Fixes:
+
+<ul>
+<li>Allow exporting to IFC while using Collaboration for Revit where the default directory isn't local.
+<li>Better support for MEP type entities, that didn't always export correctly.
+<li>Correct the parameters of the directrix of some IfcSweptSolids.
+<li>Fix correct mapping of IfcBurnerType/IfcGasTerminalType and IfcElectricHeaterType/IfcSpaceHeaterType.
+<li>Fix creation of types for sub-entities of IfcDistributionCOntrolElement.
+<li>Fix offset problem when using the "Export Linked Files as Separate IFCs" option in locales where the decimal mark is not a point.
+<li>(IFC4) Correct names of IFC4 entity quantity sets.
+<li>(IFC4) Fix the name of IfcCommunicationsApplianceType.
+</ul>
+
+<p>Import Bug Fixes:
+
+<ul>
+<li>Improve heuristic that decides the "best" material to export when we can only assign one material to geometry.
+<li>Stabilize GUIDs of some IfcOpeningElements.
+<li>Stabilize order of creation of geometry with multiple clippings and openings, to have consistent output.
+</ul>
+
+</div>
+
 <div class="version">18.1.0.0</div><div class="versioninfo-bullet">
 
 <p>General:

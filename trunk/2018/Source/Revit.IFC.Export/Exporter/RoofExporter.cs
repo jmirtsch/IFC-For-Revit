@@ -182,6 +182,14 @@ namespace Revit.IFC.Export.Exporter
          if (!elementIsRoof && !elementIsFloor)
             return null;
 
+         Common.Enums.IFCEntityType elementClassTypeEnum = Common.Enums.IFCEntityType.IfcRoof;
+         if (elementIsFloor)
+            elementClassTypeEnum = Common.Enums.IFCEntityType.IfcSlab;
+
+         // Check the intended IFC entity or type name is in the exclude list specified in the UI
+         if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+            return null;
+
          using (IFCTransaction transaction = new IFCTransaction(file))
          {
             using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, element))
@@ -343,6 +351,12 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="productWrapper">The ProductWrapper.</param>
       public static void ExportRoofAsParts(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement, ProductWrapper productWrapper)
       {
+         // Check the intended IFC entity or type name is in the exclude list specified in the UI
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcRoof", out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+               return;
+
          IFCFile file = exporterIFC.GetFile();
 
          using (IFCTransaction transaction = new IFCTransaction(file))

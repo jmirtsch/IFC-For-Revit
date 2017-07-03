@@ -72,12 +72,12 @@ namespace BIM.IFC.Export.UI
          RevitCommandId commandId = RevitCommandId.LookupCommandId("ID_EXPORT_IFC");
          try
          {
-             m_ifcCommandBinding = application.CreateAddInCommandBinding(commandId);
-             
+            m_ifcCommandBinding = application.CreateAddInCommandBinding(commandId);
+
          }
-          catch
+         catch
          {
-             return Result.Failed;
+            return Result.Failed;
          }
 
          m_ifcCommandBinding.Executed += OnIFCExport;
@@ -139,8 +139,8 @@ namespace BIM.IFC.Export.UI
       /// </summary>
       public static String MruExportPath
       {
-          get { return m_mruExportPath; }
-          set { m_mruExportPath = value; }
+         get { return m_mruExportPath; }
+         set { m_mruExportPath = value; }
       }
 
       /// <summary>
@@ -162,7 +162,7 @@ namespace BIM.IFC.Export.UI
          }
       }
 
-      
+
       /// <summary>
       /// Implementation of the command binding event for the IFC export command.
       /// </summary>
@@ -203,128 +203,128 @@ namespace BIM.IFC.Export.UI
                // This shouldn't happen, but just to be safe.
                if (docsToExport == 0)
                   return;
-                
+
                bool multipleFiles = docsToExport > 1;
-               
+
                // If user chooses to continue
-                
-                
-                  // change options
-                  IFCExportConfiguration selectedConfig = mainWindow.GetSelectedConfiguration();
 
-                  // Prompt the user for the file location and path
-                  string defaultExt = mainWindow.DefaultExt;
-                  String fullName = mainWindow.ExportFilePathName;
-                  String path = Path.GetDirectoryName(fullName);
-                  String fileName = multipleFiles ? Properties.Resources.MultipleFiles : Path.GetFileName(fullName);
- 
 
-                  // This option should be rarely used, and is only for consistency with old files.  As such, it is set by environment variable only.
-                  String use2009GUID = Environment.GetEnvironmentVariable("Assign2009GUIDToBuildingStoriesOnIFCExport");
-                  bool use2009BuildingStoreyGUIDs = (use2009GUID != null && use2009GUID == "1");
+               // change options
+               IFCExportConfiguration selectedConfig = mainWindow.GetSelectedConfiguration();
 
-                  string unsuccesfulExports = string.Empty;
+               // Prompt the user for the file location and path
+               string defaultExt = mainWindow.DefaultExt;
+               String fullName = mainWindow.ExportFilePathName;
+               String path = Path.GetDirectoryName(fullName);
+               String fileName = multipleFiles ? Properties.Resources.MultipleFiles : Path.GetFileName(fullName);
 
-                  // In rare occasions, there may be two projects loaded into Revit with the same name.  This isn't supposed to be allowed, but can happen if,
-                  // e.g., a user creates a new project, exports it to IFC, and then calls Open IFC.  In this case, if we export both projects, we will overwrite
-                  // one of the exports.  Prevent that by keeping track of the exported file names.
-                  ISet<string> exportedFileNames = new HashSet<string>();
 
-                  foreach (Document document in mainWindow.DocumentsToExport)
+               // This option should be rarely used, and is only for consistency with old files.  As such, it is set by environment variable only.
+               String use2009GUID = Environment.GetEnvironmentVariable("Assign2009GUIDToBuildingStoriesOnIFCExport");
+               bool use2009BuildingStoreyGUIDs = (use2009GUID != null && use2009GUID == "1");
+
+               string unsuccesfulExports = string.Empty;
+
+               // In rare occasions, there may be two projects loaded into Revit with the same name.  This isn't supposed to be allowed, but can happen if,
+               // e.g., a user creates a new project, exports it to IFC, and then calls Open IFC.  In this case, if we export both projects, we will overwrite
+               // one of the exports.  Prevent that by keeping track of the exported file names.
+               ISet<string> exportedFileNames = new HashSet<string>();
+
+               foreach (Document document in mainWindow.DocumentsToExport)
+               {
+                  TheDocument = document;
+
+                  // Call this before the Export IFC transaction starts, as it has its own transaction.
+                  IFCClassificationMgr.DeleteObsoleteSchemas(document);
+
+                  Transaction transaction = new Transaction(document, "Export IFC");
+                  transaction.Start();
+
+                  FailureHandlingOptions failureOptions = transaction.GetFailureHandlingOptions();
+                  failureOptions.SetClearAfterRollback(false);
+                  transaction.SetFailureHandlingOptions(failureOptions);
+
+                  // Normally the transaction will be rolled back, but there are cases where we do update the document.
+                  // There is no UI option for this, but these two options can be useful for debugging/investigating
+                  // issues in specific file export.  The first one supports export of only one element
+                  //exportOptions.AddOption("SingleElement", "174245");
+                  // The second one supports export only of a list of elements
+                  //exportOptions.AddOption("ElementsForExport", "174245;205427");
+
+                  if (multipleFiles)
                   {
-                     TheDocument = document;
+                     fileName = IFCUISettings.GenerateFileNameFromDocument(document, exportedFileNames) + "." + defaultExt;
+                     fullName = path + "\\" + fileName;
+                  }
 
-                     // Call this before the Export IFC transaction starts, as it has its own transaction.
-                     IFCClassificationMgr.DeleteObsoleteSchemas(document);
+                  // Prepare the export options
+                  IFCExportOptions exportOptions = new IFCExportOptions();
 
-                     Transaction transaction = new Transaction(document, "Export IFC");
-                     transaction.Start();
+                  ElementId activeViewId = GenerateActiveViewIdFromDocument(document);
+                  selectedConfig.ActiveViewId = selectedConfig.UseActiveViewGeometry ? activeViewId.IntegerValue : -1;
+                  selectedConfig.UpdateOptions(exportOptions, activeViewId);
 
-                     FailureHandlingOptions failureOptions = transaction.GetFailureHandlingOptions();
-                     failureOptions.SetClearAfterRollback(false);
-                     transaction.SetFailureHandlingOptions(failureOptions);
+                  bool result = document.Export(path, fileName, exportOptions);
 
-                     // Normally the transaction will be rolled back, but there are cases where we do update the document.
-                     // There is no UI option for this, but these two options can be useful for debugging/investigating
-                     // issues in specific file export.  The first one supports export of only one element
-                     //exportOptions.AddOption("SingleElement", "174245");
-                     // The second one supports export only of a list of elements
-                     //exportOptions.AddOption("ElementsForExport", "174245;205427");
-
-                     if (multipleFiles)
+                  Dictionary<ElementId, string> linksGUIDsCache = new Dictionary<ElementId, string>();
+                  if (result)
+                  {
+                     // Cache for links guids
+                     if (selectedConfig.ExportLinkedFiles == true)
                      {
-                         fileName = IFCUISettings.GenerateFileNameFromDocument(document, exportedFileNames) + "." + defaultExt;
-                        fullName = path + "\\" + fileName;
-                     }
-
-                     // Prepare the export options
-                     IFCExportOptions exportOptions = new IFCExportOptions();
-                     
-                     ElementId activeViewId = GenerateActiveViewIdFromDocument(document);
-                     selectedConfig.UpdateOptions(exportOptions, activeViewId);
-                     selectedConfig.ActiveViewId = selectedConfig.UseActiveViewGeometry ? activeViewId.IntegerValue : -1;
-
-                     bool result = document.Export(path, fileName, exportOptions);
-
-                     Dictionary<ElementId, string> linksGUIDsCache = new Dictionary<ElementId, string>();
-                     if (result)
-                     {
-                        // Cache for links guids
-                        if (selectedConfig.ExportLinkedFiles == true)
+                        Autodesk.Revit.DB.FilteredElementCollector collector = new FilteredElementCollector(document);
+                        collector.WhereElementIsNotElementType().OfCategory(BuiltInCategory.OST_RvtLinks);
+                        System.Collections.Generic.ICollection<ElementId> rvtLinkInstanceIds = collector.ToElementIds();
+                        foreach (ElementId linkId in rvtLinkInstanceIds)
                         {
-                           Autodesk.Revit.DB.FilteredElementCollector collector = new FilteredElementCollector(document);
-                           collector.WhereElementIsNotElementType().OfCategory(BuiltInCategory.OST_RvtLinks);
-                           System.Collections.Generic.ICollection<ElementId> rvtLinkInstanceIds = collector.ToElementIds();
-                           foreach (ElementId linkId in rvtLinkInstanceIds)
+                           Element linkInstance = document.GetElement(linkId);
+                           if (linkInstance == null)
+                              continue;
+                           Parameter parameter = linkInstance.get_Parameter(BuiltInParameter.IFC_GUID);
+                           if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.String)
                            {
-                              Element linkInstance = document.GetElement(linkId);
-                              if (linkInstance == null)
-                                 continue;
-                              Parameter parameter = linkInstance.get_Parameter(BuiltInParameter.IFC_GUID);
-                              if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.String)
-                              {
-                                 String sGUID = parameter.AsString(), sGUIDlower = sGUID.ToLower();
-                                 foreach (KeyValuePair<ElementId, string> value in linksGUIDsCache)
-                                    if (value.Value.ToLower().IndexOf(sGUIDlower) == 0)
-                                       sGUID += "-";
-                                 linksGUIDsCache.Add(linkInstance.Id, sGUID);
-                              }
+                              String sGUID = parameter.AsString(), sGUIDlower = sGUID.ToLower();
+                              foreach (KeyValuePair<ElementId, string> value in linksGUIDsCache)
+                                 if (value.Value.ToLower().IndexOf(sGUIDlower) == 0)
+                                    sGUID += "-";
+                              linksGUIDsCache.Add(linkInstance.Id, sGUID);
                            }
                         }
                      }
-                     else
-                     {
-                        unsuccesfulExports += fullName + "\n";
-                     }
-
-                     // Roll back the transaction started earlier, unless certain options are set.
-                     if (result && (use2009BuildingStoreyGUIDs || selectedConfig.StoreIFCGUID))
-                        transaction.Commit();
-                     else
-                        transaction.RollBack();
-
-                     // Export links
-                     if (selectedConfig.ExportLinkedFiles == true)
-                     {
-                        exportOptions.AddOption("ExportingLinks", true.ToString());
-                        ExportLinkedDocuments(document, fullName, linksGUIDsCache, exportOptions);
-                        exportOptions.AddOption("ExportingLinks", false.ToString());
-                     }
                   }
-
-                  if (!string.IsNullOrWhiteSpace(unsuccesfulExports))
+                  else
                   {
-                     using (TaskDialog taskDialog = new TaskDialog(Properties.Resources.IFCExport))
-                     {
-                        taskDialog.MainInstruction = string.Format(Properties.Resources.IFCExportProcessError, unsuccesfulExports);
-                        taskDialog.MainIcon = TaskDialogIcon.TaskDialogIconWarning;
-                        TaskDialogResult taskDialogResult = taskDialog.Show();
-                     }
+                     unsuccesfulExports += fullName + "\n";
                   }
 
-                  // Remember last successful export location
-                  m_mruExportPath = path;
-               
+                  // Roll back the transaction started earlier, unless certain options are set.
+                  if (result && (use2009BuildingStoreyGUIDs || selectedConfig.StoreIFCGUID))
+                     transaction.Commit();
+                  else
+                     transaction.RollBack();
+
+                  // Export links
+                  if (selectedConfig.ExportLinkedFiles == true)
+                  {
+                     exportOptions.AddOption("ExportingLinks", true.ToString());
+                     ExportLinkedDocuments(document, fullName, linksGUIDsCache, exportOptions);
+                     exportOptions.AddOption("ExportingLinks", false.ToString());
+                  }
+               }
+
+               if (!string.IsNullOrWhiteSpace(unsuccesfulExports))
+               {
+                  using (TaskDialog taskDialog = new TaskDialog(Properties.Resources.IFCExport))
+                  {
+                     taskDialog.MainInstruction = string.Format(Properties.Resources.IFCExportProcessError, unsuccesfulExports);
+                     taskDialog.MainIcon = TaskDialogIcon.TaskDialogIconWarning;
+                     TaskDialogResult taskDialogResult = taskDialog.Show();
+                  }
+               }
+
+               // Remember last successful export location
+               m_mruExportPath = path;
+
             }
 
             // The cancel button should cancel the export, not any "OK"ed setup changes.
@@ -494,9 +494,9 @@ namespace BIM.IFC.Export.UI
             if (index <= 0)
                index = linkPathNameCopy.Length;
             linkPathNameCopy = linkPathNameCopy.Insert(index, " - Copy");
-            int i = 1;
+            int ii = 1;
             while (File.Exists(linkPathNameCopy))
-               linkPathNameCopy = linkPathNameCopy.Insert(index, "(" + (++i).ToString() + ")");
+               linkPathNameCopy = linkPathNameCopy.Insert(index, "(" + (++ii).ToString() + ")");
 
             // copy the file
             File.Copy(linkPathName, linkPathNameCopy);
@@ -647,17 +647,17 @@ namespace BIM.IFC.Export.UI
                int numLinkInstancesToExport = linkFileNames.Count;
                exportOptions.AddOption("NumberOfExportedLinkInstances", numLinkInstancesToExport.ToString());
 
-               for (int ii = 0; ii < numLinkInstancesToExport; ii++)
+               for (int ind = 0; ind < numLinkInstancesToExport; ind++)
                {
-                  string optionName = (ii == 0) ? "ExportLinkInstanceTransform" : "ExportLinkInstanceTransform" + (ii + 1).ToString();
-                  exportOptions.AddOption(optionName, serTransforms[ii]);
+                  string optionName = (ind == 0) ? "ExportLinkInstanceTransform" : "ExportLinkInstanceTransform" + (ind + 1).ToString();
+                  exportOptions.AddOption(optionName, serTransforms[ind]);
 
                   // Don't pass in file name for the first link instance.
-                  if (ii == 0)
+                  if (ind == 0)
                      continue;
 
-                  optionName = "ExportLinkInstanceFileName" + (ii + 1).ToString();
-                  exportOptions.AddOption(optionName, linkFileNames[ii]);
+                  optionName = "ExportLinkInstanceFileName" + (ind + 1).ToString();
+                  exportOptions.AddOption(optionName, linkFileNames[ind]);
                }
 
                // Pass in the first value; the rest will  be in the options.

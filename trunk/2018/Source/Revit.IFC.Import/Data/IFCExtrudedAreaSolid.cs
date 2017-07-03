@@ -277,6 +277,7 @@ namespace Revit.IFC.Import.Data
                 loops == null ||
                 loops.Count() == 0 ||
                 extrusionDirection == null ||
+                !extrusionPosition.IsConformal ||
                 !Application.IsValidThickness(currDepth))
                return null;
 
@@ -567,7 +568,7 @@ namespace Revit.IFC.Import.Data
          return extrusionSolids;
       }
 
-      private GeometryObject CreateGeometryFromMateriaProfile(IFCImportShapeEditScope shapeEditScope, 
+      private GeometryObject CreateGeometryFromMaterialProfile(IFCImportShapeEditScope shapeEditScope, 
          IList<CurveLoop> loops, XYZ extrusionDirection, double currDepth, SolidOptions solidOptions, out bool shouldWarn)
       {
          GeometryObject extrusionSolid = null;
@@ -667,12 +668,12 @@ namespace Revit.IFC.Import.Data
          Transform origLCS = (lcs == null) ? Transform.Identity : lcs;
          Transform origScaledLCS = (scaledLcs == null) ? Transform.Identity : scaledLcs;
 
-         Transform extrusionPosition = (Position == null) ? origLCS : origLCS.Multiply(Position);
+         Transform unscaledExtrusionPosition = (Position == null) ? origLCS : origLCS.Multiply(Position);
          Transform scaledExtrusionPosition = (Position == null) ? origScaledLCS : origScaledLCS.Multiply(Position);
 
-         XYZ extrusionDirection = extrusionPosition.OfVector(Direction);
+         XYZ scaledExtrusionDirection = scaledExtrusionPosition.OfVector(Direction);
 
-         ISet<IList<CurveLoop>> disjointLoops = GetTransformedCurveLoops(extrusionPosition);
+         ISet<IList<CurveLoop>> disjointLoops = GetTransformedCurveLoops(unscaledExtrusionPosition, scaledExtrusionPosition);
          if (disjointLoops == null || disjointLoops.Count() == 0)
             return null;
 
@@ -695,15 +696,15 @@ namespace Revit.IFC.Import.Data
                {
                   if (shapeEditScope.Creator.MaterialSelect is IFCMaterialLayerSetUsage)
                   {
-                     IList<GeometryObject> extrusionLayers = CreateGeometryFromMaterialLayerUsage(shapeEditScope, extrusionPosition, loops,
-                        extrusionDirection, currDepth, out overrideMaterialId, out shouldWarn);
+                     IList<GeometryObject> extrusionLayers = CreateGeometryFromMaterialLayerUsage(shapeEditScope, scaledExtrusionPosition, loops,
+                        scaledExtrusionDirection, currDepth, out overrideMaterialId, out shouldWarn);
                      if (extrusionLayers == null || extrusionLayers.Count == 0)
                      {
                         if (shouldWarn)
                            Importer.TheLog.LogWarning(Id, "Couldn't process associated IfcMaterialLayerSetUsage, using body geometry instead.", false);
                         if (overrideMaterialId != ElementId.InvalidElementId)
                            solidOptions.MaterialId = overrideMaterialId;
-                        extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, extrusionDirection, currDepth, solidOptions);
+                        extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, scaledExtrusionDirection, currDepth, solidOptions);
                      }
                      else
                      {
@@ -713,18 +714,18 @@ namespace Revit.IFC.Import.Data
                   }
                   else if (shapeEditScope.Creator.MaterialSelect is IFCMaterialProfileSetUsage)
                   {
-                     extrusionObject = CreateGeometryFromMateriaProfile(shapeEditScope, loops, extrusionDirection, currDepth, solidOptions, out shouldWarn);
+                     extrusionObject = CreateGeometryFromMaterialProfile(shapeEditScope, loops, scaledExtrusionDirection, currDepth, solidOptions, out shouldWarn);
                      if (extrusionObject == null)
-                        extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, extrusionDirection, currDepth, solidOptions);
+                        extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, scaledExtrusionDirection, currDepth, solidOptions);
                   }
                   else
                   {
-                     extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, extrusionDirection, currDepth, solidOptions);
+                     extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, scaledExtrusionDirection, currDepth, solidOptions);
                   }
                }
                else
                {
-                  extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, extrusionDirection, currDepth, solidOptions);
+                  extrusionObject = GeometryCreationUtilities.CreateExtrusionGeometry(loops, scaledExtrusionDirection, currDepth, solidOptions);
                }
             }
             catch (Exception ex)
@@ -735,7 +736,7 @@ namespace Revit.IFC.Import.Data
                Importer.TheLog.LogError(Id, "Extrusion has an invalid definition for a solid; reverting to mesh.", false);
 
                MeshFromGeometryOperationResult meshResult = TessellatedShapeBuilder.CreateMeshByExtrusion(
-                  loops, extrusionDirection, currDepth, GetMaterialElementId(shapeEditScope));
+                  loops, scaledExtrusionDirection, currDepth, GetMaterialElementId(shapeEditScope));
 
                // will throw if mesh is not available
                extrusionObject = meshResult.GetMesh();

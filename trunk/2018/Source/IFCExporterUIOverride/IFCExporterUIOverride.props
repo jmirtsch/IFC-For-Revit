@@ -18,11 +18,6 @@
       <HintPath>$(RevitExePath)\RevitAPIIFC.dll</HintPath>
 	  <Private>False</Private>
     </Reference>
-    <Reference Include="Revit.IFC.Common">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(RevitExePath)\Revit.IFC.Common.dll</HintPath>
-	  <Private>False</Private>
-    </Reference>
   </ItemGroup>
   <ItemGroup />
     <!--
