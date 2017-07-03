@@ -242,10 +242,6 @@ namespace Revit.IFC.Export.Exporter
             roomId = setter.UpdateRoomRelativeCoordinates(familyInstance, out localPlacementToUse);
          }
 
-         // Note that the call below is incorrect: productRepresentation can be null for parts, and 
-         // GetRepresentations throws if it is.
-         //List<IFCAnyHandle> repHnds = IFCAnyHandleUtil.GetRepresentations(productRepresentation);
-
          //should remove the create method where there is no use of this handle for API methods
          //some places uses the return value of ExportGenericInstance as input parameter for API methods
          IFCAnyHandle instanceHandle = null;
@@ -255,13 +251,6 @@ namespace Revit.IFC.Export.Exporter
             case IFCExportType.IfcBeamType:
                {
                   string preDefinedType = string.IsNullOrWhiteSpace(ifcEnumType) ? "BEAM" : ifcEnumType;
-                  //if (RepresentationUtil.representationForStandardCases(type, repHnds))
-                  //{
-                  //    instanceHandle = IFCInstanceExporter.CreateBeamStandardCase(file, instanceGUID, ownerHistory,
-                  //       instanceName, instanceDescription, instanceObjectType, localPlacementToUse,
-                  //       productRepresentation, instanceTag, preDefinedType);
-                  //}
-                  //else
                   instanceHandle = IFCInstanceExporter.CreateBeam(file, instanceGUID, ownerHistory,
                      instanceName, instanceDescription, instanceObjectType, localPlacementToUse,
                      productRepresentation, instanceTag, preDefinedType);
@@ -271,12 +260,6 @@ namespace Revit.IFC.Export.Exporter
             case IFCExportType.IfcColumnType:
                {
                   string preDefinedType = string.IsNullOrWhiteSpace(ifcEnumType) ? "COLUMN" : ifcEnumType;
-                  //if (RepresentationUtil.representationForStandardCases(type, repHnds))
-                  //{
-                  //    instanceHandle = IFCInstanceExporter.CreateColumnStandardCase(file, instanceGUID, ownerHistory,
-                  //       instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag, preDefinedType);
-                  //}
-                  //else
                   instanceHandle = IFCInstanceExporter.CreateColumn(file, instanceGUID, ownerHistory,
                      instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag, preDefinedType);
                   break;
@@ -292,12 +275,6 @@ namespace Revit.IFC.Export.Exporter
             case IFCExportType.IfcMemberType:
                {
                   string preDefinedType = string.IsNullOrWhiteSpace(ifcEnumType) ? "BRACE" : ifcEnumType;
-                  //if (RepresentationUtil.representationForStandardCases(type, repHnds))
-                  //{
-                  //    instanceHandle = IFCInstanceExporter.CreateMemberStandardCase(file, instanceGUID, ownerHistory,
-                  //       instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag, preDefinedType);
-                  //}
-                  //else
                   instanceHandle = IFCInstanceExporter.CreateMember(file, instanceGUID, ownerHistory,
                      instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag, preDefinedType);
 
@@ -316,10 +293,6 @@ namespace Revit.IFC.Export.Exporter
                   }
 
                   string preDefinedType = string.IsNullOrWhiteSpace(ifcEnumType) ? "NOTDEFINED" : ifcEnumType;
-                  //if (ExporterCacheManager.ExportOptionsCache.ExportAs4 && RepresentationUtil.representationForStandardCases(type, repHnds))
-                  //    instanceHandle = IFCInstanceExporter.CreatePlateStandardCase(file, instanceGUID, ownerHistory,
-                  //        instanceName, instanceDescription, instanceObjectType, localPlacement, productRepresentation, instanceTag, preDefinedType);
-                  //else
                   instanceHandle = IFCInstanceExporter.CreatePlate(file, instanceGUID, ownerHistory,
                       instanceName, instanceDescription, instanceObjectType, localPlacement, productRepresentation, instanceTag, preDefinedType);
                   break;
@@ -426,18 +399,19 @@ namespace Revit.IFC.Export.Exporter
                            instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
                      }
                   }
-                  else if ((type == IFCExportType.IfcFurnishingElement) || IsFurnishingElementSubType(type) ||
-                              (type == IFCExportType.IfcEnergyConversionDevice) || IsEnergyConversionDeviceSubType(type) ||
-                              (type == IFCExportType.IfcFlowFitting) || IsFlowFittingSubType(type) ||
-                              (type == IFCExportType.IfcFlowMovingDevice) || IsFlowMovingDeviceSubType(type) ||
-                              (type == IFCExportType.IfcFlowSegment) || IsFlowSegmentSubType(type) ||
-                              (type == IFCExportType.IfcFlowStorageDevice) || IsFlowStorageDeviceSubType(type) ||
-                              (type == IFCExportType.IfcFlowTerminal) || IsFlowTerminalSubType(type) ||
-                              (type == IFCExportType.IfcFlowTreatmentDevice) || IsFlowTreatmentDeviceSubType(type) ||
-                              (type == IFCExportType.IfcFlowController) || IsFlowControllerSubType(type) ||
-                              (type == IFCExportType.IfcDistributionFlowElement) || IsDistributionFlowElementSubType(type) ||
-                              (type == IFCExportType.IfcDistributionControlElement) || IsDistributionControlElementSubType(type) ||
-                              (type == IFCExportType.IfcBuildingElementProxy) || (type == IFCExportType.IfcBuildingElementProxyType))
+                  else if ((type == IFCExportType.IfcPile) ||
+                     (type == IFCExportType.IfcFurnishingElement) || IsFurnishingElementSubType(type) ||
+                     (type == IFCExportType.IfcEnergyConversionDevice) || IsEnergyConversionDeviceSubType(type) ||
+                     (type == IFCExportType.IfcFlowFitting) || IsFlowFittingSubType(type) ||
+                     (type == IFCExportType.IfcFlowMovingDevice) || IsFlowMovingDeviceSubType(type) ||
+                     (type == IFCExportType.IfcFlowSegment) || IsFlowSegmentSubType(type) ||
+                     (type == IFCExportType.IfcFlowStorageDevice) || IsFlowStorageDeviceSubType(type) ||
+                     (type == IFCExportType.IfcFlowTerminal) || IsFlowTerminalSubType(type) ||
+                     (type == IFCExportType.IfcFlowTreatmentDevice) || IsFlowTreatmentDeviceSubType(type) ||
+                     (type == IFCExportType.IfcFlowController) || IsFlowControllerSubType(type) ||
+                     (type == IFCExportType.IfcDistributionFlowElement) || IsDistributionFlowElementSubType(type) ||
+                     (type == IFCExportType.IfcDistributionControlElement) || IsDistributionControlElementSubType(type) ||
+                     (type == IFCExportType.IfcBuildingElementProxy) || (type == IFCExportType.IfcBuildingElementProxyType))
                   {
                      string exportEntityStr = type.ToString();
                      Common.Enums.IFCEntityType exportEntity = Common.Enums.IFCEntityType.UnKnown;
@@ -566,7 +540,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="symbol">The element type.</param>
       /// <returns>The handle.</returns>
       private static IFCAnyHandle ExportGenericTypeBase(IFCFile file,
-         IFCExportType type,
+         IFCExportType originalType,
          string ifcEnumType,
          string guid,
          IFCAnyHandle ownerHistory,
@@ -583,16 +557,15 @@ namespace Revit.IFC.Export.Exporter
          // TODO: This routine needs to be simplified.  The long list of IFC2x3 and IFC4 calls to CreateGenericIFCType make it too easy to miss an entry.
 
          Revit.IFC.Common.Enums.IFCEntityType IFCTypeEntity;
-         if (!Enum.TryParse(type.ToString(), out IFCTypeEntity))
+         string typeAsString = originalType.ToString();
+
+         // We'll accept the IFCExportType with or without "Type", but we'll append "Type" if we don't find it.
+         if (string.Compare(typeAsString.Substring(typeAsString.Length - 4), "Type", true) != 0)
+            typeAsString += "Type";
+
+         if (!Enum.TryParse(typeAsString, out IFCTypeEntity))
             return null;    // The export type is unknown IFC type entity
 
-         // NOTE: If the entity doesn't end in "Type", it isn't a type entity, and is likely currently unsupported to be exported as a type.
-         // This needs to be cleaned up so that it doesn't normally happen.
-         string IFCTypeEntityAsString = IFCTypeEntity.ToString();
-         if (string.Compare(IFCTypeEntityAsString.Substring(IFCTypeEntityAsString.Length - 4), "Type", true) != 0)
-            return null;
-
-         string desireType = string.Empty;
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             // TODO: Create a routine that does this mapping automatically.
@@ -600,16 +573,13 @@ namespace Revit.IFC.Export.Exporter
             {
                case Common.Enums.IFCEntityType.IfcGasTerminalType:
                   IFCTypeEntity = Common.Enums.IFCEntityType.IfcBurnerType;
-                  type = IFCExportType.IfcBurnerType;
+                  typeAsString = IFCExportType.IfcBurnerType.ToString();
                   break;
                case Common.Enums.IFCEntityType.IfcElectricHeaterType:
                   IFCTypeEntity = Common.Enums.IFCEntityType.IfcSpaceHeaterType;
-                  type = IFCExportType.IfcSpaceHeaterType;
+                  typeAsString = IFCExportType.IfcSpaceHeaterType.ToString();
                   break;
             }
-
-            string[] typeStr = type.ToString().Split('.');
-            desireType = "Revit.IFC.Export.Toolkit.IFC4." + typeStr[typeStr.Length - 1];
          }
          else
          {
@@ -618,17 +588,19 @@ namespace Revit.IFC.Export.Exporter
             {
                case Common.Enums.IFCEntityType.IfcBurnerType:
                   IFCTypeEntity = Common.Enums.IFCEntityType.IfcGasTerminalType;
-                  type = IFCExportType.IfcGasTerminalType;
+                  typeAsString = IFCExportType.IfcGasTerminalType.ToString();
                   break;
                case Common.Enums.IFCEntityType.IfcSpaceHeaterType:
                   IFCTypeEntity = Common.Enums.IFCEntityType.IfcElectricHeaterType;
-                  type = IFCExportType.IfcElectricHeaterType;
+                  typeAsString = IFCExportType.IfcElectricHeaterType.ToString();
                   break;
             }
-
-            string[] typeStr = type.ToString().Split('.');
-            desireType = "Revit.IFC.Export.Toolkit." + typeStr[typeStr.Length - 1];
          }
+
+         string[] typeStr = typeAsString.Split('.');
+         string desireTypeBase = "Revit.IFC.Export.Toolkit.";
+         string desireTypeBaseExtra = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? ".IFC4" : string.Empty;
+         string desireType = desireTypeBase + desireTypeBaseExtra + typeStr[typeStr.Length - 1];
 
          object enumValue = null;
 
@@ -681,613 +653,6 @@ namespace Revit.IFC.Export.Exporter
                      description, applicableOccurrence, propertySets, representationMapList, elementTag,
                      typeName, enumValueAsString);
       }
-      //switch (type)
-      //{
-      //   case IFCExportType.IfcActuatorType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCActuatorType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcAirTerminalBoxType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCAirTerminalBoxType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcAirTerminalType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCAirTerminalType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcAirToAirHeatRecoveryType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCAirToAirHeatRecoveryType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcAlarmType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCAlarmType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcAudioVisualAppliance:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCAudioVisualApplianceType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcBoilerType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCBoilerType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcBurnerType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCBurnerType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcCableCarrierFittingType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCCableCarrierFittingType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcCableCarrierSegmentType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCCableCarrierSegmentType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcCableFittingType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCCableFittingType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcCableSegmentType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCCableSegmentType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcChillerType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCChillerType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcCoilType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCCoilType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcCommunicationAppliance:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCCommunicationsApplianceType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcCompressorType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCCompressorType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcCondenserType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCCondenserType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcControllerType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCControllerType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcCooledBeamType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCCooledBeamType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcCoolingTowerType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCCoolingTowerType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcDamperType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCDamperType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcDistributionChamberElementType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCDistributionChamberElementType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcDuctFittingType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCDuctFittingType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcDuctSegmentType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCDuctSegmentType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcDuctSilencerType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCDuctSilencerType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcElectricApplianceType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCElectricApplianceType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcElectricDistributionBoardType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCElectricDistributionBoardType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcElectricFlowStorageDeviceType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCElectricFlowStorageDeviceType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcElectricGeneratorType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCElectricGeneratorType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcElectricHeaterType:
-      //      {
-      //         Convert to IfcSpaceHeaterType for IFC4.
-      //         return IFCInstanceExporter.CreateGenericIFCType(Common.Enums.IFCEntityType.IfcSpaceHeaterType, file, guid, ownerHistory, name,
-      //             description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //             typeName, GetPreDefinedType<Toolkit.IFC4.IFCSpaceHeaterType>(instance, ifcEnumType).ToString());
-      //      }
-      //   case IFCExportType.IfcElectricMotorType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCElectricMotorType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcElectricTimeControlType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCElectricTimeControlType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcEngineType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCEngineType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcEvaporativeCoolerType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCEvaporativeCoolerType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcEvaporatorType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCEvaporatorType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcFanType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCFanType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcFilterType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCFilterType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcFireSuppressionTerminalType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCFireSuppressionTerminalType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcFlowInstrumentType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCFlowInstrumentType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcFlowMeterType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCFlowMeterType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcHeatExchangerType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCHeatExchangerType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcHumidifierType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCHumidifierType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcInterceptorType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCInterceptorType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcJunctionBoxType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCJunctionBoxType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcLampType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCLampType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcLightFixtureType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCLightFixtureType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcMedicalDeviceType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCMedicalDeviceType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcMotorConnectionType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCMotorConnectionType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcOutletType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCOutletType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcPipeFittingType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCPipeFittingType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcPipeSegmentType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCPipeSegmentType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcProtectiveDeviceType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCProtectiveDeviceType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcProtectiveDeviceTrippingUnitType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCProtectiveDeviceTrippingUnitType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcPumpType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCPumpType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcSanitaryTerminalType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCSanitaryTerminalType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcSensorType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCSensorType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcSolarDeviceType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCSolarDeviceType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcSpaceHeaterType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCSpaceHeaterType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcStackTerminalType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCStackTerminalType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcSwitchingDeviceType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCSwitchingDeviceType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcTankType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCTankType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcTransformerType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCTransformerType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcTubeBundleType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCTubeBundleType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcUnitaryControlElementType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCUnitaryControlElementType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcUnitaryEquipmentType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCUnitaryEquipmentType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcValveType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCValveType>(instance, ifcEnumType).ToString());
-      //   case IFCExportType.IfcWasteTerminalType:
-      //      return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //          description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //          typeName, GetPreDefinedType<Toolkit.IFC4.IFCWasteTerminalType>(instance, ifcEnumType).ToString());
-
-      //// Non MEP types
-      //case IFCExportType.IfcDiscreteAccessoryType:
-      //   return IFCInstanceExporter.CreateDiscreteAccessoryType(file, guid, ownerHistory, name,
-      //      description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //      typeName);
-      //case IFCExportType.IfcFastenerType:
-      //   return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //       description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //       typeName, GetPreDefinedType<Toolkit.IFC4.IFCFastenerType>(instance, ifcEnumType).ToString());
-      //case IFCExportType.IfcSystemFurnitureElementType:
-      //   return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //       description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //       typeName, GetPreDefinedType<Toolkit.IFC4.IFCSystemFurnitureElementType>(instance, ifcEnumType).ToString());
-      //case IFCExportType.IfcFurnitureType:
-      //   return IFCInstanceExporter.CreateFurnitureType(file, guid, ownerHistory, name,
-      //       description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //       typeName, GetAssemblyPlace(instance, ifcEnumType), GetPreDefinedType<Toolkit.IFC4.IFCFurnitureType>(instance, ifcEnumType).ToString());
-      //case IFCExportType.IfcMechanicalFastenerType:
-      //   return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //       description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //       typeName, GetPreDefinedType<Toolkit.IFC4.IFCMechanicalFastenerType>(instance, ifcEnumType).ToString());
-      //case IFCExportType.IfcMemberType:
-      //   return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //       description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //       typeName, GetPreDefinedType<Toolkit.IFC4.IFCMemberType>(instance, ifcEnumType).ToString());
-      //case IFCExportType.IfcPlateType:
-      //   return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //       description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //       typeName, GetPreDefinedType<Toolkit.IFC4.IFCPlateType>(instance, ifcEnumType).ToString());
-      //case IFCExportType.IfcTransportElementType:
-      //   return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //       description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //       typeName, GetPreDefinedType<Toolkit.IFC4.IFCTransportElementType>(instance, ifcEnumType).ToString());
-      //case IFCExportType.IfcRailingType:
-      //   return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //       description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //       typeName, GetPreDefinedType<Toolkit.IFC4.IFCRailingType>(instance, ifcEnumType).ToString());
-      //case IFCExportType.IfcBuildingElementProxy:
-      //case IFCExportType.IfcBuildingElementProxyType:
-      //   return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //       description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //       typeName, GetPreDefinedType<Toolkit.IFC4.IFCBuildingElementProxyType>(instance, ifcEnumType).ToString());
-      //default:
-      //   return null;
-      //}
-      //   }
-      //   else
-      //   {   // For IFC2x3 schema version
-      //      switch (type)
-      //      {
-      //         case IFCExportType.IfcActuatorType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCActuatorType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcAirTerminalBoxType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCAirTerminalBoxType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcAirTerminalType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCAirTerminalType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcAirToAirHeatRecoveryType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCAirToAirHeatRecoveryType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcAlarmType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCAlarmType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcBoilerType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCBoilerType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcBurnerType:
-      //            {
-      //               // Map to IFC2x3 IfcGasTerminalType instad.
-      //               return IFCInstanceExporter.CreateGenericIFCType(Common.Enums.IFCEntityType.IfcGasTerminalType, file, guid, ownerHistory, name,
-      //                   description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                   typeName, GetPreDefinedType<Toolkit.IFCGasTerminalType>(instance, ifcEnumType).ToString());
-      //            }
-      //         case IFCExportType.IfcCableCarrierFittingType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCCableCarrierFittingType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcCableCarrierSegmentType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCCableCarrierSegmentType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcCableSegmentType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCCableSegmentType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcChillerType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCChillerType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcCoilType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCCoilType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcCompressorType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCCompressorType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcCondenserType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCCondenserType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcControllerType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCControllerType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcCooledBeamType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCCooledBeamType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcCoolingTowerType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCCoolingTowerType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcDamperType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCDamperType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcDistributionChamberElementType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCDistributionChamberElementType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcDuctFittingType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCDuctFittingType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcDuctSegmentType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCDuctSegmentType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcDuctSilencerType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCDuctSilencerType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcElectricApplianceType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCElectricApplianceType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcElectricFlowStorageDeviceType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCElectricFlowStorageDeviceType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcElectricGeneratorType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCElectricGeneratorType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcElectricHeaterType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCElectricHeaterType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcElectricMotorType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCElectricMotorType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcElectricTimeControlType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCElectricTimeControlType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcEvaporativeCoolerType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCEvaporativeCoolerType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcEvaporatorType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCEvaporatorType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcFanType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCFanType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcFilterType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCFilterType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcFireSuppressionTerminalType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCFireSuppressionTerminalType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcFlowInstrumentType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCFlowInstrumentType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcFlowMeterType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCFlowMeterType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcHeatExchangerType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCHeatExchangerType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcHumidifierType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCHumidifierType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcJunctionBoxType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCJunctionBoxType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcLampType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCLampType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcLightFixtureType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCLightFixtureType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcMotorConnectionType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCMotorConnectionType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcOutletType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCOutletType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcPipeFittingType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCPipeFittingType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcPipeSegmentType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCPipeSegmentType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcProtectiveDeviceType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCProtectiveDeviceType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcPumpType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCPumpType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcSanitaryTerminalType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCSanitaryTerminalType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcSensorType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCSensorType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcSpaceHeaterType:
-      //            {
-      //               // Backwards compatibility with IFC2x3.
-      //               return IFCInstanceExporter.CreateGenericIFCType(Common.Enums.IFCEntityType.IfcElectricHeaterType, file, guid, ownerHistory, name,
-      //                   description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                   typeName, GetPreDefinedType<Toolkit.IFCElectricHeaterType>(instance, ifcEnumType).ToString());
-      //            }
-      //         case IFCExportType.IfcStackTerminalType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCStackTerminalType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcSwitchingDeviceType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCSwitchingDeviceType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcTankType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCTankType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcTransformerType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCTransformerType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcTubeBundleType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCTubeBundleType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcUnitaryEquipmentType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCUnitaryEquipmentType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcValveType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCValveType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcWasteTerminalType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCWasteTerminalType>(instance, ifcEnumType).ToString());
-
-      //         // Non MEP types
-      //         case IFCExportType.IfcDiscreteAccessoryType:
-      //            return IFCInstanceExporter.CreateDiscreteAccessoryType(file, guid, ownerHistory, name,
-      //               description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //               typeName);
-      //         case IFCExportType.IfcFastenerType:
-      //            return IFCInstanceExporter.CreateFastenerType(file, guid, ownerHistory, name,
-      //               description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //               typeName);
-      //         case IFCExportType.IfcFurnishingElement:
-      //            return IFCInstanceExporter.CreateFurnishingElementType(file, guid, ownerHistory, name,
-      //               description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //               typeName);
-      //         case IFCExportType.IfcFurnitureType:
-      //            return IFCInstanceExporter.CreateFurnitureType(file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetAssemblyPlace(instance, ifcEnumType), null);
-      //         case IFCExportType.IfcMechanicalFastenerType:
-      //            return IFCInstanceExporter.CreateMechanicalFastenerType(file, guid, ownerHistory, name,
-      //               description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //               typeName);
-      //         case IFCExportType.IfcMemberType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCMemberType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcPlateType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCPlateType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcTransportElementType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCTransportElementType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcRailingType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCRailingType>(instance, ifcEnumType).ToString());
-      //         case IFCExportType.IfcBuildingElementProxy:
-      //         case IFCExportType.IfcBuildingElementProxyType:
-      //            return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-      //                description, applicableOccurrence, propertySets, representationMapList, elementTag,
-      //                typeName, GetPreDefinedType<Toolkit.IFCBuildingElementProxyType>(instance, ifcEnumType).ToString());
-      //         default:
-      //            // NOTE: There is no type in IFC2x3 for IfcElectricDistributionPoint.
-      //            return null;
-      //      }
-      //   }
-      //}
 
       /// <summary>
       /// Checks if export type is room related.
@@ -1311,8 +676,6 @@ namespace Revit.IFC.Export.Exporter
              exportType == IFCExportType.IfcBuildingElementProxyType);
       }
 
-      //        #region MEP Type's PreDefinedType
-
       /// <summary>
       /// Generic check for the PreDefinedType string from either IfcExportAs with (.predefinedtype), or IfcExportType param, or legacy IfcType param
       /// </summary>
@@ -1332,9 +695,6 @@ namespace Revit.IFC.Export.Exporter
 
          if (String.IsNullOrEmpty(value))
             return enumValue;
-
-         // string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
-         // Enum.TryParse(newValue, true, out enumValue);
 
          Enum.TryParse(value, true, out enumValue);
          return enumValue;

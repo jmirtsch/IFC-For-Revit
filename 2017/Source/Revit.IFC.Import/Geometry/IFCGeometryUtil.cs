@@ -67,7 +67,7 @@ namespace Revit.IFC.Import.Geometry
       /// <param name="origLoop">The original curve loop.</param>
       /// <param name="trf">The transform.</param>
       /// <returns>The transformed loop.</returns>
-      public static CurveLoop CreateTransformed(CurveLoop origLoop, Transform trf)
+      private static CurveLoop CreateTransformedFromConformalTransform(CurveLoop origLoop, Transform trf)
       {
          if (origLoop == null)
             return null;
@@ -76,6 +76,111 @@ namespace Revit.IFC.Import.Geometry
          foreach (Curve curve in origLoop)
          {
             newLoop.Append(curve.CreateTransformed(trf));
+         }
+         return newLoop;
+      }
+
+      private static Curve CreateArcOrEllipse(XYZ center, double radiusX, double radiusY, XYZ xAxis, XYZ yAxis, double startParam, double endParam)
+      {
+         if (MathUtil.IsAlmostEqual(radiusX, radiusY))
+            return Arc.Create(center, radiusX, startParam, endParam, xAxis, yAxis);
+         else
+            return Ellipse.CreateCurve(center, radiusX, radiusY, xAxis, yAxis, startParam, endParam);
+      }
+
+      /// <summary>
+      /// Create a copy of a curve loop with a given non-transformal transformation applied.
+      /// </summary>
+      /// <param name="origLoop">The original curve loop.</param>
+      /// <param name="id">The id of the originating entity, for error reporting.</param>
+      /// <param name="unscaledTrf">The unscaled (conformal) transform, used if we don't know how to process the curve loop.</param>
+      /// <param name="scaledTrf">The scaled transform.</param>
+      /// <returns>The transformed loop.</returns>
+      /// <remarks>Revit API only allows for conformal transformations.  Here, we support
+      /// enough data types for non-conformal cases.  In cases where we can't process
+      /// a curve in the loop, we will use the conformal parameter and log an error.</remarks>
+      public static CurveLoop CreateTransformed(CurveLoop origLoop, int id, Transform unscaledTrf, Transform scaledTrf)
+      {
+         if (origLoop == null)
+            return null;
+
+         if (scaledTrf.IsConformal)
+            return CreateTransformedFromConformalTransform(origLoop, scaledTrf);
+
+         CurveLoop newLoop = new CurveLoop();
+         foreach (Curve curve in origLoop)
+         {
+            Curve newCurve = null;
+            try
+            {
+               // Cover only Line, Arc, and Ellipse for now.  These are the most common cases.  Warn if it isn't one of these, or if the 
+               if (curve is Line)
+               {
+                  Line line = curve as Line;
+                  XYZ newEndPoint0 = scaledTrf.OfPoint(line.GetEndPoint(0));
+                  XYZ newEndPoint1 = scaledTrf.OfPoint(line.GetEndPoint(1));
+                  newCurve = Line.CreateBound(newEndPoint0, newEndPoint1);
+               }
+               else if (curve is Arc || curve is Ellipse)
+               {
+                  double startParam = curve.GetEndParameter(0);
+                  double endParam = curve.GetEndParameter(1);
+
+                  XYZ center = null;
+                  XYZ xAxis = null;
+                  XYZ yAxis = null;
+                  double radiusX = 0.0;
+                  double radiusY = 0.0;
+
+                  if (curve is Arc)
+                  {
+                     Arc arc = curve as Arc;
+                     center = arc.Center;
+                     xAxis = arc.XDirection;
+                     yAxis = arc.YDirection;
+
+                     radiusX = radiusY = arc.Radius;
+                  }
+                  else if (curve is Ellipse)
+                  {
+                     Ellipse ellipse = curve as Ellipse;
+
+                     center = ellipse.Center;
+                     xAxis = ellipse.XDirection;
+                     yAxis = ellipse.YDirection;
+
+                     radiusX = ellipse.RadiusX;
+                     radiusY = ellipse.RadiusY;
+                  }
+
+                  XYZ radiusXDir = new XYZ(radiusX, 0, 0);
+                  XYZ radiusYDir = new XYZ(0, radiusY, 0);
+                  XYZ scaledRadiusXDir = scaledTrf.OfVector(radiusXDir);
+                  XYZ scaledRadiusYDir = scaledTrf.OfVector(radiusYDir);
+
+                  double scaledRadiusX = scaledRadiusXDir.GetLength();
+                  double scaledRadiusY = scaledRadiusYDir.GetLength();
+
+                  XYZ scaledCenter = scaledTrf.OfPoint(center);
+                  XYZ scaledXAxis = scaledTrf.OfVector(xAxis).Normalize();
+                  XYZ scaledYAxis = scaledTrf.OfVector(yAxis).Normalize();
+                  newCurve = CreateArcOrEllipse(scaledCenter, scaledRadiusX, scaledRadiusY, scaledXAxis, scaledYAxis, startParam, endParam);
+               }
+            }
+            catch (Exception)
+            {
+               newCurve = null;
+            }
+
+            if (newCurve == null)
+            {
+               Importer.TheLog.LogError(id, "Couldn't apply a non-uniform transform to this curve loop.  The resulting geometry may be the wrong size.", false);
+               return CreateTransformedFromConformalTransform(origLoop, unscaledTrf);
+            }
+            else
+            {
+               newLoop.Append(newCurve);
+            }
          }
          return newLoop;
       }
@@ -256,11 +361,12 @@ namespace Revit.IFC.Import.Geometry
       /// <summary>
       /// Returns a CurveLoop that has potentially been trimmed.
       /// </summary>
+      /// <param name="id">The id of the containing IFC entity, for messaging purposes.</param>
       /// <param name="origCurveLoop">The original curve loop.</param>
       /// <param name="startVal">The starting trim parameter.</param>
       /// <param name="origEndVal">The optional end trim parameter.  If not supplied, assume no end trim.</param>
       /// <returns>The original curve loop, if no trimming has been done, otherwise a trimmed copy.</returns>
-      public static CurveLoop TrimCurveLoop(CurveLoop origCurveLoop, double startVal, double? origEndVal)
+      public static CurveLoop TrimCurveLoop(int id, CurveLoop origCurveLoop, double startVal, double? origEndVal)
       {
          // Trivial case: no trimming.
          if (!origEndVal.HasValue && MathUtil.IsAlmostZero(startVal))
@@ -269,9 +375,14 @@ namespace Revit.IFC.Import.Geometry
          IList<double> curveLengths = new List<double>();
          IList<Curve> loopCurves = new List<Curve>();
 
+         bool allLines = true;
+
          double totalParamLength = 0.0;
          foreach (Curve curve in origCurveLoop)
          {
+            if (!(curve is Line))
+               allLines = false;
+
             double currLength = ScaleCurveLengthForSweptSolid(curve, curve.GetEndParameter(1) - curve.GetEndParameter(0));
             loopCurves.Add(curve);
             curveLengths.Add(currLength);
@@ -284,6 +395,19 @@ namespace Revit.IFC.Import.Geometry
          // is equal, that an offset value is OK.
          if (MathUtil.IsAlmostEqual(endVal - startVal, totalParamLength))
             return origCurveLoop;
+
+         // Special case: if startval = 0 and endval = 1 and we have a polyline, then this likely means that the importing application
+         // incorrectly set the extents to be the "whole" curve, when really this is just a portion of the curves
+         // (the parametrization is described above).
+         // As such, if the totalParamLength is not 1 but startVal = 0 and endVal = 1, we will warn but not trim.
+         // This is not a hypothetical case: it occurs in several AllPlan 2017 files at least.
+         if (allLines && (MathUtil.IsAlmostZero(startVal) && MathUtil.IsAlmostEqual(endVal, 1.0)))
+         {
+            Importer.TheLog.LogWarning(id, "The Start Parameter for the trimming of this curve was set to 0, and the End Parameter was set to 1.  " +
+               "Most likely, this is an error in the sending application, and the trim extents are being ignored.  " +
+               "If this trim was intended, please contact Autodesk.", true);
+            return origCurveLoop;
+         }
 
          int numCurves = loopCurves.Count;
          double currentPosition = 0.0;
@@ -331,7 +455,7 @@ namespace Revit.IFC.Import.Geometry
          }
 
          CurveLoop trimmedCurveLoop = new CurveLoop();
-         foreach (Curve curve in loopCurves)
+         foreach (Curve curve in newLoopCurves)
             trimmedCurveLoop.Append(curve);
          return trimmedCurveLoop;
       }

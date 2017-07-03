@@ -693,21 +693,47 @@ namespace Revit.IFC.Export.Utility
          if (exportType == IFCExportType.IfcOpeningElement && !allowSeparateOpeningExport)
             return false;
 
+         // Check whether the intended Entity type is inside the export exclusion set
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>(ifcClassName, out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+               return false;
+
          return true;
       }
 
       /// <summary>
-      /// Checks if element should be exported by checking IfcExportAs.
+      /// Checks if an element has the IfcExportAs variable set to "DontExport".
+      /// </summary>
+      /// <param name="element">The element.</param>
+      /// <returns>True if the element has the IfcExportAs variable set to "DontExport".</returns>
+      public static bool IsIFCExportAsSetToDontExport(Element element)
+      {
+         string exportAsEntity = "IFCExportAs";
+         string elementClassName;
+         if (ParameterUtil.GetStringValueFromElementOrSymbol(element, exportAsEntity, out elementClassName) != null)
+         {
+            if (CompareAlphaOnly(elementClassName, "DONTEXPORT"))
+               return true;
+         }
+         return false;
+      }
+
+      /// <summary>
+      /// Checks if element should be exported using a variety of different checks.
       /// </summary>
       /// <param name="exporterIFC">The ExporterIFC object.</param>
       /// <param name="element">The element.</param>
       /// <param name="allowSeparateOpeningExport">True if IfcOpeningElement is allowed to be exported.</param>
       /// <returns>True if the element should be exported, false otherwise.</returns>
+      /// <remarks>There are some inefficiencies here, as we later check IfcExportAs in other contexts.  We should attempt to get the value only once.</remarks>
       public static bool ShouldElementBeExported(ExporterIFC exporterIFC, Element element, bool allowSeparateOpeningExport)
       {
+         // Allow the ExporterStateManager to say that an element should be exported regardless of settings.
          if (ExporterStateManager.CanExportElementOverride())
             return true;
 
+         // Check to see if the category should be exported.  This overrides the IfcExportAs parameter.
          if (!ShouldCategoryBeExported(exporterIFC, element, allowSeparateOpeningExport))
             return false;
 
@@ -715,8 +741,17 @@ namespace Revit.IFC.Export.Utility
          string elementClassName;
          if (ParameterUtil.GetStringValueFromElementOrSymbol(element, exportAsEntity, out elementClassName) != null)
          {
+            string enumTypeValue = string.Empty;
+            ExporterUtil.ExportEntityAndPredefinedType(elementClassName, out elementClassName, out enumTypeValue);
+
             if (CompareAlphaOnly(elementClassName, "DONTEXPORT"))
                return false;
+
+            // Check whether the intended Entity type is inside the export exclusion set
+            Common.Enums.IFCEntityType elementClassTypeEnum;
+            if (Enum.TryParse<Common.Enums.IFCEntityType>(elementClassName, out elementClassTypeEnum))
+               if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+                  return false;
          }
          return true;
       }

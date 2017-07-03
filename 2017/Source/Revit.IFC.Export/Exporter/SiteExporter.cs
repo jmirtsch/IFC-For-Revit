@@ -90,6 +90,12 @@ namespace Revit.IFC.Export.Exporter
                     throw new ArgumentException("Both document and element are null.");
             }
 
+         // Check the intended IFC entity or type name is in the exclude list specified in the UI
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcSite", out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+               return;
+
             IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction tr = new IFCTransaction(file))
             {
@@ -230,6 +236,14 @@ namespace Revit.IFC.Export.Exporter
                         string.IsNullOrWhiteSpace(siteLongName) && string.IsNullOrWhiteSpace(siteLandTitleNumber))
                         return;
                 }
+
+            COBieProjectInfo cobieProjectInfo = ExporterCacheManager.ExportOptionsCache.COBieProjectInfo;
+            // Override Site information when it is a special COBie export
+            if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieProjectInfo != null)
+            {
+               siteName = cobieProjectInfo.SiteLocation;
+               siteDescription = cobieProjectInfo.SiteDescription;
+            }
 
                 if (exportSite)
                 {

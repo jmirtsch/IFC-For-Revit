@@ -736,7 +736,7 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to IFC2x3 Extended FM Handover View.
+        ///   Looks up a localized string similar to IFC2x3  COBie 2.4 Design Deliverable View.
         /// </summary>
         public static string IFC2x3FM {
             get {
@@ -844,7 +844,7 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to IFC2x3 Extended FM Handover View.
+        ///   Looks up a localized string similar to IFC2x3 COBie 2.4 Design Deliverable View.
         /// </summary>
         public static string IFCMVDFMExtendedHandOver {
             get {

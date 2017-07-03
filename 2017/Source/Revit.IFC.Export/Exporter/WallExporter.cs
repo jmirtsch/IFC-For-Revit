@@ -1100,6 +1100,12 @@ namespace Revit.IFC.Export.Exporter
       public static void ExportWall(ExporterIFC exporterIFC, Element element, IList<IList<IFCConnectedWallData>> connectedWalls, GeometryElement geometryElement,
          ProductWrapper productWrapper)
       {
+         // Check the intended IFC entity or type name is in the exclude list specified in the UI
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcWall", out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+               return;
+
          IList<IFCAnyHandle> createdWalls = new List<IFCAnyHandle>();
 
          // We will not split walls and columns if the assemblyId is set, as we would like to keep the original wall

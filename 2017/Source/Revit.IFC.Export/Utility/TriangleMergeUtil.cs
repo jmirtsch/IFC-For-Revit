@@ -142,7 +142,7 @@ namespace Revit.IFC.Export.Utility
          /// Test whether a line segment coincides with this one (must be exactly the same start - end, or end - start) 
          /// </summary>
          /// <param name="inputSegment"></param>
-         /// <returns></returns>
+         /// <returns>True if coincide</returns>
          public bool coincide(IndexSegment inputSegment)
          {
             return ((startPindex == inputSegment.startPindex && endPIndex == inputSegment.endPIndex) 
@@ -192,11 +192,11 @@ namespace Revit.IFC.Export.Utility
             outerAndInnerBoundaries = setupEdges(indexOuterBoundary);
 
             IList<XYZ> vertices = new List<XYZ>();
-            for (int i = 0; i < indexOuterBoundary.Count; ++i)
+            for (int ii = 0; ii < indexOuterBoundary.Count; ++ii)
             {
-               vertices.Add(_geom.GetVertex(indexOuterBoundary[i]));
+               vertices.Add(_geom.GetVertex(indexOuterBoundary[ii]));
             }
-            normal = normalByNewellMethod(vertices);
+            normal = NormalByNewellMethod(vertices);
         }
 
          /// <summary>
@@ -230,11 +230,11 @@ namespace Revit.IFC.Export.Utility
 
             // Create normal from only the outer boundary
             IList<XYZ> vertices = new List<XYZ>();
-            for (int i = 0; i < indexOuterBoundary.Count; ++i)
+            for (int ii = 0; ii < indexOuterBoundary.Count; ++ii)
             {
-               vertices.Add(_geom.GetVertex(indexOuterBoundary[i]));
+               vertices.Add(_geom.GetVertex(indexOuterBoundary[ii]));
             }
-            normal = normalByNewellMethod(vertices);
+            normal = NormalByNewellMethod(vertices);
          }
 
          /// <summary>
@@ -253,7 +253,7 @@ namespace Revit.IFC.Export.Utility
          /// Find matched line segment in the face boundaries
          /// </summary>
          /// <param name="inpSeg">Input line segment as vertex indices</param>
-         /// <returns></returns>
+         /// <returns>Return index of the matched segment</returns>
          public int findMatechedIndexSegment(IndexSegment inpSeg)
          {
             int idx;
@@ -276,20 +276,20 @@ namespace Revit.IFC.Export.Utility
             else
                 boundLinesDictOffset = boundaryLinesDict.Count();
 
-            for (int i = 0; i < vertxIndices.Count; ++i)
+            for (int ii = 0; ii < vertxIndices.Count; ++ii)
             {
                IndexSegment segm; 
-               if (i == vertxIndices.Count - 1)
+               if (ii == vertxIndices.Count - 1)
                {
-                  segm = new IndexSegment(vertxIndices[i], vertxIndices[0]);
+                  segm = new IndexSegment(vertxIndices[ii], vertxIndices[0]);
 
                }
                else
                {
-                  segm = new IndexSegment(vertxIndices[i], vertxIndices[i + 1]);
+                  segm = new IndexSegment(vertxIndices[ii], vertxIndices[ii + 1]);
                }
                indexList.Add(segm);
-               boundaryLinesDict.Add(segm, i + boundLinesDictOffset);       // boundaryLinesDict is a dictionary for the combined outer and inner boundaries, the values should be sequential
+               boundaryLinesDict.Add(segm, ii + boundLinesDictOffset);       // boundaryLinesDict is a dictionary for the combined outer and inner boundaries, the values should be sequential
             }
 
             return indexList;
@@ -338,7 +338,7 @@ namespace Revit.IFC.Export.Utility
          return facesColl[_mergedFaceList.ElementAt(fIdx)].indexedInnerBoundaries;
       }
 
-      void sortVertAndFaces(int vIndex, int fIndex)
+      void SortVertAndFaces(int vIndex, int fIndex)
       {
          HashSet<int> facesOfVert;
          if (!sortedFVert.TryGetValue(vIndex, out facesOfVert))
@@ -354,7 +354,7 @@ namespace Revit.IFC.Export.Utility
          }
       }
 
-      static XYZ normalByNewellMethod(IList<XYZ> vertices)
+      static XYZ NormalByNewellMethod(IList<XYZ> vertices)
       {
          XYZ normal;
          if (vertices.Count == 3)
@@ -371,20 +371,20 @@ namespace Revit.IFC.Export.Utility
             double normZ = 0;
 
             // Use Newell algorithm only when there are more than 3 vertices to handle non-convex face and colinear edges
-            for (int i = 0; i < vertices.Count; i++)
+            for (int ii = 0; ii < vertices.Count; ii++)
             {
-               if (i == vertices.Count - 1)
+               if (ii == vertices.Count - 1)
                {
                   //The last vertex
-                  normX += (vertices[i].Y - vertices[0].Y) * (vertices[i].Z + vertices[0].Z);
-                  normY += (vertices[i].Z - vertices[0].Z) * (vertices[i].X + vertices[0].X);
-                  normZ += (vertices[i].X - vertices[0].X) * (vertices[i].Y + vertices[0].Y);
+                  normX += (vertices[ii].Y - vertices[0].Y) * (vertices[ii].Z + vertices[0].Z);
+                  normY += (vertices[ii].Z - vertices[0].Z) * (vertices[ii].X + vertices[0].X);
+                  normZ += (vertices[ii].X - vertices[0].X) * (vertices[ii].Y + vertices[0].Y);
                }
                else
                {
-                  normX += (vertices[i].Y - vertices[i + 1].Y) * (vertices[i].Z + vertices[i + 1].Z);
-                  normY += (vertices[i].Z - vertices[i + 1].Z) * (vertices[i].X + vertices[i + 1].X);
-                  normZ += (vertices[i].X - vertices[i + 1].X) * (vertices[i].Y + vertices[i + 1].Y);
+                  normX += (vertices[ii].Y - vertices[ii + 1].Y) * (vertices[ii].Z + vertices[ii + 1].Z);
+                  normY += (vertices[ii].Z - vertices[ii + 1].Z) * (vertices[ii].X + vertices[ii + 1].X);
+                  normZ += (vertices[ii].X - vertices[ii + 1].X) * (vertices[ii].Y + vertices[ii + 1].Y);
                }
             }
             normal = new XYZ(normX, normY, normZ);
@@ -395,7 +395,7 @@ namespace Revit.IFC.Export.Utility
       /// <summary>
       /// Combine coplanar triangles from the faceted body if they share the edge. From this process, polygonal faces (with or without holes) will be created
       /// </summary>
-      public void simplifyAndMergeFaces()
+      public void SimplifyAndMergeFaces()
       {
          int noTriangle = _geom.TriangleCount;
          int noVertices = _geom.VertexCount;
@@ -410,9 +410,9 @@ namespace Revit.IFC.Export.Utility
 
             IndexFace intF = new IndexFace(vertIndex);
             facesColl.Add(ef, intF);         // Keep faces in a dictionary and assigns ID
-            sortVertAndFaces(f.VertexIndex0, ef);
-            sortVertAndFaces(f.VertexIndex1, ef);
-            sortVertAndFaces(f.VertexIndex2, ef);
+            SortVertAndFaces(f.VertexIndex0, ef);
+            SortVertAndFaces(f.VertexIndex1, ef);
+            SortVertAndFaces(f.VertexIndex2, ef);
          }
 
          // After the above, we have a sorted polyhedron vertices that contains hashset of faces it belongs to
@@ -447,7 +447,7 @@ namespace Revit.IFC.Export.Utility
                List<int> mergedFaceList = null;
                if (fListDict.Value.Count > 1)
                {
-                  tryMergeFaces(fListDict.Value, out mergedFaceList);
+                  TryMergeFaces(fListDict.Value, out mergedFaceList);
                   if (mergedFaceList != null && mergedFaceList.Count > 0)
                   {
                      // insert only new face indexes as the mergedlist from different vertices can be duplicated
@@ -468,8 +468,8 @@ namespace Revit.IFC.Export.Utility
       /// </summary>
       /// <param name="inputFaceList"></param>
       /// <param name="outputFaceList"></param>
-      /// <returns></returns>
-      bool tryMergeFaces(List<int> inputFaceList, out List<int> outputFaceList)
+      /// <returns>True if done successfully</returns>
+      bool TryMergeFaces(List<int> inputFaceList, out List<int> outputFaceList)
       {
          outputFaceList = new List<int>();
          IndexFace firstF = facesColl[inputFaceList[0]];
@@ -525,40 +525,40 @@ namespace Revit.IFC.Export.Utility
 
                // Now we will remove the paired edges and merge the faces
                List<IndexSegment> newFaceEdges = new List<IndexSegment>();
-               for (int i = 0; i < currEdgeIdx; i++)
+               for (int ii = 0; ii < currEdgeIdx; ii++)
                {
                   bool toSkip = false;
                   if (fFaceIdxList.Count > 0)
-                     toSkip = fFaceIdxList.Contains(i);
+                     toSkip = fFaceIdxList.Contains(ii);
                   if (!toSkip)
-                     newFaceEdges.Add(firstF.outerAndInnerBoundaries[i]);     // add the previous edges from the firstF faces first. This will skip the currEdge
+                     newFaceEdges.Add(firstF.outerAndInnerBoundaries[ii]);     // add the previous edges from the firstF faces first. This will skip the currEdge
                }
 
                // Add the next-in-sequence edges from the second face
-               for (int i = idx + 1; i < currFace.outerAndInnerBoundaries.Count; i++)
+               for (int ii = idx + 1; ii < currFace.outerAndInnerBoundaries.Count; ii++)
                {
                   bool toSkip = false;
                   if (currFaceIdxList.Count > 0)
-                     toSkip = currFaceIdxList.Contains(i);
+                     toSkip = currFaceIdxList.Contains(ii);
                   if (!toSkip)
-                     newFaceEdges.Add(currFace.outerAndInnerBoundaries[i]);
+                     newFaceEdges.Add(currFace.outerAndInnerBoundaries[ii]);
                }
-               for (int i = 0; i < idx; i++)
+               for (int ii = 0; ii < idx; ii++)
                {
                   bool toSkip = false;
                   if (currFaceIdxList.Count > 0)
-                     toSkip = currFaceIdxList.Contains(i);
+                     toSkip = currFaceIdxList.Contains(ii);
                   if (!toSkip)
-                     newFaceEdges.Add(currFace.outerAndInnerBoundaries[i]);
+                     newFaceEdges.Add(currFace.outerAndInnerBoundaries[ii]);
                }
 
-               for (int i = currEdgeIdx + 1; i < firstF.outerAndInnerBoundaries.Count; i++)
+               for (int ii = currEdgeIdx + 1; ii < firstF.outerAndInnerBoundaries.Count; ii++)
                {
                   bool toSkip = false;
                   if (fFaceIdxList.Count > 0)
-                     toSkip = fFaceIdxList.Contains(i);
+                     toSkip = fFaceIdxList.Contains(ii);
                   if (!toSkip)
-                     newFaceEdges.Add(firstF.outerAndInnerBoundaries[i]);
+                     newFaceEdges.Add(firstF.outerAndInnerBoundaries[ii]);
                }
 
                // Build a new face
@@ -568,22 +568,22 @@ namespace Revit.IFC.Export.Utility
 
                List<IndexSegment> loopEdges = new List<IndexSegment>();
                loops.Add(loopEdges);
-               for (int i = 0; i < newFaceEdges.Count; i++)
+               for (int ii = 0; ii < newFaceEdges.Count; ii++)
                {
-                  if (i == 0)
+                  if (ii == 0)
                   {
-                     loopEdges.Add(newFaceEdges[i]);
+                     loopEdges.Add(newFaceEdges[ii]);
                   }
                   else
                   {
-                     if (newFaceEdges[i].startPindex == newFaceEdges[i - 1].endPIndex)
-                        loopEdges.Add(newFaceEdges[i]);
+                     if (newFaceEdges[ii].startPindex == newFaceEdges[ii - 1].endPIndex)
+                        loopEdges.Add(newFaceEdges[ii]);
                      else
                      {
                         // Discontinuity detected
                         loopEdges = new List<IndexSegment>();   // start new loop
                         loops.Add(loopEdges);
-                        loopEdges.Add(newFaceEdges[i]);
+                        loopEdges.Add(newFaceEdges[ii]);
                      }
                   }
                }
@@ -594,15 +594,15 @@ namespace Revit.IFC.Export.Utility
                   {
                      // There are more than 1 loops, need to consolidate if there are fragments to combine due to their continuity between the fragments
                      int toDelIdx = -1;
-                     for (int i = 1; i < loops.Count; i++)
+                     for (int ii = 1; ii < loops.Count; ii++)
                      {
-                        if (loops[0][loops[0].Count - 1].endPIndex == loops[i][0].startPindex)
+                        if (loops[0][loops[0].Count - 1].endPIndex == loops[ii][0].startPindex)
                         {
                            // found continuity, merge the loops
                            List<IndexSegment> newLoop = new List<IndexSegment>(loops[0]);
-                           newLoop.AddRange(loops[i]);
+                           newLoop.AddRange(loops[ii]);
                            finalLoops.Add(newLoop);
-                           toDelIdx = i;
+                           toDelIdx = ii;
                            break;
                         }
                      }
@@ -656,20 +656,20 @@ namespace Revit.IFC.Export.Utility
                foreach (List<IndexSegment> loop in finalLoops)
                {
                   IList<int> newFaceVerts = new List<int>();
-                  for (int i = 0; i < loop.Count; i++)
+                  for (int ii = 0; ii < loop.Count; ii++)
                   {
-                     if (i == 0)
+                     if (ii == 0)
                      {
-                        newFaceVerts.Add(loop[i].startPindex);
-                        newFaceVerts.Add(loop[i].endPIndex);
+                        newFaceVerts.Add(loop[ii].startPindex);
+                        newFaceVerts.Add(loop[ii].endPIndex);
                      }
-                     else if (i == loop.Count - 1)   // Last
+                     else if (ii == loop.Count - 1)   // Last
                      {
                         // Add nothing as the last segment ends at the first vertex
                      }
                      else
                      {
-                        newFaceVerts.Add(loop[i].endPIndex);
+                        newFaceVerts.Add(loop[ii].endPIndex);
                      }
                   }
                   // close the loop with end point from the starting point (it is important to mark the end of loop and if there is any other vertex follow, they start the inner loop)

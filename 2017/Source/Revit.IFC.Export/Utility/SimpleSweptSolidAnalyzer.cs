@@ -238,14 +238,14 @@ namespace Revit.IFC.Export.Utility
          if (potentialSweepEndFaces.Count < 2)
                 throw new InvalidOperationException("Can't find enough potential end faces.");
 
-         int i = 0;
+         int ii = 0;
          PlanarFace candidateProfileFace = null; // the potential profile face for the swept solid
          PlanarFace candidateProfileFace2 = null;
          Edge candidatePathEdge = null;
          bool foundCandidateFace = false;
          do
          {
-            candidateProfileFace = potentialSweepEndFaces[i++];
+            candidateProfileFace = potentialSweepEndFaces[ii++];
 
             // find edges on the candidate profile face and the side faces with the edges
             // later find edges on the other candidate profile face with same side faces
@@ -351,7 +351,7 @@ namespace Revit.IFC.Export.Utility
 
             if (foundCandidateFace)
                break;
-         } while (i < potentialSweepEndFaces.Count);
+         } while (ii < potentialSweepEndFaces.Count);
 
          SimpleSweptSolidAnalyzer simpleSweptSolidAnalyzer = null;
 
@@ -425,9 +425,9 @@ namespace Revit.IFC.Export.Utility
             EdgeArrayArray edgeLoops = face.EdgeLoops;
             int edgeLoopCount = edgeLoops.Size;
 
-            for (int i = 0; i < edgeLoopCount; i++)
+            for (int ii = 0; ii < edgeLoopCount; ii++)
             {
-               foreach (Edge edge in edgeLoops.get_Item(i))
+               foreach (Edge edge in edgeLoops.get_Item(ii))
                {
                   Face alignedFace = edge.GetFace(0);
                   if (alignedFace == face)
@@ -469,10 +469,10 @@ namespace Revit.IFC.Export.Utility
             if (simpleEdgeList0.Count != simpleEdgeList1.Count)
                 return false;
 
-            for (int i=0; i<simpleEdgeList0.Count; ++i)
+            for (int ii=0; ii<simpleEdgeList0.Count; ++ii)
             {
-                Curve curve0 = simpleEdgeList0[i].AsCurve();
-                Curve curve1 = simpleEdgeList1[i].AsCurve();
+                Curve curve0 = simpleEdgeList0[ii].AsCurve();
+                Curve curve1 = simpleEdgeList1[ii].AsCurve();
 
                 if (curve0 is Line)
                 {
@@ -647,15 +647,15 @@ namespace Revit.IFC.Export.Utility
             XYZ endPoint0 = edge.Evaluate(0);
             XYZ endPoint1 = edge.Evaluate(1);
 
-            for (int i = 0; i < 2; i++)
+            for (int ii = 0; ii < 2; ii++)
             {
                bool found = false;
-               for (int j = 0; j < 2; j++)
+               for (int jj = 0; jj < 2; jj++)
                {
-                  if (endPoint0.IsAlmostEqualTo(endPoints[i, j], vertexEps))
+                  if (endPoint0.IsAlmostEqualTo(endPoints[ii, jj], vertexEps))
                   {
-                     int k = 1 - j;
-                     if (endPoint1.IsAlmostEqualTo(endPoints[i, k], vertexEps))
+                     int kk = 1 - jj;
+                     if (endPoint1.IsAlmostEqualTo(endPoints[ii, kk], vertexEps))
                      {
                         candidatePathEdges.Add(edge);
                         found = true;

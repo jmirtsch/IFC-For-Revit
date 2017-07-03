@@ -5,7 +5,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"  
         xmlns:ui="clr-namespace:Autodesk.Revit.WPFFramework;assembly=UserInterfaceUtility"
         xmlns:System="clr-namespace:System;assembly=mscorlib" Title="{x:Static p:Resources.IFCExport}" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" WindowStyle="SingleBorderWindow" ResizeMode="NoResize" Closing="Window_Closing" Height="326" Width="689">
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" WindowStyle="SingleBorderWindow" ResizeMode="NoResize" Closing="Window_Closing" Height="326" Width="689" ContentRendered="ChildWindow_ContentRendered">
    <Grid Margin="10,0,0,0" RenderTransformOrigin="0,0" HorizontalAlignment="Left" Width="668">
       <Label Content="{x:Static p:Resources.FileName}" HorizontalAlignment="Left" Margin="0,12,0,0" x:Name="label_FileName" Height="28" VerticalAlignment="Top" Width="202" VerticalContentAlignment="Top" RenderTransformOrigin="0.462,0.478"/>
       <TextBox Height="23" Margin="207,12,0,0" Name="textBoxSetupFileName" VerticalAlignment="Top" IsEnabled="True"  TextWrapping="NoWrap" VerticalContentAlignment="Center" HorizontalAlignment="Left" Width="337"/>

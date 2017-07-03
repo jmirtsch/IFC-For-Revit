@@ -37,8 +37,6 @@ namespace Revit.IFC.Export.Exporter
    /// </summary>
    class ExporterInitializer
    {
-
-
       /// <summary>
       /// Initializes property sets.
       /// </summary>
@@ -2627,7 +2625,7 @@ namespace Revit.IFC.Export.Exporter
          ifcBaseQuantity.AddEntry(ifcQE);
 
          ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
-         if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3FMHandoverView)   // FMHandOver view exclude NetArea, GrossArea, NetVolume and GrossVolumne
+         if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable)   // FMHandOver view exclude NetArea, GrossArea, NetVolume and GrossVolumne
          {
             ifcQE = new QuantityEntry("NetFloorArea");
             ifcQE.QuantityType = QuantityType.Area;
@@ -2731,7 +2729,7 @@ namespace Revit.IFC.Export.Exporter
          ifcBaseQuantity.AddEntry(ifcQE);
 
          ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
-         if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3FMHandoverView)   // FMHandOver view exclude GrossVolumne, FinishFloorHeight
+         if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable)   // FMHandOver view exclude GrossVolumne, FinishFloorHeight
          {
             ifcQE = new QuantityEntry("GrossVolume");
             ifcQE.MethodOfMeasurement = "volume measured in geometry";

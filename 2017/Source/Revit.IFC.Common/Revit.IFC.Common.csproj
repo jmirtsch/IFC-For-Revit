@@ -55,6 +55,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Enums\IFC2xEntityType.cs" />
@@ -68,10 +69,15 @@
     <Compile Include="Extension\IFCFileHeaderItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <AppDesigner Include="Properties\" />
+    <Compile Include="Utility\COBieCompanyInfo.cs" />
+    <Compile Include="Utility\COBieProjectInfo.cs" />
     <Compile Include="Utility\IFCAnyHandleUtil.cs" />
     <Compile Include="Utility\IFCCompatibilityType.cs" />
     <Compile Include="Utility\IFCFuzzyXYZ.cs" />
+    <Compile Include="Utility\IfcSchemaEntityNode.cs" />
+    <Compile Include="Utility\IfcSchemaEntityTree.cs" />
     <Compile Include="Utility\MathUtil.cs" />
+    <Compile Include="Utility\ProcessIFCXMLSchema.cs" />
     <Compile Include="Utility\RevitStatusBar.cs" />
   </ItemGroup>
   <ItemGroup>

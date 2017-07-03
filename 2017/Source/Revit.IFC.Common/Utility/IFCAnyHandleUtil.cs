@@ -159,6 +159,39 @@ namespace Revit.IFC.Common.Utility
          }
       }
 
+      public static void ValidateSubTypeOf(ICollection<IFCAnyHandle> handles, bool nullAllowed, out ICollection<IFCAnyHandle> badEntries, params IFCEntityType[] types)
+      {
+         badEntries = null;
+         if (handles == null)
+         {
+            if (!nullAllowed)
+               throw new ArgumentNullException("handles");
+
+            return;
+         }
+         else
+         {
+            int count = 0;
+            foreach (IFCAnyHandle handle in handles)
+            {
+               bool foundIsSubType = false;
+               for (int ii = 0; ii < types.Length; ii++)
+               {
+                  if (IsSubTypeOf(handle, types[ii]))
+                     foundIsSubType = true;
+               }
+               count++;
+               if (!foundIsSubType)
+               {
+                  //throw new ArgumentException("Contains invalid handle.", "handles");
+                  if (badEntries == null)
+                     badEntries = new HashSet<IFCAnyHandle>();
+                  badEntries.Add(handle);
+               }
+            }
+         }
+      }
+
       /// <summary>
       /// Sets string attribute for the handle.
       /// </summary>

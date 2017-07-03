@@ -804,6 +804,12 @@ namespace Revit.IFC.Export.Exporter
                   string ifcEnumType;
                   IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
 
+                  // Check the intended IFC entity or type name is in the exclude list specified in the UI
+                  Common.Enums.IFCEntityType elementClassTypeEnum;
+                  if (Enum.TryParse<Common.Enums.IFCEntityType>(exportType.ToString(), out elementClassTypeEnum))
+                     if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+                        return;
+
                   // The intention with the code below is to make this the "generic" element exporter, which would export any Revit element as any IFC instance.
                   // We would then in addition have specialized functions that would convert specific Revit elements to specific IFC instances where extra information
                   // could be gathered from the element.
@@ -935,6 +941,7 @@ namespace Revit.IFC.Export.Exporter
          ExporterCacheManager.LanguageType = langType;
 
          ElementFilteringUtil.InitCategoryVisibilityCache();
+         NamingUtil.InitNameIncrNumberCache();
 
          ExporterCacheManager.Document = document;
          String writeIFCExportedElementsVar = Environment.GetEnvironmentVariable("WriteIFCExportedElements");
@@ -982,7 +989,14 @@ namespace Revit.IFC.Export.Exporter
             string buildingName = String.Empty;
             string buildingDescription = null;
             string buildingLongName = null;
-            if (projectInfo != null)
+
+            COBieProjectInfo cobieProjectInfo = ExporterCacheManager.ExportOptionsCache.COBieProjectInfo;
+            if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieProjectInfo != null)
+            {
+               buildingName = cobieProjectInfo.BuildingName_Number;
+               buildingDescription = cobieProjectInfo.BuildingDescription;
+            }
+            else if (projectInfo != null)
             {
                try
                {
@@ -1002,6 +1016,21 @@ namespace Revit.IFC.Export.Exporter
                 buildingGUID, ownerHistory, buildingName, buildingDescription, null, buildingPlacement, null, buildingLongName,
                 Toolkit.IFCElementComposition.Element, null, null, buildingAddress);
             ExporterCacheManager.BuildingHandle = buildingHandle;
+
+            if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieProjectInfo != null)
+            {
+               string classificationName;
+               string classificationItemCode;
+               string classificationItemName;
+               string classificationParamValue = cobieProjectInfo.BuildingType;
+               int numRefItem = ClassificationUtil.parseClassificationCode(classificationParamValue, "dummy", out classificationName, out classificationItemCode, out classificationItemName);
+               if (numRefItem > 0 && !string.IsNullOrEmpty(classificationItemCode))
+               {
+                  IFCAnyHandle classifRef = IFCInstanceExporter.CreateClassificationReference(file, null, classificationItemCode, classificationItemName, null);
+                  IFCAnyHandle relClassif = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
+                                             ownerHistory, "BuildingType", null, new HashSet<IFCAnyHandle>() { buildingHandle }, classifRef);
+               }
+            }
 
             // create levels
             List<Level> levels = LevelUtil.FindAllLevels(document);
@@ -1692,12 +1721,10 @@ namespace Revit.IFC.Export.Exporter
             else
             {
                string currentLine;
-               if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3FMHandoverView)
+               if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable)
                {
-                  currentLine = string.Format("ViewDefinition [{0}{1}{2}{3}]",
-                     coordinationView,
-                     exportOptionsCache.ExportBaseQuantities ? ", QuantityTakeOffAddOnView" : "",
-                     ", ", "FMHandOverView");
+                  currentLine = string.Format("ViewDefinition [{0}]",
+                     "COBie2.4DesignDeliverable");
                }
                else
                {
@@ -1708,6 +1735,10 @@ namespace Revit.IFC.Export.Exporter
 
                descriptions.Add(currentLine);
 
+            }
+            if (!string.IsNullOrEmpty(ExporterCacheManager.ExportOptionsCache.ExcludeFilter))
+            {
+               descriptions.Add("Options [Excluded Entities: " + ExporterCacheManager.ExportOptionsCache.ExcludeFilter + "]");
             }
 
             string projectNumber = (projectInfo != null) ? projectInfo.Number : null;
@@ -1955,10 +1986,10 @@ namespace Revit.IFC.Export.Exporter
       private void GetCOBieContactInfo(IFCFile file, Document doc)
       {
          if (String.Compare(ExporterCacheManager.ExportOptionsCache.SelectedConfigName, "IFC2x3 Extended FM Handover View") == 0)
-         {
-            string CObieContactXML = Path.GetDirectoryName(doc.PathName) + @"\" + Path.GetFileNameWithoutExtension(doc.PathName) + @"_COBieContact.xml";
-            string category = null, company = null, department = null, organizationCode = null, contactFirstName = null, contactFamilyName = null,
-                postalBox = null, town = null, stateRegion = null, postalCode = null, country = null;
+            {
+               string CObieContactXML = Path.GetDirectoryName(doc.PathName) + @"\" + Path.GetFileNameWithoutExtension(doc.PathName) + @"_COBieContact.xml";
+               string category = null, company = null, department = null, organizationCode = null, contactFirstName = null, contactFamilyName = null,
+                   postalBox = null, town = null, stateRegion = null, postalCode = null, country = null;
 
             try
             {
@@ -2092,7 +2123,26 @@ namespace Revit.IFC.Export.Exporter
          NamingUtil.ParseName(author, out familyName, out givenName, out middleNames, out prefixTitles, out suffixTitles);
 
          IFCFile file = exporterIFC.GetFile();
+         int creationDate = (int)GetCreationDate(doc);
+         IFCAnyHandle ownerHistory = null;
+         IFCAnyHandle person = null;
+         IFCAnyHandle organization = null;
 
+         COBieCompanyInfo cobieCompInfo = ExporterCacheManager.ExportOptionsCache.COBieCompanyInfo;
+
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieCompInfo != null)
+         {
+            IFCAnyHandle postalAddress = IFCInstanceExporter.CreatePostalAddress(file, null, null, null, null, new List<string>() { cobieCompInfo.StreetAddress }, 
+               null, cobieCompInfo.City, cobieCompInfo.State_Region, cobieCompInfo.PostalCode, cobieCompInfo.Country);
+            IFCAnyHandle telecomAddress = IFCInstanceExporter.CreateTelecomAddress(file, null, null, null, new List<string>() { cobieCompInfo.CompanyPhone },
+               null, null, new List<string>() { cobieCompInfo.CompanyEmail }, null);
+
+            organization = IFCInstanceExporter.CreateOrganization(file, null, cobieCompInfo.CompanyName, null,
+                null, new List<IFCAnyHandle>() { postalAddress, telecomAddress });
+            person = IFCInstanceExporter.CreatePerson(file, null, null, null, null, null, null, null, null);
+         }
+         else
+         {
          IFCAnyHandle telecomAddress = GetTelecomAddressFromExtStorage(file, doc);
          IList<IFCAnyHandle> telecomAddresses = null;
          if (telecomAddress != null)
@@ -2101,7 +2151,7 @@ namespace Revit.IFC.Export.Exporter
             telecomAddresses.Add(telecomAddress);
          }
 
-         IFCAnyHandle person = IFCInstanceExporter.CreatePerson(file, null, familyName, givenName, middleNames,
+            person = IFCInstanceExporter.CreatePerson(file, null, familyName, givenName, middleNames,
              prefixTitles, suffixTitles, null, telecomAddresses);
 
          string organizationName = null;
@@ -2118,15 +2168,13 @@ namespace Revit.IFC.Export.Exporter
             }
          }
 
-         int creationDate = (int)GetCreationDate(doc);
-
-         IFCAnyHandle organization = IFCInstanceExporter.CreateOrganization(file, null, organizationName, organizationDescription,
-             null, null);
+            organization = IFCInstanceExporter.CreateOrganization(file, null, organizationName, organizationDescription, null, null);
+         }
 
          IFCAnyHandle owningUser = IFCInstanceExporter.CreatePersonAndOrganization(file, person, organization, null);
-         IFCAnyHandle ownerHistory = IFCInstanceExporter.CreateOwnerHistory(file, owningUser, application, null,
+         ownerHistory = IFCInstanceExporter.CreateOwnerHistory(file, owningUser, application, null,
              Toolkit.IFCChangeAction.NoChange, null, null, null, creationDate);
-
+         
          exporterIFC.SetOwnerHistoryHandle(ownerHistory);    // For use by native code only.
          ExporterCacheManager.OwnerHistoryHandle = ownerHistory;
 
@@ -2136,17 +2184,32 @@ namespace Revit.IFC.Export.Exporter
          IFCAnyHandle units = CreateDefaultUnits(exporterIFC, doc);
          HashSet<IFCAnyHandle> repContexts = CreateContextInformation(exporterIFC, doc);
 
+         string projectName = null;
+         string projectLongName = null;
+         string projectObjectType = null;
+         string projectDescription = null;
+         string projectPhase = null;
+
+         COBieProjectInfo cobieProjInfo = ExporterCacheManager.ExportOptionsCache.COBieProjectInfo;
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieProjInfo != null)
+         {
+            projectName = cobieProjInfo.ProjectName;
+            projectDescription = cobieProjInfo.ProjectDescription;
+            projectPhase = cobieProjInfo.ProjectPhase;
+         }
+         else
+         {
          // As per IFC implementer's agreement, we get IfcProject.Name from ProjectInfo.Number and IfcProject.Longname from ProjectInfo.Name 
-         string projectName = (projectInfo != null) ? projectInfo.Number : null;
-         string projectLongName = (projectInfo != null) ? projectInfo.Name : null;
+            projectName = (projectInfo != null) ? projectInfo.Number : null;
+            projectLongName = (projectInfo != null) ? projectInfo.Name : null;
 
          // Get project description if it is set in the Project info
-         string projectObjectType = (projectInfo != null) ? NamingUtil.GetObjectTypeOverride(projectInfo, null) : null;
-         string projectDescription = (projectInfo != null) ? NamingUtil.GetDescriptionOverride(projectInfo, null) : null;
+            projectObjectType = (projectInfo != null) ? NamingUtil.GetObjectTypeOverride(projectInfo, null) : null;
+            projectDescription = (projectInfo != null) ? NamingUtil.GetDescriptionOverride(projectInfo, null) : null;
 
-         string projectPhase = null;
          if (projectInfo != null)
             ParameterUtil.GetStringValueFromElement(projectInfo.Id, "Project Phase", out projectPhase);
+         }
 
          string projectGUID = GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Project);
          IFCAnyHandle projectHandle = IFCInstanceExporter.CreateProject(file, projectGUID, ownerHistory,

@@ -112,10 +112,10 @@ namespace Revit.IFC.Export.Utility
                     if (!string.IsNullOrWhiteSpace(classification.ClassificationFieldName))
                     {
                         string[] splitResult = classification.ClassificationFieldName.Split(new Char[] { ',', ';', '\t', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        for (int i=0; i<splitResult.Length; i++)
+                        for (int ii=0; ii<splitResult.Length; ii++)
                         {
                             // found [<Classification Field Names>]
-                            string classificationFieldName = splitResult[i].Trim();
+                            string classificationFieldName = splitResult[ii].Trim();
                             CustomClassificationCodeNames.Add(classificationFieldName);
                             if (classificationHasName)
                                 FieldNameToClassificationNames[classificationFieldName] = classification.ClassificationName;

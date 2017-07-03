@@ -494,9 +494,9 @@ namespace BIM.IFC.Export.UI
             if (index <= 0)
                index = linkPathNameCopy.Length;
             linkPathNameCopy = linkPathNameCopy.Insert(index, " - Copy");
-            int i = 1;
+            int ii = 1;
             while (File.Exists(linkPathNameCopy))
-               linkPathNameCopy = linkPathNameCopy.Insert(index, "(" + (++i).ToString() + ")");
+               linkPathNameCopy = linkPathNameCopy.Insert(index, "(" + (++ii).ToString() + ")");
 
             // copy the file
             File.Copy(linkPathName, linkPathNameCopy);
@@ -647,17 +647,17 @@ namespace BIM.IFC.Export.UI
                int numLinkInstancesToExport = linkFileNames.Count;
                exportOptions.AddOption("NumberOfExportedLinkInstances", numLinkInstancesToExport.ToString());
 
-               for (int ii = 0; ii < numLinkInstancesToExport; ii++)
+               for (int ind = 0; ind < numLinkInstancesToExport; ind++)
                {
-                  string optionName = (ii == 0) ? "ExportLinkInstanceTransform" : "ExportLinkInstanceTransform" + (ii + 1).ToString();
-                  exportOptions.AddOption(optionName, serTransforms[ii]);
+                  string optionName = (ind == 0) ? "ExportLinkInstanceTransform" : "ExportLinkInstanceTransform" + (ind + 1).ToString();
+                  exportOptions.AddOption(optionName, serTransforms[ind]);
 
                   // Don't pass in file name for the first link instance.
-                  if (ii == 0)
+                  if (ind == 0)
                      continue;
 
-                  optionName = "ExportLinkInstanceFileName" + (ii + 1).ToString();
-                  exportOptions.AddOption(optionName, linkFileNames[ii]);
+                  optionName = "ExportLinkInstanceFileName" + (ind + 1).ToString();
+                  exportOptions.AddOption(optionName, linkFileNames[ind]);
                }
 
                // Pass in the first value; the rest will  be in the options.

@@ -94,7 +94,7 @@ namespace Revit.IFC.Export.Exporter
         /// <summary>
         /// A handle for the Footprint representation
         /// </summary>
-        private IFCAnyHandle m_FootprintOrProfileRepHandle = null;
+        private FootPrintInfo m_FootprintInfo = null;
 
         /// <summary>
         /// A Dictionary for Material Profile
@@ -195,10 +195,10 @@ namespace Revit.IFC.Export.Exporter
         /// <summary>
         /// Footprint Handle
         /// </summary>
-        public IFCAnyHandle FootprintOrProfileHandle
+        public FootPrintInfo FootprintInfo
         {
-            get { return m_FootprintOrProfileRepHandle; }
-            set { m_FootprintOrProfileRepHandle = value; }
+            get { return m_FootprintInfo; }
+            set { m_FootprintInfo = value; }
         }
 
          public MaterialAndProfile materialAndProfile

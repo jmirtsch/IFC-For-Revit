@@ -155,7 +155,8 @@ namespace Revit.IFC.Import.Data
          switch (Identifier)
          {
             case IFCRepresentationIdentifier.Axis:
-               return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcCurve));
+               return !(IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcCurve) ||
+                   IFCAnyHandleUtil.IsSubTypeOf(item, IFCEntityType.IfcMappedItem));
             case IFCRepresentationIdentifier.Body:
                return false;
             case IFCRepresentationIdentifier.Box:

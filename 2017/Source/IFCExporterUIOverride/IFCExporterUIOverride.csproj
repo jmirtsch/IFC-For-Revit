@@ -73,6 +73,12 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="COBieCompanyInfoTab.xaml.cs">
+      <DependentUpon>COBieCompanyInfoTab.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="COBieProjectInfoTab.xaml.cs">
+      <DependentUpon>COBieProjectInfoTab.xaml</DependentUpon>
+    </Compile>
     <Compile Include="IFCAddressInformationUI.xaml.cs">
       <DependentUpon>IFCAddressInformationUI.xaml</DependentUpon>
     </Compile>
@@ -156,6 +162,14 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="COBieCompanyInfoTab.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="COBieProjectInfoTab.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="IFCAddressInformationUI.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

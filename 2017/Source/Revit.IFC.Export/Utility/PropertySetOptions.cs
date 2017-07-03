@@ -188,7 +188,7 @@ namespace Revit.IFC.Export.Utility
 
             PropertySetOptions propertySetOptions = new PropertySetOptions();
 
-            propertySetOptions.m_ExportInternalRevit = (!cache.ExportAs2x3CoordinationView2);
+            propertySetOptions.m_ExportInternalRevit = (!(cache.ExportAs2x3CoordinationView2 || cache.ExportAs2x3COBIE24DesignDeliverable));
 
             // "Revit property sets" override
             propertySetOptions.ExportInternalRevitOverride = ExportOptionsCache.GetNamedBooleanOption(options, "ExportInternalRevitPropertySets");

@@ -244,6 +244,12 @@ namespace Revit.IFC.Export.Exporter
         /// </param>
         public static void ExportRailing(ExporterIFC exporterIFC, Element element, GeometryElement geomElem, string ifcEnumType, ProductWrapper productWrapper)
         {
+            // Check the intended IFC entity or type name is in the exclude list specified in the UI
+            Common.Enums.IFCEntityType elementClassTypeEnum;
+            if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcRailing", out elementClassTypeEnum))
+               if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+                  return;
+
             ElementType elemType = element.Document.GetElement(element.GetTypeId()) as ElementType;
             IFCFile file = exporterIFC.GetFile();
             Options geomOptions = GeometryUtil.GetIFCExportGeometryOptions();
