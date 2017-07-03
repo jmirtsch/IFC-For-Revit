@@ -85,7 +85,6 @@
     <Compile Include="Exporter\HostedSweepExporter.cs" />
     <Compile Include="Exporter\HostObjectExporter.cs" />
     <Compile Include="Exporter\InsulationExporter.cs" />
-    <Compile Include="Exporter\MullionExporter.cs" />
     <Compile Include="Exporter\PartExporter.cs" />
     <Compile Include="Exporter\PileExporter.cs" />
     <Compile Include="Exporter\PipeInsulationExporter.cs" />
@@ -165,6 +164,7 @@
     <Compile Include="Exporter\SpatialElementExporter.cs" />
     <Compile Include="Exporter\StairRampContainerInfo.cs" />
     <Compile Include="Exporter\StairsExporter.cs" />
+    <Compile Include="Exporter\StructuralMemberExporter.cs" />
     <Compile Include="Exporter\SurfaceExporter.cs" />
     <Compile Include="Exporter\SweptSolidExporter.cs" />
     <Compile Include="Exporter\TextNoteExporter.cs" />
@@ -220,6 +220,7 @@
     <Compile Include="Utility\ExportOptionsCache.cs" />
     <Compile Include="Utility\FamilyExporterUtil.cs" />
     <Compile Include="Utility\FamilyTypeInfo.cs" />
+    <Compile Include="Utility\FootPrintInfo.cs" />
     <Compile Include="Utility\GeometryUtil.cs" />
     <Compile Include="Utility\GroupCache.cs" />
     <Compile Include="Utility\GroupElementGeometryCache.cs" />

@@ -76,22 +76,22 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
          SolidMeshGeometryInfo geomInfo = GeometryUtil.GetSolidMeshGeometry(geomElem, Transform.Identity);
          if (geomInfo.SolidsCount() > 0)
          {
-            for (int i = 0; i < geomInfo.SolidsCount(); ++i)
+            for (int ii = 0; ii < geomInfo.SolidsCount(); ++ii)
             {
-               foreach (Face f in geomInfo.GetSolids()[i].Faces)
+               foreach (Face f in geomInfo.GetSolids()[ii].Faces)
                   areaSum += f.Area;
             }
          }
 
          if (geomInfo.MeshesCount() > 0)
          {
-            for (int j = 0; j < geomInfo.MeshesCount(); ++j)
+            for (int jj = 0; jj < geomInfo.MeshesCount(); ++jj)
             {
-               Mesh geomMesh = geomInfo.GetMeshes()[j];
+               Mesh geomMesh = geomInfo.GetMeshes()[jj];
                XYZ arbitraryOrig = geomMesh.Vertices[0];
-               for (int i = 0; i < geomMesh.NumTriangles; ++i)
+               for (int ii = 0; ii < geomMesh.NumTriangles; ++ii)
                {
-                  MeshTriangle meshTri = geomMesh.get_Triangle(i);
+                  MeshTriangle meshTri = geomMesh.get_Triangle(ii);
                   double a = meshTri.get_Vertex(1).DistanceTo(meshTri.get_Vertex(0));
                   double b = meshTri.get_Vertex(2).DistanceTo(meshTri.get_Vertex(1));
                   double c = meshTri.get_Vertex(0).DistanceTo(meshTri.get_Vertex(2));

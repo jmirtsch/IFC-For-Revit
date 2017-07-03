@@ -48,6 +48,12 @@ namespace Revit.IFC.Export.Exporter
          if (element == null)
             return;
 
+         // Check the intended IFC entity or type name is in the exclude list specified in the UI
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcZone", out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+               return;
+
          HashSet<IFCAnyHandle> spaceHnds = new HashSet<IFCAnyHandle>();
 
          SpaceSet spaces = element.Spaces;

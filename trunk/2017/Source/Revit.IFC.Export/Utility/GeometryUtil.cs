@@ -251,9 +251,9 @@ namespace Revit.IFC.Export.Utility
          List<double> measures2 = ConvertPointToLocalCoordinatesCommon(lcs, vector);
 
          List<double> measures = new List<double>();
-         for (int i = 0; i < measures1.Count; ++i)
+         for (int ii = 0; ii < measures1.Count; ++ii)
          {
-            measures.Add(measures2[i] - measures1[i]);
+            measures.Add(measures2[ii] - measures1[ii]);
          }
          return measures;
       }
@@ -857,7 +857,7 @@ namespace Revit.IFC.Export.Utility
       /// <returns>A list of connected faces for each element id that cuts the extrusion</returns>
       public static IDictionary<ElementId, ICollection<ICollection<Face>>> GetCuttingElementFaces(Element elem, ExtrusionAnalyzer analyzer)
       {
-         IDictionary<ElementId, HashSet<Face>> cuttingElementFaces = new Dictionary<ElementId, HashSet<Face>>();
+         IDictionary<ElementId, ICollection<Face>> cuttingElementFaces = new Dictionary<ElementId, ICollection<Face>>();
 
          IDictionary<Face, ExtrusionAnalyzerFaceAlignment> allFaces = analyzer.CalculateFaceAlignment();
          foreach (KeyValuePair<Face, ExtrusionAnalyzerFaceAlignment> currFace in allFaces)
@@ -875,7 +875,8 @@ namespace Revit.IFC.Export.Utility
             ICollection<ElementId> generatingElementIds = elem.GetGeneratingElementIds(currFace.Key);
             foreach (ElementId generatingElementId in generatingElementIds)
             {
-               HashSet<Face> elementFaces;
+               ICollection<Face> elementFaces;
+
                if (cuttingElementFaces.ContainsKey(generatingElementId))
                {
                   elementFaces = cuttingElementFaces[generatingElementId];
@@ -885,13 +886,14 @@ namespace Revit.IFC.Export.Utility
                   elementFaces = new HashSet<Face>();
                   cuttingElementFaces[generatingElementId] = elementFaces;
                }
+
                elementFaces.Add(currFace.Key);
             }
          }
 
          IDictionary<ElementId, ICollection<ICollection<Face>>> cuttingElementFaceCollections =
              new Dictionary<ElementId, ICollection<ICollection<Face>>>();
-         foreach (KeyValuePair<ElementId, HashSet<Face>> cuttingElementFaceCollection in cuttingElementFaces)
+         foreach (KeyValuePair<ElementId, ICollection<Face>> cuttingElementFaceCollection in cuttingElementFaces)
          {
             ICollection<ICollection<Face>> faceCollections = new List<ICollection<Face>>();
             // Split into separate collections based on connectivity.
@@ -1127,28 +1129,21 @@ namespace Revit.IFC.Export.Utility
          return clipResults;
       }
 
-      private static bool CreateOpeningForCategory(Element cuttingElement)
-      {
-         ElementId categoryId = cuttingElement.Category.Id;
-         return (categoryId == new ElementId(BuiltInCategory.OST_Doors) ||
-             categoryId == new ElementId(BuiltInCategory.OST_Windows));
-      }
-
       /// <summary>
-      /// Attempts to create a clipping, recess, or opening from a collection of faces.
+      /// Attempts to create a clipping or recess from a collection of planar faces.
       /// </summary>
       /// <param name="exporterIFC">The exporter.</param>
-      /// <param name="cuttingElement">The cutting element.  This will help determine whether to use a clipping or opening in boundary cases.</param>
+      /// <param name="allowMultipleClipPlanes">Determine whether we are allowed to create more than one clip plane if necessary.</param>
       /// <param name="extrusionBaseLCS">The local coordinate system whose XY plane contains the extrusion base.</param>
       /// <param name="extrusionDirection">The extrusion direction.</param>
-      /// <param name="faces">The collection of faces.</param>
+      /// <param name="clippingFaces">The original collection of faces.  Currently these should all be planar faces.</param>
       /// <param name="range">The valid range of the extrusion.</param>
       /// <param name="origBodyRepHnd">The original body representation.</param>
       /// <param name="skippedFaces">The faces that weren't handled by this operation.  These may represent openings.</param>
       /// <returns>The new body representation.  If the clipping completely clips the extrusion, this will be null.  Otherwise, this
       /// will be the clipped representation if a clipping was done, or the original representation if not.</returns>
-      public static IFCAnyHandle CreateClippingFromFaces(ExporterIFC exporterIFC, Element cuttingElement, Transform extrusionBaseLCS,
-          XYZ extrusionDirection, ICollection<Face> faces, IFCRange range, IFCAnyHandle origBodyRepHnd, out ICollection<Face> skippedFaces)
+      public static IFCAnyHandle CreateClippingFromPlanarFaces(ExporterIFC exporterIFC, bool allowMultipleClipPlanes, Transform extrusionBaseLCS,
+          XYZ extrusionDirection, ICollection<PlanarFace> clippingFaces, IFCRange range, IFCAnyHandle origBodyRepHnd, out ICollection<Face> skippedFaces)
       {
          skippedFaces = null;
 
@@ -1161,130 +1156,118 @@ namespace Revit.IFC.Export.Utility
          IList<Transform> outerCurveLoopLCS = new List<Transform>();
          IList<bool> boundaryIsPolygonal = new List<bool>();
 
-         bool allPlanes = true;
          UV faceOriginUV = new UV(0, 0);
-         foreach (Face face in faces)
+
+         foreach (PlanarFace face in clippingFaces)
          {
             FaceBoundaryType faceBoundaryType;
             CurveLoop curveLoop = GetOuterFaceBoundary(face, null, polygonalOnly, out faceBoundaryType);
             outerCurveLoops.Add(curveLoop);
             boundaryIsPolygonal.Add(faceBoundaryType == FaceBoundaryType.Polygonal);
 
-            if (face is PlanarFace)
-            {
-               PlanarFace planarFace = face as PlanarFace;
-               Transform lcs = CreateTransformFromPlanarFace(planarFace);
-               outerCurveLoopLCS.Add(lcs);
+            PlanarFace planarFace = face as PlanarFace;
+            Transform lcs = CreateTransformFromPlanarFace(planarFace);
+            outerCurveLoopLCS.Add(lcs);
 
-               if (!curveLoop.IsCounterclockwise(planarFace.FaceNormal))
-                  curveLoop.Flip();
+            if (!curveLoop.IsCounterclockwise(planarFace.FaceNormal))
+               curveLoop.Flip();
+         }
+
+         int numFaces = clippingFaces.Count;
+
+         // Special case: one face is a clip plane.
+         if (numFaces == 1)
+         {
+            return ProcessClippingFace(exporterIFC, outerCurveLoops[0], outerCurveLoopLCS[0], extrusionBaseLCS,
+                extrusionDirection, range, false, origBodyRepHnd);
+         }
+
+         KeyValuePair<bool, bool> clipsExtrusionEnds = CollectionClipsExtrusionEnds(outerCurveLoops, extrusionDirection, range);
+         if (clipsExtrusionEnds.Key == true || clipsExtrusionEnds.Value == true)
+         {
+            // Don't clip for a door, window or opening.
+            if (!allowMultipleClipPlanes)
+               throw new Exception("Unhandled opening.");
+
+            ICollection<int> facesToSkip = new HashSet<int>();
+            bool clipStart = (clipsExtrusionEnds.Key == true);
+            bool clipBoth = (clipsExtrusionEnds.Key == true && clipsExtrusionEnds.Value == true);
+            if (!clipBoth)
+            {
+               for (int ii = 0; ii < numFaces; ii++)
+               {
+                  double slant = outerCurveLoopLCS[ii].BasisZ.DotProduct(extrusionDirection);
+                  if (!MathUtil.IsAlmostZero(slant))
+                  {
+                     if (clipStart && (slant > 0.0))
+                        throw new Exception("Unhandled clip plane direction.");
+                     if (!clipStart && (slant < 0.0))
+                        throw new Exception("Unhandled clip plane direction.");
+                  }
+                  else
+                  {
+                     facesToSkip.Add(ii);
+                  }
+               }
             }
             else
             {
-               outerCurveLoopLCS.Add(null);
-               allPlanes = false;
-            }
-         }
-
-         // We only currently handle all planar faces.
-         if (allPlanes)
-         {
-            int numFaces = faces.Count;
-
-            // Special case: one face is a clip plane.
-            if (numFaces == 1)
-            {
-               return ProcessClippingFace(exporterIFC, outerCurveLoops[0], outerCurveLoopLCS[0], extrusionBaseLCS,
-                   extrusionDirection, range, false, origBodyRepHnd);
-            }
-
-            KeyValuePair<bool, bool> clipsExtrusionEnds = CollectionClipsExtrusionEnds(outerCurveLoops, extrusionDirection, range);
-            if (clipsExtrusionEnds.Key == true || clipsExtrusionEnds.Value == true)
-            {
-               // Don't clip for a door, window or opening.
-               if (CreateOpeningForCategory(cuttingElement))
-                  throw new Exception("Unhandled opening.");
-
-               ICollection<int> facesToSkip = new HashSet<int>();
-               bool clipStart = (clipsExtrusionEnds.Key == true);
-               bool clipBoth = (clipsExtrusionEnds.Key == true && clipsExtrusionEnds.Value == true);
-               if (!clipBoth)
+               // If we are clipping both the start and end of the extrusion, we have to make sure all of the clipping
+               // planes have the same a non-negative dot product relative to one another.
+               int clipOrientation = 0;
+               for (int ii = 0; ii < numFaces; ii++)
                {
-                  for (int ii = 0; ii < numFaces; ii++)
+                  double slant = outerCurveLoopLCS[ii].BasisZ.DotProduct(extrusionDirection);
+                  if (!MathUtil.IsAlmostZero(slant))
                   {
-                     double slant = outerCurveLoopLCS[ii].BasisZ.DotProduct(extrusionDirection);
-                     if (!MathUtil.IsAlmostZero(slant))
+                     if (slant > 0.0)
                      {
-                        if (clipStart && (slant > 0.0))
-                           throw new Exception("Unhandled clip plane direction.");
-                        if (!clipStart && (slant < 0.0))
-                           throw new Exception("Unhandled clip plane direction.");
+                        if (clipOrientation < 0)
+                           throw new Exception("Unhandled clipping orientations.");
+                        clipOrientation = 1;
                      }
                      else
                      {
-                        facesToSkip.Add(ii);
+                        if (clipOrientation > 0)
+                           throw new Exception("Unhandled clipping orientations.");
+                        clipOrientation = -1;
                      }
                   }
-               }
-               else
-               {
-                  // If we are clipping both the start and end of the extrusion, we have to make sure all of the clipping
-                  // planes have the same a non-negative dot product relative to one another.
-                  int clipOrientation = 0;
-                  for (int ii = 0; ii < numFaces; ii++)
+                  else
                   {
-                     double slant = outerCurveLoopLCS[ii].BasisZ.DotProduct(extrusionDirection);
-                     if (!MathUtil.IsAlmostZero(slant))
-                     {
-                        if (slant > 0.0)
-                        {
-                           if (clipOrientation < 0)
-                              throw new Exception("Unhandled clipping orientations.");
-                           clipOrientation = 1;
-                        }
-                        else
-                        {
-                           if (clipOrientation > 0)
-                              throw new Exception("Unhandled clipping orientations.");
-                           clipOrientation = -1;
-                        }
-                     }
-                     else
-                     {
-                        facesToSkip.Add(ii);
-                     }
+                     facesToSkip.Add(ii);
                   }
                }
-
-               IFCAnyHandle newBodyRepHnd = origBodyRepHnd;
-               skippedFaces = new HashSet<Face>();
-
-               // faces is an ICollection, so we can't index it.  Instead, we will keep the count ourselves.
-               int faceIdx = -1;   // start at -1 so that first increment puts faceIdx at 0.
-               foreach (Face face in faces)
-               {
-                  faceIdx++;
-
-                  if (facesToSkip.Contains(faceIdx))
-                  {
-                     skippedFaces.Add(face);
-                     continue;
-                  }
-
-                  newBodyRepHnd = ProcessClippingFace(exporterIFC, outerCurveLoops[faceIdx], outerCurveLoopLCS[faceIdx],
-                      extrusionBaseLCS, extrusionDirection, range, true, newBodyRepHnd);
-                  if (newBodyRepHnd == null)
-                     return null;
-               }
-               return newBodyRepHnd;
             }
+
+            IFCAnyHandle newBodyRepHnd = origBodyRepHnd;
+            skippedFaces = new HashSet<Face>();
+
+            // originalFaces is an ICollection, so we can't index it.  Instead, we will keep the count ourselves.
+            int faceIdx = -1;   // start at -1 so that first increment puts faceIdx at 0.
+            foreach (PlanarFace planarFace in clippingFaces)
+            {
+               faceIdx++;
+
+               if (facesToSkip.Contains(faceIdx))
+               {
+                  skippedFaces.Add(planarFace);
+                  continue;
+               }
+
+               newBodyRepHnd = ProcessClippingFace(exporterIFC, outerCurveLoops[faceIdx], outerCurveLoopLCS[faceIdx],
+                   extrusionBaseLCS, extrusionDirection, range, true, newBodyRepHnd);
+               if (newBodyRepHnd == null)
+                  return null;
+            }
+            return newBodyRepHnd;
          }
 
          //not handled
          throw new Exception("Unhandled clipping.");
       }
 
-      public static IFCAnyHandle CreateOpeningFromFaces(ExporterIFC exporterIFC, Element cuttingElement, Plane extrusionBasePlane,
+      public static IFCAnyHandle CreateOpeningFromFaces(ExporterIFC exporterIFC, Plane extrusionBasePlane,
           XYZ extrusionDirection, ICollection<Face> faces, IFCRange range, IFCAnyHandle origBodyRepHnd)
       {
          // If we have no faces, return the original value.
@@ -1669,9 +1652,9 @@ namespace Revit.IFC.Export.Utility
                   throw new Exception("Can't handle.");
                }
 
-               for (int i = 0; i < controlPointCount; i++)
+               for (int ii = 0; ii < controlPointCount; ii++)
                {
-                  if (!MathUtil.IsAlmostEqual(controlPoints1[i].DistanceTo(controlPoints2[controlPointCount - i - 1]), planesDistance))
+                  if (!MathUtil.IsAlmostEqual(controlPoints1[ii].DistanceTo(controlPoints2[controlPointCount - ii - 1]), planesDistance))
                   {
                      //Error, can't handle this
                      throw new Exception("Can't handle.");
@@ -1688,9 +1671,9 @@ namespace Revit.IFC.Export.Utility
                   throw new Exception("Can't handle.");
                }
 
-               for (int i = 0; i < parametersCount; i++)
+               for (int ii = 0; ii < parametersCount; ii++)
                {
-                  if (!MathUtil.IsAlmostEqual(parameters1.get_Item(i), parameters2.get_Item(i)))
+                  if (!MathUtil.IsAlmostEqual(parameters1.get_Item(ii), parameters2.get_Item(ii)))
                   {
                      //Error, can't handle this
                      throw new Exception("Can't handle.");
@@ -1737,9 +1720,9 @@ namespace Revit.IFC.Export.Utility
                   throw new Exception("Can't handle.");
                }
 
-               for (int i = 0; i < weightsCount; i++)
+               for (int ii = 0; ii < weightsCount; ii++)
                {
-                  if (!MathUtil.IsAlmostEqual(weights1.get_Item(i), weights2.get_Item(i)))
+                  if (!MathUtil.IsAlmostEqual(weights1.get_Item(ii), weights2.get_Item(ii)))
                   {
                      //Error, can't handle this
                      throw new Exception("Can't handle.");
@@ -3013,10 +2996,20 @@ namespace Revit.IFC.Export.Utility
             if (curve.IsBound)
             {
                Line curveLine = curve as Line;
-               IFCAnyHandle point = XYZtoIfcCartesianPoint(exporterIFC, curveLine.GetEndPoint(0), cartesianPoints);
-               IFCAnyHandle vector = VectorToIfcVector(exporterIFC, curveLine.Direction);
+               //ifcCurve = CreateLineSegment(exporterIFC, curveLine);
 
-               ifcCurve = IFCInstanceExporter.CreateLine(file, point, vector);
+               // Create line based trimmed curve for Axis
+               IFCAnyHandle curveOrigin = XYZtoIfcCartesianPoint(exporterIFC, curveLine.Origin, cartesianPoints);
+               IFCAnyHandle vector = VectorToIfcVector(exporterIFC, curveLine.Direction);
+               IFCAnyHandle line = IFCInstanceExporter.CreateLine(file, curveOrigin, vector);
+
+               IFCAnyHandle startPoint = XYZtoIfcCartesianPoint(exporterIFC, curveLine.GetEndPoint(0), cartesianPoints);
+               HashSet<IFCData> trim1 = new HashSet<IFCData>();
+               trim1.Add(IFCData.CreateIFCAnyHandle(startPoint));
+               IFCAnyHandle endPoint = XYZtoIfcCartesianPoint(exporterIFC, curveLine.GetEndPoint(1), cartesianPoints);
+               HashSet<IFCData> trim2 = new HashSet<IFCData>();
+               trim2.Add(IFCData.CreateIFCAnyHandle(endPoint));
+               ifcCurve = IFCInstanceExporter.CreateTrimmedCurve(file, line, trim1, trim2, true, IFCTrimmingPreference.Cartesian);
             }
          }
          // if the Curve is an Arc do following
@@ -3041,7 +3034,17 @@ namespace Revit.IFC.Export.Utility
             IFCAnyHandle refDirection = VectorToIfcDirection(exporterIFC, curveArcXDirection);
 
             IFCAnyHandle position3D = IFCInstanceExporter.CreateAxis2Placement3D(file, location3D, axis, refDirection);
-            ifcCurve = IFCInstanceExporter.CreateCircle(file, position3D, UnitUtil.ScaleLength(curveArc.Radius));
+            IFCAnyHandle circle = IFCInstanceExporter.CreateCircle(file, position3D, UnitUtil.ScaleLength(curveArc.Radius));
+
+            IFCAnyHandle startPoint = XYZtoIfcCartesianPoint(exporterIFC, curveArc.GetEndPoint(0), cartesianPoints);
+            HashSet<IFCData> trim1 = new HashSet<IFCData>();
+            trim1.Add(IFCData.CreateIFCAnyHandle(startPoint));
+
+            IFCAnyHandle endPoint = XYZtoIfcCartesianPoint(exporterIFC, curveArc.GetEndPoint(1), cartesianPoints);
+            HashSet<IFCData> trim2 = new HashSet<IFCData>();
+            trim2.Add(IFCData.CreateIFCAnyHandle(endPoint));
+
+            ifcCurve = IFCInstanceExporter.CreateTrimmedCurve(file, circle, trim1, trim2, true, IFCTrimmingPreference.Cartesian);
          }
          // If curve is an ellipse or elliptical Arc type
          else if (curve is Ellipse)
@@ -3060,7 +3063,17 @@ namespace Revit.IFC.Export.Utility
 
             IFCAnyHandle position = IFCInstanceExporter.CreateAxis2Placement3D(file, location3D, axis, refDirection);
 
-            ifcCurve = IFCInstanceExporter.CreateEllipse(file, position, UnitUtil.ScaleLength(curveEllipse.RadiusX), UnitUtil.ScaleLength(curveEllipse.RadiusY));
+            IFCAnyHandle ellipse = IFCInstanceExporter.CreateEllipse(file, position, UnitUtil.ScaleLength(curveEllipse.RadiusX), UnitUtil.ScaleLength(curveEllipse.RadiusY));
+
+            IFCAnyHandle startPoint = XYZtoIfcCartesianPoint(exporterIFC, curveEllipse.GetEndPoint(0), cartesianPoints);
+            HashSet<IFCData> trim1 = new HashSet<IFCData>();
+            trim1.Add(IFCData.CreateIFCAnyHandle(startPoint));
+
+            IFCAnyHandle endPoint = XYZtoIfcCartesianPoint(exporterIFC, curveEllipse.GetEndPoint(1), cartesianPoints);
+            HashSet<IFCData> trim2 = new HashSet<IFCData>();
+            trim2.Add(IFCData.CreateIFCAnyHandle(endPoint));
+
+            ifcCurve = IFCInstanceExporter.CreateTrimmedCurve(file, ellipse, trim1, trim2, true, IFCTrimmingPreference.Cartesian);
          }
          else if (allowAdvancedCurve && (curve is HermiteSpline || curve is NurbSpline))
          {

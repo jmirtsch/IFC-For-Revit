@@ -105,7 +105,7 @@ namespace Revit.IFC.Import.Data
       /// <param name="guid">The guid of an element for which represntation is being created.</param>
       /// <returns>A list containing one geometry for the IfcHalfSpaceSolid.</returns>
       protected virtual IList<GeometryObject> CreateGeometryInternal(
-            IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
+            IFCImportShapeEditScope shapeEditScope, Transform unscaledLcs, Transform scaledLcs, string guid)
       {
          IFCPlane ifcPlane = BaseSurface as IFCPlane;
          Plane plane = ifcPlane.Plane;
@@ -116,10 +116,10 @@ namespace Revit.IFC.Import.Data
          // Set some huge boundaries for now.
          const double largeCoordinateValue = 100000;
          XYZ[] corners = new XYZ[4] {
-                lcs.OfPoint((xVec * -largeCoordinateValue) + (yVec * -largeCoordinateValue) + origin),
-                lcs.OfPoint((xVec * largeCoordinateValue) + (yVec * -largeCoordinateValue) + origin),
-                lcs.OfPoint((xVec * largeCoordinateValue) + (yVec * largeCoordinateValue) + origin),
-                lcs.OfPoint((xVec * -largeCoordinateValue) + (yVec * largeCoordinateValue) + origin)
+                unscaledLcs.OfPoint((xVec * -largeCoordinateValue) + (yVec * -largeCoordinateValue) + origin),
+                unscaledLcs.OfPoint((xVec * largeCoordinateValue) + (yVec * -largeCoordinateValue) + origin),
+                unscaledLcs.OfPoint((xVec * largeCoordinateValue) + (yVec * largeCoordinateValue) + origin),
+                unscaledLcs.OfPoint((xVec * -largeCoordinateValue) + (yVec * largeCoordinateValue) + origin)
             };
 
          IList<CurveLoop> loops = new List<CurveLoop>();
@@ -133,7 +133,7 @@ namespace Revit.IFC.Import.Data
          }
          loops.Add(loop);
 
-         XYZ normal = lcs.OfVector(AgreementFlag ? -plane.Normal : plane.Normal);
+         XYZ normal = unscaledLcs.OfVector(AgreementFlag ? -plane.Normal : plane.Normal);
          SolidOptions solidOptions = new SolidOptions(GetMaterialElementId(shapeEditScope), shapeEditScope.GraphicsStyleId);
          Solid baseSolid = GeometryCreationUtilities.CreateExtrusionGeometry(loops, normal, largeCoordinateValue, solidOptions);
 
@@ -141,18 +141,21 @@ namespace Revit.IFC.Import.Data
          {
             CurveLoop polygonalBoundary = BaseBoundingCurve.CurveLoop;
 
-            Transform totalTransform = lcs.Multiply(BaseBoundingCurveTransform);
-
+            Transform unscaledTotalTransform = unscaledLcs.Multiply(BaseBoundingCurveTransform);
+            Transform scaledTotalTransform = scaledLcs.Multiply(BaseBoundingCurveTransform);
+            
             // Make sure this bounding polygon extends below base of half-space soild.
             Transform moveBaseTransform = Transform.Identity;
             moveBaseTransform.Origin = new XYZ(0, 0, -largeCoordinateValue);
-            totalTransform = totalTransform.Multiply(moveBaseTransform);
 
-            CurveLoop transformedPolygonalBoundary = IFCGeometryUtil.CreateTransformed(polygonalBoundary, totalTransform);
+            unscaledTotalTransform = unscaledTotalTransform.Multiply(moveBaseTransform);
+            scaledTotalTransform = scaledTotalTransform.Multiply(moveBaseTransform);
+
+            CurveLoop transformedPolygonalBoundary = IFCGeometryUtil.CreateTransformed(polygonalBoundary, Id, unscaledTotalTransform, scaledTotalTransform);
             IList<CurveLoop> boundingLoops = new List<CurveLoop>();
             boundingLoops.Add(transformedPolygonalBoundary);
 
-            Solid boundingSolid = GeometryCreationUtilities.CreateExtrusionGeometry(boundingLoops, totalTransform.BasisZ, 2.0 * largeCoordinateValue,
+            Solid boundingSolid = GeometryCreationUtilities.CreateExtrusionGeometry(boundingLoops, unscaledTotalTransform.BasisZ, 2.0 * largeCoordinateValue,
                 solidOptions);
             baseSolid = IFCGeometryUtil.ExecuteSafeBooleanOperation(Id, BaseBoundingCurve.Id, baseSolid, boundingSolid, BooleanOperationsType.Intersect, null);
          }

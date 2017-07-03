@@ -35,11 +35,58 @@ namespace Revit.IFC.Import.Data
    /// </summary>
    public class IFCSite : IFCSpatialStructureElement
    {
-      double? m_RefLatitude = null;
-      double? m_RefLongitude = null;
-      double m_RefElevation = 0.0;
-      string m_LandTitleNumber = null;
+      private double? m_RefLatitude = null;
+      private double? m_RefLongitude = null;
+      private double m_RefElevation = 0.0;
+      private string m_LandTitleNumber = null;
       // TODO: handle SiteAddress.
+
+      // This is not part of the IfcSite entity definition.
+      // This is true if all of the contained entities inside of IfcSite have the local placement relative to the IfcSite's.
+      // If this is set to true, we can move the project closer to the origin and set the project location; otherwise we can't do that easily.
+      private bool m_CanRemoveSiteLocalPlacement = true;
+
+      public bool CanRemoveSiteLocalPlacement
+      {
+         get { return m_CanRemoveSiteLocalPlacement; }
+         set { m_CanRemoveSiteLocalPlacement = value; }
+      }
+
+
+      public class ActiveSiteSetter : IDisposable
+      {
+         public ActiveSiteSetter(IFCSite ifcSite)
+         {
+            ActiveSite = ifcSite;
+         }
+
+         public static IFCSite ActiveSite
+         {
+            get;
+            private set;
+         }
+
+         public static void CheckObjectPlacementIsRelativeToSite(IFCProduct productEntity, int productStepId, int objectPlacementStepId)
+         {
+            if (IFCSite.ActiveSiteSetter.ActiveSite != null && productEntity.ObjectLocation.RelativeToSite == false)
+            {
+               if (productEntity is IFCSite)
+               {
+                  productEntity.ObjectLocation.RelativeToSite = true;
+               }
+               else
+               {
+                  Importer.TheLog.LogWarning(productStepId, "The local placement (#" + objectPlacementStepId + ") of this entity is not relative to the IfcSite's local placement.", false);
+                  IFCSite.ActiveSiteSetter.ActiveSite.CanRemoveSiteLocalPlacement = false;
+               }
+            }
+         }
+
+         public void Dispose()
+         {
+            ActiveSite = null;
+         }
+      }
 
       /// <summary>
       /// Constructs an IFCSite from the IfcSite handle.
@@ -73,7 +120,10 @@ namespace Revit.IFC.Import.Data
       /// <param name="ifcIFCSite">The IfcSite handle.</param>
       protected override void Process(IFCAnyHandle ifcIFCSite)
       {
-         base.Process(ifcIFCSite);
+         using (ActiveSiteSetter setter = new ActiveSiteSetter(this))
+         {
+            base.Process(ifcIFCSite);
+         }
 
          RefElevation = IFCImportHandleUtil.GetOptionalScaledLengthAttribute(ifcIFCSite, "RefElevation", 0.0);
 
@@ -196,6 +246,7 @@ namespace Revit.IFC.Import.Data
       {
          // Only set the project location for the site that contains the building.
          bool hasBuilding = false;
+         
          foreach (IFCObjectDefinition objectDefinition in ComposedObjectDefinitions)
          {
             if (objectDefinition is IFCBuilding)
@@ -222,6 +273,8 @@ namespace Revit.IFC.Import.Data
                if (ObjectLocation != null)
                {
                   XYZ projectLoc = (ObjectLocation.RelativeTransform != null) ? ObjectLocation.RelativeTransform.Origin : XYZ.Zero;
+                  if (!MathUtil.IsAlmostZero(projectLoc.Z))
+                     Importer.TheLog.LogError(Id, "The Z-value of the IfcSite object placement relative transform should be 0.  This will be ignored in favor of the RefElevation value.", false);
 
                   // Get true north from IFCProject.
                   double trueNorth = 0.0;
@@ -237,11 +290,13 @@ namespace Revit.IFC.Import.Data
 
                   ProjectPosition projectPosition = new ProjectPosition(projectLoc.X, projectLoc.Y, RefElevation, trueNorth);
 
-                  XYZ origin = new XYZ(0, 0, 0);
+                  XYZ origin = CanRemoveSiteLocalPlacement ? XYZ.Zero : new XYZ(projectLoc.X, projectLoc.Y, RefElevation);
                   projectLocation.set_ProjectPosition(origin, projectPosition);
 
-                  // Now that we've set the project position, remove the site relative transform.
-                  IFCLocation.RemoveRelativeTransformForSite(this);
+                  // Now that we've set the project position, remove the site relative transform, if the file is created correctly (that is, all entities contained in the site
+                  // have the local placements relative to the site.
+                  if (CanRemoveSiteLocalPlacement)
+                     IFCLocation.RemoveRelativeTransformForSite(this);
                }
             }
          }

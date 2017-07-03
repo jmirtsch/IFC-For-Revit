@@ -49,9 +49,9 @@ namespace Revit.IFC.Export.Exporter
       ShapeRepresentationType m_RepresentationType = ShapeRepresentationType.Undefined;
 
        /// <summary>
-       /// Footprint representation handle
+       /// Footprint representation info
        /// </summary>
-      IFCAnyHandle m_FootprintHandle = null;
+      FootPrintInfo m_FootprintInfo = null;
 
       /// <summary>
       /// Return the enum of Representation type being used
@@ -105,10 +105,10 @@ namespace Revit.IFC.Export.Exporter
        /// <summary>
        /// Additional representation for the Footprint
        /// </summary>
-       public IFCAnyHandle FootprintHandle
+       public FootPrintInfo FootprintInfo
       {
-          get { return m_FootprintHandle; }
-          set { m_FootprintHandle = value; }
+          get { return m_FootprintInfo; }
+          set { m_FootprintInfo = value; }
       }
 
       /// <summary>
@@ -183,7 +183,10 @@ namespace Revit.IFC.Export.Exporter
                    line.Direction, UnitUtil.ScaleLength(line.Length), false);
                 if ((addInfo & GenerateAdditionalInfo.GenerateFootprint) != 0)
                 {
-                    sweptSolidExporter.FootprintHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, faceBoundaries[0], lcs, line.Direction);
+                  FootPrintInfo fInfo = new FootPrintInfo();
+                  fInfo.LCSTransformUsed = lcs;
+                  fInfo.FootPrintHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, faceBoundaries[0], lcs, line.Direction);
+                  sweptSolidExporter.FootprintInfo = fInfo; 
                 }
             }
             else
@@ -205,8 +208,11 @@ namespace Revit.IFC.Export.Exporter
                      sweptSolidExporter.RepresentationType = ShapeRepresentationType.AdvancedSweptSolid;
                      if ((addInfo & GenerateAdditionalInfo.GenerateFootprint) != 0)
                      {
-                         Transform lcs = GeometryUtil.CreateTransformFromPlanarFace(sweptAnalyzer.ProfileFace);
-                         sweptSolidExporter.FootprintHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, faceBoundaries[0], lcs, sweptAnalyzer.ReferencePlaneNormal);
+                        FootPrintInfo fInfo = new FootPrintInfo();
+                        Transform lcs = GeometryUtil.CreateTransformFromPlanarFace(sweptAnalyzer.ProfileFace);
+                        fInfo.LCSTransformUsed = lcs;
+                        fInfo.FootPrintHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, faceBoundaries[0], lcs, sweptAnalyzer.ReferencePlaneNormal);
+                        sweptSolidExporter.FootprintInfo = fInfo;
                      }
                   }
                }

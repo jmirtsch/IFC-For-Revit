@@ -61,11 +61,11 @@ namespace Revit.IFC.Export.Exporter
         /// <summary>
         /// A handle for the Footprint representation
         /// </summary>
-        public IFCAnyHandle FootprintRepHandle = null;
+        public FootPrintInfo FootprintInfo = null;
 
          /// <summary>
          /// A Dictionary for Material Profile
          /// </summary>
-         public MaterialAndProfile materialAndProfile = null;
+         public MaterialAndProfile MaterialAndProfile = null;
     }
 }

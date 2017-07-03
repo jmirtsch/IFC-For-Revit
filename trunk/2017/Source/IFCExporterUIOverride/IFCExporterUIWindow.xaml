@@ -4,9 +4,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:Autodesk.Revit.WPFFramework;assembly=UserInterfaceUtility"
         Title="{x:Static p:Resources.ModifySetupTitle}" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" Height="389" Width="901" WindowStyle="SingleBorderWindow" ResizeMode="NoResize" Closing="Window_Closing">
-   <Grid HorizontalAlignment="Right" Margin="0,10,13,0" Height="342" VerticalAlignment="Top" Width="872">
-      <TabControl Height="293" HorizontalAlignment="Left" Name="tabControl" VerticalAlignment="Top" Width="594" Margin="278,11,0,0">
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" Height="450" Width="887" WindowStyle="SingleBorderWindow" ResizeMode="NoResize" Closing="Window_Closing">
+   <Grid HorizontalAlignment="Right" Margin="0,3,5,0" Height="403" VerticalAlignment="Top" Width="872">
+      <Grid.RowDefinitions>
+         <RowDefinition Height="394*"/>
+         <RowDefinition/>
+      </Grid.RowDefinitions>
+      <TabControl Height="344" HorizontalAlignment="Left" Name="tabControl" VerticalAlignment="Top" Width="594" Margin="278,11,0,0">
          <TabItem Header="{x:Static p:Resources.General}" Name="General">
             <Grid Width="469" Margin="0,0,-2,0">
                <Grid.ColumnDefinitions>
@@ -76,6 +80,7 @@
                </Grid.ColumnDefinitions>
                <Label Content="{x:Static p:Resources.TessellationDetails}" HorizontalAlignment="Left" Margin="-72,10,0,0" x:Name="checkBoxLevelOfDetails" Grid.ColumnSpan="2" Width="368" VerticalAlignment="Top" Height="26"/>
                <ComboBox Name="comboBoxLOD" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Top" Width="199"  Height="25"  Margin="108,10,0,0" SelectionChanged="comboBoxLOD_SelectionChanged"/>
+               <CheckBox x:Name="checkBox_TriangulationOnly" Content="Keep Tessellated Geometry as Triangulation" Margin="-68,41,285.4,200.8" Grid.ColumnSpan="2" Checked="checkBox_TriangulationOnly_Checked" Unchecked="checkBox_TriangulationOnly_Unchecked"/>
             </Grid>
          </TabItem>
          <TabItem Header="{x:Static p:Resources.Advanced}" x:Name="Advanced">
@@ -95,14 +100,20 @@
                <CheckBox Content="{x:Static p:Resources.IncludeIfcSiteElevation}" Height="16" HorizontalAlignment="Left" Margin="-74,107,0,0" x:Name="checkboxIncludeIfcSiteElevation" VerticalAlignment="Top" Checked="checkboxIfcSiteElevation_Checked" Unchecked="checkboxIfcSiteElevation_Checked" Width="569" Grid.ColumnSpan="5" />
                <CheckBox Content="{x:Static p:Resources.StoreIFCGUID}" Height="16" HorizontalAlignment="Left" Margin="-74,127,0,0" x:Name="checkboxStoreIFCGUID" VerticalAlignment="Top" Checked="checkboxStoreIFCGUID_Checked" Unchecked="checkboxStoreIFCGUID_Checked" Width="569" Grid.ColumnSpan="5"  />
                <CheckBox Content="{x:Static p:Resources.ExportBoundingBox}" Height="16" HorizontalAlignment="Left" Margin="-74,147,0,0" Name="checkboxExportBoundingBox" VerticalAlignment="Top" Checked="checkboxExportBoundingBox_Checked" Unchecked="checkboxExportBoundingBox_Checked" Width="569" Grid.ColumnSpan="5" />
-
             </Grid>
          </TabItem>
+         <!--
+         <TabItem Header="EntitiesToExport" HorizontalAlignment="Left" Height="20" VerticalAlignment="Top" Width="99" Margin="0.8,0,-16.6,0">
+            <Grid x:Name="FilterElement" Background="#FFE5E5E5">
+               <TreeView x:Name="treeView_FilterElement" Loaded="treeView_FilterElement_Loaded"/>
+            </Grid>
+         </TabItem>
+         -->
       </TabControl>
-      <Button Content="{x:Static p:Resources.OK}" HorizontalAlignment="Right" Margin="0,309,103,0" Name="buttonOK" Width="75" Click="buttonOK_Click" Height="23" VerticalAlignment="Top">
+      <Button Content="{x:Static p:Resources.OK}" HorizontalAlignment="Right" Margin="0,369,103,0" Name="buttonOK" Width="75" Click="buttonOK_Click" Height="23" VerticalAlignment="Top">
       </Button>
-      <Button Content="{x:Static p:Resources.Cancel}" Height="23" HorizontalAlignment="Right" Margin="0,309,0,0" Name="buttonCancel" VerticalAlignment="Top" Width="75" Click="buttonCancel_Click" />
-      <ListBox HorizontalAlignment="Right" Margin="0,8,599,0" Name="listBoxConfigurations" Width="260" SelectionChanged="listBoxConfigurations_SelectionChanged" Height="296" VerticalAlignment="Top" />
+      <Button Content="{x:Static p:Resources.Cancel}" Height="23" HorizontalAlignment="Right" Margin="0,369,0,0" Name="buttonCancel" VerticalAlignment="Top" Width="75" Click="buttonCancel_Click" />
+      <ListBox HorizontalAlignment="Right" Margin="0,8,599,0" Name="listBoxConfigurations" Width="260" SelectionChanged="listBoxConfigurations_SelectionChanged" Height="347" VerticalAlignment="Top" />
       <Button Height="23" HorizontalAlignment="Left" Margin="14,309,0,0" Name="buttonNewSetup" VerticalAlignment="Top" Width="25" Click="buttonNewSetup_Click" ToolTip="{x:Static p:Resources.CreateNewSetup}" BorderThickness="0" Background="Transparent" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
          <Image HorizontalAlignment="Stretch" Name="image1" Stretch="Fill" VerticalAlignment="Stretch" Source="/IFCExportUI;component/icons/create.ico" Width="16" Height="16" />
       </Button>

@@ -418,7 +418,7 @@
     <value>IFC-SPF|*.ifc</value>
   </data>
   <data name="IFCMVDFMExtendedHandOver" xml:space="preserve">
-    <value>IFC2x3 Extended FM Handover View</value>
+    <value>IFC2x3 COBie 2.4 Design Deliverable View</value>
   </data>
   <data name="IFCUnknown" xml:space="preserve">
     <value>Unrecognized file type option</value>
@@ -640,7 +640,7 @@
     <value>Custom parameter mapping table</value>
   </data>
   <data name="IFC2x3FM" xml:space="preserve">
-    <value>IFC2x3 Extended FM Handover View</value>
+    <value>IFC2x3 COBie 2.4 Design Deliverable View</value>
   </data>
   <data name="IFC4DTV" xml:space="preserve">
     <value>IFC4 Design Transfer View</value>

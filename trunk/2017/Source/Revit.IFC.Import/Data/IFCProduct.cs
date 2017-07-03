@@ -156,9 +156,12 @@ namespace Revit.IFC.Import.Data
       /// <param name="ifcProduct">The IfcProduct handle.</param>
       protected override void Process(IFCAnyHandle ifcProduct)
       {
-         base.Process(ifcProduct);
-
+         // We are going to process the IfcObjectPlacement before we do the base Process call.  The reason for this is that we'd like to
+         // process the IfcSite object placement before any of its children, so that the RelativeToSite can be properly set.
+         // If this becomes an issue, we can instead move this to after the base.Process, and calculate RelativeToSite as a post-process step.
          ProcessObjectPlacement(ifcProduct);
+         
+         base.Process(ifcProduct);
 
          IFCAnyHandle ifcProductRepresentation = IFCImportHandleUtil.GetOptionalInstanceAttribute(ifcProduct, "Representation");
          if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ifcProductRepresentation))
@@ -414,7 +417,10 @@ namespace Revit.IFC.Import.Data
          IFCAnyHandle objectPlacement = IFCAnyHandleUtil.GetInstanceAttribute(ifcProduct, "ObjectPlacement");
 
          if (!IFCAnyHandleUtil.IsNullOrHasNoValue(objectPlacement))
+         {
             ObjectLocation = IFCLocation.ProcessIFCObjectPlacement(objectPlacement);
+            IFCSite.ActiveSiteSetter.CheckObjectPlacementIsRelativeToSite(this, ifcProduct.StepId, objectPlacement.StepId);
+         }
       }
 
       /// <summary>

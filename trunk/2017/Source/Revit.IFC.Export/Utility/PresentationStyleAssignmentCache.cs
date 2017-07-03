@@ -28,83 +28,66 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of the IfcPresentationStyleAssignment handles mapping to a text element type in Revit.
-    /// </summary>
-    public class PresentationStyleAssignmentCache
-    {
-        /// <summary>
-        /// The dictionary mapping from a text element type to an IfcPresentationStyleAssignment handle. 
-        /// </summary>
-        private Dictionary<int, IFCAnyHandle> m_Styles;
+   /// <summary>
+   /// Used to keep a cache of the IfcPresentationStyleAssignment handles mapping to a text element type in Revit.
+   /// </summary>
+   public class PresentationStyleAssignmentCache
+   {
+      /// <summary>
+      /// The dictionary mapping from a text element type to an IfcPresentationStyleAssignment handle. 
+      /// </summary>
+      private Dictionary<int, IFCAnyHandle> m_Styles;
 
-        /// <summary>
-        /// Constructs a default PresentationStyleAssignmentCache object.
-        /// </summary>
-        public PresentationStyleAssignmentCache()
-        {
-            m_Styles = new Dictionary<int, IFCAnyHandle>();
-        }
+      /// <summary>
+      /// Constructs a default PresentationStyleAssignmentCache object.
+      /// </summary>
+      public PresentationStyleAssignmentCache()
+      {
+         m_Styles = new Dictionary<int, IFCAnyHandle>();
+      }
 
-        /// <summary>
-        /// Finds the IfcPresentationStyleAssignment handle from the dictionary.
-        /// </summary>
-        /// <param name="elementId">
-        /// The element elementId.
-        /// </param>
-        /// <returns>
-        /// The IfcPresentationStyleAssignment handle.
-        /// </returns>
-        public IFCAnyHandle Find(ElementId elementId)
-        {
-
-            IFCAnyHandle handle;
-            if (m_Styles.TryGetValue(elementId.IntegerValue, out handle))
+      /// <summary>
+      /// Finds the IfcPresentationStyleAssignment handle for a particular material.
+      /// </summary>
+      /// <param name="elementId">The Material's element id.</param>
+      /// <returns>The IfcPresentationStyleAssignment handle.</returns>
+      public IFCAnyHandle Find(ElementId materialId)
+      {
+         int materialIdAsInt = materialId.IntegerValue;
+         IFCAnyHandle presentationStyleAssignment;
+         if (m_Styles.TryGetValue(materialIdAsInt, out presentationStyleAssignment))
+         {
+            // Make sure the handle isn't stale.
+            try
             {
-                return handle;
+               bool isPSA = IFCAnyHandleUtil.IsSubTypeOf(presentationStyleAssignment, IFCEntityType.IfcPresentationStyleAssignment);
+               if (isPSA)
+                  return presentationStyleAssignment;
             }
-            return null;
-        }
-
-        /// <summary>
-        /// Removes invalid handles from the cache.
-        /// </summary>
-        /// <param name="materialIds">The material ids.</param>
-        public void RemoveInvalidHandles(ISet<ElementId> materialIds)
-        {
-            foreach (ElementId materialId in materialIds)
+            catch
             {
-                IFCAnyHandle presentationStyleAssignment;
-                if (m_Styles.TryGetValue(materialId.IntegerValue, out presentationStyleAssignment))
-                {
-                    try
-                    {
-                        bool isPSA = IFCAnyHandleUtil.IsSubTypeOf(presentationStyleAssignment, IFCEntityType.IfcPresentationStyleAssignment);
-                        if (!isPSA)
-                            m_Styles.Remove(materialId.IntegerValue);
-                    }
-                    catch
-                    {
-                        m_Styles.Remove(materialId.IntegerValue);
-                    }
-                }
             }
-        }
 
-        /// <summary>
-        /// Adds the IfcPresentationStyleAssignment handle to the dictionary.
-        /// </summary>
-        /// <param name="elementId">The element elementId.</param>
-        /// <param name="handle">The IfcPresentationStyleAssignment handle.</param>
-        public void Register(ElementId elementId, IFCAnyHandle handle)
-        {
-            if (m_Styles.ContainsKey(elementId.IntegerValue))
-                throw new Exception("TextStyleCache already contains handle for elementId " + elementId.IntegerValue);
+            m_Styles.Remove(materialIdAsInt);
+         }
 
-            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(handle))
-                m_Styles[elementId.IntegerValue] = handle;
-            else
-                throw new Exception("Invalid Handle.");
-        }
-    }
+         return null;
+      }
+
+      /// <summary>
+      /// Adds the IfcPresentationStyleAssignment handle to the dictionary.
+      /// </summary>
+      /// <param name="elementId">The element elementId.</param>
+      /// <param name="handle">The IfcPresentationStyleAssignment handle.</param>
+      public void Register(ElementId elementId, IFCAnyHandle handle)
+      {
+         if (m_Styles.ContainsKey(elementId.IntegerValue))
+            throw new Exception("TextStyleCache already contains handle for elementId " + elementId.IntegerValue);
+
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(handle))
+            m_Styles[elementId.IntegerValue] = handle;
+         else
+            throw new Exception("Invalid Handle.");
+      }
+   }
 }

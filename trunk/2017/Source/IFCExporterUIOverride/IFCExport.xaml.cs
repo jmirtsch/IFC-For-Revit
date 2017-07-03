@@ -50,7 +50,7 @@ namespace BIM.IFC.Export.UI
       /// <summary>
       /// The file to store the previous window bounds.
       /// </summary>
-      string m_SettingFile = "IFCExportSettings_v29.txt";  // update the file when resize window bounds.
+      string m_SettingFile = "IFCExportSettings_v34.txt";  // update the file when resize window bounds.
 
       /// <summary>
       /// The list of documents to export as chosen by the user.
@@ -152,7 +152,6 @@ namespace BIM.IFC.Export.UI
       }
 
 
-
       /// <summary>
       /// Restores the previous window. If no previous window found, place on the left top.
       /// </summary>
@@ -249,6 +248,8 @@ namespace BIM.IFC.Export.UI
 
          RestorePreviousWindow();
 
+         currentSelectedSetup.SelectionChanged -= currentSelectedSetup_SelectionChanged;
+
          UpdateCurrentSelectedSetupCombo(selectedConfigName);
          UpdateOpenedProjectsListView(app);
 
@@ -258,7 +259,6 @@ namespace BIM.IFC.Export.UI
 
          int docToExport = GetDocumentExportCount();
          updateFileName();
-
       }
 
 
@@ -431,6 +431,11 @@ namespace BIM.IFC.Export.UI
          IFCExportConfiguration selectedConfig = GetSelectedConfiguration();
          IFCExportConfigurationsMap configurationsMap = new IFCExportConfigurationsMap(m_configMap);
          IFCExporterUIWindow editorWindow = new IFCExporterUIWindow(configurationsMap, selectedConfig.Name);
+
+         // the SelectionChanged event will be temporary disabled when the Modify Config Window is active 
+         //   (it is particularly useful for COBie v2.4 setup to avoid the function is called repeatedly) 
+         currentSelectedSetup.SelectionChanged -= currentSelectedSetup_SelectionChanged;
+
          editorWindow.ShowDialog();
          if (editorWindow.DialogResult.HasValue && editorWindow.DialogResult.Value)
          {
@@ -438,11 +443,14 @@ namespace BIM.IFC.Export.UI
             currentSelectedSetup.Items.Clear();
             m_configMap = configurationsMap;
             String selectedConfigName = editorWindow.GetSelectedConfigurationName();
+
             UpdateCurrentSelectedSetupCombo(selectedConfigName);
 
             updateFileName();
          }
 
+         // The SelectionChanged event will be activated again after the Modify Config Window is closed
+         currentSelectedSetup.SelectionChanged += currentSelectedSetup_SelectionChanged;
       }
 
       /// <summary>
@@ -456,7 +464,7 @@ namespace BIM.IFC.Export.UI
          string filePath = Path.GetDirectoryName(textBoxSetupFileName.Text);
 
          // Show Path is invalid message if the path is blank or invalid.
-         if (!String.IsNullOrWhiteSpace(filePath) && !Directory.Exists(filePath))
+         if (!string.IsNullOrWhiteSpace(filePath) && !Directory.Exists(filePath))
          {
             MessageBox.Show(Properties.Resources.ValidPathExists);
          }
@@ -542,7 +550,6 @@ namespace BIM.IFC.Export.UI
          // For the file dialog check if the path exists or not
          String defaultDirectory = m_ExportPath != null ? m_ExportPath : null;
 
-
          // If the defaultDirectory is null, find the path of the revit file
          if (defaultDirectory == null)
          {
@@ -553,7 +560,7 @@ namespace BIM.IFC.Export.UI
             }
          }
 
-          if ((defaultDirectory == null) || (!System.IO.Directory.Exists(defaultDirectory)))
+         if ((defaultDirectory == null) || (!System.IO.Directory.Exists(defaultDirectory)))
             defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
          return defaultDirectory;
@@ -638,6 +645,15 @@ namespace BIM.IFC.Export.UI
 
             // Display the IFC Version 
             textBoxSetupDescription.Text = selectedConfig.FileVersionDescription;
+
+            IFCExportConfiguration prevConfig = null;
+            if (args.RemovedItems.Count > 0)
+               prevConfig = m_configMap[args.RemovedItems[0].ToString()];
+            //if (GetSelectedConfiguration().IFCVersion == IFCVersion.IFC2x3FM && (prevConfig == null || prevConfig.IFCVersion != IFCVersion.IFC2x3FM))
+            //{
+               //// For COBie, we will always pop up the configuration window to make sure all items are initialized and user update them if necessary
+               //buttonEditSetup_Click(sender, args);
+            //}
          }
       }
 
@@ -735,6 +751,19 @@ namespace BIM.IFC.Export.UI
       {
          // handle using the context help command handler
          e.Handled = OnContextHelp();
+      }
+
+      private void ChildWindow_ContentRendered(object sender, EventArgs e)
+      {
+         // For COBie, we will always pop up the configuration window to make sure all items are initialized and user update them if necessary,
+         //   and this should only happen after IFCexport window has been completely rendered
+         //if (GetSelectedConfiguration().IFCVersion == IFCVersion.IFC2x3FM)
+         //{
+            //buttonEditSetup_Click(sender, e as RoutedEventArgs);
+         //}
+
+         // The SelectionChanged event will be activated after the Modify Config Window is closed
+         currentSelectedSetup.SelectionChanged += currentSelectedSetup_SelectionChanged;
       }
    }
 }

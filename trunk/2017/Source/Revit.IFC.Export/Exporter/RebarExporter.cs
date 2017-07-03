@@ -156,25 +156,31 @@ namespace Revit.IFC.Export.Exporter
             {
                if (groupRebarHandles)
                {
-                  IFCFile file = exporterIFC.GetFile();
-                  using (IFCTransaction tr = new IFCTransaction(file))
-                  {
-                     IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
-                     string revitObjectType = exporterIFC.GetFamilyName();
-                     string name = NamingUtil.GetNameOverride(element, revitObjectType);
-                     string description = NamingUtil.GetDescriptionOverride(element, null);
-                     string objectType = NamingUtil.GetObjectTypeOverride(element, revitObjectType);
+                  // Check the intended IFC entity or type name is in the exclude list specified in the UI
+                  Common.Enums.IFCEntityType elementClassTypeEnum;
+                  if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcGroup", out elementClassTypeEnum))
+                     if (!ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+                     {
+                        IFCFile file = exporterIFC.GetFile();
+                        using (IFCTransaction tr = new IFCTransaction(file))
+                        {
+                           IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
+                           string revitObjectType = exporterIFC.GetFamilyName();
+                           string name = NamingUtil.GetNameOverride(element, revitObjectType);
+                           string description = NamingUtil.GetDescriptionOverride(element, null);
+                           string objectType = NamingUtil.GetObjectTypeOverride(element, revitObjectType);
 
-                     IFCAnyHandle rebarGroup = IFCInstanceExporter.CreateGroup(file, guid,
-                         ownerHistory, name, description, objectType);
+                           IFCAnyHandle rebarGroup = IFCInstanceExporter.CreateGroup(file, guid,
+                               ownerHistory, name, description, objectType);
 
-                     productWrapper.AddElement(element, rebarGroup);
+                           productWrapper.AddElement(element, rebarGroup);
 
-                     IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(), ownerHistory,
-                         null, null, createdRebarHandles, null, rebarGroup);
+                           IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(), ownerHistory,
+                               null, null, createdRebarHandles, null, rebarGroup);
 
-                     tr.Commit();
-                  }
+                           tr.Commit();
+                        }
+                     }
                }
             }
             else
@@ -255,6 +261,12 @@ namespace Revit.IFC.Export.Exporter
       /// <returns>The set of handles created, to add to the ProductWrapper in the calling function.</returns>
       private static ISet<DelayedProductWrapper> ExportRebar(ExporterIFC exporterIFC, object rebarItem, Element rebarElement, int itemIndex, ProductWrapper productWrapper)
       {
+         // Check the intended IFC entity or type name is in the exclude list specified in the UI
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcReinforcingBar", out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+               return null;
+
          IFCFile file = exporterIFC.GetFile();
          HashSet<DelayedProductWrapper> createdRebars = new HashSet<DelayedProductWrapper>();
 

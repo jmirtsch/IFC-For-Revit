@@ -138,9 +138,9 @@ namespace Revit.IFC.Common.Utility
       /// <returns>True if they are parallel, false if not.</returns>
       public static bool VectorsAreParallel(XYZ a, XYZ b)
       {
-         int i = VectorsAreParallel2(a, b);
+         int ret = VectorsAreParallel2(a, b);
 
-         return i == 1 || i == -1;
+         return ret == 1 || ret == -1;
       }
 
       /// <summary>

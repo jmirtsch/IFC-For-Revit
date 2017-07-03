@@ -173,6 +173,12 @@ namespace BIM.IFC.Export.UI
       public double TessellationLevelOfDetail { get; set; }
 
       /// <summary>
+      /// Value indicating whether tessellated geometry should be kept only as triagulation
+      /// (Note: in IFC4_ADD2 IfcPolygonalFaceSet is introduced that can simplify the coplanar triangle faces into a polygonal face. This option skip this)
+      /// </summary>
+      public bool UseOnlyTriangulation { get; set; }
+
+      /// <summary>
       /// True to store the IFC GUID in the file after the export.  This will require manually saving the file to keep the parameter.
       /// </summary>
       public bool StoreIFCGUID { get; set; }
@@ -194,6 +200,21 @@ namespace BIM.IFC.Export.UI
       /// Id of the active view.
       /// </summary>
       public int ActiveViewId { get; set; }
+
+      /// <summary>
+      /// Exclude filter string (element list in an arrary, seperated with semicolon ';')
+      /// </summary>
+      public string ExcludeFilter { get; set; } = "";
+
+      /// <summary>
+      /// COBie specific company information (from a dedicated tab)
+      /// </summary>
+      public string COBieCompanyInfo { get; set; } = "";
+
+      /// <summary>
+      /// COBie specific project information (from a dedicated tab)
+      /// </summary>
+      public string COBieProjectInfo { get; set; } = "";
 
       private bool m_isBuiltIn = false;
       private bool m_isInSession = false;
@@ -261,10 +282,14 @@ namespace BIM.IFC.Export.UI
          this.UseActiveViewGeometry = false;
          this.ExportSpecificSchedules = false;
          this.TessellationLevelOfDetail = 0.5;
+         this.UseOnlyTriangulation = false;
          this.StoreIFCGUID = false;
          this.m_isBuiltIn = false;
          this.m_isInSession = false;
          this.ExportRoomsInView = false;
+         this.ExcludeFilter = string.Empty;
+         this.COBieCompanyInfo = string.Empty;
+         this.COBieProjectInfo = string.Empty;
       }
 
       /// <summary>
@@ -293,7 +318,8 @@ namespace BIM.IFC.Export.UI
                                  bool userDefinedParameterMapping,
                                  bool PlanElems2D,
                                  bool exportBoundingBox,
-                                 bool exportLinkedFiles)
+                                 bool exportLinkedFiles,
+                                 string excludeFilter = "")
       {
          IFCExportConfiguration configuration = new IFCExportConfiguration();
          configuration.Name = name;
@@ -322,11 +348,16 @@ namespace BIM.IFC.Export.UI
          configuration.IncludeSiteElevation = false;
          // The default tesselationLevelOfDetail will be low
          configuration.TessellationLevelOfDetail = 0.5;
+         configuration.UseOnlyTriangulation = false;
          configuration.StoreIFCGUID = false;
          configuration.m_isBuiltIn = true;
          configuration.m_isInSession = false;
          configuration.ActivePhaseId = ElementId.InvalidElementId;
          configuration.ExportRoomsInView = false;
+         configuration.ExcludeFilter = excludeFilter;
+         configuration.COBieCompanyInfo = "";
+         configuration.COBieProjectInfo = "";
+
          return configuration;
       }
 
@@ -366,11 +397,15 @@ namespace BIM.IFC.Export.UI
          this.ExportLinkedFiles = other.ExportLinkedFiles;
          this.IncludeSiteElevation = other.IncludeSiteElevation;
          this.TessellationLevelOfDetail = other.TessellationLevelOfDetail;
+         this.UseOnlyTriangulation = other.UseOnlyTriangulation;
          this.StoreIFCGUID = other.StoreIFCGUID;
          this.m_isBuiltIn = other.m_isBuiltIn;
          this.m_isInSession = other.m_isInSession;
          this.ActivePhaseId = other.ActivePhaseId;
          this.ExportRoomsInView = other.ExportRoomsInView;
+         this.ExcludeFilter = other.ExcludeFilter;
+         this.COBieCompanyInfo = other.COBieCompanyInfo;
+         this.COBieProjectInfo = other.COBieProjectInfo;
       }
 
       /// <summary>
@@ -415,10 +450,14 @@ namespace BIM.IFC.Export.UI
          this.ExportLinkedFiles = other.ExportLinkedFiles;
          this.IncludeSiteElevation = other.IncludeSiteElevation;
          this.TessellationLevelOfDetail = other.TessellationLevelOfDetail;
+         this.UseOnlyTriangulation = other.UseOnlyTriangulation;
          this.ActivePhaseId = other.ActivePhaseId;
          this.ExportRoomsInView = other.ExportRoomsInView;
          this.m_isBuiltIn = false;
          this.m_isInSession = false;
+         this.ExcludeFilter = other.ExcludeFilter;
+         this.COBieCompanyInfo = other.COBieCompanyInfo;
+         this.COBieProjectInfo = other.COBieProjectInfo;
       }
 
       /// <summary>
@@ -481,6 +520,7 @@ namespace BIM.IFC.Export.UI
          options.AddOption("ExportLinkedFiles", ExportLinkedFiles.ToString());
          options.AddOption("IncludeSiteElevation", IncludeSiteElevation.ToString());
          options.AddOption("TessellationLevelOfDetail", TessellationLevelOfDetail.ToString());
+         options.AddOption("UseOnlyTriangulation", UseOnlyTriangulation.ToString());
          options.AddOption("ActiveViewId", ActiveViewId.ToString());
          options.AddOption("StoreIFCGUID", StoreIFCGUID.ToString());
 
@@ -498,6 +538,9 @@ namespace BIM.IFC.Export.UI
          options.AddOption("ExportUserDefinedPsetsFileName", ExportUserDefinedPsetsFileName);
          options.AddOption("ExportUserDefinedParameterMappingFileName", ExportUserDefinedParameterMappingFileName);
          options.AddOption("ExportRoomsInView", ExportRoomsInView.ToString());
+         options.AddOption("ExcludeFilter", ExcludeFilter.ToString());
+         options.AddOption("COBieCompanyInfo", COBieCompanyInfo);
+         options.AddOption("COBieProjectInfo", COBieProjectInfo);
       }
 
 

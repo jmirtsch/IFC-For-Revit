@@ -69,6 +69,7 @@ namespace Revit.IFC.Export.Utility
             int openingNumber = 1;
             for (int curr = info.Count - 1; curr >= 0; curr--)
             {
+               Transform extrusionTrf = Transform.Identity;
                IFCAnyHandle extrusionHandle = ExtrusionExporter.CreateExtrudedSolidFromExtrusionData(exporterIFC, element, info[curr]);
                if (IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionHandle))
                   continue;
@@ -185,6 +186,14 @@ namespace Revit.IFC.Export.Utility
          return elementHandles[0];
       }
 
+      private static string CreateOpeningGUID(Element openingElem, bool canUseElementGUID)
+      {
+         if (canUseElementGUID)
+            return GUIDUtil.CreateGUID(openingElem);
+         else
+            return GUIDUtil.CreateGUID();
+      }
+
       /// <summary>
       /// Adds openings to an element.
       /// </summary>
@@ -198,8 +207,9 @@ namespace Revit.IFC.Export.Utility
       /// <param name="setter">The placement setter.</param>
       /// <param name="localPlacement">The local placement.</param>
       /// <param name="localWrapper">The wrapper.</param>
-      public static void AddOpeningsToElement(ExporterIFC exporterIFC, IList<IFCAnyHandle> elementHandles, IList<CurveLoop> curveLoops, Element element, Transform lcs, double scaledWidth,
-          IFCRange range, PlacementSetter setter, IFCAnyHandle localPlacement, ProductWrapper localWrapper)
+      public static void AddOpeningsToElement(ExporterIFC exporterIFC, IList<IFCAnyHandle> elementHandles,
+         IList<CurveLoop> curveLoops, Element element, Transform lcs, double scaledWidth,
+         IFCRange range, PlacementSetter setter, IFCAnyHandle localPlacement, ProductWrapper localWrapper)
       {
          IList<IFCOpeningData> openingDataList = ExporterIFCUtils.GetOpeningData(exporterIFC, element, lcs, range);
          IFCFile file = exporterIFC.GetFile();
@@ -211,7 +221,8 @@ namespace Revit.IFC.Export.Utility
                openingElem = element;
 
             // Don't export the opening if WallSweep category has been turned off.
-            // This is currently restricted to WallSweeps because the element responsible for the opening could be a variety of things, including a line as part of the elevation profile of the wall.
+            // This is currently restricted to WallSweeps because the element responsible for the opening could be a variety of things, 
+            // including a line as part of the elevation profile of the wall.
             // As such, we will restrict which element types we check for CanExportElement.
             if ((openingElem is WallSweep) && (!ElementFilteringUtil.CanExportElement(exporterIFC, openingElem, true)))
                continue;
@@ -238,7 +249,9 @@ namespace Revit.IFC.Export.Utility
                }
             }
 
-            bool canUseElementGUID = !isDoorOrWindowOpening;
+            // If the opening is "filled" by another element (either a door or window as determined above, 
+            // or an embedded wall, then we can't use the element GUID for the opening. 
+            bool canUseElementGUID = !isDoorOrWindowOpening && !(openingElem is Wall);
 
             IList<Solid> solids = openingData.GetOpeningSolids();
             foreach (Solid solid in solids)
@@ -248,14 +261,9 @@ namespace Revit.IFC.Export.Utility
                   extrusionCreationData.SetLocalPlacement(ExporterUtil.CreateLocalPlacement(file, localPlacement, null));
                   extrusionCreationData.ReuseLocalPlacement = true;
 
-                  string openingGUID = null;
-                  if (canUseElementGUID)
-                  {
-                     openingGUID = GUIDUtil.CreateGUID(openingElem);
-                     canUseElementGUID = false;
-                  }
-                  else
-                     openingGUID = GUIDUtil.CreateGUID();
+                  string openingGUID = CreateOpeningGUID(openingElem, canUseElementGUID);
+                  canUseElementGUID = false; // Either it was used above, and therefore is now false, or it was already false.
+
                   CreateOpening(exporterIFC, parentHandle, element, openingElem, openingGUID, solid, scaledWidth, openingData.IsRecess, extrusionCreationData,
                       setter, localWrapper);
                }
@@ -266,14 +274,9 @@ namespace Revit.IFC.Export.Utility
                if (extrusionData.ScaledExtrusionLength < MathUtil.Eps())
                   extrusionData.ScaledExtrusionLength = scaledWidth;
 
-               string openingGUID = null;
-               if (canUseElementGUID)
-               {
-                  openingGUID = GUIDUtil.CreateGUID(element);
-                  canUseElementGUID = false;
-               }
-               else
-                  openingGUID = GUIDUtil.CreateGUID();
+               string openingGUID = CreateOpeningGUID(openingElem, canUseElementGUID);
+               canUseElementGUID = false; // Either it was used above, and therefore is now false, or it was already false.
+
                CreateOpening(exporterIFC, parentHandle, localPlacement, element, openingElem, openingGUID, extrusionData, lcs, openingData.IsRecess,
                    setter, localWrapper);
             }
