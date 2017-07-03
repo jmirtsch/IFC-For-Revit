@@ -77,13 +77,16 @@ namespace Revit.IFC.Import.Data
       {
       }
 
-      private IList<CurveLoop> GetTransformedCurveLoopsFromSimpleProfile(IFCSimpleProfile simpleSweptArea, Transform lcs)
+      private IList<CurveLoop> GetTransformedCurveLoopsFromSimpleProfile(IFCSimpleProfile simpleSweptArea, Transform unscaledLcs, Transform scaledLcs)
       {
          IList<CurveLoop> loops = new List<CurveLoop>();
 
          // It is legal for simpleSweptArea.Position to be null, for example for IfcArbitraryClosedProfileDef.
-         Transform sweptAreaPosition =
-             (simpleSweptArea.Position == null) ? lcs : lcs.Multiply(simpleSweptArea.Position);
+         Transform unscaledSweptAreaPosition =
+             (simpleSweptArea.Position == null) ? unscaledLcs : unscaledLcs.Multiply(simpleSweptArea.Position);
+
+         Transform scaledSweptAreaPosition =
+             (simpleSweptArea.Position == null) ? scaledLcs : scaledLcs.Multiply(simpleSweptArea.Position);
 
          CurveLoop currLoop = simpleSweptArea.OuterCurve;
          if (currLoop == null || currLoop.Count() == 0)
@@ -91,24 +94,24 @@ namespace Revit.IFC.Import.Data
             Importer.TheLog.LogError(simpleSweptArea.Id, "No outer curve loop for profile, ignoring.", false);
             return null;
          }
-         loops.Add(IFCGeometryUtil.CreateTransformed(currLoop, sweptAreaPosition));
+         loops.Add(IFCGeometryUtil.CreateTransformed(currLoop, Id, unscaledSweptAreaPosition, scaledSweptAreaPosition));
 
          if (simpleSweptArea.InnerCurves != null)
          {
             foreach (CurveLoop innerCurveLoop in simpleSweptArea.InnerCurves)
-               loops.Add(IFCGeometryUtil.CreateTransformed(innerCurveLoop, sweptAreaPosition));
+               loops.Add(IFCGeometryUtil.CreateTransformed(innerCurveLoop, Id, unscaledSweptAreaPosition, scaledSweptAreaPosition));
          }
 
          return loops;
       }
 
-      private void GetTransformedCurveLoopsFromProfile(IFCProfileDef profile, Transform lcs, ISet<IList<CurveLoop>> loops)
+      private void GetTransformedCurveLoopsFromProfile(IFCProfileDef profile, Transform unscaledLcs, Transform scaledLcs, ISet<IList<CurveLoop>> loops)
       {
          if (profile is IFCSimpleProfile)
          {
             IFCSimpleProfile simpleSweptArea = profile as IFCSimpleProfile;
 
-            IList<CurveLoop> currLoops = GetTransformedCurveLoopsFromSimpleProfile(simpleSweptArea, lcs);
+            IList<CurveLoop> currLoops = GetTransformedCurveLoopsFromSimpleProfile(simpleSweptArea, unscaledLcs, scaledLcs);
             if (currLoops != null && currLoops.Count > 0)
                loops.Add(currLoops);
          }
@@ -117,20 +120,26 @@ namespace Revit.IFC.Import.Data
             IFCCompositeProfile compositeSweptArea = profile as IFCCompositeProfile;
 
             foreach (IFCProfileDef subProfile in compositeSweptArea.Profiles)
-               GetTransformedCurveLoopsFromProfile(subProfile, lcs, loops);
+               GetTransformedCurveLoopsFromProfile(subProfile, unscaledLcs, scaledLcs, loops);
          }
          else if (profile is IFCDerivedProfileDef)
          {
             IFCDerivedProfileDef derivedProfileDef = profile as IFCDerivedProfileDef;
 
-            Transform fullLCS = lcs;
+            Transform fullUnscaledLCS = unscaledLcs;
             Transform localLCS = derivedProfileDef.Operator.Transform;
-            if (fullLCS == null)
-               fullLCS = localLCS;
+            if (fullUnscaledLCS == null)
+               fullUnscaledLCS = localLCS;
             else if (localLCS != null)
-               fullLCS = fullLCS.Multiply(localLCS);
+               fullUnscaledLCS = fullUnscaledLCS.Multiply(localLCS);
 
-            GetTransformedCurveLoopsFromProfile(derivedProfileDef.ParentProfile, fullLCS, loops);
+            Transform fullScaledLCS = scaledLcs;
+            if (fullScaledLCS == null)
+               fullScaledLCS = localLCS;
+            else if (localLCS != null)
+               fullScaledLCS = fullScaledLCS.Multiply(localLCS);
+
+            GetTransformedCurveLoopsFromProfile(derivedProfileDef.ParentProfile, fullUnscaledLCS, fullScaledLCS, loops);
          }
          else
          {
@@ -142,13 +151,14 @@ namespace Revit.IFC.Import.Data
       /// <summary>
       /// Gathers a set of transformed curve loops.  Each member of the set has exactly one outer and zero of more inner loops.
       /// </summary>
-      /// <param name="lcs">The transform.</param>
+      /// <param name="lcs">The unscaled transform, if the scaled transform isn't supported.</param>
+      /// <param name="lcs">The scaled (true) transform.</param>
       /// <returns>The set of list of curveloops representing logically disjoint profiles of exactly one outer and zero of more inner loops.</returns>
       /// <remarks>We state "logically disjoint" because the code does not check the validity of the loops at this time.</remarks>
-      protected ISet<IList<CurveLoop>> GetTransformedCurveLoops(Transform lcs)
+      protected ISet<IList<CurveLoop>> GetTransformedCurveLoops(Transform lcs, Transform scaledLCS)
       {
          ISet<IList<CurveLoop>> loops = new HashSet<IList<CurveLoop>>();
-         GetTransformedCurveLoopsFromProfile(SweptArea, lcs, loops);
+         GetTransformedCurveLoopsFromProfile(SweptArea, lcs, scaledLCS, loops);
          return loops;
       }
 

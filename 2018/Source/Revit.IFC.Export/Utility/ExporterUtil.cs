@@ -1317,15 +1317,17 @@ namespace Revit.IFC.Export.Utility
             ParameterUtil.GetStringValueFromElementOrSymbol(element, exportAsEntity, out symbolClassName);
             ParameterUtil.GetStringValueFromElementOrSymbol(element, exportAsType, out enumTypeValue);
 
-            // We are expanding IfcExportAs format to support also format: <IfcTypeEntity>.<predefinedType>. Therefore we need to parse here. This format will override value in
-            // IFCExportType if any
-            string[] splitResult = symbolClassName.Split(new Char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
-            if (splitResult.Length > 1)
-            {
-               // found <IfcTypeEntity>.<PredefinedType>
-               symbolClassName = splitResult[0].Trim();
-               enumTypeValue = splitResult[1].Trim();
-            }
+            //// We are expanding IfcExportAs format to support also format: <IfcTypeEntity>.<predefinedType>. Therefore we need to parse here. This format will override value in
+            //// IFCExportType if any
+            //string[] splitResult = symbolClassName.Split(new Char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+            //if (splitResult.Length > 1)
+            //{
+            //   // found <IfcTypeEntity>.<PredefinedType>
+            //   symbolClassName = splitResult[0].Trim();
+            //   enumTypeValue = splitResult[1].Trim();
+            //}
+
+            ExportEntityAndPredefinedType(symbolClassName, out symbolClassName, out enumTypeValue);
 
             if (!String.IsNullOrEmpty(symbolClassName))
             {
@@ -1354,6 +1356,12 @@ namespace Revit.IFC.Export.Utility
             //bool exportSeparately = true;
             exportType = ElementFilteringUtil.GetExportTypeFromCategoryId(categoryId, out enumTypeValue /*, out bool exportSeparately*/);
          }
+
+         // Check whether the intended Entity type is inside the export exclusion set
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>(exportType.ToString(), out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+            return IFCExportType.DontExport;
 
          // if not set, fall back on symbol functions.
          // allow override of IfcBuildingElementProxy.
@@ -1388,7 +1396,21 @@ namespace Revit.IFC.Export.Utility
          return exportType;
       }
 
+      public static void ExportEntityAndPredefinedType(string symbolClassName, out string exportEntity, out string predefinedTypeStr)
+      {
+         exportEntity = symbolClassName;
+         predefinedTypeStr = string.Empty;
 
+         // We are expanding IfcExportAs format to support also format: <IfcTypeEntity>.<predefinedType>. Therefore we need to parse here. This format will override value in
+         // IFCExportType if any
+         string[] splitResult = symbolClassName.Split(new Char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+         if (splitResult.Length > 1)
+         {
+            // found <IfcTypeEntity>.<PredefinedType>
+            exportEntity = splitResult[0].Trim();
+            predefinedTypeStr = splitResult[1].Trim();
+         }
+      }
 
       /// Creates a list of IfcCartesianPoints corresponding to a list of UV points that represent a closed boundary loop.
       /// </summary>
@@ -1917,9 +1939,9 @@ namespace Revit.IFC.Export.Utility
                   if (!cs.IsVerticallyHomogeneous() && !MathUtil.IsAlmostZero(wallHeight))
                      cs = cs.GetSimpleCompoundStructure(wallHeight, wallHeight / 2.0);
 
-                  for (int i = 0; i < cs.LayerCount; ++i)
+                  for (int ii = 0; ii < cs.LayerCount; ++ii)
                   {
-                     ElementId matId = cs.GetMaterialId(i);
+                     ElementId matId = cs.GetMaterialId(ii);
                      if (matId != ElementId.InvalidElementId)
                      {
                         matIds.Add(matId);
@@ -1928,10 +1950,10 @@ namespace Revit.IFC.Export.Utility
                      {
                         matIds.Add(baseMatId);
                      }
-                     widths.Add(cs.GetLayerWidth(i));
+                     widths.Add(cs.GetLayerWidth(ii));
                      // save layer function into ProductWrapper, 
                      // it's used while exporting "Function" of Pset_CoveringCommon
-                     functions.Add(cs.GetLayerFunction(i));
+                     functions.Add(cs.GetLayerFunction(ii));
                   }
                }
 
@@ -2013,6 +2035,87 @@ namespace Revit.IFC.Export.Utility
          }
 
          return materialLayerSet;
+      }
+
+      /// <summary>
+      /// Get Transform from an IfcLocalPlacement
+      /// </summary>
+      /// <param name="ecsHnd">Handle to the IfcLocalPlacement</param>
+      /// <returns>Transform from the RelativePlacement attribute of the IfcLocalPlacement</returns>
+      public static Transform GetTransformFromLocalPlacementHnd(IFCAnyHandle ecsHnd)
+      {
+         Transform ecsFromHnd = null;
+         if (!IFCAnyHandleUtil.IsTypeOf(ecsHnd, IFCEntityType.IfcLocalPlacement))
+            return null;
+
+         IFCAnyHandle relPlacement = IFCAnyHandleUtil.GetInstanceAttribute(ecsHnd, "RelativePlacement");       // expected: IfcAxis2Placement3D
+         if (!IFCAnyHandleUtil.IsTypeOf(relPlacement, IFCEntityType.IfcAxis2Placement3D))
+            return null;
+
+         IFCAnyHandle zDir = IFCAnyHandleUtil.GetInstanceAttribute(relPlacement, "Axis");                      // IfcDirection
+         IFCAnyHandle xDir = IFCAnyHandleUtil.GetInstanceAttribute(relPlacement, "RefDirection");              // IfcDirection
+         IFCAnyHandle pos = IFCAnyHandleUtil.GetInstanceAttribute(relPlacement, "Location");                   // IfcCartesianPoint
+
+         XYZ xDirection = null;
+         XYZ zDirection = null;
+
+         if (zDir != null)
+         {
+            IList<double> zDirValues = IFCAnyHandleUtil.GetAggregateDoubleAttribute<List<double>>(zDir, "DirectionRatios");
+            zDirection = new XYZ(zDirValues[0], zDirValues[1], zDirValues[2]);
+         }
+         else
+         {
+            // Default Z-Direction
+            zDirection = new XYZ(0.0, 0.0, 1.0);
+         }
+
+         if (xDir != null)
+         {
+            IList<double> xDirValues = IFCAnyHandleUtil.GetAggregateDoubleAttribute<List<double>>(xDir, "DirectionRatios");
+            xDirection = new XYZ(xDirValues[0], xDirValues[1], xDirValues[2]);
+         }
+         else
+         {
+            // Default X-Direction
+            xDirection = new XYZ(1.0, 0.0, 0.0);
+         }
+
+         XYZ yDirection = xDirection.CrossProduct(zDirection);
+         IList<double> posCoords = IFCAnyHandleUtil.GetAggregateDoubleAttribute<List<double>>(pos, "Coordinates");
+         XYZ position = new XYZ(posCoords[0], posCoords[1], posCoords[2]);
+
+         ecsFromHnd = Transform.Identity;
+         ecsFromHnd.BasisX = xDirection;
+         ecsFromHnd.BasisY = yDirection;
+         ecsFromHnd.BasisZ = zDirection;
+         ecsFromHnd.Origin = position;
+
+         return ecsFromHnd;
+      }
+
+      /// <summary>
+      /// Simple scaling of Transform from scaled unit (used in IFC) to the internal unscaled Revit tansform
+      /// </summary>
+      /// <param name="scaledTrf">scaled Transform</param>
+      /// <returns>unscaled Transform</returns>
+      public static Transform UnscaleTransformOrigin (Transform scaledTrf)
+      {
+         Transform unscaledTrf = new Transform(scaledTrf);
+         unscaledTrf.Origin = UnitUtil.UnscaleLength(scaledTrf.Origin);
+         return unscaledTrf;
+      }
+
+      /// <summary>
+      /// Simple scaling of Transform from the Revit internal value to the IFC scaled unit
+      /// </summary>
+      /// <param name="unscaledTrf">the unscaled Transform</param>
+      /// <returns>scaled Transform</returns>
+      public static Transform ScaleTransformOrigin (Transform unscaledTrf)
+      {
+         Transform scaledTrf = new Transform(unscaledTrf);
+         scaledTrf.Origin = UnitUtil.ScaleLength(unscaledTrf.Origin);
+         return scaledTrf;
       }
    }
 }

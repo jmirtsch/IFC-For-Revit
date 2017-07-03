@@ -34,10 +34,13 @@ namespace Revit.IFC.Export.Utility
       double? m_scaledCrossSectioNArea = null;
       double? m_scaledOuterPerimeter = null;
       double? m_scaledInnerPerimeter = null;
+      Transform m_lcsTransformUsed = null;
+      Curve m_pathCurve = null;
 
       public MaterialAndProfile()
       {
          m_MaterialAndProfileDict = new Dictionary<ElementId, HashSet<IFCAnyHandle>>();
+         m_lcsTransformUsed = Transform.Identity;
       }
 
       public void Add(ElementId materialId, IFCAnyHandle profileHnd)
@@ -109,6 +112,18 @@ namespace Revit.IFC.Export.Utility
       {
          get { return m_scaledInnerPerimeter; }
          set { m_scaledInnerPerimeter = value; }
+      }
+
+      public Transform LCSTransformUsed
+      {
+         get { return m_lcsTransformUsed; }
+         set { m_lcsTransformUsed = value; }
+      }
+
+      public Curve PathCurve
+      {
+         get { return m_pathCurve; }
+         set { m_pathCurve = value; }
       }
    }
 }

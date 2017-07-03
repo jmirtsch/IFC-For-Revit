@@ -68,6 +68,12 @@ namespace Revit.IFC.Export.Exporter
          if (exportParts && !PartExporter.CanExportElementInPartExport(element, element.LevelId, false))
             return;
 
+         // Check the intended IFC entity or type name is in the exclude list specified in the UI
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcCovering", out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+               return;
+
          ElementType elemType = element.Document.GetElement(element.GetTypeId()) as ElementType;
          IFCFile file = exporterIFC.GetFile();
 

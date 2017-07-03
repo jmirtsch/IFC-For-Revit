@@ -65,6 +65,12 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="COBieCompanyInfoTab.xaml.cs">
+      <DependentUpon>COBieCompanyInfoTab.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="COBieProjectInfoTab.xaml.cs">
+      <DependentUpon>COBieProjectInfoTab.xaml</DependentUpon>
+    </Compile>
     <Compile Include="IFCAddressInformationUI.xaml.cs">
       <DependentUpon>IFCAddressInformationUI.xaml</DependentUpon>
     </Compile>
@@ -148,6 +154,14 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="COBieCompanyInfoTab.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="COBieProjectInfoTab.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="IFCAddressInformationUI.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -190,7 +204,12 @@
     <Resource Include="icons\duplicate_ico.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Foundation\UserInterfaceUtility\UserInterfaceUtility.csproj">
+    <ProjectReference Include="..\Revit.IFC.Common\Revit.IFC.Common.csproj">
+      <Project>{032EA4DC-181F-4453-9F93-E08DE1C07D95}</Project>
+      <Name>Revit.IFC.Common</Name>
+      <Private>False</Private>
+    </ProjectReference>
+      <ProjectReference Include="..\..\..\..\Foundation\UserInterfaceUtility\UserInterfaceUtility.csproj">
       <Project>{80f7e25d-8198-4083-b30e-b60ee420c27e}</Project>
       <Name>UserInterfaceUtility</Name>
       <Private>True</Private>

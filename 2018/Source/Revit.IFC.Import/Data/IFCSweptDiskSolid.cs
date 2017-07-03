@@ -248,24 +248,25 @@ namespace Revit.IFC.Import.Data
       /// Return geometry for a particular representation item.
       /// </summary>
       /// <param name="shapeEditScope">The geometry creation scope.</param>
-      /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
+      /// <param name="unscaledLcs">Local coordinate system for the geometry, without scale.</param>
       /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
       /// <param name="guid">The guid of an element for which represntation is being created.</param>
       /// <returns>Zero or more created geometries.</returns>
       protected override IList<GeometryObject> CreateGeometryInternal(
-            IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
+            IFCImportShapeEditScope shapeEditScope, Transform unscaledLcs, Transform scaledLcs, string guid)
       {
-         Transform sweptDiskPosition = (lcs == null) ? Transform.Identity : lcs;
+         Transform unscaledSweptDiskPosition = (unscaledLcs == null) ? Transform.Identity : unscaledLcs;
+         Transform scaledSweptDiskPosition = (scaledLcs == null) ? Transform.Identity : scaledLcs;
 
          CurveLoop baseProfileCurve = Directrix.GetCurveLoop();
          if (baseProfileCurve == null)
             return null;
 
-         CurveLoop trimmedDirectrix = IFCGeometryUtil.TrimCurveLoop(baseProfileCurve, StartParameter, EndParameter);
+         CurveLoop trimmedDirectrix = IFCGeometryUtil.TrimCurveLoop(Id, baseProfileCurve, StartParameter, EndParameter);
          if (trimmedDirectrix == null)
             return null;
 
-         CurveLoop trimmedDirectrixInWCS = IFCGeometryUtil.CreateTransformed(trimmedDirectrix, sweptDiskPosition);
+         CurveLoop trimmedDirectrixInWCS = IFCGeometryUtil.CreateTransformed(trimmedDirectrix, Id, unscaledSweptDiskPosition, scaledSweptDiskPosition);
 
          // Create the disk.
          Curve firstCurve = null;

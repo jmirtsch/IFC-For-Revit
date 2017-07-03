@@ -40,92 +40,92 @@ using Revit.IFC.Common.Extensions;
 
 namespace BIM.IFC.Export.UI
 {
-    /// <summary>
-    /// Interaction logic for File Header Tab in IFCAssignmentUI.xaml
-    /// </summary>
-    public partial class IFCFileHeaderInformation : ChildWindow
-    {
-       
-        private IFCFileHeader m_newFileHeader = new IFCFileHeader();
-        private IFCFileHeaderItem m_newFileHeaderItem = new IFCFileHeaderItem();
-        private IFCFileHeaderItem m_savedFileHeaderItem = new IFCFileHeaderItem();
+   /// <summary>
+   /// Interaction logic for File Header Tab in IFCAssignmentUI.xaml
+   /// </summary>
+   public partial class IFCFileHeaderInformation : ChildWindow
+   {
 
-        /// <summary>
-        /// initialization of IFCAssignemt class
-        /// </summary>
-        /// <param name="document"></param>
-        public IFCFileHeaderInformation()
-        {
-            InitializeComponent();
-        }
+      private IFCFileHeader m_newFileHeader = new IFCFileHeader();
+      private IFCFileHeaderItem m_newFileHeaderItem = new IFCFileHeaderItem();
+      private IFCFileHeaderItem m_savedFileHeaderItem = new IFCFileHeaderItem();
 
-        /// <summary>
-        /// Event when Window is loaded
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-           FileHeaderTab.DataContext = m_newFileHeaderItem;
-        }
+      /// <summary>
+      /// initialization of IFCAssignemt class
+      /// </summary>
+      /// <param name="document"></param>
+      public IFCFileHeaderInformation()
+      {
+         InitializeComponent();
+      }
 
-        /// <summary>
-        /// Event when OK button is pressed
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="args"></param>
-        private void buttonOK_Click(object sender, RoutedEventArgs args)
-        {
+      /// <summary>
+      /// Event when Window is loaded
+      /// </summary>
+      /// <param name="sender"></param>
+      /// <param name="e"></param>
+      private void Window_Loaded(object sender, RoutedEventArgs e)
+      {
+         FileHeaderTab.DataContext = m_newFileHeaderItem;
+      }
 
-            // Saved changes to both Address Tab items and File Header Tab items if they have changed
+      /// <summary>
+      /// Event when OK button is pressed
+      /// </summary>
+      /// <param name="sender"></param>
+      /// <param name="args"></param>
+      private void buttonOK_Click(object sender, RoutedEventArgs args)
+      {
 
-            
-            if (m_newFileHeaderItem.isUnchanged(m_savedFileHeaderItem) == false)
-            {
-                m_newFileHeader.UpdateFileHeader(IFCCommandOverrideApplication.TheDocument, m_newFileHeaderItem);
-            }
+         // Saved changes to both Address Tab items and File Header Tab items if they have changed
 
-            Close();
-        }
 
-        /// <summary>
-        /// Event when Cancel button is pressed
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void bottonCancel_Click(object sender, RoutedEventArgs e)
-        {
-            Close();
-        }
+         if (m_newFileHeaderItem.isUnchanged(m_savedFileHeaderItem) == false)
+         {
+            m_newFileHeader.UpdateFileHeader(IFCCommandOverrideApplication.TheDocument, m_newFileHeaderItem);
+         }
 
-       
-       
-        /// <summary>
-        /// Initialization of File Header tab
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void FileHeaderTab_Initialized(object sender, EventArgs e)
-        {
-            bool hasSavedItem = m_newFileHeader.GetSavedFileHeader(IFCCommandOverrideApplication.TheDocument, out m_newFileHeaderItem);
-            if (hasSavedItem == true)
-            {
-                m_savedFileHeaderItem = m_newFileHeaderItem.Clone();
-            }
+         Close();
+      }
 
-            // File Description and Source File name are assigned by exporter later on and therefore needs to be set to null for the UI for the null value text to be displayed
-            m_newFileHeaderItem.FileDescription = null;
-            m_newFileHeaderItem.SourceFileName = null;
-            m_newFileHeaderItem.FileSchema = null;
+      /// <summary>
+      /// Event when Cancel button is pressed
+      /// </summary>
+      /// <param name="sender"></param>
+      /// <param name="e"></param>
+      private void bottonCancel_Click(object sender, RoutedEventArgs e)
+      {
+         Close();
+      }
 
-            // Application Name and Number are fixed for the software release and will not change, therefore they are always forced set here
-            m_newFileHeaderItem.ApplicationName = IFCCommandOverrideApplication.TheDocument.Application.VersionName;
-            m_newFileHeaderItem.VersionNumber = IFCCommandOverrideApplication.TheDocument.Application.VersionBuild;
 
-        }
+
+      /// <summary>
+      /// Initialization of File Header tab
+      /// </summary>
+      /// <param name="sender"></param>
+      /// <param name="e"></param>
+      private void FileHeaderTab_Initialized(object sender, EventArgs e)
+      {
+         bool hasSavedItem = m_newFileHeader.GetSavedFileHeader(IFCCommandOverrideApplication.TheDocument, out m_newFileHeaderItem);
+         if (hasSavedItem == true)
+         {
+            m_savedFileHeaderItem = m_newFileHeaderItem.Clone();
+         }
+
+         // File Description and Source File name are assigned by exporter later on and therefore needs to be set to null for the UI for the null value text to be displayed
+         m_newFileHeaderItem.FileDescription = null;
+         m_newFileHeaderItem.SourceFileName = null;
+         m_newFileHeaderItem.FileSchema = null;
+
+         // Application Name and Number are fixed for the software release and will not change, therefore they are always forced set here
+         m_newFileHeaderItem.ApplicationName = IFCCommandOverrideApplication.TheDocument.Application.VersionName;
+         m_newFileHeaderItem.VersionNumber = IFCCommandOverrideApplication.TheDocument.Application.VersionBuild;
+
+      }
 
         
 
-    }
+   }
 }
 

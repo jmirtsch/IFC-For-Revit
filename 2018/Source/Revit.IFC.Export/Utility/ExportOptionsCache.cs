@@ -24,6 +24,10 @@ using System.Globalization;
 
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Revit.IFC.Common.Enums;
+using Revit.IFC.Common.Utility;
+
+using Newtonsoft.Json;
 
 // CQ_TODO: Better storage of pipe insulation options
 
@@ -47,7 +51,8 @@ namespace Revit.IFC.Export.Utility
       private bool m_ExportAs4_ADD1;
       private bool m_ExportAs4_ADD2;
       private IFCVersion m_FileVersion;
-
+      public COBieCompanyInfo COBieCompanyInfo { get; set; }
+      public COBieProjectInfo COBieProjectInfo { get; set; }
 
       /// Private default constructor.
       /// </summary>
@@ -293,6 +298,9 @@ namespace Revit.IFC.Export.Utility
             cache.LevelOfDetail = (ExportTessellationLevel) levelOfDetail;
          }
 
+         bool? useOnlyTriangulation = GetNamedBooleanOption(options, "UseOnlyTriangulation");
+         cache.UseOnlyTriangulation = useOnlyTriangulation.HasValue ? useOnlyTriangulation.Value : false;
+
          /// Allow exporting a mix of extrusions and BReps as a solid model, if possible.
          bool? canExportSolidModelRep = GetNamedBooleanOption(options, "ExportSolidModelRep");
          cache.CanExportSolidModelRep = canExportSolidModelRep != null ? canExportSolidModelRep.Value : false;
@@ -384,6 +392,14 @@ namespace Revit.IFC.Export.Utility
             }
          }
 
+         cache.ExcludeFilter = GetNamedStringOption(options, "ExcludeFilter");
+
+         // Get COBie specific information
+         if (cache.ExportAs2x3COBIE24DesignDeliverable)
+         {
+            cache.COBieCompanyInfo = JsonConvert.DeserializeObject<COBieCompanyInfo>(GetNamedStringOption(options, "COBieCompanyInfo"));
+            cache.COBieProjectInfo = JsonConvert.DeserializeObject<COBieProjectInfo>(GetNamedStringOption(options, "COBieProjectInfo"));
+         }
          return cache;
       }
 
@@ -672,11 +688,11 @@ namespace Revit.IFC.Export.Utility
          }
       }
 
-      public bool ExportAs2x3FMHandoverView
+      public bool ExportAs2x3COBIE24DesignDeliverable
       {
          get
          {
-            return ((FileVersion == IFCVersion.IFC2x3BFM) || (FileVersion == IFCVersion.IFC2x3FM));
+            return (FileVersion == IFCVersion.IFC2x3FM);
          }
       }
 
@@ -821,6 +837,15 @@ namespace Revit.IFC.Export.Utility
       /// The level of detail to use when exporting geometry.  Different elements will use this differently.
       /// </summary>
       public ExportTessellationLevel LevelOfDetail
+      {
+         get;
+         set;
+      }
+
+      /// <summary>
+      /// The option to leave tessellation results as triangulation and not optimized into polygonal faceset (supported in IFC4_ADD2)
+      /// </summary>
+      public bool UseOnlyTriangulation
       {
          get;
          set;
@@ -1053,6 +1078,41 @@ namespace Revit.IFC.Export.Utility
       {
          get;
          set;
+      }
+
+      /// <summary>
+      /// To check whether a specified IFC Entity is listed in the Exclude Filter (from configuration)
+      /// </summary>
+      /// <param name="entity">IFCEntityType enumeration representing the IFC entity concerned</param>
+      /// <returns>true if the entity found in the set</returns>
+      public bool IsElementInExcludeList(IFCEntityType entity)
+      {
+         return (ExcludeElementSet.Contains(entity.ToString()));
+      }
+
+      /// <summary>
+      /// The exclude filter from the UI/configuration
+      /// </summary>
+      public string ExcludeFilter { get; set; }
+      HashSet<string> _excludesElementSet = null;
+
+      HashSet<string> ExcludeElementSet
+      {
+         get
+         {
+            if (_excludesElementSet != null)
+               return _excludesElementSet;
+
+            HashSet<string> exclSet = new HashSet<string>();
+            if (!string.IsNullOrEmpty(ExcludeFilter))
+            {
+               string[] eList = ExcludeFilter.Split(';');
+               foreach (string elem in eList)
+                  exclSet.Add(elem);
+            }
+            _excludesElementSet = exclSet;
+            return _excludesElementSet;
+         }
       }
 
       /// <summary>

@@ -85,6 +85,9 @@ namespace Revit.IFC.Export.Exporter
                      {
                         if (subElem is FamilyInstance)
                         {
+                           string ifcEnumType;
+                           IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, subElem, out ifcEnumType);
+
                            if (subElem is Mullion)
                            {
                               if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
@@ -92,20 +95,23 @@ namespace Revit.IFC.Export.Exporter
                               else
                               {
                                  IFCAnyHandle currLocalPlacement = currSetter.LocalPlacement;
-                                 //MullionExporter.Export(exporterIFC, subElem as Mullion, geomElem, currLocalPlacement, currSetter,
-                                 //    productWrapper);
-                                 string ifcEnumType = "MULLION";
-                                 IFCExportType exportType = IFCExportType.IfcMemberType;
+
+                                 if (exportType == IFCExportType.IfcCurtainWallType)
+                                 {
+                                    // By default, panels and mullions are set to the same category as their parent.  In this case,
+                                    // ask to get the exportType from the category id, since we don't want to inherit the parent class.
+                                    exportType = IFCExportType.IfcMemberType;
+                                    ifcEnumType = "MULLION";
+                                 }
+                                 
                                  FamilyInstanceExporter.ExportFamilyInstanceAsMappedItem(exporterIFC, subElem as Mullion, exportType, ifcEnumType, productWrapper,
                                      ElementId.InvalidElementId, null, currLocalPlacement);
                               }
                            }
                            else
                            {
-                              string ifcEnumType;
                               FamilyInstance subFamInst = subElem as FamilyInstance;
 
-                              IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, subElem, out ifcEnumType);
                               if (exportType == IFCExportType.IfcCurtainWallType)
                               {
                                  // By default, panels and mullions are set to the same category as their parent.  In this case,
@@ -321,6 +327,15 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="productWrapper">The ProductWrapper.</param>
       private static void ExportBase(ExporterIFC exporterIFC, ICollection<ElementId> allSubElements, Element element, ProductWrapper wrapper)
       {
+         Common.Enums.IFCEntityType elementClassTypeEnum = Common.Enums.IFCEntityType.IfcRoof;
+         if (element is Wall || element is CurtainSystem || IsLegacyCurtainElement(element))
+            elementClassTypeEnum = Common.Enums.IFCEntityType.IfcCurtainWall;
+         else if (element is RoofBase)
+            elementClassTypeEnum = Common.Enums.IFCEntityType.IfcRoof;
+
+         if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+            return;
+
          IFCFile file = exporterIFC.GetFile();
          IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
@@ -518,6 +533,12 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="productWrapper">The ProductWrapper.</param>
       public static void ExportCurtainSystem(ExporterIFC exporterIFC, CurtainSystem curtainSystem, ProductWrapper productWrapper)
       {
+         // Check the intended IFC entity or type name is in the exclude list specified in the UI
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcCurtainWall", out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+               return;
+
          IFCFile file = exporterIFC.GetFile();
          using (IFCTransaction transaction = new IFCTransaction(file))
          {
@@ -534,6 +555,12 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="productWrapper">The ProductWrapper.</param>
       public static void ExportLegacyCurtainElement(ExporterIFC exporterIFC, Element curtainElement, ProductWrapper productWrapper)
       {
+         // Check the intended IFC entity or type name is in the exclude list specified in the UI
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcCurtainWall", out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+               return;
+
          ICollection<ElementId> allSubElements = ExporterIFCUtils.GetLegacyCurtainSubElements(curtainElement);
 
          IFCFile file = exporterIFC.GetFile();

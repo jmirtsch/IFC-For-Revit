@@ -158,6 +158,13 @@ namespace Revit.IFC.Export.Exporter
          string ifcEnumType;
          IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, floorElement, out ifcEnumType);
 
+         // Check the intended IFC entity or type name is in the exclude list specified in the UI
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>(exportType.ToString(), out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+               return;
+
+
          using (IFCTransaction tr = new IFCTransaction(file))
          {
             bool canExportAsContainerOrWithExtrusionAnalyzer = (!exportParts && (floorElement is Floor));
@@ -247,8 +254,9 @@ namespace Revit.IFC.Export.Exporter
                               representations.Add(floorAndProperties.Handle);
 
                               // Footprint representation will only be exported in export to IFC4
-                              if (((additionalInfo & GenerateAdditionalInfo.GenerateFootprint) != 0) && (floorAndProperties.FootprintRepHandle != null))
-                                 representations.Add(floorAndProperties.FootprintRepHandle);
+                              if (((additionalInfo & GenerateAdditionalInfo.GenerateFootprint) != 0) && (floorAndProperties.FootprintInfo != null))
+                                 if (!(IFCAnyHandleUtil.IsNullOrHasNoValue(floorAndProperties.FootprintInfo.FootPrintHandle)))
+                                    representations.Add(floorAndProperties.FootprintInfo.FootPrintHandle);
 
                               IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
                               prodReps.Add(prodRep);

@@ -47,7 +47,13 @@ namespace Revit.IFC.Export.Exporter
             if (filledRegion == null || geometryElement == null)
                 return;
 
-            IFCFile file = exporterIFC.GetFile();
+         // Check the intended IFC entity or type name is in the exclude list specified in the UI
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcAnnotation", out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+               return;
+
+         IFCFile file = exporterIFC.GetFile();
             using (IFCTransaction transaction = new IFCTransaction(file))
             {
                 IList<CurveLoop> boundaries = filledRegion.GetBoundaries();

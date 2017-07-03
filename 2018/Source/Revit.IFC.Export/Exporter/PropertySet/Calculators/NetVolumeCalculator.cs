@@ -76,15 +76,15 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
             SolidMeshGeometryInfo geomInfo = GeometryUtil.GetSolidMeshGeometry(geomElem, Transform.Identity);
             if (geomInfo.SolidsCount() > 0)
             {
-               for (int i = 0; i <geomInfo.SolidsCount(); ++i)
-                  vol += geomInfo.GetSolids()[i].Volume;
+               for (int ii = 0; ii <geomInfo.SolidsCount(); ++ii)
+                  vol += geomInfo.GetSolids()[ii].Volume;
             }
 
             if (geomInfo.MeshesCount() > 0)
             {
-               for (int j = 0; j < geomInfo.MeshesCount(); ++j)
+               for (int jj = 0; jj < geomInfo.MeshesCount(); ++jj)
                {
-                  Mesh geomMesh = geomInfo.GetMeshes()[j];
+                  Mesh geomMesh = geomInfo.GetMeshes()[jj];
                   XYZ arbitraryOrig = geomMesh.Vertices[0];
                   for (int i = 0; i < geomMesh.NumTriangles; ++i)
                   {

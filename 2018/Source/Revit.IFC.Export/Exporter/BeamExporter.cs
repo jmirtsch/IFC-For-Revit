@@ -263,12 +263,12 @@ namespace Revit.IFC.Export.Exporter
          XYZ planeYVec = orientTrf.BasisZ.Normalize();
 
          MaterialAndProfile materialAndProfile = null;
-         IFCAnyHandle footPrintHnd = null;
+         FootPrintInfo footPrintInfo = null;
 
          Plane beamExtrusionBasePlane = GeometryUtil.CreatePlaneByXYVectorsAtOrigin(planeXVec, planeYVec);
          info.RepresentationHandle = ExtrusionExporter.CreateExtrusionWithClipping(exporterIFC, element,
              catId, solid, beamExtrusionBasePlane, orientTrf.Origin, beamDirection, null, out completelyClipped,
-             out footPrintHnd, out materialAndProfile, addInfo:GenerateAdditionalInfo.GenerateProfileDef);
+             out footPrintInfo, out materialAndProfile, addInfo:GenerateAdditionalInfo.GenerateProfileDef);
          if (completelyClipped)
          {
             info.DontExport = true;
@@ -462,7 +462,8 @@ namespace Revit.IFC.Export.Exporter
 
                         repHnd = bodyData.RepresentationHnd;
                         materialIds = bodyData.MaterialIds;
-                        offsetTransform = bodyData.OffsetTransform;
+                        if (!bodyData.OffsetTransform.IsIdentity)
+                           offsetTransform = bodyData.OffsetTransform;
                         materialAndProfile = bodyData.materialAndProfile;
                      }
                   }
@@ -473,49 +474,7 @@ namespace Revit.IFC.Export.Exporter
                      return null;
                   }
 
-                  // This code doesn't quite work yet, as it always creates a BeamType and doesn't deal with axes correctly.  Redo or remove.
-                  // Note that there is a call CreateBeamType below that does the right thing below.
-
-                  //IFCAnyHandle typeStyle = null;
-                  //FamilyInstance familyInstance = element as FamilyInstance;
-                  //if (familyInstance != null)
-                  //{
-                     //FamilySymbol originalFamilySymbol = ExporterIFCUtils.GetOriginalSymbol(familyInstance);
-                     //FamilySymbol familySymbol = familyInstance.Symbol;
-                     //if (originalFamilySymbol != null && familySymbol != null)
-                     //{
-                        //IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
-
-                        //string familyName = familySymbol.Name;
-                        //string revitObjectType = familyName;
-                        //string symId = NamingUtil.CreateIFCElementId(originalFamilySymbol);
-                        //string guid = GUIDUtil.CreateGUID(originalFamilySymbol);
-
-                        //string gentypeName = NamingUtil.GetNameOverride(familySymbol, revitObjectType);
-                        //string gentypeDescription = NamingUtil.GetDescriptionOverride(familySymbol, null);
-                        //string gentypeApplicableOccurrence = NamingUtil.GetOverrideStringValue(familySymbol, "IfcApplicableOccurrence", null);
-                        //string gentypeTag = NamingUtil.GetTagOverride(familySymbol, symId);
-                        //string gentypeElementType = NamingUtil.GetOverrideStringValue(familySymbol, "IfcElementType", revitObjectType);
-
-                        //HashSet<IFCAnyHandle> propertySets = new HashSet<IFCAnyHandle>();
-
-                        //IList<IFCAnyHandle> repMapsHnd = new List<IFCAnyHandle>();
-
-                        //string beamType = "Beam";
-                        //typeStyle = IFCInstanceExporter.CreateBeamType(file, guid, ownerHistory, gentypeName,
-                            //gentypeDescription, gentypeApplicableOccurrence, propertySets, repMapsHnd, gentypeTag,
-                            //gentypeElementType, GetBeamType(familyInstance, beamType));
-
-                        //if (materialAndProfile != null)
-                        //{
-                           //materialProfileSet = CategoryUtil.GetOrCreateMaterialSet(exporterIFC, familySymbol, typeStyle, materialAndProfile);
-                           //CategoryUtil.CreateMaterialAssociation(exporterIFC, familySymbol, typeStyle, materialAndProfile);
-                        //}
-                     //}
-                  //}
-
                   IList<IFCAnyHandle> representations = new List<IFCAnyHandle>();
-
                   IFCAnyHandle axisRep = CreateBeamAxis(exporterIFC, element, catId, axisInfo, offsetTransform);
                   if (!IFCAnyHandleUtil.IsNullOrHasNoValue(axisRep))
                      representations.Add(axisRep);
@@ -562,8 +521,6 @@ namespace Revit.IFC.Export.Exporter
 
                   // Register the beam's IFC handle for later use by truss and beam system export.
                   ExporterCacheManager.ElementToHandleCache.Register(element.Id, beam);
-
-                   // TODO: To create IfcBeamType, IfcMaterialProfileSet, Usage
                }
             }
 
