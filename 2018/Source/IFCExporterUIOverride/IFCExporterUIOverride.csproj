@@ -209,7 +209,7 @@
       <Name>Revit.IFC.Common</Name>
       <Private>False</Private>
     </ProjectReference>
-      <ProjectReference Include="..\..\..\..\Foundation\UserInterfaceUtility\UserInterfaceUtility.csproj">
+    <ProjectReference Include="..\..\..\..\Foundation\UserInterfaceUtility\UserInterfaceUtility.csproj">
       <Project>{80f7e25d-8198-4083-b30e-b60ee420c27e}</Project>
       <Name>UserInterfaceUtility</Name>
       <Private>True</Private>
@@ -219,13 +219,8 @@
   <PropertyGroup>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>call $(SolutionDir)SignFile.bat $(TargetPath)
-$(SolutionDir)..\..\ThirdParty\RevitAPI\Identification\SignData\Release\SignData.exe $(TargetPath) $(SolutionDir)..\..\ThirdParty\RevitAPI\Identification\pair.dat LT
-perl $(SolutionDir)PostBuild.pl $(ProjectDir) $(TargetPath) $(Configuration) $(Platform)
-    if exist $(ProjectDir)PostBuildStep.bat call $(ProjectDir)PostBuildStep.bat $(OutDir) $(SolutionDir) $(TargetName) $(ConfigurationName) $(PlatformName)
-
-if exist $(ProjectDir)PostBuildStep.bat call $(ProjectDir)PostBuildStep.bat $(OutDir) $(SolutionDir) $(TargetName) $(ConfigurationName) $(PlatformName)
-</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
