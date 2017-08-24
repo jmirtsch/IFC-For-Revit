@@ -30,13 +30,19 @@
     <Reference Include="RevitAPIUI">
       <SpecificVersion>False</SpecificVersion>
 	  <!-- Change to your directory of Revit installation. -->
-      <HintPath>C:\Program Files\Autodesk\Revit 2018\Program\RevitAPIUI.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\Revit 2018\RevitAPIUI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="RevitAPIIFC">
       <SpecificVersion>False</SpecificVersion>
 	  <!-- Change to your directory of Revit installation. -->
       <HintPath>C:\Program Files\Autodesk\Revit 2018\RevitAPIIFC.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+     <Reference Include="UserInterfaceUtility">
+      <SpecificVersion>False</SpecificVersion>
+    <!-- Change to your directory of Revit installation. -->
+      <HintPath>C:\Program Files\Autodesk\Revit 2018\UserInterfaceUtility.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>  
