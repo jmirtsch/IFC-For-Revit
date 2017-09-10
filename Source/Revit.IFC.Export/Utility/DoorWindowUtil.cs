@@ -1053,8 +1053,9 @@ namespace Revit.IFC.Export.Utility
                         extraParams.ScaledArea = UnitUtil.ScaleArea(area);
 
                     extraParams.ScaledLength = depth;
-                    PropertyUtil.CreateOpeningQuantities(exporterIFC, openingHnd, extraParams);
-                }
+               // PropertyUtil.CreateOpeningQuantities(exporterIFC, openingHnd, extraParams);
+#warning ggFix
+            }
             }
 
             return DoorWindowOpeningInfo.Create(openingHnd, openingHeight, openingWidth);

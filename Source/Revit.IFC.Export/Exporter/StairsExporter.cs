@@ -1206,7 +1206,8 @@ namespace Revit.IFC.Export.Exporter
                             stairName, stairDescription, stairObjectType, stringerLocalPlacement, stringerRepHnd, stairElementTag, "STRINGER");
 
                         productWrapper.AddElement(null, memberHnd, placementSetter.LevelInfo, ecData, false);
-                        PropertyUtil.CreateBeamColumnMemberBaseQuantities(exporterIFC, memberHnd, null, ecData);
+                        // PropertyUtil.CreateBeamColumnMemberBaseQuantities(exporterIFC, memberHnd, null, ecData);
+#warning ggFix
                         CategoryUtil.CreateMaterialAssociation(exporterIFC, memberHnd, bodyData.MaterialIds);
 
                         components[0].Add(memberHnd);

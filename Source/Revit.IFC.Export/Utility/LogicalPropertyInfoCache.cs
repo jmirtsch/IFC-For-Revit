@@ -23,12 +23,14 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB.IFC;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Utility
 {
     /// <summary>
     /// Used to keep a cache of IFC logical properties.
     /// </summary>
-    public class LogicalPropertyInfoCache : Dictionary<KeyValuePair<string, IFCLogical>, IFCAnyHandle>
+    public class LogicalPropertyInfoCache : Dictionary<KeyValuePair<string, IfcLogicalEnum>, IfcProperty>
     {
         /// <summary>
         /// Finds if it contains the property with the specified logical value.
@@ -36,11 +38,11 @@ namespace Revit.IFC.Export.Utility
         /// <param name="propertyName">The property name.</param>
         /// <param name="value">The value.</param>
         /// <returns>True if it has, false otherwise.</returns>
-        public IFCAnyHandle Find(string propertyName, IFCLogical value)
+        public IfcProperty Find(string propertyName, IfcLogicalEnum value)
         {
-            KeyValuePair<string, IFCLogical> key = new KeyValuePair<string, IFCLogical>(propertyName, value);
+            KeyValuePair<string, IfcLogicalEnum> key = new KeyValuePair<string, IfcLogicalEnum>(propertyName, value);
 
-            IFCAnyHandle propertyHandle;
+            IfcProperty propertyHandle;
             if (TryGetValue(key, out propertyHandle))
                 return propertyHandle;
 
@@ -53,9 +55,9 @@ namespace Revit.IFC.Export.Utility
         /// <param name="propertyName">The property name.</param>
         /// <param name="value">The value.</param>
         /// <param name="propertyHandle">The property handle.</param>
-        public void Add(string propertyName, IFCLogical value, IFCAnyHandle propertyHandle)
+        public void Add(string propertyName, IfcLogicalEnum value, IfcProperty propertyHandle)
         {
-            KeyValuePair<string, IFCLogical> key = new KeyValuePair<string, IFCLogical>(propertyName, value);
+            KeyValuePair<string, IfcLogicalEnum> key = new KeyValuePair<string, IfcLogicalEnum>(propertyName, value);
             this[key] = propertyHandle;
         }
     }

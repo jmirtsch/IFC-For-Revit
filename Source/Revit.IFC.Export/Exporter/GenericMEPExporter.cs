@@ -260,7 +260,8 @@ namespace Revit.IFC.Export.Exporter
          if (!IFCAnyHandleUtil.IsNullOrHasNoValue(styleHandle))
             ExporterCacheManager.TypeRelationsCache.Add(styleHandle, instanceHandle);
 
-         PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper.GetAllObjects());
+         //PropertyUtil.CreateInternalRevitPropertySets(exporterIFC, element, productWrapper.GetAllObjects());
+#warning ggFix
 
          ExporterCacheManager.MEPCache.Register(element, instanceHandle);
 

@@ -1061,7 +1061,8 @@ namespace Revit.IFC.Export.Exporter
 
                            //export Base Quantities.
                            // This is necessary for now as it deals properly with split columns by level.
-                           PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, instanceHandle, familyInstance, typeInfo, geomObjects);
+                           // PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, instanceHandle, familyInstance, typeInfo, geomObjects);
+#warning ggFix
                            break;
                         }
                      case IFCExportType.IfcDoorType:

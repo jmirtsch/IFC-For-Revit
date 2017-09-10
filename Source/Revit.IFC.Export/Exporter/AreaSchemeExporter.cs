@@ -29,6 +29,8 @@ using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Export.Exporter.PropertySet;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Exporter
 {
     /// <summary>
@@ -42,7 +44,7 @@ namespace Revit.IFC.Export.Exporter
         /// <param name="exporterIFC">The ExporterIFC object.</param>
         /// <param name="element">The element.</param>
         /// <param name="productWrapper">The ProductWrapper.</param>
-        public static void ExportAreaScheme(ExporterIFC exporterIFC, AreaScheme element,
+        public static void ExportAreaScheme(ExporterIFC exporterIFC, DatabaseIfc db, AreaScheme element,
             ProductWrapper productWrapper)
         {
             if (element == null)

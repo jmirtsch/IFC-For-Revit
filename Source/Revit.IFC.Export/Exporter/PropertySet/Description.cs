@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
@@ -26,6 +27,8 @@ using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Enums;
 using Revit.IFC.Common.Utility;
+
+using GeometryGym.Ifc;
 
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
@@ -50,7 +53,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <summary>
       /// The types of element appropriate for this property or quantity set.
       /// </summary>
-      HashSet<IFCEntityType> m_IFCEntityTypes = new HashSet<IFCEntityType>();
+      HashSet<Type> m_IFCEntityTypes = new HashSet<Type>();
 
       /// <summary>
       /// The object type of element appropriate for this property or quantity set.
@@ -78,12 +81,16 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// </summary>
       /// <param name="handle">The handle.</param>
       /// <returns>True if it is sub type, false otherwise.</returns>
-      public bool IsSubTypeOfEntityTypes(IFCAnyHandle handle)
+      
+      public bool IsSubTypeOfEntityTypes(BaseClassIfc handle)
       {
          // Note that although EntityTypes is represented as a set, we still need to go through each item in the last to check for subtypes.
-         foreach (IFCEntityType entityType in EntityTypes)
+         Type t = handle.GetType();
+         if (EntityTypes.Contains(t))
+            return true;
+         foreach (Type entityType in EntityTypes)
          {
-            if (IFCAnyHandleUtil.IsSubTypeOf(handle, entityType))
+            if (t.IsSubclassOf(entityType))
                return true;
          }
          return false;
@@ -99,15 +106,18 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <returns>
       /// True if it matches, false otherwise.
       /// </returns>
-      public bool IsAppropriateType(IFCAnyHandle handle)
+      public bool IsAppropriateType(IfcObjectDefinition handle)
       {
          if (handle == null || !IsSubTypeOfEntityTypes(handle))
             return false;
          if (ObjectType == "")
             return true;
-
-         string objectType = IFCAnyHandleUtil.GetObjectType(handle);
-         return (NamingUtil.IsEqualIgnoringCaseAndSpaces(ObjectType, objectType));
+         IfcObject obj = handle as IfcObject;
+         if (obj != null)
+         {
+            return (NamingUtil.IsEqualIgnoringCaseAndSpaces(ObjectType, obj.ObjectType));
+         }
+         return false;
       }
 
       /// <summary>
@@ -119,7 +129,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <returns>
       /// True if it matches, false otherwise.
       /// </returns>
-      public bool IsAppropriateEntityType(IFCAnyHandle handle)
+      public bool IsAppropriateEntityType(IfcObjectDefinition handle)
       {
          if (handle == null || !IsSubTypeOfEntityTypes(handle))
             return false;
@@ -135,15 +145,17 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <returns>
       /// True if it matches, false otherwise.
       /// </returns>
-      public bool IsAppropriateObjectType(IFCAnyHandle handle)
+      public bool IsAppropriateObjectType(IfcObjectDefinition handle)
       {
          if (handle == null)
             return false;
          if (ObjectType == "")
             return true;
+         IfcObject obj = handle as IfcObject;
+         if (obj == null)
+            return false;
 
-         string objectType = IFCAnyHandleUtil.GetObjectType(handle);
-         return (NamingUtil.IsEqualIgnoringCaseAndSpaces(ObjectType, objectType));
+         return (NamingUtil.IsEqualIgnoringCaseAndSpaces(ObjectType, obj.ObjectType));
       }
 
       /// <summary>
@@ -153,7 +165,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <param name="predefinedType">Optional predefined type.  Will be set if null.</param>
       /// <returns>True if it matches, false otherwise. </returns>
       /// <remarks>Currently only works with types that have "PredefinedType", not "ShapeType".</remarks>
-      public bool IsAppropriatePredefinedType(IFCAnyHandle handle, string predefinedType)
+      public bool IsAppropriatePredefinedType(IfcObjectDefinition handle, string predefinedType)
       {
          if (handle == null)
             return false;
@@ -164,7 +176,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          {
             try
             {
-               predefinedType = IFCAnyHandleUtil.GetEnumerationAttribute(handle, "PredefinedType");
+               Type type = handle.GetType();
+               PropertyInfo pi = type.GetProperty("PredefinedType");
+               if (pi != null)
+               {
+                  predefinedType = pi.GetValue(handle).ToString();
+               }
             }
             catch
             {
@@ -196,7 +213,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <summary>
       /// The type of element appropriate for this property or quantity set.
       /// </summary>
-      public HashSet<IFCEntityType> EntityTypes
+      public HashSet<Type> EntityTypes
       {
          get
          {

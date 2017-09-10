@@ -26,6 +26,8 @@ using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Common.Utility;
 using Revit.IFC.Export.Utility;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
    /// <summary>
@@ -59,12 +61,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          m_Entries.Add(entry);
       }
 
-      private string UsablePropertyName(IFCAnyHandle propHnd, IDictionary<string, IFCAnyHandle> propertiesByName)
+      private string UsablePropertyName(IfcProperty propHnd, IDictionary<string, IfcProperty> propertiesByName)
       {
-         if (IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+         if (propHnd == null)
             return null;
 
-         string currPropertyName = IFCAnyHandleUtil.GetStringAttribute(propHnd, "Name");
+         string currPropertyName = propHnd.Name;
          if (string.IsNullOrWhiteSpace(currPropertyName))
             return null;   // This shouldn't be posssible.
 
@@ -74,9 +76,18 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             try
             {
                // Only IfcSimplePropertyValue has the NominalValue attribute; any other type of property will throw.
-               IFCData currPropertyValue = propHnd.GetAttribute("NominalValue");
-               if (currPropertyValue.PrimitiveType == IFCDataPrimitiveType.String && string.IsNullOrWhiteSpace(currPropertyValue.AsString()))
-                  return null;
+               IfcPropertySingleValue singleValue = propHnd as IfcPropertySingleValue;
+               if(singleValue != null)
+               {
+                  IfcValue value = singleValue.NominalValue;
+                  if(value != null)
+                  {
+
+                     //if (currPropertyValue.PrimitiveType == IFCDataPrimitiveType.String && string.IsNullOrWhiteSpace(currPropertyValue.AsString()))
+                     //   return null;
+#warning ggCheck
+                  }
+               }
             }
             catch
             {
@@ -97,24 +108,24 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <param name="elemTypeToUse">The base element type.</param>
       /// <param name="handle">The handle for which we process the entries.</param>
       /// <returns>A set of property handles.</returns>
-      public ISet<IFCAnyHandle> ProcessEntries(IFCFile file, ExporterIFC exporterIFC, IFCExtrusionCreationData ifcParams, Element elementToUse, ElementType elemTypeToUse, IFCAnyHandle handle)
+      public ISet<IfcProperty> ProcessEntries(IFCExtrusionCreationData ifcParams, Element elementToUse, ElementType elemTypeToUse, IfcObjectDefinition handle)
       {
          // We need to ensure that we don't have the same property name twice in the same property set.
          // By convention, we will keep the last property with the same name.  This allows for a user-defined
          // property set to look at both the type and the instance for a property value, if the type and instance properties
          // have different names.
-         IDictionary<string, IFCAnyHandle> propertiesByName = new SortedDictionary<string, IFCAnyHandle>();
+         IDictionary<string, IfcProperty> propertiesByName = new SortedDictionary<string, IfcProperty>();
 
          foreach (PropertySetEntry entry in m_Entries)
          {
-            IFCAnyHandle propHnd = entry.ProcessEntry(file, exporterIFC, ifcParams, elementToUse, elemTypeToUse, handle);
+            IfcProperty propHnd = entry.ProcessEntry(ifcParams, elementToUse, elemTypeToUse, handle);
 
             string currPropertyName = UsablePropertyName(propHnd, propertiesByName);
             if (currPropertyName != null)
                propertiesByName[currPropertyName] = propHnd;
          }
 
-         ISet<IFCAnyHandle> props = new HashSet<IFCAnyHandle>(propertiesByName.Values);
+         ISet<IfcProperty> props = new HashSet<IfcProperty>(propertiesByName.Values);
          return props;
       }
    }

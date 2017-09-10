@@ -94,9 +94,9 @@ namespace Revit.IFC.Export.Utility
                IFCAnyHandle openingElement = IFCInstanceExporter.CreateOpeningElement(file, guid, ownerHistory,
                   openingName, null, openingObjectType, openingPlacement, openingRep, elementId);
                wrapper.AddElement(null, openingElement, setter, extraParams, true);
-               if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities && (extraParams != null))
-                  PropertyUtil.CreateOpeningQuantities(exporterIFC, openingElement, extraParams);
-
+               // if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities && (extraParams != null))
+               //    PropertyUtil.CreateOpeningQuantities(exporterIFC, openingElement, extraParams);
+#warning ggFix
                string voidGuid = GUIDUtil.CreateGUID();
                IFCInstanceExporter.CreateRelVoidsElement(file, voidGuid, ownerHistory, null, null, elementHandle, openingElement);
             }
@@ -373,8 +373,9 @@ namespace Revit.IFC.Export.Utility
 
          IFCAnyHandle openingHnd = IFCInstanceExporter.CreateOpeningElement(file, openingGUID, ownerHistory, openingName, null,
              openingObjectType, openingPlacement, prodRep, null);
-         if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities)
-            PropertyUtil.CreateOpeningQuantities(exporterIFC, openingHnd, extrusionCreationData);
+         // if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities)
+         //   PropertyUtil.CreateOpeningQuantities(exporterIFC, openingHnd, extrusionCreationData);
+#warning ggFix
 
          if (localWrapper != null)
          {
@@ -449,7 +450,8 @@ namespace Revit.IFC.Export.Utility
                double area = ExporterIFCUtils.ComputeAreaOfCurveLoops(curveLoops);
                ecData.ScaledArea = UnitUtil.ScaleArea(area);
             }
-            PropertyUtil.CreateOpeningQuantities(exporterIFC, openingHnd, ecData);
+            //PropertyUtil.CreateOpeningQuantities(exporterIFC, openingHnd, ecData);
+#warning ggFix
          }
 
          if (localWrapper != null)

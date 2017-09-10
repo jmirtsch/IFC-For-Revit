@@ -23,12 +23,14 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB.IFC;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Utility
 {
     /// <summary>
     /// Used to keep a cache of IFC double properties.
     /// </summary>
-    public class DoublePropertyInfoCache : Dictionary<KeyValuePair<string, double>, IFCAnyHandle>
+    public class DoublePropertyInfoCache : Dictionary<KeyValuePair<string, double>, IfcProperty>
     {
         /// <summary>
         /// Finds if it contains the property with the specified double value.
@@ -36,11 +38,11 @@ namespace Revit.IFC.Export.Utility
         /// <param name="propertyName">The property name.</param>
         /// <param name="value">The value.</param>
         /// <returns>True if it has, false otherwise.</returns>
-        public IFCAnyHandle Find(string propertyName, double value)
+        public IfcProperty Find(string propertyName, double value)
         {
             KeyValuePair<string, double> key = new KeyValuePair<string, double>(propertyName, value);
 
-            IFCAnyHandle propertyHandle;
+            IfcProperty propertyHandle;
             if (TryGetValue(key, out propertyHandle))
                 return propertyHandle;
 
@@ -53,7 +55,7 @@ namespace Revit.IFC.Export.Utility
         /// <param name="propertyName">The property name.</param>
         /// <param name="value">The value.</param>
         /// <param name="propertyHandle">The property handle.</param>
-        public void Add(string propertyName, double value, IFCAnyHandle propertyHandle)
+        public void Add(string propertyName, double value, IfcProperty propertyHandle)
         {
             KeyValuePair<string, double> key = new KeyValuePair<string, double>(propertyName, value);
             this[key] = propertyHandle;

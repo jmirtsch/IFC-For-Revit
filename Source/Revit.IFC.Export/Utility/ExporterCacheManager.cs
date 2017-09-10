@@ -30,6 +30,8 @@ using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Export.Exporter.PropertySet;
 using Revit.IFC.Common.Enums;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Utility
 {
     /// <summary>
@@ -37,6 +39,7 @@ namespace Revit.IFC.Export.Utility
     /// </summary>
     public class ExporterCacheManager
     {
+        static DatabaseIfc m_Database;
         /// <summary>
         /// The AssemblyInstanceCache object.
         /// </summary>
@@ -1008,7 +1011,7 @@ namespace Revit.IFC.Export.Utility
             get
             {
                 if (m_ClassificationCache == null)
-                    m_ClassificationCache = new ClassificationCache(ExporterCacheManager.Document);
+                    m_ClassificationCache = new ClassificationCache(ExporterCacheManager.Document, m_Database);
                 return m_ClassificationCache;
             }
             set { m_ClassificationCache = value; }

@@ -29,6 +29,8 @@ using Revit.IFC.Common.Utility;
 using System.Text.RegularExpressions;
 using Revit.IFC.Common.Extensions;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
    /// <summary>
@@ -59,14 +61,15 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          IFCAnyHandle classification;
-         if (!ExporterCacheManager.ClassificationCache.ClassificationHandles.TryGetValue(uniformatKeyString, out classification))
-         {
-            classification = IFCInstanceExporter.CreateClassification(file, "http://www.csiorg.net/uniformat", "1998", null, uniformatKeyString);
-            ExporterCacheManager.ClassificationCache.ClassificationHandles.Add(uniformatKeyString, classification);
-         }
+         //if (!ExporterCacheManager.ClassificationCache.ClassificationHandles.TryGetValue(uniformatKeyString, out classification))
+         //{
+         //   classification = IFCInstanceExporter.CreateClassification(file, "http://www.csiorg.net/uniformat", "1998", null, uniformatKeyString);
+         //   ExporterCacheManager.ClassificationCache.ClassificationHandles.Add(uniformatKeyString, classification);
+         //}
 
-         if (!String.IsNullOrEmpty(uniformatCode))
-            InsertClassificationReference(exporterIFC, file, elemHnd, uniformatKeyString, uniformatCode, uniformatDescription, "http://www.csiorg.net/uniformat");
+         //if (!String.IsNullOrEmpty(uniformatCode))
+         //   InsertClassificationReference(exporterIFC, file, elemHnd, uniformatKeyString, uniformatCode, uniformatDescription, "http://www.csiorg.net/uniformat");
+#warning ggFix
 
       }
 
@@ -79,6 +82,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <param name="elemHnd">The corresponding IFC entity handle.</param>
       /// <returns>True if a classification or classification reference is created.</returns>
       public static bool CreateClassification(ExporterIFC exporterIFC, IFCFile file, Element element, IFCAnyHandle elemHnd)
+      {
+         return false;
+#warning ggFix
+      }
+      public static bool CreateClassification(ExporterIFC exporterIFC, IFCFile file, Element element, IfcProduct elemHnd)
       {
          bool createdClassification = false;
 
@@ -123,31 +131,29 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             if (String.IsNullOrEmpty(classificationName))
                continue;
 
-            IFCAnyHandle classification;
+            IfcClassification classification;
             if (!ExporterCacheManager.ClassificationCache.ClassificationHandles.TryGetValue(classificationName, out classification))
             {
-               IFCClassification savedClassification = new IFCClassification();
+               IfcClassification savedClassification = null;
                if (ExporterCacheManager.ClassificationCache.ClassificationsByName.TryGetValue(classificationName, out savedClassification))
                {
-                  if (savedClassification.ClassificationEditionDate == null)
+                  if (savedClassification.EditionDate == DateTime.MinValue)
                   {
-                     IFCAnyHandle editionDate = IFCInstanceExporter.CreateCalendarDate(file, savedClassification.ClassificationEditionDate.Day, savedClassification.ClassificationEditionDate.Month, savedClassification.ClassificationEditionDate.Year);
-
-                     classification = IFCInstanceExporter.CreateClassification(file, savedClassification.ClassificationSource, savedClassification.ClassificationEdition,
-                         editionDate, savedClassification.ClassificationName);
+                     classification = new IfcClassification(elemHnd.Database, savedClassification.Name) { Source = savedClassification.Source,
+                        Edition = savedClassification.Edition, EditionDate = classification.EditionDate };
                   }
                   else
                   {
-                     classification = IFCInstanceExporter.CreateClassification(file, savedClassification.ClassificationSource, savedClassification.ClassificationEdition,
-                         null, savedClassification.ClassificationName);
+                     classification = new IfcClassification(elemHnd.Database, savedClassification.Name) { Source = savedClassification.Source,
+                        Edition = savedClassification.Edition, EditionDate = savedClassification.EditionDate };
                   }
 
-                  if (!String.IsNullOrEmpty(savedClassification.ClassificationLocation))
-                     ExporterCacheManager.ClassificationLocationCache.Add(classificationName, savedClassification.ClassificationLocation);
+                  if (!String.IsNullOrEmpty(savedClassification.Location))
+                     ExporterCacheManager.ClassificationLocationCache.Add(classificationName, savedClassification.Location);
                }
                else
                {
-                  classification = IFCInstanceExporter.CreateClassification(file, "", "", null, classificationName);
+                  classification = new IfcClassification(elemHnd.Database, classificationName);
                }
 
                ExporterCacheManager.ClassificationCache.ClassificationHandles.Add(classificationName, classification);
@@ -244,16 +250,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <param name="classificationCode">The classification code.</param>
       /// <param name="classificationDescription">The classification description.</param>
       /// <param name="location">The location of the classification.</param>
-      public static void InsertClassificationReference(ExporterIFC exporterIFC, IFCFile file, IFCAnyHandle elemHnd, string classificationKeyString, string classificationCode, string classificationDescription, string location)
+      public static void InsertClassificationReference(ExporterIFC exporterIFC, IFCFile file, IfcProduct elemHnd, string classificationKeyString, string classificationCode, string classificationDescription, string location)
       {
-         IFCAnyHandle classificationReference = CreateClassificationReference(file, classificationKeyString, classificationCode, classificationDescription, location);
+         IfcClassificationReference classificationReference = CreateClassificationReference(elemHnd.Database, classificationKeyString, classificationCode, classificationDescription, location);
 
-         HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();
-         relatedObjects.Add(elemHnd);
-
-         IFCAnyHandle relAssociates = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
-            ExporterCacheManager.OwnerHistoryHandle, classificationKeyString + " Classification", "", relatedObjects, classificationReference);
-
+         new IfcRelAssociatesClassification(classificationReference, elemHnd);
       }
 
       /// <summary>
@@ -284,18 +285,35 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <returns></returns>
       public static IFCAnyHandle CreateClassificationReference(IFCFile file, string classificationKeyString, string classificationCode, string classificationDescription, string location)
       {
-         IFCAnyHandle classification;
+         return null;
+      //   IFCAnyHandle classification;
+
+         // Check whether Classification is already defined before
+         //if (!ExporterCacheManager.ClassificationCache.ClassificationHandles.TryGetValue(classificationKeyString, out classification))
+         //{
+         //   classification = IFCInstanceExporter.CreateClassification(file, "", "", null, classificationKeyString);
+         //   ExporterCacheManager.ClassificationCache.ClassificationHandles.Add(classificationKeyString, classification);
+         //}
+
+//         IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
+  //          location, classificationCode, classificationDescription, classification);
+
+    //     return classificationReference;
+#warning ggFix
+      }
+      public static IfcClassificationReference CreateClassificationReference(DatabaseIfc db, string classificationKeyString, string classificationCode, string classificationDescription, string location)
+      {
+         IfcClassification classification;
 
          // Check whether Classification is already defined before
          if (!ExporterCacheManager.ClassificationCache.ClassificationHandles.TryGetValue(classificationKeyString, out classification))
          {
-            classification = IFCInstanceExporter.CreateClassification(file, "", "", null, classificationKeyString);
+            classification = new IfcClassification(db, classificationKeyString);
             ExporterCacheManager.ClassificationCache.ClassificationHandles.Add(classificationKeyString, classification);
          }
 
-         IFCAnyHandle classificationReference = IFCInstanceExporter.CreateClassificationReference(file,
-            location, classificationCode, classificationDescription, classification);
-
+         IfcClassificationReference classificationReference = new IfcClassificationReference(db) { Location = location,
+            Identification = classificationCode, Name = classificationDescription, ReferencedSource = classification };
          return classificationReference;
       }
    }

@@ -26,6 +26,8 @@ using Revit.IFC.Export.Utility;
 using Revit.IFC.Common.Enums;
 using Revit.IFC.Common.Utility;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Toolkit
 {
    public class IFCInstanceExporter
@@ -1300,8 +1302,16 @@ namespace Revit.IFC.Export.Toolkit
          string location, string itemReference, string name)
       {
          IFCAnyHandleUtil.SetAttribute(externalReference, "Location", location);
-         IFCAnyHandleUtil.SetAttribute(externalReference, (ExporterCacheManager.ExportOptionsCache.ExportAs4) ? "Identification" : "ItemReference", itemReference);
+         IFCAnyHandleUtil.SetAttribute(externalReference, (ExporterCacheManager.ExportOptionsCache.ExportAs4)? "Identification" : "ItemReference", itemReference);
          IFCAnyHandleUtil.SetAttribute(externalReference, "Name", name);
+      }
+
+      private static void SetExternalReference(IfcClassificationReference externalReference,
+         string location, string itemReference, string name)
+      {
+         externalReference.Location = location;
+         externalReference.Identification = itemReference;
+         externalReference.Name = name;
       }
 
       /// <summary>
@@ -8853,6 +8863,16 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandle classificationReference = CreateInstance(file, IFCEntityType.IfcClassificationReference);
          SetExternalReference(classificationReference, location, itemReference, name);
          IFCAnyHandleUtil.SetAttribute(classificationReference, "ReferencedSource", referencedSource);
+         return classificationReference;
+      }
+
+      public static IfcClassificationReference CreateClassificationReference(DatabaseIfc db, string location,
+         string itemReference, string name, IfcClassification referencedSource)
+      {
+         // All IfcExternalReference arguments are optional.
+         IfcClassificationReference classificationReference = new IfcClassificationReference(db);
+         SetExternalReference(classificationReference, location, itemReference, name);
+         classificationReference.ReferencedSource = referencedSource;
          return classificationReference;
       }
 

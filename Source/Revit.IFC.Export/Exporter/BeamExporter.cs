@@ -514,8 +514,8 @@ namespace Revit.IFC.Export.Exporter
                   typeInfo.ScaledArea = extrusionCreationData.ScaledArea;
                   typeInfo.ScaledInnerPerimeter = extrusionCreationData.ScaledInnerPerimeter;
                   typeInfo.ScaledOuterPerimeter = extrusionCreationData.ScaledOuterPerimeter;
-                  PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, beam, element, typeInfo, null);
-
+                  //PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, beam, element, typeInfo, null);
+#warning ggFix
                   if (materialIds.Count != 0)
                      CategoryUtil.CreateMaterialAssociation(exporterIFC, beam, materialIds);
 

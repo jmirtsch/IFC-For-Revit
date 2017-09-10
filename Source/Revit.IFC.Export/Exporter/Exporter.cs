@@ -37,6 +37,8 @@ using Revit.IFC.Common.Enums;
 using Autodesk.Revit.DB.ExternalService;
 using Revit.IFC.Export.Properties;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Exporter
 {
    /// <summary>
@@ -102,7 +104,7 @@ namespace Revit.IFC.Export.Exporter
       private IFCFile m_IfcFile;
 
       // Allow a derived class to add Element exporter routines.
-      public delegate void ElementExporter(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document);
+      public delegate void ElementExporter(ExporterIFC exporterIFC, DatabaseIfc db, Document document);
 
       protected ElementExporter m_ElementExporter = null;
 
@@ -150,13 +152,13 @@ namespace Revit.IFC.Export.Exporter
 
          try
          {
-            BeginExport(exporterIFC, document, filterView);
+            DatabaseIfc db = BeginExport(exporterIFC, document, filterView);
 
             InitializeElementExporters();
             if (m_ElementExporter != null)
-               m_ElementExporter(exporterIFC, document);
+               m_ElementExporter(exporterIFC, db, document);
 
-            EndExport(exporterIFC, document);
+            EndExport(exporterIFC, db, document);
             WriteIFCFile(exporterIFC, document);
          }
          finally
@@ -206,7 +208,7 @@ namespace Revit.IFC.Export.Exporter
 
       #endregion
 
-      protected void ExportSpatialElements(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
+      protected void ExportSpatialElements(ExporterIFC exporterIFC, DatabaseIfc db, Document document)
       {
          ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
          View filterView = exportOptionsCache.FilterViewForExport;
@@ -258,13 +260,13 @@ namespace Revit.IFC.Export.Exporter
             // if the section box isn't active, then we export the element.
             if (sectionBox != null && !GeometryUtil.BoundingBoxesOverlap(element.get_BoundingBox(null), sectionBox))
                continue;
-            ExportElement(exporterIFC, element);
+            ExportElement(exporterIFC, db, element);
          }
 
          SpatialElementExporter.DestroySpatialElementGeometryCalculator();
       }
 
-      protected void ExportNonSpatialElements(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
+      protected void ExportNonSpatialElements(ExporterIFC exporterIFC, DatabaseIfc db, Document document)
       {
          FilteredElementCollector otherElementCollector;
          View filterView = ExporterCacheManager.ExportOptionsCache.FilterViewForExport;
@@ -289,7 +291,7 @@ namespace Revit.IFC.Export.Exporter
          {
             statusBar.Set(String.Format(Resources.IFCProcessingNonSpatialElements, otherElementCollectorCount, numOfOtherElement, element.Id));
             otherElementCollectorCount++;
-            ExportElement(exporterIFC, element);
+            ExportElement(exporterIFC, db, element);
          }
       }
 
@@ -298,16 +300,16 @@ namespace Revit.IFC.Export.Exporter
       /// </summary>
       /// <param name="document">The Revit document.</param>
       /// <param name="exporterIFC">The exporterIFC class.</param>
-      protected void ExportContainers(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
+      protected void ExportContainers(ExporterIFC exporterIFC, DatabaseIfc db, Document document)
       {
          using (ExporterStateManager.ForceElementExport forceElementExport = new ExporterStateManager.ForceElementExport())
          {
-            ExportCachedRailings(exporterIFC, document);
-            ExportCachedFabricAreas(exporterIFC, document);
-            ExportTrusses(exporterIFC, document);
-            ExportBeamSystems(exporterIFC, document);
-            ExportAreaSchemes(exporterIFC, document);
-            ExportZones(exporterIFC, document);
+            ExportCachedRailings(exporterIFC, db, document);
+            ExportCachedFabricAreas(exporterIFC, db, document);
+            ExportTrusses(exporterIFC, db, document);
+            ExportBeamSystems(exporterIFC, db, document);
+            ExportAreaSchemes(exporterIFC, db, document);
+            ExportZones(exporterIFC, db, document);
          }
       }
 
@@ -318,7 +320,7 @@ namespace Revit.IFC.Export.Exporter
       /// </summary>
       /// <param name="document">The Revit document.</param>
       /// <param name="exporterIFC">The exporterIFC class.</param>
-      protected void ExportCachedRailings(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
+      protected void ExportCachedRailings(ExporterIFC exporterIFC, DatabaseIfc db, Document document)
       {
          HashSet<ElementId> railingCollection = ExporterCacheManager.RailingCache;
          int railingIndex = 1;
@@ -328,7 +330,7 @@ namespace Revit.IFC.Export.Exporter
             statusBar.Set(String.Format(Resources.IFCProcessingRailings, railingIndex, railingCollectionCount, elementId));
             railingIndex++;
             Element element = document.GetElement(elementId);
-            ExportElement(exporterIFC, element);
+            ExportElement(exporterIFC, db, element);
          }
       }
 
@@ -338,7 +340,7 @@ namespace Revit.IFC.Export.Exporter
       /// </summary>
       /// <param name="document">The Revit document.</param>
       /// <param name="exporterIFC">The exporterIFC class.</param>
-      protected void ExportCachedFabricAreas(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
+      protected void ExportCachedFabricAreas(ExporterIFC exporterIFC, DatabaseIfc db, Document document)
       {
          IDictionary<ElementId, HashSet<IFCAnyHandle>> fabricAreaCollection = ExporterCacheManager.FabricAreaHandleCache;
          int fabricAreaIndex = 1;
@@ -348,7 +350,7 @@ namespace Revit.IFC.Export.Exporter
             statusBar.Set(String.Format(Resources.IFCProcessingFabricAreas, fabricAreaIndex, fabricAreaCollectionCount, elementId));
             fabricAreaIndex++;
             Element element = document.GetElement(elementId);
-            ExportElement(exporterIFC, element);
+            ExportElement(exporterIFC, db, element);
          }
       }
 
@@ -357,7 +359,7 @@ namespace Revit.IFC.Export.Exporter
       /// </summary>
       /// <param name="document">The Revit document.</param>
       /// <param name="exporterIFC">The exporterIFC class.</param>
-      protected void ExportTrusses(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
+      protected void ExportTrusses(ExporterIFC exporterIFC, DatabaseIfc db, Document document)
       {
          HashSet<ElementId> trussCollection = ExporterCacheManager.TrussCache;
          int trussIndex = 1;
@@ -367,7 +369,7 @@ namespace Revit.IFC.Export.Exporter
             statusBar.Set(String.Format(Resources.IFCProcessingTrusses, trussIndex, trussCollectionCount, elementId));
             trussIndex++;
             Element element = document.GetElement(elementId);
-            ExportElement(exporterIFC, element);
+            ExportElement(exporterIFC, db, element);
          }
       }
 
@@ -376,7 +378,7 @@ namespace Revit.IFC.Export.Exporter
       /// </summary>
       /// <param name="document">The Revit document.</param>
       /// <param name="exporterIFC">The exporterIFC class.</param>
-      protected void ExportBeamSystems(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
+      protected void ExportBeamSystems(ExporterIFC exporterIFC, DatabaseIfc db, Document document)
       {
          HashSet<ElementId> beamSystemCollection = ExporterCacheManager.BeamSystemCache;
          int beamSystemIndex = 1;
@@ -386,7 +388,7 @@ namespace Revit.IFC.Export.Exporter
             statusBar.Set(String.Format(Resources.IFCProcessingBeamSystems, beamSystemIndex, beamSystemCollectionCount, elementId));
             beamSystemIndex++;
             Element element = document.GetElement(elementId);
-            ExportElement(exporterIFC, element);
+            ExportElement(exporterIFC, db, element);
          }
       }
 
@@ -395,7 +397,7 @@ namespace Revit.IFC.Export.Exporter
       /// </summary>
       /// <param name="document">The Revit document.</param>
       /// <param name="exporterIFC">The exporterIFC class.</param>
-      protected void ExportZones(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
+      protected void ExportZones(ExporterIFC exporterIFC, DatabaseIfc db, Document document)
       {
          HashSet<ElementId> zoneCollection = ExporterCacheManager.ZoneCache;
          int zoneIndex = 1;
@@ -405,7 +407,7 @@ namespace Revit.IFC.Export.Exporter
             statusBar.Set(String.Format(Resources.IFCProcessingExportZones, zoneIndex, zoneCollectionCount, elementId));
             zoneIndex++;
             Element element = document.GetElement(elementId);
-            ExportElement(exporterIFC, element);
+            ExportElement(exporterIFC, db, element);
          }
       }
 
@@ -414,22 +416,22 @@ namespace Revit.IFC.Export.Exporter
       /// </summary>
       /// <param name="document">The Revit document.</param>
       /// <param name="exporterIFC">The exporterIFC class.</param>
-      protected void ExportAreaSchemes(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
+      protected void ExportAreaSchemes(ExporterIFC exporterIFC, DatabaseIfc db, Document document)
       {
          foreach (ElementId elementId in ExporterCacheManager.AreaSchemeCache.Keys)
          {
             Element element = document.GetElement(elementId);
-            ExportElement(exporterIFC, element);
+            ExportElement(exporterIFC, db, element);
          }
       }
 
-      protected void ExportGrids(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
+      protected void ExportGrids(ExporterIFC exporterIFC, DatabaseIfc db, Document document)
       {
          // Export the grids
-         GridExporter.Export(exporterIFC, document);
+         GridExporter.Export(exporterIFC, db, document);
       }
 
-      protected void ExportConnectors(ExporterIFC exporterIFC, Autodesk.Revit.DB.Document document)
+      protected void ExportConnectors(ExporterIFC exporterIFC, DatabaseIfc db, Document document)
       {
          ConnectorExporter.Export(exporterIFC);
       }
@@ -450,7 +452,7 @@ namespace Revit.IFC.Export.Exporter
       /// </summary>
       /// <param name="exporterIFC">The IFC exporter object.</param>
       /// <param name="element ">The element to export.</param>
-      public virtual void ExportElement(ExporterIFC exporterIFC, Autodesk.Revit.DB.Element element)
+      public virtual void ExportElement(ExporterIFC exporterIFC, DatabaseIfc db, Element element)
       {
          if (!CanExportElement(exporterIFC, element))
          {
@@ -480,14 +482,15 @@ namespace Revit.IFC.Export.Exporter
          {
             using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, true))
             {
-               ExportElementImpl(exporterIFC, element, productWrapper);
-               ExporterUtil.ExportRelatedProperties(exporterIFC, element, productWrapper);
-            }
+               ExportElementImpl(exporterIFC, db, element, productWrapper);
+               //   ExporterUtil.ExportRelatedProperties(exporterIFC, element, productWrapper);
+#warning ggFix
 
-            // We are going to clear the parameter cache for the element (not the type) after the export.
-            // We do not expect to need the parameters for this element again, so we can free up the space.
-            if (!(element is ElementType) && !ExporterStateManager.ShouldPreserveElementParameterCache(element))
-               ParameterUtil.RemoveElementFromCache(element);
+               // We are going to clear the parameter cache for the element (not the type) after the export.
+               // We do not expect to need the parameters for this element again, so we can free up the space.
+               if (!(element is ElementType) && !ExporterStateManager.ShouldPreserveElementParameterCache(element))
+                  ParameterUtil.RemoveElementFromCache(element);
+            }
          }
          catch (System.Exception ex)
          {
@@ -567,7 +570,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="exporterIFC">The IFC exporter object.</param>
       /// <param name="element">The element to export.</param>
       /// <param name="productWrapper">The ProductWrapper object.</param>
-      public virtual void ExportElementImpl(ExporterIFC exporterIFC, Element element, ProductWrapper productWrapper)
+      public virtual void ExportElementImpl(ExporterIFC exporterIFC, DatabaseIfc db, Element element, ProductWrapper productWrapper)
       {
          Options options;
          View ownerView = null;
@@ -609,7 +612,7 @@ namespace Revit.IFC.Export.Exporter
                // A long list of supported elements.  Please keep in alphabetical order by the first item in the list..
                if (element is AreaScheme)
                {
-                  AreaSchemeExporter.ExportAreaScheme(exporterIFC, element as AreaScheme, productWrapper);
+                  AreaSchemeExporter.ExportAreaScheme(exporterIFC, db, element as AreaScheme, productWrapper);
                }
                else if (element is AssemblyInstance)
                {
@@ -912,7 +915,7 @@ namespace Revit.IFC.Export.Exporter
       /// </summary>
       /// <param name="exporterIFC">The IFC exporter object.</param>
       /// <param name="document">The document to export.</param>
-      private void BeginExport(ExporterIFC exporterIFC, Document document, Autodesk.Revit.DB.View filterView)
+      private DatabaseIfc BeginExport(ExporterIFC exporterIFC, Document document, Autodesk.Revit.DB.View filterView)
       {
          statusBar = RevitStatusBar.Create();
 
@@ -952,6 +955,7 @@ namespace Revit.IFC.Export.Exporter
 
          IFCFileModelOptions modelOptions = CreateIFCFileModelOptions(exporterIFC);
 
+         DatabaseIfc db = new DatabaseIfc(false, ReleaseVersion.IFC4A2);
          m_IfcFile = IFCFile.Create(modelOptions);
          exporterIFC.SetFile(m_IfcFile);
 
@@ -963,11 +967,9 @@ namespace Revit.IFC.Export.Exporter
          using (IFCTransaction transaction = new IFCTransaction(file))
          {
             // create building
-            IFCAnyHandle applicationHandle = CreateApplicationInformation(file, document);
+            IfcApplication applicationHandle = CreateApplicationInformation(db, document);
 
-            CreateGlobalCartesianOrigin(exporterIFC);
-            CreateGlobalDirection(exporterIFC);
-            CreateGlobalDirection2D(exporterIFC);
+            CreateApplicationInformation(db, document);
 
             // Set relative transform depending on whether it is a linked transform or not.
             IFCAnyHandle relativePlacement = null;
@@ -977,12 +979,14 @@ namespace Revit.IFC.Export.Exporter
                relativePlacement = ExporterUtil.CreateAxis2Placement3D(file, linkTrf.Origin, linkTrf.BasisZ, linkTrf.BasisX);
             }
             else
+            {
                relativePlacement = ExporterUtil.CreateAxis2Placement3D(file);
-
+            }
+            
             IFCAnyHandle buildingPlacement = IFCInstanceExporter.CreateLocalPlacement(file, null, relativePlacement);
-
-            CreateProject(exporterIFC, document, applicationHandle);
-
+           
+            
+            CreateProject(db, document);
             IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
             ProjectInfo projectInfo = document.ProjectInformation;
 
@@ -1009,12 +1013,13 @@ namespace Revit.IFC.Export.Exporter
                buildingLongName = NamingUtil.GetOverrideStringValue(projectInfo, "BuildingLongName", buildingName);
             }
 
-            IFCAnyHandle buildingAddress = CreateIFCAddress(file, document, projectInfo);
+            IfcPostalAddress buildingAddress = CreateIFCAddress(db, document, projectInfo);
 
             string buildingGUID = GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building);
             IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(file,
-                buildingGUID, ownerHistory, buildingName, buildingDescription, null, buildingPlacement, null, buildingLongName,
-                Toolkit.IFCElementComposition.Element, null, null, buildingAddress);
+               buildingGUID, ownerHistory, buildingName, buildingDescription, null, buildingPlacement, null, buildingLongName,
+               Toolkit.IFCElementComposition.Element, null, null, null);// buildingAddress);
+#warning ggFix
             ExporterCacheManager.BuildingHandle = buildingHandle;
 
             if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieProjectInfo != null)
@@ -1026,9 +1031,9 @@ namespace Revit.IFC.Export.Exporter
                int numRefItem = ClassificationUtil.parseClassificationCode(classificationParamValue, "dummy", out classificationName, out classificationItemCode, out classificationItemName);
                if (numRefItem > 0 && !string.IsNullOrEmpty(classificationItemCode))
                {
-                  IFCAnyHandle classifRef = IFCInstanceExporter.CreateClassificationReference(file, null, classificationItemCode, classificationItemName, null);
-                  IFCAnyHandle relClassif = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
-                                             ownerHistory, "BuildingType", null, new HashSet<IFCAnyHandle>() { buildingHandle }, classifRef);
+                  // IfcClassificationReference classifRef = new IfcClassificationReference(db) { Identification = classificationItemCode, Name = classificationItemName };
+                  // new IfcRelAssociatesClassification(classifRef, buildingHandle) { Name = "BuildingType" };
+#warning ggFix
                }
             }
 
@@ -1109,23 +1114,20 @@ namespace Revit.IFC.Export.Exporter
                }
 
                double elevation = UnitUtil.ScaleLength(elev);
-               XYZ orig = new XYZ(0.0, 0.0, elevation);
+               IfcCartesianPoint orig = new IfcCartesianPoint(db, 0.0, 0.0, elevation);
+               XYZ oorig = new XYZ(0.0, 0.0, elevation);
 
-               IFCAnyHandle placement = ExporterUtil.CreateLocalPlacement(file, buildingPlacement, orig, null, null);
+               IFCAnyHandle placement = ExporterUtil.CreateLocalPlacement(file, buildingPlacement, oorig, null, null);
                string levelName = NamingUtil.GetNameOverride(level, level.Name);
                string objectType = NamingUtil.GetObjectTypeOverride(level, null);
                string description = NamingUtil.GetDescriptionOverride(level, null);
                string longName = NamingUtil.GetLongNameOverride(level, level.Name);
                string levelGUID = GUIDUtil.GetLevelGUID(level);
                IFCElementComposition ifcComposition = LevelUtil.GetElementCompositionTypeOverride(level);
-               IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(file,
-                   levelGUID, ExporterCacheManager.OwnerHistoryHandle,
-                   levelName, description, objectType, placement,
-                   null, longName, ifcComposition, elevation);
-
-               // Create classification reference when level has classification field name assigned to it
-               ClassificationUtil.CreateClassification(exporterIFC, file, level, buildingStorey);
-
+               IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(file, levelGUID, ExporterCacheManager.OwnerHistoryHandle, levelName, description, objectType, placement, null, longName, IFCElementComposition.Element, elevation);
+               //Create classification reference when level has classification field name assigned to it
+               //ClassificationUtil.CreateClassification(exporterIFC, file, level, buildingStorey);
+#warning ggFix
                if (prevBuildingStorey == null)
                {
                   foreach (Level baseLevel in unassignedBaseLevels)
@@ -1156,6 +1158,7 @@ namespace Revit.IFC.Export.Exporter
             }
             transaction.Commit();
          }
+         return db;
       }
 
       private void GetElementHandles(ICollection<ElementId> ids, ISet<IFCAnyHandle> handles)
@@ -1176,7 +1179,7 @@ namespace Revit.IFC.Export.Exporter
       /// </summary>
       /// <param name="exporterIFC">The IFC exporter object.</param>
       /// <param name="document">The document to export.</param>
-      private void EndExport(ExporterIFC exporterIFC, Document document)
+      private void EndExport(ExporterIFC exporterIFC, DatabaseIfc db, Document document)
       {
          IFCFile file = exporterIFC.GetFile();
          IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
@@ -1371,8 +1374,9 @@ namespace Revit.IFC.Export.Exporter
             using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, true))
             {
                productWrapper.AddBuilding(projectInfo, buildingHnd);
-               if (projectInfo != null)
-                  ExporterUtil.ExportRelatedProperties(exporterIFC, projectInfo, productWrapper);
+               //if (projectInfo != null)
+               //   ExporterUtil.ExportRelatedProperties(exporterIFC, projectInfo, productWrapper);
+#warning ggFix
             }
 
             // create material layer associations
@@ -1403,18 +1407,17 @@ namespace Revit.IFC.Export.Exporter
                if (typePropertyInfo.AssignedToType)
                   continue;
 
-               ICollection<IFCAnyHandle> propertySets = typePropertyInfo.PropertySets;
-               ISet<IFCAnyHandle> elements = typePropertyInfo.Elements;
+               ICollection<IfcPropertySet> propertySets = typePropertyInfo.PropertySets;
+               ISet<IfcObjectDefinition> elements = typePropertyInfo.Elements;
 
                if (elements.Count == 0)
                   continue;
 
-               foreach (IFCAnyHandle propertySet in propertySets)
+               foreach (IfcPropertySet propertySet in propertySets)
                {
                   try
                   {
-                     ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory,
-                                                     null, null, elements, propertySet);
+                     new IfcRelDefinesByProperties(elements, propertySet);
                   }
                   catch
                   {
@@ -1895,7 +1898,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="file">The IFC file.</param>
       /// <param name="app">The application object.</param>
       /// <returns>The handle of IFC file.</returns>
-      private IFCAnyHandle CreateApplicationInformation(IFCFile file, Document document)
+      private IfcApplication CreateApplicationInformation(DatabaseIfc db, Document document)
       {
          Application app = document.Application;
          string pathName = document.PathName;
@@ -1905,8 +1908,8 @@ namespace Revit.IFC.Export.Exporter
          string productVersion = app.VersionNumber;
          string productIdentifier = "Revit";
 
-         IFCAnyHandle developer = IFCInstanceExporter.CreateOrganization(file, null, productFullName, null, null, null);
-         IFCAnyHandle application = IFCInstanceExporter.CreateApplication(file, developer, productVersion, productFullName, productIdentifier);
+         IfcOrganization developer = new IfcOrganization(db, productFullName);
+         IfcApplication application = db.Factory.Application = new IfcApplication(developer, productVersion, productFullName, productIdentifier);
          return application;
       }
 
@@ -1916,7 +1919,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="exporterIFC">The IFC exporter object.</param>
       /// <param name="doc">The document provides the ProjectLocation.</param>
       /// <returns>The collection contains the 3D/2D context (not sub-context) handles of IFC file.</returns>
-      private HashSet<IFCAnyHandle> CreateContextInformation(ExporterIFC exporterIFC, Document doc)
+      private HashSet<IFCAnyHandle> CreateContextInformation(DatabaseIfc db, Document doc)
       {
          HashSet<IFCAnyHandle> repContexts = new HashSet<IFCAnyHandle>();
 
@@ -1929,63 +1932,59 @@ namespace Revit.IFC.Export.Exporter
          int exponent = Convert.ToInt32(Math.Log10(scaledPrecision));
          double precision = Math.Pow(10.0, exponent);
 
-         IFCFile file = exporterIFC.GetFile();
-         IFCAnyHandle origin = ExporterIFCUtils.GetGlobal3DOriginHandle();
-         IFCAnyHandle wcs = IFCInstanceExporter.CreateAxis2Placement3D(file, origin, null, null);
+        // IFCFile file = exporterIFC.GetFile();
+         //IFCAnyHandle origin = ExporterIFCUtils.GetGlobal3DOriginHandle();
+         //IFCAnyHandle wcs = IFCInstanceExporter.CreateAxis2Placement3D(file, origin, null, null);
 
          double trueNorthAngleInRadians;
          ExporterUtil.GetSafeProjectPositionAngle(doc, out trueNorthAngleInRadians);
 
          // CoordinationView2.0 requires that we always export true north, even if it is the same as project north.
-         IFCAnyHandle trueNorth = null;
+         IfcDirection trueNorth = null;
          {
             double trueNorthAngleConverted = -trueNorthAngleInRadians + Math.PI / 2.0;
-            List<double> dirRatios = new List<double>();
-            dirRatios.Add(Math.Cos(trueNorthAngleConverted));
-            dirRatios.Add(Math.Sin(trueNorthAngleConverted));
-            trueNorth = IFCInstanceExporter.CreateDirection(file, dirRatios);
+            trueNorth = new IfcDirection(db, Math.Cos(trueNorthAngleConverted), Math.Sin(trueNorthAngleConverted));
          }
 
-         int dimCount = 3;
-         IFCAnyHandle context3D = IFCInstanceExporter.CreateGeometricRepresentationContext(file, null,
-             "Model", dimCount, precision, wcs, trueNorth);
+         IfcGeometricRepresentationContext context3D = db.Factory.GeometricRepresentationContext(FactoryIfc.ContextIdentifier.Model);// IfcGeometricRepresentationContext.GeometricContextIdentifier.Model);
          // CoordinationView2.0 requires sub-contexts of "Axis", "Body", and "Box".  We will use these for regular export also.
          {
-            IFCAnyHandle context3DAxis = IFCInstanceExporter.CreateGeometricRepresentationSubContext(file,
-                "Axis", "Model", context3D, null, Toolkit.IFCGeometricProjection.Graph_View, null);
-            IFCAnyHandle context3DBody = IFCInstanceExporter.CreateGeometricRepresentationSubContext(file,
-                "Body", "Model", context3D, null, Toolkit.IFCGeometricProjection.Model_View, null);
-            IFCAnyHandle context3DBox = IFCInstanceExporter.CreateGeometricRepresentationSubContext(file,
-                "Box", "Model", context3D, null, Toolkit.IFCGeometricProjection.Model_View, null);
-            IFCAnyHandle context3DFootPrint = IFCInstanceExporter.CreateGeometricRepresentationSubContext(file,
-                "FootPrint", "Model", context3D, null, Toolkit.IFCGeometricProjection.Model_View, null);
+            //IFCAnyHandle context3DAxis = IFCInstanceExporter.CreateGeometricRepresentationSubContext(file,
+            //    "Axis", "Model", context3D, null, Toolkit.IFCGeometricProjection.Graph_View, null);
+            //IFCAnyHandle context3DBody = IFCInstanceExporter.CreateGeometricRepresentationSubContext(file,
+            //    "Body", "Model", context3D, null, Toolkit.IFCGeometricProjection.Model_View, null);
+            //IFCAnyHandle context3DBox = IFCInstanceExporter.CreateGeometricRepresentationSubContext(file,
+            //    "Box", "Model", context3D, null, Toolkit.IFCGeometricProjection.Model_View, null);
+            //IFCAnyHandle context3DFootPrint = IFCInstanceExporter.CreateGeometricRepresentationSubContext(file,
+            //    "FootPrint", "Model", context3D, null, Toolkit.IFCGeometricProjection.Model_View, null);
 
-            exporterIFC.Set3DContextHandle(context3DAxis, "Axis");
-            exporterIFC.Set3DContextHandle(context3DBody, "Body");
-            exporterIFC.Set3DContextHandle(context3DBox, "Box");
-            exporterIFC.Set3DContextHandle(context3DFootPrint, "FootPrint");
+            //exporterIFC.Set3DContextHandle(context3DAxis, "Axis");
+            //exporterIFC.Set3DContextHandle(context3DBody, "Body");
+            //exporterIFC.Set3DContextHandle(context3DBox, "Box");
+            //exporterIFC.Set3DContextHandle(context3DFootPrint, "FootPrint");
          }
 
-         exporterIFC.Set3DContextHandle(context3D, "");
-         repContexts.Add(context3D); // Only Contexts in list, not sub-contexts.
 
-         if (ExporterCacheManager.ExportOptionsCache.ExportAnnotations)
-         {
-            string context2DType = "Annotation";
-            IFCAnyHandle context2DHandle = IFCInstanceExporter.CreateGeometricRepresentationContext(file,
-                null, context2DType, dimCount, precision, wcs, trueNorth);
+       //  exporterIFC.Set3DContextHandle(context3D, "");
+        // repContexts.Add(context3D); // Only Contexts in list, not sub-contexts.
 
-            IFCAnyHandle context2D = IFCInstanceExporter.CreateGeometricRepresentationSubContext(file,
-                null, context2DType, context2DHandle, 0.01, Toolkit.IFCGeometricProjection.Plan_View, null);
+         //if (ExporterCacheManager.ExportOptionsCache.ExportAnnotations)
+         //{
+         //   string context2DType = "Annotation";
+         //   IFCAnyHandle context2DHandle = IFCInstanceExporter.CreateGeometricRepresentationContext(file,
+         //       null, context2DType, dimCount, precision, wcs, trueNorth);
 
-            exporterIFC.Set2DContextHandle(context2D);
-            repContexts.Add(context2DHandle); // Only Contexts in list, not sub-contexts.
-         }
+         //   IFCAnyHandle context2D = IFCInstanceExporter.CreateGeometricRepresentationSubContext(file,
+         //       null, context2DType, context2DHandle, 0.01, Toolkit.IFCGeometricProjection.Plan_View, null);
+
+         //   exporterIFC.Set2DContextHandle(context2D);
+         //   repContexts.Add(context2DHandle); // Only Contexts in list, not sub-contexts.
+         //}
 
          return repContexts;
       }
 
-      private void GetCOBieContactInfo(IFCFile file, Document doc)
+      private void GetCOBieContactInfo(DatabaseIfc db, Document doc)
       {
          if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3ExtendedFMHandoverView)
          {
@@ -2053,9 +2052,16 @@ namespace Revit.IFC.Export.Exporter
                                  break;
                               case "Contact":
                                  if (reader.IsStartElement()) break;     // Do nothing at the start tag, process when it is the end
-                                 CreateContact(file, category, company, department, organizationCode, contactFirstName,
-                                     contactFamilyName, postalBox, town, stateRegion, postalCode, country,
-                                     eMailAddressList, telNoList, addressLines);
+                                 IfcPerson contactPerson = new IfcPerson(db) { GivenName = contactFirstName, FamilyName = contactFamilyName };
+                                 IfcTelecomAddress telecom = new IfcTelecomAddress(db);
+                                 foreach (string address in eMailAddressList)
+                                   telecom.AddElectronicMailAddress(address);
+                                 foreach (string number in telNoList)
+                                    telecom.AddTelephoneNumber(number);
+                                 IfcOrganization contactOrganization = new IfcOrganization(db, company) { Identification = organizationCode };
+                                 IfcPersonAndOrganization contactEntry = new IfcPersonAndOrganization(contactPerson, contactOrganization);
+                                 contactEntry.AddRole(new IfcActorRole(contactPerson.Database) { Role = IfcRoleEnum.USERDEFINED, UserDefinedRole = category });
+
                                  // reset variables
                                  {
                                     category = null;
@@ -2095,7 +2101,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="exporterIFC">The IFC exporter object.</param>
       /// <param name="doc">The document provides the owner information.</param>
       /// <param name="application">The handle of IFC file to create the owner history.</param>
-      private void CreateProject(ExporterIFC exporterIFC, Document doc, IFCAnyHandle application)
+      private void CreateProject(DatabaseIfc db, Document doc)
       {
          string familyName;
          string givenName;
@@ -2124,37 +2130,38 @@ namespace Revit.IFC.Export.Exporter
 
          NamingUtil.ParseName(author, out familyName, out givenName, out middleNames, out prefixTitles, out suffixTitles);
 
-         IFCFile file = exporterIFC.GetFile();
          int creationDate = (int)GetCreationDate(doc);
-         IFCAnyHandle ownerHistory = null;
-         IFCAnyHandle person = null;
-         IFCAnyHandle organization = null;
+         IfcPerson person = null;
+         IfcOrganization organization = null;
 
          COBieCompanyInfo cobieCompInfo = ExporterCacheManager.ExportOptionsCache.COBieCompanyInfo;
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieCompInfo != null)
          {
-            IFCAnyHandle postalAddress = IFCInstanceExporter.CreatePostalAddress(file, null, null, null, null, new List<string>() { cobieCompInfo.StreetAddress }, 
-               null, cobieCompInfo.City, cobieCompInfo.State_Region, cobieCompInfo.PostalCode, cobieCompInfo.Country);
-            IFCAnyHandle telecomAddress = IFCInstanceExporter.CreateTelecomAddress(file, null, null, null, new List<string>() { cobieCompInfo.CompanyPhone },
-               null, null, new List<string>() { cobieCompInfo.CompanyEmail }, null);
+            IfcPostalAddress postalAddress = new IfcPostalAddress(db) { Town = cobieCompInfo.City, Region = cobieCompInfo.State_Region, PostalCode = cobieCompInfo.PostalCode, Country = cobieCompInfo.Country };
+            postalAddress.AddAddressLine(cobieCompInfo.StreetAddress);
+            IfcTelecomAddress telecomAdress = new IfcTelecomAddress(db);
+            telecomAdress.AddElectronicMailAddress(cobieCompInfo.CompanyEmail);
 
-            organization = IFCInstanceExporter.CreateOrganization(file, null, cobieCompInfo.CompanyName, null,
-                null, new List<IFCAnyHandle>() { postalAddress, telecomAddress });
-            person = IFCInstanceExporter.CreatePerson(file, null, null, null, null, null, null, null, null);
+            organization = new IfcOrganization(db, cobieCompInfo.CompanyName);
+            organization.AddAddress(postalAddress);
+            organization.AddAddress(telecomAdress);
+            person = new IfcPerson(db);
          }
          else
          {
-            IFCAnyHandle telecomAddress = GetTelecomAddressFromExtStorage(file, doc);
-            IList<IFCAnyHandle> telecomAddresses = null;
+            person = new IfcPerson(db) { FamilyName = familyName, GivenName = givenName };
+            foreach (string name in middleNames)
+               person.AddMiddleName(name);
+            foreach (string title in prefixTitles)
+               person.AddPrefixTitle(title);
+            foreach (string title in suffixTitles)
+               person.AddSuffixTitle(title);
+            IfcTelecomAddress telecomAddress = GetTelecomAddressFromExtStorage(db, doc);
             if (telecomAddress != null)
             {
-               telecomAddresses = new List<IFCAnyHandle>();
-               telecomAddresses.Add(telecomAddress);
+               person.AddAddress(telecomAddress);
             }
-
-            person = IFCInstanceExporter.CreatePerson(file, null, familyName, givenName, middleNames,
-                prefixTitles, suffixTitles, null, telecomAddresses);
 
             string organizationName = null;
             string organizationDescription = null;
@@ -2170,21 +2177,17 @@ namespace Revit.IFC.Export.Exporter
                }
             }
 
-            organization = IFCInstanceExporter.CreateOrganization(file, null, organizationName, organizationDescription, null, null);
+            organization = new IfcOrganization(db, organizationName) { Description = organizationDescription };
          }
 
-         IFCAnyHandle owningUser = IFCInstanceExporter.CreatePersonAndOrganization(file, person, organization, null);
-         ownerHistory = IFCInstanceExporter.CreateOwnerHistory(file, owningUser, application, null,
-            Toolkit.IFCChangeAction.NoChange, null, null, null, creationDate);
-
-         exporterIFC.SetOwnerHistoryHandle(ownerHistory);    // For use by native code only.
-         ExporterCacheManager.OwnerHistoryHandle = ownerHistory;
+         IfcPersonAndOrganization owningUser = new IfcPersonAndOrganization(person, organization);
+         db.Factory.AddOwnerHistory(new IfcOwnerHistory(owningUser, db.Factory.Application, IfcChangeActionEnum.NOCHANGE) { CreationDate = creationDate });
 
          // Getting contact information from Revit extensible storage that COBie extension tool creates
-         GetCOBieContactInfo(file, doc);
+         GetCOBieContactInfo(db, doc);
 
-         IFCAnyHandle units = CreateDefaultUnits(exporterIFC, doc);
-         HashSet<IFCAnyHandle> repContexts = CreateContextInformation(exporterIFC, doc);
+         IfcUnitAssignment units = CreateDefaultUnits(db, doc);
+         CreateContextInformation(db, doc);
 
          string projectName = null;
          string projectLongName = null;
@@ -2214,45 +2217,22 @@ namespace Revit.IFC.Export.Exporter
          }
 
          string projectGUID = GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Project);
-         IFCAnyHandle projectHandle = IFCInstanceExporter.CreateProject(file, projectGUID, ownerHistory,
-             projectName, projectDescription, projectObjectType, projectLongName, projectPhase, repContexts, units);
-         ExporterCacheManager.ProjectHandle = projectHandle;
+         IfcProject projectHandle = new IfcProject(db, projectName) { GlobalId = projectGUID, Description = projectDescription,
+            ObjectType = projectObjectType, LongName = projectLongName, Phase = projectPhase, UnitsInContext = units };
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAsCOBIE)
          {
-            HashSet<IFCAnyHandle> projectHandles = new HashSet<IFCAnyHandle>();
-            projectHandles.Add(projectHandle);
             string clientName = (projectInfo != null) ? projectInfo.ClientName : String.Empty;
-            IFCAnyHandle clientOrg = IFCInstanceExporter.CreateOrganization(file, null, clientName, null, null, null);
-            IFCAnyHandle actor = IFCInstanceExporter.CreateActor(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, null, clientOrg);
-            IFCInstanceExporter.CreateRelAssignsToActor(file, GUIDUtil.CreateGUID(), ownerHistory, "Project Client/Owner", null, projectHandles, null, actor, null);
+            IfcOrganization clientOrg = new IfcOrganization(db, clientName);
+            IfcActor actor = new IfcActor(clientOrg);
+            new IfcRelAssignsToActor(actor, projectHandle) { Name = "Project Client/Owner" };
 
-            IFCAnyHandle architectActor = IFCInstanceExporter.CreateActor(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, null, person);
-            IFCInstanceExporter.CreateRelAssignsToActor(file, GUIDUtil.CreateGUID(), ownerHistory, "Project Architect", null, projectHandles, null, architectActor, null);
+            IfcActor architectActor = new IfcActor(person);
+            new IfcRelAssignsToActor(architectActor, projectHandle) { Name = "Project Architect" };
          }
       }
 
-      private void CreateContact(IFCFile file, string category, string company, string department, string organizationCode, string contactFirstName,
-          string contactFamilyName, string postalBox, string town, string stateRegion, string postalCode, string country,
-          IList<string> eMailAddressList, IList<string> telNoList, IList<string> addressLines)
-      {
-         IFCAnyHandle contactTelecomAddress = IFCInstanceExporter.CreateTelecomAddress(file, null, null, null, telNoList, null, null, eMailAddressList, null);
-         IFCAnyHandle contactPostalAddress = IFCInstanceExporter.CreatePostalAddress(file, null, null, null, department, addressLines, postalBox, town, stateRegion,
-                 postalCode, country);
-         IList<IFCAnyHandle> contactAddresses = new List<IFCAnyHandle>();
-         contactAddresses.Add(contactTelecomAddress);
-         contactAddresses.Add(contactPostalAddress);
-         IFCAnyHandle contactPerson = IFCInstanceExporter.CreatePerson(file, null, contactFamilyName, contactFirstName, null,
-             null, null, null, contactAddresses);
-         IFCAnyHandle contactOrganization = IFCInstanceExporter.CreateOrganization(file, organizationCode, company, null,
-             null, null);
-         IFCAnyHandle actorRole = IFCInstanceExporter.CreateActorRole(file, "UserDefined", category, null);
-         IList<IFCAnyHandle> actorRoles = new List<IFCAnyHandle>();
-         actorRoles.Add(actorRole);
-         IFCAnyHandle contactEntry = IFCInstanceExporter.CreatePersonAndOrganization(file, contactPerson, contactOrganization, actorRoles);
-      }
-
-      private IFCAnyHandle GetTelecomAddressFromExtStorage(IFCFile file, Document document)
+      private IfcTelecomAddress GetTelecomAddressFromExtStorage(DatabaseIfc db, Document document)
       {
          IFCFileHeader fHeader = new IFCFileHeader();
          IFCFileHeaderItem fHItem = null;
@@ -2260,9 +2240,9 @@ namespace Revit.IFC.Export.Exporter
          fHeader.GetSavedFileHeader(document, out fHItem);
          if (!String.IsNullOrEmpty(fHItem.AuthorEmail))
          {
-            IList<string> electronicMailAddress = new List<string>();
-            electronicMailAddress.Add(fHItem.AuthorEmail);
-            return IFCInstanceExporter.CreateTelecomAddress(file, null, null, null, null, null, null, electronicMailAddress, null);
+            IfcTelecomAddress telecomAddress = new IfcTelecomAddress(db);
+            telecomAddress.AddElectronicMailAddress(fHItem.AuthorEmail);
+            return telecomAddress;
          }
 
          return null;
@@ -2274,43 +2254,46 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="file"></param>
       /// <param name="document"></param>
       /// <returns>The handle of IFC file.</returns>
-      private IFCAnyHandle CreateIFCAddressFromExtStorage(IFCFile file, Document document)
+      private IfcPostalAddress CreateIFCAddressFromExtStorage(DatabaseIfc db, Document document)
       {
          IFCAddress savedAddress = new IFCAddress();
          IFCAddressItem savedAddressItem;
 
          if (savedAddress.GetSavedAddress(document, out savedAddressItem) == true)
          {
-            IFCAnyHandle postalAddress;
+            IfcPostalAddress postalAddress = new IfcPostalAddress(db)
+            {
+               Description = savedAddressItem.Description,
+               UserDefinedPurpose = savedAddressItem.UserDefinedPurpose,
+               InternalLocation = savedAddressItem.InternalLocation,
+               PostalBox = savedAddressItem.POBox,
+               Town = savedAddressItem.TownOrCity,
+               Region = savedAddressItem.RegionOrState,
+               PostalCode = savedAddressItem.PostalCode,
+               Country = savedAddressItem.Country
+            };
 
             // We have address saved in the extensible storage
             List<string> addressLines = new List<string>();
             if (!String.IsNullOrEmpty(savedAddressItem.AddressLine1))
             {
-               addressLines.Add(savedAddressItem.AddressLine1);
+               postalAddress.AddAddressLine(savedAddressItem.AddressLine1);
                if (!String.IsNullOrEmpty(savedAddressItem.AddressLine2))
-                  addressLines.Add(savedAddressItem.AddressLine2);
+                  postalAddress.AddAddressLine(savedAddressItem.AddressLine2);
             }
 
-            IFCAddressType? addressPurpose = null;
             if (!String.IsNullOrEmpty(savedAddressItem.Purpose))
             {
-               addressPurpose = IFCAddressType.UserDefined;     // set this as default value
+               postalAddress.Purpose = IfcAddressTypeEnum.USERDEFINED;
                if (String.Compare(savedAddressItem.Purpose, "OFFICE", true) == 0)
-                  addressPurpose = Toolkit.IFCAddressType.Office;
+                  postalAddress.Purpose = IfcAddressTypeEnum.OFFICE;
                else if (String.Compare(savedAddressItem.Purpose, "SITE", true) == 0)
-                  addressPurpose = Toolkit.IFCAddressType.Site;
+                  postalAddress.Purpose = IfcAddressTypeEnum.SITE;
                else if (String.Compare(savedAddressItem.Purpose, "HOME", true) == 0)
-                  addressPurpose = Toolkit.IFCAddressType.Home;
+                  postalAddress.Purpose = IfcAddressTypeEnum.HOME;
                else if (String.Compare(savedAddressItem.Purpose, "DISTRIBUTIONPOINT", true) == 0)
-                  addressPurpose = Toolkit.IFCAddressType.DistributionPoint;
-               else if (String.Compare(savedAddressItem.Purpose, "USERDEFINED", true) == 0)
-                  addressPurpose = Toolkit.IFCAddressType.UserDefined;
+                  postalAddress.Purpose = IfcAddressTypeEnum.DISTRIBUTIONPOINT;
             }
-
-            postalAddress = IFCInstanceExporter.CreatePostalAddress(file, addressPurpose, savedAddressItem.Description, savedAddressItem.UserDefinedPurpose,
-               savedAddressItem.InternalLocation, addressLines, savedAddressItem.POBox, savedAddressItem.TownOrCity, savedAddressItem.RegionOrState, savedAddressItem.PostalCode,
-               savedAddressItem.Country);
 
             return postalAddress;
          }
@@ -2325,10 +2308,10 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="address">The address string.</param>
       /// <param name="town">The town string.</param>
       /// <returns>The handle of IFC file.</returns>
-      private IFCAnyHandle CreateIFCAddress(IFCFile file, Document document, ProjectInfo projInfo)
+      private IfcPostalAddress CreateIFCAddress(DatabaseIfc db, Document document, ProjectInfo projInfo)
       {
-         IFCAnyHandle postalAddress = null;
-         postalAddress = CreateIFCAddressFromExtStorage(file, document);
+         IfcPostalAddress postalAddress = null;
+         postalAddress = CreateIFCAddressFromExtStorage(db, document);
          if (postalAddress != null)
             return postalAddress;
 
@@ -2388,24 +2371,21 @@ namespace Revit.IFC.Export.Exporter
             numLines--;
          }
 
-         List<string> addressLines = new List<string>();
+         postalAddress = new IfcPostalAddress(db) { Town = city, Region = state, PostalCode = postCode, Country = country };
          if (!String.IsNullOrEmpty(projectAddress))
-            addressLines.Add(projectAddress);
+            postalAddress.AddAddressLine(projectAddress);
 
          for (int ii = 0; ii < numLines; ii++)
          {
-            addressLines.Add(parsedAddress[ii]);
+            postalAddress.AddAddressLine(parsedAddress[ii]);
          }
-
-         postalAddress = IFCInstanceExporter.CreatePostalAddress(file, null, null, null,
-            null, addressLines, null, city, state, postCode, country);
 
          return postalAddress;
       }
 
-      private IFCAnyHandle CreateSIUnit(IFCFile file, UnitType? unitType, IFCUnit ifcUnitType, IFCSIUnitName unitName, IFCSIPrefix? prefix, DisplayUnitType? dut)
+      private IfcNamedUnit CreateSIUnit(DatabaseIfc db, UnitType? unitType, IfcUnitEnum ifcUnitType, IfcSIUnitName unitName, IfcSIPrefix prefix, DisplayUnitType? dut)
       {
-         IFCAnyHandle siUnit = IFCInstanceExporter.CreateSIUnit(file, ifcUnitType, prefix, unitName);
+         IfcSIUnit siUnit = new IfcSIUnit(db, ifcUnitType, prefix, unitName);
          if (unitType.HasValue && dut.HasValue)
          {
             double scaleFactor = UnitUtils.ConvertFromInternalUnits(1.0, dut.Value);
@@ -2421,20 +2401,17 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="exporterIFC">The IFC exporter object.</param>
       /// <param name="doc">The document provides ProjectUnit and DisplayUnitSystem.</param>
       /// <returns>The IFC handle.</returns>
-      private IFCAnyHandle CreateDefaultUnits(ExporterIFC exporterIFC, Document doc)
+      private IfcUnitAssignment CreateDefaultUnits(DatabaseIfc db, Document doc)
       {
-         HashSet<IFCAnyHandle> unitSet = new HashSet<IFCAnyHandle>();
-         IFCFile file = exporterIFC.GetFile();
+         HashSet<IfcUnit> unitSet = new HashSet<IfcUnit>();
          bool exportToCOBIE = ExporterCacheManager.ExportOptionsCache.ExportAsCOBIE;
 
-         IFCAnyHandle lenSIBaseUnit = null;
+         IfcNamedUnit lenSIBaseUnit = null;
          {
             bool lenConversionBased = false;
             bool lenUseDefault = false;
 
-            IFCUnit lenUnitType = IFCUnit.LengthUnit;
-            IFCSIPrefix? lenPrefix = null;
-            IFCSIUnitName lenUnitName = IFCSIUnitName.Metre;
+            IfcSIPrefix lenPrefix = IfcSIPrefix.NONE;
             string lenConvName = null;
 
             FormatOptions lenFormatOptions = doc.GetUnits().GetFormatOptions(UnitType.UT_Length);
@@ -2444,10 +2421,10 @@ namespace Revit.IFC.Export.Exporter
                case DisplayUnitType.DUT_METERS_CENTIMETERS:
                   break;
                case DisplayUnitType.DUT_CENTIMETERS:
-                  lenPrefix = IFCSIPrefix.Centi;
+                  lenPrefix = IfcSIPrefix.CENTI;
                   break;
                case DisplayUnitType.DUT_MILLIMETERS:
-                  lenPrefix = IFCSIPrefix.Milli;
+                  lenPrefix = IfcSIPrefix.MILLI;
                   break;
                case DisplayUnitType.DUT_DECIMAL_FEET:
                case DisplayUnitType.DUT_FEET_FRACTIONAL_INCHES:
@@ -2483,19 +2460,18 @@ namespace Revit.IFC.Export.Exporter
             }
 
             double lengthScaleFactor = UnitUtils.ConvertFromInternalUnits(1.0, lenUseDefault ? DisplayUnitType.DUT_DECIMAL_FEET : lenFormatOptions.DisplayUnits);
-            IFCAnyHandle lenSIUnit = IFCInstanceExporter.CreateSIUnit(file, lenUnitType, lenPrefix, lenUnitName);
-            if (lenPrefix == null)
+            IfcNamedUnit lenSIUnit = new IfcSIUnit(db, IfcUnitEnum.LENGTHUNIT, lenPrefix, IfcSIUnitName.METRE);
+            if (lenPrefix == IfcSIPrefix.NONE)
                lenSIBaseUnit = lenSIUnit;
             else
-               lenSIBaseUnit = IFCInstanceExporter.CreateSIUnit(file, lenUnitType, null, lenUnitName);
+               lenSIBaseUnit = new IfcSIUnit(db, IfcUnitEnum.LENGTHUNIT, IfcSIPrefix.NONE, IfcSIUnitName.METRE);
 
             if (lenConversionBased)
             {
                double lengthSIScaleFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_METERS) / lengthScaleFactor;
-               IFCAnyHandle lenDims = IFCInstanceExporter.CreateDimensionalExponents(file, 1, 0, 0, 0, 0, 0, 0); // length
-               IFCAnyHandle lenConvFactor = IFCInstanceExporter.CreateMeasureWithUnit(file, Toolkit.IFCDataUtil.CreateAsRatioMeasure(lengthSIScaleFactor),
-                   lenSIUnit);
-               lenSIUnit = IFCInstanceExporter.CreateConversionBasedUnit(file, lenDims, lenUnitType, lenConvName, lenConvFactor);
+               IfcDimensionalExponents lenDims = new IfcDimensionalExponents(db, 1, 0, 0, 0, 0, 0, 0); // length
+               IfcMeasureWithUnit lenConvFactor = new IfcMeasureWithUnit(new IfcRatioMeasure(lengthSIScaleFactor), lenSIUnit);
+               lenSIUnit = new IfcConversionBasedUnit(IfcUnitEnum.LENGTHUNIT, lenConvName, lenConvFactor) { Dimensions = lenDims };
             }
 
             unitSet.Add(lenSIUnit);      // created above, so unique.
@@ -2506,9 +2482,7 @@ namespace Revit.IFC.Export.Exporter
             bool areaConversionBased = false;
             bool areaUseDefault = false;
 
-            IFCUnit areaUnitType = IFCUnit.AreaUnit;
-            IFCSIPrefix? areaPrefix = null;
-            IFCSIUnitName areaUnitName = IFCSIUnitName.Square_Metre;
+            IfcSIPrefix areaPrefix = IfcSIPrefix.NONE;
             string areaConvName = null;
 
             FormatOptions areaFormatOptions = doc.GetUnits().GetFormatOptions(UnitType.UT_Area);
@@ -2517,10 +2491,10 @@ namespace Revit.IFC.Export.Exporter
                case DisplayUnitType.DUT_SQUARE_METERS:
                   break;
                case DisplayUnitType.DUT_SQUARE_CENTIMETERS:
-                  areaPrefix = IFCSIPrefix.Centi;
+                  areaPrefix = IfcSIPrefix.CENTI;
                   break;
                case DisplayUnitType.DUT_SQUARE_MILLIMETERS:
-                  areaPrefix = IFCSIPrefix.Milli;
+                  areaPrefix = IfcSIPrefix.MILLI;
                   break;
                case DisplayUnitType.DUT_SQUARE_FEET:
                   {
@@ -2554,13 +2528,13 @@ namespace Revit.IFC.Export.Exporter
             }
 
             double areaScaleFactor = UnitUtils.ConvertFromInternalUnits(1.0, areaUseDefault ? DisplayUnitType.DUT_SQUARE_FEET : areaFormatOptions.DisplayUnits);
-            IFCAnyHandle areaSiUnit = IFCInstanceExporter.CreateSIUnit(file, areaUnitType, areaPrefix, areaUnitName);
+            IfcUnit areaSiUnit = new IfcSIUnit(db, IfcUnitEnum.AREAUNIT, areaPrefix, IfcSIUnitName.SQUARE_METRE);
             if (areaConversionBased)
             {
                double areaSIScaleFactor = areaScaleFactor * UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_SQUARE_METERS);
-               IFCAnyHandle areaDims = IFCInstanceExporter.CreateDimensionalExponents(file, 2, 0, 0, 0, 0, 0, 0); // area
-               IFCAnyHandle areaConvFactor = IFCInstanceExporter.CreateMeasureWithUnit(file, Toolkit.IFCDataUtil.CreateAsRatioMeasure(areaSIScaleFactor), areaSiUnit);
-               areaSiUnit = IFCInstanceExporter.CreateConversionBasedUnit(file, areaDims, areaUnitType, areaConvName, areaConvFactor);
+               IfcDimensionalExponents areaDims = new IfcDimensionalExponents(db, 2, 0, 0, 0, 0, 0, 0); // area
+               IfcMeasureWithUnit areaConvFactor = new IfcMeasureWithUnit(new IfcRatioMeasure(areaSIScaleFactor), areaSiUnit);
+               areaSiUnit = new IfcConversionBasedUnit(IfcUnitEnum.AREAUNIT, areaConvName, areaConvFactor) { Dimensions = areaDims };
             }
 
             unitSet.Add(areaSiUnit);      // created above, so unique.
@@ -2571,9 +2545,7 @@ namespace Revit.IFC.Export.Exporter
             bool volumeConversionBased = false;
             bool volumeUseDefault = false;
 
-            IFCUnit volumeUnitType = IFCUnit.VolumeUnit;
-            IFCSIPrefix? volumePrefix = null;
-            IFCSIUnitName volumeUnitName = IFCSIUnitName.Cubic_Metre;
+            IfcSIPrefix volumePrefix = IfcSIPrefix.NONE;
             string volumeConvName = null;
 
             FormatOptions volumeFormatOptions = doc.GetUnits().GetFormatOptions(UnitType.UT_Volume);
@@ -2582,13 +2554,13 @@ namespace Revit.IFC.Export.Exporter
                case DisplayUnitType.DUT_CUBIC_METERS:
                   break;
                case DisplayUnitType.DUT_LITERS:
-                  volumePrefix = IFCSIPrefix.Deci;
+                  volumePrefix = IfcSIPrefix.DECI;
                   break;
                case DisplayUnitType.DUT_CUBIC_CENTIMETERS:
-                  volumePrefix = IFCSIPrefix.Centi;
+                  volumePrefix = IfcSIPrefix.CENTI;
                   break;
                case DisplayUnitType.DUT_CUBIC_MILLIMETERS:
-                  volumePrefix = IFCSIPrefix.Milli;
+                  volumePrefix = IfcSIPrefix.MILLI;
                   break;
                case DisplayUnitType.DUT_CUBIC_FEET:
                   {
@@ -2623,13 +2595,13 @@ namespace Revit.IFC.Export.Exporter
 
             double volumeScaleFactor =
                 UnitUtils.ConvertFromInternalUnits(1.0, volumeUseDefault ? DisplayUnitType.DUT_CUBIC_FEET : volumeFormatOptions.DisplayUnits);
-            IFCAnyHandle volumeSiUnit = IFCInstanceExporter.CreateSIUnit(file, volumeUnitType, volumePrefix, volumeUnitName);
+            IfcUnit volumeSiUnit = new IfcSIUnit(db, IfcUnitEnum.VOLUMEUNIT, volumePrefix, IfcSIUnitName.CUBIC_METRE);
             if (volumeConversionBased)
             {
                double volumeSIScaleFactor = volumeScaleFactor * UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_CUBIC_METERS);
-               IFCAnyHandle volumeDims = IFCInstanceExporter.CreateDimensionalExponents(file, 3, 0, 0, 0, 0, 0, 0); // area
-               IFCAnyHandle volumeConvFactor = IFCInstanceExporter.CreateMeasureWithUnit(file, Toolkit.IFCDataUtil.CreateAsRatioMeasure(volumeSIScaleFactor), volumeSiUnit);
-               volumeSiUnit = IFCInstanceExporter.CreateConversionBasedUnit(file, volumeDims, volumeUnitType, volumeConvName, volumeConvFactor);
+               IfcDimensionalExponents volumeDims = new IfcDimensionalExponents(db, 3, 0, 0, 0, 0, 0, 0); // volume
+               IfcMeasureWithUnit volumeConvFactor = new IfcMeasureWithUnit(new IfcRatioMeasure(volumeSIScaleFactor), volumeSiUnit);
+               volumeSiUnit = new IfcConversionBasedUnit(IfcUnitEnum.VOLUMEUNIT, volumeConvName, volumeConvFactor) { Dimensions = volumeDims };
             }
 
             unitSet.Add(volumeSiUnit);      // created above, so unique.
@@ -2637,10 +2609,7 @@ namespace Revit.IFC.Export.Exporter
          }
 
          {
-            IFCUnit unitType = IFCUnit.PlaneAngleUnit;
-            IFCSIUnitName unitName = IFCSIUnitName.Radian;
-
-            IFCAnyHandle planeAngleUnit = IFCInstanceExporter.CreateSIUnit(file, unitType, null, unitName);
+            IfcUnit planeAngleUnit = new IfcSIUnit(db, IfcUnitEnum.PLANEANGLEUNIT, IfcSIPrefix.NONE, IfcSIUnitName.RADIAN);
 
             string convName = null;
 
@@ -2663,22 +2632,22 @@ namespace Revit.IFC.Export.Exporter
                   break;
             }
 
-            IFCAnyHandle dims = IFCInstanceExporter.CreateDimensionalExponents(file, 0, 0, 0, 0, 0, 0, 0);
+            IfcDimensionalExponents dims = new IfcDimensionalExponents(db, 0, 0, 0, 0, 0, 0, 0);
 
             double angleScaleFactor = UnitUtils.Convert(1.0, angleUseDefault ? DisplayUnitType.DUT_DECIMAL_DEGREES : angleFormatOptions.DisplayUnits, DisplayUnitType.DUT_RADIANS);
             if (convName != null)
             {
-               IFCAnyHandle convFactor = IFCInstanceExporter.CreateMeasureWithUnit(file, Toolkit.IFCDataUtil.CreateAsRatioMeasure(angleScaleFactor), planeAngleUnit);
-               planeAngleUnit = IFCInstanceExporter.CreateConversionBasedUnit(file, dims, unitType, convName, convFactor);
+               IfcMeasureWithUnit convFactor = new IfcMeasureWithUnit(new IfcRatioMeasure(angleScaleFactor), planeAngleUnit);
+               planeAngleUnit = new IfcConversionBasedUnit(IfcUnitEnum.PLANEANGLEUNIT, convName, convFactor) { Dimensions = dims };
             }
             unitSet.Add(planeAngleUnit);      // created above, so unique.
             ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_Angle, planeAngleUnit, 1.0 / angleScaleFactor, 0.0);
          }
 
          // Mass
-         IFCAnyHandle massSIUnit = null;
+         IfcNamedUnit massSIUnit = null;
          {
-            massSIUnit = CreateSIUnit(file, UnitType.UT_Mass, IFCUnit.MassUnit, IFCSIUnitName.Gram, IFCSIPrefix.Kilo, null);
+            massSIUnit = CreateSIUnit(db, UnitType.UT_Mass, IfcUnitEnum.MASSUNIT, IfcSIUnitName.GRAM, IfcSIPrefix.KILO, null);
             // If we are exporting to GSA standard, we will override kg with pound below.
             if (!exportToCOBIE)
                unitSet.Add(massSIUnit);      // created above, so unique.
@@ -2686,56 +2655,54 @@ namespace Revit.IFC.Export.Exporter
 
          // Mass density - support metric kg/(m^3) only.
          {
-            ISet<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, massSIUnit, 1));
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, lenSIBaseUnit, -3));
+            ISet<IfcDerivedUnitElement> elements = new HashSet<IfcDerivedUnitElement>();
+            elements.Add(new IfcDerivedUnitElement(massSIUnit, 1));
+            elements.Add(new IfcDerivedUnitElement(lenSIBaseUnit, -3));
 
-            IFCAnyHandle massDensityUnit = IFCInstanceExporter.CreateDerivedUnit(file, elements,
-                IFCDerivedUnitEnum.MassDensityUnit, null);
-            unitSet.Add(massDensityUnit);
+            IfcDerivedUnit massDensityUnit = new IfcDerivedUnit(elements, IfcDerivedUnitEnum.MASSDENSITYUNIT);
 
             double massDensityFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_KILOGRAMS_PER_CUBIC_METER);
             ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_MassDensity, massDensityUnit, massDensityFactor, 0.0);
          }
 
          // Time -- support seconds only.
-         IFCAnyHandle timeSIUnit = null;
+         IfcNamedUnit timeSIUnit = null;
          {
-            timeSIUnit = CreateSIUnit(file, null, IFCUnit.TimeUnit, IFCSIUnitName.Second, null, null);
+            timeSIUnit = CreateSIUnit(db, null, IfcUnitEnum.TIMEUNIT, IfcSIUnitName.SECOND, IfcSIPrefix.NONE, null);
             unitSet.Add(timeSIUnit);      // created above, so unique.
          }
 
          // Frequency = support Hertz only.
          {
-            IFCAnyHandle frequencySIUnit = CreateSIUnit(file, null, IFCUnit.FrequencyUnit, IFCSIUnitName.Hertz, null, null);
+            IfcUnit frequencySIUnit = CreateSIUnit(db, null, IfcUnitEnum.FREQUENCYUNIT, IfcSIUnitName.HERTZ, IfcSIPrefix.NONE, null);
             unitSet.Add(frequencySIUnit);      // created above, so unique.
          }
 
          // Temperature
-         IFCAnyHandle tempBaseSIUnit = null;
+         IfcNamedUnit tempBaseSIUnit = null;
          {
             // Base SI unit for temperature.
-            tempBaseSIUnit = CreateSIUnit(file, null, IFCUnit.ThermoDynamicTemperatureUnit, IFCSIUnitName.Kelvin, null, null);
+            tempBaseSIUnit = CreateSIUnit(db, null, IfcUnitEnum.THERMODYNAMICTEMPERATUREUNIT, IfcSIUnitName.KELVIN, IfcSIPrefix.NONE, null);
 
             // We are going to have two entries: one for thermodynamic temperature (default), and one for color temperature.
             FormatOptions tempFormatOptions = doc.GetUnits().GetFormatOptions(UnitType.UT_HVAC_Temperature);
-            IFCSIUnitName thermalTempUnit;
+            IfcSIUnitName thermalTempUnit = IfcSIUnitName.KELVIN;
             double offset = 0.0;
             switch (tempFormatOptions.DisplayUnits)
             {
                case DisplayUnitType.DUT_CELSIUS:
                case DisplayUnitType.DUT_FAHRENHEIT:
-                  thermalTempUnit = IFCSIUnitName.Degree_Celsius;
+                  thermalTempUnit = IfcSIUnitName.DEGREE_CELSIUS;
                   offset = -273.15;
                   break;
                default:
-                  thermalTempUnit = IFCSIUnitName.Kelvin;
+                  thermalTempUnit = IfcSIUnitName.KELVIN;
                   break;
             }
 
-            IFCAnyHandle temperatureSIUnit = null;
-            if (thermalTempUnit != IFCSIUnitName.Kelvin)
-               temperatureSIUnit = IFCInstanceExporter.CreateSIUnit(file, IFCUnit.ThermoDynamicTemperatureUnit, null, thermalTempUnit);
+            IfcUnit temperatureSIUnit = null;
+            if (thermalTempUnit != IfcSIUnitName.KELVIN)
+               temperatureSIUnit = new IfcSIUnit(db, IfcUnitEnum.THERMODYNAMICTEMPERATUREUNIT, IfcSIPrefix.NONE, thermalTempUnit);
             else
                temperatureSIUnit = tempBaseSIUnit;
             ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_HVAC_Temperature, temperatureSIUnit, 1.0, offset);
@@ -2744,33 +2711,32 @@ namespace Revit.IFC.Export.Exporter
 
             // Color temperature.
             // We don't add the color temperature to the unit set; it will be explicitly used.
-            IFCAnyHandle colorTempSIUnit = tempBaseSIUnit;
+            IfcUnit colorTempSIUnit = tempBaseSIUnit;
             ExporterCacheManager.UnitsCache["COLORTEMPERATURE"] = colorTempSIUnit;
          }
 
          // Thermal transmittance - support metric W/(m^2 * K) = kg/(K * s^3) only.
          {
-            ISet<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, massSIUnit, 1));
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, tempBaseSIUnit, -1));
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, timeSIUnit, -3));
+            ISet<IfcDerivedUnitElement> elements = new HashSet<IfcDerivedUnitElement>();
+            elements.Add(new IfcDerivedUnitElement(massSIUnit, 1));
+            elements.Add(new IfcDerivedUnitElement(tempBaseSIUnit, -1));
+            elements.Add(new IfcDerivedUnitElement(timeSIUnit, -3));
 
-            IFCAnyHandle thermalTransmittanceUnit = IFCInstanceExporter.CreateDerivedUnit(file, elements,
-                IFCDerivedUnitEnum.ThermalTransmittanceUnit, null);
+            IfcDerivedUnit thermalTransmittanceUnit = new IfcDerivedUnit(elements, IfcDerivedUnitEnum.THERMALTRANSMITTANCEUNIT);
             unitSet.Add(thermalTransmittanceUnit);
          }
 
          // Volumetric Flow Rate - support metric L/s or m^3/s only.
          {
-            ISet<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
-            IFCAnyHandle volumetricFlowRateLenUnit = null;
+            ISet<IfcDerivedUnitElement> elements = new HashSet<IfcDerivedUnitElement>();
+            IfcNamedUnit volumetricFlowRateLenUnit = null;
             double volumetricFlowRateFactor = 1.0;
 
             FormatOptions tempFormatOptions = doc.GetUnits().GetFormatOptions(UnitType.UT_HVAC_Airflow);
             switch (tempFormatOptions.DisplayUnits)
             {
                case DisplayUnitType.DUT_LITERS_PER_SECOND:
-                  volumetricFlowRateLenUnit = IFCInstanceExporter.CreateSIUnit(file, IFCUnit.LengthUnit, IFCSIPrefix.Deci, IFCSIUnitName.Metre);
+                  volumetricFlowRateLenUnit = new IfcSIUnit(db, IfcUnitEnum.LENGTHUNIT, IfcSIPrefix.DECI, IfcSIUnitName.METRE);
                   break;
                default:
                   volumetricFlowRateLenUnit = lenSIBaseUnit;   // use m^3/s by default.
@@ -2778,11 +2744,10 @@ namespace Revit.IFC.Export.Exporter
                   break;
             }
 
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, lenSIBaseUnit, 3));
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, timeSIUnit, -1));
+            elements.Add(new IfcDerivedUnitElement(lenSIBaseUnit, 3));
+            elements.Add(new IfcDerivedUnitElement(timeSIUnit, -1));
 
-            IFCAnyHandle volumetricFlowRateUnit = IFCInstanceExporter.CreateDerivedUnit(file, elements,
-                IFCDerivedUnitEnum.VolumetricFlowRateUnit, null);
+            IfcDerivedUnit volumetricFlowRateUnit = new IfcDerivedUnit(elements, IfcDerivedUnitEnum.VOLUMETRICFLOWRATEUNIT);
             unitSet.Add(volumetricFlowRateUnit);
 
             ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_HVAC_Airflow, volumetricFlowRateUnit, volumetricFlowRateFactor, 0.0);
@@ -2790,28 +2755,25 @@ namespace Revit.IFC.Export.Exporter
 
          // Electrical current - support metric ampere only.
          {
-            IFCAnyHandle currentSIUnit = CreateSIUnit(file, UnitType.UT_Electrical_Current, IFCUnit.ElectricCurrentUnit, IFCSIUnitName.Ampere,
-                null, DisplayUnitType.DUT_AMPERES);
+            IfcNamedUnit currentSIUnit = CreateSIUnit(db, UnitType.UT_Electrical_Current, IfcUnitEnum.ELECTRICCURRENTUNIT, IfcSIUnitName.AMPERE, IfcSIPrefix.NONE, DisplayUnitType.DUT_AMPERES);
             unitSet.Add(currentSIUnit);      // created above, so unique.
          }
 
          // Electrical voltage - support metric volt only.
          {
-            IFCAnyHandle voltageSIUnit = CreateSIUnit(file, UnitType.UT_Electrical_Potential, IFCUnit.ElectricVoltageUnit, IFCSIUnitName.Volt,
-                null, DisplayUnitType.DUT_VOLTS);
+            IfcNamedUnit voltageSIUnit = CreateSIUnit(db, UnitType.UT_Electrical_Potential, IfcUnitEnum.ELECTRICVOLTAGEUNIT, IfcSIUnitName.VOLT, IfcSIPrefix.NONE, DisplayUnitType.DUT_VOLTS);
             unitSet.Add(voltageSIUnit);      // created above, so unique.
          }
 
          // Power - support metric watt only.
          {
-            IFCAnyHandle voltageSIUnit = CreateSIUnit(file, UnitType.UT_HVAC_Power, IFCUnit.PowerUnit, IFCSIUnitName.Watt,
-                null, DisplayUnitType.DUT_WATTS);
+            IfcNamedUnit voltageSIUnit = CreateSIUnit(db, UnitType.UT_HVAC_Power, IfcUnitEnum.POWERUNIT, IfcSIUnitName.WATT, IfcSIPrefix.NONE, DisplayUnitType.DUT_WATTS);
             unitSet.Add(voltageSIUnit);      // created above, so unique.
          }
 
          // Force - support newtons (N) and kN only.
          {
-            IFCSIPrefix? prefix = null;
+            IfcSIPrefix prefix = IfcSIPrefix.NONE;
             FormatOptions forceFormatOptions = doc.GetUnits().GetFormatOptions(UnitType.UT_Force);
             DisplayUnitType dut = forceFormatOptions.DisplayUnits;
             switch (dut)
@@ -2819,54 +2781,49 @@ namespace Revit.IFC.Export.Exporter
                case DisplayUnitType.DUT_NEWTONS:
                   break;
                case DisplayUnitType.DUT_KILONEWTONS:
-                  prefix = IFCSIPrefix.Kilo;
+                  prefix = IfcSIPrefix.KILO;
                   break;
                default:
                   dut = DisplayUnitType.DUT_NEWTONS;
                   break;
             }
 
-            IFCAnyHandle forceSIUnit = CreateSIUnit(file, UnitType.UT_Force, IFCUnit.ForceUnit, IFCSIUnitName.Newton,
-                prefix, dut);
+            IfcNamedUnit forceSIUnit = CreateSIUnit(db, UnitType.UT_Force, IfcUnitEnum.FORCEUNIT, IfcSIUnitName.NEWTON, prefix, dut);
             unitSet.Add(forceSIUnit);      // created above, so unique.
          }
 
          // Illuminance
          {
-            IFCSIPrefix? prefix = null;
-            IFCAnyHandle luxSIUnit = CreateSIUnit(file, UnitType.UT_Electrical_Illuminance, IFCUnit.IlluminanceUnit, IFCSIUnitName.Lux,
-                prefix, DisplayUnitType.DUT_LUX);
+            IfcSIPrefix prefix = IfcSIPrefix.NONE;
+            IfcNamedUnit luxSIUnit = CreateSIUnit(db, UnitType.UT_Electrical_Illuminance, IfcUnitEnum.ILLUMINANCEUNIT, IfcSIUnitName.LUX, prefix, DisplayUnitType.DUT_LUX);
             unitSet.Add(luxSIUnit);      // created above, so unique.
             ExporterCacheManager.UnitsCache["LUX"] = luxSIUnit;
          }
 
          // Luminous Flux
-         IFCAnyHandle lumenSIUnit = null;
+         IfcNamedUnit lumenSIUnit = null;
          {
-            IFCSIPrefix? prefix = null;
-            lumenSIUnit = CreateSIUnit(file, UnitType.UT_Electrical_Luminous_Flux, IFCUnit.LuminousFluxUnit, IFCSIUnitName.Lumen,
-                prefix, DisplayUnitType.DUT_LUMENS);
+            IfcSIPrefix prefix = IfcSIPrefix.NONE;
+            lumenSIUnit = CreateSIUnit(db, UnitType.UT_Electrical_Luminous_Flux, IfcUnitEnum.LUMINOUSFLUXUNIT, IfcSIUnitName.LUMEN, prefix, DisplayUnitType.DUT_LUMENS);
             unitSet.Add(lumenSIUnit);      // created above, so unique.
          }
 
          // Luminous Intensity
          {
-            IFCSIPrefix? prefix = null;
-            IFCAnyHandle candelaSIUnit = CreateSIUnit(file, UnitType.UT_Electrical_Luminous_Intensity, IFCUnit.LuminousIntensityUnit, IFCSIUnitName.Candela,
-                prefix, DisplayUnitType.DUT_CANDELAS);
+            IfcSIPrefix prefix = IfcSIPrefix.NONE;
+            IfcNamedUnit candelaSIUnit = CreateSIUnit(db, UnitType.UT_Electrical_Luminous_Intensity, IfcUnitEnum.LUMINOUSINTENSITYUNIT, IfcSIUnitName.CANDELA, prefix, DisplayUnitType.DUT_CANDELAS);
             unitSet.Add(candelaSIUnit);      // created above, so unique.
          }
 
          // Luminous Efficacy - support lm/W only.
          {
-            ISet<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, massSIUnit, -1));
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, lenSIBaseUnit, -2));
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, timeSIUnit, 3));
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, lumenSIUnit, 1));
+            ISet<IfcDerivedUnitElement> elements = new HashSet<IfcDerivedUnitElement>();
+            elements.Add(new IfcDerivedUnitElement(massSIUnit, -1));
+            elements.Add(new IfcDerivedUnitElement(lenSIBaseUnit, -2));
+            elements.Add(new IfcDerivedUnitElement(timeSIUnit, 3));
+            elements.Add(new IfcDerivedUnitElement(lumenSIUnit, 1));
 
-            IFCAnyHandle luminousEfficacyUnit = IFCInstanceExporter.CreateDerivedUnit(file, elements,
-                IFCDerivedUnitEnum.UserDefined, "Luminous Efficacy");
+            IfcDerivedUnit luminousEfficacyUnit = new IfcDerivedUnit(elements, "Luminous Efficacy");
 
             double electricalEfficacyFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_LUMENS_PER_WATT);
             ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_Electrical_Efficacy, luminousEfficacyUnit, electricalEfficacyFactor, 0.0);
@@ -2877,12 +2834,11 @@ namespace Revit.IFC.Export.Exporter
 
          // Linear Velocity - support m/s only.
          {
-            ISet<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, lenSIBaseUnit, 1));
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, timeSIUnit, -1));
+            ISet<IfcDerivedUnitElement> elements = new HashSet<IfcDerivedUnitElement>();
+            elements.Add(new IfcDerivedUnitElement(lenSIBaseUnit, 1));
+            elements.Add(new IfcDerivedUnitElement(timeSIUnit, -1));
 
-            IFCAnyHandle linearVelocityUnit = IFCInstanceExporter.CreateDerivedUnit(file, elements,
-                IFCDerivedUnitEnum.LinearVelocityUnit, null);
+            IfcDerivedUnit linearVelocityUnit = new IfcDerivedUnit(elements, IfcDerivedUnitEnum.LINEARVELOCITYUNIT);
 
             double linearVelocityFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_METERS_PER_SECOND);
             ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_HVAC_Velocity, linearVelocityUnit, linearVelocityFactor, 0.0);
@@ -2896,7 +2852,7 @@ namespace Revit.IFC.Export.Exporter
             FormatOptions currencyFormatOptions = doc.GetUnits().GetFormatOptions(UnitType.UT_Currency);
             UnitSymbolType ust = currencyFormatOptions.UnitSymbol;
 
-            IFCAnyHandle currencyUnit = null;
+            IfcMonetaryUnit currencyUnit = null;
 
             // Some of these are guesses for IFC2x3, since multiple currencies may use the same symbol, 
             // but no detail is given on which currency is being used.  For IFC4, we just use the label.
@@ -2906,7 +2862,7 @@ namespace Revit.IFC.Export.Exporter
                try
                {
                   currencyLabel = LabelUtils.GetLabelFor(ust);
-                  currencyUnit = IFCInstanceExporter.CreateMonetaryUnit4(file, currencyLabel);
+                  currencyUnit = new IfcMonetaryUnit(db, currencyLabel);
                }
                catch
                {
@@ -2915,45 +2871,45 @@ namespace Revit.IFC.Export.Exporter
             }
             else
             {
-               IFCCurrencyType? currencyType = null;
+               IfcCurrencyEnum currencyType = IfcCurrencyEnum.NOTDEFINED;
 
                switch (ust)
                {
                   case UnitSymbolType.UST_DOLLAR:
-                     currencyType = IFCCurrencyType.USD;
+                     currencyType = IfcCurrencyEnum.USD;
                      break;
                   case UnitSymbolType.UST_EURO_PREFIX:
                   case UnitSymbolType.UST_EURO_SUFFIX:
-                     currencyType = IFCCurrencyType.EUR;
+                     currencyType = IfcCurrencyEnum.EUR;
                      break;
                   case UnitSymbolType.UST_POUND:
-                     currencyType = IFCCurrencyType.GBP;
+                     currencyType = IfcCurrencyEnum.GBP;
                      break;
                   case UnitSymbolType.UST_CHINESE_HONG_KONG_SAR:
-                     currencyType = IFCCurrencyType.HKD;
+                     currencyType = IfcCurrencyEnum.HKD;
                      break;
                   case UnitSymbolType.UST_KRONER:
-                     currencyType = IFCCurrencyType.NOK;
+                     currencyType = IfcCurrencyEnum.NOK;
                      break;
                   case UnitSymbolType.UST_SHEQEL:
-                     currencyType = IFCCurrencyType.ILS;
+                     currencyType = IfcCurrencyEnum.ILS;
                      break;
                   case UnitSymbolType.UST_YEN:
-                     currencyType = IFCCurrencyType.JPY;
+                     currencyType = IfcCurrencyEnum.JPY;
                      break;
                   case UnitSymbolType.UST_WON:
-                     currencyType = IFCCurrencyType.KRW;
+                     currencyType = IfcCurrencyEnum.KRW;
                      break;
                   case UnitSymbolType.UST_BAHT:
-                     currencyType = IFCCurrencyType.THB;
+                     currencyType = IfcCurrencyEnum.THB;
                      break;
                   case UnitSymbolType.UST_DONG:
-                     currencyType = IFCCurrencyType.VND;
+                     currencyType = IfcCurrencyEnum.VND;
                      break;
                }
 
-               if (currencyType.HasValue)
-                  currencyUnit = IFCInstanceExporter.CreateMonetaryUnit2x3(file, currencyType.Value);
+               if (currencyType != IfcCurrencyEnum.NOTDEFINED)
+                  currencyUnit = new IfcMonetaryUnit(db, currencyType.ToString());
             }
 
             if (currencyUnit != null)
@@ -2966,7 +2922,7 @@ namespace Revit.IFC.Export.Exporter
 
          // Pressure - support Pascal, kPa and MPa.
          {
-            IFCSIPrefix? prefix = null;
+            IfcSIPrefix prefix = IfcSIPrefix.NONE;
             FormatOptions pressureFormatOptions = doc.GetUnits().GetFormatOptions(UnitType.UT_HVAC_Pressure);
             DisplayUnitType dut = pressureFormatOptions.DisplayUnits;
             switch (dut)
@@ -2974,30 +2930,28 @@ namespace Revit.IFC.Export.Exporter
                case DisplayUnitType.DUT_PASCALS:
                   break;
                case DisplayUnitType.DUT_KILOPASCALS:
-                  prefix = IFCSIPrefix.Kilo;
+                  prefix = IfcSIPrefix.KILO;
                   break;
                case DisplayUnitType.DUT_MEGAPASCALS:
-                  prefix = IFCSIPrefix.Mega;
+                  prefix = IfcSIPrefix.MEGA;
                   break;
                default:
                   dut = DisplayUnitType.DUT_PASCALS;
                   break;
             }
 
-            IFCAnyHandle pressureSIUnit = CreateSIUnit(file, UnitType.UT_HVAC_Pressure, IFCUnit.PressureUnit, IFCSIUnitName.Pascal,
-                prefix, dut);
+            IfcNamedUnit pressureSIUnit = CreateSIUnit(db, UnitType.UT_HVAC_Pressure, IfcUnitEnum.PRESSUREUNIT, IfcSIUnitName.PASCAL, prefix, dut);
             unitSet.Add(pressureSIUnit);      // created above, so unique.
          }
 
          // Friction loss - support Pa/m only.
          {
-            ISet<IFCAnyHandle> elements = new HashSet<IFCAnyHandle>();
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, lenSIBaseUnit, -2));
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, massSIUnit, 1));
-            elements.Add(IFCInstanceExporter.CreateDerivedUnitElement(file, timeSIUnit, -2));
+            ISet<IfcDerivedUnitElement> elements = new HashSet<IfcDerivedUnitElement>();
+            elements.Add(new IfcDerivedUnitElement(lenSIBaseUnit, -2));
+            elements.Add(new IfcDerivedUnitElement(massSIUnit, 1));
+            elements.Add(new IfcDerivedUnitElement(timeSIUnit, -2));
 
-            IFCAnyHandle frictionLossUnit = IFCInstanceExporter.CreateDerivedUnit(file, elements,
-                IFCDerivedUnitEnum.UserDefined, "Friction Loss");
+            IfcDerivedUnit frictionLossUnit = new IfcDerivedUnit(elements, "Friction Loss");
 
             double frictionLossFactor = UnitUtils.ConvertFromInternalUnits(1.0, DisplayUnitType.DUT_PASCALS_PER_METER);
             ExporterCacheManager.UnitsCache.AddUnit(UnitType.UT_HVAC_Friction, frictionLossUnit, frictionLossFactor, 0.0);
@@ -3011,76 +2965,31 @@ namespace Revit.IFC.Export.Exporter
          {
             // Derived imperial mass unit
             {
-               IFCUnit unitType = IFCUnit.MassUnit;
-               IFCAnyHandle dims = IFCInstanceExporter.CreateDimensionalExponents(file, 0, 1, 0, 0, 0, 0, 0);
+               IfcDimensionalExponents dims = new IfcDimensionalExponents(db, 0, 1, 0, 0, 0, 0, 0);
                double factor = 0.45359237; // --> pound to kilogram
                string convName = "pound";
 
-               IFCAnyHandle convFactor = IFCInstanceExporter.CreateMeasureWithUnit(file, Toolkit.IFCDataUtil.CreateAsRatioMeasure(factor), massSIUnit);
-               IFCAnyHandle massUnit = IFCInstanceExporter.CreateConversionBasedUnit(file, dims, unitType, convName, convFactor);
+               IfcMeasureWithUnit convFactor = new IfcMeasureWithUnit(new IfcRatioMeasure(factor), massSIUnit);
+               IfcConversionBasedUnit massUnit = new IfcConversionBasedUnit(IfcUnitEnum.MASSUNIT, convName, convFactor) { Dimensions = dims };
                unitSet.Add(massUnit);      // created above, so unique.
             }
 
             // Air Changes per Hour
             {
-               IFCUnit unitType = IFCUnit.FrequencyUnit;
-               IFCAnyHandle dims = IFCInstanceExporter.CreateDimensionalExponents(file, 0, 0, -1, 0, 0, 0, 0);
+               IfcDimensionalExponents dims = new IfcDimensionalExponents(db, 0, 0, -1, 0, 0, 0, 0);
                double factor = 1.0 / 3600.0; // --> seconds to hours
                string convName = "ACH";
 
-               IFCAnyHandle convFactor = IFCInstanceExporter.CreateMeasureWithUnit(file, Toolkit.IFCDataUtil.CreateAsRatioMeasure(factor), timeSIUnit);
-               IFCAnyHandle achUnit = IFCInstanceExporter.CreateConversionBasedUnit(file, dims, unitType, convName, convFactor);
+               IfcMeasureWithUnit convFactor = new IfcMeasureWithUnit(new IfcRatioMeasure(factor), timeSIUnit);
+               IfcConversionBasedUnit achUnit = new IfcConversionBasedUnit(IfcUnitEnum.FREQUENCYUNIT, convName, convFactor) { Dimensions = dims };
                unitSet.Add(achUnit);      // created above, so unique.
                ExporterCacheManager.UnitsCache["ACH"] = achUnit;
             }
          }
 
-         return IFCInstanceExporter.CreateUnitAssignment(file, unitSet);
+         return new IfcUnitAssignment(unitSet);
       }
 
-      /// <summary>
-      /// Creates the global direction and sets the cardinal directions in 3D.
-      /// </summary>
-      /// <param name="exporterIFC">The IFC exporter object.</param>
-      private void CreateGlobalDirection(ExporterIFC exporterIFC)
-      {
-         // Note that we do not use the ExporterUtil.CreateDirection functions below, as they try
-         // to match the input XYZ to one of the "global" directions that we are creating below.
-         IFCAnyHandle xDirPos = null;
-         IFCAnyHandle xDirNeg = null;
-         IFCAnyHandle yDirPos = null;
-         IFCAnyHandle yDirNeg = null;
-         IFCAnyHandle zDirPos = null;
-         IFCAnyHandle zDirNeg = null;
-
-         IFCFile file = exporterIFC.GetFile();
-         IList<double> xxp = new List<double>();
-         xxp.Add(1.0); xxp.Add(0.0); xxp.Add(0.0);
-         xDirPos = IFCInstanceExporter.CreateDirection(file, xxp);
-
-         IList<double> xxn = new List<double>();
-         xxn.Add(-1.0); xxn.Add(0.0); xxn.Add(0.0);
-         xDirNeg = IFCInstanceExporter.CreateDirection(file, xxn);
-
-         IList<double> yyp = new List<double>();
-         yyp.Add(0.0); yyp.Add(1.0); yyp.Add(0.0);
-         yDirPos = IFCInstanceExporter.CreateDirection(file, yyp);
-
-         IList<double> yyn = new List<double>();
-         yyn.Add(0.0); yyn.Add(-1.0); yyn.Add(0.0);
-         yDirNeg = IFCInstanceExporter.CreateDirection(file, yyn);
-
-         IList<double> zzp = new List<double>();
-         zzp.Add(0.0); zzp.Add(0.0); zzp.Add(1.0);
-         zDirPos = IFCInstanceExporter.CreateDirection(file, zzp);
-
-         IList<double> zzn = new List<double>();
-         zzn.Add(0.0); zzn.Add(0.0); zzn.Add(-1.0);
-         zDirNeg = IFCInstanceExporter.CreateDirection(file, zzn);
-
-         ExporterIFCUtils.SetGlobal3DDirectionHandles(true, xDirPos, yDirPos, zDirPos);
-         ExporterIFCUtils.SetGlobal3DDirectionHandles(false, xDirNeg, yDirNeg, zDirNeg);
-      }
 
       /// <summary>
       /// Creates the global direction and sets the cardinal directions in 2D.
@@ -3236,7 +3145,8 @@ namespace Revit.IFC.Export.Exporter
                   // Add Property set, quantities and classification of Building Storey also to IFC
                   productWrapper.AddElement(level, buildingStoreyHandle, levelInfo, null, false);
 
-                  ExporterUtil.ExportRelatedProperties(exporterIFC, level, productWrapper);
+                  //  ExporterUtil.ExportRelatedProperties(exporterIFC, level, productWrapper);
+#warning ggFix
                }
             }
 

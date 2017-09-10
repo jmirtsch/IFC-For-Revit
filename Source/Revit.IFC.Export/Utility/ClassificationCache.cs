@@ -27,6 +27,8 @@ using Revit.IFC.Common.Extensions;
 using Revit.IFC.Export.Exporter;
 using Revit.IFC.Export.Toolkit;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Utility
 {
     /// <summary>
@@ -34,32 +36,32 @@ namespace Revit.IFC.Export.Utility
     /// </summary>
     public class ClassificationCache
     {
-        private IDictionary<string, IFCAnyHandle> m_ClassificationHandles = null;
+        private IDictionary<string, IfcClassification> m_ClassificationHandles = null;
         
         /// <summary>
         /// The map of classification names to the IfcClassification handles.
         /// </summary>
-        public IDictionary<string, IFCAnyHandle> ClassificationHandles
+        public IDictionary<string, IfcClassification> ClassificationHandles
         {
             get 
             {
                 if (m_ClassificationHandles == null)
-                    m_ClassificationHandles = new Dictionary<string, IFCAnyHandle>();
+                    m_ClassificationHandles = new Dictionary<string, IfcClassification>();
                 return m_ClassificationHandles; 
             }
         }
 
-        private IDictionary<string, IFCClassification> m_ClassificationsByName = null;
+        private IDictionary<string, IfcClassification> m_ClassificationsByName = null;
         
         /// <summary>
         /// The list of defined classifications, sorted by name.
         /// </summary>
-        public IDictionary<string, IFCClassification> ClassificationsByName
+        public IDictionary<string, IfcClassification> ClassificationsByName
         {
             get 
             {
                 if (m_ClassificationsByName == null)
-                    m_ClassificationsByName = new Dictionary<string, IFCClassification>();
+                    m_ClassificationsByName = new Dictionary<string, IfcClassification>();
                 return m_ClassificationsByName; 
             }
         }
@@ -98,7 +100,7 @@ namespace Revit.IFC.Export.Utility
         /// Create a new ClassificationCache.
         /// </summary>
         /// <param name="doc">The document.</param>
-        public ClassificationCache(Document doc)
+        public ClassificationCache(Document doc, DatabaseIfc db)
         {
             // The UI currently supports only one, but future UIs may support a list.
             IList<IFCClassification> classifications;
@@ -108,7 +110,7 @@ namespace Revit.IFC.Export.Utility
                 {
                     bool classificationHasName = !string.IsNullOrWhiteSpace(classification.ClassificationName);
                     if (classificationHasName)
-                        ClassificationsByName[classification.ClassificationName] = classification;
+                        ClassificationsByName[classification.ClassificationName] = new IfcClassification(db, classification.ClassificationName);
                     if (!string.IsNullOrWhiteSpace(classification.ClassificationFieldName))
                     {
                         string[] splitResult = classification.ClassificationFieldName.Split(new Char[] { ',', ';', '\t', '\n' }, StringSplitOptions.RemoveEmptyEntries);

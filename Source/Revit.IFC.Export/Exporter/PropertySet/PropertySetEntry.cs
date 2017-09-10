@@ -28,6 +28,8 @@ using Revit.IFC.Common.Enums;
 using Revit.IFC.Common.Utility;
 using Revit.IFC.Export.Utility;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
    /// <summary>
@@ -863,231 +865,231 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <returns>
       /// Then created property handle.
       /// </returns>
-      public IFCAnyHandle ProcessEntry(IFCFile file, ExporterIFC exporterIFC,
-         IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType, IFCAnyHandle handle)
+      public IfcProperty ProcessEntry(IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType, IfcObjectDefinition handle)
       {
-         IFCAnyHandle propHnd = null;
+         IfcProperty propHnd = null;
+         DatabaseIfc db = handle.Database;
 
          if (ParameterNameIsValid)
          {
-            propHnd = CreatePropertyFromElementOrSymbol(file, exporterIFC, element);
+            propHnd = CreatePropertyFromElementOrSymbol(db, element);
          }
 
-         if (IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+         if(propHnd == null)
          {
-            propHnd = CreatePropertyFromCalculator(file, exporterIFC, extrusionCreationData, element, elementType, handle);
+            propHnd = CreatePropertyFromCalculator(extrusionCreationData, element, elementType, handle);
          }
          return propHnd;
       }
 
       // This function is static to make sure that no properties are used directly from the entry.
-      private static IFCAnyHandle CreatePropertyFromElementOrSymbolBase(IFCFile file, ExporterIFC exporterIFC, Element element,
+      private static IfcProperty CreatePropertyFromElementOrSymbolBase(DatabaseIfc db, Element element,
           string revitParamNameToUse, string ifcPropertyName, BuiltInParameter builtInParameter,
           PropertyType propertyType, PropertyValueType valueType, Type propertyEnumerationType)
       {
-         IFCAnyHandle propHnd = null;
+         IfcProperty propHnd = null;
 
          switch (propertyType)
          {
             case PropertyType.Text:
                {
-                  propHnd = PropertyUtil.CreateTextPropertyFromElementOrSymbol(file, element, revitParamNameToUse, builtInParameter, ifcPropertyName, valueType, propertyEnumerationType);
+                  propHnd = PropertyUtil.CreateTextPropertyFromElementOrSymbol(db, element, revitParamNameToUse, builtInParameter, ifcPropertyName, valueType, propertyEnumerationType);
                   break;
                }
             case PropertyType.Label:
                {
-                  propHnd = PropertyUtil.CreateLabelPropertyFromElementOrSymbol(file, element, revitParamNameToUse, builtInParameter, ifcPropertyName, valueType, propertyEnumerationType);
+                  propHnd = PropertyUtil.CreateLabelPropertyFromElementOrSymbol(db, element, revitParamNameToUse, builtInParameter, ifcPropertyName, valueType, propertyEnumerationType);
                   break;
                }
             case PropertyType.Identifier:
                {
-                  propHnd = PropertyUtil.CreateIdentifierPropertyFromElementOrSymbol(file, element, revitParamNameToUse, builtInParameter, ifcPropertyName, valueType);
+                  propHnd = PropertyUtil.CreateIdentifierPropertyFromElementOrSymbol(db, element, revitParamNameToUse, builtInParameter, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.Boolean:
                {
-                  propHnd = PropertyUtil.CreateBooleanPropertyFromElementOrSymbol(file, element, revitParamNameToUse, ifcPropertyName, valueType);
+                  propHnd = PropertyUtil.CreateBooleanPropertyFromElementOrSymbol(db, element, revitParamNameToUse, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.Logical:
                {
-                  propHnd = PropertyUtil.CreateLogicalPropertyFromElementOrSymbol(file, element, revitParamNameToUse, ifcPropertyName, valueType);
+                  propHnd = PropertyUtil.CreateLogicalPropertyFromElementOrSymbol(db, element, revitParamNameToUse, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.Integer:
                {
-                  propHnd = PropertyUtil.CreateIntegerPropertyFromElementOrSymbol(file, element, revitParamNameToUse, ifcPropertyName, valueType);
+                  propHnd = PropertyUtil.CreateIntegerPropertyFromElementOrSymbol(db, element, revitParamNameToUse, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.Real:
                {
-                  propHnd = PropertyUtil.CreateRealPropertyFromElementOrSymbol(file, element, revitParamNameToUse, ifcPropertyName, valueType);
+                  propHnd = PropertyUtil.CreateRealPropertyFromElementOrSymbol(db, element, revitParamNameToUse, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.Length:
                {
-                  propHnd = PropertyUtil.CreateLengthMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                  propHnd = PropertyUtil.CreateLengthMeasurePropertyFromElementOrSymbol(db, element, revitParamNameToUse,
                       builtInParameter, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.PositiveLength:
                {
-                  propHnd = PropertyUtil.CreatePositiveLengthMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                  propHnd = PropertyUtil.CreatePositiveLengthMeasurePropertyFromElementOrSymbol(db, element, revitParamNameToUse,
                       builtInParameter, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.NormalisedRatio:
                {
-                  propHnd = PropertyUtil.CreateNormalisedRatioPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                  propHnd = PropertyUtil.CreateNormalisedRatioPropertyFromElementOrSymbol(db, element, revitParamNameToUse,
                       ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.PositiveRatio:
                {
-                  propHnd = PropertyUtil.CreatePositiveRatioPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                  propHnd = PropertyUtil.CreatePositiveRatioPropertyFromElementOrSymbol(db, element, revitParamNameToUse,
                       ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.Ratio:
                {
-                  propHnd = PropertyUtil.CreateRatioPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, ifcPropertyName,
+                  propHnd = PropertyUtil.CreateRatioPropertyFromElementOrSymbol(db, element, revitParamNameToUse, ifcPropertyName,
                       valueType);
                   break;
                }
             case PropertyType.PlaneAngle:
                {
-                  propHnd = PropertyUtil.CreatePlaneAngleMeasurePropertyFromElementOrSymbol(file, element, revitParamNameToUse, ifcPropertyName,
+                  propHnd = PropertyUtil.CreatePlaneAngleMeasurePropertyFromElementOrSymbol(db, element, revitParamNameToUse, ifcPropertyName,
                       valueType);
                   break;
                }
             case PropertyType.PositivePlaneAngle:
                {
-                  propHnd = PositivePlaneAnglePropertyUtil.CreatePositivePlaneAngleMeasurePropertyFromElementOrSymbol(file, element, revitParamNameToUse, ifcPropertyName,
+                  propHnd = PositivePlaneAnglePropertyUtil.CreatePositivePlaneAngleMeasurePropertyFromElementOrSymbol(db, element, revitParamNameToUse, ifcPropertyName,
                       valueType);
                   break;
                }
             case PropertyType.Area:
                {
-                  propHnd = PropertyUtil.CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                  propHnd = PropertyUtil.CreateAreaMeasurePropertyFromElementOrSymbol(db, element, revitParamNameToUse,
                       builtInParameter, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.Volume:
                {
-                  propHnd = PropertyUtil.CreateVolumeMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                  propHnd = PropertyUtil.CreateVolumeMeasurePropertyFromElementOrSymbol(db, element, revitParamNameToUse,
                       builtInParameter, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.Count:
                {
-                  propHnd = PropertyUtil.CreateCountMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                  propHnd = PropertyUtil.CreateCountMeasurePropertyFromElementOrSymbol(db, element, revitParamNameToUse,
                       builtInParameter, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.Frequency:
                {
-                  propHnd = FrequencyPropertyUtil.CreateFrequencyPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                  propHnd = FrequencyPropertyUtil.CreateFrequencyPropertyFromElementOrSymbol(db, element, revitParamNameToUse, builtInParameter,
                       ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.ElectricalCurrent:
                {
-                  propHnd = ElectricalCurrentPropertyUtil.CreateElectricalCurrentMeasurePropertyFromElementOrSymbol(file, element, revitParamNameToUse, ifcPropertyName, valueType);
+                  propHnd = ElectricalCurrentPropertyUtil.CreateElectricalCurrentMeasurePropertyFromElementOrSymbol(db, element, revitParamNameToUse, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.ElectricalVoltage:
                {
-                  propHnd = ElectricalVoltagePropertyUtil.CreateElectricalVoltageMeasurePropertyFromElementOrSymbol(file, element, revitParamNameToUse, ifcPropertyName, valueType);
+                  propHnd = ElectricalVoltagePropertyUtil.CreateElectricalVoltageMeasurePropertyFromElementOrSymbol(db, element, revitParamNameToUse, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.LuminousFlux:
                {
-                  propHnd = PropertyUtil.CreateLuminousFluxMeasurePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                  propHnd = PropertyUtil.CreateLuminousFluxMeasurePropertyFromElementOrSymbol(db, element, revitParamNameToUse,
                       builtInParameter, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.Force:
                {
-                  propHnd = FrequencyPropertyUtil.CreateForcePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                  propHnd = FrequencyPropertyUtil.CreateForcePropertyFromElementOrSymbol(db, element, revitParamNameToUse, builtInParameter,
                       ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.Pressure:
                {
-                  propHnd = FrequencyPropertyUtil.CreatePressurePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                  propHnd = FrequencyPropertyUtil.CreatePressurePropertyFromElementOrSymbol(db, element, revitParamNameToUse, builtInParameter,
                       ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.ColorTemperature:
                {
-                  propHnd = PropertyUtil.CreateColorTemperaturePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                  propHnd = PropertyUtil.CreateColorTemperaturePropertyFromElementOrSymbol(db, element, revitParamNameToUse, builtInParameter,
                       ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.Currency:
                {
-                  propHnd = PropertyUtil.CreateCurrencyPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                  propHnd = PropertyUtil.CreateCurrencyPropertyFromElementOrSymbol(db, element, revitParamNameToUse, builtInParameter,
                       ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.ElectricalEfficacy:
                {
-                  propHnd = PropertyUtil.CreateElectricalEfficacyPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                  propHnd = PropertyUtil.CreateElectricalEfficacyPropertyFromElementOrSymbol(db, element, revitParamNameToUse, builtInParameter,
                       ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.LuminousIntensity:
                {
-                  propHnd = PropertyUtil.CreateLuminousIntensityPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                  propHnd = PropertyUtil.CreateLuminousIntensityPropertyFromElementOrSymbol(db, element, revitParamNameToUse, builtInParameter,
                       ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.MassDensity:
                {
-                  propHnd = PropertyUtil.CreateMassDensityPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                  propHnd = PropertyUtil.CreateMassDensityPropertyFromElementOrSymbol(db, element, revitParamNameToUse, builtInParameter,
                       ifcPropertyName, valueType);
                   break;
                }
 
             case PropertyType.Illuminance:
                {
-                  propHnd = PropertyUtil.CreateIlluminancePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                  propHnd = PropertyUtil.CreateIlluminancePropertyFromElementOrSymbol(db, element, revitParamNameToUse, builtInParameter,
                       ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.Power:
                {
-                  propHnd = PropertyUtil.CreatePowerPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                  propHnd = PropertyUtil.CreatePowerPropertyFromElementOrSymbol(db, element, revitParamNameToUse, builtInParameter,
                       ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.ThermodynamicTemperature:
                {
-                  propHnd = PropertyUtil.CreateThermodynamicTemperaturePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                  propHnd = PropertyUtil.CreateThermodynamicTemperaturePropertyFromElementOrSymbol(db, element, revitParamNameToUse,
                       builtInParameter, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.ThermalTransmittance:
                {
-                  propHnd = PropertyUtil.CreateThermalTransmittancePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                  propHnd = PropertyUtil.CreateThermalTransmittancePropertyFromElementOrSymbol(db, element, revitParamNameToUse,
                       builtInParameter, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.VolumetricFlowRate:
                {
-                  propHnd = PropertyUtil.CreateVolumetricFlowRatePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                  propHnd = PropertyUtil.CreateVolumetricFlowRatePropertyFromElementOrSymbol(db, element, revitParamNameToUse,
                       builtInParameter, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.ClassificationReference:
                {
-                  propHnd = PropertyUtil.CreateClassificationReferencePropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                  propHnd = PropertyUtil.CreateClassificationReferencePropertyFromElementOrSymbol(db, element, revitParamNameToUse,
                       builtInParameter, ifcPropertyName);
                   break;
                }
             case PropertyType.LinearVelocity:
                {
-                  propHnd = PropertyUtil.CreateLinearVelocityPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
+                  propHnd = PropertyUtil.CreateLinearVelocityPropertyFromElementOrSymbol(db, element, revitParamNameToUse,
                       ifcPropertyName, valueType);
                   break;
                }
@@ -1105,7 +1107,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <param name="exporterIFC">The ExporterIFC.</param>
       /// <param name="element">The element.</param>
       /// <returns>The property handle.</returns>
-      IFCAnyHandle CreatePropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element element)
+      IfcProperty CreatePropertyFromElementOrSymbol(DatabaseIfc db, Element element)
       {
          PropertyType propertyType = PropertyType;
          PropertyValueType valueType = PropertyValueType;
@@ -1116,17 +1118,17 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          string localizedRevitParameterName = LocalizedRevitParameterName(ExporterCacheManager.LanguageType);
          string revitParameterName = RevitParameterName;
 
-         IFCAnyHandle propHnd = null;
+         IfcProperty propHnd = null;
          if (localizedRevitParameterName != null)
          {
-            propHnd = PropertySetEntry.CreatePropertyFromElementOrSymbolBase(file, exporterIFC, element,
+            propHnd = PropertySetEntry.CreatePropertyFromElementOrSymbolBase(db, element,
                  localizedRevitParameterName, ifcPropertyName, BuiltInParameter.INVALID,
                  propertyType, valueType, propertyEnumerationType);
          }
 
-         if (IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+         if (propHnd == null)
          {
-            propHnd = PropertySetEntry.CreatePropertyFromElementOrSymbolBase(file, exporterIFC, element,
+            propHnd = PropertySetEntry.CreatePropertyFromElementOrSymbolBase(db, element,
                  revitParameterName, ifcPropertyName, RevitBuiltInParameter,
                  propertyType, valueType, propertyEnumerationType);
          }
@@ -1143,16 +1145,17 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <param name="elementType">The element type.</param>
       /// <param name="handle">The handle for which we calculate the property.</param>
       /// <returns>The property handle.</returns>
-      IFCAnyHandle CreatePropertyFromCalculator(IFCFile file, ExporterIFC exporterIFC,
-         IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType, IFCAnyHandle handle)
+      IfcProperty CreatePropertyFromCalculator(IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType, IfcObjectDefinition handle)
       {
-         IFCAnyHandle propHnd = null;
+         DatabaseIfc db = handle.Database;
+         IfcProperty propHnd = null;
 
          if (PropertyCalculator == null)
             return propHnd;
 
-         if (PropertyCalculator.GetParameterFromSubelementCache(element, handle) ||
-             PropertyCalculator.Calculate(exporterIFC, extrusionCreationData, element, elementType))
+#warning ggFix
+         if (false) //PropertyCalculator.GetParameterFromSubelementCache(element, handle) ||
+             //PropertyCalculator.Calculate(null,extrusionCreationData, element, elementType))
          {
             PropertyType propertyType = PropertyType;
             PropertyValueType valueType = PropertyValueType;
@@ -1163,129 +1166,129 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                case PropertyType.Label:
                   {
                      if (PropertyCalculator.CalculatesMutipleValues)
-                        propHnd = PropertyUtil.CreateLabelProperty(file, PropertyName, PropertyCalculator.GetStringValues(), valueType, propertyEnumerationType);
+                        propHnd = PropertyUtil.CreateLabelProperty(db, PropertyName, PropertyCalculator.GetStringValues(), valueType, propertyEnumerationType);
                      else
                      {
                         bool cacheLabel = PropertyCalculator.CacheStringValues;
-                        propHnd = PropertyUtil.CreateLabelPropertyFromCache(file, null, PropertyName, PropertyCalculator.GetStringValue(), valueType, cacheLabel, propertyEnumerationType);
+                        propHnd = PropertyUtil.CreateLabelPropertyFromCache(db, null, PropertyName, PropertyCalculator.GetStringValue(), valueType, cacheLabel, propertyEnumerationType);
                      }
                      break;
                   }
                case PropertyType.Text:
                   {
-                     propHnd = PropertyUtil.CreateTextPropertyFromCache(file, PropertyName, PropertyCalculator.GetStringValue(), valueType);
+                     propHnd = PropertyUtil.CreateTextPropertyFromCache(db, PropertyName, PropertyCalculator.GetStringValue(), valueType);
                      break;
                   }
                case PropertyType.Identifier:
                   {
-                     propHnd = PropertyUtil.CreateIdentifierPropertyFromCache(file, PropertyName, PropertyCalculator.GetStringValue(), valueType);
+                     propHnd = PropertyUtil.CreateIdentifierPropertyFromCache(db, PropertyName, PropertyCalculator.GetStringValue(), valueType);
                      break;
                   }
                case PropertyType.Boolean:
                   {
-                     propHnd = PropertyUtil.CreateBooleanPropertyFromCache(file, PropertyName, PropertyCalculator.GetBooleanValue(), valueType);
+                     propHnd = PropertyUtil.CreateBooleanPropertyFromCache(db, PropertyName, PropertyCalculator.GetBooleanValue(), valueType);
                      break;
                   }
                case PropertyType.Logical:
                   {
-                     propHnd = PropertyUtil.CreateLogicalPropertyFromCache(file, PropertyName, PropertyCalculator.GetLogicalValue(), valueType);
+                     propHnd = PropertyUtil.CreateLogicalPropertyFromCache(db, PropertyName, PropertyCalculator.GetLogicalValue(), valueType);
                      break;
                   }
                case PropertyType.Integer:
                   {
                      if (PropertyCalculator.CalculatesMultipleParameters)
-                        propHnd = PropertyUtil.CreateIntegerPropertyFromCache(file, PropertyName, PropertyCalculator.GetIntValue(PropertyName), valueType);
+                        propHnd = PropertyUtil.CreateIntegerPropertyFromCache(db, PropertyName, PropertyCalculator.GetIntValue(PropertyName), valueType);
                      else
-                        propHnd = PropertyUtil.CreateIntegerPropertyFromCache(file, PropertyName, PropertyCalculator.GetIntValue(), valueType);
+                        propHnd = PropertyUtil.CreateIntegerPropertyFromCache(db, PropertyName, PropertyCalculator.GetIntValue(), valueType);
                      break;
                   }
                case PropertyType.Real:
                   {
-                     propHnd = PropertyUtil.CreateRealPropertyFromCache(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                     propHnd = PropertyUtil.CreateRealPropertyFromCache(db, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                case PropertyType.Length:
                   {
                      if (PropertyCalculator.CalculatesMultipleParameters)
-                        propHnd = PropertyUtil.CreateLengthMeasurePropertyFromCache(file, PropertyName, PropertyCalculator.GetDoubleValue(PropertyName), valueType);
+                        propHnd = PropertyUtil.CreateLengthMeasurePropertyFromCache(db, PropertyName, PropertyCalculator.GetDoubleValue(PropertyName), valueType);
                      else
-                        propHnd = PropertyUtil.CreateLengthMeasurePropertyFromCache(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                        propHnd = PropertyUtil.CreateLengthMeasurePropertyFromCache(db, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                case PropertyType.PositiveLength:
                   {
                      if (PropertyCalculator.CalculatesMultipleParameters)
-                        propHnd = PropertyUtil.CreatePositiveLengthMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(PropertyName), valueType);
+                        propHnd = PropertyUtil.CreatePositiveLengthMeasureProperty(db, PropertyName, PropertyCalculator.GetDoubleValue(PropertyName), valueType);
                      else
-                        propHnd = PropertyUtil.CreatePositiveLengthMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                        propHnd = PropertyUtil.CreatePositiveLengthMeasureProperty(db, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                case PropertyType.NormalisedRatio:
                   {
-                     propHnd = PropertyUtil.CreateNormalisedRatioMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                     propHnd = PropertyUtil.CreateNormalisedRatioMeasureProperty(db, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                case PropertyType.PositiveRatio:
                   {
-                     propHnd = PropertyUtil.CreatePositiveRatioMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                     propHnd = PropertyUtil.CreatePositiveRatioMeasureProperty(db, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                case PropertyType.Ratio:
                   {
-                     propHnd = PropertyUtil.CreateRatioMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                     propHnd = PropertyUtil.CreateRatioMeasureProperty(db, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                case PropertyType.PlaneAngle:
                   {
-                     propHnd = PropertyUtil.CreatePlaneAngleMeasurePropertyFromCache(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                     propHnd = PropertyUtil.CreatePlaneAngleMeasurePropertyFromCache(db, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                case PropertyType.PositivePlaneAngle:
                   {
-                     propHnd = PositivePlaneAnglePropertyUtil.CreatePositivePlaneAngleMeasurePropertyFromCache(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                     propHnd = PositivePlaneAnglePropertyUtil.CreatePositivePlaneAngleMeasurePropertyFromCache(db, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                case PropertyType.Area:
                   {
-                     propHnd = PropertyUtil.CreateAreaMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                     propHnd = PropertyUtil.CreateAreaMeasureProperty(db, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                case PropertyType.Count:
                   {
                      if (PropertyCalculator.CalculatesMultipleParameters)
-                        propHnd = PropertyUtil.CreateCountMeasureProperty(file, PropertyName, PropertyCalculator.GetIntValue(PropertyName), valueType);
+                        propHnd = PropertyUtil.CreateCountMeasureProperty(db, PropertyName, PropertyCalculator.GetIntValue(PropertyName), valueType);
                      else
-                        propHnd = PropertyUtil.CreateCountMeasureProperty(file, PropertyName, PropertyCalculator.GetIntValue(), valueType);
+                        propHnd = PropertyUtil.CreateCountMeasureProperty(db, PropertyName, PropertyCalculator.GetIntValue(), valueType);
                      break;
                   }
                case PropertyType.Frequency:
                   {
-                     propHnd = FrequencyPropertyUtil.CreateFrequencyProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                     propHnd = FrequencyPropertyUtil.CreateFrequencyProperty(db, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                case PropertyType.Power:
                   {
-                     propHnd = PropertyUtil.CreatePowerPropertyFromCache(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                     propHnd = PropertyUtil.CreatePowerPropertyFromCache(db, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                case PropertyType.ThermodynamicTemperature:
                   {
-                     propHnd = PropertyUtil.CreateThermodynamicTemperaturePropertyFromCache(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                     propHnd = PropertyUtil.CreateThermodynamicTemperaturePropertyFromCache(db, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                case PropertyType.ThermalTransmittance:
                   {
-                     propHnd = PropertyUtil.CreateThermalTransmittancePropertyFromCache(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                     propHnd = PropertyUtil.CreateThermalTransmittancePropertyFromCache(db, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                case PropertyType.VolumetricFlowRate:
                   {
-                     propHnd = PropertyUtil.CreateVolumetricFlowRateMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                     propHnd = PropertyUtil.CreateVolumetricFlowRateMeasureProperty(db, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                case PropertyType.LinearVelocity:
                   {
-                     propHnd = PropertyUtil.CreateLinearVelocityMeasureProperty(file, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
+                     propHnd = PropertyUtil.CreateLinearVelocityMeasureProperty(db, PropertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                default:

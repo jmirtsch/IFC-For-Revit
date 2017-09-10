@@ -27,6 +27,8 @@ using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Enums;
 using Revit.IFC.Common.Utility;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Exporter
 {
    /// <summary>
@@ -110,7 +112,7 @@ namespace Revit.IFC.Export.Exporter
 
       // Properties
 
-      private static ISet<IFCEntityType> GetListOfRelatedEntities(IFCEntityType entityType)
+      private static ISet<Type> GetListOfRelatedEntities(Type entityType)
       {
          // This is currently only for extending IfcElementType for schemas before IFC4, but could be expanded in the future.
          // TODO: add types for elements that didn't have types in IFC2x3 for IFC4 support.
@@ -118,16 +120,14 @@ namespace Revit.IFC.Export.Exporter
             return null;
 
          // Check IfcElementType and its parent types.
-         if (entityType == IFCEntityType.IfcElementType ||
-            entityType == IFCEntityType.IfcTypeProduct ||
-            entityType == IFCEntityType.IfcTypeObject)
+         if (entityType.IsSubclassOf(typeof(IfcTypeObject)))
          {
-            ISet<IFCEntityType> relatedEntities = new HashSet<IFCEntityType>();
-            relatedEntities.Add(IFCEntityType.IfcFooting);
-            relatedEntities.Add(IFCEntityType.IfcPile);
-            relatedEntities.Add(IFCEntityType.IfcRamp);
-            relatedEntities.Add(IFCEntityType.IfcRoof);
-            relatedEntities.Add(IFCEntityType.IfcStair);
+            ISet<Type> relatedEntities = new HashSet<Type>();
+            relatedEntities.Add(typeof(IfcFooting));
+            relatedEntities.Add(typeof(IfcPile));
+            relatedEntities.Add(typeof(IfcRamp));
+            relatedEntities.Add(typeof(IfcRoof));
+            relatedEntities.Add(typeof(IfcStair));
             return relatedEntities;
          }
 
@@ -166,12 +166,13 @@ namespace Revit.IFC.Export.Exporter
                      IFCEntityType originalEntity = ifcEntity;
                      IFCCompatibilityType.checkCompatibleType(originalEntity, out ifcEntity);
                   }
-
-                  userDefinedPropetySet.EntityTypes.Add(ifcEntity);
+                  Type type = Type.GetType("GeometryGym.Ifc." + ifcEntity.ToString(), false, true);
+                  if (type != null)
+                     userDefinedPropetySet.EntityTypes.Add(type);
                   // This is intended mostly as a workaround in IFC2x3 for IfcElementType.  Not all elements have an associated type (e.g. IfcRoof),
                   // but we still want to be able to export type property sets for that element.  So we will manually add these extra types here without
                   // forcing the user to guess.  If this causes issues, we may come up with a different design.
-                  ISet<IFCEntityType> relatedEntities = GetListOfRelatedEntities(ifcEntity);
+                  ISet<Type> relatedEntities = GetListOfRelatedEntities(type);
                   if (relatedEntities != null)
                      userDefinedPropetySet.EntityTypes.UnionWith(relatedEntities);
                }
@@ -250,7 +251,7 @@ namespace Revit.IFC.Export.Exporter
 
             // The schedule will be responsible for determining which elements to actually export.
             customPSet.ViewScheduleId = schedule.Id;
-            customPSet.EntityTypes.Add(IFCEntityType.IfcProduct);
+            customPSet.EntityTypes.Add(typeof(IfcProduct));
 
             int fieldCount = definition.GetFieldCount();
             if (fieldCount == 0)
@@ -429,7 +430,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetManufacturer.Name = "Pset_ManufacturerTypeInformation";
 
          // sub type of IfcElement
-         propertySetManufacturer.EntityTypes.Add(IFCEntityType.IfcElement);
+         propertySetManufacturer.EntityTypes.Add(typeof(IfcElement));
 
          PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("ArticleNumber");
          propertySetManufacturer.AddEntry(ifcPSE);
@@ -468,7 +469,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetWallCommon.Name = "Pset_WallCommon";
          propertySetWallCommon.SubElementIndex = (int)IFCCommonPSets.PSetWallCommon;
 
-         propertySetWallCommon.EntityTypes.Add(IFCEntityType.IfcWall);
+         propertySetWallCommon.EntityTypes.Add(typeof(IfcWall));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetWallCommon.AddEntry(ifcPSE);
@@ -510,7 +511,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetCurtainWallCommon.Name = "Pset_CurtainWallCommon";
          propertySetCurtainWallCommon.SubElementIndex = (int)IFCCommonPSets.PSetCurtainWallCommon;
 
-         propertySetCurtainWallCommon.EntityTypes.Add(IFCEntityType.IfcCurtainWall);
+         propertySetCurtainWallCommon.EntityTypes.Add(typeof(IfcCurtainWall));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetCurtainWallCommon.AddEntry(ifcPSE);
@@ -545,7 +546,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetCoveringCommon.Name = "Pset_CoveringCommon";
          propertySetCoveringCommon.SubElementIndex = (int)IFCCommonPSets.PSetCoveringCommon;
 
-         propertySetCoveringCommon.EntityTypes.Add(IFCEntityType.IfcCovering);
+         propertySetCoveringCommon.EntityTypes.Add(typeof(IfcCovering));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetCoveringCommon.AddEntry(ifcPSE);
@@ -596,7 +597,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetDoorCommon.Name = "Pset_DoorCommon";
          propertySetDoorCommon.SubElementIndex = (int)IFCCommonPSets.PSetDoorCommon;
 
-         propertySetDoorCommon.EntityTypes.Add(IFCEntityType.IfcDoor);
+         propertySetDoorCommon.EntityTypes.Add(typeof(IfcDoor));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetDoorCommon.AddEntry(ifcPSE);
@@ -641,8 +642,8 @@ namespace Revit.IFC.Export.Exporter
          propertySetDoorWindowGlazingType.Name = "Pset_DoorWindowGlazingType";
          propertySetDoorWindowGlazingType.SubElementIndex = (int)IFCCommonPSets.PSetDoorWindowGlazingType;
 
-         propertySetDoorWindowGlazingType.EntityTypes.Add(IFCEntityType.IfcDoor);
-         propertySetDoorWindowGlazingType.EntityTypes.Add(IFCEntityType.IfcWindow);
+         propertySetDoorWindowGlazingType.EntityTypes.Add(typeof(IfcDoor));
+         propertySetDoorWindowGlazingType.EntityTypes.Add(typeof(IfcWindow));
 
          propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreateCount("GlassLayers"));
          propertySetDoorWindowGlazingType.AddEntry(PropertySetEntry.CreatePositiveLength("GlassThickness1"));
@@ -690,8 +691,8 @@ namespace Revit.IFC.Export.Exporter
          propertySetDoorWindowShadingType.Name = "Pset_DoorWindowShadingType";
          propertySetDoorWindowShadingType.SubElementIndex = (int)IFCCommonPSets.PsetDoorWindowShadingType;
 
-         propertySetDoorWindowShadingType.EntityTypes.Add(IFCEntityType.IfcDoor);
-         propertySetDoorWindowShadingType.EntityTypes.Add(IFCEntityType.IfcWindow);
+         propertySetDoorWindowShadingType.EntityTypes.Add(typeof(IfcDoor));
+         propertySetDoorWindowShadingType.EntityTypes.Add(typeof(IfcWindow));
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
@@ -717,7 +718,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetWindowCommon.Name = "Pset_WindowCommon";
          propertySetWindowCommon.SubElementIndex = (int)IFCCommonPSets.PSetWindowCommon;
 
-         propertySetWindowCommon.EntityTypes.Add(IFCEntityType.IfcWindow);
+         propertySetWindowCommon.EntityTypes.Add(typeof(IfcWindow));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetWindowCommon.AddEntry(ifcPSE);
@@ -761,7 +762,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetLightFixtureTypeCommon.Name = "Pset_LightFixtureTypeCommon";
          propertySetLightFixtureTypeCommon.SubElementIndex = (int)IFCCommonPSets.PSetLightFixtureTypeCommon;
 
-         propertySetLightFixtureTypeCommon.EntityTypes.Add(IFCEntityType.IfcLightFixtureType);
+         propertySetLightFixtureTypeCommon.EntityTypes.Add(typeof(IfcLightFixtureType));
 
          PropertySetEntry ifcPSE = PropertySetEntry.CreateInteger("NumberOfSources");
          propertySetLightFixtureTypeCommon.AddEntry(ifcPSE);
@@ -809,7 +810,7 @@ namespace Revit.IFC.Export.Exporter
          propertyDistributionFlowElementCommon.Name = "Pset_DistributionFlowElementCommon";
          propertyDistributionFlowElementCommon.SubElementIndex = (int)IFCCommonPSets.PSetDistributionFlowElementCommon;
 
-         propertyDistributionFlowElementCommon.EntityTypes.Add(IFCEntityType.IfcDistributionFlowElement);
+         propertyDistributionFlowElementCommon.EntityTypes.Add(typeof(IfcDistributionFlowElement));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertyDistributionFlowElementCommon.AddEntry(ifcPSE);
@@ -827,7 +828,7 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertySetElectricalCircuit = new PropertySetDescription();
          propertySetElectricalCircuit.Name = "Pset_ElectricalCircuit";
 
-         propertySetElectricalCircuit.EntityTypes.Add(IFCEntityType.IfcElectricalCircuit);
+         propertySetElectricalCircuit.EntityTypes.Add(typeof(IfcElectricalCircuit));
 
          propertySetElectricalCircuit.AddEntry(PropertySetEntry.CreatePositiveRatio("Diversity"));
          propertySetElectricalCircuit.AddEntry(PropertySetEntry.CreateInteger("NumberOfPhases"));
@@ -847,7 +848,7 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertySetElectricalDeviceCommon = new PropertySetDescription();
          propertySetElectricalDeviceCommon.Name = "Pset_ElectricalDeviceCommon";
 
-         propertySetElectricalDeviceCommon.EntityTypes.Add(IFCEntityType.IfcDistributionElement);
+         propertySetElectricalDeviceCommon.EntityTypes.Add(typeof(IfcDistributionElement));
 
          propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateFrequency("NominalFrequencyRange"));
          propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateInteger("NumberOfPoles"));
@@ -887,8 +888,8 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertyFlowTerminalAirTerminal = new PropertySetDescription();
          propertyFlowTerminalAirTerminal.Name = "Pset_FlowTerminalAirTerminal";
          propertyFlowTerminalAirTerminal.SubElementIndex = (int)IFCCommonPSets.PSetFlowTerminalAirTerminal;
-
-         propertyFlowTerminalAirTerminal.EntityTypes.Add(IFCEntityType.IfcFlowTerminal);
+         
+         propertyFlowTerminalAirTerminal.EntityTypes.Add(typeof(IfcFlowTerminal));
 
          propertyFlowTerminalAirTerminal.AddEntry(PropertySetEntry.CreateEnumeratedValue("AirflowType", PropertyType.Label,
              typeof(PSetFlowTerminalAirTerminal_AirTerminalAirflowType)));
@@ -909,7 +910,7 @@ namespace Revit.IFC.Export.Exporter
          propertyAirTerminalTypeCommon.Name = "Pset_AirTerminalTypeCommon";
          propertyAirTerminalTypeCommon.SubElementIndex = (int)IFCCommonPSets.PSetAirTerminalTypeCommon;
 
-         propertyAirTerminalTypeCommon.EntityTypes.Add(IFCEntityType.IfcAirTerminalType);
+         propertyAirTerminalTypeCommon.EntityTypes.Add(typeof(IfcAirTerminalType));
 
          propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("Shape", PropertyType.Label,
              typeof(PSetAirTerminalTypeCommon_AirTerminalShape)));
@@ -967,7 +968,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetBeamCommon.Name = "Pset_BeamCommon";
          propertySetBeamCommon.SubElementIndex = (int)IFCCommonPSets.PSetBeamCommon;
 
-         propertySetBeamCommon.EntityTypes.Add(IFCEntityType.IfcBeam);
+         propertySetBeamCommon.EntityTypes.Add(typeof(IfcBeam));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetBeamCommon.AddEntry(ifcPSE);
@@ -1017,7 +1018,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetMemberCommon.Name = "Pset_MemberCommon";
          propertySetMemberCommon.SubElementIndex = (int)IFCCommonPSets.PSetMemberCommon;
 
-         propertySetMemberCommon.EntityTypes.Add(IFCEntityType.IfcMember);
+         propertySetMemberCommon.EntityTypes.Add(typeof(IfcMember));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetMemberCommon.AddEntry(ifcPSE);
@@ -1066,7 +1067,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetPlateCommon.Name = "Pset_PlateCommon";
          propertySetPlateCommon.SubElementIndex = (int)IFCCommonPSets.PSetPlateCommon;
 
-         propertySetPlateCommon.EntityTypes.Add(IFCEntityType.IfcPlate);
+         propertySetPlateCommon.EntityTypes.Add(typeof(IfcPlate));
 
          propertySetPlateCommon.AddEntry(PropertySetEntryUtil.CreateReferenceEntry());
          propertySetPlateCommon.AddEntry(PropertySetEntryUtil.CreateIsExternalEntry());
@@ -1091,7 +1092,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetReinforcingBarCommon.Name = "Pset_ReinforcingBarBendingsBECCommon";
          propertySetReinforcingBarCommon.SubElementIndex = (int)IFCCommonPSets.PSetBECCommon;
 
-         propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
+         propertySetReinforcingBarCommon.EntityTypes.Add(typeof(IfcReinforcingBar));
 
          propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreateLabel("BECBarShapeCode"));
          for (char shapeParameterSuffix = 'a'; shapeParameterSuffix <= 'l'; shapeParameterSuffix++)
@@ -1117,7 +1118,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetReinforcingBarCommon.Name = "Pset_ReinforcingBarBendingsBS8666Common";
          propertySetReinforcingBarCommon.SubElementIndex = (int)IFCCommonPSets.PSetBS8666Common;
 
-         propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
+         propertySetReinforcingBarCommon.EntityTypes.Add(typeof(IfcReinforcingBar));
 
          propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreateLabel("BS8666ShapeCode"));
          for (char shapeParameterSuffix = 'A'; shapeParameterSuffix <= 'E'; shapeParameterSuffix++)
@@ -1137,7 +1138,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetReinforcingBarCommon.Name = "Pset_ReinforcingBarBendingsDIN135610Common";
          propertySetReinforcingBarCommon.SubElementIndex = (int)IFCCommonPSets.PSetDIN135610Common;
 
-         propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
+         propertySetReinforcingBarCommon.EntityTypes.Add(typeof(IfcReinforcingBar));
 
          propertySetReinforcingBarCommon.AddEntry(PropertySetEntry.CreateLabel("DIN135610ShapeCode"));
          for (char shapeParameterSuffix = 'a'; shapeParameterSuffix <= 'e'; shapeParameterSuffix++)
@@ -1157,7 +1158,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetReinforcingBarCommon.Name = "Pset_ReinforcingBarBendingsISOCD3766Common";
          propertySetReinforcingBarCommon.SubElementIndex = (int)IFCCommonPSets.PSetISOCD3766Common;
 
-         propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
+         propertySetReinforcingBarCommon.EntityTypes.Add(typeof(IfcReinforcingBar));
 
          PropertySetEntry ifcPSE = PropertySetEntry.CreateLabel("ISOCD3766ShapeCode");
          ifcPSE.PropertyCalculator = ISOCD3766ShapeCodeCalculator.Instance;
@@ -1208,7 +1209,7 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertySetColumnCommon = new PropertySetDescription();
          propertySetColumnCommon.Name = "Pset_ColumnCommon";
 
-         propertySetColumnCommon.EntityTypes.Add(IFCEntityType.IfcColumn);
+         propertySetColumnCommon.EntityTypes.Add(typeof(IfcColumn));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetColumnCommon.AddEntry(ifcPSE);
@@ -1252,7 +1253,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetRoofCommon.Name = "Pset_RoofCommon";
          propertySetRoofCommon.SubElementIndex = (int)IFCCommonPSets.PSetRoofCommon;
 
-         propertySetRoofCommon.EntityTypes.Add(IFCEntityType.IfcRoof);
+         propertySetRoofCommon.EntityTypes.Add(typeof(IfcRoof));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetRoofCommon.AddEntry(ifcPSE);
@@ -1295,7 +1296,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetSlabCommon.Name = "Pset_SlabCommon";
          propertySetSlabCommon.SubElementIndex = (int)IFCCommonPSets.PSetSlabCommon;
 
-         propertySetSlabCommon.EntityTypes.Add(IFCEntityType.IfcSlab);
+         propertySetSlabCommon.EntityTypes.Add(typeof(IfcSlab));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetSlabCommon.AddEntry(ifcPSE);
@@ -1344,7 +1345,7 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertySetRailingCommon = new PropertySetDescription();
          propertySetRailingCommon.Name = "Pset_RailingCommon";
 
-         propertySetRailingCommon.EntityTypes.Add(IFCEntityType.IfcRailing);
+         propertySetRailingCommon.EntityTypes.Add(typeof(IfcRailing));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetRailingCommon.AddEntry(ifcPSE);
@@ -1375,7 +1376,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetRampCommon.Name = "Pset_RampCommon";
          propertySetRampCommon.SubElementIndex = (int)IFCCommonPSets.PSetRampCommon;
 
-         propertySetRampCommon.EntityTypes.Add(IFCEntityType.IfcRamp);
+         propertySetRampCommon.EntityTypes.Add(typeof(IfcRamp));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetRampCommon.AddEntry(ifcPSE);
@@ -1409,7 +1410,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetStairFlightCommon.Name = "Pset_StairFlightCommon";
          // Add Calculator for SubElementIndex.
 
-         propertySetStairFlightCommon.EntityTypes.Add(IFCEntityType.IfcStairFlight);
+         propertySetStairFlightCommon.EntityTypes.Add(typeof(IfcStairFlight));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetStairFlightCommon.AddEntry(ifcPSE);
@@ -1469,7 +1470,7 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertySetRampFlightCommon = new PropertySetDescription();
          propertySetRampFlightCommon.Name = "Pset_RampFlightCommon";
 
-         propertySetRampFlightCommon.EntityTypes.Add(IFCEntityType.IfcRampFlight);
+         propertySetRampFlightCommon.EntityTypes.Add(typeof(IfcRampFlight));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetRampFlightCommon.AddEntry(ifcPSE);
@@ -1499,7 +1500,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetStairCommon.Name = "Pset_StairCommon";
          propertySetStairCommon.SubElementIndex = (int)IFCCommonPSets.PSetStairCommon;
 
-         propertySetStairCommon.EntityTypes.Add(IFCEntityType.IfcStair);
+         propertySetStairCommon.EntityTypes.Add(typeof(IfcStair));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetStairCommon.AddEntry(ifcPSE);
@@ -1555,7 +1556,7 @@ namespace Revit.IFC.Export.Exporter
          // Pset_BuildingCommon
          PropertySetDescription propertySetBuildingCommon = new PropertySetDescription();
          propertySetBuildingCommon.Name = "Pset_BuildingCommon";
-         propertySetBuildingCommon.EntityTypes.Add(IFCEntityType.IfcBuilding);
+         propertySetBuildingCommon.EntityTypes.Add(typeof(IfcBuilding));
          propertySetBuildingCommon.SubElementIndex = (int)IFCCommonPSets.PSetBuildingCommon;
 
          propertySetBuildingCommon.AddEntry(PropertySetEntry.CreateIdentifier("BuildingID"));
@@ -1600,7 +1601,7 @@ namespace Revit.IFC.Export.Exporter
          //property level common
          PropertySetDescription propertySetLevelCommon = new PropertySetDescription();
          propertySetLevelCommon.Name = "Pset_BuildingStoreyCommon";
-         propertySetLevelCommon.EntityTypes.Add(IFCEntityType.IfcBuildingStorey);
+         propertySetLevelCommon.EntityTypes.Add(typeof(IfcBuildingStorey));
          propertySetLevelCommon.SubElementIndex = (int)IFCCommonPSets.PSetBuildingStoreyCommon;
 
          PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("EntranceLevel");
@@ -1636,7 +1637,7 @@ namespace Revit.IFC.Export.Exporter
          //property site common
          PropertySetDescription propertySetSiteCommon = new PropertySetDescription();
          propertySetSiteCommon.Name = "Pset_SiteCommon";
-         propertySetSiteCommon.EntityTypes.Add(IFCEntityType.IfcSite);
+         propertySetSiteCommon.EntityTypes.Add(typeof(IfcSite));
          propertySetSiteCommon.SubElementIndex = (int)IFCCommonPSets.PSetSiteCommon;
 
          PropertySetEntry ifcPSE = PropertySetEntry.CreateArea("BuildableArea");
@@ -1670,7 +1671,7 @@ namespace Revit.IFC.Export.Exporter
          //property building element proxy common
          PropertySetDescription propertySetBuildingElementProxyCommon = new PropertySetDescription();
          propertySetBuildingElementProxyCommon.Name = "Pset_BuildingElementProxyCommon";
-         propertySetBuildingElementProxyCommon.EntityTypes.Add(IFCEntityType.IfcBuildingElementProxy);
+         propertySetBuildingElementProxyCommon.EntityTypes.Add(typeof(IfcBuildingElementProxy));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetBuildingElementProxyCommon.AddEntry(ifcPSE);
@@ -1701,7 +1702,7 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertySetSpaceCommon = new PropertySetDescription();
          propertySetSpaceCommon.Name = "Pset_SpaceCommon";
 
-         propertySetSpaceCommon.EntityTypes.Add(IFCEntityType.IfcSpace);
+         propertySetSpaceCommon.EntityTypes.Add(typeof(IfcSpace));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetSpaceCommon.AddEntry(ifcPSE);
@@ -1761,7 +1762,7 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertySetSpaceOccupancyRequirements = new PropertySetDescription();
          propertySetSpaceOccupancyRequirements.Name = "Pset_SpaceOccupancyRequirements";
 
-         propertySetSpaceOccupancyRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
+         propertySetSpaceOccupancyRequirements.EntityTypes.Add(typeof(IfcSpace));
 
          propertySetSpaceOccupancyRequirements.AddEntry(PropertySetEntry.CreateLabel("OccupancyType"));
          propertySetSpaceOccupancyRequirements.AddEntry(PropertySetEntry.CreateCount("OccupancyNumber"));
@@ -1784,7 +1785,7 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertySetZoneCommon = new PropertySetDescription();
          propertySetZoneCommon.Name = "Pset_ZoneCommon";
 
-         propertySetZoneCommon.EntityTypes.Add(IFCEntityType.IfcZone);
+         propertySetZoneCommon.EntityTypes.Add(typeof(IfcZone));
 
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetZoneCommon.AddEntry(ifcPSE);
@@ -1818,7 +1819,7 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertySetSpaceFireSafetyRequirements = new PropertySetDescription();
          propertySetSpaceFireSafetyRequirements.Name = "Pset_SpaceFireSafetyRequirements";
 
-         propertySetSpaceFireSafetyRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
+         propertySetSpaceFireSafetyRequirements.EntityTypes.Add(typeof(IfcSpace));
 
          if (!ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
@@ -1845,7 +1846,7 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertySetSpaceLightingRequirements = new PropertySetDescription();
          propertySetSpaceLightingRequirements.Name = "Pset_SpaceLightingRequirements";
 
-         propertySetSpaceLightingRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
+         propertySetSpaceLightingRequirements.EntityTypes.Add(typeof(IfcSpace));
 
          propertySetSpaceLightingRequirements.AddEntry(PropertySetEntry.CreateBoolean("ArtificialLighting"));
          propertySetSpaceLightingRequirements.AddEntry(PropertySetEntry.CreateReal("Illuminance"));
@@ -1862,7 +1863,7 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertySetSpaceThermalRequirements = new PropertySetDescription();
          propertySetSpaceThermalRequirements.Name = "Pset_SpaceThermalRequirements";
 
-         propertySetSpaceThermalRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
+         propertySetSpaceThermalRequirements.EntityTypes.Add(typeof(IfcSpace));
 
 
          propertySetSpaceThermalRequirements.AddEntry(PropertySetEntry.CreateThermodynamicTemperature("SpaceTemperatureMax"));
@@ -1913,7 +1914,7 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertySetSpaceCoveringRequirements = new PropertySetDescription();
          propertySetSpaceCoveringRequirements.Name = "Pset_SpaceCoveringRequirements";
 
-         propertySetSpaceCoveringRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
+         propertySetSpaceCoveringRequirements.EntityTypes.Add(typeof(IfcSpace));
 
          PropertySetEntry ifcPSE = PropertySetEntry.CreateLabel("CeilingCovering");
          ifcPSE.RevitBuiltInParameter = BuiltInParameter.ROOM_FINISH_CEILING;
@@ -1949,7 +1950,7 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertySetGSASpaceCategories = new PropertySetDescription();
          propertySetGSASpaceCategories.Name = "GSA Space Categories";
 
-         propertySetGSASpaceCategories.EntityTypes.Add(IFCEntityType.IfcSpace);
+         propertySetGSASpaceCategories.EntityTypes.Add(typeof(IfcSpace));
 
          propertySetGSASpaceCategories.AddEntry(PropertySetEntry.CreateLabel("GSA STAR Space Type"));
          propertySetGSASpaceCategories.AddEntry(PropertySetEntry.CreateLabel("GSA STAR Space Category"));
@@ -1967,7 +1968,7 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertySetSpaceOccupant = new PropertySetDescription();
          propertySetSpaceOccupant.Name = "Space Occupant Properties";
 
-         propertySetSpaceOccupant.EntityTypes.Add(IFCEntityType.IfcSpace);
+         propertySetSpaceOccupant.EntityTypes.Add(typeof(IfcSpace));
 
          propertySetSpaceOccupant.AddEntry(PropertySetEntry.CreateLabel("Occupant Organization Code"));
          propertySetSpaceOccupant.AddEntry(PropertySetEntry.CreateLabel("Occupant Organization Abbreviation"));
@@ -1987,7 +1988,7 @@ namespace Revit.IFC.Export.Exporter
          PropertySetDescription propertySetSpaceZones = new PropertySetDescription();
          propertySetSpaceZones.Name = "Space Zones";
 
-         propertySetSpaceZones.EntityTypes.Add(IFCEntityType.IfcSpace);
+         propertySetSpaceZones.EntityTypes.Add(typeof(IfcSpace));
 
          propertySetSpaceZones.AddEntry(PropertySetEntry.CreateLabel("Security Zone"));
          propertySetSpaceZones.AddEntry(PropertySetEntry.CreateLabel("Preservation Zone"));
@@ -2014,7 +2015,7 @@ namespace Revit.IFC.Export.Exporter
       {
          PropertySetDescription propertySetBuildingWaterStorage = new PropertySetDescription();
          propertySetBuildingWaterStorage.Name = "Pset_BuildingWaterStorage";
-         propertySetBuildingWaterStorage.EntityTypes.Add(IFCEntityType.IfcBuilding);
+         propertySetBuildingWaterStorage.EntityTypes.Add(typeof(IfcBuilding));
 
          propertySetBuildingWaterStorage.AddEntry(PropertySetEntry.CreateReal("OneDayPotableWater"));
          propertySetBuildingWaterStorage.AddEntry(PropertySetEntry.CreateReal("OneDayProcessOrProductionWater"));
@@ -2031,7 +2032,7 @@ namespace Revit.IFC.Export.Exporter
       {
          PropertySetDescription propertySetElementShading = new PropertySetDescription();
          propertySetElementShading.Name = "Pset_ElementShading";
-         propertySetElementShading.EntityTypes.Add(IFCEntityType.IfcBuildingElementProxy);
+         propertySetElementShading.EntityTypes.Add(typeof(IfcBuildingElementProxy));
          propertySetElementShading.ObjectType = "Solar Shade";
 
          propertySetElementShading.AddEntry(PropertySetEntry.CreateEnumeratedValue("ShadingDeviceType", PropertyType.Label,
@@ -2060,7 +2061,7 @@ namespace Revit.IFC.Export.Exporter
          else
             propertySetProvisionForVoid.Name = "Pset_ProvisionForVoid";
 
-         propertySetProvisionForVoid.EntityTypes.Add(IFCEntityType.IfcBuildingElementProxy);
+         propertySetProvisionForVoid.EntityTypes.Add(typeof(IfcBuildingElementProxy));
          propertySetProvisionForVoid.ObjectType = "ProvisionForVoid";
 
          // The Shape value must be determined first, as other calculators will use the value stored.
@@ -2098,7 +2099,7 @@ namespace Revit.IFC.Export.Exporter
       {
          PropertySetDescription propertySetBath = new PropertySetDescription();
          propertySetBath.Name = "Pset_SanitaryTerminalTypeBath";
-         propertySetBath.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
+         propertySetBath.EntityTypes.Add(typeof(IfcSanitaryTerminalType));
          propertySetBath.PredefinedType = "BATH";
 
          propertySetBath.AddEntry(PropertySetEntry.CreateEnumeratedValue("BathType", PropertyType.Label,
@@ -2124,7 +2125,7 @@ namespace Revit.IFC.Export.Exporter
       {
          PropertySetDescription propertySetShower = new PropertySetDescription();
          propertySetShower.Name = "Pset_SanitaryTerminalTypeShower";
-         propertySetShower.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
+         propertySetShower.EntityTypes.Add(typeof(IfcSanitaryTerminalType));
          propertySetShower.PredefinedType = "SHOWER";
 
          propertySetShower.AddEntry(PropertySetEntry.CreateEnumeratedValue("ShowerType", PropertyType.Label,
@@ -2151,7 +2152,7 @@ namespace Revit.IFC.Export.Exporter
       {
          PropertySetDescription propertySetSink = new PropertySetDescription();
          propertySetSink.Name = "Pset_SanitaryTerminalTypeSink";
-         propertySetSink.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
+         propertySetSink.EntityTypes.Add(typeof(IfcSanitaryTerminalType));
          propertySetSink.PredefinedType = "SINK";
 
          propertySetSink.AddEntry(PropertySetEntry.CreateEnumeratedValue("SinkType", PropertyType.Label,
@@ -2178,7 +2179,7 @@ namespace Revit.IFC.Export.Exporter
       {
          PropertySetDescription propertySetToiletPan = new PropertySetDescription();
          propertySetToiletPan.Name = "Pset_SanitaryTerminalTypeToiletPan";
-         propertySetToiletPan.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
+         propertySetToiletPan.EntityTypes.Add(typeof(IfcSanitaryTerminalType));
          propertySetToiletPan.PredefinedType = "TOILETPAN";
 
          propertySetToiletPan.AddEntry(PropertySetEntry.CreateEnumeratedValue("ToiletType", PropertyType.Label,
@@ -2208,7 +2209,7 @@ namespace Revit.IFC.Export.Exporter
       {
          PropertySetDescription propertySetWashHandBasin = new PropertySetDescription();
          propertySetWashHandBasin.Name = "Pset_SanitaryTerminalTypeWashHandBasin";
-         propertySetWashHandBasin.EntityTypes.Add(IFCEntityType.IfcSanitaryTerminalType);
+         propertySetWashHandBasin.EntityTypes.Add(typeof(IfcSanitaryTerminalType));
          propertySetWashHandBasin.PredefinedType = "WASHHANDBASIN";
 
          propertySetWashHandBasin.AddEntry(PropertySetEntry.CreateEnumeratedValue("WashHandBasinType", PropertyType.Label,
@@ -2234,7 +2235,7 @@ namespace Revit.IFC.Export.Exporter
       {
          PropertySetDescription propertySetSwitchingDeviceTypeCommon = new PropertySetDescription();
          propertySetSwitchingDeviceTypeCommon.Name = "Pset_SwitchingDeviceTypeCommon";
-         propertySetSwitchingDeviceTypeCommon.EntityTypes.Add(IFCEntityType.IfcSwitchingDeviceType);
+         propertySetSwitchingDeviceTypeCommon.EntityTypes.Add(typeof(IfcSwitchingDeviceType));
 
          propertySetSwitchingDeviceTypeCommon.AddEntry(PropertySetEntry.CreateInteger("NumberOfGangs"));
          propertySetSwitchingDeviceTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("SwitchFunction",
@@ -2261,7 +2262,7 @@ namespace Revit.IFC.Export.Exporter
       {
          PropertySetDescription propertySetSwitchingDeviceTypeToggleSwitch = new PropertySetDescription();
          propertySetSwitchingDeviceTypeToggleSwitch.Name = "Pset_SwitchingDeviceTypeToggleSwitch";
-         propertySetSwitchingDeviceTypeToggleSwitch.EntityTypes.Add(IFCEntityType.IfcSwitchingDeviceType);
+         propertySetSwitchingDeviceTypeToggleSwitch.EntityTypes.Add(typeof(IfcSwitchingDeviceType));
          // TODO: Restrict to TOGGLESWITCH.
 
          propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(PropertySetEntry.CreateEnumeratedValue("ToggleSwitchType",
@@ -2304,7 +2305,7 @@ namespace Revit.IFC.Export.Exporter
       {
          PropertySetDescription propertySetSpaceThermalSimulationProperties = new PropertySetDescription();
          propertySetSpaceThermalSimulationProperties.Name = "ePset_SpaceThermalSimulationProperties";
-         propertySetSpaceThermalSimulationProperties.EntityTypes.Add(IFCEntityType.IfcSpace);
+         propertySetSpaceThermalSimulationProperties.EntityTypes.Add(typeof(IfcSpace));
 
          PropertySetEntry ifcPSE = PropertySetEntry.CreateLabel("Space Thermal Simulation Type");
          ifcPSE.PropertyName = "SpaceThermalSimulationType";
@@ -2345,7 +2346,7 @@ namespace Revit.IFC.Export.Exporter
       {
          PropertySetDescription propertySetSpaceThermalDesign = new PropertySetDescription();
          propertySetSpaceThermalDesign.Name = "Pset_SpaceThermalDesign";
-         propertySetSpaceThermalDesign.EntityTypes.Add(IFCEntityType.IfcSpace);
+         propertySetSpaceThermalDesign.EntityTypes.Add(typeof(IfcSpace));
 
          PropertySetEntry ifcPSE = PropertySetEntry.CreateVolumetricFlowRate("CoolingDesignAirflow");
          propertySetSpaceThermalDesign.AddEntry(ifcPSE);
@@ -2401,7 +2402,7 @@ namespace Revit.IFC.Export.Exporter
       {
          PropertySetDescription propertySetSpaceVentilationCriteria = new PropertySetDescription();
          propertySetSpaceVentilationCriteria.Name = "ePset_SpaceVentilationCriteria";
-         propertySetSpaceVentilationCriteria.EntityTypes.Add(IFCEntityType.IfcSpace);
+         propertySetSpaceVentilationCriteria.EntityTypes.Add(typeof(IfcSpace));
 
          PropertySetEntry ifcPSE = PropertySetEntry.CreateLabel("Ventilation Type");
          ifcPSE.PropertyName = "VentilationType";
@@ -2422,7 +2423,7 @@ namespace Revit.IFC.Export.Exporter
       {
          PropertySetDescription propertySetBuildingEnergyTarget = new PropertySetDescription();
          propertySetBuildingEnergyTarget.Name = "ePset_BuildingEnergyTarget";
-         propertySetBuildingEnergyTarget.EntityTypes.Add(IFCEntityType.IfcBuilding);
+         propertySetBuildingEnergyTarget.EntityTypes.Add(typeof(IfcBuilding));
 
          PropertySetEntry ifcPSE = PropertySetEntry.CreateReal("Building Energy Target Value");
          ifcPSE.PropertyName = "BuildingEnergyTargetValue";
@@ -2443,7 +2444,7 @@ namespace Revit.IFC.Export.Exporter
       {
          PropertySetDescription propertySetGlazingPropertiesEnergyAnalysis = new PropertySetDescription();
          propertySetGlazingPropertiesEnergyAnalysis.Name = "ePset_GlazingPropertiesEnergyAnalysis";
-         propertySetGlazingPropertiesEnergyAnalysis.EntityTypes.Add(IFCEntityType.IfcCurtainWall);
+         propertySetGlazingPropertiesEnergyAnalysis.EntityTypes.Add(typeof(IfcCurtainWall));
 
          PropertySetEntry ifcPSE = PropertySetEntry.CreateLabel("Windows 6 Glazing System Name");
          ifcPSE.PropertyName = "Windows6GlazingSystemName";
@@ -2460,9 +2461,9 @@ namespace Revit.IFC.Export.Exporter
       {
          PropertySetDescription propertySetPhotovoltaicArray = new PropertySetDescription();
          propertySetPhotovoltaicArray.Name = "ePset_PhotovoltaicArray";
-         propertySetPhotovoltaicArray.EntityTypes.Add(IFCEntityType.IfcRoof);
-         propertySetPhotovoltaicArray.EntityTypes.Add(IFCEntityType.IfcWall);
-         propertySetPhotovoltaicArray.EntityTypes.Add(IFCEntityType.IfcSlab);
+         propertySetPhotovoltaicArray.EntityTypes.Add(typeof(IfcRoof));
+         propertySetPhotovoltaicArray.EntityTypes.Add(typeof(IfcWall));
+         propertySetPhotovoltaicArray.EntityTypes.Add(typeof(IfcSlab));
 
          PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("Hosts Photovoltaic Array");
          ifcPSE.PropertyName = "HostsPhotovoltaicArray";
@@ -2507,7 +2508,7 @@ namespace Revit.IFC.Export.Exporter
             ifcCeilingQuantity.Name = "BaseQuantities";
             ifcQE = new QuantityEntry("GrossCeilingArea");
          }
-         ifcCeilingQuantity.EntityTypes.Add(IFCEntityType.IfcCovering);
+         ifcCeilingQuantity.EntityTypes.Add(typeof(IfcCovering));
 
          ifcQE.QuantityType = QuantityType.Area;
          ifcQE.RevitBuiltInParameter = BuiltInParameter.HOST_AREA_COMPUTED;
@@ -2531,7 +2532,7 @@ namespace Revit.IFC.Export.Exporter
          {
             ifcRailingQuantity.Name = "BaseQuantities";
          }
-         ifcRailingQuantity.EntityTypes.Add(IFCEntityType.IfcRailing);
+         ifcRailingQuantity.EntityTypes.Add(typeof(IfcRailing));
 
          QuantityEntry ifcQE = new QuantityEntry("Length");
          ifcQE.QuantityType = QuantityType.PositiveLength;
@@ -2556,7 +2557,7 @@ namespace Revit.IFC.Export.Exporter
          {
             ifcSlabQuantity.Name = "BaseQuantities";
          }
-         ifcSlabQuantity.EntityTypes.Add(IFCEntityType.IfcSlab);
+         ifcSlabQuantity.EntityTypes.Add(typeof(IfcSlab));
 
          QuantityEntry ifcQE = new QuantityEntry("GrossArea");
          ifcQE.QuantityType = QuantityType.Area;
@@ -2596,7 +2597,7 @@ namespace Revit.IFC.Export.Exporter
          {
             ifcBaseQuantity.Name = "BaseQuantities";
          }
-         ifcBaseQuantity.EntityTypes.Add(IFCEntityType.IfcRampFlight);
+         ifcBaseQuantity.EntityTypes.Add(typeof(IfcRampFlight));
 
          QuantityEntry ifcQE = new QuantityEntry("Width");
          ifcQE.QuantityType = QuantityType.PositiveLength;
@@ -2621,7 +2622,7 @@ namespace Revit.IFC.Export.Exporter
          {
             ifcBaseQuantity.Name = "BaseQuantities";
          }
-         ifcBaseQuantity.EntityTypes.Add(IFCEntityType.IfcBuildingStorey);
+         ifcBaseQuantity.EntityTypes.Add(typeof(IfcBuildingStorey));
 
          QuantityEntry ifcQE = new QuantityEntry("NetHeight");
          ifcQE.QuantityType = QuantityType.PositiveLength;
@@ -2680,7 +2681,7 @@ namespace Revit.IFC.Export.Exporter
          {
             ifcBaseQuantity.Name = "BaseQuantities";
          }
-         ifcBaseQuantity.EntityTypes.Add(IFCEntityType.IfcSpace);
+         ifcBaseQuantity.EntityTypes.Add(typeof(IfcSpace));
 
          QuantityEntry ifcQE = new QuantityEntry("NetFloorArea");
          ifcQE.MethodOfMeasurement = "area measured in geometry";
@@ -2770,7 +2771,7 @@ namespace Revit.IFC.Export.Exporter
          {
             ifcBaseQuantity.Name = "BaseQuantities";
          }
-         ifcBaseQuantity.EntityTypes.Add(IFCEntityType.IfcCovering);
+         ifcBaseQuantity.EntityTypes.Add(typeof(IfcCovering));
 
          QuantityEntry ifcQE = new QuantityEntry("GrossArea");
          ifcQE.QuantityType = QuantityType.Area;
@@ -2800,7 +2801,7 @@ namespace Revit.IFC.Export.Exporter
          {
             ifcBaseQuantity.Name = "BaseQuantities";
          }
-         ifcBaseQuantity.EntityTypes.Add(IFCEntityType.IfcWindow);
+         ifcBaseQuantity.EntityTypes.Add(typeof(IfcWindow));
 
          QuantityEntry ifcQE = new QuantityEntry("Height");
          ifcQE.QuantityType = QuantityType.PositiveLength;
@@ -2836,7 +2837,7 @@ namespace Revit.IFC.Export.Exporter
          {
             ifcBaseQuantity.Name = "BaseQuantities";
          }
-         ifcBaseQuantity.EntityTypes.Add(IFCEntityType.IfcDoor);
+         ifcBaseQuantity.EntityTypes.Add(typeof(IfcDoor));
 
          QuantityEntry ifcQE = new QuantityEntry("Height");
          ifcQE.QuantityType = QuantityType.PositiveLength;
@@ -2872,7 +2873,7 @@ namespace Revit.IFC.Export.Exporter
          {
             ifcBeamQuantity.Name = "BaseQuantities";
          }
-         ifcBeamQuantity.EntityTypes.Add(IFCEntityType.IfcBeam);
+         ifcBeamQuantity.EntityTypes.Add(typeof(IfcBeam));
 
          QuantityEntry ifcQE = new QuantityEntry("Length");
          ifcQE.QuantityType = QuantityType.PositiveLength;
@@ -2937,7 +2938,7 @@ namespace Revit.IFC.Export.Exporter
          {
             ifcBeamQuantity.Name = "BaseQuantities";
          }
-         ifcBeamQuantity.EntityTypes.Add(IFCEntityType.IfcColumn);
+         ifcBeamQuantity.EntityTypes.Add(typeof(IfcColumn));
 
          QuantityEntry ifcQE = new QuantityEntry("Length");
          ifcQE.QuantityType = QuantityType.PositiveLength;
@@ -3002,7 +3003,7 @@ namespace Revit.IFC.Export.Exporter
          {
             ifcBeamQuantity.Name = "BaseQuantities";
          }
-         ifcBeamQuantity.EntityTypes.Add(IFCEntityType.IfcMember);
+         ifcBeamQuantity.EntityTypes.Add(typeof(IfcMember));
 
          QuantityEntry ifcQE = new QuantityEntry("Length");
          ifcQE.QuantityType = QuantityType.PositiveLength;
@@ -3100,7 +3101,7 @@ namespace Revit.IFC.Export.Exporter
       {
          QuantityDescription ifcCOBIEQuantity = new QuantityDescription();
          ifcCOBIEQuantity.Name = "BaseQuantities";
-         ifcCOBIEQuantity.EntityTypes.Add(IFCEntityType.IfcSpace);
+         ifcCOBIEQuantity.EntityTypes.Add(typeof(IfcSpace));
 
          QuantityEntry ifcQE = new QuantityEntry("Height");
          ifcQE.MethodOfMeasurement = "length measured in geometry";
@@ -3143,7 +3144,7 @@ namespace Revit.IFC.Export.Exporter
       {
          QuantityDescription ifcCOBIEQuantity = new QuantityDescription();
          ifcCOBIEQuantity.Name = "BaseQuantities";
-         ifcCOBIEQuantity.EntityTypes.Add(IFCEntityType.IfcSpace);
+         ifcCOBIEQuantity.EntityTypes.Add(typeof(IfcSpace));
          ifcCOBIEQuantity.DescriptionCalculator = SpaceLevelDescriptionCalculator.Instance;
 
          QuantityEntry ifcQE = new QuantityEntry("GrossFloorArea");
@@ -3164,7 +3165,7 @@ namespace Revit.IFC.Export.Exporter
          QuantityDescription ifcCOBIEQuantity = new QuantityDescription();
          ifcCOBIEQuantity.Name = "Space Quantities (Property Management)";
          ifcCOBIEQuantity.MethodOfMeasurement = "As defined by BOMA (see www.boma.org)";
-         ifcCOBIEQuantity.EntityTypes.Add(IFCEntityType.IfcSpace);
+         ifcCOBIEQuantity.EntityTypes.Add(typeof(IfcSpace));
 
          QuantityEntry ifcQE = new QuantityEntry("NetFloorArea_BOMA");
          ifcQE.MethodOfMeasurement = "area measured in geometry";

@@ -24,6 +24,8 @@ using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Utility
 {
     /// <summary>
@@ -31,9 +33,9 @@ namespace Revit.IFC.Export.Utility
     /// </summary>
     public class StringPropertyInfoCache
     {
-        private IDictionary<KeyValuePair<ElementId, string>, IFCAnyHandle> m_PropertiesByIdCache = new Dictionary<KeyValuePair<ElementId, string>, IFCAnyHandle>();
+        private IDictionary<KeyValuePair<ElementId, string>, IfcProperty> m_PropertiesByIdCache = new Dictionary<KeyValuePair<ElementId, string>, IfcProperty>();
         
-        private IDictionary<KeyValuePair<string, string>, IFCAnyHandle> m_NamedPropertiesCache = new Dictionary<KeyValuePair<string, string>, IFCAnyHandle>();
+        private IDictionary<KeyValuePair<string, string>, IfcProperty> m_NamedPropertiesCache = new Dictionary<KeyValuePair<string, string>, IfcProperty>();
         
         /// <summary>
         /// Finds if it contains the property with the specified string value.
@@ -42,9 +44,9 @@ namespace Revit.IFC.Export.Utility
         /// <param name="propertyName">The property name.  Can be null if elementId != InvalidElementId.</param>
         /// <param name="value">The value.</param>
         /// <returns>True if it has, false otherwise.</returns>
-        public IFCAnyHandle Find(ElementId parameterId, string propertyName, string value)
+        public IfcProperty Find(ElementId parameterId, string propertyName, string value)
         {
-            IFCAnyHandle propertyHandle = null;
+            IfcProperty propertyHandle = null;
             if ((parameterId != null) && (parameterId != ElementId.InvalidElementId))
             {
                 ElementId parameterIdToUse = ParameterUtil.MapParameterId(parameterId);
@@ -67,7 +69,7 @@ namespace Revit.IFC.Export.Utility
         /// <param name="propertyName">The property name.  Can be null if elementId != InvalidElementId.</param>
         /// <param name="value">The value.</param>
         /// <param name="propertyHandle">The property handle.</param>
-        public void Add(ElementId parameterId, string propertyName, string value, IFCAnyHandle propertyHandle)
+        public void Add(ElementId parameterId, string propertyName, string value, IfcProperty propertyHandle)
         {
             if ((parameterId != null) && (parameterId != ElementId.InvalidElementId))
             {

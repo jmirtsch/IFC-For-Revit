@@ -27,6 +27,8 @@ using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Utility;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
     /// <summary>
@@ -42,7 +44,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="value">The value of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreatePositivePlaneAngleMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+        public static IfcProperty CreatePositivePlaneAngleMeasureProperty(DatabaseIfc db, string propertyName, double value, PropertyValueType valueType)
         {
             // Ensure it is positive.  Don't throw, but should tell user.
             if (value <= MathUtil.Eps())
@@ -51,13 +53,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             switch (valueType)
             {
                 case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsPositivePlaneAngleMeasure(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
-                    }
+                    return new IfcPropertyEnumeratedValue(db, propertyName, new IfcPositivePlaneAngleMeasure(value));
                 case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsPositivePlaneAngleMeasure(value), null);
+                    return new IfcPropertySingleValue(db, propertyName, new IfcPositivePlaneAngleMeasure(value));
                 default:
                     throw new InvalidOperationException("Missing case!");
             }
@@ -71,7 +69,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="value">The value of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created or cached property handle.</returns>
-        public static IFCAnyHandle CreatePositivePlaneAngleMeasurePropertyFromCache(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+        public static IfcProperty CreatePositivePlaneAngleMeasurePropertyFromCache(DatabaseIfc db, string propertyName, double value, PropertyValueType valueType)
         {
             // We have a partial cache here - we will only cache multiples of 15 degrees.
             bool canCache = false;
@@ -83,7 +81,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                 value = integerDegrees;
             }
 
-            IFCAnyHandle propertyHandle;
+            IfcProperty propertyHandle;
             if (canCache)
             {
                 propertyHandle = ExporterCacheManager.PropertyInfoCache.PositivePlaneAngleCache.Find(propertyName, value);
@@ -91,9 +89,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                     return propertyHandle;
             }
 
-            propertyHandle = CreatePositivePlaneAngleMeasureProperty(file, propertyName, value, valueType);
+            propertyHandle = CreatePositivePlaneAngleMeasureProperty(db, propertyName, value, valueType);
 
-            if (canCache && !IFCAnyHandleUtil.IsNullOrHasNoValue(propertyHandle))
+            if (canCache && propertyHandle != null)
             {
                 ExporterCacheManager.PropertyInfoCache.PositivePlaneAngleCache.Add(propertyName, value, propertyHandle);
             }
@@ -110,20 +108,20 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="ifcPropertyName">The name of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreatePositivePlaneAngleMeasurePropertyFromElementOrSymbol(IFCFile file, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        public static IfcProperty CreatePositivePlaneAngleMeasurePropertyFromElementOrSymbol(DatabaseIfc db, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             double propertyValue;
             if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
             {
                 propertyValue = UnitUtil.ScaleAngle(propertyValue);
-                return CreatePositivePlaneAngleMeasurePropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
+                return CreatePositivePlaneAngleMeasurePropertyFromCache(db, ifcPropertyName, propertyValue, valueType);
             }
             // For Symbol
             Document document = elem.Document;
             ElementId typeId = elem.GetTypeId();
             Element elemType = document.GetElement(typeId);
             if (elemType != null)
-                return CreatePositivePlaneAngleMeasurePropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
+                return CreatePositivePlaneAngleMeasurePropertyFromElementOrSymbol(db, elemType, revitParameterName, ifcPropertyName, valueType);
             else
                 return null;
         }

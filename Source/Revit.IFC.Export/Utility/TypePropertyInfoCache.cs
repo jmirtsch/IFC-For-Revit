@@ -25,6 +25,8 @@ using Autodesk.Revit.DB;
 using Revit.IFC.Export.Exporter;
 using Autodesk.Revit.DB.IFC;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Utility
 {
     /// <summary>
@@ -47,12 +49,12 @@ namespace Revit.IFC.Export.Utility
         /// </summary>
         /// <param name="elementId">The element id.</param>
         /// <param name="elements">The IFC elements.</param>
-        public void AddNewElementHandles(ElementId elementId, ICollection<IFCAnyHandle> elements)
+        public void AddNewElementHandles(ElementId elementId, ICollection<IfcObjectDefinition> elements)
         {
             TypePropertyInfo typePropertyInfo;
             if (TryGetValue(elementId, out typePropertyInfo))
             {
-                foreach (IFCAnyHandle element in elements)
+                foreach (IfcObjectDefinition element in elements)
                     typePropertyInfo.Elements.Add(element);
             }
         }
@@ -63,8 +65,8 @@ namespace Revit.IFC.Export.Utility
         /// <param name="elementId">The element id.</param>
         /// <param name="propertySets">The property sets.</param>
         /// <param name="elements">The IFC elements.</param>
-        public void AddNewTypeProperties(ElementId elementId, ICollection<IFCAnyHandle> propertySets,
-            ICollection<IFCAnyHandle> elements)
+        public void AddNewTypeProperties(ElementId elementId, ICollection<IfcPropertySet> propertySets,
+            ICollection<IfcObjectDefinition> elements)
         {
             TypePropertyInfo typePropertyInfo = new TypePropertyInfo(propertySets, elements);
             Add(elementId, typePropertyInfo);

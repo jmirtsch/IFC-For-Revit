@@ -24,6 +24,8 @@ using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Utility
 {
     /// <summary>
@@ -38,7 +40,7 @@ namespace Revit.IFC.Export.Utility
         /// <summary>
         /// The dictionary mapping from an IFC handle to ElementId. 
         /// </summary>
-        private Dictionary<IFCAnyHandle, ElementId> m_HandleToElementCache = new Dictionary<IFCAnyHandle, ElementId>();
+        private Dictionary<IfcProduct, ElementId> m_HandleToElementCache = new Dictionary<IfcProduct, ElementId>();
 
         /// <summary>
         /// Finds the ElementId from the dictionary.
@@ -49,7 +51,7 @@ namespace Revit.IFC.Export.Utility
         /// <returns>
         /// The ElementId.
         /// </returns>
-        public ElementId Find(IFCAnyHandle hnd)
+        public ElementId Find(IfcProduct hnd)
         {
             ElementId id;
             if (m_HandleToElementCache.TryGetValue(hnd, out id))
@@ -68,9 +70,14 @@ namespace Revit.IFC.Export.Utility
         /// <param name="elementId">
         /// The material element elementId.
         /// </param>
-        public void Register(IFCAnyHandle handle, ElementId elementId)
+        public void Register(IfcProduct handle, ElementId elementId)
         {
             m_HandleToElementCache[handle] = elementId;
         }
-    }
+      public void Register(IFCAnyHandle handle, ElementId elementId)
+      {
+         //   m_HandleToElementCache[handle] = elementId;
+#warning ggFix
+      }
+   }
 }

@@ -27,6 +27,8 @@ using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Utility;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
     /// <summary>
@@ -42,19 +44,15 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="value">The value of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateElectricalCurrentMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+        public static IfcProperty CreateElectricalCurrentMeasureProperty(DatabaseIfc db, string propertyName, double value, PropertyValueType valueType)
         {
             switch (valueType)
             {
                 case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsElectricalCurrentMeasure(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
-                    }
+                    return new IfcPropertyEnumeratedValue(db, propertyName, new IfcElectricCurrentMeasure(value));
                 case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsElectricalCurrentMeasure(value), null);
-                default:
+                    return new IfcPropertySingleValue(db, propertyName, new IfcElectricCurrentMeasure(value));
+            default:
                     throw new InvalidOperationException("Missing case!");
             }
         }
@@ -67,7 +65,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="value">The value of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created or cached property handle.</returns>
-        public static IFCAnyHandle CreateElectricalCurrentMeasurePropertyFromCache(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+        public static IfcProperty CreateElectricalCurrentMeasurePropertyFromCache(DatabaseIfc db, string propertyName, double value, PropertyValueType valueType)
         {
             // We have a partial cache here - we will only cache multiples of 15 degrees.
             bool canCache = false;
@@ -79,17 +77,17 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                 value = integerAmps;
             }
 
-            IFCAnyHandle propertyHandle;
-            if (canCache)
+         IfcProperty propertyHandle;
+         if (canCache)
             {
                 propertyHandle = ExporterCacheManager.PropertyInfoCache.ElectricalCurrentCache.Find(propertyName, value);
                 if (propertyHandle != null)
                     return propertyHandle;
             }
 
-            propertyHandle = CreateElectricalCurrentMeasureProperty(file, propertyName, value, valueType);
+            propertyHandle = CreateElectricalCurrentMeasureProperty(db, propertyName, value, valueType);
 
-            if (canCache && !IFCAnyHandleUtil.IsNullOrHasNoValue(propertyHandle))
+            if (canCache && propertyHandle != null)
             {
                 ExporterCacheManager.PropertyInfoCache.ElectricalCurrentCache.Add(propertyName, value, propertyHandle);
             }
@@ -106,20 +104,20 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="ifcPropertyName">The name of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateElectricalCurrentMeasurePropertyFromElementOrSymbol(IFCFile file, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        public static IfcProperty CreateElectricalCurrentMeasurePropertyFromElementOrSymbol(DatabaseIfc db, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             double propertyValue;
             if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
             {
                 propertyValue = UnitUtil.ScaleElectricalCurrent(propertyValue);
-                return CreateElectricalCurrentMeasurePropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
+                return CreateElectricalCurrentMeasurePropertyFromCache(db, ifcPropertyName, propertyValue, valueType);
             }
             // For Symbol
             Document document = elem.Document;
             ElementId typeId = elem.GetTypeId();
             Element elemType = document.GetElement(typeId);
             if (elemType != null)
-                return CreateElectricalCurrentMeasurePropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
+                return CreateElectricalCurrentMeasurePropertyFromElementOrSymbol(db, elemType, revitParameterName, ifcPropertyName, valueType);
             else
                 return null;
         }

@@ -27,6 +27,8 @@ using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Utility;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
     /// <summary>
@@ -40,10 +42,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="value">The value of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateFrequencyProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+        public static IfcProperty CreateFrequencyProperty(DatabaseIfc db, string propertyName, double value, PropertyValueType valueType)
         {
-            IFCData frequencyData = IFCDataUtil.CreateAsFrequencyMeasure(value);
-            return CreateCommonProperty(file, propertyName, frequencyData, valueType, null);
+            return CreateCommonProperty(db, propertyName, new IfcFrequencyMeasure(value), valueType, null);
         }
 
         /// <summary>
@@ -56,12 +57,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="ifcPropertyName">The name of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateFrequencyPropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+        public static IfcProperty CreateFrequencyPropertyFromElement(DatabaseIfc db, Element elem,
             string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             double propertyValue;
             if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
-                return CreateFrequencyProperty(file, ifcPropertyName, propertyValue, valueType);
+                return CreateFrequencyProperty(db, ifcPropertyName, propertyValue, valueType);
             return null;
         }
 
@@ -76,18 +77,18 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="ifcPropertyName">The name of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateFrequencyPropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
+        public static IfcProperty CreateFrequencyPropertyFromElementOrSymbol(DatabaseIfc db, Element elem,
             string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
         {
-            IFCAnyHandle propHnd = CreateFrequencyPropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName, valueType);
-            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+            IfcProperty propHnd = CreateFrequencyPropertyFromElement(db, elem, revitParameterName, ifcPropertyName, valueType);
+            if(propHnd != null)
                 return propHnd;
 
             if (revitBuiltInParam != BuiltInParameter.INVALID)
             {
                 string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
-                propHnd = CreateFrequencyPropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName, valueType);
-                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+                propHnd = CreateFrequencyPropertyFromElement(db, elem, builtInParamName, ifcPropertyName, valueType);
+                if(propHnd != null)
                     return propHnd;
             }
 
@@ -96,7 +97,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             ElementId typeId = elem.GetTypeId();
             Element elemType = document.GetElement(typeId);
             if (elemType != null)
-                return CreateFrequencyPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+                return CreateFrequencyPropertyFromElementOrSymbol(db, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
             else
                 return null;
         }

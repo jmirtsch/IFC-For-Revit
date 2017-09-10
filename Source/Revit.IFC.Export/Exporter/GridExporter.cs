@@ -29,6 +29,8 @@ using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Utility;
 using Revit.IFC.Export.Exporter.PropertySet;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Exporter
 {
    /// <summary>
@@ -41,7 +43,7 @@ namespace Revit.IFC.Export.Exporter
       /// </summary>
       /// <param name="exporterIFC">The ExporterIFC object.</param>
       /// <param name="document">The document object.</param>
-      public static void Export(ExporterIFC exporterIFC, Document document)
+      public static void Export(ExporterIFC exporterIFC, DatabaseIfc db, Document document)
       {
          if (ExporterCacheManager.GridCache.Count == 0)
             return;
@@ -62,19 +64,19 @@ namespace Revit.IFC.Export.Exporter
             // Export radial grids first.
             if (radialGrids.Count > 0)
             {
-               ExportRadialGrids(exporterIFC, levelId, radialGrids, linearGrids);
+               ExportRadialGrids(exporterIFC, db, levelId, radialGrids, linearGrids);
             }
 
             // Export the rectangular and duplex rectangular grids.
             if (linearGrids.Count > 1)
             {
-               ExportRectangularGrids(exporterIFC, levelId, linearGrids);
+               ExportRectangularGrids(exporterIFC, db, levelId, linearGrids);
             }
 
             // Export the triangular grids
             if (linearGrids.Count > 1)
             {
-               ExportTriangularGrids(exporterIFC, levelId, linearGrids);
+               ExportTriangularGrids(exporterIFC, db, levelId, linearGrids);
             }
 
             // TODO: warn user about orphaned grid lines.
@@ -90,7 +92,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="levelId">The level id.</param>
       /// <param name="radialGrids">The set of radial grids.</param>
       /// <param name="linearGrids">The set of linear grids.</param>
-      public static void ExportRadialGrids(ExporterIFC exporterIFC, ElementId levelId, IDictionary<XYZ, List<Grid>> radialGrids, IDictionary<XYZ, List<Grid>> linearGrids)
+      public static void ExportRadialGrids(ExporterIFC exporterIFC, DatabaseIfc db, ElementId levelId, IDictionary<XYZ, List<Grid>> radialGrids, IDictionary<XYZ, List<Grid>> linearGrids)
       {
          foreach (XYZ centerPoint in radialGrids.Keys)
          {
@@ -116,7 +118,7 @@ namespace Revit.IFC.Export.Exporter
                continue; //not export the orphan grid (only has U).
 
             // export a radial IFCGrid.
-            ExportGrid(exporterIFC, levelId, radialUAxes, radialVAxes, null);
+            ExportGrid(exporterIFC, db, levelId, radialUAxes, radialVAxes, null);
 
             // remove the linear grids that have been exported.
             exportedLinearGrids = exportedLinearGrids.Union<Grid>(radialVAxes).ToList();
@@ -130,7 +132,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="exporterIFC">The ExporterIFC object.</param>
       /// <param name="levelId">The level id.</param>
       /// <param name="linearGrids">The set of linear grids.</param>
-      public static void ExportRectangularGrids(ExporterIFC exporterIFC, ElementId levelId, IDictionary<XYZ, List<Grid>> linearGrids)
+      public static void ExportRectangularGrids(ExporterIFC exporterIFC, DatabaseIfc db, ElementId levelId, IDictionary<XYZ, List<Grid>> linearGrids)
       {
          XYZ uDirection = null;
          XYZ vDirection = null;
@@ -150,7 +152,7 @@ namespace Revit.IFC.Export.Exporter
             List<Grid> duplexAxesV = FindParallelGrids(linearGrids, vDirection);
 
             // export a rectangular IFCGrid.
-            ExportGrid(exporterIFC, levelId, duplexAxesU, duplexAxesV, null);
+            ExportGrid(exporterIFC, db, levelId, duplexAxesU, duplexAxesV, null);
 
             // remove the linear grids that have been exported.
             exportedLinearGrids = exportedLinearGrids.Union<Grid>(duplexAxesU).ToList();
@@ -170,7 +172,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="exporterIFC">The ExporterIFC object.</param>
       /// <param name="levelId">The level id.</param>
       /// <param name="linearGrids">The set of linear grids.</param>
-      public static void ExportTriangularGrids(ExporterIFC exporterIFC, ElementId levelId, IDictionary<XYZ, List<Grid>> linearGrids)
+      public static void ExportTriangularGrids(ExporterIFC exporterIFC, DatabaseIfc db, ElementId levelId, IDictionary<XYZ, List<Grid>> linearGrids)
       {
          List<XYZ> directionList = linearGrids.Keys.ToList();
          for (int ii = 0; ii < directionList.Count; ii += 3)
@@ -193,7 +195,7 @@ namespace Revit.IFC.Export.Exporter
                continue;//not export the orphan grid (only has U).
 
             // export a triangular IFCGrid.
-            ExportGrid(exporterIFC, levelId, sameDirectionAxesU, sameDirectionAxesV, sameDirectionAxesW);
+            ExportGrid(exporterIFC, db, levelId, sameDirectionAxesU, sameDirectionAxesV, sameDirectionAxesW);
          }
       }
 
@@ -205,7 +207,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="sameDirectionAxesU">The U axes of grids.</param>
       /// <param name="sameDirectionAxesV">The V axes of grids.</param>
       /// <param name="sameDirectionAxesW">The W axes of grids.</param>
-      public static void ExportGrid(ExporterIFC exporterIFC, ElementId levelId, List<Grid> sameDirectionAxesU, List<Grid> sameDirectionAxesV, List<Grid> sameDirectionAxesW)
+      public static void ExportGrid(ExporterIFC exporterIFC, DatabaseIfc db, ElementId levelId, List<Grid> sameDirectionAxesU, List<Grid> sameDirectionAxesV, List<Grid> sameDirectionAxesW)
       {
 
          List<IFCAnyHandle> axesU = null;
@@ -220,10 +222,10 @@ namespace Revit.IFC.Export.Exporter
             {
                GridRepresentationData gridRepresentationData = new GridRepresentationData();
 
-               axesU = CreateIFCGridAxisAndRepresentations(exporterIFC, productWrapper, sameDirectionAxesU, representations, gridRepresentationData);
-               axesV = CreateIFCGridAxisAndRepresentations(exporterIFC, productWrapper, sameDirectionAxesV, representations, gridRepresentationData);
+               axesU = CreateIFCGridAxisAndRepresentations(exporterIFC, db, productWrapper, sameDirectionAxesU, representations, gridRepresentationData);
+               axesV = CreateIFCGridAxisAndRepresentations(exporterIFC, db, productWrapper, sameDirectionAxesV, representations, gridRepresentationData);
                if (sameDirectionAxesW != null)
-                  axesW = CreateIFCGridAxisAndRepresentations(exporterIFC, productWrapper, sameDirectionAxesW, representations, gridRepresentationData);
+                  axesW = CreateIFCGridAxisAndRepresentations(exporterIFC, db, productWrapper, sameDirectionAxesW, representations, gridRepresentationData);
 
                IFCAnyHandle contextOfItemsFootPrint = exporterIFC.Get3DContextHandle("FootPrint");
                string identifierOpt = "FootPrint";
@@ -299,7 +301,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="sameDirectionAxes">The grid axes in the same direction of one level.</param>
       /// <param name="representations">The representation of grid axis.</param>
       /// <returns>The list of handles of grid axes.</returns>
-      private static List<IFCAnyHandle> CreateIFCGridAxisAndRepresentations(ExporterIFC exporterIFC, ProductWrapper productWrapper, IList<Grid> sameDirectionAxes,
+      private static List<IFCAnyHandle> CreateIFCGridAxisAndRepresentations(ExporterIFC exporterIFC, DatabaseIfc db, ProductWrapper productWrapper, IList<Grid> sameDirectionAxes,
           IList<IFCAnyHandle> representations, GridRepresentationData gridRepresentationData)
       {
          if (sameDirectionAxes.Count == 0)

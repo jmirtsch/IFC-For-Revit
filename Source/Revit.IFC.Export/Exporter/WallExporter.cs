@@ -1027,7 +1027,8 @@ namespace Revit.IFC.Export.Exporter
                         {
                            scaledFootprintArea = MathUtil.AreaIsAlmostZero(scaledFootprintArea) ? extraParams.ScaledArea : scaledFootprintArea;
                            scaledLength = MathUtil.IsAlmostZero(scaledLength) ? extraParams.ScaledLength : scaledLength;
-                           PropertyUtil.CreateWallBaseQuantities(exporterIFC, wallElement, solids, meshes, wallHnd, scaledLength, depth, scaledFootprintArea);
+                           //PropertyUtil.CreateWallBaseQuantities(wallElement, solids, meshes, wallHnd, scaledLength, depth, scaledFootprintArea);
+#warning ggBasic
                         }
                      }
                      else

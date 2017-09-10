@@ -23,6 +23,8 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB.IFC;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Exporter
 {
     /// <summary>
@@ -31,8 +33,8 @@ namespace Revit.IFC.Export.Exporter
     public class TypePropertyInfo
     {
         bool m_assignedToType = false;
-        HashSet<IFCAnyHandle> m_PropertySets;
-        HashSet<IFCAnyHandle> m_Elements;
+        HashSet<IfcPropertySet> m_PropertySets;
+        HashSet<IfcObjectDefinition> m_Elements;
 
         /// <summary>
         /// Default constructor.
@@ -56,16 +58,16 @@ namespace Revit.IFC.Export.Exporter
         /// </summary>
         /// <param name="propertySets">The property sets.</param>
         /// <param name="elements">The elements.</param>
-        public TypePropertyInfo(ICollection<IFCAnyHandle> propertySets, ICollection<IFCAnyHandle> elements)
+        public TypePropertyInfo(ICollection<IfcPropertySet> propertySets, ICollection<IfcObjectDefinition> elements)
         {
-            m_PropertySets = new HashSet<IFCAnyHandle>(propertySets);
-            m_Elements = new HashSet<IFCAnyHandle>(elements);
+            m_PropertySets = new HashSet<IfcPropertySet>(propertySets);
+            m_Elements = new HashSet<IfcObjectDefinition>(elements);
         }
 
         /// <summary>
         /// The property sets.
         /// </summary>
-        public HashSet<IFCAnyHandle> PropertySets
+        public HashSet<IfcPropertySet> PropertySets
         {
             get { return m_PropertySets; }
         }
@@ -73,7 +75,7 @@ namespace Revit.IFC.Export.Exporter
         /// <summary>
         /// The IFC elements.
         /// </summary>
-        public HashSet<IFCAnyHandle> Elements
+        public HashSet<IfcObjectDefinition> Elements
         {
             get { return m_Elements; }
         }

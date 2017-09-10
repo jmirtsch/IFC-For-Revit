@@ -27,6 +27,8 @@ using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Utility;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
     /// <summary>
@@ -42,10 +44,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="value">The value of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateElectricalVoltageMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+        public static IfcProperty CreateElectricalVoltageMeasureProperty(DatabaseIfc db, string propertyName, double value, PropertyValueType valueType)
         {
-            IFCData electricalVoltageData = IFCDataUtil.CreateAsElectricalVoltageMeasure(value);
-            return CreateCommonProperty(file, propertyName, electricalVoltageData, valueType, null);
+            return CreateCommonProperty(db, propertyName, new IfcElectricVoltageMeasure(value), valueType, null);
         }
 
         /// <summary>
@@ -56,7 +57,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="value">The value of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created or cached property handle.</returns>
-        public static IFCAnyHandle CreateElectricalVoltageMeasurePropertyFromCache(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+        public static IfcProperty CreateElectricalVoltageMeasurePropertyFromCache(DatabaseIfc db, string propertyName, double value, PropertyValueType valueType)
         {
             // We have a partial cache here - we will only cache multiples of 15 degrees.
             bool canCache = false;
@@ -68,7 +69,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                 value = integerAmps;
             }
 
-            IFCAnyHandle propertyHandle;
+            IfcProperty propertyHandle;
             if (canCache)
             {
                 propertyHandle = ExporterCacheManager.PropertyInfoCache.ElectricalVoltageCache.Find(propertyName, value);
@@ -76,9 +77,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                     return propertyHandle;
             }
 
-            propertyHandle = CreateElectricalVoltageMeasureProperty(file, propertyName, value, valueType);
+            propertyHandle = CreateElectricalVoltageMeasureProperty(db, propertyName, value, valueType);
 
-            if (canCache && !IFCAnyHandleUtil.IsNullOrHasNoValue(propertyHandle))
+            if (canCache && propertyHandle != null)
             {
                 ExporterCacheManager.PropertyInfoCache.ElectricalVoltageCache.Add(propertyName, value, propertyHandle);
             }
@@ -95,20 +96,20 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <param name="ifcPropertyName">The name of the property.</param>
         /// <param name="valueType">The value type of the property.</param>
         /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateElectricalVoltageMeasurePropertyFromElementOrSymbol(IFCFile file, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+        public static IfcProperty CreateElectricalVoltageMeasurePropertyFromElementOrSymbol(DatabaseIfc db, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
         {
             double propertyValue;
             if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
             {
                 propertyValue = UnitUtil.ScaleElectricalVoltage(propertyValue);
-                return CreateElectricalVoltageMeasurePropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
+                return CreateElectricalVoltageMeasurePropertyFromCache(db, ifcPropertyName, propertyValue, valueType);
             }
             // For Symbol
             Document document = elem.Document;
             ElementId typeId = elem.GetTypeId();
             Element elemType = document.GetElement(typeId);
             if (elemType != null)
-                return CreateElectricalVoltageMeasurePropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
+                return CreateElectricalVoltageMeasurePropertyFromElementOrSymbol(db, elemType, revitParameterName, ifcPropertyName, valueType);
             else
                 return null;
         }

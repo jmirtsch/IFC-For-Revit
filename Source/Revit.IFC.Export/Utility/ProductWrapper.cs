@@ -344,11 +344,12 @@ namespace Revit.IFC.Export.Utility
       /// </summary>
       public void Dispose()
       {
-         foreach (KeyValuePair<Element, HashSet<IFCAnyHandle>> propertySetToCreate in m_PropertySetsToCreate)
-            PropertyUtil.CreateInternalRevitPropertySets(m_ExporterIFC, propertySetToCreate.Key, propertySetToCreate.Value);
+         //foreach (KeyValuePair<Element, HashSet<IFCAnyHandle>> propertySetToCreate in m_PropertySetsToCreate)
+         //   PropertyUtil.CreateInternalRevitPropertySets(m_ExporterIFC, propertySetToCreate.Key, propertySetToCreate.Value);
 
-         foreach (KeyValuePair<ElementType, KeyValuePair<IFCAnyHandle, HashSet<IFCAnyHandle>>> elementTypeHandle in m_ElementTypeHandles)
-            PropertyUtil.CreateElementTypeProperties(m_ExporterIFC, elementTypeHandle.Key, elementTypeHandle.Value.Value, elementTypeHandle.Value.Key);
+         //foreach (KeyValuePair<ElementType, KeyValuePair<IFCAnyHandle, HashSet<IFCAnyHandle>>> elementTypeHandle in m_ElementTypeHandles)
+         //   PropertyUtil.CreateElementTypeProperties(m_ExporterIFC, elementTypeHandle.Key, elementTypeHandle.Value.Value, elementTypeHandle.Value.Key);
+#warning ggFix
 
          if (m_ParentWrapper != null)
             m_ParentWrapper.m_CreatedHandles.UnionWith(m_CreatedHandles);
