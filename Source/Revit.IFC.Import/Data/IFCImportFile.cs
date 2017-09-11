@@ -647,10 +647,10 @@ namespace Revit.IFC.Import.Data
       /// <param name="useExistingType">True if the RevitLinkType already exists.</param>
       /// <param name="doSave">True if we should save the document.  This should only be false if we are reusing a cached document.</param>
       /// <returns>The element id of the RevitLinkType for this link operation.</returns>
-      public static ElementId LinkInFile(string originalIFCFileName, string baseLocalFileName, Document ifcDocument, Document originalDocument, bool useExistingType, bool doSave)
+      public static ElementId LinkInFile(string baseFileName, Document ifcDocument, Document originalDocument, bool useExistingType, bool doSave)
       {
          bool saveSucceded = true;
-         string fileName = GenerateRevitFileName(baseLocalFileName);
+         string fileName = GenerateRevitFileName(baseFileName);
 
          if (doSave)
          {
@@ -661,34 +661,11 @@ namespace Revit.IFC.Import.Data
             {
                ifcDocument.SaveAs(fileName, saveAsOptions);
             }
-            catch
+            catch (Exception ex)
             {
+               // We still want to close the document to prevent having a corrupt model in memory.
+               Importer.TheLog.LogError(-1, ex.Message, false);
                saveSucceded = false;
-            }
-
-            if (!saveSucceded)
-            {
-               try
-               {
-                  string tempPathDir = Path.GetTempPath();
-                  string fileNameOnly = Path.GetFileName(fileName);
-                  string intermediateFileName = tempPathDir + fileNameOnly;
-                  ifcDocument.SaveAs(tempPathDir + fileNameOnly, saveAsOptions);
-
-                  File.Copy(intermediateFileName, fileName);
-                  Application application = ifcDocument.Application;
-                  ifcDocument.Close(false);
-
-                  ifcDocument = application.OpenDocumentFile(fileName);
-                  File.Delete(intermediateFileName);
-                  saveSucceded = true;
-               }
-               catch (Exception ex)
-               {
-                  // We still want to close the document to prevent having a corrupt model in memory.
-                  saveSucceded = false;
-                  Importer.TheLog.LogError(-1, ex.Message, false);
-               }
             }
          }
 
@@ -708,30 +685,6 @@ namespace Revit.IFC.Import.Data
             revitLinkTypeId = RevitLinkType.GetTopLevelLink(originalDocument, originalRevitFilePath);
          }
 
-         ModelPath path = ModelPathUtils.ConvertUserVisiblePathToModelPath(originalIFCFileName);
-
-         // Relative path type only works if the model isn't in the cloud.  As such, we'll try again if the
-         // routine returns an exception.
-         ExternalResourceReference ifcResource = null;
-         for (int ii = 0; ii < 2; ii++)
-         {
-            PathType pathType = (ii == 0) ? PathType.Relative : PathType.Absolute;
-            try
-            {
-               ifcResource = ExternalResourceReference.CreateLocalResource(originalDocument,
-                  ExternalResourceTypes.BuiltInExternalResourceTypes.IFCLink, path, pathType);
-               break;
-            }
-            catch
-            {
-               ifcResource = null;
-            }
-         }
-
-         if (ifcResource == null)
-            Importer.TheLog.LogError(-1, "Couldn't create local IFC cached file.  Aborting import.", true);
-
-
          if (!doReloadFrom)
          {
             Transaction linkTransaction = new Transaction(originalDocument);
@@ -742,7 +695,7 @@ namespace Revit.IFC.Import.Data
                if (revitLinkTypeId == ElementId.InvalidElementId)
                {
                   RevitLinkOptions options = new RevitLinkOptions(true);
-                  LinkLoadResult loadResult = RevitLinkType.CreateFromIFC(originalDocument, ifcResource, fileName, false, options);
+                  RevitLinkLoadResult loadResult = RevitLinkType.CreateFromIFC(originalDocument, baseFileName, fileName, false, options);
                   if ((loadResult != null) && (loadResult.ElementId != ElementId.InvalidElementId))
                      revitLinkTypeId = loadResult.ElementId;
                }
@@ -766,7 +719,7 @@ namespace Revit.IFC.Import.Data
             {
                RevitLinkType existingRevitLinkType = originalDocument.GetElement(revitLinkTypeId) as RevitLinkType;
                if (existingRevitLinkType != null)
-                  existingRevitLinkType.UpdateFromIFC(originalDocument, ifcResource, fileName, false);
+                  existingRevitLinkType.UpdateFromIFC(originalDocument, baseFileName, fileName, false);
             }
          }
 

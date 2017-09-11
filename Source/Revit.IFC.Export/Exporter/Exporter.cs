@@ -1855,8 +1855,6 @@ namespace Revit.IFC.Export.Exporter
                return " (HUN)";
             case LanguageType.Brazilian_Portuguese:
                return " (PTB)";
-            case LanguageType.English_GB:
-               return " (ENG)";
             default:
                return "";
          }
@@ -2333,7 +2331,7 @@ namespace Revit.IFC.Export.Exporter
             return postalAddress;
 
          string projectAddress = projInfo != null ? projInfo.Address : String.Empty;
-         SiteLocation siteLoc = document.ActiveProjectLocation.GetSiteLocation();
+         SiteLocation siteLoc = document.ActiveProjectLocation.SiteLocation;
          string location = siteLoc != null ? siteLoc.PlaceName : String.Empty;
 
          if (projectAddress == null)

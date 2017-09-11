@@ -337,7 +337,7 @@ namespace Revit.IFC.Export.Exporter
                      continue;
 
                   Rebar rebar = rebarElement as Rebar;
-                  if ((rebar != null) && (rebar.DistributionType == DistributionType.VaryingLength || rebar.IsRebarFreeForm()))
+                  if ((rebar != null) && (rebar.DistributionType == DistributionType.VaryingLength))
                   {
                      baseCurves = GetRebarCenterlineCurves(rebar, true, false, false, MultiplanarOption.IncludeOnlyPlanarCurves, ii);
                      DoubleParameterValue barLengthParamVal = rebar.GetParameterValueAtIndex(barLengthParamId, ii) as DoubleParameterValue;
@@ -570,10 +570,7 @@ namespace Revit.IFC.Export.Exporter
          if (element is Rebar)
          {
             Rebar rebar = element as Rebar;
-            if (rebar.IsRebarFreeForm())
-               return Transform.Identity; // free form rebar don't have a transformation
-
-            return (element as Rebar).GetShapeDrivenAccessor().GetBarPositionTransform(barPositionIndex);
+            return (element as Rebar).GetBarPositionTransform(barPositionIndex);
          }
          else if (element is RebarInSystem)
          {

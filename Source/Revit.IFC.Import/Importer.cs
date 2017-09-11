@@ -323,14 +323,8 @@ namespace Revit.IFC.Import
       /// <param name="doc">The parent document.</param>
       /// <param name="originalIFCFileName">The IFC file name.</param>
       /// <returns>True if we need a reload; false if nothing has changed.</returns>
-      private bool NeedsReload(Document doc, string originalIFCFileName)
+      private bool NeedsReload(string ifcFileName, string revitFileName)
       {
-         string ifcFileName = ImporterIFCUtils.GetLocalFileName(doc, originalIFCFileName);
-         if (ifcFileName == null)
-            return true;
-
-         string revitFileName = IFCImportFile.GetRevitFileName(ifcFileName);
-         
          // If the RVT file doesn't exist, we'll reload.  Otherwise, look at saved file size and timestamp.
          if (!File.Exists(revitFileName))
             return true;
@@ -349,19 +343,10 @@ namespace Revit.IFC.Import
          if ((TheOptions.OriginalFileSize != 0) && (ifcFileLength != TheOptions.OriginalFileSize))
             return true;
 
-         // If we got a local IFC file name that is different from the original file name, that may have resulted in a load
-         // operation that would update the timestamp.  In this case, ignore that check.
-         // Unfortunately, this means that it is possible that an updated IFC file with the same file size but different contents
-         // would register as unchanged when it was.  The alternative, though, is to reload the IFC file on every file open,
-         // which is unacceptable.
-         bool checkFileTimestamp = (ifcFileName == originalIFCFileName);
-         if (checkFileTimestamp)
-         {
-            // Ignore ticks - only needs to be accurate to the second, or 10,000,000 ticks.
-            Int64 diffTicks = infoIFC.LastWriteTimeUtc.Ticks - TheOptions.OriginalTimeStamp.Ticks;
-            if (diffTicks < 0 || diffTicks >= 10000000)
-               return true;
-         }
+         // Ignore ticks - only needs to be accurate to the second, or 10,000,000 ticks.
+         Int64 diffTicks = infoIFC.LastWriteTimeUtc.Ticks - TheOptions.OriginalTimeStamp.Ticks;
+         if (diffTicks < 0 || diffTicks >= 10000000)
+            return true;
 
          return false;
       }
@@ -444,22 +429,17 @@ namespace Revit.IFC.Import
       /// <param name="document">The host document for the import.</param>
       /// <param name="origFullFileName">The full file name of the document.</param>
       /// <param name="options">The list of configurable options for this import.</param>
-      public void ReferenceIFC(Document document, string origFullFileName, IDictionary<String, String> options)
+      public void ReferenceIFC(Document document, string fullFileName, IDictionary<String, String> options)
       {
-         // We need to generate a local file name for all of the intermediate files (the log file, the cache file, and the shared parameters file).
-         string localFileName = ImporterIFCUtils.GetLocalFileName(document, origFullFileName);
-         if (localFileName == null)
-            return;
-
          // An early check, based on the options set - if we are allowed to use an up-to-date existing file on disk, use it.
-         m_ImportLog = IFCImportLog.CreateLog(localFileName, "log.html");
+         m_ImportLog = IFCImportLog.CreateLog(fullFileName, "log.html");
 
          Document originalDocument = document;
          Document ifcDocument = null;
 
          if (TheOptions.Action == IFCImportAction.Link)
          {
-            string linkedFileName = IFCImportFile.GetRevitFileName(localFileName);
+            string linkedFileName = IFCImportFile.GetRevitFileName(fullFileName);
 
             ifcDocument = LoadOrCreateLinkDocument(originalDocument, linkedFileName);
             if (ifcDocument == null)
@@ -468,7 +448,7 @@ namespace Revit.IFC.Import
          else
             ifcDocument = originalDocument;
 
-         bool useCachedRevitFile = DocumentUpToDate(ifcDocument, localFileName);
+         bool useCachedRevitFile = DocumentUpToDate(ifcDocument, fullFileName);
 
          // In the case where the document is already opened as a link, but it has been updated on disk,
          // give the user a warning and use the cached value.
@@ -480,14 +460,14 @@ namespace Revit.IFC.Import
 
          if (!useCachedRevitFile)
          {
-            m_ImportCache = IFCImportCache.Create(ifcDocument, localFileName);
+            m_ImportCache = IFCImportCache.Create(ifcDocument, fullFileName);
 
             // Limit creating the cache to Link, but may either remove limiting or make it more restrict (reload only) later.
             if (TheOptions.Action == IFCImportAction.Link)
                TheCache.CreateExistingElementMaps(ifcDocument);
 
             // TheFile will contain the same value as the return value for this function.
-            IFCImportFile.Create(localFileName, m_ImportOptions, ifcDocument);
+            IFCImportFile.Create(fullFileName, m_ImportOptions, ifcDocument);
          }
 
          if (useCachedRevitFile || IFCImportFile.TheFile != null)
@@ -502,7 +482,7 @@ namespace Revit.IFC.Import
                foreach (IFCObjectDefinition objDef in IFCImportFile.TheFile.OtherEntitiesToCreate)
                   IFCObjectDefinition.CreateElement(ifcDocument, objDef);
 
-               theFile.EndImport(ifcDocument, localFileName);
+               theFile.EndImport(ifcDocument, fullFileName);
             }
 
             if (TheOptions.Action == IFCImportAction.Link)
@@ -510,7 +490,7 @@ namespace Revit.IFC.Import
                // If we have an original Revit link file name, don't create a new RevitLinkType - 
                // we will use the existing one.
                bool useExistingType = (TheOptions.RevitLinkFileName != null);
-               ElementId revitLinkTypeId = IFCImportFile.LinkInFile(origFullFileName, localFileName, ifcDocument, originalDocument, useExistingType, !useCachedRevitFile);
+               ElementId revitLinkTypeId = IFCImportFile.LinkInFile(fullFileName, ifcDocument, originalDocument, useExistingType, !useCachedRevitFile);
             }
          }
 
@@ -533,7 +513,7 @@ namespace Revit.IFC.Import
          try
          {
             string fullIFCFileName = importer.FullFileName;
-            if (!TheOptions.ForceImport && !NeedsReload(importer.Document, fullIFCFileName))
+            if (!TheOptions.ForceImport && !NeedsReload(importer.FullFileName, fullIFCFileName))
                return;
 
             // Clear the category mapping table, to force reload of options.
