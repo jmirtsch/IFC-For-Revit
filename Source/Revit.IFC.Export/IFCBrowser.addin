@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>IFC Browser</Name>
+    <Assembly>C:\Program Files (x86)\Revit IFC 2018\Revit.IFC.PropertyBrowser.dll</Assembly>
+    <AddInId>63081B07-B5B3-445F-9B72-D2AD7BE967D1</AddInId>
+    <FullClassName>Revit.IFC.Export.UI.PropertyBrowser</FullClassName>
+    <VendorId>ADSK</VendorId>
+	<VendorDescription>Autodesk, www.autodesk.com</VendorDescription>
+  </AddIn>
+</RevitAddIns>
