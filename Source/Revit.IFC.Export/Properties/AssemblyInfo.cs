@@ -1,9 +1,10 @@
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("IFC Exporter for Revit")]
+[assembly: AssemblyTitle("IFC Property Browser for Revit")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Autodesk, Inc.")]
@@ -14,6 +15,8 @@ using System.Reflection;
 
 [assembly: AssemblyVersion("18.2.0.0")]
 [assembly: AssemblyFileVersion("18.2.0.0")]
+
+[assembly: Guid("63081B07-B5B3-445F-9B72-D2AD7BE967D1")]
 
 #region Using directives
 

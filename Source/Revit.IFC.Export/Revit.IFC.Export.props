@@ -21,10 +21,22 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
+   <Reference Include="AdWindows">
+      <SpecificVersion>False</SpecificVersion>
+    <!-- Change to your directory of Revit installation. -->
+      <HintPath>C:\Program Files\Autodesk\Revit 2018\AdWindows.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="RevitAPI">
       <SpecificVersion>False</SpecificVersion>
 	  <!-- Change to your directory of Revit installation. -->
       <HintPath>C:\Program Files\Autodesk\Revit 2018\RevitAPI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="RevitAPIUI">
+      <SpecificVersion>False</SpecificVersion>
+    <!-- Change to your directory of Revit installation. -->
+      <HintPath>C:\Program Files\Autodesk\Revit 2018\RevitAPIUI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="RevitAPIIFC">

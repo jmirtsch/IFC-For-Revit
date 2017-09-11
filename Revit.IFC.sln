@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.8
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Revit.IFC.Import", "Source\Revit.IFC.Import\Revit.IFC.Import.csproj", "{7F987D09-9716-4F50-ADE0-278E4B537101}"
 EndProject
@@ -83,6 +83,9 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E9A0C4B1-4E40-49BA-92E8-62D7D1057A83} = {88C55E9A-2767-48B7-A035-E3D864C4FF09}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {983D7627-F093-452F-9E44-904566E37BCD}
 	EndGlobalSection
 	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
 		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}
