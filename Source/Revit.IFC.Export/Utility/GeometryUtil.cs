@@ -2648,6 +2648,7 @@ namespace Revit.IFC.Export.Utility
          return triangulatedItem;
       }
 
+      /// <summary>
       /// Check if two bounding boxes overlap. 
       /// </summary>
       /// <param name="originalBox1">The first bounding box</param>

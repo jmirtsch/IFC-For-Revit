@@ -30,28 +30,32 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
-   /// <summary>
-   /// Represents the type of the container for a property.
-   /// </summary>
-   public enum PropertyValueType
-   {
-      /// <summary>
-      /// A single property (IfcSingleValue)
-      /// </summary>
-      SingleValue,
-      /// <summary>
-      /// An enumerated property (IfcEnumeratedValue)
-      /// </summary>
-      EnumeratedValue,
-      /// <summary>
-      /// A list property (IfcListValue)
-      /// </summary>
-      ListValue,
-      /// <summary>
-      /// A reference property (IfcPropertyReferenceValue)
-      /// </summary>
-      ReferenceValue
-   }
+    /// <summary>
+    /// Represents the type of the container for a property.
+    /// </summary>
+    public enum PropertyValueType
+    {
+        /// <summary>
+        /// A single property (IfcPropertySingleValue)
+        /// </summary>
+        SingleValue,
+        /// <summary>
+        /// An enumerated property (IfcPropertyEnumeratedValue)
+        /// </summary>
+        EnumeratedValue,
+        /// <summary>
+        /// A list property (IfcPropertyListValue)
+        /// </summary>
+        ListValue,
+        /// <summary>
+        /// A reference property (IfcPropertyReferenceValue)
+        /// </summary>
+        ReferenceValue,
+        /// <summary>
+        /// A Table property (IfcPropertyTableValue)
+        /// </summary>
+        TableValue
+    }
 
    /// <summary>
    /// Represents the type of a property.
@@ -198,6 +202,58 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// Mass Density
       /// </summary>
       MassDensity,
+      IfcPerson,
+      IfcTimeSeries,
+      Torque,
+      IfcMaterial,
+      Mass,
+      SoundPower,
+      Time,
+      LocalTime,
+      Energy,
+      PlanarForce,
+      Monetary,
+      ThermalConductivity,
+      ElectricCurrent,
+      ElectricVoltage,
+      IfcMaterialDefinition,
+      RotationalFrequency,
+      AreaDensity,
+      Date,
+      IfcExternalReference,
+      MassFlowRate,
+      ElectricResistance,
+      MassPerLength,
+      IfcCalendarDate,
+      IfcOrganization,
+      SpecificHeatCapacity,
+      MolecularWeight,
+      HeatingValue,
+      IsothermalMoistureCapacity,
+      VaporPermeability,
+      MoistureDiffusivity,
+      DynamicViscosity,
+      ModulusOfElasticity,
+      ThermalExpansionCoefficient,
+      IonConcentration,
+      PH,
+      DateTime,
+      IfcDateAndTime,
+      IfcLocalTime,
+      IfcClassificationReference,
+      NonNegativeLength,
+      MomentOfInertia,
+      WarpingConstant,
+      SectionModulus,
+      Duration,
+      ElectricConductance,
+      TemperatureRateOfChange,
+      RadioActivity,
+      SoundPressure,
+      HeatFluxDensity,
+      ComplexNumber,
+      ThermalResistance,
+      Numeric,
    }
 
    /// <summary>
@@ -220,62 +276,62 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// </summary>
       Type m_PropertyEnumerationType = null;
 
-      /// <summary>
-      /// Constructs a PropertySetEntry object.
-      /// </summary>
-      /// <param name="revitParameterName">
-      /// Revit parameter name.
-      /// </param>
-      private PropertySetEntry(string revitParameterName)
-          : base(revitParameterName)
-      {
+        /// <summary>
+        /// Constructs a PropertySetEntry object.
+        /// </summary>
+        /// <param name="revitParameterName">
+        /// Revit parameter name.
+        /// </param>
+        public PropertySetEntry(string revitParameterName)
+            : base(revitParameterName)
+        {
 
       }
 
-      /// <summary>
-      /// The type of the IFC property set entry.
-      /// </summary>
-      public PropertyType PropertyType
-      {
-         get
-         {
-            return m_PropertyType;
-         }
-         private set
-         {
-            m_PropertyType = value;
-         }
-      }
+        /// <summary>
+        /// The type of the IFC property set entry.
+        /// </summary>
+        public PropertyType PropertyType
+        {
+            get
+            {
+                return m_PropertyType;
+            }
+            set
+            {
+                m_PropertyType = value;
+            }
+        }
 
-      /// <summary>
-      /// The value type of the IFC property set entry.
-      /// </summary>
-      public PropertyValueType PropertyValueType
-      {
-         get
-         {
-            return m_PropertyValueType;
-         }
-         private set
-         {
-            m_PropertyValueType = value;
-         }
-      }
+        /// <summary>
+        /// The value type of the IFC property set entry.
+        /// </summary>
+        public PropertyValueType PropertyValueType
+        {
+            get
+            {
+                return m_PropertyValueType;
+            }
+            set
+            {
+                m_PropertyValueType = value;
+            }
+        }
 
-      /// <summary>
-      /// The type of the Enum that will validate the value for an enumeration.
-      /// </summary>
-      public Type PropertyEnumerationType
-      {
-         get
-         {
-            return m_PropertyEnumerationType;
-         }
-         private set
-         {
-            m_PropertyEnumerationType = value;
-         }
-      }
+        /// <summary>
+        /// The type of the Enum that will validate the value for an enumeration.
+        /// </summary>
+        public Type PropertyEnumerationType
+        {
+            get
+            {
+                return m_PropertyEnumerationType;
+            }
+            set
+            {
+                m_PropertyEnumerationType = value;
+            }
+        }
 
       /// <summary>
       /// Creates an entry of type given by propertyType.
@@ -1042,12 +1098,15 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                       ifcPropertyName, valueType);
                   break;
                }
-            case PropertyType.MassDensity:
-               {
-                  propHnd = PropertyUtil.CreateMassDensityPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
-                      ifcPropertyName, valueType);
-                  break;
-               }
+               case PropertyType.MassDensity:
+                  {
+                     //if (dblVal != null && dblVal.HasValue)
+                     //   propHnd = PropertyUtil.CreateDoublePropertyFromValue(file, ifcPropertyName, dblVal.Value, "IfcMassDensityMeasure", UnitType.UT_MassDensity, valueType);
+                     //else
+                        propHnd = PropertyUtil.CreateMassDensityPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse, builtInParameter,
+                         ifcPropertyName, valueType);
+                     break;
+                  }
 
             case PropertyType.Illuminance:
                {

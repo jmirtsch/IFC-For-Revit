@@ -1220,7 +1220,7 @@ namespace Revit.IFC.Export.Exporter
 
       private static HandleAndAnalyzer CreateExtrusionWithClippingBase(ExporterIFC exporterIFC, Element element,
           ElementId catId, IList<Solid> solids, Plane basePlane, XYZ planeOrigin, XYZ projDir, IFCRange range, out bool completelyClipped, 
-          out HashSet<ElementId> materialIds, GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None)
+          out HashSet<ElementId> materialIds, GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None, string profileName=null)
       {
          IFCFile file = exporterIFC.GetFile();
          bool mustUseTessellation = false;
@@ -1240,7 +1240,7 @@ namespace Revit.IFC.Export.Exporter
                bool hasBooleanResult = false;
                ElementId materialId = ElementId.InvalidElementId;
                HandleAndAnalyzer currRetVal = CreateExtrusionWithClippingAndOpening(exporterIFC, element, catId, solid, basePlane, planeOrigin, projDir, range,
-                   out completelyClipped, out hasClippingResult, out hasBooleanResult, out materialId, addInfo:addInfo);
+                   out completelyClipped, out hasClippingResult, out hasBooleanResult, out materialId, addInfo: addInfo, profileName:profileName);
 
                if (currRetVal != null && currRetVal.Handle != null)
                {
@@ -1400,7 +1400,7 @@ namespace Revit.IFC.Export.Exporter
       private static HandleAndAnalyzer CreateExtrusionWithClippingAndOpening(ExporterIFC exporterIFC, Element element,
           ElementId catId, Solid solid, Plane basePlane, XYZ planeOrigin, XYZ projDir, IFCRange range, 
           out bool completelyClipped, out bool hasClippingResult, out bool hasBooleanResult, out ElementId materialId,
-          GenerateAdditionalInfo addInfo=GenerateAdditionalInfo.None)
+          GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None, string profileName=null)
       {
          completelyClipped = false;
          materialId = ElementId.InvalidElementId;
@@ -1462,14 +1462,27 @@ namespace Revit.IFC.Export.Exporter
 
             double scaledExtrusionDepth = UnitUtil.ScaleLength(extrusionLength);
 
-            string profileName = null;
-            if (element != null)
-            {
-               ElementType type =
-                  element is ElementType ? element as ElementType : element.Document.GetElement(element.GetTypeId()) as ElementType;
-               if (type != null)
-                  profileName = type.Name;
-            }
+            //// Get a profile name. It is by default set to the type (familySumbol) name, but can be overridden by IfcProfileName[Type] shared parameter
+            //string profileName = null;
+            //if (element != null)
+            //{
+            //   FamilySymbol fSymb = element as FamilySymbol;
+            //   if (element is FamilyInstance)
+            //   {
+            //      FamilyInstance inst = element as FamilyInstance;
+            //      if (inst != null)
+            //      {
+            //         fSymb = inst.Symbol;
+            //      }
+            //   }
+            //   if (fSymb != null)
+            //   {
+            //      string profile;
+            //      ParameterUtil.GetStringValueFromElement(fSymb.Id, "IfcProfileName[Type]", out profile);
+            //      if (string.IsNullOrEmpty(profile))
+            //         profileName = profile;
+            //   }
+            //}
 
             // We use a sub-transaction here in case we are able to generate the base body but not the clippings.
             IFCFile file = exporterIFC.GetFile();
@@ -1682,7 +1695,7 @@ namespace Revit.IFC.Export.Exporter
       public static IFCAnyHandle CreateExtrusionWithClipping(ExporterIFC exporterIFC, Element element, ElementId catId,
           Solid solid, Plane basePlane, XYZ planeOrigin, XYZ projDir, IFCRange range, out bool completelyClipped,
           out FootPrintInfo footPrintInfo, out MaterialAndProfile materialAndProfile,
-          GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None)
+          GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None, string profileName=null)
       {
          footPrintInfo = null;
           materialAndProfile = null;
@@ -1690,7 +1703,7 @@ namespace Revit.IFC.Export.Exporter
          solids.Add(solid);
          HashSet<ElementId> materialIds = null;
          HandleAndAnalyzer handleAndAnalyzer = CreateExtrusionWithClippingBase(exporterIFC, element, catId,
-             solids, basePlane, planeOrigin, projDir, range, out completelyClipped, out materialIds, addInfo:addInfo);
+             solids, basePlane, planeOrigin, projDir, range, out completelyClipped, out materialIds, addInfo: addInfo, profileName:profileName);
          if ((addInfo & GenerateAdditionalInfo.GenerateFootprint) != 0)
          {
             footPrintInfo = handleAndAnalyzer.FootPrintInfo;
@@ -1721,13 +1734,13 @@ namespace Revit.IFC.Export.Exporter
       public static IFCAnyHandle CreateExtrusionWithClipping(ExporterIFC exporterIFC, Element element, ElementId catId,
             IList<Solid> solids, Plane basePlane, XYZ planeOrigin, XYZ projDir, IFCRange range, out bool completelyClipped, out HashSet<ElementId> materialIds,
           out FootPrintInfo footPrintInfo, out MaterialAndProfile materialAndProfile, out IFCExtrusionCreationData extrusionData,
-          GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None)
+          GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None, string profileName=null)
       {
          footPrintInfo = null;
           materialAndProfile = null;
          extrusionData = null;
          HandleAndAnalyzer handleAndAnalyzer = CreateExtrusionWithClippingBase(exporterIFC, element, catId,
-             solids, basePlane, planeOrigin, projDir, range, out completelyClipped, out materialIds, addInfo:addInfo);
+             solids, basePlane, planeOrigin, projDir, range, out completelyClipped, out materialIds, addInfo: addInfo, profileName:profileName);
 
          if ((addInfo & GenerateAdditionalInfo.GenerateFootprint) != 0)
          {
@@ -1758,14 +1771,14 @@ namespace Revit.IFC.Export.Exporter
       /// <returns>The extrusion handle.</returns>
       public static HandleAndData CreateExtrusionWithClippingAndProperties(ExporterIFC exporterIFC,
             Element element, ElementId catId, Solid solid, Plane basePlane, XYZ planeOrig, XYZ projDir, IFCRange range, out bool completelyClipped,
-          GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None)
+          GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None, string profileName=null)
       {
          IList<Solid> solids = new List<Solid>();
          solids.Add(solid);
 
          HashSet<ElementId> materialIds = null;
          HandleAndAnalyzer handleAndAnalyzer = CreateExtrusionWithClippingBase(exporterIFC, element, catId,
-             solids, basePlane, planeOrig, projDir, range, out completelyClipped, out materialIds, addInfo:addInfo);
+             solids, basePlane, planeOrig, projDir, range, out completelyClipped, out materialIds, addInfo: addInfo, profileName:profileName);
 
          HandleAndData ret = new HandleAndData();
          ret.Handle= handleAndAnalyzer.Handle;     // Add the "Body" representation

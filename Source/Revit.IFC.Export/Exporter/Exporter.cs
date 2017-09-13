@@ -2209,8 +2209,8 @@ namespace Revit.IFC.Export.Exporter
             projectObjectType = (projectInfo != null) ? NamingUtil.GetObjectTypeOverride(projectInfo, null) : null;
             projectDescription = (projectInfo != null) ? NamingUtil.GetDescriptionOverride(projectInfo, null) : null;
 
-            if (projectInfo != null)
-               ParameterUtil.GetStringValueFromElement(projectInfo.Id, "Project Phase", out projectPhase);
+         if (projectInfo != null)
+            ParameterUtil.GetStringValueFromElement(projectInfo, projectInfo.Id, "Project Phase", out projectPhase);
          }
 
          string projectGUID = GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Project);

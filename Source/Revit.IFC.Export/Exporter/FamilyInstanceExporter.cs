@@ -542,6 +542,9 @@ namespace Revit.IFC.Export.Exporter
                         XYZ orig = XYZ.Zero;
                         XYZ extrudeDirection = null;
 
+                        // Get a profile name. 
+                        string profileName = NamingUtil.GetProfileName(familySymbol);
+
                         StructuralMemberAxisInfo axisInfo = StructuralMemberExporter.GetStructuralMemberAxisTransform(familyInstance);
                         if (axisInfo != null)
                         {
@@ -550,7 +553,7 @@ namespace Revit.IFC.Export.Exporter
                            extrudeDirection = axisInfo.AxisDirection;
 
                            extraParams.CustomAxis = extrudeDirection;
-                           extraParams.PossibleExtrusionAxes = IFCExtrusionAxes.TryCustom;
+                           extraParams.PossibleExtrusionAxes = IFCExtrusionAxes.TryXY;
                         }
                         else
                         {
@@ -570,7 +573,8 @@ namespace Revit.IFC.Export.Exporter
                            FootPrintInfo footprintInfo = null;
                            IFCAnyHandle bodyRepresentation = ExtrusionExporter.CreateExtrusionWithClipping(exporterIFC, exportGeometryElement,
                                categoryId, solids, basePlane, orig, extrudeDirection, null, out completelyClipped, out materialIds,
-                               out footprintInfo, out materialAndProfile, out extrusionData, GenerateAdditionalInfo.GenerateProfileDef);
+                               out footprintInfo, out materialAndProfile, out extrusionData, GenerateAdditionalInfo.GenerateProfileDef,
+                               profileName:profileName);
                            if (extrusionData != null)
                            {
                               extraParams.Slope = extrusionData.Slope;
@@ -635,14 +639,20 @@ namespace Revit.IFC.Export.Exporter
                      BodyData bodyData = null;
                      if (representations3D.Count == 0)
                      {
+                        string profileName = null;
                         BodyExporterOptions bodyExporterOptions = new BodyExporterOptions(tryToExportAsExtrusion, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
                         if (exportType == IFCExportType.IfcColumnType || exportType == IFCExportType.IfcMemberType || exportType == IFCExportType.IfcBeamType)
+                        {
                            bodyExporterOptions.CollectMaterialAndProfile = true;
+                           // Get a profile name. 
+                           profileName = NamingUtil.GetProfileName(familySymbol);
+                        }
+
                         if (exportType == IFCExportType.IfcSlab || exportType == IFCExportType.IfcPlateType)
                            bodyExporterOptions.CollectFootprintHandle = ExporterCacheManager.ExportOptionsCache.ExportAs4;
 
                         bodyData = BodyExporter.ExportBody(exporterIFC, familyInstance, categoryId, ElementId.InvalidElementId,
-                            geomObjects, bodyExporterOptions, extraParams, potentialPathGeom);
+                            geomObjects, bodyExporterOptions, extraParams, potentialPathGeom, profileName:profileName);
                         typeInfo.MaterialIds = bodyData.MaterialIds;
                         //if (!bodyData.OffsetTransform.IsIdentity)
                         offsetTransform = bodyData.OffsetTransform;
@@ -1202,7 +1212,7 @@ namespace Revit.IFC.Export.Exporter
                               if (!isBuildingElementProxy && FamilyExporterUtil.IsDistributionControlElementSubType(exportType))
                               {
                                  string ifcelementType = null;
-                                 ParameterUtil.GetStringValueFromElement(familyInstance.Id, "IfcElementType", out ifcelementType);
+                                 ParameterUtil.GetStringValueFromElement(familyInstance, familyInstance.Id, "IfcElementType", out ifcelementType);
 
                                  instanceHandle = IFCInstanceExporter.CreateDistributionControlElement(file, instanceGUID,
                                     ownerHistory, instanceName, instanceDescription, instanceObjectType,

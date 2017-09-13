@@ -67,7 +67,7 @@ namespace Revit.IFC.Export.Utility
             m_SubelementParameterValueCache.Clear();
         }
 
-        private static Parameter GetStringValueFromElementBase(ElementId elementId, string propertyName, bool allowUnset, out string propertyValue)
+        private static Parameter GetStringValueFromElementBase(Element element, ElementId elementId, string propertyName, bool allowUnset, out string propertyValue)
         {
             if (elementId == ElementId.InvalidElementId)
                 throw new ArgumentNullException("element");
@@ -87,9 +87,22 @@ namespace Revit.IFC.Export.Utility
 
                 if (parameter.HasValue)
                 {
-                    if (parameter.AsString() != null)
+                  string propValue;
+                  propValue = parameter.AsString();
+
+                  if (!string.IsNullOrEmpty(propValue))
                     {
-                        propertyValue = parameter.AsString();
+                        // This is kind of hack to quickly check whether we need to parse the parameter or not
+                        if ((propValue.Length > 1 && propValue[0] == '{') || (propValue.Length > 2 && propValue[1] == '{'))
+                        {
+                           ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValue);
+                           propertyValue = pResv.GetStringValue();
+                           if (string.IsNullOrEmpty(propertyValue))
+                              propertyValue = propValue;
+                        }
+                        else
+                           propertyValue = propValue;
+
                         return parameter;
                     }
                     else if (parameter.AsElementId() != null)
@@ -118,9 +131,9 @@ namespace Revit.IFC.Export.Utility
         /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
         /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
         /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetStringValueFromElement(ElementId elementId, string propertyName, out string propertyValue)
+        public static Parameter GetStringValueFromElement(Element element, ElementId elementId, string propertyName, out string propertyValue)
         {
-            return GetStringValueFromElementBase(elementId, propertyName, false, out propertyValue);
+            return GetStringValueFromElementBase(element, elementId, propertyName, false, out propertyValue);
         }
 
         /// <summary>
@@ -132,9 +145,9 @@ namespace Revit.IFC.Export.Utility
         /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
         /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
         /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetOptionalStringValueFromElement(ElementId elementId, string propertyName, out string propertyValue)
+        public static Parameter GetOptionalStringValueFromElement(Element element, ElementId elementId, string propertyName, out string propertyValue)
         {
-            return GetStringValueFromElementBase(elementId, propertyName, true, out propertyValue);
+            return GetStringValueFromElementBase(element, elementId, propertyName, true, out propertyValue);
         }
         
         /// <summary>
@@ -179,19 +192,34 @@ namespace Revit.IFC.Export.Utility
                         return parameter;
                     case StorageType.String:
                         {
-                            try
-                            {
-                                propertyValue = Convert.ToInt32(parameter.AsString());
-                                return parameter;
-                            }
-                            catch
-                            {
-                                return null;
-                            }
+                           string propValue;
+                           propValue = parameter.AsString();
+
+                           // This is kind of hack to quickly check whether we need to parse the parameter or not
+                           if (propValue != null &&
+                              ((propValue.Length > 1 && propValue[0] == '{') || (propValue.Length > 2 && propValue[1] == '{')))
+                           {
+                              ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValue);
+                              int? propertyIntValue = pResv.GetIntValue();
+                              if (propertyIntValue.HasValue)
+                              {
+                                 propertyValue = propertyIntValue.Value;
+                                 return parameter;
+                              }
+                           }
+
+                           try
+                           {
+                              propertyValue = Convert.ToInt32(parameter.AsString());
+                              return parameter;
+                           }
+                           catch
+                           {
+                              return null;
+                           }
                         }
                 }
             }
-
             return null;
         }
 
@@ -219,17 +247,35 @@ namespace Revit.IFC.Export.Utility
 
             if (parameter != null && parameter.HasValue)
             {
-                switch (parameter.StorageType)
-                {
-                    case StorageType.Double:
-                        propertyValue = parameter.AsDouble();
-                        return parameter;
-                    case StorageType.Integer:
-                        propertyValue = parameter.AsInteger();
-                        return parameter;
-                    case StorageType.String:
-                        return Double.TryParse(parameter.AsString(), out propertyValue) ? parameter : null;
-                }
+               switch (parameter.StorageType)
+               {
+                  case StorageType.Double:
+                     propertyValue = parameter.AsDouble();
+                     return parameter;
+                  case StorageType.Integer:
+                     propertyValue = parameter.AsInteger();
+                     return parameter;
+                  case StorageType.String:
+                     {
+                        string propValue;
+                        propValue = parameter.AsString();
+
+                        // This is kind of hack to quickly check whether we need to parse the parameter or not
+                        if (propValue != null && 
+                              ((propValue.Length > 1 && propValue[0] == '{') || (propValue.Length > 2 && propValue[1] == '{')))
+                        {
+                           ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValue);
+                           double? propertyDoubleValue = pResv.GetDoubleValue();
+                           if (propertyDoubleValue.HasValue)
+                           {
+                              propertyValue = propertyDoubleValue.Value;
+                              return parameter;
+                           }
+                        }
+
+                        return Double.TryParse(propValue, out propertyValue) ? parameter : null;
+                     }
+               }
             }
 
             return null;
@@ -772,7 +818,7 @@ namespace Revit.IFC.Export.Utility
 
         private static Parameter GetStringValueFromElementOrSymbolBase(Element element, string propertyName, bool allowUnset, out string propertyValue)
         {
-            Parameter parameter = GetStringValueFromElementBase(element.Id, propertyName, allowUnset, out propertyValue);
+            Parameter parameter = GetStringValueFromElementBase(element, element.Id, propertyName, allowUnset, out propertyValue);
             if (parameter != null)
             {
                 if (!string.IsNullOrEmpty(propertyValue))
@@ -781,7 +827,7 @@ namespace Revit.IFC.Export.Utility
             
             ElementId typeId = element.GetTypeId();
             if (typeId != ElementId.InvalidElementId)
-                return GetStringValueFromElementBase(typeId, propertyName, allowUnset, out propertyValue);
+                return GetStringValueFromElementBase(element, typeId, propertyName, allowUnset, out propertyValue);
 
             return parameter;
         }

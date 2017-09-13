@@ -2779,7 +2779,8 @@ namespace Revit.IFC.Export.Exporter
           IList<GeometryObject> geometryList,
           BodyExporterOptions options,
           IFCExtrusionCreationData exportBodyParams,
-          GeometryObject potentialPathGeom = null)
+          GeometryObject potentialPathGeom = null,
+          string profileName = null)
       {
          BodyData bodyData = new BodyData();
          if (geometryList.Count == 0)
@@ -2879,7 +2880,7 @@ namespace Revit.IFC.Export.Exporter
                         bool completelyClipped;
                         HandleAndData extrusionData = ExtrusionExporter.CreateExtrusionWithClippingAndProperties(exporterIFC, element,
                             CategoryUtil.GetSafeCategoryId(element), geometryList[0] as Solid, extrusionBasePlane, options.ExtrusionLocalCoordinateSystem.Origin,
-                            extrusionDirection, null, out completelyClipped, addInfo:footprintOrProfile);
+                            extrusionDirection, null, out completelyClipped, addInfo:footprintOrProfile, profileName:profileName);
                         if (!completelyClipped && !IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionData.Handle))
                         {
                            // There are two valid cases here:
