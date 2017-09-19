@@ -184,7 +184,7 @@ namespace Revit.IFC.Export.Utility
         /// <remarks>Please initialize this after all other code, as it relies on a consistent cache otherwise.</remarks>
         public static PropertySetOptions Create(ExporterIFC exporterIFC, ExportOptionsCache cache)
         {
-            IDictionary<String, String> options = exporterIFC.GetOptions();
+            IDictionary<String, String> options = (exporterIFC == null ? new Dictionary<String, String>() : exporterIFC.GetOptions());
 
             PropertySetOptions propertySetOptions = new PropertySetOptions();
 

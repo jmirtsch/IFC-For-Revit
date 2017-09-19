@@ -7,24 +7,24 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.UI
 {
    public class PropertyBrowser : IExternalApplication
    {
-      private RequestHandler mHandler;
-      Browser m_MyDockableWindow = null;
       private ExternalEvent mExEvent;
 
       public Result OnStartup(UIControlledApplication a)
       {
          DockablePaneProviderData data = new DockablePaneProviderData();
-         m_MyDockableWindow = new Browser();
-         data.FrameworkElement = m_MyDockableWindow as System.Windows.FrameworkElement;
+         Browser browser = new Browser();
+         data.FrameworkElement = browser as System.Windows.FrameworkElement;
          data.InitialState = new DockablePaneState();
          data.InitialState.DockPosition = DockPosition.Tabbed;
 
          DockablePaneId dpid = new DockablePaneId(new Guid("{C7C70722-1B9B-4454-A054-DFD142F23580}"));
-         a.RegisterDockablePane(dpid, "IFC Properties", m_MyDockableWindow as IDockablePaneProvider);
+         a.RegisterDockablePane(dpid, "IFC Properties", browser as IDockablePaneProvider);
 
         foreach (Autodesk.Windows.RibbonTab tab in Autodesk.Windows.ComponentManager.Ribbon.Tabs)
          {
@@ -34,8 +34,8 @@ namespace Revit.IFC.Export.UI
                break;
             }
          }
-         //mHandler = new RequestHandler(this);
-         mExEvent = ExternalEvent.Create(mHandler);
+         RequestHandler handler = new RequestHandler(browser);
+         mExEvent = ExternalEvent.Create(handler);
          return Result.Succeeded;
       }
 
@@ -48,13 +48,8 @@ namespace Revit.IFC.Export.UI
       {
          if (e.PropertyName == "Title")
          {
-
+            mExEvent.Raise();
          }
-      }
-
-      private void MakeRequest(string json)
-      {
-         mExEvent.Raise();
       }
    }
 
@@ -63,24 +58,54 @@ namespace Revit.IFC.Export.UI
       private Request mRequest = new Request();
       public Request Request { get { return mRequest; } }
 
-      //private 
-      public RequestHandler(Form form)
+      private Browser mBrowser = null;
+      public RequestHandler(Browser browser)
       {
-         //mForm = form;
+         mBrowser = browser;
       }
 
-      public String GetName() { return "BimForce UOB"; }
+      public String GetName() { return "IFC Property Browser"; }
       public void Execute(UIApplication uiapp)
       {
          try
          {
-            ICollection<ElementId> elementIds = uiapp.ActiveUIDocument.Selection.GetElementIds(); 
+            Document document = uiapp.ActiveUIDocument.Document;
+            ICollection<ElementId> elementIds = uiapp.ActiveUIDocument.Selection.GetElementIds();
+            if(elementIds.Count == 0)
+            {
+               mBrowser.mPropertyGrid.SelectedObject = null;
+               return;
+            }
+            DatabaseIfc db = new DatabaseIfc(true, ReleaseVersion.IFC4A2);
+            IfcBuilding building = new IfcBuilding(db, "Dummy");
+            IfcProject project = new IfcProject(building, "Dummy");
+            Utility.ExporterCacheManager.ExportOptionsCache = Utility.ExportOptionsCache.Create(null, document, null);
+            Utility.ExporterCacheManager.Document = uiapp.ActiveUIDocument.Document;
+            Exporter.Exporter exporter = new Revit.IFC.Export.Exporter.Exporter();
+            exporter.InitializePropertySets();
+            List<IfcProduct> products = new List<IfcProduct>();
+            foreach (ElementId elid in elementIds)
+            {
+               Element e = document.GetElement(elid);
+               IfcProduct product = new IfcWall(building, null, null);
+               Utility.ExporterUtil.ExportRelatedProperties(e, product);
+               HashSet<IfcObjectDefinition> objs = new HashSet<IfcObjectDefinition>();
+               objs.Add(product);
+               Exporter.PropertySet.PropertyUtil.CreateInternalRevitPropertySets(e, db, objs);
+               products.Add(product);
 
+            }
+            
+            if (products.Count < 1)
+               return;
+            mBrowser.mPropertyGrid.SelectedObject = products[0];
+           
+            
          }
          finally
          {
-         }
 
+         }
          return;
       }
    }

@@ -172,14 +172,18 @@ namespace Revit.IFC.Export.Utility
       /// <returns>The new cache.</returns>
       public static ExportOptionsCache Create(ExporterIFC exporterIFC, Document document, Autodesk.Revit.DB.View filterView)
       {
-         IDictionary<String, String> options = exporterIFC.GetOptions();
-
          ExportOptionsCache cache = new ExportOptionsCache();
-         cache.FileVersion = exporterIFC.FileVersion;
-         cache.FileName = exporterIFC.FileName;
-         cache.ExportBaseQuantities = exporterIFC.ExportBaseQuantities;
-         cache.WallAndColumnSplitting = exporterIFC.WallAndColumnSplitting;
-         cache.SpaceBoundaryLevel = exporterIFC.SpaceBoundaryLevel;
+         IDictionary<String, String> options = new Dictionary<String, String>();
+         if (exporterIFC != null)
+         {
+
+            options = exporterIFC.GetOptions();
+            cache.FileVersion = exporterIFC.FileVersion;
+            cache.FileName = exporterIFC.FileName;
+            cache.ExportBaseQuantities = exporterIFC.ExportBaseQuantities;
+            cache.WallAndColumnSplitting = exporterIFC.WallAndColumnSplitting;
+            cache.SpaceBoundaryLevel = exporterIFC.SpaceBoundaryLevel;
+         }
          // Export Part element only if 'Current View Only' is checked and 'Show Parts' is selected. 
          cache.ExportParts = filterView != null && filterView.PartsVisibility == PartsVisibility.ShowPartsOnly;
          cache.ExportPartsAsBuildingElementsOverride = null;

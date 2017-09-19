@@ -1036,42 +1036,36 @@ namespace Revit.IFC.Export.Utility
       /// <param name="exporterIFC">The IFC exporter object.</param>
       /// <param name="element ">The element whose properties are exported.</param>
       /// <param name="productWrapper">The ProductWrapper object.</param>
-      private static void ExportPsetDraughtingFor2x2(ExporterIFC exporterIFC, Element element, IfcProduct productWrapper)
+      private static void ExportPsetDraughtingFor2x2(Element element, IfcProduct productWrapper)
       {
-         IFCFile file = exporterIFC.GetFile();
          DatabaseIfc db = productWrapper.Database;
-         using (IFCTransaction transaction = new IFCTransaction(file))
+
+         string catName = CategoryUtil.GetCategoryName(element);
+         Color color = CategoryUtil.GetElementColor(element);
+
+
+         HashSet<IfcProperty> nameAndColorProps = new HashSet<IfcProperty>();
+
+         nameAndColorProps.Add(PropertyUtil.CreateLabelPropertyFromCache(db, null, "Layername", catName, PropertyValueType.SingleValue, true, null));
+
+         //color
          {
-            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
+            HashSet<IfcProperty> colorProps = new HashSet<IfcProperty>();
+            colorProps.Add(PropertyUtil.CreateIntegerPropertyFromCache(db, "Red", color.Red, PropertyValueType.SingleValue));
+            colorProps.Add(PropertyUtil.CreateIntegerPropertyFromCache(db, "Green", color.Green, PropertyValueType.SingleValue));
+            colorProps.Add(PropertyUtil.CreateIntegerPropertyFromCache(db, "Blue", color.Blue, PropertyValueType.SingleValue));
 
-            string catName = CategoryUtil.GetCategoryName(element);
-            Color color = CategoryUtil.GetElementColor(element);
-
-
-            HashSet<IfcProperty> nameAndColorProps = new HashSet<IfcProperty>();
-
-            nameAndColorProps.Add(PropertyUtil.CreateLabelPropertyFromCache(db, null, "Layername", catName, PropertyValueType.SingleValue, true, null));
-
-            //color
-            {
-               HashSet<IfcProperty> colorProps = new HashSet<IfcProperty>();
-               colorProps.Add(PropertyUtil.CreateIntegerPropertyFromCache(db, "Red", color.Red, PropertyValueType.SingleValue));
-               colorProps.Add(PropertyUtil.CreateIntegerPropertyFromCache(db, "Green", color.Green, PropertyValueType.SingleValue));
-               colorProps.Add(PropertyUtil.CreateIntegerPropertyFromCache(db, "Blue", color.Blue, PropertyValueType.SingleValue));
-
-               string propertyName = "Color";
-               nameAndColorProps.Add(new IfcComplexProperty(db, propertyName, propertyName, colorProps));
-            }
-
-            string name = "Pset_Draughting";   // IFC 2x2 standard
-            IfcPropertySet propertySet2 = new IfcPropertySet(name, nameAndColorProps);
-
-            // HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>(productWrapper.GetAllObjects());
-            //ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, propertySet2);
-#warning ggCHECK
-            new IfcRelDefinesByProperties(productWrapper, propertySet2);
-            transaction.Commit();
+            string propertyName = "Color";
+            nameAndColorProps.Add(new IfcComplexProperty(db, propertyName, propertyName, colorProps));
          }
+
+         string name = "Pset_Draughting";   // IFC 2x2 standard
+         IfcPropertySet propertySet2 = new IfcPropertySet(name, nameAndColorProps);
+
+         // HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>(productWrapper.GetAllObjects());
+         //ExporterUtil.CreateRelDefinesByProperties(file, GUIDUtil.CreateGUID(), ownerHistory, null, null, relatedObjects, propertySet2);
+#warning ggCHECK
+         new IfcRelDefinesByProperties(productWrapper, propertySet2);
       }
 
       /// <summary>
@@ -1080,110 +1074,105 @@ namespace Revit.IFC.Export.Utility
       /// <param name="exporterIFC">The IFC exporter object.</param>
       /// <param name="element">The element whose properties are exported.</param>
       /// <param name="productWrapper">The ProductWrapper object.</param>
-      private static void ExportElementProperties(ExporterIFC exporterIFC, Element element, IfcProduct productWrapper)
+      private static void ExportElementProperties(Element element, IfcProduct productWrapper)
       {
          if (productWrapper == null)
             return;
 
-         IFCFile file = exporterIFC.GetFile();
-         using (IFCTransaction transaction = new IFCTransaction(file))
-         {
-            Document doc = element.Document;
+         Document doc = element.Document;
 
-            ElementType elemType = doc.GetElement(element.GetTypeId()) as ElementType;
+         ElementType elemType = doc.GetElement(element.GetTypeId()) as ElementType;
 
-            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
+         IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
-            // ICollection<IFCAnyHandle> productSet = productWrapper.GetAllObjects();
-            List<IfcProduct> productSet = new List<IfcProduct>() { productWrapper };
+         // ICollection<IFCAnyHandle> productSet = productWrapper.GetAllObjects();
+         List<IfcProduct> productSet = new List<IfcProduct>() { productWrapper };
 #warning ggCheck
-            IList<IList<PropertySetDescription>> psetsToCreate = ExporterCacheManager.ParameterCache.PropertySets;
+         IList<IList<PropertySetDescription>> psetsToCreate = ExporterCacheManager.ParameterCache.PropertySets;
 
-            // In some cases, like multi-story stairs and ramps, we may have the same Pset used for multiple levels.
-            // If ifcParams is null, re-use the property set.
-            ISet<string> locallyUsedGUIDs = new HashSet<string>();
-            IDictionary<Tuple<Element, Element, string>, IfcPropertySet> createdPropertySets =
-                new Dictionary<Tuple<Element, Element, string>, IfcPropertySet>();
-            IDictionary<IfcPropertySet, HashSet<IfcProduct>> relDefinesByPropertiesMap =
-                new Dictionary<IfcPropertySet, HashSet<IfcProduct>>();
+         // In some cases, like multi-story stairs and ramps, we may have the same Pset used for multiple levels.
+         // If ifcParams is null, re-use the property set.
+         ISet<string> locallyUsedGUIDs = new HashSet<string>();
+         IDictionary<Tuple<Element, Element, string>, IfcPropertySet> createdPropertySets =
+             new Dictionary<Tuple<Element, Element, string>, IfcPropertySet>();
+         IDictionary<IfcPropertySet, HashSet<IfcProduct>> relDefinesByPropertiesMap =
+             new Dictionary<IfcPropertySet, HashSet<IfcProduct>>();
 
-            foreach (IfcProduct prodHnd in productSet)
+         foreach (IfcProduct prodHnd in productSet)
+         {
+            IList<PropertySetDescription> currPsetsToCreate = GetCurrPSetsToCreate(prodHnd, psetsToCreate);
+            if (currPsetsToCreate.Count == 0)
+               continue;
+
+            ElementId overrideElementId = ExporterCacheManager.HandleToElementCache.Find(prodHnd);
+            Element elementToUse = (overrideElementId == ElementId.InvalidElementId) ? element : doc.GetElement(overrideElementId);
+            ElementType elemTypeToUse = (overrideElementId == ElementId.InvalidElementId) ? elemType : doc.GetElement(elementToUse.GetTypeId()) as ElementType;
+            if (elemTypeToUse == null)
+               elemTypeToUse = elemType;
+
+            IFCExtrusionCreationData ifcParams = null;// productWrapper.FindExtrusionCreationParameters(prodHnd);
+#warning ggFix
+
+            foreach (PropertySetDescription currDesc in currPsetsToCreate)
             {
-               IList<PropertySetDescription> currPsetsToCreate = GetCurrPSetsToCreate(prodHnd, psetsToCreate);
-               if (currPsetsToCreate.Count == 0)
-                  continue;
+               // Last conditional check: if the property set comes from a ViewSchedule, check if the element is in the schedule.
+               if (currDesc.ViewScheduleId != ElementId.InvalidElementId)
+                  if (!ExporterCacheManager.ViewScheduleElementCache[currDesc.ViewScheduleId].Contains(elementToUse.Id))
+                     continue;
 
-               ElementId overrideElementId = ExporterCacheManager.HandleToElementCache.Find(prodHnd);
-               Element elementToUse = (overrideElementId == ElementId.InvalidElementId) ? element : doc.GetElement(overrideElementId);
-               ElementType elemTypeToUse = (overrideElementId == ElementId.InvalidElementId) ? elemType : doc.GetElement(elementToUse.GetTypeId()) as ElementType;
-               if (elemTypeToUse == null)
-                  elemTypeToUse = elemType;
-
-               IFCExtrusionCreationData ifcParams = null;// productWrapper.FindExtrusionCreationParameters(prodHnd);
-#warning ggFix
-
-               foreach (PropertySetDescription currDesc in currPsetsToCreate)
+               Tuple<Element, Element, string> propertySetKey = new Tuple<Element, Element, string>(elementToUse, elemTypeToUse, currDesc.Name);
+               IfcPropertySet propertySet = null;
+               if ((ifcParams != null) || (!createdPropertySets.TryGetValue(propertySetKey, out propertySet)))
                {
-                  // Last conditional check: if the property set comes from a ViewSchedule, check if the element is in the schedule.
-                  if (currDesc.ViewScheduleId != ElementId.InvalidElementId)
-                     if (!ExporterCacheManager.ViewScheduleElementCache[currDesc.ViewScheduleId].Contains(elementToUse.Id))
-                        continue;
-
-                  Tuple<Element, Element, string> propertySetKey = new Tuple<Element, Element, string>(elementToUse, elemTypeToUse, currDesc.Name);
-                  IfcPropertySet propertySet = null;
-                  if ((ifcParams != null) || (!createdPropertySets.TryGetValue(propertySetKey, out propertySet)))
+                  ISet<IfcProperty> props = currDesc.ProcessEntries(ifcParams, elementToUse, elemTypeToUse, prodHnd);
+                  if (props.Count > 0)
                   {
-                     ISet<IfcProperty> props = currDesc.ProcessEntries(ifcParams, elementToUse, elemTypeToUse, prodHnd);
-                     if (props.Count > 0)
-                     {
-                        int subElementIndex = CheckElementTypeValidityForSubIndex(currDesc, prodHnd, element);
+                     int subElementIndex = CheckElementTypeValidityForSubIndex(currDesc, prodHnd, element);
 
-                        string guid = GUIDUtil.CreateSubElementGUID(elementToUse, subElementIndex);
-                        if (locallyUsedGUIDs.Contains(guid))
-                           guid = GUIDUtil.CreateGUID();
-                        else
-                           locallyUsedGUIDs.Add(guid);
+                     string guid = GUIDUtil.CreateSubElementGUID(elementToUse, subElementIndex);
+                     if (locallyUsedGUIDs.Contains(guid))
+                        guid = GUIDUtil.CreateGUID();
+                     else
+                        locallyUsedGUIDs.Add(guid);
 
-                        string paramSetName = currDesc.Name;
-                        propertySet = new IfcPropertySet(paramSetName, props) { GlobalId = guid };
-                        if (ifcParams == null)
-                           createdPropertySets[propertySetKey] = propertySet;
-                     }
-                  }
-
-                  if (propertySet != null)
-                  {
-                     IfcProduct prodHndToUse = prodHnd;
-                     DescriptionCalculator ifcRDC = currDesc.DescriptionCalculator;
-                     if (ifcRDC != null)
-                     {
-                        //IFCAnyHandle overrideHnd = ifcRDC.RedirectDescription(exporterIFC, elementToUse);
-                        //if (!IFCAnyHandleUtil.IsNullOrHasNoValue(overrideHnd))
-                        //   prodHndToUse = overrideHnd;
-                     }
-#warning ggFix
-
-                     HashSet<IfcProduct> relatedObjects = null;
-                     if (!relDefinesByPropertiesMap.TryGetValue(propertySet, out relatedObjects))
-                     {
-                        relatedObjects = new HashSet<IfcProduct>();
-                        relDefinesByPropertiesMap[propertySet] = relatedObjects;
-                     }
-                     relatedObjects.Add(prodHndToUse);
+                     string paramSetName = currDesc.Name;
+                     propertySet = new IfcPropertySet(paramSetName, props) { GlobalId = guid };
+                     if (ifcParams == null)
+                        createdPropertySets[propertySetKey] = propertySet;
                   }
                }
-            }
 
-            foreach (KeyValuePair<IfcPropertySet, HashSet<IfcProduct>> relDefinesByProperties in relDefinesByPropertiesMap)
-            {
-               new IfcRelDefinesByProperties(relDefinesByProperties.Value, relDefinesByProperties.Key);
-            }
+               if (propertySet != null)
+               {
+                  IfcProduct prodHndToUse = prodHnd;
+                  DescriptionCalculator ifcRDC = currDesc.DescriptionCalculator;
+                  if (ifcRDC != null)
+                  {
+                     //IFCAnyHandle overrideHnd = ifcRDC.RedirectDescription(exporterIFC, elementToUse);
+                     //if (!IFCAnyHandleUtil.IsNullOrHasNoValue(overrideHnd))
+                     //   prodHndToUse = overrideHnd;
+                  }
+#warning ggFix
 
-            transaction.Commit();
+                  HashSet<IfcProduct> relatedObjects = null;
+                  if (!relDefinesByPropertiesMap.TryGetValue(propertySet, out relatedObjects))
+                  {
+                     relatedObjects = new HashSet<IfcProduct>();
+                     relDefinesByPropertiesMap[propertySet] = relatedObjects;
+                  }
+                  relatedObjects.Add(prodHndToUse);
+               }
+            }
          }
 
+         foreach (KeyValuePair<IfcPropertySet, HashSet<IfcProduct>> relDefinesByProperties in relDefinesByPropertiesMap)
+         {
+            new IfcRelDefinesByProperties(relDefinesByProperties.Value, relDefinesByProperties.Key);
+         }
+
+
          if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
-            ExportPsetDraughtingFor2x2(exporterIFC, element, productWrapper);
+            ExportPsetDraughtingFor2x2(element, productWrapper);
       }
 
       /// <summary>
@@ -1192,57 +1181,52 @@ namespace Revit.IFC.Export.Utility
       /// <param name="exporterIFC">The IFC exporter object.</param>
       /// <param name="element ">The element whose quantities are exported.</param>
       /// <param name="productWrapper">The ProductWrapper object.</param>
-      private static void ExportElementQuantities(ExporterIFC exporterIFC, Element element, IfcProduct productWrapper)
+      private static void ExportElementQuantities(Element element, IfcProduct productWrapper)
       {
          if (productWrapper == null)
             return;
 
-         IFCFile file = exporterIFC.GetFile();
-         using (IFCTransaction transaction = new IFCTransaction(file))
-         {
-            Document doc = element.Document;
+         Document doc = element.Document;
 
-            ElementType elemType = doc.GetElement(element.GetTypeId()) as ElementType;
+         ElementType elemType = doc.GetElement(element.GetTypeId()) as ElementType;
 
-            //            ICollection<IFCAnyHandle> productSet = productWrapper.GetAllObjects();
-            List<IfcProduct> productSet = new List<IfcProduct>() { productWrapper };
+         //            ICollection<IFCAnyHandle> productSet = productWrapper.GetAllObjects();
+         List<IfcProduct> productSet = new List<IfcProduct>() { productWrapper };
 #warning ggQuery
-            IList<IList<QuantityDescription>> quantitiesToCreate = ExporterCacheManager.ParameterCache.Quantities;
+         IList<IList<QuantityDescription>> quantitiesToCreate = ExporterCacheManager.ParameterCache.Quantities;
 
-            foreach (IList<QuantityDescription> currStandard in quantitiesToCreate)
+         foreach (IList<QuantityDescription> currStandard in quantitiesToCreate)
+         {
+            foreach (QuantityDescription currDesc in currStandard)
             {
-               foreach (QuantityDescription currDesc in currStandard)
+               foreach (IfcProduct prodHnd in productSet)
                {
-                  foreach (IfcProduct prodHnd in productSet)
+                  if (currDesc.IsAppropriateType(prodHnd))
                   {
-                     if (currDesc.IsAppropriateType(prodHnd))
-                     {
-                        IFCExtrusionCreationData ifcParams = null;// productWrapper.FindExtrusionCreationParameters(prodHnd);
-                        HashSet<IfcPhysicalQuantity> quantities = new HashSet<IfcPhysicalQuantity>();// currDesc.ProcessEntries(file, exporterIFC, ifcParams, element, elemType);
+                     IFCExtrusionCreationData ifcParams = null;// productWrapper.FindExtrusionCreationParameters(prodHnd);
+                     HashSet<IfcPhysicalQuantity> quantities = new HashSet<IfcPhysicalQuantity>();// currDesc.ProcessEntries(file, exporterIFC, ifcParams, element, elemType);
 #warning ggquery
 
-                        if (quantities.Count > 0)
-                        {
-                           string paramSetName = currDesc.Name;
-                           string methodName = currDesc.MethodOfMeasurement;
+                     if (quantities.Count > 0)
+                     {
+                        string paramSetName = currDesc.Name;
+                        string methodName = currDesc.MethodOfMeasurement;
 
-                           IfcElementQuantity propertySet = new IfcElementQuantity(paramSetName, quantities) { MethodOfMeasurement = methodName };
-                           IfcProduct prodHndToUse = prodHnd;
-                           DescriptionCalculator ifcRDC = currDesc.DescriptionCalculator;
-                           if (ifcRDC != null)
-                           {
-                              //IFCAnyHandle overrideHnd = ifcRDC.RedirectDescription(exporterIFC, element);
-                              //if (!IFCAnyHandleUtil.IsNullOrHasNoValue(overrideHnd))
-                              //   prodHndToUse = overrideHnd;
-                           }
-#warning ggfix
-                           new IfcRelDefinesByProperties(prodHndToUse, propertySet);
+                        IfcElementQuantity propertySet = new IfcElementQuantity(paramSetName, quantities) { MethodOfMeasurement = methodName };
+                        IfcProduct prodHndToUse = prodHnd;
+                        DescriptionCalculator ifcRDC = currDesc.DescriptionCalculator;
+                        if (ifcRDC != null)
+                        {
+                           //IFCAnyHandle overrideHnd = ifcRDC.RedirectDescription(exporterIFC, element);
+                           //if (!IFCAnyHandleUtil.IsNullOrHasNoValue(overrideHnd))
+                           //   prodHndToUse = overrideHnd;
                         }
+#warning ggfix
+                        new IfcRelDefinesByProperties(prodHndToUse, propertySet);
                      }
                   }
                }
             }
-            transaction.Commit();
          }
       }
 
@@ -1273,8 +1257,8 @@ namespace Revit.IFC.Export.Utility
          if (productWrapper == null)
             return;
 
-         using (IFCTransaction transaction = new IFCTransaction(file))
-         {
+         //using (IFCTransaction transaction = new IFCTransaction(file))
+         //{
             //ICollection<IFCAnyHandle> productSet = productWrapper.GetAllObjects();
             //foreach (IFCAnyHandle prodHnd in productSet)
             //{
@@ -1282,9 +1266,9 @@ namespace Revit.IFC.Export.Utility
             //   // if (IFCAnyHandleUtil.IsSubTypeOf(prodHnd, IFCEntityType.IfcElement))
             //   ClassificationUtil.CreateClassification(exporterIFC, file, element, prodHnd);
             //}
+         //   transaction.Commit();
+         //}
 #warning ggFix
-            transaction.Commit();
-         }
       }
 
       /// <summary>
@@ -1293,13 +1277,13 @@ namespace Revit.IFC.Export.Utility
       /// <param name="exporterIFC">The exporterIFC class.</param>
       /// <param name="element">The element.</param>
       /// <param name="productWrapper">The ProductWrapper class that contains the associated IFC handles.</param>
-      public static void ExportRelatedProperties(ExporterIFC exporterIFC, Element element, IfcProduct productWrapper)
+      public static void ExportRelatedProperties(Element element, IfcProduct productWrapper)
       {
-         ExportElementProperties(exporterIFC, element, productWrapper);
+         ExportElementProperties(element, productWrapper);
          if (ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities && !(ExporterCacheManager.ExportOptionsCache.ExportAsCOBIE))
-            ExportElementQuantities(exporterIFC, element, productWrapper);
-         ExportElementClassifications(exporterIFC.GetFile(), element, productWrapper);                     // Exporting ClassificationCode from IFC parameter 
-         ExportElementUniformatClassifications(exporterIFC.GetFile(), element, productWrapper);            // Default classification, if filled out.
+            ExportElementQuantities(element, productWrapper);
+         ExportElementClassifications(null,element, productWrapper);                     // Exporting ClassificationCode from IFC parameter 
+         ExportElementUniformatClassifications(null,element, productWrapper);            // Default classification, if filled out.
       }
 
       /// <summary>

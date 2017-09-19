@@ -897,7 +897,7 @@ namespace Revit.IFC.Export.Exporter
       /// <summary>
       /// Sets the lists of property sets to be exported.  This can be overriden.
       /// </summary>
-      protected virtual void InitializePropertySets()
+      protected internal virtual void InitializePropertySets()
       {
          ExporterInitializer.InitPropertySets(m_PropertySetsToExport);
       }

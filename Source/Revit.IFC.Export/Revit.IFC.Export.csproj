@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Revit.IFC.Export</RootNamespace>
-    <AssemblyName>Revit.IFC.Export</AssemblyName>
+    <AssemblyName>Revit.IFC.ExportPropertyBrowser</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
@@ -328,7 +328,7 @@
     <ProjectReference Include="..\Revit.IFC.Common\Revit.IFC.Common.csproj">
       <Project>{032EA4DC-181F-4453-9F93-E08DE1C07D95}</Project>
       <Name>Revit.IFC.Common</Name>
-      <Private>False</Private>
+      <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -355,7 +355,8 @@
     -->
   <Import Project=".\Revit.IFC.Export.props" />
   <PropertyGroup>
-    <PostBuildEvent>Copy "$(TargetPath)" "C:\Program Files (x86)\Revit IFC 2018\"</PostBuildEvent>
+    <PostBuildEvent>Copy "$(TargetPath)" "C:\Program Files (x86)\Revit IFC 2018\"
+Copy "$(ProjectDir)IFCBrowser.addin" "C:\ProgramData\Autodesk\Revit\Addins\2018"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

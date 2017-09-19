@@ -38,6 +38,7 @@ namespace Revit.IFC.Export
          //    targetPane = null;
          //else targetPane = new DockablePaneId(m_targetGuid);
          //if (m_position == DockPosition.Tabbed)
+
          data.InitialState.TabBehind = Autodesk.Revit.UI.DockablePanes.BuiltInDockablePanes.ProjectBrowser;
          //if (m_position == DockPosition.Floating)
          //{
