@@ -165,6 +165,10 @@ namespace BIM.IFC.Export.UI
          comboBoxLOD.Items.Add(Properties.Resources.DetailLevelLow);
          comboBoxLOD.Items.Add(Properties.Resources.DetailLevelMedium);
          comboBoxLOD.Items.Add(Properties.Resources.DetailLevelHigh);
+
+         comboBoxSitePlacement.Items.Add(new IFCSitePlacementAttributes(0));
+         comboBoxSitePlacement.Items.Add(new IFCSitePlacementAttributes(1));
+         comboBoxSitePlacement.Items.Add(new IFCSitePlacementAttributes(2));
       }
 
       private void UpdatePhaseAttributes(IFCExportConfiguration configuration)
@@ -228,6 +232,14 @@ namespace BIM.IFC.Export.UI
                break;
             }
          }
+         foreach (IFCSitePlacementAttributes attribute in comboBoxSitePlacement.Items.Cast<IFCSitePlacementAttributes>())
+         {
+            if (configuration.SitePlacement == attribute.Level)
+            {
+               comboboxSpaceBoundaries.SelectedItem = attribute;
+               break;
+            }
+         }
 
          UpdatePhaseAttributes(configuration);
 
@@ -251,7 +263,7 @@ namespace BIM.IFC.Export.UI
          checkboxStoreIFCGUID.IsChecked = configuration.StoreIFCGUID;
          checkBoxExportRoomsInView.IsChecked = configuration.ExportRoomsInView;
          comboBoxLOD.SelectedIndex = (int)(Math.Round(configuration.TessellationLevelOfDetail * 4) - 1);
-
+         comboBoxSitePlacement.SelectedIndex = (int)configuration.SitePlacement;
          if ((configuration.IFCVersion == IFCVersion.IFC4 || configuration.IFCVersion == IFCVersion.IFC4DTV || configuration.IFCVersion == IFCVersion.IFC4RV)
             && !configuration.IsBuiltIn)
             checkBox_TriangulationOnly.IsEnabled = true;
@@ -854,7 +866,15 @@ namespace BIM.IFC.Export.UI
             LoadTreeviewFilterElement(treeView_FilterElement);
          }
       }
-
+      private void comboBoxPlacement_SelectionChanged(object sender, SelectionChangedEventArgs e)
+      {
+         IFCSitePlacementAttributes attributes = (IFCSitePlacementAttributes)comboboxIfcType.SelectedItem;
+         IFCExportConfiguration configuration = GetSelectedConfiguration();
+         if (attributes != null && configuration != null)
+         {
+            configuration.SitePlacement = attributes.Level;
+         }
+      }
 
       /// <summary>
       /// Updates the configuration IFCFileType when FileType changed in the combobox.

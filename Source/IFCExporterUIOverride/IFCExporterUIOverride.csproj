@@ -101,6 +101,7 @@
     </Compile>
     <Compile Include="IFCExportResult.cs" />
     <Compile Include="IFCFileFormatAttributes.cs" />
+    <Compile Include="IFCSitePlacementAttributes.cs" />
     <Compile Include="IFCSpaceBoundaryAttributes.cs" />
     <Compile Include="IFCUIUtility.cs" />
     <Compile Include="IFCVersionAttributes.cs" />
