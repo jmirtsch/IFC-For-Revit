@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Reflection;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Events;
+using Autodesk.Windows;
 
 using GeometryGym.Ifc;
 
@@ -14,19 +16,39 @@ namespace Revit.IFC.Export.UI
    public class PropertyBrowser : IExternalApplication
    {
       private ExternalEvent mExEvent;
-
+		internal static DockablePaneId mPropertyPanel = null;
       public Result OnStartup(UIControlledApplication a)
       {
-         DockablePaneProviderData data = new DockablePaneProviderData();
+			string tabName = "IFC";
+			RibbonControl myRibbon = ComponentManager.Ribbon;
+			RibbonTab ggTab = null;
+
+			foreach (RibbonTab tab in myRibbon.Tabs)
+			{
+				if (string.Compare(tab.Id, tabName, true) == 0)
+				{
+					ggTab = tab;
+					break;
+				}
+			}
+			if (ggTab == null)
+				a.CreateRibbonTab(tabName);
+			Autodesk.Revit.UI.RibbonPanel rp = a.CreateRibbonPanel(tabName, "Browser");
+			PushButtonData pbd = new PushButtonData("propBrowser", "Ifc Property Browser", Assembly.GetExecutingAssembly().Location, "Revit.IFC.Export.UI.ShowBrowser");
+			pbd.ToolTip = "Show Property Browser";
+
+			rp.AddItem(pbd);
+			DockablePaneProviderData data = new DockablePaneProviderData();
          Browser browser = new Browser();
          data.FrameworkElement = browser as System.Windows.FrameworkElement;
          data.InitialState = new DockablePaneState();
          data.InitialState.DockPosition = DockPosition.Tabbed;
 
-         DockablePaneId dpid = new DockablePaneId(new Guid("{C7C70722-1B9B-4454-A054-DFD142F23580}"));
-         a.RegisterDockablePane(dpid, "IFC Properties", browser as IDockablePaneProvider);
+			mPropertyPanel = new DockablePaneId(new Guid("{C7C70722-1B9B-4454-A054-DFD142F23580}"));
+         a.RegisterDockablePane(mPropertyPanel, "IFC Properties", browser as IDockablePaneProvider);
+			
 
-        foreach (Autodesk.Windows.RibbonTab tab in Autodesk.Windows.ComponentManager.Ribbon.Tabs)
+			foreach (Autodesk.Windows.RibbonTab tab in Autodesk.Windows.ComponentManager.Ribbon.Tabs)
          {
             if (tab.Id == "Modify")
             {
@@ -44,7 +66,7 @@ namespace Revit.IFC.Export.UI
          return Result.Succeeded;
       }
 
-      void PanelEvent(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+      void PanelEvent(object sender, PropertyChangedEventArgs e)
       {
          if (e.PropertyName == "Title")
          {
@@ -52,8 +74,18 @@ namespace Revit.IFC.Export.UI
          }
       }
    }
+	[Transaction(TransactionMode.Manual)]
+	public class ShowBrowser : IExternalCommand
+	{
+		public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+		{
+			DockablePane dp = commandData.Application.GetDockablePane(PropertyBrowser.mPropertyPanel);
+			dp.Show();
+			return Result.Succeeded;
+		}
+	}
 
-   public class RequestHandler : IExternalEventHandler
+	public class RequestHandler : IExternalEventHandler
    {
       private Request mRequest = new Request();
       public Request Request { get { return mRequest; } }
@@ -95,10 +127,13 @@ namespace Revit.IFC.Export.UI
                products.Add(product);
 
             }
-            
-            if (products.Count < 1)
-               return;
-            mBrowser.mPropertyGrid.SelectedObject = products[0];
+
+				if (products.Count < 1)
+				{
+					mBrowser.mPropertyGrid.SelectedObject = null;
+					return;
+				}
+            mBrowser.mPropertyGrid.SelectedObject = new ProductPropertyGridAdapter( products[0]);
            
             
          }
@@ -109,8 +144,286 @@ namespace Revit.IFC.Export.UI
          return;
       }
    }
+	
+	class ProductPropertyGridAdapter : ICustomTypeDescriptor
+	{
+		private IfcProduct mProduct = null;
 
-   public class Request
+
+		public ProductPropertyGridAdapter(IfcProduct product)
+		{
+			mProduct = product;
+		}
+
+		public string GetComponentName()
+		{
+			return TypeDescriptor.GetComponentName(this, true);
+		}
+
+		public EventDescriptor GetDefaultEvent()
+		{
+			return TypeDescriptor.GetDefaultEvent(this, true);
+		}
+
+		public string GetClassName()
+		{
+			return TypeDescriptor.GetClassName(mProduct, true);
+		}
+
+		public EventDescriptorCollection GetEvents(Attribute[] attributes)
+		{
+			return TypeDescriptor.GetEvents(this, attributes, true);
+		}
+
+		EventDescriptorCollection ICustomTypeDescriptor.GetEvents()
+		{
+			return TypeDescriptor.GetEvents(this, true);
+		}
+
+		public TypeConverter GetConverter()
+		{
+			return TypeDescriptor.GetConverter(this, true);
+		}
+
+		public object GetPropertyOwner(PropertyDescriptor pd)
+		{
+			return this;
+		}
+
+		public AttributeCollection GetAttributes()
+		{
+			return TypeDescriptor.GetAttributes(this, true);
+		}
+
+		public object GetEditor(Type editorBaseType)
+		{
+			return TypeDescriptor.GetEditor(this, editorBaseType, true);
+		}
+
+		public PropertyDescriptor GetDefaultProperty()
+		{
+			return null;
+		}
+
+		PropertyDescriptorCollection ICustomTypeDescriptor.GetProperties()
+		{
+			return ((ICustomTypeDescriptor)this).GetProperties(new Attribute[0]);
+		}
+
+		public PropertyDescriptorCollection GetProperties(Attribute[] attributes)
+		{
+			List<PropertyDescriptor> properties = new List<PropertyDescriptor>();
+			
+			foreach (IfcRelDefinesByProperties rdp in mProduct.IsDefinedBy)
+			{
+				IfcPropertySetDefinition psetdef = rdp.RelatingPropertyDefinition;
+				IfcPropertySet pset = psetdef as IfcPropertySet;
+				if(pset != null)
+				{
+					foreach (IfcProperty property in pset.HasProperties.Values)
+					{
+						IfcPropertySingleValue psv = property as IfcPropertySingleValue;
+						if (psv != null)
+						{
+							IfcValue value = psv.NominalValue;
+							IfcSimpleValue sv = value as IfcSimpleValue;
+							if (sv != null)
+							{
+								IfcInteger integer = sv as IfcInteger;
+								if (integer != null)
+									properties.Add(new PropertySingleValueIntegerDescriptor(psv, psetdef.Name));
+								else
+								{
+									IfcIdentifier id = sv as IfcIdentifier;
+									if(id != null)
+										properties.Add(new PropertySingleValueIdentifierDescriptor(psv, psetdef.Name));
+									else
+									{
+										IfcLabel label = sv as IfcLabel;
+										if (label != null)
+											properties.Add(new PropertySingleValueLabelDescriptor(psv, psetdef.Name));
+										else
+										{
+											IfcText text = sv as IfcText;
+											if (text != null)
+												properties.Add(new PropertySingleValueTextDescriptor(psv, psetdef.Name));
+											else
+											{
+												IfcBoolean boolean = sv as IfcBoolean;
+												if (boolean != null)
+													properties.Add(new PropertySingleValueBooleanDescriptor(psv, psetdef.Name));
+												else
+												{
+													continue;
+												}
+											}
+										}
+									}
+								}
+							}
+							else
+							{
+								IfcMeasureValue measure = value as IfcMeasureValue;
+								if (measure != null)
+									properties.Add(new PropertySingleValueMeasureDescriptor(psv, psetdef.Name));
+							}
+						}
+					}
+				}
+			}
+
+			return new PropertyDescriptorCollection(properties.ToArray());
+		}
+	}
+
+	public class PropertySingleValueIdentifierDescriptor : PropertySingleValueDescriptor
+	{
+		protected IfcIdentifier mValue = null;
+		internal PropertySingleValueIdentifierDescriptor(IfcPropertySingleValue psv, string category)
+			: base(psv, category)
+		{
+			mValue = psv.NominalValue as IfcIdentifier;
+		}
+		public override Type PropertyType { get { return typeof(string); } }
+		public override void SetValue(object component, object value)
+		{
+			mValue.Identifier = value.ToString();
+		}
+		public override object GetValue(object component)
+		{
+			return mValue.Identifier;
+		}
+	}
+	public class PropertySingleValueLabelDescriptor : PropertySingleValueDescriptor
+	{
+		protected IfcLabel mValue = null;
+		internal PropertySingleValueLabelDescriptor(IfcPropertySingleValue psv, string category)
+			: base(psv, category)
+		{
+			mValue = psv.NominalValue as IfcLabel;
+		}
+		public override Type PropertyType { get { return typeof(string); } }
+		public override void SetValue(object component, object value)
+		{
+			mValue.Label = value.ToString();
+		}
+		public override object GetValue(object component)
+		{
+			return mValue.Label;
+		}
+	}
+	public class PropertySingleValueTextDescriptor : PropertySingleValueDescriptor
+	{
+		protected IfcText mValue = null;
+		internal PropertySingleValueTextDescriptor(IfcPropertySingleValue psv, string category)
+			: base(psv, category)
+		{
+			mValue = psv.NominalValue as IfcText;
+		}
+		public override Type PropertyType { get { return typeof(string); } }
+		public override void SetValue(object component, object value)
+		{
+			mValue.Text = value.ToString();
+		}
+		public override object GetValue(object component)
+		{
+			return mValue.Text;
+		}
+	}
+	public class PropertySingleValueIntegerDescriptor : PropertySingleValueDescriptor
+	{
+		protected IfcInteger mValue = null;
+		internal PropertySingleValueIntegerDescriptor(IfcPropertySingleValue psv, string category)
+			: base(psv, category)
+		{
+			mValue = psv.NominalValue as IfcInteger;
+		}
+		public override Type PropertyType { get { return typeof(double); } }
+		public override void SetValue(object component, object value)
+		{
+			mValue.Magnitude = Convert.ToInt32(value);
+		}
+		public override object GetValue(object component)
+		{
+			return mValue.Magnitude;
+		}
+	}
+	public class PropertySingleValueBooleanDescriptor : PropertySingleValueDescriptor
+	{
+		protected IfcBoolean mValue = null;
+		internal PropertySingleValueBooleanDescriptor(IfcPropertySingleValue psv, string category)
+			: base(psv, category)
+		{
+			mValue = psv.NominalValue as IfcBoolean;
+		}
+		public override Type PropertyType { get { return typeof(bool); } }
+		public override void SetValue(object component, object value)
+		{
+			mValue.Boolean = Convert.ToBoolean(value);
+		}
+		public override object GetValue(object component)
+		{
+			return mValue.Boolean;
+		}
+	}
+	public class PropertySingleValueMeasureDescriptor : PropertySingleValueDescriptor
+	{
+		protected IfcMeasureValue mMeasure = null;
+		internal PropertySingleValueMeasureDescriptor(IfcPropertySingleValue psv, string category)
+			:base(psv, category)
+		{
+			mMeasure = psv.NominalValue as IfcMeasureValue;
+		}
+		public override Type PropertyType { get { return typeof(double); } }
+		public override void SetValue(object component, object value)
+		{
+			mMeasure.Measure = Convert.ToDouble(value);
+		}
+		public override object GetValue(object component)
+		{
+			return mMeasure.Measure; 
+		}
+	}
+	public abstract class PropertySingleValueDescriptor : PropertyDescriptor
+	{
+		protected IfcPropertySingleValue mProperty = null;
+		protected string mCategory = "";
+
+		internal PropertySingleValueDescriptor(IfcPropertySingleValue psv, string category)
+			 : base(psv.Name, null)
+		{
+			mProperty = psv;
+			mCategory = category;
+		}
+		
+		public override bool IsReadOnly
+		{
+			get { return false; }
+		}
+
+		public override Type ComponentType
+		{
+			get { return null; }
+		}
+
+		public override bool CanResetValue(object component)
+		{
+			return false;
+		}
+
+		public override void ResetValue(object component)
+		{
+		}
+
+		public override bool ShouldSerializeValue(object component)
+		{
+			return false;
+		}
+		public override string Category => mCategory;
+		public override string Description => mProperty.Description;
+	}
+
+	public class Request
    {
       //public string Take()
       //{

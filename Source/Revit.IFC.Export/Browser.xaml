@@ -10,7 +10,7 @@
       Title="Browser">
 
     <Grid>
-		<xctk:PropertyGrid x:Name="mPropertyGrid" Width="350" Margin="10" >
+		<xctk:PropertyGrid x:Name="mPropertyGrid" Width="350" Margin="10">
 		</xctk:PropertyGrid>
 	</Grid>
 </Page>

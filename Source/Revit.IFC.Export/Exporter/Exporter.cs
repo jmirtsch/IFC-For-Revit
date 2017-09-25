@@ -1946,8 +1946,7 @@ namespace Revit.IFC.Export.Exporter
             trueNorth = new IfcDirection(db, Math.Cos(trueNorthAngleConverted), Math.Sin(trueNorthAngleConverted));
          }
 
-         IfcGeometricRepresentationContext context3D = db.Factory.GeometricRepresentationContext(FactoryIfc.ContextIdentifier.Model);// IfcGeometricRepresentationContext.GeometricContextIdentifier.Model);
-         //IfcGeometricRepresentationContext context3D = db.Factory.GeometricRepresentationContext(IfcGeometricRepresentationContext.GeometricContextIdentifier.Model);
+         IfcGeometricRepresentationContext context3D = db.Factory.GeometricRepresentationContext(IfcGeometricRepresentationContext.GeometricContextIdentifier.Model);
          // CoordinationView2.0 requires sub-contexts of "Axis", "Body", and "Box".  We will use these for regular export also.
          {
             //IFCAnyHandle context3DAxis = IFCInstanceExporter.CreateGeometricRepresentationSubContext(file,
