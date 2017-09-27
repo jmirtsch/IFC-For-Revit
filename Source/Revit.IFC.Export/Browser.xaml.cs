@@ -26,6 +26,7 @@ namespace Revit.IFC.Export
       public Browser()
       {
          InitializeComponent();
+			Menu menu = new Menu();
       }
 
       public void SetupDockablePane(DockablePaneProviderData data)
@@ -48,5 +49,10 @@ namespace Revit.IFC.Export
          //Log.Message("***Intial docking parameters***");
          //Log.Message(APIUtility.GetDockStateSummary(data.InitialState));
       }
-   }
+
+		private void MenuItem_Click(object sender, RoutedEventArgs e)
+		{
+
+		}
+	}
 }

@@ -149,7 +149,6 @@ namespace Revit.IFC.Export.UI
 	{
 		private IfcProduct mProduct = null;
 
-
 		public ProductPropertyGridAdapter(IfcProduct product)
 		{
 			mProduct = product;
@@ -226,165 +225,19 @@ namespace Revit.IFC.Export.UI
 						if (psv != null)
 						{
 							IfcValue value = psv.NominalValue;
-							IfcSimpleValue sv = value as IfcSimpleValue;
-							if (sv != null)
-							{
-								IfcInteger integer = sv as IfcInteger;
-								if (integer != null)
-									properties.Add(new PropertySingleValueIntegerDescriptor(psv, psetdef.Name));
-								else
-								{
-									IfcIdentifier id = sv as IfcIdentifier;
-									if(id != null)
-										properties.Add(new PropertySingleValueIdentifierDescriptor(psv, psetdef.Name));
-									else
-									{
-										IfcLabel label = sv as IfcLabel;
-										if (label != null)
-											properties.Add(new PropertySingleValueLabelDescriptor(psv, psetdef.Name));
-										else
-										{
-											IfcText text = sv as IfcText;
-											if (text != null)
-												properties.Add(new PropertySingleValueTextDescriptor(psv, psetdef.Name));
-											else
-											{
-												IfcBoolean boolean = sv as IfcBoolean;
-												if (boolean != null)
-													properties.Add(new PropertySingleValueBooleanDescriptor(psv, psetdef.Name));
-												else
-												{
-													continue;
-												}
-											}
-										}
-									}
-								}
-							}
-							else
-							{
-								IfcMeasureValue measure = value as IfcMeasureValue;
-								if (measure != null)
-									properties.Add(new PropertySingleValueMeasureDescriptor(psv, psetdef.Name));
+							if(value != null)
+							{ 
+								properties.Add(new PropertySingleValueDescriptor(psv, psetdef.Name));
 							}
 						}
 					}
 				}
 			}
-
 			return new PropertyDescriptorCollection(properties.ToArray());
 		}
 	}
 
-	public class PropertySingleValueIdentifierDescriptor : PropertySingleValueDescriptor
-	{
-		protected IfcIdentifier mValue = null;
-		internal PropertySingleValueIdentifierDescriptor(IfcPropertySingleValue psv, string category)
-			: base(psv, category)
-		{
-			mValue = psv.NominalValue as IfcIdentifier;
-		}
-		public override Type PropertyType { get { return typeof(string); } }
-		public override void SetValue(object component, object value)
-		{
-			mValue.Identifier = value.ToString();
-		}
-		public override object GetValue(object component)
-		{
-			return mValue.Identifier;
-		}
-	}
-	public class PropertySingleValueLabelDescriptor : PropertySingleValueDescriptor
-	{
-		protected IfcLabel mValue = null;
-		internal PropertySingleValueLabelDescriptor(IfcPropertySingleValue psv, string category)
-			: base(psv, category)
-		{
-			mValue = psv.NominalValue as IfcLabel;
-		}
-		public override Type PropertyType { get { return typeof(string); } }
-		public override void SetValue(object component, object value)
-		{
-			mValue.Label = value.ToString();
-		}
-		public override object GetValue(object component)
-		{
-			return mValue.Label;
-		}
-	}
-	public class PropertySingleValueTextDescriptor : PropertySingleValueDescriptor
-	{
-		protected IfcText mValue = null;
-		internal PropertySingleValueTextDescriptor(IfcPropertySingleValue psv, string category)
-			: base(psv, category)
-		{
-			mValue = psv.NominalValue as IfcText;
-		}
-		public override Type PropertyType { get { return typeof(string); } }
-		public override void SetValue(object component, object value)
-		{
-			mValue.Text = value.ToString();
-		}
-		public override object GetValue(object component)
-		{
-			return mValue.Text;
-		}
-	}
-	public class PropertySingleValueIntegerDescriptor : PropertySingleValueDescriptor
-	{
-		protected IfcInteger mValue = null;
-		internal PropertySingleValueIntegerDescriptor(IfcPropertySingleValue psv, string category)
-			: base(psv, category)
-		{
-			mValue = psv.NominalValue as IfcInteger;
-		}
-		public override Type PropertyType { get { return typeof(double); } }
-		public override void SetValue(object component, object value)
-		{
-			mValue.Magnitude = Convert.ToInt32(value);
-		}
-		public override object GetValue(object component)
-		{
-			return mValue.Magnitude;
-		}
-	}
-	public class PropertySingleValueBooleanDescriptor : PropertySingleValueDescriptor
-	{
-		protected IfcBoolean mValue = null;
-		internal PropertySingleValueBooleanDescriptor(IfcPropertySingleValue psv, string category)
-			: base(psv, category)
-		{
-			mValue = psv.NominalValue as IfcBoolean;
-		}
-		public override Type PropertyType { get { return typeof(bool); } }
-		public override void SetValue(object component, object value)
-		{
-			mValue.Boolean = Convert.ToBoolean(value);
-		}
-		public override object GetValue(object component)
-		{
-			return mValue.Boolean;
-		}
-	}
-	public class PropertySingleValueMeasureDescriptor : PropertySingleValueDescriptor
-	{
-		protected IfcMeasureValue mMeasure = null;
-		internal PropertySingleValueMeasureDescriptor(IfcPropertySingleValue psv, string category)
-			:base(psv, category)
-		{
-			mMeasure = psv.NominalValue as IfcMeasureValue;
-		}
-		public override Type PropertyType { get { return typeof(double); } }
-		public override void SetValue(object component, object value)
-		{
-			mMeasure.Measure = Convert.ToDouble(value);
-		}
-		public override object GetValue(object component)
-		{
-			return mMeasure.Measure; 
-		}
-	}
-	public abstract class PropertySingleValueDescriptor : PropertyDescriptor
+	public class PropertySingleValueDescriptor : PropertyDescriptor 
 	{
 		protected IfcPropertySingleValue mProperty = null;
 		protected string mCategory = "";
@@ -421,6 +274,15 @@ namespace Revit.IFC.Export.UI
 		}
 		public override string Category => mCategory;
 		public override string Description => mProperty.Description;
+		public override object GetValue(object component)
+		{
+			return mProperty.NominalValue.Value;
+		}
+		public override Type PropertyType { get { return mProperty.NominalValue.ValueType; } }
+		public override void SetValue(object component, object value)
+		{
+			mProperty.NominalValue.Value = value;
+		}
 	}
 
 	public class Request
