@@ -48,6 +48,14 @@
     <OutputPath>..\..\..\..\..\Slow_Debugx64\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="GeometryGymIFC, Version=0.0.15.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Geometry Gym\source code\GeometryGym\BIM\IFC\GeometryGymIFC\GeometryGymIFC\bin\Debug\GeometryGymIFC.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.XML" />
   </ItemGroup>
@@ -303,7 +311,9 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <!--
     Always Import the appropriate *.OutputPath.targets file BEFORE the
     Revit.CSharp.targets file, otherwise VisualStudio will complain
@@ -311,7 +321,8 @@
     -->
   <Import Project=".\Revit.IFC.Export.props" />
   <PropertyGroup>
-    <PostBuildEvent>Copy "$(TargetPath)" "C:\Program Files (x86)\Revit IFC 2018\"</PostBuildEvent>
+    <PostBuildEvent>Copy "$(TargetPath)" "C:\Program Files (x86)\Revit IFC 2018\"
+Copy "$(TargetDir)\GeometryGymIFC.dll" "C:\Program Files (x86)\Revit IFC 2018\"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

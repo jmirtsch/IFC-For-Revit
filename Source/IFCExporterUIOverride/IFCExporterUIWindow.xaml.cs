@@ -1095,7 +1095,7 @@ namespace BIM.IFC.Export.UI
 
          // Set filter for file extension and default file extension 
          dlg.DefaultExt = ".txt";
-         dlg.Filter = Properties.Resources.UserDefinedParameterSets + @"|*.txt";
+         dlg.Filter = Properties.Resources.UserDefinedParameterSets + @"|*.txt; *.ifcxml";
          if (configuration != null && !string.IsNullOrWhiteSpace(configuration.ExportUserDefinedPsetsFileName))
          {
             string pathName = System.IO.Path.GetDirectoryName(configuration.ExportUserDefinedPsetsFileName);

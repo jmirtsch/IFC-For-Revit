@@ -189,6 +189,7 @@ namespace Revit.IFC.Export.Exporter
                {
                   pSE.RevitParameterName = prop.revitParameterName;
                }
+               pSE.RevitBuiltInParameter = prop.revitBuiltInParameter;
                userDefinedPropetySet.AddEntry(pSE);
             }
             userDefinedPropertySets.Add(userDefinedPropetySet);

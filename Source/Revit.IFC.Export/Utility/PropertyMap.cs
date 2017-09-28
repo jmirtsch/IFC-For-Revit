@@ -24,6 +24,8 @@ using System.Text;
 using System.IO;
 using System.Text.RegularExpressions;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Utility
 {
     /// <summary>
@@ -47,13 +49,15 @@ namespace Revit.IFC.Export.Utility
     }
 
     /// <summary>
-    /// Property struct
+    /// Property 
     /// </summary>
-    public struct PropertyDef
+    public class PropertyDef
     {
         public string propertyName;
         public string propertyDataType;
-        public string revitParameterName;
+        public string revitParameterName = "";
+        public Autodesk.Revit.DB.BuiltInParameter revitBuiltInParameter = Autodesk.Revit.DB.BuiltInParameter.INVALID;
+        public PropertyDef() { }
     }
 
     class PropertyMap
@@ -135,59 +139,112 @@ namespace Revit.IFC.Export.Utility
                 if (!File.Exists(filename))
                     return userDefinedPsets;
 
-                using (StreamReader sr = new StreamReader(filename))
+                string extension = Path.GetExtension(filename);
+                if (string.Compare(extension, ".ifcxml", true) == 0)
                 {
-                    string line;
-
-                    while ((line = sr.ReadLine()) != null)
+                    DatabaseIfc db = new DatabaseIfc(filename);
+                    IfcContext context = db.Context;
+                    if (context == null)
+                        return userDefinedPsets;
+                    foreach (IfcRelDeclares relDeclares in context.Declares)
                     {
-                        line.TrimStart(' ', '\t');
-
-                        if (String.IsNullOrEmpty(line)) continue;
-                        if (line[0] != '#')
+                        foreach (IfcPropertySetTemplate template in relDeclares.RelatedDefinitions.OfType<IfcPropertySetTemplate>())
                         {
-                            // Format: PropertSet: <Pset_name> I[nstance]/T[ype] <IFC entity list separated by ','> 
-                            //              Property_name   Data_type   Revit_Parameter
-                            // ** For now it only works for simple property with single value (datatype supported: Text, Integer, Real and Boolean)
+                            userDefinedPset = new PropertySetDef();
+                            userDefinedPset.applicableElements = new List<string>(template.ApplicableEntity.Split(";".ToCharArray()));
+                            userDefinedPset.propertyDefs = new List<PropertyDef>();
 
-                            string[] split = line.Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                            if (string.Compare(split[0], "PropertySet:", true) == 0)
+                            userDefinedPset.propertySetName = template.Name;
+                            userDefinedPset.applicableTo = (template.TemplateType == IfcPropertySetTemplateTypeEnum.PSET_TYPEDRIVENONLY || template.TemplateType == IfcPropertySetTemplateTypeEnum.QTO_TYPEDRIVENONLY ? TypeOrInstance.Type : TypeOrInstance.Instance);
+                            userDefinedPsets.Add(userDefinedPset);
+                            foreach (IfcPropertyTemplate propTemplate in template.HasPropertyTemplates)
                             {
-                                userDefinedPset = new PropertySetDef();
-                                userDefinedPset.applicableElements = new List<string>();
-                                userDefinedPset.propertyDefs = new List<PropertyDef>();
-
-                                if (split.Count() >= 4)         // Any entry with less than 3 par is malformed
+                                PropertyDef propertyDefUnit = new PropertyDef() { propertyName = propTemplate.Name };
+                                foreach (IfcRelAssociatesClassification classification in propTemplate.HasAssociations.OfType<IfcRelAssociatesClassification>())
                                 {
-                                    userDefinedPset.propertySetName = split[1];
-                                    switch (split[2][0])
+                                    IfcClassificationReference classificationReference = classification.RelatingClassification as IfcClassificationReference;
+                                    if (classificationReference != null)
                                     {
-                                        case 'T': userDefinedPset.applicableTo = TypeOrInstance.Type;
-                                            break;
-                                        case 'I': userDefinedPset.applicableTo = TypeOrInstance.Instance;
-                                            break;
-                                        default: userDefinedPset.applicableTo = TypeOrInstance.Instance;
-                                            break;
+                                        string id = classificationReference.Identification;
+                                        if (id.ToLower().StartsWith("builtinparameter."))
+                                        {
+                                            id = id.Substring(17);
+                                            if (!Enum.TryParse<Autodesk.Revit.DB.BuiltInParameter>(id, out propertyDefUnit.revitBuiltInParameter))
+                                            {
+                                                propertyDefUnit.revitBuiltInParameter = Autodesk.Revit.DB.BuiltInParameter.INVALID;
+                                            }
+                                        }
                                     }
-                                    string[] elemlist = split[3].Split(new char[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                                    foreach (string elem in elemlist)
-                                        userDefinedPset.applicableElements.Add(elem);
-
-                                    userDefinedPsets.Add(userDefinedPset);
                                 }
-                            }
-                            else
-                            {
-                                PropertyDef propertyDefUnit = new PropertyDef();
-                                if (split.Count() >= 2)
+                                IfcSimplePropertyTemplate simple = propTemplate as IfcSimplePropertyTemplate;
+                                if (simple != null)
                                 {
-                                    propertyDefUnit.propertyName = split[0];
-                                    propertyDefUnit.propertyDataType = split[1];
-                                    if (split.Count() >= 3)
-                                        propertyDefUnit.revitParameterName = split[2];
-                                    else
-                                        propertyDefUnit.revitParameterName = propertyDefUnit.propertyName;
-                                    userDefinedPsets.Last().propertyDefs.Add(propertyDefUnit);
+                                    propertyDefUnit.propertyDataType = simple.PrimaryMeasureType;
+                                }
+                                userDefinedPset.propertyDefs.Add(propertyDefUnit);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    using (StreamReader sr = new StreamReader(filename))
+                    {
+                        string line;
+
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            line.TrimStart(' ', '\t');
+
+                            if (String.IsNullOrEmpty(line)) continue;
+                            if (line[0] != '#')
+                            {
+                                // Format: PropertSet: <Pset_name> I[nstance]/T[ype] <IFC entity list separated by ','> 
+                                //              Property_name   Data_type   Revit_Parameter
+                                // ** For now it only works for simple property with single value (datatype supported: Text, Integer, Real and Boolean)
+
+                                string[] split = line.Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                                if (string.Compare(split[0], "PropertySet:", true) == 0)
+                                {
+                                    userDefinedPset = new PropertySetDef();
+                                    userDefinedPset.applicableElements = new List<string>();
+                                    userDefinedPset.propertyDefs = new List<PropertyDef>();
+
+                                    if (split.Count() >= 4)         // Any entry with less than 3 par is malformed
+                                    {
+                                        userDefinedPset.propertySetName = split[1];
+                                        switch (split[2][0])
+                                        {
+                                            case 'T':
+                                                userDefinedPset.applicableTo = TypeOrInstance.Type;
+                                                break;
+                                            case 'I':
+                                                userDefinedPset.applicableTo = TypeOrInstance.Instance;
+                                                break;
+                                            default:
+                                                userDefinedPset.applicableTo = TypeOrInstance.Instance;
+                                                break;
+                                        }
+                                        string[] elemlist = split[3].Split(new char[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                                        foreach (string elem in elemlist)
+                                            userDefinedPset.applicableElements.Add(elem);
+
+                                        userDefinedPsets.Add(userDefinedPset);
+                                    }
+                                }
+                                else
+                                {
+                                    PropertyDef propertyDefUnit = new PropertyDef();
+                                    if (split.Count() >= 2)
+                                    {
+                                        propertyDefUnit.propertyName = split[0];
+                                        propertyDefUnit.propertyDataType = split[1];
+                                        if (split.Count() >= 3)
+                                            propertyDefUnit.revitParameterName = split[2];
+                                        else
+                                            propertyDefUnit.revitParameterName = propertyDefUnit.propertyName;
+                                        userDefinedPsets.Last().propertyDefs.Add(propertyDefUnit);
+                                    }
                                 }
                             }
                         }

@@ -72,10 +72,10 @@ namespace Revit.IFC.Export.Utility
             if (elementId == ElementId.InvalidElementId)
                 throw new ArgumentNullException("element");
 
-            if (String.IsNullOrEmpty(propertyName))
-                throw new ArgumentException("It is null or empty.", "propertyName");
-
             propertyValue = string.Empty;
+            if (String.IsNullOrEmpty(propertyName))
+                return null;
+
 
             Parameter parameter = GetParameterFromName(elementId, null, propertyName);
 
