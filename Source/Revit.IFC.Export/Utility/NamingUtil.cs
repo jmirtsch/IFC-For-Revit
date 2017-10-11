@@ -228,9 +228,18 @@ namespace Revit.IFC.Export.Utility
       /// <returns>
       /// The string contains the description string value.
       /// </returns>
-      public static string GetDescriptionOverride(Element element, string originalValue)
+      public static string GetDescriptionOverride(IFCAnyHandle handle, Element element, string originalValue)
       {
-         string nameOverride = "IfcDescription";
+         Exporter.PropertySet.AttributeSetEntry entry = ExporterCacheManager.AttributeCache.GetEntry(handle, Exporter.PropertySet.PropertyType.Text, "Description");
+         if (entry == null)
+         {
+            return entry.AsString(element);
+         }
+         return GetDescriptionOverride(element, originalValue);
+      }
+      public static string GetDescriptionOverride(Element element, string originalValue)
+      { 
+            string nameOverride = "IfcDescription";
          string overrideValue = GetOverrideStringValue(element, nameOverride, originalValue);
          //GetOverrideStringValue will return the override value from the parameter specified, otherwise it will return the originalValue
          return overrideValue;

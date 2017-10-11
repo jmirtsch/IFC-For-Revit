@@ -45,18 +45,10 @@ namespace Revit.IFC.Export.Exporter
          if (IFCAnyHandleUtil.IsNullOrHasNoValue(memberType))
          {
             IFCFile file = exporterIFC.GetFile();
-            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
-            string stringerTypeGUID = GUIDUtil.CreateGUID(stringerType);
             string stringerTypeName = NamingUtil.GetNameOverride(stringerType, NamingUtil.GetIFCName(stringerType));
-            string stringerTypeDescription = NamingUtil.GetDescriptionOverride(stringerType, null);
-            string stringerTypeTag = NamingUtil.GetTagOverride(stringerType, NamingUtil.CreateIFCElementId(stringerType));
-            string stringerApplicableOccurence = NamingUtil.GetOverrideStringValue(stringerType, "IfcApplicableOccurence", null);
-            string stringerElementType = NamingUtil.GetOverrideStringValue(stringerType, "IfcElementType", null);
 
-            memberType = IFCInstanceExporter.CreateMemberType(file, stringerTypeGUID,
-                ownerHistory, stringerTypeName, stringerTypeDescription, stringerApplicableOccurence, null, null, stringerTypeTag,
-                stringerElementType, IFCMemberType.Stringer);
+            memberType = IFCInstanceExporter.CreateMemberType(file, stringerType, stringerTypeName, null, null, IFCMemberType.Stringer);
             ExporterCacheManager.ElementToHandleCache.Register(stringerType.Id, memberType);
          }
          return memberType;

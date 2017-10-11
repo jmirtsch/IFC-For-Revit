@@ -179,7 +179,7 @@ namespace Revit.IFC.Export.Utility
                                 IfcSimplePropertyTemplate simple = propTemplate as IfcSimplePropertyTemplate;
                                 if (simple != null)
                                 {
-                                    propertyDefUnit.propertyDataType = simple.PrimaryMeasureType;
+                                    propertyDefUnit.propertyDataType = simple.PrimaryMeasureType.ToLower().Replace("ifc","");
                                 }
                                 userDefinedPset.propertyDefs.Add(propertyDefUnit);
                             }

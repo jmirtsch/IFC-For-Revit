@@ -154,45 +154,72 @@ namespace Revit.IFC.Export.Exporter
          foreach (PropertySetDef psetDef in userDefinedPsetDefs)
          {
             // Add Propertyset entry
-            PropertySetDescription userDefinedPropetySet = new PropertySetDescription();
-            userDefinedPropetySet.Name = psetDef.propertySetName;
-            foreach (string elem in psetDef.applicableElements)
+            Description description = null;
+            if (string.Compare(psetDef.propertySetName, "Attribute Mapping", true) == 0)
             {
-               Common.Enums.IFCEntityType ifcEntity;
-               if (Enum.TryParse(elem, out ifcEntity))
+               AttributeSetDescription attributeDescription = new AttributeSetDescription();
+               ExporterCacheManager.AttributeCache.AddAttributeSet(attributeDescription);
+               foreach(PropertyDef prop in psetDef.propertyDefs)
                {
-                  if (exportPre4)
+                  PropertyType dataType;
+
+                  if (!Enum.TryParse(prop.propertyDataType, true, out dataType))
+                     dataType = PropertyType.Text;           // force default to Text/string if the type does not match with any correct datatype
+
+                  AttributeSetEntry aSE = new AttributeSetEntry(prop.propertyName, dataType);
+                  if (string.Compare(prop.propertyName, prop.revitParameterName) != 0)
                   {
-                     IFCEntityType originalEntity = ifcEntity;
-                     IFCCompatibilityType.checkCompatibleType(originalEntity, out ifcEntity);
+                     aSE.RevitParameterName = prop.revitParameterName;
                   }
-
-                  userDefinedPropetySet.EntityTypes.Add(ifcEntity);
-                  // This is intended mostly as a workaround in IFC2x3 for IfcElementType.  Not all elements have an associated type (e.g. IfcRoof),
-                  // but we still want to be able to export type property sets for that element.  So we will manually add these extra types here without
-                  // forcing the user to guess.  If this causes issues, we may come up with a different design.
-                  ISet<IFCEntityType> relatedEntities = GetListOfRelatedEntities(ifcEntity);
-                  if (relatedEntities != null)
-                     userDefinedPropetySet.EntityTypes.UnionWith(relatedEntities);
+                  aSE.RevitBuiltInParameter = prop.revitBuiltInParameter;
+                  attributeDescription.AddEntry(aSE);
                }
+               description = attributeDescription;
             }
-
-            foreach (PropertyDef prop in psetDef.propertyDefs)
+            else
             {
-               PropertyType dataType;
+               PropertySetDescription userDefinedPropertySet = new PropertySetDescription();
+               description = userDefinedPropertySet;
+               userDefinedPropertySet.Name = psetDef.propertySetName;
 
-               if (!Enum.TryParse(prop.propertyDataType, out dataType))
-                  dataType = PropertyType.Text;           // force default to Text/string if the type does not match with any correct datatype
-
-               PropertySetEntry pSE = PropertySetEntry.CreateGenericEntry(dataType, prop.propertyName);
-               if (string.Compare(prop.propertyName, prop.revitParameterName) != 0)
+               foreach (PropertyDef prop in psetDef.propertyDefs)
                {
-                  pSE.RevitParameterName = prop.revitParameterName;
+                  PropertyType dataType;
+
+                  if (!Enum.TryParse(prop.propertyDataType, true, out dataType))
+                     dataType = PropertyType.Text;           // force default to Text/string if the type does not match with any correct datatype
+
+                  PropertySetEntry pSE = PropertySetEntry.CreateGenericEntry(dataType, prop.propertyName);
+                  if (string.Compare(prop.propertyName, prop.revitParameterName) != 0)
+                  {
+                     pSE.RevitParameterName = prop.revitParameterName;
+                  }
+                  pSE.RevitBuiltInParameter = prop.revitBuiltInParameter;
+                  userDefinedPropertySet.AddEntry(pSE);
                }
-               pSE.RevitBuiltInParameter = prop.revitBuiltInParameter;
-               userDefinedPropetySet.AddEntry(pSE);
+				   userDefinedPropertySets.Add(userDefinedPropertySet);
             }
-            userDefinedPropertySets.Add(userDefinedPropetySet);
+
+				foreach (string elem in psetDef.applicableElements)
+				{
+					Common.Enums.IFCEntityType ifcEntity;
+					if (Enum.TryParse(elem, out ifcEntity))
+					{
+						if (exportPre4)
+						{
+							IFCEntityType originalEntity = ifcEntity;
+							IFCCompatibilityType.checkCompatibleType(originalEntity, out ifcEntity);
+						}
+
+						description.EntityTypes.Add(ifcEntity);
+						// This is intended mostly as a workaround in IFC2x3 for IfcElementType.  Not all elements have an associated type (e.g. IfcRoof),
+						// but we still want to be able to export type property sets for that element.  So we will manually add these extra types here without
+						// forcing the user to guess.  If this causes issues, we may come up with a different design.
+						ISet<IFCEntityType> relatedEntities = GetListOfRelatedEntities(ifcEntity);
+						if (relatedEntities != null)
+							description.EntityTypes.UnionWith(relatedEntities);
+					}
+				}
          }
 
          propertySets.Add(userDefinedPropertySets);

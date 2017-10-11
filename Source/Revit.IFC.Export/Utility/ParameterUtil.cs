@@ -760,7 +760,7 @@ namespace Revit.IFC.Export.Utility
         /// <param name="group">The optional parameter group.</param>
         /// <param name="propertyName">The property name.</param>
         /// <returns>The Parameter.</returns>
-        static Parameter GetParameterFromName(ElementId elemId, BuiltInParameterGroup? group, string propertyName)
+        internal static Parameter GetParameterFromName(ElementId elemId, BuiltInParameterGroup? group, string propertyName)
         {
             if (!m_IFCParameters.ContainsKey(elemId))
                 CacheParametersForElement(elemId);

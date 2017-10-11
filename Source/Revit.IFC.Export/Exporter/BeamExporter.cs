@@ -353,16 +353,12 @@ namespace Revit.IFC.Export.Exporter
             return;
          }
 
-         string elemGUID = GUIDUtil.CreateGUID(elementType);
          string elemName = NamingUtil.GetNameOverride(elementType, NamingUtil.GetIFCName(elementType));
-         string elemDesc = NamingUtil.GetDescriptionOverride(elementType, null);
-         string elemTag = NamingUtil.GetTagOverride(elementType, NamingUtil.CreateIFCElementId(elementType));
-         string elemApplicableOccurence = NamingUtil.GetOverrideStringValue(elementType, "IfcApplicableOccurence", null);
-         string elemElementType = NamingUtil.GetOverrideStringValue(elementType, "IfcElementType", null);
+         
 
          // Property sets will be set later.
-         beamType = IFCInstanceExporter.CreateBeamType(exporterIFC.GetFile(), elemGUID, ExporterCacheManager.OwnerHistoryHandle,
-            elemName, elemDesc, elemApplicableOccurence, null, null, elemTag, elemElementType, predefinedType);
+         beamType = IFCInstanceExporter.CreateBeamType(exporterIFC.GetFile(), elementType, 
+            elemName, null, null, predefinedType);
 
          wrapper.RegisterHandleWithElementType(elementType as ElementType, beamType, null);
 

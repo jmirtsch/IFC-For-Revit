@@ -475,10 +475,7 @@ namespace Revit.IFC.Export.Exporter
       public static IFCAnyHandle ExportGenericType(ExporterIFC exporterIFC,
          IFCExportType type,
          string ifcEnumType,
-         string guid,
          string name,
-         string description,
-         string applicableOccurrence,
          HashSet<IFCAnyHandle> propertySets,
          IList<IFCAnyHandle> representationMapList,
          string elemId,
@@ -487,7 +484,6 @@ namespace Revit.IFC.Export.Exporter
          ElementType symbol)
       {
          IFCFile file = exporterIFC.GetFile();
-         IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
          IFCAnyHandle typeHandle = null;
 
          try
@@ -497,7 +493,6 @@ namespace Revit.IFC.Export.Exporter
                      && type != IFCExportType.IfcZone && type != IFCExportType.IfcGroup && type != IFCExportType.IfcGrid)
             {
                string elemIdToUse = elemId;
-               string instanceElementType = null;
                switch (type)
                {
                   case IFCExportType.IfcFurnitureType:
@@ -505,13 +500,14 @@ namespace Revit.IFC.Export.Exporter
                   case IFCExportType.IfcPlateType:
                      {
                         elemIdToUse = NamingUtil.GetTagOverride(instance, NamingUtil.CreateIFCElementId(instance));
-                        instanceElementType = NamingUtil.GetOverrideStringValue(instance, "IfcElementType", typeName);
                         break;
                      }
                }
 
-               typeHandle = ExportGenericTypeBase(file, type, ifcEnumType, guid, ownerHistory, name, description, applicableOccurrence,
-                  null, representationMapList, elemIdToUse, instanceElementType, instance, symbol);
+               typeHandle = ExportGenericTypeBase(file, type, ifcEnumType, name,
+                  null, representationMapList, instance, symbol);
+               IFCAnyHandleUtil.SetAttribute(typeHandle, "Tag", elemIdToUse);
+
             }
          }
          catch
@@ -542,15 +538,9 @@ namespace Revit.IFC.Export.Exporter
       private static IFCAnyHandle ExportGenericTypeBase(IFCFile file,
          IFCExportType originalType,
          string ifcEnumType,
-         string guid,
-         IFCAnyHandle ownerHistory,
          string name,
-         string description,
-         string applicableOccurrence,
          HashSet<IFCAnyHandle> propertySets,
          IList<IFCAnyHandle> representationMapList,
-         string elementTag,
-         string typeName,
          Element instance,
          ElementType symbol)
       {
@@ -649,9 +639,7 @@ namespace Revit.IFC.Export.Exporter
          }
 
          string enumValueAsString = (enumValue == null) ? null : enumValue.ToString();
-         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-                     description, applicableOccurrence, propertySets, representationMapList, elementTag,
-                     typeName, enumValueAsString);
+         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, symbol, file, name, propertySets, representationMapList, enumValueAsString);
       }
 
       /// <summary>

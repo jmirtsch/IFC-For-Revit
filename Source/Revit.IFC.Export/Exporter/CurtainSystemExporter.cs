@@ -690,17 +690,15 @@ namespace Revit.IFC.Export.Exporter
             return;
          }
 
-         string elemGUID = GUIDUtil.CreateGUID(elementType);
          string elemName = NamingUtil.GetNameOverride(elementType, NamingUtil.GetIFCName(elementType));
-         string elemDesc = NamingUtil.GetDescriptionOverride(elementType, null);
-         string elemTag = NamingUtil.GetTagOverride(elementType, NamingUtil.CreateIFCElementId(elementType));
-         string elemApplicableOccurence = NamingUtil.GetOverrideStringValue(elementType, "IfcApplicableOccurence", null);
          string elemElementType = NamingUtil.GetOverrideStringValue(elementType, "IfcElementType", null);
 
          // Property sets will be set later.
-         wallType = IFCInstanceExporter.CreateCurtainWallType(exporterIFC.GetFile(), elemGUID, ExporterCacheManager.OwnerHistoryHandle,
-             elemName, elemDesc, elemApplicableOccurence, null, null, elemTag, elemElementType, (elemElementType != null) ? "USERDEFINED" : "NOTDEFINED");
-
+         wallType = IFCInstanceExporter.CreateCurtainWallType(exporterIFC.GetFile(), elementType,
+             elemName, null, null,  elemElementType, (elemElementType != null) ? "USERDEFINED" : "NOTDEFINED");
+         
+         string elemTag = NamingUtil.GetTagOverride(elementType, NamingUtil.CreateIFCElementId(elementType));
+         IFCAnyHandleUtil.SetAttribute(wallType, "Tag", elemTag);
          wrapper.RegisterHandleWithElementType(elementType as ElementType, wallType, null);
 
          ExporterCacheManager.TypeRelationsCache.Add(wallType, elementHandle);

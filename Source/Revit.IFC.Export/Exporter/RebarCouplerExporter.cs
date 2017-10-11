@@ -71,11 +71,8 @@ namespace Revit.IFC.Export.Exporter
             bool found = currentTypeInfo.IsValid();
             if (!found)
             {
-               string typeGUID = GUIDUtil.CreateGUID(familySymbol);
                string typeName = NamingUtil.GetIFCName(familySymbol);
                string typeObjectType = NamingUtil.CreateIFCObjectName(exporterIFC, familySymbol);
-               string applicableOccurance = NamingUtil.GetObjectTypeOverride(familySymbol, typeObjectType);
-               string typeDescription = NamingUtil.GetDescriptionOverride(familySymbol, null);
                string typeElemId = NamingUtil.CreateIFCElementId(familySymbol);
 
                HashSet<IFCAnyHandle> propertySetsOpt = new HashSet<IFCAnyHandle>();
@@ -90,11 +87,12 @@ namespace Revit.IFC.Export.Exporter
                IFCAnyHandle origin = ExporterUtil.CreateAxis2Placement3D(file); ;
                repMap.Add(IFCInstanceExporter.CreateRepresentationMap(file, origin, bodyData.RepresentationHnd));
 
-               IFCAnyHandle styleHandle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, typeGUID, typeName,
-                   typeDescription, applicableOccurance, propertySetsOpt, repMap, typeElemId, typeName, coupler, familySymbol);
+               IFCAnyHandle styleHandle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, typeName,
+                   propertySetsOpt, repMap, typeElemId, typeName, coupler, familySymbol);
 
                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(styleHandle))
                {
+                  IFCAnyHandleUtil.SetAttribute(styleHandle, "ApplicableOccurence", NamingUtil.GetObjectTypeOverride(familySymbol, typeObjectType));
                   currentTypeInfo.Style = styleHandle;
                   ExporterCacheManager.FamilySymbolToTypeInfoCache.Register(coupler.GetTypeId(), false, exportType, currentTypeInfo);
                }

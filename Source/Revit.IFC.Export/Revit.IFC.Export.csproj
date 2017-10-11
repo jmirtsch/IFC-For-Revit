@@ -90,6 +90,8 @@
     <Compile Include="Exporter\PartExporter.cs" />
     <Compile Include="Exporter\PileExporter.cs" />
     <Compile Include="Exporter\PipeInsulationExporter.cs" />
+    <Compile Include="Exporter\PropertySet\AttributeSetDescription.cs" />
+    <Compile Include="Exporter\PropertySet\AttributeSetEntry.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamLoadBearingCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamMemberSpanCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\CrossSectionAreaCalculator.cs" />
@@ -191,6 +193,7 @@
     <Compile Include="Toolkit\TransformSetter.cs" />
     <Compile Include="Utility\AllocatedGeometryObjectCache.cs" />
     <Compile Include="Utility\AssemblyInstanceCache.cs" />
+    <Compile Include="Utility\AttributeCache.cs" />
     <Compile Include="Utility\BooleanPropertyInfoCache.cs" />
     <Compile Include="Utility\CategoryUtil.cs" />
     <Compile Include="Utility\ClassificationLocationCache.cs" />

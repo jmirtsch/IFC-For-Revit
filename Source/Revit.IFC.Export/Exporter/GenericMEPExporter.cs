@@ -186,20 +186,18 @@ namespace Revit.IFC.Export.Exporter
             bool found = currentTypeInfo.IsValid();
             if (!found)
             {
-               string typeGUID = GUIDUtil.CreateGUID(type);
                string typeName = NamingUtil.GetIFCName(type);
                string typeObjectType = NamingUtil.CreateIFCObjectName(exporterIFC, type);
-               string applicableOccurance = NamingUtil.GetObjectTypeOverride(type, typeObjectType);
-               string typeDescription = NamingUtil.GetDescriptionOverride(type, null);
                string typeElemId = NamingUtil.CreateIFCElementId(type);
 
                HashSet<IFCAnyHandle> propertySetsOpt = new HashSet<IFCAnyHandle>();
                IList<IFCAnyHandle> repMapListOpt = new List<IFCAnyHandle>();
 
-               styleHandle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, typeGUID, typeName,
-                   typeDescription, applicableOccurance, propertySetsOpt, repMapListOpt, typeElemId, typeName, element, type);
+               styleHandle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, typeName,
+                   propertySetsOpt, repMapListOpt, typeElemId, typeName, element, type);
                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(styleHandle))
                {
+                  IFCAnyHandleUtil.SetAttribute(styleHandle, "ApplicableOccurence", NamingUtil.GetObjectTypeOverride(type, typeObjectType));
                   currentTypeInfo.Style = styleHandle;
                   ExporterCacheManager.FamilySymbolToTypeInfoCache.Register(typeId, false, exportType, currentTypeInfo);
                }
