@@ -1,4 +1,23 @@
-﻿using System;
+﻿//
+// BIM IFC library: this library works with Autodesk(R) Revit(R) to export IFC files containing model geometry.
+// Copyright (C) 2012  Autodesk, Inc.
+// 
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+//
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -570,66 +589,6 @@ namespace RevitIFCTools
                   {
                      processSimpleProperty(outF, prop, pDef.Name, pDef.IfcVersion, vspecPDef.SchemaFileVersion, varName);
                   }                    
-
-                  //outF.WriteLine("\t\t\t\tifcPSE = new PropertySetEntry(\"{0}.{1}\");", pDef.Name, prop.Name);
-                  //if (prop.PropertyType != null)
-                  //{
-                  //   if (prop.PropertyType is PropertyEnumeratedValue)
-                  //   {
-                  //      PropertyEnumeratedValue propEnum = prop.PropertyType as PropertyEnumeratedValue;
-                  //      outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.Label;");
-                  //      outF.WriteLine("\t\t\t\tifcPSE.PropertyValueType = PropertyValueType.EnumeratedValue;");
-                  //      outF.WriteLine("\t\t\t\tifcPSE.PropertyEnumerationType = typeof(Revit.IFC.Export.Exporter.PropertySet." + pDef.IfcVersion + "." + propEnum.Name + ");");
-                  //      IList<string> enumItems = new List<string>();
-                  //      foreach (PropertyEnumItem enumItem in propEnum.EnumDef)
-                  //      {
-                  //         string item = HandleInvalidCharacter(enumItem.EnumItem);
-                  //         enumItems.Add(item);
-                  //      }
-                  //      writeEnumFile(pDef.IfcVersion, vspecPDef.SchemaFileVersion, propEnum.Name, enumItems);
-                  //   }
-                  //   else if (prop.PropertyType is PropertyReferenceValue)
-                  //   {
-                  //      PropertyReferenceValue propRef = prop.PropertyType as PropertyReferenceValue;
-                  //      outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.{0};", propRef.RefEntity);
-                  //      outF.WriteLine("\t\t\t\tifcPSE.PropertyValueType = PropertyValueType.ReferenceValue;");
-                  //   }
-                  //   else if (prop.PropertyType is PropertyListValue)
-                  //   {
-                  //      PropertyListValue propList = prop.PropertyType as PropertyListValue;
-                  //      if (propList.DataType != null)
-                  //         outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.{0};", propList.DataType.ToString().Replace("Ifc", "").Replace("Measure", ""));
-                  //      else
-                  //         outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.Label;");    // default to Label if not defined
-
-                  //      outF.WriteLine("\t\t\t\tifcPSE.PropertyValueType = PropertyValueType.ListValue;");
-                  //   }
-                  //   else if (prop.PropertyType is PropertyTableValue)
-                  //   {
-                  //      PropertyTableValue propTab = prop.PropertyType as PropertyTableValue;
-                  //      // TableValue has 2 types: DefiningValue and DefinedValue. This is not fully implemented yet
-                  //      if (propTab.DefinedValueType != null)
-                  //         outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.{0};", propTab.DefinedValueType.ToString().Replace("Ifc", "").Replace("Measure", ""));
-                  //      else
-                  //         outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.Label;");    // default to Label if missing
-
-                  //      outF.WriteLine("\t\t\t\tifcPSE.PropertyValueType = PropertyValueType.TableValue;");
-                  //   }
-                  //   else
-                  //      outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.{0};", prop.PropertyType.ToString().Replace("Ifc", "").Replace("Measure", ""));
-                  //}
-
-                  //if (prop.NameAliases != null)
-                  //{
-                  //   foreach (NameAlias alias in prop.NameAliases)
-                  //   {
-                  //      LanguageType lang = checkAliasLanguage(alias.lang);
-                  //      outF.WriteLine("\t\t\t\tifcPSE.AddLocalizedParameterName(LanguageType.{0}, \"{1}\");", lang, alias.Alias);
-                  //   }
-                  //}
-                  //outF.WriteLine("\t\t\t\tifcPSE.PropertyCalculator = ReferenceCalculator.Instance;");
-                  //outF.WriteLine("\t\t\t\t{0}.AddEntry(ifcPSE);", varName);
-                  //outF.WriteLine("");
                }
                outF.WriteLine("\t\t\t}");
             }

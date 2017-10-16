@@ -1712,7 +1712,7 @@ namespace Revit.IFC.Export.Exporter
             }
             else if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
             {
-               descriptions.Add("ViewDefinition [ReferenceView_V1.0]");
+               descriptions.Add("ViewDefinition [ReferenceView_V1.1]");
             }
             else if (ExporterCacheManager.ExportOptionsCache.ExportAs4DesignTransferView)
             {
@@ -1757,12 +1757,17 @@ namespace Revit.IFC.Export.Exporter
                IFCAnyHandleUtil.UpdateProject(project, projectNumber, projectName, projectStatus);
 
             IFCInstanceExporter.CreateFileSchema(file);
-            IFCInstanceExporter.CreateFileDescription(file, descriptions);
+
             // Get stored File Header information from the UI and use it for export
             IFCFileHeader fHeader = new IFCFileHeader();
             IFCFileHeaderItem fHItem = null;
 
             fHeader.GetSavedFileHeader(document, out fHItem);
+
+            // Add information in the File Description (e.g. Exchange Requirement) that is assigned in the UI
+            if (!string.IsNullOrEmpty(fHItem.FileDescription))
+               descriptions.Add(fHItem.FileDescription);
+            IFCInstanceExporter.CreateFileDescription(file, descriptions);
 
             List<string> author = new List<string>();
             if (String.IsNullOrEmpty(fHItem.AuthorName) == false)

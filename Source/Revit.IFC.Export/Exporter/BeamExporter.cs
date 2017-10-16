@@ -212,10 +212,28 @@ namespace Revit.IFC.Export.Exporter
 
          Transform offsetLCS = new Transform(lcs);
          offsetLCS.Origin = XYZ.Zero;
-         IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, offsetLCS, projDir, false);
-         ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, curve, curveOffset, true);
+         IList<IFCAnyHandle> axis_items = null;
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+         {
+            IFCFile file = exporterIFC.GetFile();
+            IList<int> segmentIndex = null;
+            IList<IList<double>> pointList = GeometryUtil.PointListFromCurve(exporterIFC, curve, null, null, out segmentIndex);
 
-         IList<IFCAnyHandle> axis_items = info.GetCurves();
+            IList<IList<int>> segmentIndexList = new List<IList<int>>();
+            segmentIndexList.Add(segmentIndex);
+
+            IFCAnyHandle pointListHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, pointList);
+            IFCAnyHandle axisHnd = IFCInstanceExporter.CreateIndexedPolyCurve(file, pointListHnd, segmentIndexList, false);
+            axis_items = new List<IFCAnyHandle>();
+            axis_items.Add(axisHnd);
+         }
+         else
+         {
+            IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, offsetLCS, projDir, false);
+            ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, curve, curveOffset, true);
+
+            axis_items = info.GetCurves();
+         }
 
          if (axis_items.Count > 0)
          {

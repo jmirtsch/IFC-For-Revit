@@ -437,6 +437,10 @@ namespace Revit.IFC.Export.Exporter
 
          IList<Transform> repMapTrfList = new List<Transform>();
 
+         Plane basePlane = null;
+         XYZ orig = XYZ.Zero;
+         XYZ extrudeDirection = null;
+
          using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
          {
             // Extra information if we are exporting a door or a window.
@@ -538,10 +542,6 @@ namespace Revit.IFC.Export.Exporter
 
                      if (exportType == IFCExportType.IfcColumnType || exportType == IFCExportType.IfcMemberType || exportType == IFCExportType.IfcBeamType)
                      {
-                        Plane basePlane = null;
-                        XYZ orig = XYZ.Zero;
-                        XYZ extrudeDirection = null;
-
                         // Get a profile name. 
                         string profileName = NamingUtil.GetProfileName(familySymbol);
 
@@ -673,16 +673,9 @@ namespace Revit.IFC.Export.Exporter
                               Transform offset = Transform.Identity;
                               if (!useInstanceGeometry)
                               {
-                                 //if (offsetTransform == null)
-                                 //{
                                  // When it is the case of NOT using instance geometry (i.e. using the original family symbol), use the transform of the familyInstance as the new LCS
                                  // This transform will be set as the Object LCS later on
                                  newLCS = new Transform(trf);
-                                 //}
-                                 //else
-                                 //{
-                                 //   newLCS = new Transform(offsetTransform);
-                                 //}
                               }
                               else
                               {
@@ -797,13 +790,26 @@ namespace Revit.IFC.Export.Exporter
                   typeInfo.Style = typeStyle;
 
                   bool addedMaterialAssociation = false;
-                  if ((exportType == IFCExportType.IfcColumnType) || (exportType == IFCExportType.IfcMemberType) || (exportType == IFCExportType.IfcBeamType))
+                  if ((exportType == IFCExportType.IfcColumnType) || (exportType == IFCExportType.IfcMemberType) || (exportType == IFCExportType.IfcBeamType)
+                     && ExporterCacheManager.ExportOptionsCache.ExportAs4)
                   {
                      if (typeInfo.materialAndProfile != null)
                      {
-                        materialProfileSet = CategoryUtil.GetOrCreateMaterialSet(exporterIFC, familySymbol, typeStyle, typeInfo.materialAndProfile);
+                        materialProfileSet = CategoryUtil.GetOrCreateMaterialSet(exporterIFC, familySymbol, typeInfo.materialAndProfile);
                         CategoryUtil.CreateMaterialAssociation(exporterIFC, familySymbol, typeStyle, typeInfo.materialAndProfile);
                         addedMaterialAssociation = true;
+                     }
+                     else if (basePlane != null && orig != null)
+                     {
+                        // If Material Profile information is somehow missing (e.g. the geometry is exported as Tessellation or BRep. In IFC4 where geometry is restricted
+                        //   the materialprofile information may still be needed), it will try to get the information here:
+                        MaterialAndProfile matNProf = GeometryUtil.GetProfileAndMaterial(exporterIFC, familyInstance, basePlane, orig);
+                        if (matNProf.GetKeyValuePairs().Count > 0)
+                        {
+                           materialProfileSet = CategoryUtil.GetOrCreateMaterialSet(exporterIFC, familySymbol, matNProf);
+                           CategoryUtil.CreateMaterialAssociation(exporterIFC, familySymbol, typeStyle, matNProf);
+                           addedMaterialAssociation = true;
+                        }
                      }
                   }
                   else if (exportType == IFCExportType.IfcPlateType || exportType == IFCExportType.IfcSlab || exportType == IFCExportType.IfcWall)
@@ -839,6 +845,17 @@ namespace Revit.IFC.Export.Exporter
                  && materialProfileSet == null)
             {
                materialProfileSet = ExporterCacheManager.MaterialSetCache.Find(familySymbol.Id);
+               if (ExporterCacheManager.ExportOptionsCache.ExportAs4 && materialProfileSet == null && basePlane != null && orig != null)
+               {
+                  // If Material Profile information is somehow missing (e.g. the geometry is exported as Tessellation or BRep. In IFC4 where geometry is restricted
+                  //   the materialprofile information may still be needed), it will try to get the information here:
+                  MaterialAndProfile matNProf = GeometryUtil.GetProfileAndMaterial(exporterIFC, familyInstance, basePlane, orig);
+                  if (matNProf.GetKeyValuePairs().Count > 0)
+                  {
+                     materialProfileSet = CategoryUtil.GetOrCreateMaterialSet(exporterIFC, familySymbol, matNProf);
+                     CategoryUtil.CreateMaterialAssociation(exporterIFC, familySymbol, typeInfo.Style, matNProf);
+                  }
+               }
             }
 
             if ((exportType == IFCExportType.IfcSlab || exportType == IFCExportType.IfcPlateType || exportType == IFCExportType.IfcWall)
@@ -1028,8 +1045,17 @@ namespace Revit.IFC.Export.Exporter
 
                               if (materialProfileSet != null)
                               {
-                                 IFCAnyHandle matSetUsage = IFCInstanceExporter.CreateMaterialProfileSetUsage(file, materialProfileSet, cardinalPoint, null);
-                                 CategoryUtil.CreateMaterialAssociation(exporterIFC, instanceHandle, matSetUsage);
+                                 // RV does not support IfcMaterialProfileSetUsage, material assignment should be directly to the MaterialProfileSet
+                                 if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+                                 {
+                                    CategoryUtil.CreateMaterialAssociation(exporterIFC, instanceHandle, materialProfileSet);
+                                 }
+                                 else
+                                 {
+                                    IFCAnyHandle matSetUsage = IFCInstanceExporter.CreateMaterialProfileSetUsage(file, materialProfileSet, cardinalPoint, null);
+                                    CategoryUtil.CreateMaterialAssociation(exporterIFC, instanceHandle, matSetUsage);
+                                 }
+
                                  materialAlreadyAssociated = true;
                               }
                            }
@@ -1064,8 +1090,16 @@ namespace Revit.IFC.Export.Exporter
 
                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(materialProfileSet) && RepresentationUtil.RepresentationForStandardCaseFromProduct(exportType, instanceHandle))
                            {
-                              IFCAnyHandle matSetUsage = IFCInstanceExporter.CreateMaterialProfileSetUsage(file, materialProfileSet, null, null);
-                              CategoryUtil.CreateMaterialAssociation(exporterIFC, instanceHandle, matSetUsage);
+                              // RV does not support IfcMaterialProfileSetUsage, material assignment should be directly to the MaterialProfileSet
+                              if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+                              {
+                                 CategoryUtil.CreateMaterialAssociation(exporterIFC, instanceHandle, materialProfileSet);
+                              }
+                              else
+                              {
+                                 IFCAnyHandle matSetUsage = IFCInstanceExporter.CreateMaterialProfileSetUsage(file, materialProfileSet, null, null);
+                                 CategoryUtil.CreateMaterialAssociation(exporterIFC, instanceHandle, matSetUsage);
+                              }
                               materialAlreadyAssociated = true;
                            }
 
@@ -1129,8 +1163,16 @@ namespace Revit.IFC.Export.Exporter
 
                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(materialProfileSet) && RepresentationUtil.RepresentationForStandardCaseFromProduct(exportType, instanceHandle))
                            {
-                              IFCAnyHandle matSetUsage = IFCInstanceExporter.CreateMaterialProfileSetUsage(file, materialProfileSet, null, null);
-                              CategoryUtil.CreateMaterialAssociation(exporterIFC, instanceHandle, matSetUsage);
+                              // RV does not support IfcMaterialProfileSetUsage, material assignment should be directly to the MaterialProfileSet
+                              if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+                              {
+                                 CategoryUtil.CreateMaterialAssociation(exporterIFC, instanceHandle, materialProfileSet);
+                              }
+                              else
+                              {
+                                 IFCAnyHandle matSetUsage = IFCInstanceExporter.CreateMaterialProfileSetUsage(file, materialProfileSet, null, null);
+                                 CategoryUtil.CreateMaterialAssociation(exporterIFC, instanceHandle, matSetUsage);
+                              }
                               materialAlreadyAssociated = true;
                            }
 

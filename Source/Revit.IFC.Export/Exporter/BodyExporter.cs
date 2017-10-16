@@ -312,7 +312,7 @@ namespace Revit.IFC.Export.Exporter
       public static void CreateSurfaceStyleForRepItem(ExporterIFC exporterIFC, Document document, IFCAnyHandle repItemHnd,
           ElementId overrideMatId)
       {
-         if (repItemHnd == null || ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
+         if (repItemHnd == null || ExporterCacheManager.ExportOptionsCache.ExportAs2x2 || ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
             return;
 
          // Restrict material to proper subtypes.
@@ -377,7 +377,8 @@ namespace Revit.IFC.Export.Exporter
       /// <returns>The IfcCurveStyle handle.</returns>
       public static IFCAnyHandle CreateCurveStyleForRepItem(ExporterIFC exporterIFC, IFCAnyHandle repItemHnd, IFCData curveWidth, IFCAnyHandle colorHnd)
       {
-         if (repItemHnd == null)
+         // Styled Item is not allowed in IFC4RV
+         if (repItemHnd == null || !ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
             return null;
 
          IFCAnyHandle presStyleHnd = null;
@@ -2844,6 +2845,7 @@ namespace Revit.IFC.Export.Exporter
 
          MaterialAndProfile materialAndProfile = null;
          HashSet<FootPrintInfo> footprintInfoSet = new HashSet<FootPrintInfo>();
+         Plane extrusionBasePlane = null;
 
          using (IFCTransaction tr = new IFCTransaction(file))
          {
@@ -2868,7 +2870,7 @@ namespace Revit.IFC.Export.Exporter
                         XYZ planeXVec = options.ExtrusionLocalCoordinateSystem.BasisY.Normalize();
                         XYZ planeYVec = options.ExtrusionLocalCoordinateSystem.BasisZ.Normalize();
 
-                        Plane extrusionBasePlane = GeometryUtil.CreatePlaneByXYVectorsAtOrigin(planeXVec, planeYVec);
+                        extrusionBasePlane = GeometryUtil.CreatePlaneByXYVectorsAtOrigin(planeXVec, planeYVec);
                         XYZ extrusionDirection = options.ExtrusionLocalCoordinateSystem.BasisX;
 
                         GenerateAdditionalInfo footprintOrProfile = GenerateAdditionalInfo.None;
@@ -2887,7 +2889,7 @@ namespace Revit.IFC.Export.Exporter
                            // 1. We actually created an extrusion.
                            // 2. We are in the Reference View, and we created a TriangulatedFaceSet.
                            if (extrusionData.BaseRepresentationItems != null && extrusionData.BaseRepresentationItems.Count == 1)
-                        {
+                           {
                               HashSet<ElementId> materialIds = extrusionData.MaterialIds;
 
                               // We skip setting and getting the material id from the exporter as unnecessary.
@@ -2899,8 +2901,8 @@ namespace Revit.IFC.Export.Exporter
                                  bodyData.AddMaterial(matId);
                               bodyData.RepresentationHnd = extrusionData.Handle;
                               bodyData.ShapeRepresentationType = extrusionData.ShapeRepresentationType;
-                           bodyData.materialAndProfile = extrusionData.MaterialAndProfile;
-                           bodyData.FootprintInfo = extrusionData.FootprintInfo;
+                              bodyData.materialAndProfile = extrusionData.MaterialAndProfile;
+                              bodyData.FootprintInfo = extrusionData.FootprintInfo;
 
                               bodyItems.Add(extrusionData.BaseRepresentationItems[0]);
 
@@ -2919,10 +2921,10 @@ namespace Revit.IFC.Export.Exporter
                               }
 
                               hasExtrusions = true;
-                           if ((footprintOrProfile & GenerateAdditionalInfo.GenerateFootprint) != 0)
-                               footprintInfoSet.Add(extrusionData.FootprintInfo);
-                           if ((footprintOrProfile & GenerateAdditionalInfo.GenerateProfileDef) != 0)
-                               materialAndProfile = extrusionData.MaterialAndProfile;
+                              if ((footprintOrProfile & GenerateAdditionalInfo.GenerateFootprint) != 0)
+                                  footprintInfoSet.Add(extrusionData.FootprintInfo);
+                              if ((footprintOrProfile & GenerateAdditionalInfo.GenerateProfileDef) != 0)
+                                  materialAndProfile = extrusionData.MaterialAndProfile;
 
                               extrusionTransaction.Commit();
                            }
@@ -3154,8 +3156,7 @@ namespace Revit.IFC.Export.Exporter
                                      // Get the handle to the extrusion Swept Area needed for creation of IfcMaterialProfile
                                      IFCData extrArea = sweptHandle.GetAttribute("SweptArea");
                                      materialAndProfile.Add(exporterIFC.GetMaterialIdForCurrentExportState(), extrArea.AsInstance());
-                                    //materialAndProfile.LCSTransformUsed = Transform.Identity;      // ?????
-                                    materialAndProfile.PathCurve = simpleSweptSolidAnalyzer.PathCurve;
+                                     materialAndProfile.PathCurve = simpleSweptSolidAnalyzer.PathCurve;
                                  }
                               }
                               else
@@ -3205,7 +3206,7 @@ namespace Revit.IFC.Export.Exporter
                            bodyData.RepresentationHnd =
                                RepresentationUtil.CreateTessellatedRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
                            bodyData.ShapeRepresentationType = ShapeRepresentationType.Tessellation;
-
+                          
                            // If there is footprint information that won't be used for Tessellation, delete them 
                            foreach (FootPrintInfo footPInfo in footprintInfoSet)
                               DeleteOrphanedFootprintHnd(footPInfo.FootPrintHandle);
@@ -3292,6 +3293,7 @@ namespace Revit.IFC.Export.Exporter
                   transformSetter.CreateLocalPlacementFromOffset(exporterIFC, bbox, exportBodyParams, lpOrig, unscaledTrfOrig);
                   tr.Commit();
                }
+
                return brepBodyData;
             }
          }
