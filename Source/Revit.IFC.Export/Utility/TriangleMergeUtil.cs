@@ -254,7 +254,7 @@ namespace Revit.IFC.Export.Utility
          /// </summary>
          /// <param name="inpSeg">Input line segment as vertex indices</param>
          /// <returns>Return index of the matched segment</returns>
-         public int findMatechedIndexSegment(IndexSegment inpSeg)
+         public int findMatchedIndexSegment(IndexSegment inpSeg)
          {
             int idx;
             if (boundaryLinesDict.TryGetValue(inpSeg, out idx))
@@ -270,11 +270,11 @@ namespace Revit.IFC.Export.Utility
 
             if (boundaryLinesDict == null)
             {
-                IEqualityComparer<IndexSegment> segCompare = new SegmentCompare();
-                boundaryLinesDict = new Dictionary<IndexSegment, int>(segCompare);
+               IEqualityComparer<IndexSegment> segCompare = new SegmentCompare();
+               boundaryLinesDict = new Dictionary<IndexSegment, int>(segCompare);
             }
             else
-                boundLinesDictOffset = boundaryLinesDict.Count();
+               boundLinesDictOffset = boundaryLinesDict.Count();
 
             for (int ii = 0; ii < vertxIndices.Count; ++ii)
             {
@@ -488,15 +488,15 @@ namespace Revit.IFC.Export.Utility
             while (currFaceIdx < inputFaceList.Count && currEdgeIdx < firstF.outerAndInnerBoundaries.Count)
             {
                IndexFace currFace = facesColl[inputFaceList[currFaceIdx]];
-               int idx = currFace.findMatechedIndexSegment(reversedEdge);       // Test reversedEdge first as it is the most likely one in our data
+               int idx = currFace.findMatchedIndexSegment(reversedEdge);       // Test reversedEdge first as it is the most likely one in our data
                if (idx < 0)
                {
-                  idx = currFace.findMatechedIndexSegment(firstF.outerAndInnerBoundaries[currEdgeIdx]);
+                  idx = currFace.findMatchedIndexSegment(firstF.outerAndInnerBoundaries[currEdgeIdx]);
                   if (idx >= 0)
                   {
                      // Found match, we need to reversed the order of the data in this face
                      currFace.Reverse();
-                     idx = currFace.findMatechedIndexSegment(reversedEdge);
+                     idx = currFace.findMatchedIndexSegment(reversedEdge);
                   }
                }
                if (idx < 0)
@@ -515,7 +515,7 @@ namespace Revit.IFC.Export.Utility
                      continue;   // skip already known coincide edge
                   int ffIdx = -1;
                   IndexSegment reL = new IndexSegment(currFace.outerAndInnerBoundaries[ci].endPIndex, currFace.outerAndInnerBoundaries[ci].startPindex);
-                  ffIdx = firstF.findMatechedIndexSegment(reL);
+                  ffIdx = firstF.findMatchedIndexSegment(reL);
                   if (ffIdx > 0)
                   {
                      fFaceIdxList.Add(ffIdx);        // List of edges to skip when merging
