@@ -1950,9 +1950,10 @@ namespace Revit.IFC.Export.Exporter
                      bool faceWithHole = triMerge.NoOfHolesInFace(jj) > 0;
 
                      IList<int> outerBound = new List<int>();
-                     for (int kk = 0; kk < triMerge.IndexOuterboundOfFaceAt(jj).Count; ++kk)
+                     IList<int> faceIndexOuterbound = triMerge.IndexOuterboundOfFaceAt(jj);
+                     for (int kk = 0; kk < faceIndexOuterbound.Count; ++kk)
                      {
-                        outerBound.Add(triMerge.IndexOuterboundOfFaceAt(jj)[kk] + 1);   // IFC starts the index at 1
+                        outerBound.Add(faceIndexOuterbound[kk] + 1);   // IFC starts the index at 1
                      }
 
                      if (!faceWithHole)
