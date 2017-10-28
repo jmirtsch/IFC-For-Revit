@@ -355,21 +355,16 @@ namespace Revit.IFC.Export.Exporter
                IFCAnyHandle prodRepHnd = null;
                IFCAnyHandle elemHnd = null;
                string elemGUID = GUIDUtil.CreateGUID(element);
-               string elemName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-               string elemDesc = NamingUtil.GetDescriptionOverride(element, null);
-               string elemType = NamingUtil.GetObjectTypeOverride(element, objectType);
-               string elemTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
                if (element is Wall || element is CurtainSystem || IsLegacyCurtainElement(element))
                {
-                  elemHnd = IFCInstanceExporter.CreateCurtainWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemType, localPlacement, prodRepHnd, elemTag);
+                  elemHnd = IFCInstanceExporter.CreateCurtainWall(exporterIFC, element, elemGUID, ownerHistory, localPlacement, prodRepHnd);
                }
                else if (element is RoofBase)
                {
                   //need to convert the string to enum
                   string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, element);
                   ifcEnumType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
-                  elemHnd = IFCInstanceExporter.CreateRoof(file, elemGUID, ownerHistory, elemName, elemDesc, elemType, localPlacement,
-                      prodRepHnd, elemTag, ifcEnumType);
+                  elemHnd = IFCInstanceExporter.CreateRoof(exporterIFC, element, elemGUID, ownerHistory, localPlacement, prodRepHnd, ifcEnumType);
                }
                else
                {
@@ -695,7 +690,7 @@ namespace Revit.IFC.Export.Exporter
 
          // Property sets will be set later.
          wallType = IFCInstanceExporter.CreateCurtainWallType(exporterIFC.GetFile(), elementType,
-             elemName, null, null,  elemElementType, (elemElementType != null) ? "USERDEFINED" : "NOTDEFINED");
+             null, null,  elemElementType, (elemElementType != null) ? "USERDEFINED" : "NOTDEFINED");
          
          string elemTag = NamingUtil.GetTagOverride(elementType, NamingUtil.CreateIFCElementId(elementType));
          IFCAnyHandleUtil.SetAttribute(wallType, "Tag", elemTag);

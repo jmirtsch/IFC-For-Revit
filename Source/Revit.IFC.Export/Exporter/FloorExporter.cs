@@ -90,14 +90,8 @@ namespace Revit.IFC.Export.Exporter
 
                      string entityType = IFCValidateEntry.GetValidIFCType<IFCSlabType>(slabElement, ifcEnumType, "FLOOR");
 
-                     string ifcName = NamingUtil.GetNameOverride(slabElement, NamingUtil.GetIFCName(slabElement));
-                     string ifcDescription = NamingUtil.GetDescriptionOverride(slabElement, null);
-                     string ifcObjectType = NamingUtil.GetObjectTypeOverride(slabElement, exporterIFC.GetFamilyName());
-                     string ifcTag = NamingUtil.GetTagOverride(slabElement, NamingUtil.CreateIFCElementId(slabElement));
-
-                     IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(file, ifcGUID, ownerHistory, ifcName,
-                             ifcDescription, ifcObjectType, localPlacement, exportParts ? null : prodDefHnd,
-                             ifcTag, entityType);
+                     IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(exporterIFC, slabElement, ifcGUID, ownerHistory, 
+                             localPlacement, exportParts ? null : prodDefHnd, entityType);
 
                      if (IFCAnyHandleUtil.IsNullOrHasNoValue(slabHnd))
                         return;
@@ -377,9 +371,6 @@ namespace Revit.IFC.Export.Exporter
                   for (int ii = 0; ii < numReps; ii++)
                   {
                      string ifcName = NamingUtil.GetNameOverride(floorElement, NamingUtil.GetIFCNamePlusIndex(floorElement, ii == 0 ? -1 : ii + 1));
-                     string ifcDescription = NamingUtil.GetDescriptionOverride(floorElement, null);
-                     string ifcObjectType = NamingUtil.GetObjectTypeOverride(floorElement, exporterIFC.GetFamilyName());
-                     string ifcTag = NamingUtil.GetTagOverride(floorElement, NamingUtil.CreateIFCElementId(floorElement));
 
                      string currentGUID = (ii == 0) ? ifcGUID : GUIDUtil.CreateGUID();
                      IFCAnyHandle localPlacementHnd = exportedAsInternalExtrusion ? localPlacements[ii] : localPlacement;
@@ -390,19 +381,16 @@ namespace Revit.IFC.Export.Exporter
                      switch (exportType)
                      {
                         case IFCExportType.IfcFooting:
-                           slabHnd = IFCInstanceExporter.CreateFooting(file, currentGUID, ownerHistory, ifcName,
-                               ifcDescription, ifcObjectType, localPlacementHnd, exportParts ? null : prodReps[ii],
-                               ifcTag, entityType);
+                           slabHnd = IFCInstanceExporter.CreateFooting(exporterIFC, floorElement, currentGUID, ownerHistory,
+                               localPlacementHnd, exportParts ? null : prodReps[ii], entityType);
                            break;
                         case IFCExportType.IfcCovering:
-                           slabHnd = IFCInstanceExporter.CreateCovering(file, currentGUID, ownerHistory, ifcName,
-                               ifcDescription, ifcObjectType, localPlacementHnd, exportParts ? null : prodReps[ii],
-                               ifcTag, entityType);
+                           slabHnd = IFCInstanceExporter.CreateCovering(exporterIFC, floorElement, currentGUID, ownerHistory, 
+                               localPlacementHnd, exportParts ? null : prodReps[ii], entityType);
                            break;
                         case IFCExportType.IfcRamp:
-                           slabHnd = IFCInstanceExporter.CreateRamp(file, currentGUID, ownerHistory, ifcName,
-                               ifcDescription, ifcObjectType, localPlacementHnd, exportParts ? null : prodReps[ii],
-                               ifcTag, entityType);
+                           slabHnd = IFCInstanceExporter.CreateRamp(exporterIFC, floorElement, currentGUID, ownerHistory, 
+							   localPlacementHnd, exportParts ? null : prodReps[ii], entityType);
                            break;
                         default:
                            //if ((canExportAsInternalExtrusion || exportedAsInternalExtrusion) && ExporterCacheManager.ExportOptionsCache.ExportAs4)
@@ -412,15 +400,14 @@ namespace Revit.IFC.Export.Exporter
                            //        ifcTag, entityType);
                            //}
                            //else
-                           slabHnd = IFCInstanceExporter.CreateSlab(file, currentGUID, ownerHistory, ifcName,
-                               ifcDescription, ifcObjectType, localPlacementHnd, exportParts ? null : prodReps[ii],
-                               ifcTag, entityType);
+                           slabHnd = IFCInstanceExporter.CreateSlab(exporterIFC, floorElement, currentGUID, ownerHistory,
+							   localPlacementHnd, exportParts ? null : prodReps[ii], entityType);
                            break;
                      }
 
                      if (IFCAnyHandleUtil.IsNullOrHasNoValue(slabHnd))
                         return;
-
+							IFCAnyHandleUtil.SetAttribute(slabHnd, "Name", ifcName);
                      if (exportParts)
                         PartExporter.ExportHostPart(exporterIFC, floorElement, slabHnd, productWrapper, placementSetter, localPlacementHnd, null);
 

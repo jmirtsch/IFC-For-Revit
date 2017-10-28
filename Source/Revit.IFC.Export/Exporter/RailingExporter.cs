@@ -97,8 +97,7 @@ namespace Revit.IFC.Export.Exporter
             return returnHostId;
         }
 
-        private static IFCAnyHandle CopyRailingHandle(ExporterIFC exporterIFC, Element elem, ElementId catId, IFCAnyHandle origLocalPlacement,
-            IFCAnyHandle origRailing)
+        private static IFCAnyHandle CopyRailingHandle(ExporterIFC exporterIFC, Element elem, ElementId catId, IFCAnyHandle origLocalPlacement, IFCAnyHandle origRailing)
         {
             IFCFile file = exporterIFC.GetFile();
 
@@ -144,14 +143,8 @@ namespace Revit.IFC.Export.Exporter
 
             string copyGUID = GUIDUtil.CreateGUID();
             IFCAnyHandle copyOwnerHistory = IFCAnyHandleUtil.GetInstanceAttribute(origRailing, "OwnerHistory");
-            string copyName = IFCAnyHandleUtil.GetStringAttribute(origRailing, "Name");
-            string copyDescription = IFCAnyHandleUtil.GetStringAttribute(origRailing, "Description");
-            string copyObjectType = IFCAnyHandleUtil.GetStringAttribute(origRailing, "ObjectType");
-            string copyElemId = IFCAnyHandleUtil.GetStringAttribute(origRailing, "Tag");
 
-            return IFCInstanceExporter.CreateRailing(file, copyGUID, copyOwnerHistory, copyName, copyDescription, copyObjectType,
-                newLocalPlacement, newProdRep,
-                copyElemId, ifcEnumTypeAsString);
+            return IFCInstanceExporter.CreateRailing(exporterIFC, elem, copyGUID, copyOwnerHistory, newLocalPlacement, newProdRep, ifcEnumTypeAsString);
         }
 
         /// <summary>
@@ -346,16 +339,11 @@ namespace Revit.IFC.Export.Exporter
                         IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
                         string instanceGUID = GUIDUtil.CreateGUID(element);
-                        string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-                        string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
-                        string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
-                        string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
                         string railingType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
 
-                        IFCAnyHandle railing = IFCInstanceExporter.CreateRailing(file, instanceGUID, ownerHistory,
-                            instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(),
-                            prodRep, instanceTag, railingType);
+                        IFCAnyHandle railing = IFCInstanceExporter.CreateRailing(exporterIFC, element, instanceGUID, ownerHistory,
+                            ecData.GetLocalPlacement(), prodRep, railingType);
 
                         bool associateToLevel = (hostId == ElementId.InvalidElementId);
 

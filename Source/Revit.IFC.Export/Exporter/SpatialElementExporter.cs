@@ -879,22 +879,7 @@ namespace Revit.IFC.Export.Exporter
 
          IFCLevelInfo levelInfo = exporterIFC.GetLevelInfo(levelId);
 
-         string strSpaceNumber = null;
-         string strSpaceName = null;
-         string strSpaceDesc = null;
-
-         if (ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NUMBER, out strSpaceNumber) == null)
-            strSpaceNumber = null;
-
-         if (ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ROOM_NAME, out strSpaceName) == null)
-            strSpaceName = null;
-
-         if (ParameterUtil.GetStringValueFromElement(spatialElement, BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS, out strSpaceDesc) == null)
-            strSpaceDesc = null;
-
-         string name = strSpaceNumber;
-         string longName = strSpaceName;
-         string desc = strSpaceDesc;
+        
 
          IFCFile file = exporterIFC.GetFile();
 
@@ -930,7 +915,6 @@ namespace Revit.IFC.Export.Exporter
          }
 
          IFCAnyHandle spaceHnd = null;
-         string spatialElementName = null;
          using (IFCExtrusionCreationData extraParams = new IFCExtrusionCreationData())
          {
             extraParams.SetLocalPlacement(localPlacement);
@@ -974,19 +958,15 @@ namespace Revit.IFC.Export.Exporter
                extraParams.ScaledHeight = scaledRoomHeight;
                extraParams.ScaledArea = dArea;
 
-               spatialElementName = NamingUtil.GetNameOverride(spatialElement, name);
-               string spatialElementDescription = NamingUtil.GetDescriptionOverride(spatialElement, desc);
-               string spatialElementObjectType = NamingUtil.GetObjectTypeOverride(spatialElement, null);
-               string spatialElementLongName = NamingUtil.GetLongNameOverride(spatialElement, longName);
+               
 
                double? spaceElevationWithFlooring = null;
                double elevationWithFlooring = 0.0;
                if (ParameterUtil.GetDoubleValueFromElement(spatialElement, null, "IfcElevationWithFlooring", out elevationWithFlooring) != null)
                   spaceElevationWithFlooring = UnitUtil.ScaleLength(elevationWithFlooring);
-               spaceHnd = IFCInstanceExporter.CreateSpace(file, GUIDUtil.CreateGUID(spatialElement),
+               spaceHnd = IFCInstanceExporter.CreateSpace(exporterIFC, spatialElement, GUIDUtil.CreateGUID(spatialElement),
                                              ExporterCacheManager.OwnerHistoryHandle,
-                                             spatialElementName, spatialElementDescription, spatialElementObjectType,
-                                             extraParams.GetLocalPlacement(), repHnd, spatialElementLongName, Toolkit.IFCElementComposition.Element,
+                                             extraParams.GetLocalPlacement(), repHnd, IFCElementComposition.Element,
                                              internalOrExternal, spaceElevationWithFlooring);
 
                transaction2.Commit();
@@ -1026,7 +1006,7 @@ namespace Revit.IFC.Export.Exporter
             bool addonMVDSupportDesignGrossArea = !ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities;
             if (mvdSupportDesignGrossArea && addonMVDSupportDesignGrossArea)
             {
-               bool isDesignGrossArea = (string.Compare(spatialElementName, "GSA Design Gross Area") > 0);
+               bool isDesignGrossArea = (string.Compare(spatialElement.Name, "GSA Design Gross Area") > 0);
                PropertyUtil.CreatePreCOBIEGSAQuantities(exporterIFC, spaceHnd, "GSA Space Areas", (isDesignGrossArea ? "GSA Design Gross Area" : "GSA BIM Area"), dArea);
             }
          }

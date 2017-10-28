@@ -353,12 +353,8 @@ namespace Revit.IFC.Export.Exporter
             return;
          }
 
-         string elemName = NamingUtil.GetNameOverride(elementType, NamingUtil.GetIFCName(elementType));
-         
-
          // Property sets will be set later.
-         beamType = IFCInstanceExporter.CreateBeamType(exporterIFC.GetFile(), elementType, 
-            elemName, null, null, predefinedType);
+         beamType = IFCInstanceExporter.CreateBeamType(exporterIFC.GetFile(), elementType, null, null, predefinedType);
 
          wrapper.RegisterHandleWithElementType(elementType as ElementType, beamType, null);
 
@@ -484,15 +480,10 @@ namespace Revit.IFC.Export.Exporter
                   IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
 
                   string instanceGUID = GUIDUtil.CreateGUID(element);
-                  string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-                  string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
-                  string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, NamingUtil.CreateIFCObjectName(exporterIFC, element));
-                  string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
                   string preDefinedType = "BEAM";     // Default predefined type for Beam
                   preDefinedType = IFCValidateEntry.GetValidIFCType(element, preDefinedType);
 
-                  beam = IFCInstanceExporter.CreateBeam(file, instanceGUID, ExporterCacheManager.OwnerHistoryHandle,
-                      instanceName, instanceDescription, instanceObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, instanceTag, preDefinedType);
+                  beam = IFCInstanceExporter.CreateBeam(exporterIFC, element, instanceGUID, ExporterCacheManager.OwnerHistoryHandle, extrusionCreationData.GetLocalPlacement(), prodRep, preDefinedType);
 
                   IFCAnyHandle mpSetUsage;
                   if (materialProfileSet != null)

@@ -231,7 +231,9 @@ namespace Revit.IFC.Export.Exporter
                 IFCAnyHandle localPlacement = CreateLocalPlacementForConnector(exporterIFC, connector, inElementIFCHandle, flowDir);
                 string portName = "InPort_" + inElement.Id;
                 string portType = "Flow";   // Assigned as Port.Description
-                portIn = IFCInstanceExporter.CreateDistributionPort(ifcFile, guid, ownerHistory, portName, portType, null, localPlacement, null, flowDir);
+                portIn = IFCInstanceExporter.CreateDistributionPort(exporterIFC, null, guid, ownerHistory, localPlacement, null, flowDir);
+				IFCAnyHandleUtil.SetAttribute(portIn, "Name", portName);
+				IFCAnyHandleUtil.SetAttribute(portIn, "Description", portType);
 
                 // Attach the port to the element
                 guid = GUIDUtil.CreateGUID();
@@ -247,10 +249,12 @@ namespace Revit.IFC.Export.Exporter
                 IFCAnyHandle localPlacement = CreateLocalPlacementForConnector(exporterIFC, connected, outElementIFCHandle, flowDir);
                 string portName = "OutPort_" + outElement.Id;
                 string portType = "Flow";   // Assigned as Port.Description
-                portOut = IFCInstanceExporter.CreateDistributionPort(ifcFile, guid, ownerHistory, portName, portType, null, localPlacement, null, flowDir);
+                portOut = IFCInstanceExporter.CreateDistributionPort(exporterIFC, null, guid, ownerHistory, localPlacement, null, flowDir);
+				IFCAnyHandleUtil.SetAttribute(portOut, "Name", portName);
+				IFCAnyHandleUtil.SetAttribute(portOut, "Description", portType);
 
-                // Attach the port to the element
-                guid = GUIDUtil.CreateGUID();
+				// Attach the port to the element
+				guid = GUIDUtil.CreateGUID();
                 string connectionName = outElement.Id + "|" + guid;
                 IFCAnyHandle connectorOut = IFCInstanceExporter.CreateRelConnectsPortToElement(ifcFile, guid, ownerHistory, connectionName, portType, portOut, outElementIFCHandle);
             }

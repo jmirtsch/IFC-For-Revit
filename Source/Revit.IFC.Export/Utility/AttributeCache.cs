@@ -26,42 +26,43 @@ using Revit.IFC.Export.Exporter.PropertySet;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of Attribute Mapping when exporting an element.
-    /// </summary>
-    public class AttributeCache
-    {
-        /// <summary>
-        /// List of Attribute Maps.
-        /// </summary>
-        private List<AttributeSetDescription> m_AttributeSets;
+   /// <summary>
+   /// Used to keep a cache of Attribute Mapping when exporting an element.
+   /// </summary>
+   public class AttributeCache
+   {
+      /// <summary>
+      /// List of Attribute Maps.
+      /// </summary>
+      private List<AttributeSetDescription> m_AttributeSets;
 
-        /// <summary>
-        /// Constructs a default AttributeCache object.
-        /// </summary>
-        public AttributeCache()
-        {
-            m_AttributeSets = new List<AttributeSetDescription>();
-        }
+      /// <summary>
+      /// Constructs a default AttributeCache object.
+      /// </summary>
+      public AttributeCache()
+      {
+         m_AttributeSets = new List<AttributeSetDescription>();
+      }
 
-        public void AddAttributeSet(AttributeSetDescription attribute)
-        {
-            m_AttributeSets.Add(attribute);
-        }
+      public void AddAttributeSet(AttributeSetDescription attribute)
+      {
+         m_AttributeSets.Add(attribute);
+      }
 
-        public AttributeSetEntry GetEntry(IFCAnyHandle handle, PropertyType propertyType, string name)
-        {
-            foreach(AttributeSetDescription set in m_AttributeSets)
+      public List<AttributeEntry> GetEntry(IFCAnyHandle handle, PropertyType propertyType, string name)
+      {
+         List<AttributeEntry> result = new List<AttributeEntry>();
+         foreach (AttributeSetDescription set in m_AttributeSets)
+         {
+            if (set.IsAppropriateType(handle))
             {
-                 if(set.IsAppropriateType(handle))
-                 {
-                      AttributeSetEntry entry = set.GetEntry(propertyType, name);
-                      if (entry != null)
-                          return entry;
-                 }
+               AttributeEntry entry = set.GetEntry(propertyType, name);
+               if (entry != null)
+                  result.Add(entry);
             }
-            return null;
-        }
-        
-    }
+         }
+         return result;
+      }
+
+   }
 }

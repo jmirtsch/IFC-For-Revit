@@ -1137,7 +1137,7 @@ namespace Revit.IFC.Export.Utility
                            locallyUsedGUIDs.Add(guid);
 
                         string paramSetName = currDesc.Name;
-                        propertySet = IFCInstanceExporter.CreatePropertySet(file, guid, ownerHistory, paramSetName, null, props);
+                        propertySet = IFCInstanceExporter.CreatePropertySet(file, guid, ownerHistory, paramSetName, currDesc.DescriptionOfSet, props);
                         if (ifcParams == null)
                            createdPropertySets[propertySetKey] = propertySet;
                      }

@@ -94,7 +94,8 @@ namespace Revit.IFC.Export.Exporter
                   string elementTypeName = NamingUtil.CreateIFCObjectName(exporterIFC, element);
 
                   string typeGuid = GUIDUtil.CreateSubElementGUID(element, (int)IFCHostedSweepSubElements.PipeSegmentType);
-                  IFCAnyHandle style = IFCInstanceExporter.CreatePipeSegmentType(file, null, elementTypeName, null, repMapList, IFCPipeSegmentType.Gutter);
+                  IFCAnyHandle style = IFCInstanceExporter.CreatePipeSegmentType(file, null, null, repMapList, IFCPipeSegmentType.Gutter);
+						IFCAnyHandleUtil.SetAttribute(style, "Name", elementTypeName);
 
                   IFCAnyHandleUtil.SetAttribute(style, "Tag", originalTag);
                   IFCAnyHandleUtil.SetAttribute(style, "GlobalId", typeGuid);
@@ -125,13 +126,9 @@ namespace Revit.IFC.Export.Exporter
                      localPlacementToUse = ecData.GetLocalPlacement();
 
                   string guid = GUIDUtil.CreateGUID(element);
-                  string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-                  string description = NamingUtil.GetDescriptionOverride(element, null);
-                  string objectType = NamingUtil.GetObjectTypeOverride(element, elementTypeName);
-                  string tag = NamingUtil.GetTagOverride(element, originalTag);
 
-                  IFCAnyHandle elemHnd = IFCInstanceExporter.CreateFlowSegment(file, guid,
-                      ExporterCacheManager.OwnerHistoryHandle, name, description, objectType, localPlacementToUse, prodRep, tag);
+                  IFCAnyHandle elemHnd = IFCInstanceExporter.CreateFlowSegment(exporterIFC, element, guid,
+                      ExporterCacheManager.OwnerHistoryHandle, localPlacementToUse, prodRep);
 
                   bool containedInSpace = (roomId != ElementId.InvalidElementId);
                   productWrapper.AddElement(element, elemHnd, setter.LevelInfo, ecData, !containedInSpace);

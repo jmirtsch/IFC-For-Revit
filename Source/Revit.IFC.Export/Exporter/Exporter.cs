@@ -1012,8 +1012,8 @@ namespace Revit.IFC.Export.Exporter
             IFCAnyHandle buildingAddress = CreateIFCAddress(file, document, projectInfo);
 
             string buildingGUID = GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building);
-            IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(file,
-                buildingGUID, ownerHistory, buildingName, buildingDescription, null, buildingPlacement, null, buildingLongName,
+            IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(exporterIFC,
+                buildingGUID, ownerHistory, buildingName, buildingDescription, buildingPlacement, null, buildingLongName,
                 Toolkit.IFCElementComposition.Element, null, null, buildingAddress);
             ExporterCacheManager.BuildingHandle = buildingHandle;
 
@@ -1112,16 +1112,11 @@ namespace Revit.IFC.Export.Exporter
                XYZ orig = new XYZ(0.0, 0.0, elevation);
 
                IFCAnyHandle placement = ExporterUtil.CreateLocalPlacement(file, buildingPlacement, orig, null, null);
-               string levelName = NamingUtil.GetNameOverride(level, level.Name);
-               string objectType = NamingUtil.GetObjectTypeOverride(level, null);
-               string description = NamingUtil.GetDescriptionOverride(level, null);
-               string longName = NamingUtil.GetLongNameOverride(level, level.Name);
-               string levelGUID = GUIDUtil.GetLevelGUID(level);
+
+
                IFCElementComposition ifcComposition = LevelUtil.GetElementCompositionTypeOverride(level);
-               IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(file,
-                   levelGUID, ExporterCacheManager.OwnerHistoryHandle,
-                   levelName, description, objectType, placement,
-                   null, longName, ifcComposition, elevation);
+               IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(exporterIFC, level, ExporterCacheManager.OwnerHistoryHandle,
+                       placement, ifcComposition, elevation);
 
                // Create classification reference when level has classification field name assigned to it
                ClassificationUtil.CreateClassification(exporterIFC, file, level, buildingStorey);
@@ -2188,7 +2183,6 @@ namespace Revit.IFC.Export.Exporter
 
          string projectName = null;
          string projectLongName = null;
-         string projectObjectType = null;
          string projectDescription = null;
          string projectPhase = null;
 
@@ -2206,7 +2200,6 @@ namespace Revit.IFC.Export.Exporter
             projectLongName = (projectInfo != null) ? projectInfo.Name : null;
 
             // Get project description if it is set in the Project info
-            projectObjectType = (projectInfo != null) ? NamingUtil.GetObjectTypeOverride(projectInfo, null) : null;
             projectDescription = (projectInfo != null) ? NamingUtil.GetDescriptionOverride(projectInfo, null) : null;
 
             if (projectInfo != null)
@@ -2214,8 +2207,8 @@ namespace Revit.IFC.Export.Exporter
          }
 
          string projectGUID = GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Project);
-         IFCAnyHandle projectHandle = IFCInstanceExporter.CreateProject(file, projectGUID, ownerHistory,
-             projectName, projectDescription, projectObjectType, projectLongName, projectPhase, repContexts, units);
+         IFCAnyHandle projectHandle = IFCInstanceExporter.CreateProject(exporterIFC, projectInfo, projectGUID, ownerHistory,
+             projectName, projectDescription,  projectLongName, projectPhase, repContexts, units);
          ExporterCacheManager.ProjectHandle = projectHandle;
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAsCOBIE)

@@ -136,10 +136,8 @@ namespace Revit.IFC.Export.Exporter
 
       private static IFCAnyHandle CreateFamilyTypeHandle(ExporterIFC exporterIFC, ref FamilyTypeInfo typeInfo, DoorWindowInfo doorWindowInfo,
           IList<IFCAnyHandle> representations3D, IList<Transform> trfRepMapList, IList<IFCAnyHandle> representations2D,
-          Element familyInstance, ElementType familySymbol, ElementType originalFamilySymbol,
-          bool useInstanceGeometry, bool exportParts,
-          IFCExportType exportType, string revitObjectType, string ifcEnumType,
-          out HashSet<IFCAnyHandle> propertySets)
+          Element familyInstance, ElementType familySymbol, ElementType originalFamilySymbol, bool useInstanceGeometry, bool exportParts,
+          IFCExportType exportType, string ifcEnumType, out HashSet<IFCAnyHandle> propertySets)
       {
          // for many
          propertySets = new HashSet<IFCAnyHandle>();
@@ -209,11 +207,6 @@ namespace Revit.IFC.Export.Exporter
          else
             guid = GUIDUtil.CreateGUID(originalFamilySymbol);
 
-         string symId = NamingUtil.CreateIFCElementId(originalFamilySymbol);
-
-         string gentypeName = NamingUtil.GetNameOverride(familySymbol, revitObjectType);
-         string gentypeTag = NamingUtil.GetTagOverride(familySymbol, symId);
-         string gentypeElementType = NamingUtil.GetOverrideStringValue(familySymbol, "IfcElementType", revitObjectType);
 
          //// This covers many generic types.  If we can't find it in the list here, do custom exports.
          //typeStyle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, guid,
@@ -229,7 +222,7 @@ namespace Revit.IFC.Export.Exporter
                case IFCExportType.IfcBeamType:
                   {
                      string beamType = "Beam";   // temporary. It might be provided through type info? or override
-                     typeStyle = IFCInstanceExporter.CreateBeamType(file, familySymbol, gentypeName,
+                     typeStyle = IFCInstanceExporter.CreateBeamType(file, familySymbol, 
                          propertySets, repMapList, GetBeamType(familyInstance, beamType));
                      break;
                   }
@@ -237,7 +230,7 @@ namespace Revit.IFC.Export.Exporter
                case IFCExportType.IfcColumnType:
                   {
                      string columnType = "Column";
-                     typeStyle = IFCInstanceExporter.CreateColumnType(file, familySymbol, gentypeName,
+                     typeStyle = IFCInstanceExporter.CreateColumnType(file, familySymbol, 
                          propertySets, repMapList, GetColumnType(familyInstance, columnType));
                      break;
                   }
@@ -245,7 +238,7 @@ namespace Revit.IFC.Export.Exporter
                case IFCExportType.IfcMemberType:
                   {
                      string memberType = "Brace";   // temporary. It might be provided through type info? or override
-                     typeStyle = IFCInstanceExporter.CreateMemberType(file, familySymbol, gentypeName,
+                     typeStyle = IFCInstanceExporter.CreateMemberType(file, familySymbol, 
                          propertySets, repMapList, GetMemberType(familyInstance, memberType));
                      break;
                   }
@@ -262,14 +255,14 @@ namespace Revit.IFC.Export.Exporter
                      if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
                      {
                         guid = GUIDUtil.CreateSubElementGUID(originalFamilySymbol, (int)IFCDoorSubElements.DoorType);
-                        typeStyle = IFCInstanceExporter.CreateDoorType(file, originalFamilySymbol, gentypeName,
+                        typeStyle = IFCInstanceExporter.CreateDoorType(file, originalFamilySymbol, 
                            propertySets, repMapList, doorWindowInfo.PreDefinedType, doorWindowInfo.DoorOperationTypeString,
                            paramTakesPrecedence, doorWindowInfo.UserDefinedOperationType);
                      }
                      else
                      {
                         guid = GUIDUtil.CreateSubElementGUID(originalFamilySymbol, (int)IFCDoorSubElements.DoorStyle);
-                        typeStyle = IFCInstanceExporter.CreateDoorStyle(file, originalFamilySymbol, gentypeName,
+                        typeStyle = IFCInstanceExporter.CreateDoorStyle(file, originalFamilySymbol, 
                            propertySets, repMapList, doorWindowInfo.DoorOperationTypeString, DoorWindowUtil.GetDoorStyleConstruction(familyInstance),
                            paramTakesPrecedence, sizeable);
                      }
@@ -277,13 +270,13 @@ namespace Revit.IFC.Export.Exporter
                   }
                case IFCExportType.IfcSpace:
                   {
-                     typeStyle = IFCInstanceExporter.CreateSpaceType(file, familySymbol, gentypeName, propertySets, repMapList);
+                     typeStyle = IFCInstanceExporter.CreateSpaceType(file, familySymbol, propertySets, repMapList);
 
                      break;
                   }
                case IFCExportType.IfcSystemFurnitureElementType:
                   {
-                     typeStyle = IFCInstanceExporter.CreateSystemFurnitureElementType(file, familySymbol, gentypeName, propertySets, repMapList);
+                     typeStyle = IFCInstanceExporter.CreateSystemFurnitureElementType(file, familySymbol, propertySets, repMapList);
 
                      break;
                   }
@@ -304,13 +297,13 @@ namespace Revit.IFC.Export.Exporter
 
                      if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
                      {
-                        typeStyle = IFCInstanceExporter.CreateWindowType(file, originalFamilySymbol, gentypeName,
+                        typeStyle = IFCInstanceExporter.CreateWindowType(file, originalFamilySymbol, 
                            propertySets, repMapList, doorWindowInfo.PreDefinedType, DoorWindowUtil.GetIFCWindowPartitioningType(originalFamilySymbol),
                            paramTakesPrecedence, doorWindowInfo.UserDefinedOperationType);
                      }
                      else
                      {
-                        typeStyle = IFCInstanceExporter.CreateWindowStyle(file, originalFamilySymbol, gentypeName,
+                        typeStyle = IFCInstanceExporter.CreateWindowStyle(file, originalFamilySymbol, 
                            propertySets, repMapList, constructionType, operationType, paramTakesPrecedence, sizeable);
                      }
                      break;
@@ -321,7 +314,7 @@ namespace Revit.IFC.Export.Exporter
                      Revit.IFC.Common.Enums.IFCEntityType IFCTypeEntity;
                      if (!Enum.TryParse(ifcEnumType, out IFCTypeEntity))
                         break;    // The export type is unknown IFC type entity
-                     typeStyle = IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, familySymbol, file, gentypeName, propertySets, repMapList, 
+                     typeStyle = IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, familySymbol, file, propertySets, repMapList, 
                         FamilyExporterUtil.GetPreDefinedType<Toolkit.IFCBuildingElementProxyType>(familyInstance, ifcEnumType).ToString());
                      break;
                   }
@@ -340,12 +333,10 @@ namespace Revit.IFC.Export.Exporter
          {
             // This covers many generic types.  If we can't find it in the list here, do custom exports.
             typeStyle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, 
-               gentypeName, propertySets, repMapList, gentypeTag, gentypeElementType, familyInstance, familySymbol);
+               propertySets, repMapList, familyInstance, familySymbol);
          }
          IFCAnyHandleUtil.SetAttribute(typeStyle, "GlobalId", guid);
          string symbolTag = NamingUtil.GetTagOverride(familySymbol, NamingUtil.CreateIFCElementId(familySymbol));
-         IFCAnyHandleUtil.SetAttribute(typeStyle, "Tag", gentypeTag);
-         IFCAnyHandleUtil.SetAttribute(typeStyle, "ElementType", gentypeElementType);
          return typeStyle;
       }
 
@@ -381,9 +372,8 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="wrapper">The ProductWrapper.</param>
       /// <param name="overrideLevelId">The level id.</param>
       /// <param name="range">The range of this family instance to be exported.</param>
-      public static void ExportFamilyInstanceAsMappedItem(ExporterIFC exporterIFC,
-         FamilyInstance familyInstance, IFCExportType exportType, string ifcEnumType,
-         ProductWrapper wrapper, ElementId overrideLevelId, IFCRange range, IFCAnyHandle parentLocalPlacement)
+      public static void ExportFamilyInstanceAsMappedItem(ExporterIFC exporterIFC, FamilyInstance familyInstance, IFCExportType exportType, 
+		  string ifcEnumType, ProductWrapper wrapper, ElementId overrideLevelId, IFCRange range, IFCAnyHandle parentLocalPlacement)
       {
          bool exportParts = PartExporter.CanExportParts(familyInstance);
          bool isSplit = range != null;
@@ -408,7 +398,6 @@ namespace Revit.IFC.Export.Exporter
          ElementId categoryId = CategoryUtil.GetSafeCategoryId(familySymbol);
 
          string familyName = familySymbol.Name;
-         string revitObjectType = familyName;
 
          // A Family Instance can have its own copy of geometry, or use the symbol's copy with a transform.
          // The routine below tells us whether to use the Instance's copy or the Symbol's copy.
@@ -763,7 +752,7 @@ namespace Revit.IFC.Export.Exporter
                HashSet<IFCAnyHandle> propertySets = null;
                IFCAnyHandle typeStyle = CreateFamilyTypeHandle(exporterIFC, ref typeInfo, doorWindowInfo, representations3D, repMapTrfList, representations2D,
                    familyInstance, familySymbol, originalFamilySymbol, useInstanceGeometry, exportParts,
-                   exportType, revitObjectType, ifcEnumType, out propertySets);
+                   exportType, ifcEnumType, out propertySets);
 
                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(typeStyle))
                {
@@ -948,11 +937,6 @@ namespace Revit.IFC.Export.Exporter
                   else
                      instanceGUID = GUIDUtil.CreateGUID();
 
-                  string instanceName = NamingUtil.GetNameOverride(familyInstance, NamingUtil.GetIFCName(familyInstance));
-                  string instanceDescription = NamingUtil.GetDescriptionOverride(familyInstance, null);
-                  string instanceObjectType = NamingUtil.GetObjectTypeOverride(familyInstance, revitObjectType);
-                  string instanceTag = NamingUtil.GetTagOverride(familyInstance, NamingUtil.CreateIFCElementId(familyInstance));
-
                   IFCAnyHandle overrideLocalPlacement = null;
                   bool isChildInContainer = familyInstance.AssemblyInstanceId != ElementId.InvalidElementId;
 
@@ -967,8 +951,7 @@ namespace Revit.IFC.Export.Exporter
                   }
 
                   instanceHandle = FamilyExporterUtil.ExportGenericInstance(exportType, exporterIFC, familyInstance,
-                     wrapper, setter, extraParams, instanceGUID, ownerHistory, instanceName, instanceDescription, instanceObjectType,
-                     exportParts ? null : repHnd, instanceTag, ifcEnumType, overrideLocalPlacement);
+                     wrapper, setter, extraParams, instanceGUID, ownerHistory, exportParts ? null : repHnd, ifcEnumType, overrideLocalPlacement);
 
                   if (exportParts)
                      PartExporter.ExportHostPart(exporterIFC, familyInstance, instanceHandle, familyProductWrapper, setter, setter.LocalPlacement, overrideLevelId);
@@ -1061,14 +1044,12 @@ namespace Revit.IFC.Export.Exporter
                            IFCAnyHandle doorWindowLocalPlacement = !IFCAnyHandleUtil.IsNullOrHasNoValue(overrideLocalPlacement) ?
                                overrideLocalPlacement : localPlacement;
                            if (exportType == IFCExportType.IfcDoorType)
-                              instanceHandle = IFCInstanceExporter.CreateDoor(file, instanceGUID, ownerHistory,
-                                 instanceName, instanceDescription, instanceObjectType, doorWindowLocalPlacement,
-                                 repHnd, instanceTag, height, width, doorWindowInfo.PreDefinedType, doorWindowInfo.DoorOperationTypeString,
-                                 doorWindowInfo.UserDefinedOperationType);
+                              instanceHandle = IFCInstanceExporter.CreateDoor(exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                                 doorWindowLocalPlacement, repHnd, height, width, doorWindowInfo.PreDefinedType, 
+								 doorWindowInfo.DoorOperationTypeString, doorWindowInfo.UserDefinedOperationType);
                            else if (exportType == IFCExportType.IfcWindowType)
-                              instanceHandle = IFCInstanceExporter.CreateWindow(file, instanceGUID, ownerHistory,
-                                 instanceName, instanceDescription, instanceObjectType, doorWindowLocalPlacement,
-                                 repHnd, instanceTag, height, width, doorWindowInfo.PreDefinedType, DoorWindowUtil.GetIFCWindowPartitioningType(originalFamilySymbol),
+                              instanceHandle = IFCInstanceExporter.CreateWindow(exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                                 doorWindowLocalPlacement, repHnd, height, width, doorWindowInfo.PreDefinedType, DoorWindowUtil.GetIFCWindowPartitioningType(originalFamilySymbol),
                                  doorWindowInfo.UserDefinedPartitioningType);
                            wrapper.AddElement(familyInstance, instanceHandle, setter, extraParams, true);
 
@@ -1160,9 +1141,8 @@ namespace Revit.IFC.Export.Exporter
                            double capacityByNumber = 0.0;
                            ParameterUtil.GetDoubleValueFromElementOrSymbol(familyInstance, "IfcCapacityByNumber", out capacityByNumber);
 
-                           instanceHandle = IFCInstanceExporter.CreateTransportElement(file, instanceGUID, ownerHistory,
-                              instanceName, instanceDescription, instanceObjectType,
-                              localPlacementToUse, repHnd, instanceTag, operationTypeStr, capacityByWeight, capacityByNumber);
+                           instanceHandle = IFCInstanceExporter.CreateTransportElement(exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                              localPlacementToUse, repHnd, operationTypeStr, capacityByWeight, capacityByNumber);
 
                            bool containedInSpace = (roomId != ElementId.InvalidElementId);
                            wrapper.AddElement(familyInstance, instanceHandle, setter, extraParams, !containedInSpace);
@@ -1189,15 +1169,13 @@ namespace Revit.IFC.Export.Exporter
                                  string ifcelementType = null;
                                  ParameterUtil.GetStringValueFromElement(familyInstance.Id, "IfcElementType", out ifcelementType);
 
-                                 instanceHandle = IFCInstanceExporter.CreateDistributionControlElement(file, instanceGUID,
-                                    ownerHistory, instanceName, instanceDescription, instanceObjectType,
-                                    localPlacementToUse, repHnd, instanceTag, ifcelementType);
+                                 instanceHandle = IFCInstanceExporter.CreateDistributionControlElement(exporterIFC, familyInstance, instanceGUID,
+                                    ownerHistory, localPlacementToUse, repHnd, ifcelementType);
                               }
                               else
                               {
-                                 instanceHandle = IFCInstanceExporter.CreateBuildingElementProxy(file, instanceGUID,
-                                    ownerHistory, instanceName, instanceDescription, instanceObjectType,
-                                    localPlacementToUse, repHnd, instanceTag, null);
+                                 instanceHandle = IFCInstanceExporter.CreateBuildingElementProxy(exporterIFC, familyInstance, instanceGUID,
+                                    ownerHistory, localPlacementToUse, repHnd, null);
                               }
 
                               bool containedInSpace = (roomId != ElementId.InvalidElementId);

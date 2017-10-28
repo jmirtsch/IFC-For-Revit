@@ -935,11 +935,6 @@ namespace Revit.IFC.Export.Exporter
                      else
                         elemGUID = GUIDUtil.CreateGUID();
 
-                     string elemName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-                     string elemDesc = NamingUtil.GetDescriptionOverride(element, null);
-                     string elemObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
-                     string elemTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
-
                      string ifcType = IFCValidateEntry.GetValidIFCType(element, null);
 
                      // For Foundation and Retaining walls, allow exporting as IfcFooting instead.
@@ -969,8 +964,8 @@ namespace Revit.IFC.Export.Exporter
                      {
                         if (exportAsFooting)
                         {
-                           wallHnd = IFCInstanceExporter.CreateFooting(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                               localPlacement, exportParts ? null : prodRep, elemTag, ifcType);
+                           wallHnd = IFCInstanceExporter.CreateFooting(exporterIFC, element, elemGUID, ownerHistory,
+                               localPlacement, exportParts ? null : prodRep, ifcType);
                         }
                         else
                         {
@@ -990,13 +985,13 @@ namespace Revit.IFC.Export.Exporter
 
                            if (exportAsWall)
                            {
-                              wallHnd = IFCInstanceExporter.CreateWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                                      localPlacement, prodRep, elemTag, ifcType);
+                              wallHnd = IFCInstanceExporter.CreateWall(exporterIFC, element, elemGUID, ownerHistory, 
+                                      localPlacement, prodRep, ifcType);
                            }
                            else
                            {
-                              wallHnd = IFCInstanceExporter.CreateWallStandardCase(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                                  localPlacement, prodRep, elemTag, ifcType);
+                              wallHnd = IFCInstanceExporter.CreateWallStandardCase(exporterIFC, element, elemGUID, ownerHistory,
+                                  localPlacement, prodRep, ifcType);
                            }
                         }
 
@@ -1034,13 +1029,13 @@ namespace Revit.IFC.Export.Exporter
                      {
                         if (exportAsFooting)
                         {
-                           wallHnd = IFCInstanceExporter.CreateFooting(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                               localPlacement, exportParts ? null : prodRep, elemTag, ifcType);
+                           wallHnd = IFCInstanceExporter.CreateFooting(exporterIFC, element, elemGUID, ownerHistory, 
+                               localPlacement, exportParts ? null : prodRep, ifcType);
                         }
                         else
                         {
-                           wallHnd = IFCInstanceExporter.CreateWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                               localPlacement, exportParts ? null : prodRep, elemTag, ifcType);
+                           wallHnd = IFCInstanceExporter.CreateWall(exporterIFC, element, elemGUID, ownerHistory, 
+                               localPlacement, exportParts ? null : prodRep, ifcType);
                         }
 
                         if (exportParts)
@@ -1298,18 +1293,13 @@ namespace Revit.IFC.Export.Exporter
             else
                elemGUID = GUIDUtil.CreateGUID();
 
-            string elemName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-            string elemDesc = NamingUtil.GetDescriptionOverride(element, null);
-            string elemObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
-            string elemTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
-
             Transform orientationTrf = Transform.Identity;
 
             using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, element, null, orientationTrf, overrideLevelId))
             {
                IFCAnyHandle localPlacement = setter.LocalPlacement;
-               wallHnd = IFCInstanceExporter.CreateWall(file, elemGUID, ownerHistory, elemName, elemDesc, elemObjectType,
-                   localPlacement, null, elemTag, "NOTDEFINED");
+               wallHnd = IFCInstanceExporter.CreateWall(exporterIFC, element, elemGUID, ownerHistory, 
+                   localPlacement, null, "NOTDEFINED");
 
                if (exportParts)
                   PartExporter.ExportHostPart(exporterIFC, element, wallHnd, localWrapper, setter, localPlacement, overrideLevelId);
@@ -1356,15 +1346,12 @@ namespace Revit.IFC.Export.Exporter
             return;
          }
 
-         string elemName = NamingUtil.GetNameOverride(elementType, NamingUtil.GetIFCName(elementType));
 
          // Property sets will be set later.
          if (asFooting)
-            wallType = IFCInstanceExporter.CreateFootingType(exporterIFC.GetFile(), elementType,
-                elemName, null, null, null);
+            wallType = IFCInstanceExporter.CreateFootingType(exporterIFC.GetFile(), elementType, null, null, null);
          else
-            wallType = IFCInstanceExporter.CreateWallType(exporterIFC.GetFile(), elementType, 
-                elemName, null, null, isStandard ? "STANDARD" : "NOTDEFINED");
+            wallType = IFCInstanceExporter.CreateWallType(exporterIFC.GetFile(), elementType,  null, null, isStandard ? "STANDARD" : "NOTDEFINED");
 
          wrapper.RegisterHandleWithElementType(elementType as ElementType, wallType, null);
 

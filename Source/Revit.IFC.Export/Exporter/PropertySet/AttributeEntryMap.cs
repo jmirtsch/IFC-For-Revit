@@ -23,38 +23,44 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Revit.IFC.Export.Toolkit;
+using Revit.IFC.Common.Enums;
 using Revit.IFC.Common.Utility;
 using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
    /// <summary>
-   /// A description mapping of a group of Revit parameters and/or calculated values to an IfcPropertySet.
+   /// Represents a mapping from a Revit parameter or calculated quantity to an IFC property.
    /// </summary>
-   /// <remarks>
-   /// The mapping includes: the name of the IFC property set, the entity type this property to which this set applies,
-   /// and an array of property set entries.  A property set description is valid for only one entity type.
-   /// </remarks>
-   public class AttributeSetDescription : Description
+   public class AttributeEntryMap : EntryMap
    {
-      /// <summary>
-      /// The entries stored in this property set description.
-      /// </summary>
-      Dictionary<Tuple<PropertyType,string>, AttributeEntry> m_Entries = new Dictionary<Tuple<PropertyType,string>, AttributeEntry>();
+      public AttributeEntryMap()
+      {
 
-      /// <summary>
-      /// The entries stored in this property set description.
-      /// </summary>
-      public void AddEntry(AttributeEntry entry)
-      { 
-         m_Entries[new Tuple<PropertyType,string>(entry.PropertyType, entry.PropertyName)] = entry;
+      }
+      public AttributeEntryMap(string name, BuiltInParameter builtInParameter) : base(name, builtInParameter)
+      {
+
       }
 
-      public AttributeEntry GetEntry(PropertyType propertyType, string name)
+
+      internal string AsString(Element element)
       {
-         AttributeEntry result = null;
-         m_Entries.TryGetValue(new Tuple<PropertyType, string>(propertyType, name), out result);
-         return result;
+         if (element == null)
+            return null;
+         Parameter parameter = null;
+         if (RevitBuiltInParameter != BuiltInParameter.INVALID)
+         {
+            parameter = element.get_Parameter(RevitBuiltInParameter);
+         }
+         else
+         {
+            parameter = ParameterUtil.GetParameterFromName(element.Id, null, RevitParameterName);
+         }
+         if (parameter == null)
+            return null;
+         return parameter.AsString();
       }
    }
 }

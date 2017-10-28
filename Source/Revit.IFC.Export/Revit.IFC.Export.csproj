@@ -90,8 +90,9 @@
     <Compile Include="Exporter\PartExporter.cs" />
     <Compile Include="Exporter\PileExporter.cs" />
     <Compile Include="Exporter\PipeInsulationExporter.cs" />
+    <Compile Include="Exporter\PropertySet\AttributeEntryMap.cs" />
     <Compile Include="Exporter\PropertySet\AttributeSetDescription.cs" />
-    <Compile Include="Exporter\PropertySet\AttributeSetEntry.cs" />
+    <Compile Include="Exporter\PropertySet\AttributeEntry.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamLoadBearingCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamMemberSpanCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\CrossSectionAreaCalculator.cs" />
@@ -138,10 +139,12 @@
     <Compile Include="Exporter\PropertySet\ClassificationUtil.cs" />
     <Compile Include="Exporter\PropertySet\ElectricalCurrentPropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\ElectricalVoltagePropertyUtil.cs" />
+    <Compile Include="Exporter\PropertySet\EntryMap.cs" />
     <Compile Include="Exporter\PropertySet\FrequencyPropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\PositivePlaneAnglePropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDescription.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetEntry.cs" />
+    <Compile Include="Exporter\PropertySet\PropertySetEntryMap.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetEntryUtil.cs" />
     <Compile Include="Exporter\PropertySet\PropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\QuantityDescription.cs" />
@@ -156,6 +159,7 @@
     <Compile Include="Exporter\PropertySet\Calculators\SpaceLevelDescriptionCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpacePerimeterCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpaceVolumeCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\QuantityEntryMap.cs" />
     <Compile Include="Exporter\ProxyElementExporter.cs" />
     <Compile Include="Exporter\RailingExporter.cs" />
     <Compile Include="Exporter\RampExporter.cs" />

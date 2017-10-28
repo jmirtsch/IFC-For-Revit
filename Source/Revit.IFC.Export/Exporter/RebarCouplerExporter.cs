@@ -71,9 +71,7 @@ namespace Revit.IFC.Export.Exporter
             bool found = currentTypeInfo.IsValid();
             if (!found)
             {
-               string typeName = NamingUtil.GetIFCName(familySymbol);
                string typeObjectType = NamingUtil.CreateIFCObjectName(exporterIFC, familySymbol);
-               string typeElemId = NamingUtil.CreateIFCElementId(familySymbol);
 
                HashSet<IFCAnyHandle> propertySetsOpt = new HashSet<IFCAnyHandle>();
 
@@ -87,8 +85,7 @@ namespace Revit.IFC.Export.Exporter
                IFCAnyHandle origin = ExporterUtil.CreateAxis2Placement3D(file); ;
                repMap.Add(IFCInstanceExporter.CreateRepresentationMap(file, origin, bodyData.RepresentationHnd));
 
-               IFCAnyHandle styleHandle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, typeName,
-                   propertySetsOpt, repMap, typeElemId, typeName, coupler, familySymbol);
+               IFCAnyHandle styleHandle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, propertySetsOpt, repMap, coupler, familySymbol);
 
                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(styleHandle))
                {
@@ -108,12 +105,6 @@ namespace Revit.IFC.Export.Exporter
             for (int idx = 0; idx < nCouplerQuantity; idx++)
             {
                string instanceGUID = GUIDUtil.CreateSubElementGUID(coupler, idx);
-               string instanceName = NamingUtil.GetNameOverride(coupler, origInstanceName + ": " + idx);
-               string objectType = NamingUtil.CreateIFCObjectName(exporterIFC, coupler);
-               string instanceObjectType = NamingUtil.GetObjectTypeOverride(coupler, objectType);
-               string instanceDescription = NamingUtil.GetDescriptionOverride(coupler, null);
-               string instanceElemId = NamingUtil.CreateIFCElementId(coupler);
-               string instanceTag = NamingUtil.GetTagOverride(coupler, NamingUtil.CreateIFCElementId(coupler));
 
                IFCAnyHandle style = currentTypeInfo.Style;
                if (IFCAnyHandleUtil.IsNullOrHasNoValue(style))
@@ -139,8 +130,10 @@ namespace Revit.IFC.Export.Exporter
                using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, coupler, trf, null))
                {
                   IFCAnyHandle instanceHandle = null;
-                  instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(Common.Enums.IFCEntityType.IfcMechanicalFastener, file, instanceGUID, ownerHistory,
-                                      instanceName, instanceDescription, instanceObjectType, setter.LocalPlacement, productRepresentation, instanceTag);
+                  instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(Common.Enums.IFCEntityType.IfcMechanicalFastener, exporterIFC, coupler, instanceGUID, ownerHistory,
+                                      setter.LocalPlacement, productRepresentation);
+               string instanceName = NamingUtil.GetNameOverride(instanceHandle, coupler, origInstanceName + ": " + idx);
+						IFCAnyHandleUtil.SetAttribute(instanceHandle, "Name", instanceName);
 
                   if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
                   {

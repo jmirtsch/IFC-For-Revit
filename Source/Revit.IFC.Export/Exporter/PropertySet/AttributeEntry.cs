@@ -33,52 +33,47 @@ namespace Revit.IFC.Export.Exporter.PropertySet
    /// <summary>
    /// Represents a mapping from a Revit parameter or calculated quantity to an IFC property.
    /// </summary>
-   public class AttributeSetEntry : Entry
+   public class AttributeEntry : Entry<AttributeEntryMap>
    {
       /// <summary>
       /// The type of the IFC property set entry. Default is label.
       /// </summary>
       PropertyType m_PropertyType = PropertyType.Label;
 
-		public PropertyType PropertyType
-		{
-			get
-			{
-				return m_PropertyType;
-			}
-			private set
-			{
-				m_PropertyType = value;
-			}
-		}
-		/// <summary>
-		/// Constructs a PropertySetEntry object.
-		/// </summary>
-		/// <param name="revitParameterName">
-		/// Revit parameter name.
-		/// </param>
-		internal AttributeSetEntry(string name, PropertyType propertyType) : base(name)
+      public PropertyType PropertyType
+      {
+         get
+         {
+            return m_PropertyType;
+         }
+         private set
+         {
+            m_PropertyType = value;
+         }
+      }
+      /// <summary>
+      /// Constructs a PropertySetEntry object.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// Revit parameter name.
+      /// </param>
+      internal AttributeEntry(string name, PropertyType propertyType, List<AttributeEntryMap> mapping) : base(name, mapping)
       {
          PropertyType = propertyType;
       }
+
 
       internal string AsString(Element element)
       {
          if (element == null)
             return null;
-         Parameter parameter = null;
-         if (RevitBuiltInParameter != BuiltInParameter.INVALID)
+         foreach (AttributeEntryMap entry in m_Entries)
          {
-            parameter = element.get_Parameter(RevitBuiltInParameter);
+            string result = entry.AsString(element);
+            if (result != null)
+               return result;
          }
-         else
-         {
-            parameter = ParameterUtil.GetParameterFromName(element.Id, null, RevitParameterName);
-         }
-         if (parameter == null)
-            return null;
-         return parameter.AsString();
-         
+         return null;
       }
    }
 }

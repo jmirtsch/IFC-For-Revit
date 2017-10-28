@@ -186,15 +186,12 @@ namespace Revit.IFC.Export.Exporter
             bool found = currentTypeInfo.IsValid();
             if (!found)
             {
-               string typeName = NamingUtil.GetIFCName(type);
                string typeObjectType = NamingUtil.CreateIFCObjectName(exporterIFC, type);
-               string typeElemId = NamingUtil.CreateIFCElementId(type);
 
                HashSet<IFCAnyHandle> propertySetsOpt = new HashSet<IFCAnyHandle>();
                IList<IFCAnyHandle> repMapListOpt = new List<IFCAnyHandle>();
 
-               styleHandle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, typeName,
-                   propertySetsOpt, repMapListOpt, typeElemId, typeName, element, type);
+               styleHandle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, propertySetsOpt, repMapListOpt, element, type);
                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(styleHandle))
                {
                   IFCAnyHandleUtil.SetAttribute(styleHandle, "ApplicableOccurence", NamingUtil.GetObjectTypeOverride(type, typeObjectType));
@@ -209,12 +206,7 @@ namespace Revit.IFC.Export.Exporter
          }
 
          string instanceGUID = GUIDUtil.CreateGUID(element);
-         string instanceName = NamingUtil.GetIFCName(element);
-         string objectType = NamingUtil.CreateIFCObjectName(exporterIFC, element);
-         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
-         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
-         string instanceElemId = NamingUtil.CreateIFCElementId(element);
-         string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
+         
 
          bool roomRelated = !FamilyExporterUtil.IsDistributionFlowElementSubType(exportType);
 
@@ -235,8 +227,8 @@ namespace Revit.IFC.Export.Exporter
          if (Enum.TryParse(exportEntityStr, out exportEntity))
          {
             // For MEP object creation
-            instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(exportEntity, file, instanceGUID, ownerHistory,
-               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
+            instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(exportEntity, exporterIFC, element, instanceGUID, ownerHistory,
+               localPlacementToUse, productRepresentation);
          }
 
          if (IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
