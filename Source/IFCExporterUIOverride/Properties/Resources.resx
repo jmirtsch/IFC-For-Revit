@@ -693,4 +693,20 @@
   <data name="ExportIFC" xml:space="preserve">
     <value>Export IFC</value>
   </data>
+  <data name="LoadSetup" xml:space="preserve">
+    <value>Load Setup from Disk</value>
+  </data>
+  <data name="SaveSelectedSetup" xml:space="preserve">
+    <value>Save Selected Setup</value>
+  </data>
+  <data name="ExportSelectedSetup" xml:space="preserve">
+    <value>Export Selected Setup</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="load" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\load.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="save" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\save.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>
