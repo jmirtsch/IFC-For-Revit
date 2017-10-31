@@ -1925,11 +1925,35 @@ namespace Revit.IFC.Export.Exporter
          double precision = Math.Pow(10.0, exponent);
 
          IFCFile file = exporterIFC.GetFile();
-         IFCAnyHandle origin = ExporterIFCUtils.GetGlobal3DOriginHandle();
-         IFCAnyHandle wcs = IFCInstanceExporter.CreateAxis2Placement3D(file, origin, null, null);
+         IFCAnyHandle wcsOrigin = ExporterIFCUtils.GetGlobal3DOriginHandle();
 
-         double trueNorthAngleInRadians;
-         ExporterUtil.GetSafeProjectPositionAngle(doc, out trueNorthAngleInRadians);
+         ExportOptionsCache.SiteTransformBasis transformBasis = ExporterCacheManager.ExportOptionsCache.SiteTransformation;
+
+         double trueNorthAngleInRadians = 0;
+         IFCAnyHandle wcs = null;
+         if (transformBasis == ExportOptionsCache.SiteTransformBasis.Shared)
+         {
+            wcs = IFCInstanceExporter.CreateAxis2Placement3D(file, wcsOrigin, null, null);
+         }
+         else
+         {
+            ExporterUtil.GetSafeProjectPositionAngle(doc, out trueNorthAngleInRadians);
+            ProjectLocation projLocation = doc.ActiveProjectLocation;
+            Transform siteSharedCoordinatesTrf = projLocation == null ? Transform.Identity : projLocation.GetTransform().Inverse;
+            XYZ unscaledOrigin = new XYZ(0, 0, 0);
+		  if (transformBasis == ExportOptionsCache.SiteTransformBasis.Project)
+            {
+               BasePoint basePoint = new FilteredElementCollector(doc).WherePasses(new ElementCategoryFilter(BuiltInCategory.OST_ProjectBasePoint)).First() as BasePoint;
+               if (basePoint != null)
+               {
+                  BoundingBoxXYZ bbox = basePoint.get_BoundingBox(null);
+                  unscaledOrigin = bbox.Min;
+               }
+            }
+            unscaledOrigin = siteSharedCoordinatesTrf.OfPoint(unscaledOrigin);
+            XYZ orig = UnitUtil.ScaleLength(unscaledOrigin);
+            wcs = ExporterUtil.CreateAxis2Placement3D(file, orig, siteSharedCoordinatesTrf.BasisZ, siteSharedCoordinatesTrf.BasisX);
+         }
 
          // CoordinationView2.0 requires that we always export true north, even if it is the same as project north.
          IFCAnyHandle trueNorth = null;
