@@ -693,4 +693,7 @@
   <data name="ExportIFC" xml:space="preserve">
     <value>Export IFC</value>
   </data>
+  <data name="SiteTransformOrigin" xml:space="preserve">
+    <value>Basis for Site Transform placement</value>
+  </data>
 </root>

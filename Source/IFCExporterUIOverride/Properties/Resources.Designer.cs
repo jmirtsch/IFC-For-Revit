@@ -1501,6 +1501,15 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Basis for Site Transform placement.
+        /// </summary>
+        public static string SiteTransformOrigin {
+            get {
+                return ResourceManager.GetString("SiteTransformOrigin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Source file name.
         /// </summary>
         public static string SourceFileName {

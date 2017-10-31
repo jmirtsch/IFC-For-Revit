@@ -29,6 +29,7 @@
 					<CheckBox Content="{x:Static p:Resources.SplitWallsColumsDuctsByLevel}" Margin="-51,151,201,0" Name="checkboxSplitWalls" Checked="checkboxSplitWalls_Checked" Unchecked="checkboxSplitWalls_Checked" Height="16" VerticalAlignment="Top" Grid.ColumnSpan="3"/>
 					<Button Content="{x:Static p:Resources.FileHeaderInformation}" Height="23" Margin="99,178,-51,0" Name="fileHeaderInformation" Click="buttonFileHeader_Click" VerticalAlignment="Top" RenderTransformOrigin="0.505,0.367" Grid.Column="2"/>
 					<Button Content="{x:Static p:Resources.Address}" Height="23" Margin="99,214,-51,0" Name="addressInformation" Click="buttonAddressInformation_Click" VerticalAlignment="Top"  Grid.Column="2" HorizontalAlignment="Left" Width="231"/>
+					<Label Content="{x:Static p:Resources.SiteTransformOrigin}" Height="26" HorizontalAlignment="Left" Margin="-51,220,0,0" x:Name="label_SiteOrigin" VerticalAlignment="Top" Width="335" Grid.ColumnSpan="3" RenderTransformOrigin="0.738,0.586"/>
 					<ComboBox Name="comboBoxSitePlacement" HorizontalAlignment="Left" VerticalAlignment="Top" Width="199"  Height="25"  Margin="0,251,0,0" SelectionChanged="comboBoxPlacement_SelectionChanged" Grid.ColumnSpan="3"/>
 				</Grid>
 			</TabItem>
