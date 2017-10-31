@@ -128,5 +128,11 @@
 		<Button Height="23" HorizontalAlignment="Left" Margin="103,330,0,0" Name="buttonDeleteSetup" VerticalAlignment="Top" Width="25" Click="buttonDeleteSetup_Click" ToolTip="{x:Static p:Resources.DeleteSelectedSetup}" BorderThickness="0" Background="Transparent" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
 			<Image HorizontalAlignment="Stretch" Name="image4" Stretch="Fill" VerticalAlignment="Stretch" Source="/IFCExportUI;component/icons/delete.ico" Width="16" Height="16" RenderTransformOrigin="0.5,0.688" />
 		</Button>
+		<Button Height="23" HorizontalAlignment="Left" Margin="133,330,0,0" Name="buttonSaveSetup" VerticalAlignment="Top" Width="25" Click="buttonSaveSetup_Click" ToolTip="{x:Static p:Resources.ExportSelectedSetup}" BorderThickness="0" Background="Transparent" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
+			<Image HorizontalAlignment="Stretch" Name="image5" Stretch="Fill" VerticalAlignment="Stretch" Source="Resources/save.ico" Width="16" Height="16" RenderTransformOrigin="0.5,0.688" />
+		</Button>
+		<Button Height="23" HorizontalAlignment="Left" Margin="163,330,0,0" Name="buttonLoadSetup" VerticalAlignment="Top" Width="25" Click="buttonLoadSetup_Click" ToolTip="{x:Static p:Resources.LoadSetup}" BorderThickness="0" Background="Transparent" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
+			<Image HorizontalAlignment="Stretch" Name="image6" Stretch="Fill" VerticalAlignment="Stretch" Source="Resources/load.ico" Width="16" Height="16" RenderTransformOrigin="0.5,0.688" />
+		</Button>
 	</Grid>
 </ui:ChildWindow>

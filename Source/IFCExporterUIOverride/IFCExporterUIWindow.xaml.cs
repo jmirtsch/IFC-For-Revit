@@ -20,6 +20,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -40,6 +41,7 @@ using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.UI;
 using Revit.IFC.Common.Utility;
 
+using Newtonsoft.Json;
 
 namespace BIM.IFC.Export.UI
 {
@@ -509,6 +511,73 @@ namespace BIM.IFC.Export.UI
          listBoxConfigurations.SelectedIndex = 0;
       }
 
+      private void buttonSaveSetup_Click(object sender, RoutedEventArgs e)
+      {
+         IFCExportConfiguration configuration = (IFCExportConfiguration)listBoxConfigurations.SelectedItem;
+         if(configuration.IsBuiltIn)
+         {
+            System.Windows.Forms.MessageBox.Show("Duplicate builtin Setup prior to Exporting", "Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+            return;
+         }
+         JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings();
+         jsonSerializerSettings.Formatting = Formatting.Indented;
+         System.Windows.Forms.SaveFileDialog saveFileDialog = new System.Windows.Forms.SaveFileDialog();
+         saveFileDialog.Filter = "IfcExportConfiguration (*.json)|*.json";
+         string folder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Autodesk", "Revit", "Addins", "Ifc.Export");
+         if (!Directory.Exists(folder))
+         {
+            Directory.CreateDirectory(folder);
+         }
+         saveFileDialog.InitialDirectory = folder;
+         saveFileDialog.FileName = "IFCExportConfiguration - " + configuration.Name + ".json";
+         System.Windows.Forms.DialogResult dialogResult = saveFileDialog.ShowDialog();
+         if (dialogResult == System.Windows.Forms.DialogResult.Cancel)
+            return;
+
+         using (StreamWriter sw = new StreamWriter(saveFileDialog.FileName))
+         {
+            sw.Write(JsonConvert.SerializeObject(configuration, jsonSerializerSettings));
+         }
+
+         //Process.Start(saveFileDialog.FileName);
+      }
+      private void buttonLoadSetup_Click(object sender, RoutedEventArgs e)
+      {
+
+         System.Windows.Forms.OpenFileDialog openFileDialog = new System.Windows.Forms.OpenFileDialog();
+         openFileDialog.Filter = "IfcExportConfiguration (*.json)|*.json";
+         string folder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Autodesk", "Revit", "Addins", "Ifc.Export");
+         if (Directory.Exists(folder))
+         {
+            openFileDialog.InitialDirectory = folder;
+         }
+         System.Windows.Forms.DialogResult dialogResult = openFileDialog.ShowDialog();
+         if (dialogResult == System.Windows.Forms.DialogResult.Cancel)
+            return;
+         try
+         {
+            using (StreamReader sr = new StreamReader(openFileDialog.FileName))
+            {
+               IFCExportConfiguration configuration = JsonConvert.DeserializeObject<IFCExportConfiguration>(sr.ReadToEnd());
+               if (configuration != null)
+               {
+                  if (m_configurationsMap.HasName(configuration.Name))
+                     configuration.Name = GetFirstIncrementalName(configuration.Name);
+                  m_configurationsMap.Add(configuration);
+
+                  // set new configuration as selected
+                  listBoxConfigurations.Items.Add(configuration);
+                  listBoxConfigurations.SelectedItem = configuration;
+               }
+            }
+         }
+         catch (Exception)
+         {
+
+         }
+
+         //Process.Start(saveFileDialog.FileName);
+      }
       /// <summary>
       /// Shows the rename control and updates with the results.
       /// </summary>
