@@ -170,8 +170,20 @@ namespace Revit.IFC.Export.Exporter
                   longitude.Add(longFracSec);
 
                Transform siteSharedCoordinatesTrf = projLocation.GetTransform().Inverse;
-               if (ExporterCacheManager.ExportOptionsCache.SiteTransformation == ExportOptionsCache.SiteTransformBasis.Internal)
+               ExportOptionsCache.SiteTransformBasis transformBasis = ExporterCacheManager.ExportOptionsCache.SiteTransformation;
+
+               if (transformBasis == ExportOptionsCache.SiteTransformBasis.Internal)
                   siteSharedCoordinatesTrf = Transform.Identity;
+               else if (transformBasis == ExportOptionsCache.SiteTransformBasis.Project)
+               {
+                  BasePoint basePoint = new FilteredElementCollector(doc).WherePasses(new ElementCategoryFilter(BuiltInCategory.OST_ProjectBasePoint)).First() as BasePoint;
+                  if (basePoint != null)
+                  {
+                     BoundingBoxXYZ bbox = basePoint.get_BoundingBox(null);
+                     XYZ xyz = bbox.Min;
+                     siteSharedCoordinatesTrf = Transform.CreateTranslation(new XYZ(-xyz.X, -xyz.Y, unscaledElevation -xyz.Z));
+                  }
+               }
                if (!siteSharedCoordinatesTrf.IsIdentity)
                {
                   double unscaledSiteElevation = ExporterCacheManager.ExportOptionsCache.IncludeSiteElevation ? 0.0 : unscaledElevation;

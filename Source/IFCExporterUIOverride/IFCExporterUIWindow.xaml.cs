@@ -868,7 +868,7 @@ namespace BIM.IFC.Export.UI
       }
       private void comboBoxPlacement_SelectionChanged(object sender, SelectionChangedEventArgs e)
       {
-         IFCSitePlacementAttributes attributes = (IFCSitePlacementAttributes)comboboxIfcType.SelectedItem;
+         IFCSitePlacementAttributes attributes = (IFCSitePlacementAttributes)comboBoxSitePlacement.SelectedItem;
          IFCExportConfiguration configuration = GetSelectedConfiguration();
          if (attributes != null && configuration != null)
          {
