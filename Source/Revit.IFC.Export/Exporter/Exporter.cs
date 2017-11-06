@@ -1865,7 +1865,7 @@ namespace Revit.IFC.Export.Exporter
          }
       }
 
-      private long GetCreationDate(Document document)
+      private DateTime GetCreationDate(Document document)
       {
          string pathName = document.PathName;
          if (!String.IsNullOrEmpty(pathName))
@@ -1880,16 +1880,13 @@ namespace Revit.IFC.Export.Exporter
                {
                   //This is just a temporary fix for SPR#226541, currently it's unable to get the FileInfo of a server based file stored at server.
                   //Should server based file stored at server support this functionality and how to support will be tracked by SPR#226761. 
-                  return 0;
+                  return DateTime.UtcNow;
                }
             }
             FileInfo fileInfo = new FileInfo(pathName);
-            DateTime creationTimeUtc = fileInfo.CreationTimeUtc;
-            // The IfcTimeStamp is measured in seconds since 1/1/1970.  As such, we divide by 10,000,000 (100-ns ticks in a second)
-            // and subtract the 1/1/1970 offset.
-            return creationTimeUtc.ToFileTimeUtc() / 10000000 - 11644473600;
+            return fileInfo.CreationTimeUtc;
          }
-         return 0;
+         return DateTime.UtcNow;
       }
 
       /// <summary>
@@ -2130,7 +2127,7 @@ namespace Revit.IFC.Export.Exporter
 
          NamingUtil.ParseName(author, out familyName, out givenName, out middleNames, out prefixTitles, out suffixTitles);
 
-         int creationDate = (int)GetCreationDate(doc);
+         DateTime creationDate = GetCreationDate(doc);
          IfcPerson person = null;
          IfcOrganization organization = null;
 
