@@ -112,12 +112,14 @@ namespace Revit.IFC.Export.Exporter
                     Element hostElement = connector.Owner;
                     IFCAnyHandle hostElementIFCHandle = ExporterCacheManager.MEPCache.Find(hostElement.Id);
                     IFCAnyHandle localPlacement = CreateLocalPlacementForConnector(exporterIFC, connector, hostElementIFCHandle, flowDir);
-                    string portName = "Port_" + hostElement.Id;
-                    string portType = "Flow";   // Assigned as Port.Description
                     IFCFile ifcFile = exporterIFC.GetFile();
                     IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
-                    IFCAnyHandle port = IFCInstanceExporter.CreateDistributionPort(ifcFile, guid, ownerHistory, portName, portType, null, localPlacement, null, flowDir);
-
+                    IFCAnyHandle port = IFCInstanceExporter.CreateDistributionPort(exporterIFC, null, guid, ownerHistory, localPlacement, null, flowDir);
+                    string portName = "Port_" + hostElement.Id;
+				IFCAnyHandleUtil.SetAttribute(port, "Name", portName);
+                    string portType = "Flow";   // Assigned as Port.Description
+				IFCAnyHandleUtil.SetAttribute(port, "Description", portType);
+                    
                     // Attach the port to the element
                     guid = GUIDUtil.CreateGUID();
                     string connectionName = hostElement.Id + "|" + guid;
