@@ -89,7 +89,9 @@ namespace Revit.IFC.Export.Exporter
 
                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(styleHandle))
                {
-                  IFCAnyHandleUtil.SetAttribute(styleHandle, "ApplicableOccurence", NamingUtil.GetObjectTypeOverride(familySymbol, typeObjectType));
+                  string applicableOccurrence = NamingUtil.GetObjectTypeOverride(familySymbol, typeObjectType);
+                  if(!string.IsNullOrEmpty(applicableOccurrence))
+                     IFCAnyHandleUtil.SetAttribute(styleHandle, "ApplicableOccurrence", applicableOccurrence);
                   currentTypeInfo.Style = styleHandle;
                   ExporterCacheManager.FamilySymbolToTypeInfoCache.Register(coupler.GetTypeId(), false, exportType, currentTypeInfo);
                }

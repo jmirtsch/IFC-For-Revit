@@ -474,6 +474,7 @@ namespace Revit.IFC.Export.Exporter
          IFCFile file = exporterIFC.GetFile();
          IFCAnyHandle typeHandle = null;
 
+          
          try
          {
             // Skip export type object that does not have associated IfcTypeObject
@@ -492,10 +493,9 @@ namespace Revit.IFC.Export.Exporter
                      }
                }
 
-               typeHandle = ExportGenericTypeBase(file, type, ifcEnumType, null, representationMapList, instance, symbol);
-			   if(!string.IsNullOrEmpty(elemIdToUse))
-				IFCAnyHandleUtil.SetAttribute(typeHandle, "Tag", elemIdToUse);
-
+               typeHandle = ExportGenericTypeBase(file, type, ifcEnumType, propertySets, representationMapList, instance, symbol);
+			      if(!string.IsNullOrEmpty(elemIdToUse))
+				      IFCAnyHandleUtil.SetAttribute(typeHandle, "Tag", elemIdToUse);
             }
          }
          catch

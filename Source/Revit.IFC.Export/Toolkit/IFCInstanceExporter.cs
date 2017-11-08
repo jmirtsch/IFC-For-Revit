@@ -135,11 +135,13 @@ namespace Revit.IFC.Export.Toolkit
       }
 		private static void setRootName(IFCAnyHandle root, string name)
 		{
-			IFCAnyHandleUtil.SetAttribute(root, "Name", name);
+         if(!string.IsNullOrEmpty(name))
+			   IFCAnyHandleUtil.SetAttribute(root, "Name", name);
 		}
 		private static void setRootDescription(IFCAnyHandle root, string description)
 		{
-			IFCAnyHandleUtil.SetAttribute(root, "Description", description);
+         if(!string.IsNullOrEmpty(description))
+			   IFCAnyHandleUtil.SetAttribute(root, "Description", description);
 		}
 
 		/// <summary>
@@ -206,10 +208,10 @@ namespace Revit.IFC.Export.Toolkit
          if (revitType != null)
          {
             guid = GUIDUtil.CreateGUID(revitType);
-            applicableOccurrence = NamingUtil.GetOverrideStringValue(revitType, "IfcApplicableOccurence", null); 
+            applicableOccurrence = NamingUtil.GetOverrideStringValue(revitType, "IfcApplicableOccurrence", null); 
          }
-
-         IFCAnyHandleUtil.SetAttribute(typeObject, "ApplicableOccurrence", applicableOccurrence);
+         if(!string.IsNullOrEmpty(applicableOccurrence))
+            IFCAnyHandleUtil.SetAttribute(typeObject, "ApplicableOccurrence", applicableOccurrence);
          if (propertySets != null && propertySets.Count > 0)
             IFCAnyHandleUtil.SetAttribute(typeObject, "HasPropertySets", propertySets);
 

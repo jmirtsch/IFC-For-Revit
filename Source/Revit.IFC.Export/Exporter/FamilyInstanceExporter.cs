@@ -337,6 +337,7 @@ namespace Revit.IFC.Export.Exporter
          }
          IFCAnyHandleUtil.SetAttribute(typeStyle, "GlobalId", guid);
          string symbolTag = NamingUtil.GetTagOverride(familySymbol, NamingUtil.CreateIFCElementId(familySymbol));
+         propertySets = ExporterUtil.ExtractElementTypeProperties(exporterIFC, familySymbol, typeStyle);
          return typeStyle;
       }
 
