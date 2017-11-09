@@ -571,6 +571,12 @@ namespace Revit.IFC.Export.Exporter
                   IFCTypeEntity = Common.Enums.IFCEntityType.IfcElectricHeaterType;
                   typeAsString = IFCExportType.IfcElectricHeaterType.ToString();
                   break;
+               case Common.Enums.IFCEntityType.IfcDoorType:
+                  IFCTypeEntity = Common.Enums.IFCEntityType.IfcDoorStyle;
+                  break;
+               case Common.Enums.IFCEntityType.IfcWindowType:
+                  IFCTypeEntity = Common.Enums.IFCEntityType.IfcWindowStyle;
+                  break;
             }
          }
 

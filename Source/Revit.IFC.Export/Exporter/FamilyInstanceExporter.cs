@@ -416,9 +416,9 @@ namespace Revit.IFC.Export.Exporter
          {
             // Extra information if we are exporting a door or a window.
             DoorWindowInfo doorWindowInfo = null;
-            if (exportType == IFCExportType.IfcDoorType)
+            if (exportType == IFCExportType.IfcDoorType || exportType == IFCExportType.IfcDoor)
                doorWindowInfo = DoorWindowExporter.CreateDoor(exporterIFC, familyInstance, hostElement, overrideLevelId, trf);
-            else if (exportType == IFCExportType.IfcWindowType)
+            else if (exportType == IFCExportType.IfcWindowType || exportType == IFCExportType.IfcWindow)
                doorWindowInfo = DoorWindowExporter.CreateWindow(exporterIFC, familyInstance, hostElement, overrideLevelId, trf);
 
             FamilyTypeInfo typeInfo = new FamilyTypeInfo();
@@ -967,6 +967,7 @@ namespace Revit.IFC.Export.Exporter
 
                   switch (exportType)
                   {
+                     case IFCExportType.IfcBeam:
                      case IFCExportType.IfcBeamType:
                         {
                            IFCAnyHandle placementToUse = localPlacement;
@@ -994,6 +995,7 @@ namespace Revit.IFC.Export.Exporter
                            }
                            break;
                         }
+                     case IFCExportType.IfcColumn:
                      case IFCExportType.IfcColumnType:
                         {
                            IFCAnyHandle placementToUse = localPlacement;
@@ -1033,7 +1035,9 @@ namespace Revit.IFC.Export.Exporter
                            PropertyUtil.CreateBeamColumnBaseQuantities(exporterIFC, instanceHandle, familyInstance, typeInfo, geomObjects);
                            break;
                         }
+                     case IFCExportType.IfcDoor:
                      case IFCExportType.IfcDoorType:
+                     case IFCExportType.IfcWindow:
                      case IFCExportType.IfcWindowType:
                         {
                            double doorHeight = GetMinSymbolHeight(originalFamilySymbol);
@@ -1044,11 +1048,11 @@ namespace Revit.IFC.Export.Exporter
 
                            IFCAnyHandle doorWindowLocalPlacement = !IFCAnyHandleUtil.IsNullOrHasNoValue(overrideLocalPlacement) ?
                                overrideLocalPlacement : localPlacement;
-                           if (exportType == IFCExportType.IfcDoorType)
+                           if (exportType == IFCExportType.IfcDoorType || exportType == IFCExportType.IfcDoor)
                               instanceHandle = IFCInstanceExporter.CreateDoor(exporterIFC, familyInstance, instanceGUID, ownerHistory,
                                  doorWindowLocalPlacement, repHnd, height, width, doorWindowInfo.PreDefinedType, 
 								 doorWindowInfo.DoorOperationTypeString, doorWindowInfo.UserDefinedOperationType);
-                           else if (exportType == IFCExportType.IfcWindowType)
+                           else 
                               instanceHandle = IFCInstanceExporter.CreateWindow(exporterIFC, familyInstance, instanceGUID, ownerHistory,
                                  doorWindowLocalPlacement, repHnd, height, width, doorWindowInfo.PreDefinedType, DoorWindowUtil.GetIFCWindowPartitioningType(originalFamilySymbol),
                                  doorWindowInfo.UserDefinedPartitioningType);
@@ -1078,6 +1082,7 @@ namespace Revit.IFC.Export.Exporter
                                exporterIFC, placementToUse, setter, wrapper);
                            break;
                         }
+                     case IFCExportType.IfcMember:
                      case IFCExportType.IfcMemberType:
                         {
                            OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, offsetTransform,
@@ -1093,6 +1098,7 @@ namespace Revit.IFC.Export.Exporter
 
                            break;
                         }
+                     case IFCExportType.IfcPlate:
                      case IFCExportType.IfcPlateType:
                         {
                            OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, offsetTransform,
@@ -1119,6 +1125,7 @@ namespace Revit.IFC.Export.Exporter
                            }
                            break;
                         }
+                     case IFCExportType.IfcTransportElement:
                      case IFCExportType.IfcTransportElementType:
                         {
                            IFCAnyHandle localPlacementToUse;
