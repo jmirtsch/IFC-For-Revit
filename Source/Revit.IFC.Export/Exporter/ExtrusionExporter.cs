@@ -1463,28 +1463,6 @@ namespace Revit.IFC.Export.Exporter
 
             double scaledExtrusionDepth = UnitUtil.ScaleLength(extrusionLength);
 
-            //// Get a profile name. It is by default set to the type (familySumbol) name, but can be overridden by IfcProfileName[Type] shared parameter
-            //string profileName = null;
-            //if (element != null)
-            //{
-            //   FamilySymbol fSymb = element as FamilySymbol;
-            //   if (element is FamilyInstance)
-            //   {
-            //      FamilyInstance inst = element as FamilyInstance;
-            //      if (inst != null)
-            //      {
-            //         fSymb = inst.Symbol;
-            //      }
-            //   }
-            //   if (fSymb != null)
-            //   {
-            //      string profile;
-            //      ParameterUtil.GetStringValueFromElement(fSymb.Id, "IfcProfileName[Type]", out profile);
-            //      if (string.IsNullOrEmpty(profile))
-            //         profileName = profile;
-            //   }
-            //}
-
             // We use a sub-transaction here in case we are able to generate the base body but not the clippings.
             IFCFile file = exporterIFC.GetFile();
             IFCAnyHandle finalExtrusionBodyItemHnd = null;
@@ -1830,12 +1808,32 @@ namespace Revit.IFC.Export.Exporter
          IFCFile file = exporterIFC.GetFile();
 
          XYZ extrusionDir = extrusionLCS.BasisZ;
+         IList<IFCAnyHandle> profileCurves = null;
 
          // A list of IfcCurve entities.
-         IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, extrusionLCS, extrusionDir, true);
-         ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, baseCurve, XYZ.Zero, true);
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+         {
+            IList<int> segmentIndex = null;
+            IList<IList<double>> pointList = GeometryUtil.PointListFromCurve(exporterIFC, baseCurve, extrusionLCS, extrusionDir, out segmentIndex);
 
-         IList<IFCAnyHandle> profileCurves = info.GetCurves();
+            // For now because of no support in creating IfcLineIndex and IfcArcIndex yet, it is set to null
+            //IList<IList<int>> segmentIndexList = new List<IList<int>>();
+            //segmentIndexList.Add(segmentIndex);
+            IList<IList<int>> segmentIndexList = null;
+
+            IFCAnyHandle pointListHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, pointList);
+            IFCAnyHandle curveHnd = IFCInstanceExporter.CreateIndexedPolyCurve(file, pointListHnd, segmentIndexList, false);
+            profileCurves = new List<IFCAnyHandle>();
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(curveHnd))
+               profileCurves.Add(curveHnd);
+         }
+         else
+         {
+            IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, extrusionLCS, extrusionDir, true);
+            ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, baseCurve, XYZ.Zero, true);
+
+            profileCurves = info.GetCurves();
+         }
 
          if ((profileCurves.Count != 1) || (!IFCAnyHandleUtil.IsSubTypeOf(profileCurves[0], IFCEntityType.IfcBoundedCurve)))
             return null;

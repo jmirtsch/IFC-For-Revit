@@ -31,6 +31,9 @@ namespace Revit.IFC.Export.Utility
 {
    class ParamExprResolver
    {
+      /// <summary>
+      /// Expected paramameter value type enumeration
+      /// </summary>
       public enum ExpectedValueEnum
       {
          STRINGVALUE,
@@ -43,6 +46,12 @@ namespace Revit.IFC.Export.Utility
       static Element _element;
       string _paramName;
 
+      /// <summary>
+      /// Instatiation of ParamExprResolver
+      /// </summary>
+      /// <param name="elem">Revit element</param>
+      /// <param name="paramName">parameter name</param>
+      /// <param name="paramVal">parameter string value</param>
       public ParamExprResolver(Element elem, string paramName, string paramVal)
       {
          paramExprContent = paramVal;
@@ -50,6 +59,10 @@ namespace Revit.IFC.Export.Utility
          _paramName = paramName;
       }
 
+      /// <summary>
+      /// Get string value from the expr
+      /// </summary>
+      /// <returns>string value</returns>
       public string GetStringValue()
       {
          object strVal = Process(ExpectedValueEnum.STRINGVALUE);
@@ -60,6 +73,10 @@ namespace Revit.IFC.Export.Utility
          return val;
       }
 
+      /// <summary>
+      /// Get the integer value from the expr
+      /// </summary>
+      /// <returns>the integer value</returns>
       public int? GetIntValue()
       {
          object intVal = Process(ExpectedValueEnum.INTVALUE);
@@ -70,6 +87,10 @@ namespace Revit.IFC.Export.Utility
          return val;
       }
 
+      /// <summary>
+      /// Get the double value from the expr
+      /// </summary>
+      /// <returns>the double value</returns>
       public double? GetDoubleValue()
       {
          object dblVal = Process(ExpectedValueEnum.DOUBLEVALUE);
@@ -109,6 +130,12 @@ namespace Revit.IFC.Export.Utility
          return val;
       }
 
+      /// <summary>
+      /// Resolve unary operator for expr
+      /// </summary>
+      /// <param name="unaryOp">the unary operator</param>
+      /// <param name="expr">the expr</param>
+      /// <returns>NodeProperty</returns>
       public static NodeProperty ResolveExprUnaryOperator(string unaryOp, NodeProperty expr)
       {
          NodeProperty ret = new NodeProperty();
@@ -140,6 +167,14 @@ namespace Revit.IFC.Export.Utility
          return ret;
       }
 
+      /// <summary>
+      /// Resolve "expr operator expr"
+      /// </summary>
+      /// <param name="expr1Ctx">context of expr 1</param>
+      /// <param name="expr1">NodeProperty of expr 1</param>
+      /// <param name="ops">operator</param>
+      /// <param name="expr2">NodeProperty of expr 2</param>
+      /// <returns>NodeProperty</returns>
       public static NodeProperty ResolveExprOpsExpr(ParamExprGrammarParser.ExprContext expr1Ctx, NodeProperty expr1,
                                                      ParamExprGrammarParser.OpsContext ops, NodeProperty expr2)
       {
@@ -215,6 +250,11 @@ namespace Revit.IFC.Export.Utility
          return ret;
       }
 
+      /// <summary>
+      /// Get Math power operator
+      /// </summary>
+      /// <param name="powerOp">the power operator</param>
+      /// <returns>integer value of the power</returns>
       public static int GetPowerOp(ParamExprGrammarParser.Power_opContext powerOp)
       {
          int powerOpNumber = int.Parse(powerOp.INT().GetText());
@@ -226,6 +266,12 @@ namespace Revit.IFC.Export.Utility
          return powerOpNumber;
       }
 
+      /// <summary>
+      /// Resolve "(expr)^power"
+      /// </summary>
+      /// <param name="expr">the expr NodeProperty</param>
+      /// <param name="powerOp">the power operator</param>
+      /// <returns>NodeProperty</returns>
       public static NodeProperty ResolveExprPowerOp(NodeProperty expr, int powerOp)
       {
          NodeProperty ret = new NodeProperty();

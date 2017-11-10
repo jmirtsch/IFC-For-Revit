@@ -743,12 +743,40 @@ namespace Revit.IFC.Export.Exporter
                         Transform planeTrf = doorWindowTrf.Inverse;
                         XYZ projDir = XYZ.BasisZ;
 
-                        IFCGeometryInfo IFCGeometryInfo = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, planeTrf, projDir, true);
-                        ExporterIFCUtils.CollectGeometryInfo(exporterIFC, IFCGeometryInfo, exportGeometry, curveOffset, false);
+                        if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+                        {
+                           foreach (GeometryObject gObj in exportGeometry)
+                           {
+                              if (!(gObj is Curve))
+                                 continue;
 
-                        IList<IFCAnyHandle> curves = IFCGeometryInfo.GetCurves();
-                        foreach (IFCAnyHandle curve in curves)
-                           curveSet.Add(curve);
+                              Curve curve = gObj as Curve;
+
+                              IList<int> segmentIndex = null;
+                              IList<IList<double>> pointList = GeometryUtil.PointListFromCurve(exporterIFC, curve, null, null, out segmentIndex);
+
+                              // For now because of no support in creating IfcLineIndex and IfcArcIndex yet, it is set to null
+                              //IList<IList<int>> segmentIndexList = new List<IList<int>>();
+                              //segmentIndexList.Add(segmentIndex);
+                              IList<IList<int>> segmentIndexList = null;
+
+                              IFCAnyHandle pointListHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, pointList);
+                              IFCAnyHandle curveHnd = IFCInstanceExporter.CreateIndexedPolyCurve(file, pointListHnd, segmentIndexList, false);
+                              if (curveSet == null)
+                                 curveSet = new HashSet<IFCAnyHandle>();
+                              if (!IFCAnyHandleUtil.IsNullOrHasNoValue(curveHnd))
+                                 curveSet.Add(curveHnd);
+                           }
+                        }
+                        else
+                        {
+                           IFCGeometryInfo IFCGeometryInfo = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, planeTrf, projDir, true);
+                           ExporterIFCUtils.CollectGeometryInfo(exporterIFC, IFCGeometryInfo, exportGeometry, curveOffset, false);
+
+                           IList<IFCAnyHandle> curves = IFCGeometryInfo.GetCurves();
+                           foreach (IFCAnyHandle curve in curves)
+                              curveSet.Add(curve);
+                        }
 
                         if (curveSet.Count > 0)
                         {
@@ -1197,8 +1225,15 @@ namespace Revit.IFC.Export.Exporter
 
                               if (materialLayerSet != null)
                               {
-                                 IFCAnyHandle matSetUsage = IFCInstanceExporter.CreateMaterialLayerSetUsage(file, materialLayerSet, IFCLayerSetDirection.Axis3, IFCDirectionSense.Positive, maxOffset);
-                                 CategoryUtil.CreateMaterialAssociation(exporterIFC, instanceHandle, matSetUsage);
+                                 if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+                                 {
+                                    CategoryUtil.CreateMaterialAssociation(exporterIFC, instanceHandle, materialLayerSet);
+                                 }
+                                 else
+                                 {
+                                    IFCAnyHandle matSetUsage = IFCInstanceExporter.CreateMaterialLayerSetUsage(file, materialLayerSet, IFCLayerSetDirection.Axis3, IFCDirectionSense.Positive, maxOffset);
+                                    CategoryUtil.CreateMaterialAssociation(exporterIFC, instanceHandle, matSetUsage);
+                                 }
                                  materialAlreadyAssociated = true;
                               }
                            }

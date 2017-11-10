@@ -441,14 +441,24 @@ namespace Revit.IFC.Export.Utility
          if (IFCAnyHandleUtil.IsNullOrHasNoValue(materialNameHandle))
          {
             string materialName = " <Unnamed>";
+            string description = null;
+            string category = null;
             if (materialId != ElementId.InvalidElementId)
             {
                Material material = document.GetElement(materialId) as Material;
                if (material != null)
                   materialName = NamingUtil.GetNameOverride(material, material.Name);
+
+               if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+               {
+                  category = NamingUtil.GetOverrideStringValue(material, "IfcCategory", material.Category.Name);
+                  if (string.IsNullOrEmpty(category))
+                     category = NamingUtil.GetOverrideStringValue(material, "Category", material.Category.Name);
+                  description = NamingUtil.GetOverrideStringValue(material, "IfcDescription", null);
+               }
             }
 
-            materialNameHandle = IFCInstanceExporter.CreateMaterial(exporterIFC.GetFile(), materialName);
+            materialNameHandle = IFCInstanceExporter.CreateMaterial(exporterIFC.GetFile(), materialName, description:description, category:category);
 
             ExporterCacheManager.MaterialHandleCache.Register(materialId, materialNameHandle);
 

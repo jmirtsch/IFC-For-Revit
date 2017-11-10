@@ -44,6 +44,7 @@ objref:           THIS | TYPE ;
 type:             TYPE;
 special_param:    ELEMENTID
                   | RUNNINGNUMBER 
+                  | RUNNINGNUMBERINSTANCE
                   | AUTOCALCULATE ;
 param_name:       name | type name;
 //name:             '(' (ESC | NAMEWITHSPECIALCHAR)+ ')' ;
@@ -63,6 +64,7 @@ THIS:               '$'[Tt][Hh][Ii][Ss];
 TYPE:               '$'[Tt][Yy][Pp][Ee];
 ELEMENTID:          '$'[Ee][Ll][Ee][Mm][Ee][Nn][Tt][Ii][Dd];
 RUNNINGNUMBER:      '#';
+RUNNINGNUMBERINSTANCE:  '##';
 AUTOCALCULATE:      '$'[Aa][Uu][Tt][Oo] | '$'[Aa][Uu][Tt][Oo][Mm][Aa][Tt][Ii][Cc] ;
 UNITTYPEENUM:       [Uu][Tt] '_' ALPHANUMERIC+ ;
 

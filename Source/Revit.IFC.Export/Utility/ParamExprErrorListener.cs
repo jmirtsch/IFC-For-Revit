@@ -27,6 +27,15 @@ namespace Revit.IFC.Export.Utility
 {
    public class ParamExprErrorListener : BaseErrorListener
    {
+      /// <summary>
+      /// Checking for syntax error
+      /// </summary>
+      /// <param name="recognizer">recognizer</param>
+      /// <param name="offendingSymbol">offending symbol</param>
+      /// <param name="line">line number of the statement</param>
+      /// <param name="charPositionInLine">position within the line</param>
+      /// <param name="msg">message</param>
+      /// <param name="e">recognizer exception</param>
       public override void SyntaxError(IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
       {
          string stackList = null;

@@ -128,17 +128,23 @@ namespace Revit.IFC.Export.Utility
 
          if (element != null)
          {
-            if (ParameterUtil.GetStringValueFromElement(element, element.Id, paramName, out paramValue) != null)
+            if (ParameterUtil.GetStringValueFromElement(element, element.Id, paramName, out paramValue) != null && !string.IsNullOrEmpty(paramValue))
             {
-               //ParamExprResolver pResv = new ParamExprResolver(element, paramName, paramValue);
-               //strValue = pResv.GetStringValue();
+               string propertyValue = null;
+               string paramValuetrim = paramValue.Trim();
+               // This is kind of hack to quickly check whether we need to parse the parameter or not by checking that the value is enclosed by "{ }" or "u{ }" for unique value
+               if (((paramValuetrim.Length > 1 && paramValuetrim[0] == '{') || (paramValuetrim.Length > 2 && paramValuetrim[1] == '{')) && (paramValuetrim[paramValuetrim.Length-1] == '}'))
+               {
+                  ParamExprResolver pResv = new ParamExprResolver(element, paramName, paramValuetrim);
+                  propertyValue = pResv.GetStringValue();
+                  if (string.IsNullOrEmpty(propertyValue))
+                     propertyValue = paramValue;   // return the original paramValue
+               }
+               else
+                  propertyValue = paramValue;   // return the original paramValue
 
-               //// Returns a string value from the parameter of an element.
-               //// If the string is empty, it returns the originalValue.
-               //if (!String.IsNullOrEmpty(strValue))
-               //   return strValue;
-               //else
-                  return paramValue;
+               //return paramValue;
+               return propertyValue;
             }
          }
 

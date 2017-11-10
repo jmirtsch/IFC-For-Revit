@@ -474,7 +474,7 @@ namespace Revit.IFC.Export.Utility
       {
          outputFaceList = new List<int>();
          IndexFace firstF = facesColl[inputFaceList[0]];
-         int prevFirstFIdx = 0;
+         //int prevFirstFIdx = 0;
          HashSet<int> mergedFacesIdxList = new HashSet<int>();
          mergedFacesIdxList.Add(inputFaceList[0]);
 
@@ -484,15 +484,20 @@ namespace Revit.IFC.Export.Utility
 
          IEqualityComparer<IndexSegment> segCompare = new SegmentCompare();
          IDictionary<IndexSegment, Tuple<IndexFace, int, int>> segmentOfFaceDict = new Dictionary<IndexSegment, Tuple<IndexFace, int, int>>(segCompare);
+         IList<int> discardList = new List<int>();
          for (int iFace=0; iFace < inputFaceList.Count; ++iFace)
          {
             int fidx = inputFaceList[iFace];
             IndexFace IdxFace = facesColl[fidx];
-            for (int idx=0; idx < IdxFace.outerAndInnerBoundaries.Count; ++idx)
-            {
-               segmentOfFaceDict.Add(IdxFace.outerAndInnerBoundaries[idx], new Tuple<IndexFace, int, int>(IdxFace, fidx, idx));
-            }
+            if (!segmentOfFaceToDict(ref segmentOfFaceDict, ref IdxFace, fidx))
+               discardList.Add(fidx);
          }
+
+         // Remove bad face from the input list, if any
+         if (discardList.Count > 0)
+            foreach (int fidx in discardList)
+               inputFaceList.Remove(fidx);
+         discardList.Clear();
 
          while (currEdgeIdx < firstF.outerAndInnerBoundaries.Count && inputFaceList.Count > 0)
          {
@@ -523,11 +528,23 @@ namespace Revit.IFC.Export.Utility
                         segmentOfFaceDict.Remove(currFace.outerAndInnerBoundaries[cidx]);
                      }
                      currFace.Reverse();
-                     for (int cidx = 0; cidx < currFace.outerAndInnerBoundaries.Count; ++cidx)
+                     if (!segmentOfFaceToDict(ref segmentOfFaceDict, ref currFace, currFaceIdx))
                      {
-                        segmentOfFaceDict.Add(currFace.outerAndInnerBoundaries[cidx], new Tuple<IndexFace, int, int>(currFace, currFaceIdx, cidx));
+                        // Something is wrong with this face (should not be here in the normal circumstance), discard it and continue
+                        inputFaceList.Remove(currFaceIdx);
+                        currEdgeIdx++;
+                        merged = false;
+                        continue;
                      }
-                     segmentOfFaceDict.TryGetValue(reversedEdge, out pairedFace);
+                     if (!segmentOfFaceDict.TryGetValue(reversedEdge, out pairedFace))
+                        if (!segmentOfFaceDict.TryGetValue(currEdge, out pairedFace))
+                        {
+                           // Should not be here. If somehow here, discard the face and continue
+                           inputFaceList.Remove(currFaceIdx);
+                           currEdgeIdx++;
+                           merged = false;
+                           continue;
+                        }
                      idx = pairedFace.Item3;
                   }
                }
@@ -744,15 +761,11 @@ namespace Revit.IFC.Export.Utility
                int lastFaceID = facesColl.Count;   // The new index is always the next one in the collection was inserted based on the seq order
 
                facesColl.Add(lastFaceID, firstF);
-               prevFirstFIdx = lastFaceID;
-               outputFaceList.Add(lastFaceID);
+               //prevFirstFIdx = lastFaceID;
 
-               // Add new face to segmentOfFaceDict
-               IList<IndexSegment> add = firstF.outerAndInnerBoundaries;
-               for (int cidx = 0; cidx < add.Count; ++cidx)
-               {
-                  segmentOfFaceDict.Add(add[cidx], new Tuple<IndexFace, int, int>(firstF, lastFaceID, cidx));
-               }
+               // If there is no more face to process, add the merged face into the output list
+               if (inputFaceList.Count == 0)
+                  outputFaceList.Add(lastFaceID);
 
                // Now loop through all the dictionary of the sortedVert and replace all merged face indexes with the new one
                foreach (KeyValuePair<int, HashSet<int>> v in sortedFVert)
@@ -773,6 +786,7 @@ namespace Revit.IFC.Export.Utility
                   firstF = facesColl[inputFaceList[0]];
                   mergedFacesIdxList.Clear();
                   mergedFacesIdxList.Add(inputFaceList[0]);
+
                   // Remove the merged face from segmentOfFaceDict
                   IList<IndexSegment> rem = firstF.outerAndInnerBoundaries;
                   for (int cidx = 0; cidx < rem.Count; ++cidx)
@@ -782,11 +796,58 @@ namespace Revit.IFC.Export.Utility
                   inputFaceList.RemoveAt(0);  // remove the first face from the list
                   currEdgeIdx = 0;
                   merged = false;
+
+                  // If there is still more face to process, add the merged face into the list to be processed futher
+                  // Add new face to segmentOfFaceDict
+                  IndexFace newFace = facesColl[lastFaceID];
+                  if (segmentOfFaceToDict(ref segmentOfFaceDict, ref newFace, lastFaceID))
+                  {
+                     inputFaceList.Add(lastFaceID);
+                  }
                }
             }
          }
 
          return merged;
+      }
+
+      bool segmentOfFaceToDict(ref IDictionary<IndexSegment, Tuple<IndexFace, int, int>> segmentOfFaceDict, ref IndexFace theFace, int indexFace)
+      {
+         IList<IndexSegment> entriesToRollback = new List<IndexSegment>();
+         try
+         {
+            for (int idx = 0; idx < theFace.outerAndInnerBoundaries.Count; ++idx)
+            {
+               segmentOfFaceDict.Add(theFace.outerAndInnerBoundaries[idx], new Tuple<IndexFace, int, int>(theFace, indexFace, idx));
+               entriesToRollback.Add(theFace.outerAndInnerBoundaries[idx]);
+            }
+            return true;
+         }
+         catch
+         {
+            // If exception, it is likely that there is duplicate. Remove all segments of this face first to rollback
+            foreach(IndexSegment segDel in entriesToRollback)
+               segmentOfFaceDict.Remove(segDel);
+            entriesToRollback.Clear();
+         }
+
+         theFace.Reverse();
+         try
+         {
+            for (int idx = 0; idx < theFace.outerAndInnerBoundaries.Count; ++idx)
+            {
+               segmentOfFaceDict.Add(theFace.outerAndInnerBoundaries[idx], new Tuple<IndexFace, int, int>(theFace, indexFace, idx));
+               entriesToRollback.Add(theFace.outerAndInnerBoundaries[idx]);
+            }
+            return true;
+         }
+         catch
+         {
+            // If still raises an exception (that shouldn't be). It is likely there is simple duplicate face. Cleanup, and return false;
+            foreach (IndexSegment segDel in entriesToRollback)
+               segmentOfFaceDict.Remove(segDel);
+            return false;
+         }
       }
    }
 }

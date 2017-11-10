@@ -5010,7 +5010,7 @@ namespace Revit.IFC.Export.Toolkit
       /// <returns></returns>
       public static IFCAnyHandle CreateGenericIFCEntity(IFCEntityType entityToCreate, IFCFile file, string guid, IFCAnyHandle ownerHistory, string name,
            string description, string objectType, IFCAnyHandle objectPlacement, IFCAnyHandle representation,
-           string elementTag)
+           string elementTag, string predefinedType=null)
       {
          ValidateElement(guid, ownerHistory, name, description, objectType, objectPlacement, representation, elementTag);
 
@@ -5021,6 +5021,10 @@ namespace Revit.IFC.Export.Toolkit
             genericIFCEntity = CreateInstance(file, entityToCreate);
             SetElement(genericIFCEntity, guid, ownerHistory, name, description, objectType, objectPlacement, representation,
                 elementTag);
+            if (!string.IsNullOrEmpty(predefinedType))
+            {
+               IFCAnyHandleUtil.SetAttribute(genericIFCEntity, "PredefinedType", predefinedType, true);
+            }
          }
          else
          {
@@ -7770,13 +7774,20 @@ namespace Revit.IFC.Export.Toolkit
       /// <param name="file">The file.</param>
       /// <param name="name">The name.</param>
       /// <returns>The handle.</returns>
-      public static IFCAnyHandle CreateMaterial(IFCFile file, string name)
+      public static IFCAnyHandle CreateMaterial(IFCFile file, string name, string description=null, string category=null)
       {
          if (name == null)
             throw new ArgumentNullException("name");
 
          IFCAnyHandle material = CreateInstance(file, IFCEntityType.IfcMaterial);
          IFCAnyHandleUtil.SetAttribute(material, "Name", name);
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         {
+            if (!string.IsNullOrEmpty(description))
+               IFCAnyHandleUtil.SetAttribute(material, "Description", description);
+            if (!string.IsNullOrEmpty(category))
+               IFCAnyHandleUtil.SetAttribute(material, "Category", category);
+         }
          return material;
       }
 
@@ -7828,7 +7839,8 @@ namespace Revit.IFC.Export.Toolkit
       /// <param name="layerThickness">The thickness of the layer.</param>
       /// <param name="isVentilated">  Indication of whether the material layer represents an air layer (or cavity).</param>
       /// <returns>The handle.</returns>
-      public static IFCAnyHandle CreateMaterialLayer(IFCFile file, IFCAnyHandle material, double layerThickness, IFCLogical? isVentilated)
+      public static IFCAnyHandle CreateMaterialLayer(IFCFile file, IFCAnyHandle material, double layerThickness, IFCLogical? isVentilated,
+         string name=null, string description=null, string category=null, int? priority=null)
       {
          IFCAnyHandleUtil.ValidateSubTypeOf(material, true, IFCEntityType.IfcMaterial);
 
@@ -7836,6 +7848,17 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandleUtil.SetAttribute(materialLayer, "Material", material);
          IFCAnyHandleUtil.SetAttribute(materialLayer, "LayerThickness", layerThickness);
          IFCAnyHandleUtil.SetAttribute(materialLayer, "IsVentilated", isVentilated);
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         {
+            if (!string.IsNullOrEmpty(name))
+               IFCAnyHandleUtil.SetAttribute(materialLayer, "Name", name);
+            if (!string.IsNullOrEmpty(description))
+               IFCAnyHandleUtil.SetAttribute(materialLayer, "Description", description);
+            if (!string.IsNullOrEmpty(category))
+               IFCAnyHandleUtil.SetAttribute(materialLayer, "Category", category);
+            if (priority.HasValue)
+               IFCAnyHandleUtil.SetAttribute(materialLayer, "Priority", priority);
+         }
          return materialLayer;
       }
 

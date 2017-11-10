@@ -152,6 +152,7 @@ namespace Revit.IFC.Export.Exporter
          {
             BeginExport(exporterIFC, document, filterView);
 
+            ParamExprListener.ResetParamExprInternalDicts();
             InitializeElementExporters();
             if (m_ElementExporter != null)
                m_ElementExporter(exporterIFC, document);
@@ -1429,7 +1430,7 @@ namespace Revit.IFC.Export.Exporter
             }
 
             // create wall/wall connectivity objects
-            if (ExporterCacheManager.WallConnectionDataCache.Count > 0)
+            if (ExporterCacheManager.WallConnectionDataCache.Count > 0 && !ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
             {
                IList<IDictionary<ElementId, IFCAnyHandle>> hostObjects = exporterIFC.GetHostObjects();
                List<int> relatingPriorities = new List<int>();

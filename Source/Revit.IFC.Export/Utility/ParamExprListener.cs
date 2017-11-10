@@ -59,7 +59,7 @@ namespace Revit.IFC.Export.Utility
       public Element RevitElement { get; set; }
 
       // Dictionary to keep information of which parameter that contains the running number. Key is a tuple of Revit_category and parameter name
-      IDictionary<Tuple<string, string>, int> LastRunningNumberCollection = new Dictionary<Tuple<string, string>, int>();
+      static IDictionary<Tuple<string, string>, int> LastRunningNumberCollection = new Dictionary<Tuple<string, string>, int>();
 
       // Unique paramameter value dictionary. The key: a tuple of parameter name and parameter value
       // This dictionary should be reset at the beginning of export or at the end of export
@@ -68,9 +68,10 @@ namespace Revit.IFC.Export.Utility
       /// <summary>
       /// Reset the internal dictionary that keep unique parameter values. This is needed to be done at the end of export process
       /// </summary>
-      public static void ResetUniqueParamValueDict()
+      public static void ResetParamExprInternalDicts()
       {
          UniqueParameterValue.Clear();
+         LastRunningNumberCollection.Clear();
       }
 
       /// <summary>
@@ -125,22 +126,40 @@ namespace Revit.IFC.Export.Utility
          }
       }
 
+      /// <summary>
+      /// Set NodeProperty
+      /// </summary>
+      /// <param name="node">the node</param>
+      /// <param name="value">value</param>
       public void SetNodePropertyValue(Antlr4.Runtime.Tree.IParseTree node, NodeProperty value)
       {
          nodeProp.Put(node, value);
       }
 
+      /// <summary>
+      /// Get the NodeProperty
+      /// </summary>
+      /// <param name="node">the node</param>
+      /// <returns>NodeProperty</returns>
       public NodeProperty GetNodePropertyValue(Antlr4.Runtime.Tree.IParseTree node)
       {
          return nodeProp.Get(node);
       }
 
+      /// <summary>
+      /// Instantiating the ParemExprListener
+      /// </summary>
+      /// <param name="tokens">tokens</param>
       public ParamExprListener(BufferedTokenStream tokens)
       {
          this.tokens = tokens;
          rewriter = new TokenStreamRewriter(tokens);
       }
 
+      /// <summary>
+      /// Do this when encounters Terminal
+      /// </summary>
+      /// <param name="node">the node</param>
       public override void VisitTerminal(ITerminalNode node)
       {
          string nodeName = node.Symbol.Text;
@@ -176,6 +195,10 @@ namespace Revit.IFC.Export.Utility
          }
       }
 
+      /// <summary>
+      /// Executed upon entering param_expr rule
+      /// </summary>
+      /// <param name="context">the param_expr context</param>
       public override void EnterParam_expr([NotNull] ParamExprGrammarParser.Param_exprContext context)
       {
          base.EnterParam_expr(context);
@@ -189,6 +212,10 @@ namespace Revit.IFC.Export.Utility
             isUnique = false;
       }
 
+      /// <summary>
+      /// Executed upon existing the param_expr rule
+      /// </summary>
+      /// <param name="context">the param_expr context</param>
       public override void ExitParam_expr([NotNull] ParamExprGrammarParser.Param_exprContext context)
       {
          base.ExitParam_expr(context);
@@ -212,6 +239,10 @@ namespace Revit.IFC.Export.Utility
          FinalParameterValue = parValue;
       }
 
+      /// <summary>
+      /// Executed upon exiting atomic_param rule
+      /// </summary>
+      /// <param name="context">the atomic_param context</param>
       public override void ExitAtomic_param([NotNull] ParamExprGrammarParser.Atomic_paramContext context)
       {
          base.ExitAtomic_param(context);
@@ -232,7 +263,22 @@ namespace Revit.IFC.Export.Utility
                int lastNumber; 
                if (LastRunningNumberCollection.ContainsKey(key))
                {
-                  lastNumber = LastRunningNumberCollection[key]++;
+                  lastNumber = ++LastRunningNumberCollection[key];
+               }
+               else
+               {
+                  lastNumber = 1;
+                  LastRunningNumberCollection.Add(key, lastNumber);
+               }
+               nodeP.nodePropertyValue = lastNumber;
+            }
+            else if (spParCtx.RUNNINGNUMBERINSTANCE() != null)
+            {
+               var key = new Tuple<string, string>(RevitElement.Id.ToString(), RevitParameterName);
+               int lastNumber;
+               if (LastRunningNumberCollection.ContainsKey(key))
+               {
+                  lastNumber = ++LastRunningNumberCollection[key];
                }
                else
                {
@@ -275,6 +321,10 @@ namespace Revit.IFC.Export.Utility
          SetNodePropertyValue(context, nodeP);
       }
 
+      /// <summary>
+      /// Executed upon exiting expr rule
+      /// </summary>
+      /// <param name="context">the expr context</param>
       public override void ExitExpr([NotNull] ParamExprGrammarParser.ExprContext context)
       {
          base.ExitExpr(context);
@@ -309,6 +359,10 @@ namespace Revit.IFC.Export.Utility
          SetNodePropertyValue(context, retExpr);
       }
 
+      /// <summary>
+      /// Executed upon exiting value rule
+      /// </summary>
+      /// <param name="context">the value context</param>
       public override void ExitValue([NotNull] ParamExprGrammarParser.ValueContext context)
       {
          base.ExitValue(context);
@@ -317,7 +371,7 @@ namespace Revit.IFC.Export.Utility
          string valueStr = context.GetChild(0).GetText();
          if (context.GetChild(0) is ParamExprGrammarParser.StringliteralContext)
          {
-            valueStr = valueStr.Replace("\'", "").Replace("\"","").Trim();
+            valueStr = valueStr.Trim().Replace("\'", "").Replace("\"","");
             value = (string)valueStr;
          }
          else if (context.GetChild(0) is ParamExprGrammarParser.RealliteralContext)
@@ -387,38 +441,7 @@ namespace Revit.IFC.Export.Utility
          if (paramName.ChildCount > 1 && paramName.type() != null)
          {
             el = elem.Document.GetElement(RevitElement.GetTypeId());
-            //// This is a parameter that should come from type
-            //string parameterName = paramName.name().GetText().Replace("(","").Replace(")","").Replace("'","").Replace("\"","");     // Remove the brackets
-            //var typeParams = elementType.GetParameters(parameterName);
-            //foreach (Parameter par in typeParams)
-            //{
-            //   parValue = GetParameterValue(par);
-            //   break;   // Exit once a value is found ignoring the rest of parameters with the same names if exist
-            //}
          }
-         //else
-         //{
-            //string parameterName = paramName.name().GetText().Replace("(", "").Replace(")", "").Replace("'", "").Replace("\"", "");     // Remove the brackets;
-
-            //// Special parameter (not actual parameter in Revit for Name and UniqueId string)
-            //if (parameterName.Equals("Name", StringComparison.CurrentCultureIgnoreCase))
-            //{
-            //   parValue = elem.Name;
-            //}
-            //else if (parameterName.Equals("UniqueId", StringComparison.CurrentCultureIgnoreCase))
-            //{
-            //   parValue = elem.UniqueId;
-            //}
-            //else
-            //{
-            //   var RevitParams = elem.GetParameters(parameterName);
-            //   foreach (Parameter par in RevitParams)
-            //   {
-            //      parValue = GetParameterValue(par);
-            //      break;
-            //   }
-            //}
-         //}
          parValue = GetParameterValue(el, paramName);
          return parValue;
       }

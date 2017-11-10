@@ -156,7 +156,7 @@ namespace Revit.IFC.Export.Exporter
 
                // call for host objects; curtain roofs excused from call (no material information)
                HostObjectExporter.ExportHostObjectMaterials(exporterIFC, roof, productWrapper.GetAnElement(),
-                   geometryElement, productWrapper, ElementId.InvalidElementId, IFCLayerSetDirection.Axis3, null);
+                   geometryElement, productWrapper, ElementId.InvalidElementId, IFCLayerSetDirection.Axis3, null, null);
             }
             tr.Commit();
          }

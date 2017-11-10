@@ -331,38 +331,44 @@ namespace Revit.IFC.Export.Exporter
          if (materialId == ElementId.InvalidElementId)
             return;
 
-         IFCAnyHandle presStyleHnd = ExporterCacheManager.PresentationStyleAssignmentCache.Find(materialId);
-         if (IFCAnyHandleUtil.IsNullOrHasNoValue(presStyleHnd))
+         IFCAnyHandle presStyleHnd = null;
+         if (!(ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView))
          {
-            IFCAnyHandle surfStyleHnd = CategoryUtil.GetOrCreateMaterialStyle(document, exporterIFC, materialId);
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(surfStyleHnd))
-               return;
+            presStyleHnd = ExporterCacheManager.PresentationStyleAssignmentCache.Find(materialId);
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(presStyleHnd))
+            {
+               IFCAnyHandle surfStyleHnd = CategoryUtil.GetOrCreateMaterialStyle(document, exporterIFC, materialId);
+               if (IFCAnyHandleUtil.IsNullOrHasNoValue(surfStyleHnd))
+                  return;
 
-            ISet<IFCAnyHandle> styles = new HashSet<IFCAnyHandle>();
-            styles.Add(surfStyleHnd);
+               ISet<IFCAnyHandle> styles = new HashSet<IFCAnyHandle>();
+               styles.Add(surfStyleHnd);
 
-            presStyleHnd = IFCInstanceExporter.CreatePresentationStyleAssignment(file, styles);
-            ExporterCacheManager.PresentationStyleAssignmentCache.Register(materialId, presStyleHnd);
+               presStyleHnd = IFCInstanceExporter.CreatePresentationStyleAssignment(file, styles);
+               ExporterCacheManager.PresentationStyleAssignmentCache.Register(materialId, presStyleHnd);
+            }
          }
-
 
          // Check if the IfcStyledItem has already been set for this representation item.  If so, don't set it
          // again.  This can happen in BodyExporter in certain cases where we call CreateSurfaceStyleForRepItem twice.
-         HashSet<IFCAnyHandle> styledByItemHandles = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(repItemHnd, "StyledByItem");
-         if (styledByItemHandles == null || styledByItemHandles.Count == 0)
+         if (presStyleHnd != null)
          {
-            HashSet<IFCAnyHandle> presStyleSet = new HashSet<IFCAnyHandle>();
-            presStyleSet.Add(presStyleHnd);
-            IFCAnyHandle styledItem = IFCInstanceExporter.CreateStyledItem(file, repItemHnd, presStyleSet, null);
-         }
-         else
-         {
-            IFCAnyHandle styledItem = styledByItemHandles.First();
-            HashSet<IFCAnyHandle> presStyleSet = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(styledItem, "Styles");
-            if (presStyleSet == null)
-               presStyleSet = new HashSet<IFCAnyHandle>();
-            presStyleSet.Add(presStyleHnd);
-            IFCAnyHandleUtil.SetAttribute(styledItem, "Styles", presStyleSet);
+            HashSet<IFCAnyHandle> styledByItemHandles = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(repItemHnd, "StyledByItem");
+            if (styledByItemHandles == null || styledByItemHandles.Count == 0)
+            {
+               HashSet<IFCAnyHandle> presStyleSet = new HashSet<IFCAnyHandle>();
+               presStyleSet.Add(presStyleHnd);
+               IFCAnyHandle styledItem = IFCInstanceExporter.CreateStyledItem(file, repItemHnd, presStyleSet, null);
+            }
+            else
+            {
+               IFCAnyHandle styledItem = styledByItemHandles.First();
+               HashSet<IFCAnyHandle> presStyleSet = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(styledItem, "Styles");
+               if (presStyleSet == null)
+                  presStyleSet = new HashSet<IFCAnyHandle>();
+               presStyleSet.Add(presStyleHnd);
+               IFCAnyHandleUtil.SetAttribute(styledItem, "Styles", presStyleSet);
+            }
          }
          return;
       }
@@ -378,7 +384,7 @@ namespace Revit.IFC.Export.Exporter
       public static IFCAnyHandle CreateCurveStyleForRepItem(ExporterIFC exporterIFC, IFCAnyHandle repItemHnd, IFCData curveWidth, IFCAnyHandle colorHnd)
       {
          // Styled Item is not allowed in IFC4RV
-         if (repItemHnd == null || !ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+         if (repItemHnd == null || ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
             return null;
 
          IFCAnyHandle presStyleHnd = null;
@@ -3040,7 +3046,7 @@ namespace Revit.IFC.Export.Exporter
                                   // Must Check correctness for transform!!!!!
                                  FootPrintInfo fInfo = new FootPrintInfo();
                                  fInfo.LCSTransformUsed = bodyData.OffsetTransform;
-                                 fInfo.FootPrintHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, curveLoops[0], fInfo.LCSTransformUsed, extrusionDirection);
+                                 fInfo.FootPrintHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, curveLoops[0], fInfo.LCSTransformUsed, fInfo.LCSTransformUsed.BasisZ);
                                   footprintInfoSet.Add(fInfo);
                               }
                                if (options.CollectMaterialAndProfile)

@@ -2685,7 +2685,8 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       public static void CreateWallBaseQuantities(ExporterIFC exporterIFC, Wall wallElement,
           IList<Solid> solids, IList<Mesh> meshes,
           IFCAnyHandle wallHnd,
-          double scaledLength, double scaledDepth, double scaledFootPrintArea)
+          double scaledLength, double scaledDepth, double scaledFootPrintArea,
+          IFCExtrusionCreationData extrustionData)
       {
          IFCFile file = exporterIFC.GetFile();
          HashSet<IFCAnyHandle> quantityHnds = new HashSet<IFCAnyHandle>();
@@ -2714,6 +2715,20 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             quantityHnds.Add(quantityHnd);
          }
 
+         if (scaledDepth > MathUtil.Eps() && !MathUtil.IsAlmostZero(scaledLength) && !MathUtil.IsAlmostZero(scaledWidth))
+         {
+            double grossVolume = scaledLength * scaledWidth * scaledDepth;
+            IFCAnyHandle quantityHnd = IFCInstanceExporter.CreateQuantityVolume(file, "GrossVolume", null, null, grossVolume);
+            quantityHnds.Add(quantityHnd);
+         }
+
+         if (scaledDepth > MathUtil.Eps() && !MathUtil.IsAlmostZero(scaledLength))
+         {
+            double grossSideArea = scaledLength * scaledDepth;
+            IFCAnyHandle quantityHnd = IFCInstanceExporter.CreateQuantityArea(file, "GrossSideArea", null, null, grossSideArea);
+            quantityHnds.Add(quantityHnd);
+         }
+
          double area = 0;
          double volume = 0;
 
@@ -2738,18 +2753,18 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          if (!MathUtil.IsAlmostZero(area))
          {
             area = UnitUtil.ScaleArea(area);
-            IFCAnyHandle quantityHnd = IFCInstanceExporter.CreateQuantityArea(file, "GrossSideArea", null, null, area);
+            IFCAnyHandle quantityHnd = IFCInstanceExporter.CreateQuantityArea(file, "NetSideArea", null, null, area);
             quantityHnds.Add(quantityHnd);
          }
 
          if (!MathUtil.IsAlmostZero(volume))
          {
             volume = UnitUtil.ScaleVolume(volume);
-            IFCAnyHandle quantityHnd = IFCInstanceExporter.CreateQuantityVolume(file, "GrossVolume", null, null, volume);
+            IFCAnyHandle quantityHnd = IFCInstanceExporter.CreateQuantityVolume(file, "NetVolume", null, null, volume);
             quantityHnds.Add(quantityHnd);
          }
 
-        string quantitySetName = string.Empty;
+         string quantitySetName = string.Empty;
         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
         {
             quantitySetName = "Qto_WallBaseQuantities";

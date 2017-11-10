@@ -29,6 +29,10 @@ namespace Revit.IFC.Export.Utility
    class ParamExprLogger
    {
       private static MemoryStream m_mStream = null;
+
+      /// <summary>
+      /// Logger stream
+      /// </summary>
       public static MemoryStream loggerStream
       {
          get
@@ -38,6 +42,9 @@ namespace Revit.IFC.Export.Utility
          }
       }
 
+      /// <summary>
+      /// reset the logger stream
+      /// </summary>
       public static void resetStream()
       {
          if (m_mStream != null)
@@ -47,8 +54,10 @@ namespace Revit.IFC.Export.Utility
          }
       }
 
-      //        public static MemoryStream mStream = new MemoryStream();
-
+      /// <summary>
+      /// Write log
+      /// </summary>
+      /// <param name="msgText">the message</param>
       public static void writeLog(string msgText)
       {
          if (m_mStream == null) m_mStream = new MemoryStream();
@@ -59,6 +68,10 @@ namespace Revit.IFC.Export.Utility
          m_mStream.Flush();
       }
 
+      /// <summary>
+      /// Get MemoryStream content
+      /// </summary>
+      /// <returns>character array</returns>
       public static char[] getmStreamContent()
       {
          char[] charArray;
