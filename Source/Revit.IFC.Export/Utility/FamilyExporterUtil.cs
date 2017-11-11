@@ -579,7 +579,20 @@ namespace Revit.IFC.Export.Exporter
                   break;
             }
          }
-
+         switch (IFCTypeEntity) //Use SuperType if Abstract, not all listed yet.
+         {
+            case Common.Enums.IFCEntityType.IfcEnergyConversionDeviceType:
+            case Common.Enums.IFCEntityType.IfcFlowControllerType:
+            case Common.Enums.IFCEntityType.IfcFlowFittingType:
+            case Common.Enums.IFCEntityType.IfcFlowMovingDeviceType:
+            case Common.Enums.IFCEntityType.IfcFlowSegmentType:
+            case Common.Enums.IFCEntityType.IfcFlowStorageDeviceType:
+            case Common.Enums.IFCEntityType.IfcFlowTerminalType:
+            case Common.Enums.IFCEntityType.IfcFlowTreatmentDeviceType:
+               IFCTypeEntity = Common.Enums.IFCEntityType.IfcDistributionElementType;
+               typeAsString = "IfcDistributionElementType";
+               break;
+         }
          string[] typeStr = typeAsString.Split('.');
          string desireTypeBase = "Revit.IFC.Export.Toolkit.";
          string desireTypeBaseExtra = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? ".IFC4" : string.Empty;
