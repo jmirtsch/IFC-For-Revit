@@ -29,6 +29,8 @@ using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Export.Exporter.PropertySet;
 using Revit.IFC.Common.Utility;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Exporter
 {
    /// <summary>
@@ -392,8 +394,9 @@ namespace Revit.IFC.Export.Exporter
                   // to the level or not, depending on whether they will or won't be grouped.
                   createdRebars.Add(new DelayedProductWrapper(rebarElement, elemHnd, setter.LevelInfo));
 
-                  CacheSubelementParameterValues(rebarElement, rebarElementParams, ii, elemHnd);
-                  
+                  //CacheSubelementParameterValues(rebarElement, rebarElementParams, ii, elemHnd);
+#warning ggFix
+
                   ExporterCacheManager.HandleToElementCache.Register(elemHnd, rebarElement.Id);
                   CategoryUtil.CreateMaterialAssociation(exporterIFC, elemHnd, materialId);
                }
@@ -625,7 +628,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="parameters">The paramters of the rebar element.</param>
       /// <param name="barIndex">The index of the subelement.</param>
       /// <param name="handleSubelement">The handle of the subelement.</param>
-      static void CacheSubelementParameterValues(Element element, ParameterSet parameters, int barIndex, IFCAnyHandle handleSubelement)
+      static void CacheSubelementParameterValues(Element element, ParameterSet parameters, int barIndex, IfcObjectDefinition handleSubelement)
       {
          if (element == null)
             return;
