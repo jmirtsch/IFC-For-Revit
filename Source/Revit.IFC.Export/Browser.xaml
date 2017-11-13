@@ -11,16 +11,7 @@
 
     <Grid>
 		<StackPanel>
-		<Menu IsMainMenu="True">
-			<MenuItem Header="IfcType" Click="MenuItem_Click">
-				
-			</MenuItem></Menu>
 			<xctk:PropertyGrid x:Name="mPropertyGrid" Width="350" Margin="10" >
-				<xctk:PropertyGrid.ContextMenu>
-					<ContextMenu>
-						<MenuItem>IfcType</MenuItem>
-					</ContextMenu>
-				</xctk:PropertyGrid.ContextMenu>
 			</xctk:PropertyGrid>
 		</StackPanel>
 	</Grid>

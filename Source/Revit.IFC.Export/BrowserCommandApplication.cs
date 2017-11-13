@@ -144,7 +144,7 @@ namespace Revit.IFC.Export.UI
          return;
       }
    }
-
+   [DisplayName("Ifc Properties")]
    class ProductPropertyGridAdapter : ICustomTypeDescriptor
    {
       private IfcProduct mProduct = null;
@@ -152,18 +152,19 @@ namespace Revit.IFC.Export.UI
       public ProductPropertyGridAdapter(IfcProduct product)
       {
          mProduct = product;
+         
       }
 
       public string GetComponentName()
       {
-         return TypeDescriptor.GetComponentName(this, true);
+         return TypeDescriptor.GetComponentName(mProduct, true);
       }
 
       public EventDescriptor GetDefaultEvent()
       {
          return TypeDescriptor.GetDefaultEvent(this, true);
       }
-
+      
       public string GetClassName()
       {
          return TypeDescriptor.GetClassName(mProduct, true);
