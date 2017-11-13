@@ -27,6 +27,8 @@ using Autodesk.Revit.DB.Structure;
 using Revit.IFC.Common.Utility;
 using Revit.IFC.Export.Utility;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
     /// <summary>
@@ -81,8 +83,8 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
         /// <returns>
         /// True if the operation succeed, false otherwise.
         /// </returns>
-        public override bool GetParameterFromSubelementCache(Element element, IFCAnyHandle handle)
-        {
+        public override bool GetParameterFromSubelementCache(Element element, IfcObjectDefinition handle)
+      {
             DoubleParameterValue paramVal = ParameterUtil.getParameterValueByNameFromSubelementCache(element.Id, handle, "A") as DoubleParameterValue;
             if (paramVal != null)
             {

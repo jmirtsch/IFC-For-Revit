@@ -25,6 +25,8 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.DB.Structure;
 
+using GeometryGym.Ifc;
+
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
     /// <summary>
@@ -65,7 +67,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <returns>
         /// True if the operation succeed, false otherwise.
         /// </returns>
-        virtual public bool GetParameterFromSubelementCache(Element element, IFCAnyHandle handle)
+        virtual public bool GetParameterFromSubelementCache(Element element, IfcObjectDefinition handle)
         {
             return false;
         }

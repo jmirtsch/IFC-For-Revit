@@ -1153,9 +1153,8 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          if (PropertyCalculator == null)
             return propHnd;
 
-#warning ggFix
-         if (false) //PropertyCalculator.GetParameterFromSubelementCache(element, handle) ||
-             //PropertyCalculator.Calculate(null,extrusionCreationData, element, elementType))
+         if (PropertyCalculator.GetParameterFromSubelementCache(element, handle) ||
+             PropertyCalculator.Calculate(null,extrusionCreationData, element, elementType))
          {
             PropertyType propertyType = PropertyType;
             PropertyValueType valueType = PropertyValueType;
