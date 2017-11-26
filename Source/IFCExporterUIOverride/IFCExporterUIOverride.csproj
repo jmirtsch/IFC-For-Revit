@@ -216,8 +216,8 @@
   <PropertyGroup>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>Copy "$(TargetPath)" "C:\Program Files (x86)\Revit IFC 2017\"
-Copy "$(TargetDir)UserInterfaceUtility.dll" "C:\Program Files (x86)\Revit IFC 2017\"</PostBuildEvent>
+    <PostBuildEvent>Copy "$(TargetPath)" "C:\Program Files (x86)\Revit IFC 2016\"
+Copy "$(TargetDir)UserInterfaceUtility.dll" "C:\Program Files (x86)\Revit IFC 2016\"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -1368,7 +1368,7 @@ namespace Revit.IFC.Export.Exporter
                }
                else
                {
-                  IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, lcs, XYZ.BasisZ, false);
+                  IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, new Plane(lcs.BasisX, lcs.BasisY, lcs.BasisZ), XYZ.BasisZ, false);
                   ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, curve, XYZ.Zero, false);
                   IList<IFCAnyHandle> curves = info.GetCurves();
 

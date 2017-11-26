@@ -164,7 +164,7 @@ namespace Revit.IFC.Export.Exporter
                }
                else
                {
-                  IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, curveLCS, projDir, false);
+                  IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, new Plane(curveLCS.BasisX, curveLCS.BasisY, curveLCS.Origin), projDir, false);
 
                   if (useOffsetTrf)
                   {

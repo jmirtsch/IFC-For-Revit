@@ -213,7 +213,7 @@ namespace Revit.IFC.Export.Exporter
          }
 
          Transform offsetLCS = new Transform(lcs);
-         offsetLCS.Origin = XYZ.Zero;
+         offsetLCS.Origin = XYZ.Zero; 
          IList<IFCAnyHandle> axis_items = null;
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
          {
@@ -238,9 +238,8 @@ namespace Revit.IFC.Export.Exporter
          }
          else
          {
-            IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, offsetLCS, projDir, false);
+            IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, new Plane(offsetLCS.BasisX, offsetLCS.BasisY, offsetLCS.Origin), projDir, false);
             ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, curve, curveOffset, true);
-
             axis_items = info.GetCurves();
          }
 

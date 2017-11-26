@@ -54,15 +54,11 @@ namespace Revit.IFC.Common.Utility
                schemaFile = "IFC2X2_ADD1.xsd";
                break;
             case IFCVersion.IFC2x3:
-            case IFCVersion.IFC2x3BFM:
             case IFCVersion.IFC2x3CV2:
-            case IFCVersion.IFC2x3FM:
             case IFCVersion.IFCCOBIE:
                schemaFile = "IFC2X3_TC1.xsd";
                break;
             case IFCVersion.IFC4:
-            case IFCVersion.IFC4DTV:
-            case IFCVersion.IFC4RV:
                schemaFile = "IFC4_ADD2.xsd";
                break;
             default:

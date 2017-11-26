@@ -39,9 +39,6 @@ namespace Revit.IFC.Export.Utility
       private static IDictionary<ElementId, ParameterElementCache> m_IFCParameters =
          new Dictionary<ElementId, ParameterElementCache>();
 
-      private static IDictionary<ElementId, IDictionary<IFCAnyHandle, ParameterValueSubelementCache>> m_SubelementParameterValueCache =
-         new Dictionary<ElementId, IDictionary<IFCAnyHandle, ParameterValueSubelementCache>>();
-
       public static IDictionary<BuiltInParameterGroup, ParameterElementCache> GetNonIFCParametersForElement(ElementId elemId)
       {
          if (elemId == ElementId.InvalidElementId)
@@ -64,7 +61,6 @@ namespace Revit.IFC.Export.Utility
       {
          m_NonIFCParameters.Clear();
          m_IFCParameters.Clear();
-         m_SubelementParameterValueCache.Clear();
       }
 
       private static Parameter GetStringValueFromElementBase(Element element, ElementId elementId, string propertyName, bool allowUnset, out string propertyValue)
@@ -603,31 +599,6 @@ namespace Revit.IFC.Export.Utility
       }
 
       /// <summary>
-      /// Gets the parameter value by name from the subelement parameter value cache.
-      /// </summary>
-      /// <param name="elementId">The element id.</param>
-      /// <param name="handle">The subelement ifc handle.</param>
-      /// <param name="propertyName">The property name.</param>
-      /// <returns>The Parameter.</returns>
-      static public ParameterValue getParameterValueByNameFromSubelementCache(ElementId elementId, IFCAnyHandle subelementHandle, string propertyName)
-      {
-         ParameterValue parameterVal = null;
-         string cleanPropertyName = NamingUtil.RemoveSpaces(propertyName);
-
-         IDictionary<IFCAnyHandle, ParameterValueSubelementCache> anyHandleParamValMap;
-         if (!m_SubelementParameterValueCache.TryGetValue(elementId, out anyHandleParamValMap))
-            return parameterVal;
-
-         ParameterValueSubelementCache paramValueCache;
-         if (!anyHandleParamValMap.TryGetValue(subelementHandle, out paramValueCache))
-            return parameterVal;
-
-
-         paramValueCache.ParameterValueCache.TryGetValue(cleanPropertyName, out parameterVal);
-         return parameterVal;
-      }
-
-      /// <summary>
       /// Returns true if the built-in parameter has the identical name and value as another parameter.
       /// Used to remove redundant output from the IFC export.
       /// </summary>
@@ -739,12 +710,11 @@ namespace Revit.IFC.Export.Utility
       /// <param name="subelementHandle">The subelement ifc handle.</param>
       /// <param name="param">The element's parameter that we want to override.</param>
       /// <param name="paramVal">The override value.</param>
-      static public void CacheParameterValuesForSubelementHandle(ElementId elementId, IFCAnyHandle subelementHandle, Parameter param, ParameterValue paramVal)
+      static public void CacheParameterValuesForSubelementHandle(ElementId elementId, IFCAnyHandle subelementHandle, Parameter param)
       {
          if ((elementId == ElementId.InvalidElementId) ||
              (subelementHandle == null) ||
-             (param == null) ||
-             (paramVal == null))
+             (param == null)) 
             return;
 
          if (IsDuplicateParameter(param))
@@ -762,27 +732,6 @@ namespace Revit.IFC.Export.Utility
          if (string.IsNullOrWhiteSpace(paramDefinition.Name))
             return;
 
-         string cleanPropertyName = NamingUtil.RemoveSpaces(paramDefinition.Name);
-
-         IDictionary<IFCAnyHandle, ParameterValueSubelementCache> anyHandleParamValMap;
-         if (!m_SubelementParameterValueCache.TryGetValue(elementId, out anyHandleParamValMap))
-         {
-            anyHandleParamValMap = new Dictionary<IFCAnyHandle, ParameterValueSubelementCache>();
-            m_SubelementParameterValueCache[elementId] = anyHandleParamValMap;
-         }
-
-         ParameterValueSubelementCache paramCache;
-         if (!anyHandleParamValMap.TryGetValue(subelementHandle, out paramCache))
-         {
-            paramCache = new ParameterValueSubelementCache();
-            anyHandleParamValMap[subelementHandle] = paramCache;
-         }
-
-         ParameterValue cachedParamVal;
-         if (paramCache.ParameterValueCache.TryGetValue(cleanPropertyName, out cachedParamVal))
-            return;
-
-         paramCache.ParameterValueCache[cleanPropertyName] = paramVal;
       }
 
       /// <summary>
@@ -800,7 +749,6 @@ namespace Revit.IFC.Export.Utility
          ElementId id = element.Id;
          m_NonIFCParameters.Remove(id);
          m_IFCParameters.Remove(id);
-         m_SubelementParameterValueCache.Remove(id);
       }
 
       /// <summary>

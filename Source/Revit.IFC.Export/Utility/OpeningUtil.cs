@@ -212,7 +212,7 @@ namespace Revit.IFC.Export.Utility
          IList<CurveLoop> curveLoops, Element element, Transform lcs, double scaledWidth,
          IFCRange range, PlacementSetter setter, IFCAnyHandle localPlacement, ProductWrapper localWrapper)
       {
-         IList<IFCOpeningData> openingDataList = ExporterIFCUtils.GetOpeningData(exporterIFC, element, lcs, range);
+         IList<IFCOpeningData> openingDataList = ExporterIFCUtils.GetOpeningData(exporterIFC, element, new Plane(lcs.BasisX, lcs.BasisY, lcs.Origin), range);
          IFCFile file = exporterIFC.GetFile();
          IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
          foreach (IFCOpeningData openingData in openingDataList)

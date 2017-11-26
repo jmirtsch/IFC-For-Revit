@@ -12,8 +12,8 @@ using System.Reflection;
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
-[assembly: AssemblyVersion("17.4.7.0")]
-[assembly: AssemblyFileVersion("17.4.7.0")]
+[assembly: AssemblyVersion("16.6.1.0")]
+[assembly: AssemblyFileVersion("16.6.1.0")]
 
 #region Using directives
 

@@ -1309,87 +1309,7 @@ namespace Revit.IFC.Export.Exporter
          else
             surfaceForm = Toolkit.IFC4.IFCBSplineSurfaceForm.UNSPECIFIED;
 
-         try
-         {
-            NurbsSurfaceData nurbsSurfaceData = ExportUtils.GetNurbsSurfaceDataForFace(face);
-
-            int uDegree = nurbsSurfaceData.DegreeU;
-            int vDegree = nurbsSurfaceData.DegreeV;
-
-            IList<double> originalKnotsU = nurbsSurfaceData.GetKnotsU();
-            IList<double> originalKnotsV = nurbsSurfaceData.GetKnotsV();
-
-            int originalKnotsUSz = originalKnotsU.Count;
-            int originalKnotsVSz = originalKnotsV.Count;
-
-            int numControlPointsU = originalKnotsUSz - uDegree - 1;
-            int numControlPointsV = originalKnotsVSz - vDegree - 1;
-            int numControlPoints = numControlPointsU * numControlPointsV;
-
-            // controlPointsList and weightsData
-            IList<XYZ> controlPoints = nurbsSurfaceData.GetControlPoints();
-            if (controlPoints.Count != numControlPoints)
-               return null;
-
-            IList<double> weights = nurbsSurfaceData.GetWeights();
-            if (weights.Count != numControlPoints)
-               return null;
-
-            IList<IList<IFCAnyHandle>> controlPointsList = new List<IList<IFCAnyHandle>>();
-            IList<IList<double>> weightsData = new List<IList<double>>();
-
-            int indexU = 0;
-            int indexV = 0;
-            int controlPointListSize = 0;
-            for (int ii = 0; ii < numControlPoints; ii++)
-            {
-               IFCAnyHandle controlPointHnd = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, controlPoints[ii], null);
-               if (indexU == controlPointListSize)
-               {
-                  controlPointsList.Add(new List<IFCAnyHandle>());
-                  weightsData.Add(new List<double>());
-                  controlPointListSize++;
-               }
-
-               controlPointsList[indexU].Add(controlPointHnd);
-               weightsData[indexU].Add(weights[ii]);
-
-               indexV++;
-               if (indexV == numControlPointsV)
-               {
-                  indexU++;
-                  indexV = 0;
-               }
-            }
-
-            // uKnots and uMultiplicities
-            IList<double> uKnots = new List<double>();
-            IList<int> uMultiplicities = new List<int>();
-
-            ConvertRevitKnotsToIFCKnots(originalKnotsU, uKnots, uMultiplicities);
-
-            // vKnots and vMultiplicities
-            IList<double> vKnots = new List<double>();
-            IList<int> vMultiplicities = new List<int>();
-
-
-            ConvertRevitKnotsToIFCKnots(originalKnotsV, vKnots, vMultiplicities);
-
-            // Rest of values.
-            IFCLogical uClosed = IFCLogical.False;
-            IFCLogical vClosed = IFCLogical.False;
-            IFCLogical selfIntersect = IFCLogical.Unknown;
-
-            Toolkit.IFC4.IFCKnotType knotType = Toolkit.IFC4.IFCKnotType.UNSPECIFIED;
-
-            return IFCInstanceExporter.CreateRationalBSplineSurfaceWithKnots(file, uDegree, vDegree,
-               controlPointsList, surfaceForm, uClosed, vClosed, selfIntersect,
-               uMultiplicities, vMultiplicities, uKnots, vKnots, knotType, weightsData);
-         }
-         catch
-         {
-            return null;
-         }
+         return null;
       }
 
       private static IFCAnyHandle CreatePositionForFace(ExporterIFC exporterIFC, IFCAnyHandle location, XYZ zdir, XYZ xdir)
@@ -1802,66 +1722,11 @@ namespace Revit.IFC.Export.Exporter
                      ifcSurfaceNormalDir *= isRightHanded ? 1.0 : -1.0;
                   }
                   else if (face is RuledFace)
-                  {
+                  { 
                      RuledFace ruledFace = face as RuledFace;
                      // If this face is an extruded ruled face, we will export it as an IfcSurfaceOfLinearExtrusion, else, we will
                      // convert it to NURBS surface and then export it to IFC as IfcBSplineSurface
-                     if (ruledFace.IsExtruded)
-                     {
-                        // To create an IFCSurfaceOfLinearExtrusion, we need to know the profile curve, the extrusion direction
-                        // and the depth of the extrusion, (position is optional)
-                        // To calculate the extrusion direction and the extrusion depth we first get the start points of the 2 
-                        // profile curves. The vector connecting these two points will represent the extrusion direction while
-                        // its length will be the extrusion depth
-                        Curve firstProfileCurve = ruledFace.get_Curve(0);
-                        Curve secondProfileCurve = ruledFace.get_Curve(1);
-                        if (firstProfileCurve == null || secondProfileCurve == null)
-                        {
-                           // If IsExtruded is true then both profile curves have to exist, but if one of them is null then the 
-                           // input is invalid, reject here
-                           return null;
-                        }
-
-                        // For the position of the surface, we set its location to be the start point of the first curve, its 
-                        // axis to be the extrusion direction and its ref direction to be the 90-degree rotaion of the extrusion
-                        // direction
-                        IFCAnyHandle location = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, firstProfileCurve.GetEndPoint(0), cartesianPoints);
-
-                        XYZ endsDiff = secondProfileCurve.GetEndPoint(0) - firstProfileCurve.GetEndPoint(0);
-
-                        double depth = endsDiff.GetLength();
-
-                        XYZ zdir = endsDiff.Normalize();
-                        if (zdir == null || MathUtil.IsAlmostZero(zdir.GetLength()))
-                        {
-                           // The extrusion direction is either null or too small to normalize
-                           return null;
-                        }
-
-                        // Extrusion direction is fixed on the +Z axis of the local coordinate system of the extrusion
-                        IFCAnyHandle direction = GeometryUtil.VectorToIfcDirection(exporterIFC, new XYZ(0, 0, 1));
-
-                        // Create arbitrary plane with z direction as normal.
-                        Plane arbitraryPlane = GeometryUtil.CreatePlaneByNormalAtOrigin(zdir);
-
-                        IFCAnyHandle position = CreatePositionForFace(exporterIFC, location, zdir, arbitraryPlane.XVec);
-                        Transform faceTrf = Transform.Identity;
-                        faceTrf.BasisZ = zdir;
-                        faceTrf.BasisX = arbitraryPlane.XVec;
-                        faceTrf.BasisY = faceTrf.BasisZ.CrossProduct(faceTrf.BasisX);
-
-                        IList<double> locationOrds = IFCAnyHandleUtil.GetCoordinates(location);
-                        faceTrf.Origin = new XYZ(locationOrds[0], locationOrds[1], locationOrds[2]);
-                        //Curve curveProfile = firstProfileCurve.CreateTransformed(faceTrf.Inverse);
-
-                        IFCAnyHandle sweptCurve = CreateProfileCurveFromCurve(file, exporterIFC, firstProfileCurve, Resources.RuledFaceProfileCurve, cartesianPoints, faceTrf.Inverse);
-
-                        surface = IFCInstanceExporter.CreateSurfaceOfLinearExtrusion(file, sweptCurve, position, direction, depth);
-                     }
-                     else
-                     {
-                        surface = CreateNURBSSurfaceFromFace(exporterIFC, file, face);
-                     }
+                     surface = CreateNURBSSurfaceFromFace(exporterIFC, file, face);
                   }
                   else if (face is HermiteFace)
                   {

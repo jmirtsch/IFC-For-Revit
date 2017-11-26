@@ -741,11 +741,6 @@ namespace Revit.IFC.Export.Exporter
                {
                   RebarExporter.Export(exporterIFC, element, productWrapper);
                }
-               else if (element is RebarCoupler)
-               {
-                  RebarCoupler couplerElem = element as RebarCoupler;
-                  RebarCouplerExporter.ExportCoupler(exporterIFC, couplerElem, productWrapper);
-               }
                else if (element is RoofBase)
                {
                   RoofBase roofElement = element as RoofBase;

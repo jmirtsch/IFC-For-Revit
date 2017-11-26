@@ -85,7 +85,7 @@ namespace Revit.IFC.Export.Utility
       {
          if (zDir == null)
             return null;
-         return Plane.CreateByNormalAndOrigin(zDir, XYZ.Zero);
+         return new Plane(zDir, XYZ.Zero);
       }
 
       /// <summary>
@@ -136,7 +136,7 @@ namespace Revit.IFC.Export.Utility
 
          double distanceToOrigin = point.DistanceTo(XYZ.Zero);
          XYZ orig = (distanceToOrigin < 100000) ? point : zDir.DotProduct(point) * zDir;
-         return Plane.Create(new Frame(orig, xDir, yDir, zDir));
+         return new Plane(xDir, yDir, orig);
       }
 
       /// <summary>
@@ -2505,7 +2505,7 @@ namespace Revit.IFC.Export.Utility
          }
          else
          {
-            IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, lcs, projectDir, false);
+            IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, new Plane(lcs.BasisX, lcs.BasisY, lcs.Origin), projectDir, false);
             ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, curve, XYZ.Zero, false);
             IList<IFCAnyHandle> curves = info.GetCurves();
             if (curves.Count != 1 || !IFCAnyHandleUtil.IsSubTypeOf(curves[0], IFCEntityType.IfcBoundedCurve))
@@ -3490,21 +3490,9 @@ namespace Revit.IFC.Export.Utility
 
             ifcCurve = IFCInstanceExporter.CreateTrimmedCurve(file, ellipse, trim1, trim2, true, IFCTrimmingPreference.Cartesian);
          }
-         else if (allowAdvancedCurve && (curve is HermiteSpline || curve is NurbSpline))
+         else if (allowAdvancedCurve && curve is NurbSpline)
          {
-            NurbSpline nurbSpline = null;
-            if (curve is HermiteSpline)
-            {
-               nurbSpline = NurbSpline.Create(curve as HermiteSpline);
-               if (nurbSpline == null)
-               {
-                  throw new InvalidOperationException("Cannot convert this hermite spline to nurbs");
-               }
-            }
-            else
-            {
-               nurbSpline = curve as NurbSpline;
-            }
+            NurbSpline nurbSpline =  curve as NurbSpline;
 
             int degree = nurbSpline.Degree;
             IList<XYZ> controlPoints = nurbSpline.CtrlPoints;
@@ -3968,7 +3956,7 @@ namespace Revit.IFC.Export.Utility
 
          XYZ normal = v1.CrossProduct(v2);
          normal.Normalize();
-         Plane planeOfArc = Plane.CreateByNormalAndOrigin(normal, P1);
+         Plane planeOfArc = new Plane(normal, P1);
          return planeOfArc;
       }
    }

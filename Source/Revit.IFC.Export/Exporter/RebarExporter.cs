@@ -215,42 +215,6 @@ namespace Revit.IFC.Export.Exporter
       }
 
       /// <summary>
-      /// A special case function that can export a Rebar element as an IfcBuildingElementProxy for view-specific exports where the exact geometry of the rebar matters.
-      /// </summary>
-      /// <param name="exporterIFC">The ExporterIFC object.</param>
-      /// <param name="rebarElement">The rebar element to be exported.</param>
-      /// <param name="productWrapper">The ProductWrapper object.</param>
-      /// <param name="cannotExportRebar">True if we tried to create an IFC entity but failed.</param>
-      /// <returns>True if the rebar was exported here, false otherwise.</returns>
-      /// <remarks>This functionality may be obsoleted in the future.</remarks>
-      private static IFCAnyHandle ExportRebarAsProxyElementInView(ExporterIFC exporterIFC, Element rebarElement, ProductWrapper productWrapper, out bool cannotExportRebar)
-      {
-         IFCAnyHandle rebarEntity = null;
-         cannotExportRebar = false;
-
-         if (rebarElement is Rebar && ExporterCacheManager.ExportOptionsCache.FilterViewForExport != null)
-         {
-            // The only options handled here is IfcBuildingElementProxy.
-            // Not Exported is handled previously, and ReinforcingBar vs Mesh will be handled later.
-            string ifcEnumType;
-            IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, rebarElement, out ifcEnumType);
-
-            if (exportType == IFCExportType.IfcBuildingElementProxy ||
-                exportType == IFCExportType.IfcBuildingElementProxyType)
-            {
-               Rebar rebar = rebarElement as Rebar;
-               GeometryElement rebarGeometry = rebar.GetFullGeometryForView(ExporterCacheManager.ExportOptionsCache.FilterViewForExport);
-               if (rebarGeometry != null)
-                  rebarEntity = ProxyElementExporter.ExportBuildingElementProxy(exporterIFC, rebarElement, rebarGeometry, productWrapper);
-
-               cannotExportRebar = IFCAnyHandleUtil.IsNullOrHasNoValue(rebarEntity);
-            }
-         }
-
-         return rebarEntity;
-      }
-
-      /// <summary>
       /// Exports a Rebar to IFC ReinforcingBar.
       /// </summary>
       /// <param name="exporterIFC">The ExporterIFC object.</param>
@@ -278,15 +242,6 @@ namespace Revit.IFC.Export.Exporter
          {
             using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, rebarElement))
             {
-               bool cannotExportRebar = false;
-               IFCAnyHandle rebarHandle = ExportRebarAsProxyElementInView(exporterIFC, rebarElement, productWrapper, out cannotExportRebar);
-               if (!IFCAnyHandleUtil.IsNullOrHasNoValue(rebarHandle) || cannotExportRebar)
-               {
-                  if (!cannotExportRebar)
-                     transaction.Commit();
-                  return null;   // Rebar doesn't create a group.
-               }
-
                IFCAnyHandle prodRep = null;
 
                double totalBarLengthUnscale = GetRebarTotalLength(rebarItem);
@@ -334,13 +289,6 @@ namespace Revit.IFC.Export.Exporter
                      continue;
 
                   Rebar rebar = rebarElement as Rebar;
-                  if ((rebar != null) && (rebar.DistributionType == DistributionType.VaryingLength))
-                  {
-                     baseCurves = GetRebarCenterlineCurves(rebar, true, false, false, MultiplanarOption.IncludeOnlyPlanarCurves, ii);
-                     DoubleParameterValue barLengthParamVal = rebar.GetParameterValueAtIndex(barLengthParamId, ii) as DoubleParameterValue;
-                     if (barLengthParamVal != null)
-                        barLength = barLengthParamVal.Value;
-                  }
 
                   int indexForNamingAndGUID = (itemIndex > 0) ? ii + itemIndex : ii + 1;
 
@@ -387,8 +335,6 @@ namespace Revit.IFC.Export.Exporter
                   // ExportRebar.  The reason for this is that we don't currently know if the handles such be associated
                   // to the level or not, depending on whether they will or won't be grouped.
                   createdRebars.Add(new DelayedProductWrapper(rebarElement, elemHnd, setter.LevelInfo));
-
-                  CacheSubelementParameterValues(rebarElement, rebarElementParams, ii, elemHnd);
 
                   ExporterCacheManager.HandleToElementCache.Register(elemHnd, rebarElement.Id);
                   CategoryUtil.CreateMaterialAssociation(exporterIFC, elemHnd, materialId);
@@ -494,7 +440,7 @@ namespace Revit.IFC.Export.Exporter
       {
          if (element is Rebar)
          {
-            return (element as Rebar).GetCenterlineCurves(adjustForSelfIntersection, suppressHooks, suppressBendRadius, multiplanarOption, barPositionIndex);
+            return (element as Rebar).GetCenterlineCurves(adjustForSelfIntersection, suppressHooks, suppressBendRadius, multiplanarOption);
          }
          else if (element is RebarInSystem)
          {
@@ -611,27 +557,5 @@ namespace Revit.IFC.Export.Exporter
          return bendDiameter;
       }
 
-      /// <summary>
-      /// Caches all parameter value overrides of the subelement.
-      /// </summary>
-      /// <param name="element">The rebar element.</param>
-      /// <param name="parameters">The paramters of the rebar element.</param>
-      /// <param name="barIndex">The index of the subelement.</param>
-      /// <param name="handleSubelement">The handle of the subelement.</param>
-      static void CacheSubelementParameterValues(Element element, ParameterSet parameters, int barIndex, IFCAnyHandle handleSubelement)
-      {
-         if (element == null)
-            return;
-
-         if (element is Rebar)
-         {
-            Rebar rebar = element as Rebar;
-            if (rebar.DistributionType != DistributionType.VaryingLength)
-               return;
-
-            foreach (Parameter param in parameters)
-               ParameterUtil.CacheParameterValuesForSubelementHandle(element.Id, handleSubelement, param, rebar.GetParameterValueAtIndex(param.Id, barIndex));
-         }
-      }
    }
 }

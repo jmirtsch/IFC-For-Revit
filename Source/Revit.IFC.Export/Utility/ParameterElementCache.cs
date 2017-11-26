@@ -45,23 +45,4 @@ namespace Revit.IFC.Export.Utility
          ParameterCache = new SortedDictionary<string, Parameter>(StringComparer.InvariantCultureIgnoreCase);
       }
    }
-
-   /// <summary>
-   /// Contains a cache from parameter name to parameter value.
-   /// </summary>
-   public class ParameterValueSubelementCache
-   {
-      /// <summary>
-      /// The cache from parameter name to parameter value.
-      /// </summary>
-      public IDictionary<String, ParameterValue> ParameterValueCache { get; set; }
-
-      /// <summary>
-      /// The default constructor.
-      /// </summary>
-      public ParameterValueSubelementCache()
-      {
-         ParameterValueCache = new SortedDictionary<String, ParameterValue>(StringComparer.InvariantCultureIgnoreCase);
-      }
-   }
 }

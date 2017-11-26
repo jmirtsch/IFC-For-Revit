@@ -134,14 +134,10 @@ namespace BIM.IFC.Export.UI
       private void InitializeConfigurationOptions()
       {
          comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC2x3CV2));
-         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC4RV));
-         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC4DTV));
          comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC2x3));
          comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFCCOBIE));
-         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC2x3BFM));
          comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC2x2));
          comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFCBCA));
-         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC2x3FM));
 
 
          foreach (IFCFileFormat fileType in Enum.GetValues(typeof(IFCFileFormat)))
@@ -269,7 +265,7 @@ namespace BIM.IFC.Export.UI
          checkBoxExportRoomsInView.IsChecked = configuration.ExportRoomsInView;
          comboBoxLOD.SelectedIndex = (int)(Math.Round(configuration.TessellationLevelOfDetail * 4) - 1);
          comboBoxSitePlacement.SelectedIndex = (int)configuration.SitePlacement;
-         if ((configuration.IFCVersion == IFCVersion.IFC4 || configuration.IFCVersion == IFCVersion.IFC4DTV || configuration.IFCVersion == IFCVersion.IFC4RV)
+         if ((configuration.IFCVersion == IFCVersion.IFC4)
             && !configuration.IsBuiltIn)
             checkBox_TriangulationOnly.IsEnabled = true;
          else
@@ -342,15 +338,9 @@ namespace BIM.IFC.Export.UI
 
          LoadTreeviewFilterElement(treeView_FilterElement);
 
-         if (configuration.IFCVersion.Equals(IFCVersion.IFC2x3FM))
-         {
-            DoCOBieSpecificSetup(configuration);
-         }
-         else
-         {
+         
             // Possibly we need to remove the additional COBie specific setup
             UndoCOBieSpecificSetup(configuration);
-         }
       }
 
       TabItem companyInfoItem;
@@ -766,14 +756,7 @@ namespace BIM.IFC.Export.UI
                ClearTreeViewChecked(treeView_FilterElement);   // Clear the list
 
                // Keep COBie specific data from the special tabs
-               if (prevConfig.IFCVersion == IFCVersion.IFC2x3FM)
-               {
-                  if (companyInfoItem != null && tabControl.Items.Contains(companyInfoItem))
-                     prevConfig.COBieCompanyInfo = (companyInfoItem.Content as COBieCompanyInfoTab).CompanyInfoStr;
-
-                  if (projectInfoItem != null && tabControl.Items.Contains(projectInfoItem))
-                     prevConfig.COBieProjectInfo = (projectInfoItem.Content as COBieProjectInfoTab).ProjectInfoStr;
-               }
+              
             }
          }
 
@@ -942,7 +925,7 @@ namespace BIM.IFC.Export.UI
          if (configuration != null)
          {
             configuration.IFCVersion = attributes.Version;
-            if ((configuration.IFCVersion == IFCVersion.IFC4 || configuration.IFCVersion == IFCVersion.IFC4DTV || configuration.IFCVersion == IFCVersion.IFC4RV)
+            if ((configuration.IFCVersion == IFCVersion.IFC4)
                && !configuration.IsBuiltIn)
                checkBox_TriangulationOnly.IsEnabled = true;
             else
@@ -954,15 +937,9 @@ namespace BIM.IFC.Export.UI
             LoadTreeviewFilterElement(treeView_FilterElement);
          }
 
-         if (configuration.IFCVersion.Equals(IFCVersion.IFC2x3FM))
-         {
-            DoCOBieSpecificSetup(configuration);
-         }
-         else
-         {
+        
             // Possibly we need to remove the additional COBie specific setup
             UndoCOBieSpecificSetup(configuration);
-         }
       }
 
       private void comboBoxPlacement_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1350,15 +1327,11 @@ namespace BIM.IFC.Export.UI
                   schemaFile = "IFC2X2_ADD1.xsd";
                   break;
                case IFCVersion.IFC2x3:
-               case IFCVersion.IFC2x3BFM:
                case IFCVersion.IFC2x3CV2:
-               case IFCVersion.IFC2x3FM:
                case IFCVersion.IFCCOBIE:
                   schemaFile = "IFC2X3_TC1.xsd";
                   break;
                case IFCVersion.IFC4:
-               case IFCVersion.IFC4DTV:
-               case IFCVersion.IFC4RV:
                   schemaFile = "IFC4_ADD2.xsd";
                   break;
                default:

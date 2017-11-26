@@ -448,7 +448,7 @@ namespace Revit.IFC.Export.Exporter
          bodyItems.Add(bodyItemHnd);
 
          // Check whether wall has opening. If it has, exporting it in the Reference View will need to be in a tessellated geometry that includes the opening cut
-         IList<IFCOpeningData> openingDataList = ExporterIFCUtils.GetOpeningData(exporterIFC, wallElement, wallLCS, range);
+         IList<IFCOpeningData> openingDataList = ExporterIFCUtils.GetOpeningData(exporterIFC, wallElement, new Plane(wallLCS.BasisX, wallLCS.BasisY, wallLCS.Origin), range);
          bool wallHasOpening = openingDataList.Count > 0;
          BodyExporterOptions options = new BodyExporterOptions(true, ExportOptionsCache.ExportTessellationLevel.ExtraLow);
 
@@ -834,7 +834,7 @@ namespace Revit.IFC.Export.Exporter
                         }
                         else
                         {
-                           IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, orientationTrf, projDir, false);
+                           IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, new Plane(orientationTrf.BasisX, orientationTrf.BasisY, orientationTrf.Origin), projDir, false);
                            ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, trimmedCurve, XYZ.Zero, true);
                            axisItems = info.GetCurves();
                         }

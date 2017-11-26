@@ -71,29 +71,6 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
       }
 
       /// <summary>
-      /// Retrieves shape parameter B for a rebar subelement, from the subelement cache.
-      /// </summary>
-      /// <param name="element">
-      /// The element to calculate the value.
-      /// </param>
-      /// <param name="handle">
-      /// The IFC handle that may offer parameter overrides.
-      /// </param>
-      /// <returns>
-      /// True if the operation succeed, false otherwise.
-      /// </returns>
-      public override bool GetParameterFromSubelementCache(Element element, IFCAnyHandle handle)
-      {
-         DoubleParameterValue paramVal = ParameterUtil.getParameterValueByNameFromSubelementCache(element.Id, handle, "B") as DoubleParameterValue;
-         if (paramVal != null)
-         {
-            m_ShapeParameterB = UnitUtil.ScaleLength(paramVal.Value);
-            return true;
-         }
-         return false;
-      }
-
-      /// <summary>
       /// Gets the calculated double value.
       /// </summary>
       /// <returns>

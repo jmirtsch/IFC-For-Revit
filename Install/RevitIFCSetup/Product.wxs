@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
-  <Product Id="*" Name="Revit IFC 2017" Language="1033" Version="17.4.7.0" Manufacturer="Autodesk" UpgradeCode="5559280E-E7F0-4C92-ACF0-927D5BCEC71F">
+  <Product Id="*" Name="Revit IFC 2017" Language="1033" Version="16.6.1.0" Manufacturer="Autodesk" UpgradeCode="5559280E-E7F0-4C92-ACF0-927D5BCEC71F">
     <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
@@ -23,7 +23,7 @@
     <WixVariable Id="WixUIIFC4ADD1XSD" Value="$(var.ProjectDir)..\Program Files to Install\IFC4_ADD1.xsd"></WixVariable>
     <WixVariable Id="WixUIIFC4ADD2XSD" Value="$(var.ProjectDir)..\Program Files to Install\IFC4_ADD2.xsd"></WixVariable>
 
-    <Feature Id="ProductFeature" Title="Revit IFC 2017" Level="1" ConfigurableDirectory='INSTALLDIR'>
+    <Feature Id="ProductFeature" Title="Revit IFC 2015" Level="1" ConfigurableDirectory='INSTALLDIR'>
       <ComponentGroupRef Id="ProductComponents" />
       <ComponentGroupRef Id="ProductResourceComponents" />
       <ComponentGroupRef Id="ProductFRFiles" />
@@ -42,7 +42,7 @@
   <Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder">
-        <Directory Id="INSTALLDIR" Name="Revit IFC 2017">
+        <Directory Id="INSTALLDIR" Name="Revit IFC 2016">
           <Directory Id="INSTALLRESOURCE" Name="Resource" />
           <Directory Id="INSTALLFRUI" Name="fr" />
         </Directory>
@@ -52,12 +52,12 @@
         <Directory Id="DIR_ADSK" Name="Autodesk">
           <Directory Id="DIR_REVIT" Name="Revit">
             <Directory Id="DIR_ADDINS" Name="Addins">
-              <Directory Id="DIR_Addins" Name="2017"/>
+              <Directory Id="DIR_Addins" Name="2016"/>
             </Directory>
           </Directory>
           <Directory Id="DIR_REVIT_LT" Name="RevitLT">
             <Directory Id="DIR_ADDINS_LT" Name="Addins">
-              <Directory Id="DIR_Addins_LT" Name="2017"/>
+              <Directory Id="DIR_Addins_LT" Name="2016"/>
             </Directory>
           </Directory>
         </Directory>
@@ -73,9 +73,9 @@
       <!--<Component Id = "COMP_IFC_Export_Sig" Guid="2EE671F2-165C-4DD6-A216-672FB7567FE1">
         <File Id ="FILE_Ifc_Export_Sig" Name="Revit.IFC.Export.sig" Source="$(var.ProjectDir)..\..\..\..\..\..\ReleaseX64\Addons\Revit.IFC\Revit.IFC.Export.sig" KeyPath="yes" />
       </Component>-->
-      <Component Id = "COMP_IFC_Import_DLL" Guid="E2F0633B-F323-430C-A368-76DBF939FD0D">
+      <!--<Component Id = "COMP_IFC_Import_DLL" Guid="E2F0633B-F323-430C-A368-76DBF939FD0D">
         <File Id ="FILE_Ifc_Import_DLL" Name="Revit.IFC.Import.dll" Source="$(var.Revit.IFC.Import.TargetDir)Revit.IFC.Import.dll" KeyPath="yes" />
-      </Component>
+      </Component>-->
       <!--<Component Id = "COMP_IFC_Import_Sig" Guid="48EE6912-FCF6-4AE5-9A63-F5A98DFEE811">
         <File Id ="FILE_Ifc_Import_Sig" Name="Revit.IFC.Import.sig" Source="$(var.ProjectDir)..\..\..\..\..\..\ReleaseX64\Addons\Revit.IFC\Revit.IFC.Import.sig" KeyPath="yes" />
       </Component>-->

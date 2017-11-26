@@ -1883,9 +1883,8 @@ namespace Revit.IFC.Export.Exporter
          }
          else
          {
-            IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, extrusionLCS, extrusionDir, true);
+            IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, new Plane(extrusionLCS.BasisX, extrusionLCS.BasisY, extrusionLCS.Origin), extrusionDir, true);
             ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, baseCurve, XYZ.Zero, true);
-
             profileCurves = info.GetCurves();
          }
 
