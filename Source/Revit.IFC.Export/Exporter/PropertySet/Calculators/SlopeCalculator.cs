@@ -74,7 +74,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
             double length;
             if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.INSTANCE_LENGTH_PARAM, out length) == null)
                return false;
-            m_Slope = UnitUtil.ScaleAngle(Math.Atan2(Math.Abs(endParamHeight - startParamHeight), length));
+            m_Slope = UnitUtil.ScaleAngle(Math.Asin(Math.Abs(endParamHeight - startParamHeight)/length));
             return true;
          }
          else

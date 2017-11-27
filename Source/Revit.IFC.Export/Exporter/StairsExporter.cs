@@ -1395,12 +1395,31 @@ namespace Revit.IFC.Export.Exporter
             Transform lcs = Transform.Identity;
             foreach (Curve curve in curveLoop)
             {
-               IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, lcs, XYZ.BasisZ, false);
-               ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, curve, XYZ.Zero, false);
-               IList<IFCAnyHandle> curves = info.GetCurves();
-               if (curves.Count == 1 && !IFCAnyHandleUtil.IsNullOrHasNoValue(curves[0]))
+               if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
                {
-                  curveSet.Add(curves[0]);
+                  IList<int> segmentIndex = null;
+                  IList<IList<double>> pointList = GeometryUtil.PointListFromCurve(exporterIFC, curve, null, null, out segmentIndex);
+
+                  // For now because of no support in creating IfcLineIndex and IfcArcIndex yet, it is set to null
+                  //IList<IList<int>> segmentIndexList = new List<IList<int>>();
+                  //segmentIndexList.Add(segmentIndex);
+                  IList<IList<int>> segmentIndexList = null;
+
+                  IFCAnyHandle pointListHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, pointList);
+                  IFCAnyHandle curveHnd = IFCInstanceExporter.CreateIndexedPolyCurve(file, pointListHnd, segmentIndexList, false);
+                  if (!IFCAnyHandleUtil.IsNullOrHasNoValue(curveHnd))
+                     curveSet.Add(curveHnd);
+               }
+               else
+               {
+                  IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, lcs, XYZ.BasisZ, false);
+                  ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, curve, XYZ.Zero, false);
+                  IList<IFCAnyHandle> curves = info.GetCurves();
+
+                  if (curves.Count == 1 && !IFCAnyHandleUtil.IsNullOrHasNoValue(curves[0]))
+                  {
+                     curveSet.Add(curves[0]);
+                  }
                }
             }
             IFCAnyHandle curveRepresentationItem = IFCInstanceExporter.CreateGeometricSet(file, curveSet);

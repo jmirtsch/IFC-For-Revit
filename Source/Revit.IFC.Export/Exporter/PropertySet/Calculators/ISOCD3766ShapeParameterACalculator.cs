@@ -72,6 +72,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 
         /// <summary>
         /// Retrieves shape parameter A for a rebar subelement, from the subelement cache.
+        /// </summary>
         /// <param name="element">
         /// The element to calculate the value.
         /// </param>

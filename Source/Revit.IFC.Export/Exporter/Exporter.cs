@@ -152,6 +152,7 @@ namespace Revit.IFC.Export.Exporter
          {
             BeginExport(exporterIFC, document, filterView);
 
+            ParamExprListener.ResetParamExprInternalDicts();
             InitializeElementExporters();
             if (m_ElementExporter != null)
                m_ElementExporter(exporterIFC, document);
@@ -1429,7 +1430,7 @@ namespace Revit.IFC.Export.Exporter
             }
 
             // create wall/wall connectivity objects
-            if (ExporterCacheManager.WallConnectionDataCache.Count > 0)
+            if (ExporterCacheManager.WallConnectionDataCache.Count > 0 && !ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
             {
                IList<IDictionary<ElementId, IFCAnyHandle>> hostObjects = exporterIFC.GetHostObjects();
                List<int> relatingPriorities = new List<int>();
@@ -1712,7 +1713,7 @@ namespace Revit.IFC.Export.Exporter
             }
             else if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
             {
-               descriptions.Add("ViewDefinition [ReferenceView_V1.0]");
+               descriptions.Add("ViewDefinition [ReferenceView_V1.1]");
             }
             else if (ExporterCacheManager.ExportOptionsCache.ExportAs4DesignTransferView)
             {
@@ -1757,12 +1758,17 @@ namespace Revit.IFC.Export.Exporter
                IFCAnyHandleUtil.UpdateProject(project, projectNumber, projectName, projectStatus);
 
             IFCInstanceExporter.CreateFileSchema(file);
-            IFCInstanceExporter.CreateFileDescription(file, descriptions);
+
             // Get stored File Header information from the UI and use it for export
             IFCFileHeader fHeader = new IFCFileHeader();
             IFCFileHeaderItem fHItem = null;
 
             fHeader.GetSavedFileHeader(document, out fHItem);
+
+            // Add information in the File Description (e.g. Exchange Requirement) that is assigned in the UI
+            if (!string.IsNullOrEmpty(fHItem.FileDescription))
+               descriptions.Add(fHItem.FileDescription);
+            IFCInstanceExporter.CreateFileDescription(file, descriptions);
 
             List<string> author = new List<string>();
             if (String.IsNullOrEmpty(fHItem.AuthorName) == false)
@@ -2209,8 +2215,8 @@ namespace Revit.IFC.Export.Exporter
             projectObjectType = (projectInfo != null) ? NamingUtil.GetObjectTypeOverride(projectInfo, null) : null;
             projectDescription = (projectInfo != null) ? NamingUtil.GetDescriptionOverride(projectInfo, null) : null;
 
-            if (projectInfo != null)
-               ParameterUtil.GetStringValueFromElement(projectInfo.Id, "Project Phase", out projectPhase);
+         if (projectInfo != null)
+            ParameterUtil.GetStringValueFromElement(projectInfo, projectInfo.Id, "Project Phase", out projectPhase);
          }
 
          string projectGUID = GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Project);

@@ -2563,9 +2563,19 @@ namespace Revit.IFC.Export.Exporter
          ifcQE.PropertyCalculator = GrossAreaCalculator.Instance;
          ifcSlabQuantity.AddEntry(ifcQE);
 
+         ifcQE = new QuantityEntry("NetArea");
+         ifcQE.QuantityType = QuantityType.Area;
+         ifcQE.PropertyCalculator = NetSurfaceAreaCalculator.Instance;
+         ifcSlabQuantity.AddEntry(ifcQE);
+
          ifcQE = new QuantityEntry("GrossVolume");
          ifcQE.QuantityType = QuantityType.Volume;
          ifcQE.PropertyCalculator = GrossVolumeCalculator.Instance;
+         ifcSlabQuantity.AddEntry(ifcQE);
+
+         ifcQE = new QuantityEntry("NetVolume");
+         ifcQE.QuantityType = QuantityType.Volume;
+         ifcQE.PropertyCalculator = NetVolumeCalculator.Instance;
          ifcSlabQuantity.AddEntry(ifcQE);
 
          ifcQE = new QuantityEntry("Perimeter");
@@ -2576,6 +2586,16 @@ namespace Revit.IFC.Export.Exporter
          ifcQE = new QuantityEntry("Width");
          ifcQE.QuantityType = QuantityType.PositiveLength;
          ifcQE.PropertyCalculator = SlabWidthCalculator.Instance;
+         ifcSlabQuantity.AddEntry(ifcQE);
+
+         ifcQE = new QuantityEntry("GrossWeight");
+         ifcQE.QuantityType = QuantityType.PositiveLength;
+         ifcQE.PropertyCalculator = GrossWeightCalculator.Instance;
+         ifcSlabQuantity.AddEntry(ifcQE);
+
+         ifcQE = new QuantityEntry("NetWeight");
+         ifcQE.QuantityType = QuantityType.PositiveLength;
+         ifcQE.PropertyCalculator = NetWeightCalculator.Instance;
          ifcSlabQuantity.AddEntry(ifcQE);
 
          baseQuantities.Add(ifcSlabQuantity);

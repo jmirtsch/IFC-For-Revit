@@ -554,8 +554,6 @@ namespace Revit.IFC.Export.Exporter
          Element instance,
          ElementType symbol)
       {
-         // TODO: This routine needs to be simplified.  The long list of IFC2x3 and IFC4 calls to CreateGenericIFCType make it too easy to miss an entry.
-
          Revit.IFC.Common.Enums.IFCEntityType IFCTypeEntity;
          string typeAsString = originalType.ToString();
 
