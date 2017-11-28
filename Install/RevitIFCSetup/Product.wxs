@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
-  <Product Id="0DBF0798-5B6E-4145-9C48-3AC4AA5A1B6A" Name="Revit IFC 2018" Language="1033" Version="18.2.3.0" Manufacturer="Autodesk" UpgradeCode="9C2ACF1D-0801-4E78-B25F-AB68B24640D6">
+  <Product Id="*" Name="Revit IFC 2018" Language="1033" Version="18.2.3.0" Manufacturer="Autodesk" UpgradeCode="9C2ACF1D-0801-4E78-B25F-AB68B24640D6">
     <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
@@ -91,6 +91,12 @@
       <!--<Component Id = "COMP_UserInterfaceUtility_DLL" Guid="9D697BF6-A30F-4ABE-8D18-D71846C68065">
         <File Id ="FILE_UserInterfaceUtility_DLL" Name="UserInterfaceUtility.dll" Source="$(var.ProjectDir)..\..\..\..\..\..\ReleaseX64\UserInterfaceUtility.dll" KeyPath="yes" />
       </Component>-->
+      <Component Id = "COMP_IFC_GeometryGYM_DLL" Guid="8509DD5C-F7FB-45DB-8C37-80A22EE69D3F">
+        <File Id ="FILE_Ifc_GeometryGym_DLL" Name="GeometryGymIFC.dll" Source="$(var.Revit.IFC.Export.TargetDir)GeometryGymIFC.dll" KeyPath="yes" />
+      </Component>
+      <Component Id = "COMP_IFC_Antlr4_DLL" Guid="9A80FE3D-90EE-48E7-9B89-792FF852D75E">
+        <File Id ="FILE_Ifc_Antlr4_DLL" Name="Antlr4.Runtime.dll" Source="$(var.Revit.IFC.Export.TargetDir)Antlr4.Runtime.dll" KeyPath="yes" />
+      </Component>
       <Component Id = "COMP_LICENSE_RTF" Guid="9F0851DD-3A43-4D49-AC8C-8B8D2F394A91">
         <File Id ="FILE_LICENSE_RTF" Name="LICENSE.rtf" Source="$(var.ProjectDir)..\Program Files to Install\LICENSE.rtf" KeyPath="yes" />
       </Component>
