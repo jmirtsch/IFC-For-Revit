@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Threading;
 using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
@@ -109,8 +110,34 @@ namespace Revit.IFC.Export.UI
                return;
             }
             DatabaseIfc db = new DatabaseIfc(true, ReleaseVersion.IFC4A2);
-            IfcBuilding building = new IfcBuilding(db, "Dummy");
-            IfcProject project = new IfcProject(building, "Dummy");
+            //Substitue class mapping until more code moved from closed source to opensource, ignores subcategories
+            Dictionary<BuiltInCategory, string> mapping = new Dictionary<BuiltInCategory, string>();
+            string mappingFileName = uiapp.Application.ExportIFCCategoryTable, line = "";
+            if(System.IO.File.Exists(mappingFileName))
+            {
+               FileStream filestream = new FileStream(mappingFileName, FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite);
+               StreamReader file = new StreamReader(filestream, System.Text.Encoding.UTF8, true, 128);
+               while ((line = file.ReadLine()) != null)
+               {
+                  line = line.Trim();
+                  if(!string.IsNullOrEmpty(line))
+                  {
+                     if(!line.StartsWith("#"))
+                     {
+                        string[] fields = line.Split("\t".ToCharArray());
+                        if(fields.Length > 2)
+                        {
+                           BuiltInCategory builtInCategory = BuiltInCategory.INVALID;
+                           if(Enum.TryParse<BuiltInCategory>("OST" + "_" + fields[0].Replace(" ",""),out builtInCategory) && !mapping.ContainsKey(builtInCategory))
+                              mapping.Add(builtInCategory, fields[2]);
+                        }
+                     }
+                  }
+               }
+               file.Close();
+               filestream.Close();
+            }
+            
             Utility.ExporterCacheManager.ExportOptionsCache = Utility.ExportOptionsCache.Create(null, document, null);
             Utility.ExporterCacheManager.Document = uiapp.ActiveUIDocument.Document;
             Exporter.Exporter exporter = new Exporter.Exporter();
@@ -119,12 +146,32 @@ namespace Revit.IFC.Export.UI
             foreach (ElementId elid in elementIds)
             {
                Element e = document.GetElement(elid);
-               IfcProduct product = new IfcWall(building, null, null);
-               Utility.ExporterUtil.ExportRelatedProperties(e, product);
-               HashSet<IfcObjectDefinition> objs = new HashSet<IfcObjectDefinition>();
-               objs.Add(product);
-               Exporter.PropertySet.PropertyUtil.CreateInternalRevitPropertySets(e, db, objs);
-               products.Add(product);
+               if (e.Category == null)
+                  continue;
+               BuiltInCategory cat = (BuiltInCategory)e.Category.Id.IntegerValue;
+               string ifcClassName = "IfcBuildingElementProxy";
+               if(!mapping.TryGetValue(cat, out ifcClassName))
+                  ifcClassName = "IfcBuildingElementProxy";
+               string exportAsEntity = "IFCExportAs";
+               string className = "";
+               Utility.ParameterUtil.GetStringValueFromElementOrSymbol(e, exportAsEntity, out className);
+               if (!string.IsNullOrEmpty(className))
+                  ifcClassName = className;
+
+               ifcClassName = ifcClassName.Trim();
+               if (ifcClassName.Replace(" ","").ToLower().Contains("notexported"))
+                  continue;
+               if (ifcClassName.EndsWith("type"))
+                  ifcClassName = ifcClassName.Substring(0, ifcClassName.Length - 4);
+               IfcProduct product = db.Factory.Construct(ifcClassName) as IfcProduct;
+               if (product != null)
+               {
+                  Utility.ExporterUtil.ExportRelatedProperties(e, product);
+                  HashSet<IfcObjectDefinition> objs = new HashSet<IfcObjectDefinition>();
+                  objs.Add(product);
+                  Exporter.PropertySet.PropertyUtil.CreateInternalRevitPropertySets(e, db, objs);
+                  products.Add(product);
+               }
 
             }
 
