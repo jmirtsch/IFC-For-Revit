@@ -79,7 +79,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="AdditionalFiles\IFCSubElementEnums.cs" />
     <Compile Include="ParameterExpr\ExprTester.xaml.cs">
       <DependentUpon>ExprTester.xaml</DependentUpon>
     </Compile>
@@ -147,20 +146,25 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <None Include="IFC2X2_FINAL.xsd">
+    <None Include="IFC2X2_ADD1.xsd">
       <SubType>Designer</SubType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="IFC2X3.xsd">
+    <None Include="IFC2X3_TC1.xsd">
       <SubType>Designer</SubType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="IFC4.xsd">
+      <SubType>Designer</SubType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="IFC4_ADD1.xsd">
       <SubType>Designer</SubType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="IFC4_ADD2.xsd">
       <SubType>Designer</SubType>
-    </None>
-    <None Include="ifcXML4.xsd">
-      <SubType>Designer</SubType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -193,6 +197,9 @@
       <Project>{bce5141a-291b-4cd8-a69b-7b9345aa00e9}</Project>
       <Name>Revit.IFC.Export</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="AdditionalFiles\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
