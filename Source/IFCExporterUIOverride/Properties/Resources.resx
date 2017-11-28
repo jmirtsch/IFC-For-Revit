@@ -712,4 +712,16 @@
   <data name="save" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\save.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="ER_Architecture" xml:space="preserve">
+    <value>Architectural Reference Exchange</value>
+  </data>
+  <data name="ExchangeRequirement" xml:space="preserve">
+    <value>Exchange Requirement</value>
+  </data>
+  <data name="ER_BuildingService" xml:space="preserve">
+    <value>MEP Reference Exchange</value>
+  </data>
+  <data name="ER_Structural" xml:space="preserve">
+    <value>Structural Reference Exchange</value>
+  </data>
 </root>

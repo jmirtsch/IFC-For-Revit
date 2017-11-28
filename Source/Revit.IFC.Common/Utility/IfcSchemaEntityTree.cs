@@ -155,12 +155,19 @@ namespace Revit.IFC.Common.Utility
       {
          string entityList;
          entityList = "namespace Revit.IFC.Common.Enums." + listName
-                     + "\n{\n\tpublic enum IFCEntityType"
+                     + "\n{"
+                        + "\n\t/// <summary>"
+                        + "\n\t/// List of Entities for " + listName
+                        + "\n\t/// </summary>"
+                        + "\n\tpublic enum IFCEntityType"
                      + "\n\t{";
           
          foreach (KeyValuePair<string,IfcSchemaEntityNode> ent in IfcEntityDict)
          {
-            entityList += "\n\t\t" + ent.Key + ",";
+            entityList += "\n\t\t/// <summary>"
+                           + "\n\t\t/// " + ent.Key + " enumeration"
+                           + "\n\t\t/// </summary>"
+                           + "\n\t\t" + ent.Key + ",\n";
          }
          entityList += "\n\t\tUnknown"
                      + "\n\t}"

@@ -158,7 +158,7 @@ namespace Revit.IFC.Export.Exporter
                      if (ceiling != null)
                      {
                         HostObjectExporter.ExportHostObjectMaterials(exporterIFC, ceiling, covering,
-                            geomElem, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3, null);
+                            geomElem, productWrapper, ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis3, null, null);
                      }
                      else
                      {

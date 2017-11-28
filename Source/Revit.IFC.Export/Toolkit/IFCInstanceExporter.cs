@@ -167,7 +167,7 @@ namespace Revit.IFC.Export.Toolkit
 
 		 SetRoot(objectDefinition, guid, ownerHistory, name, description);
 	   }
-	private static void SetObjectDefinition(IFCAnyHandle objectDefinition, Element element, string guid, IFCAnyHandle ownerHistory)
+	   private static void SetObjectDefinition(IFCAnyHandle objectDefinition, Element element, string guid, IFCAnyHandle ownerHistory)
       {
          SetRoot(objectDefinition, element, guid, ownerHistory);
       }
@@ -3738,10 +3738,26 @@ namespace Revit.IFC.Export.Toolkit
       }
 
       /// <summary>
+      /// Create IFC instance of IfcCartesianPointList2D
+      /// </summary>
+      /// <param name="file">The file</param>
+      /// <param name="coordinateList">the list of the 2D coordinates</param>
+      /// <returns>The handle</returns>
+      public static IFCAnyHandle CreateCartesianPointList2D(IFCFile file, IList<IList<double>> coordinateList)
+      {
+         ValidateListOfList(coordinateList, false, "CoordinateList");
+
+         IFCAnyHandle CreateCartesianPointList2D = CreateInstance(file, IFCEntityType.IfcCartesianPointList2D);
+         IFCAnyHandleUtil.SetAttribute(CreateCartesianPointList2D, "CoordList", coordinateList, 1, null, 2, 2);
+
+         return CreateCartesianPointList2D;
+      }
+      
+      /// <summary>
       /// Create IFC instance of IfcCartesianPointList3D
       /// </summary>
       /// <param name="file">The file</param>
-      /// <param name="coordinateList">the list of coordinates</param>
+      /// <param name="coordinateList">the list of the 3D coordinates</param>
       /// <returns>The handle</returns>
       public static IFCAnyHandle CreateCartesianPointList3D(IFCFile file, IList<IList<double>> coordinateList)
       {
@@ -3751,6 +3767,53 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandleUtil.SetAttribute(CreateCartesianPointList3D, "CoordList", coordinateList, 1, null, 3, 3);
 
          return CreateCartesianPointList3D;
+      }
+
+      public static IFCData CreateLineIndexType(IFCFile file, IList<int> lineIndexList)
+      {
+         if (lineIndexList == null || lineIndexList.Count == 0)
+            throw new ArgumentException("The index is empty.", "IfcLineIndex");
+         if (lineIndexList.Count < 2)
+            throw new ArgumentException("The index must contains 2 or more members.", "IfcLineIndex");
+
+         IFCAggregate lineIndex = null;
+         foreach (int index in lineIndexList)
+            lineIndex.Add(IFCData.CreateInteger(index));
+
+         IFCData lineIndexData = IFCData.CreateIFCAggregate(lineIndex);
+         return lineIndexData;
+      }
+
+      public static IFCData CreateArcIndexType(IFCFile file, IList<int> arcIndexList)
+      {
+         if (arcIndexList == null || arcIndexList.Count == 0)
+            throw new ArgumentException("The index is empty.", "IfcArcIndex");
+         if (arcIndexList.Count != 3)
+            throw new ArgumentException("The index must contains exactly 3 members.", "IfcArcIndex");
+
+         IFCAggregate arcIndex = null;
+         foreach (int index in arcIndexList)
+            arcIndex.Add(IFCData.CreateInteger(index));
+
+         IFCData arcIndexData = IFCData.CreateIFCAggregate(arcIndex);
+         return arcIndexData;
+      }
+
+      public static IFCAnyHandle CreateIndexedPolyCurve(IFCFile file, IFCAnyHandle coordinates, IList<IList<int>> segmentIndexList, bool? selfIntersect)
+      {
+         if (coordinates == null)
+            throw new ArgumentNullException("Points");
+         IFCAnyHandleUtil.ValidateSubTypeOf(coordinates, false, IFCEntityType.IfcCartesianPointList);
+         if (segmentIndexList != null && segmentIndexList.Count == 0)
+            throw new ArgumentNullException("Segments");
+
+         IFCAnyHandle indexedPolyCurveHnd = CreateInstance(file, IFCEntityType.IfcIndexedPolyCurve);
+         IFCAnyHandleUtil.SetAttribute(indexedPolyCurveHnd, "Points", coordinates);
+         if (segmentIndexList != null)
+            IFCAnyHandleUtil.SetAttribute(indexedPolyCurveHnd, "Segments", segmentIndexList, 1, null, 2, null);
+         IFCAnyHandleUtil.SetAttribute(indexedPolyCurveHnd, "SelfIntersect", selfIntersect);
+
+         return indexedPolyCurveHnd;
       }
 
       /// <summary>
@@ -7336,13 +7399,20 @@ namespace Revit.IFC.Export.Toolkit
       /// <param name="file">The file.</param>
       /// <param name="name">The name.</param>
       /// <returns>The handle.</returns>
-      public static IFCAnyHandle CreateMaterial(IFCFile file, string name)
+      public static IFCAnyHandle CreateMaterial(IFCFile file, string name, string description=null, string category=null)
       {
          if (name == null)
             throw new ArgumentNullException("name");
 
          IFCAnyHandle material = CreateInstance(file, IFCEntityType.IfcMaterial);
          IFCAnyHandleUtil.SetAttribute(material, "Name", name);
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         {
+            if (!string.IsNullOrEmpty(description))
+               IFCAnyHandleUtil.SetAttribute(material, "Description", description);
+            if (!string.IsNullOrEmpty(category))
+               IFCAnyHandleUtil.SetAttribute(material, "Category", category);
+         }
          return material;
       }
 
@@ -7394,7 +7464,8 @@ namespace Revit.IFC.Export.Toolkit
       /// <param name="layerThickness">The thickness of the layer.</param>
       /// <param name="isVentilated">  Indication of whether the material layer represents an air layer (or cavity).</param>
       /// <returns>The handle.</returns>
-      public static IFCAnyHandle CreateMaterialLayer(IFCFile file, IFCAnyHandle material, double layerThickness, IFCLogical? isVentilated)
+      public static IFCAnyHandle CreateMaterialLayer(IFCFile file, IFCAnyHandle material, double layerThickness, IFCLogical? isVentilated,
+         string name=null, string description=null, string category=null, int? priority=null)
       {
          IFCAnyHandleUtil.ValidateSubTypeOf(material, true, IFCEntityType.IfcMaterial);
 
@@ -7402,6 +7473,17 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandleUtil.SetAttribute(materialLayer, "Material", material);
          IFCAnyHandleUtil.SetAttribute(materialLayer, "LayerThickness", layerThickness);
          IFCAnyHandleUtil.SetAttribute(materialLayer, "IsVentilated", isVentilated);
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         {
+            if (!string.IsNullOrEmpty(name))
+               IFCAnyHandleUtil.SetAttribute(materialLayer, "Name", name);
+            if (!string.IsNullOrEmpty(description))
+               IFCAnyHandleUtil.SetAttribute(materialLayer, "Description", description);
+            if (!string.IsNullOrEmpty(category))
+               IFCAnyHandleUtil.SetAttribute(materialLayer, "Category", category);
+            if (priority.HasValue)
+               IFCAnyHandleUtil.SetAttribute(materialLayer, "Priority", priority);
+         }
          return materialLayer;
       }
 

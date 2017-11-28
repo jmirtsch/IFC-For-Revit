@@ -357,7 +357,7 @@ namespace Revit.IFC.Export.Utility
         public static string GetIFCWindowPartitioningType(ElementType familySymbol)
         {
             string value;
-            ParameterUtil.GetStringValueFromElement(familySymbol.Id, "WINDOW_PARTITIONING_TYPE", out value);
+            ParameterUtil.GetStringValueFromElement(familySymbol, familySymbol.Id, "WINDOW_PARTITIONING_TYPE", out value);
 
             if (String.IsNullOrEmpty(value))
                 return "NOTDEFINED";
@@ -388,7 +388,7 @@ namespace Revit.IFC.Export.Utility
         public static string GetIFCWindowType(ElementType familySymbol)
         {
             string value;
-            ParameterUtil.GetStringValueFromElement(familySymbol.Id, "WINDOW_PREDEFINED_TYPE", out value);
+            ParameterUtil.GetStringValueFromElement(familySymbol, familySymbol.Id, "WINDOW_PREDEFINED_TYPE", out value);
 
             if (String.IsNullOrEmpty(value))
                 return "NOTDEFINED";

@@ -30,28 +30,32 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
-   /// <summary>
-   /// Represents the type of the container for a property.
-   /// </summary>
-   public enum PropertyValueType
-   {
-      /// <summary>
-      /// A single property (IfcSingleValue)
-      /// </summary>
-      SingleValue,
-      /// <summary>
-      /// An enumerated property (IfcEnumeratedValue)
-      /// </summary>
-      EnumeratedValue,
-      /// <summary>
-      /// A list property (IfcListValue)
-      /// </summary>
-      ListValue,
-      /// <summary>
-      /// A reference property (IfcPropertyReferenceValue)
-      /// </summary>
-      ReferenceValue
-   }
+    /// <summary>
+    /// Represents the type of the container for a property.
+    /// </summary>
+    public enum PropertyValueType
+    {
+        /// <summary>
+        /// A single property (IfcPropertySingleValue)
+        /// </summary>
+        SingleValue,
+        /// <summary>
+        /// An enumerated property (IfcPropertyEnumeratedValue)
+        /// </summary>
+        EnumeratedValue,
+        /// <summary>
+        /// A list property (IfcPropertyListValue)
+        /// </summary>
+        ListValue,
+        /// <summary>
+        /// A reference property (IfcPropertyReferenceValue)
+        /// </summary>
+        ReferenceValue,
+        /// <summary>
+        /// A Table property (IfcPropertyTableValue)
+        /// </summary>
+        TableValue
+    }
 
    /// <summary>
    /// Represents the type of a property.
@@ -198,6 +202,58 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// Mass Density
       /// </summary>
       MassDensity,
+      IfcPerson,
+      IfcTimeSeries,
+      Torque,
+      IfcMaterial,
+      Mass,
+      SoundPower,
+      Time,
+      LocalTime,
+      Energy,
+      PlanarForce,
+      Monetary,
+      ThermalConductivity,
+      ElectricCurrent,
+      ElectricVoltage,
+      IfcMaterialDefinition,
+      RotationalFrequency,
+      AreaDensity,
+      Date,
+      IfcExternalReference,
+      MassFlowRate,
+      ElectricResistance,
+      MassPerLength,
+      IfcCalendarDate,
+      IfcOrganization,
+      SpecificHeatCapacity,
+      MolecularWeight,
+      HeatingValue,
+      IsothermalMoistureCapacity,
+      VaporPermeability,
+      MoistureDiffusivity,
+      DynamicViscosity,
+      ModulusOfElasticity,
+      ThermalExpansionCoefficient,
+      IonConcentration,
+      PH,
+      DateTime,
+      IfcDateAndTime,
+      IfcLocalTime,
+      IfcClassificationReference,
+      NonNegativeLength,
+      MomentOfInertia,
+      WarpingConstant,
+      SectionModulus,
+      Duration,
+      ElectricConductance,
+      TemperatureRateOfChange,
+      RadioActivity,
+      SoundPressure,
+      HeatFluxDensity,
+      ComplexNumber,
+      ThermalResistance,
+      Numeric,
    }
 
    /// <summary>
@@ -230,6 +286,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <param name="revitParameterName">
       /// Revit parameter name.
       /// </param>
+      public PropertySetEntry(string revitParameterName)
+          : base(revitParameterName)
+      {
+      }
       public PropertySetEntry(PropertyType propertyType, string revitParameterName)
           : base(revitParameterName)
       {
@@ -269,26 +329,26 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          {
             return m_PropertyType;
          }
-         private set
+         set
          {
             m_PropertyType = value;
          }
       }
 
-      /// <summary>
-      /// The value type of the IFC property set entry.
-      /// </summary>
-      public PropertyValueType PropertyValueType
-      {
-         get
-         {
-            return m_PropertyValueType;
-         }
-         private set
-         {
-            m_PropertyValueType = value;
-         }
-      }
+        /// <summary>
+        /// The value type of the IFC property set entry.
+        /// </summary>
+        public PropertyValueType PropertyValueType
+        {
+            get
+            {
+                return m_PropertyValueType;
+            }
+            set
+            {
+                m_PropertyValueType = value;
+            }
+        }
 
       /// <summary>
       /// The type of the Enum that will validate the value for an enumeration.
@@ -299,7 +359,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          {
             return m_PropertyEnumerationType;
          }
-         private set
+         set
          {
             m_PropertyEnumerationType = value;
          }
@@ -337,6 +397,327 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                return propHnd;
          }
          return DefaultProperty(file);
+      }
+
+      /// <summary>
+      /// Creates an entry of type given by propertyType.
+      /// </summary>
+      /// <param name="propetyType">The property type.</param>
+      /// <param name="revitParameterName">Revit parameter name.</param>
+      /// <returns>The PropertySetEntry.</returns>
+      public static PropertySetEntry CreateGenericEntry(PropertyType propertyType, string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = propertyType;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type real.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// Revit parameter name.
+      /// </param>
+      /// <returns>
+      /// The PropertySetEntry.
+      /// </returns>
+      public static PropertySetEntry CreateReal(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.Real;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type Power.
+      /// </summary>
+      /// <param name="revitParameterName">Revit parameter name.</param>
+      /// <returns>The PropertySetEntry.</returns>
+      public static PropertySetEntry CreatePower(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.Power;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type Frequency.
+      /// </summary>
+      /// <param name="revitParameterName">Revit parameter name.</param>
+      /// <returns>The PropertySetEntry.</returns>
+      public static PropertySetEntry CreateFrequency(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.Frequency;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type ElectricalCurrent.
+      /// </summary>
+      /// <param name="revitParameterName">Revit parameter name.</param>
+      /// <returns>The PropertySetEntry.</returns>
+      public static PropertySetEntry CreateElectricalCurrent(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.ElectricalCurrent;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type ElectricalVoltage.
+      /// </summary>
+      /// <param name="revitParameterName">Revit parameter name.</param>
+      /// <returns>The PropertySetEntry.</returns>
+      public static PropertySetEntry CreateElectricalVoltage(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.ElectricalVoltage;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type VolumetricFlowRate.
+      /// </summary>
+      /// <param name="revitParameterName">Revit parameter name.</param>
+      /// <returns>The PropertySetEntry.</returns>
+      public static PropertySetEntry CreateVolumetricFlowRate(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.VolumetricFlowRate;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type ThermodynamicTemperature.
+      /// </summary>
+      /// <param name="revitParameterName">Revit parameter name.</param>
+      /// <returns>The PropertySetEntry.</returns>
+      public static PropertySetEntry CreateThermodynamicTemperature(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.ThermodynamicTemperature;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type ThermalTransmittance.
+      /// </summary>
+      /// <param name="revitParameterName">Revit parameter name.</param>
+      /// <returns>The PropertySetEntry.</returns>
+      public static PropertySetEntry CreateThermalTransmittance(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.ThermalTransmittance;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type boolean.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// Revit parameter name.
+      /// </param>
+      /// <returns>
+      /// The PropertySetEntry.
+      /// </returns>
+      public static PropertySetEntry CreateBoolean(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.Boolean;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type logical.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// Revit parameter name.
+      /// </param>
+      /// <returns>
+      /// The PropertySetEntry.
+      /// </returns>
+      public static PropertySetEntry CreateLogical(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.Logical;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type label.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// Revit parameter name.
+      /// </param>
+      /// <returns>
+      /// The PropertySetEntry.
+      /// </returns>
+      public static PropertySetEntry CreateLabel(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.Label;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type text.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// Revit parameter name.
+      /// </param>
+      /// <returns>
+      /// The PropertySetEntry.
+      /// </returns>
+      public static PropertySetEntry CreateText(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.Text;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type identifier.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// Revit parameter name.
+      /// </param>
+      /// <returns>
+      /// The PropertySetEntry.
+      /// </returns>
+      public static PropertySetEntry CreateIdentifier(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.Identifier;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type integer.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// Revit parameter name.
+      /// </param>
+      /// <returns>
+      /// The PropertySetEntry.
+      /// </returns>
+      public static PropertySetEntry CreateInteger(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.Integer;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type area.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// Revit parameter name.
+      /// </param>
+      /// <returns>
+      /// The PropertySetEntry.
+      /// </returns>
+      public static PropertySetEntry CreateArea(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.Area;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type length.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// Revit parameter name.
+      /// </param>
+      /// <returns>
+      /// The PropertySetEntry.
+      /// </returns>
+      public static PropertySetEntry CreateLength(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.Length;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type positive length.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// Revit parameter name.
+      /// </param>
+      /// <returns>
+      /// The PropertySetEntry.
+      /// </returns>
+      public static PropertySetEntry CreatePositiveLength(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.PositiveLength;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type ratio.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// Revit parameter name.
+      /// </param>
+      /// <returns>
+      /// The PropertySetEntry.
+      /// </returns>
+      public static PropertySetEntry CreateRatio(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.Ratio;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type linear velocity.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// Revit parameter name.
+      /// </param>
+      /// <returns>
+      /// The PropertySetEntry.
+      /// </returns>
+      public static PropertySetEntry CreateLinearVelocity(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.LinearVelocity;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type normalised ratio.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// Revit parameter name.
+      /// </param>
+      /// <returns>
+      /// The PropertySetEntry.
+      /// </returns>
+      public static PropertySetEntry CreateNormalisedRatio(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.NormalisedRatio;
+         return pse;
+      }
+
+      /// <summary>
+      /// Creates an entry of type positive ratio.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// Revit parameter name.
+      /// </param>
+      /// <returns>
+      /// The PropertySetEntry.
+      /// </returns>
+      public static PropertySetEntry CreatePositiveRatio(string revitParameterName)
+      {
+         PropertySetEntry pse = new PropertySetEntry(revitParameterName);
+         pse.PropertyType = PropertyType.PositiveRatio;
+         return pse;
       }
 
       /// <summary>

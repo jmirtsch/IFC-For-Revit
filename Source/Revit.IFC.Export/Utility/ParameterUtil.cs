@@ -27,172 +27,204 @@ using Revit.IFC.Export.Exporter.PropertySet;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Provides static methods for parameter related manipulations.
-    /// </summary>
-    class ParameterUtil
-    {
-        // Cache the parameters for the current Element.
-        private static IDictionary<ElementId, IDictionary<BuiltInParameterGroup, ParameterElementCache>> m_NonIFCParameters =
-            new Dictionary<ElementId, IDictionary<BuiltInParameterGroup, ParameterElementCache>>();
+   /// <summary>
+   /// Provides static methods for parameter related manipulations.
+   /// </summary>
+   class ParameterUtil
+   {
+      // Cache the parameters for the current Element.
+      private static IDictionary<ElementId, IDictionary<BuiltInParameterGroup, ParameterElementCache>> m_NonIFCParameters =
+         new Dictionary<ElementId, IDictionary<BuiltInParameterGroup, ParameterElementCache>>();
 
-        private static IDictionary<ElementId, ParameterElementCache> m_IFCParameters =
-            new Dictionary<ElementId, ParameterElementCache>();
+      private static IDictionary<ElementId, ParameterElementCache> m_IFCParameters =
+         new Dictionary<ElementId, ParameterElementCache>();
 
-        private static IDictionary<ElementId, IDictionary<IFCAnyHandle, ParameterValueSubelementCache>> m_SubelementParameterValueCache =
-            new Dictionary<ElementId, IDictionary<IFCAnyHandle, ParameterValueSubelementCache>>();
+      private static IDictionary<ElementId, IDictionary<IFCAnyHandle, ParameterValueSubelementCache>> m_SubelementParameterValueCache =
+         new Dictionary<ElementId, IDictionary<IFCAnyHandle, ParameterValueSubelementCache>>();
 
-        public static IDictionary<BuiltInParameterGroup, ParameterElementCache> GetNonIFCParametersForElement(ElementId elemId)
-        {
-            if (elemId == ElementId.InvalidElementId)
-                return null;
+      public static IDictionary<BuiltInParameterGroup, ParameterElementCache> GetNonIFCParametersForElement(ElementId elemId)
+      {
+         if (elemId == ElementId.InvalidElementId)
+               return null;
 
-            IDictionary<BuiltInParameterGroup, ParameterElementCache> nonIFCParametersForElement = null;
-            if (!m_NonIFCParameters.TryGetValue(elemId, out nonIFCParametersForElement))
+         IDictionary<BuiltInParameterGroup, ParameterElementCache> nonIFCParametersForElement = null;
+         if (!m_NonIFCParameters.TryGetValue(elemId, out nonIFCParametersForElement))
+         {
+               CacheParametersForElement(elemId);
+               m_NonIFCParameters.TryGetValue(elemId, out nonIFCParametersForElement);
+         }
+
+         return nonIFCParametersForElement;
+      }
+
+      /// <summary>
+      /// Clears parameter cache.
+      /// </summary>
+      public static void ClearParameterCache()
+      {
+         m_NonIFCParameters.Clear();
+         m_IFCParameters.Clear();
+         m_SubelementParameterValueCache.Clear();
+      }
+
+      private static Parameter GetStringValueFromElementBase(Element element, ElementId elementId, string propertyName, bool allowUnset, out string propertyValue)
+      {
+         if (elementId == ElementId.InvalidElementId)
+               throw new ArgumentNullException("element");
+
+         propertyValue = string.Empty;
+         if (String.IsNullOrEmpty(propertyName))
+            return null;
+
+         propertyValue = string.Empty;
+
+         Parameter parameter = GetParameterFromName(elementId, null, propertyName);
+
+         if (parameter != null)
+         {
+            StorageType storageType = parameter.StorageType;
+            if (storageType != StorageType.String && storageType != StorageType.ElementId)
+               return null;
+
+            if (parameter.HasValue)
             {
-                CacheParametersForElement(elemId);
-                m_NonIFCParameters.TryGetValue(elemId, out nonIFCParametersForElement);
+               string propValue;
+               propValue = parameter.AsString();
+
+               if (!string.IsNullOrEmpty(propValue))
+               {
+                  string propValuetrim = propValue.Trim();
+                  // This is kind of hack to quickly check whether we need to parse the parameter or not
+                  if (((propValuetrim.Length > 1 && propValuetrim[0] == '{') || (propValuetrim.Length > 2 && propValuetrim[1] == '{')) && (propValuetrim[propValuetrim.Length - 1] == '}'))
+                  {
+                     ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValuetrim);
+                     propertyValue = pResv.GetStringValue();
+                     if (string.IsNullOrEmpty(propertyValue))
+                        propertyValue = propValue;    // return the original propValue (un-trimmed)
+                  }
+                  else
+                     propertyValue = propValue;    // return the original propValue (un-trimmed)
+
+                  return parameter;
+               }
+               else if (parameter.AsElementId() != null)
+               {
+                  propertyValue = PropertyUtil.ElementIdParameterAsString(parameter);
+                  return parameter;
+               }
             }
-
-            return nonIFCParametersForElement;
-        }
-
-        /// <summary>
-        /// Clears parameter cache.
-        /// </summary>
-        public static void ClearParameterCache()
-        {
-            m_NonIFCParameters.Clear();
-            m_IFCParameters.Clear();
-            m_SubelementParameterValueCache.Clear();
-        }
-
-        private static Parameter GetStringValueFromElementBase(ElementId elementId, string propertyName, bool allowUnset, out string propertyValue)
-        {
-            if (elementId == ElementId.InvalidElementId)
-                throw new ArgumentNullException("element");
-
-            propertyValue = string.Empty;
-            if (String.IsNullOrEmpty(propertyName))
-                return null;
-
-
-            Parameter parameter = GetParameterFromName(elementId, null, propertyName);
-
-            if (parameter != null)
-            {
-                StorageType storageType = parameter.StorageType;
-                if (storageType != StorageType.String && storageType != StorageType.ElementId)
-                    return null;
-
-                if (parameter.HasValue)
-                {
-                    if (parameter.AsString() != null)
-                    {
-                        propertyValue = parameter.AsString();
-                        return parameter;
-                    }
-                    else if (parameter.AsElementId() != null)
-                    {
-                        propertyValue = PropertyUtil.ElementIdParameterAsString(parameter);
-                        return parameter;
-                    }
-                }
                 
-                if (allowUnset)
-                {
-                    propertyValue = null;
-                    return parameter;
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Gets a non-empty string value from parameter of an element.
-        /// </summary>
-        /// <param name="elementId">The element id.</param>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
-        /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetStringValueFromElement(ElementId elementId, string propertyName, out string propertyValue)
-        {
-            return GetStringValueFromElementBase(elementId, propertyName, false, out propertyValue);
-        }
-
-        /// <summary>
-        /// Gets a string value from parameter of an element.
-        /// </summary>
-        /// <param name="elementId">The element id.</param>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
-        /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetOptionalStringValueFromElement(ElementId elementId, string propertyName, out string propertyValue)
-        {
-            return GetStringValueFromElementBase(elementId, propertyName, true, out propertyValue);
-        }
-        
-        /// <summary>
-        /// Gets integer value from parameter of an element.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
-        /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetIntValueFromElement(Element element, string propertyName, out int propertyValue)
-        {
-            if (element == null)
-                throw new ArgumentNullException("element");
-
-            if (String.IsNullOrEmpty(propertyName))
-                throw new ArgumentException("It is null or empty.", "propertyName");
-
-            propertyValue = 0;
-
-            Parameter parameter = GetParameterFromName(element.Id, null, propertyName);
-
-            if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Integer)
+            if (allowUnset)
             {
-                switch (parameter.StorageType)
-                {
-                    case StorageType.Double:
-                        {
-                            try
-                            {
-                                propertyValue = (int)parameter.AsDouble();
-                                return parameter;
-                            }
-                            catch
-                            {
-                                return null;
-                            }
-                        }
-                    case StorageType.Integer:
-                        propertyValue = parameter.AsInteger();
-                        return parameter;
-                    case StorageType.String:
-                        {
-                            try
-                            {
-                                propertyValue = Convert.ToInt32(parameter.AsString());
-                                return parameter;
-                            }
-                            catch
-                            {
-                                return null;
-                            }
-                        }
-                }
+               propertyValue = null;
+               return parameter;
             }
+         }
 
-            return null;
+         return null;
+      }
+
+      /// <summary>
+      /// Gets a non-empty string value from parameter of an element.
+      /// </summary>
+      /// <param name="elementId">The element id.</param>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+      /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetStringValueFromElement(Element element, ElementId elementId, string propertyName, out string propertyValue)
+      {
+         return GetStringValueFromElementBase(element, elementId, propertyName, false, out propertyValue);
+      }
+
+      /// <summary>
+      /// Gets a string value from parameter of an element.
+      /// </summary>
+      /// <param name="elementId">The element id.</param>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+      /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetOptionalStringValueFromElement(Element element, ElementId elementId, string propertyName, out string propertyValue)
+      {
+         return GetStringValueFromElementBase(element, elementId, propertyName, true, out propertyValue);
+      }
+        
+      /// <summary>
+      /// Gets integer value from parameter of an element.
+      /// </summary>
+      /// <param name="element">The element.</param>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+      /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetIntValueFromElement(Element element, string propertyName, out int propertyValue)
+      {
+         if (element == null)
+            throw new ArgumentNullException("element");
+
+         if (String.IsNullOrEmpty(propertyName))
+            throw new ArgumentException("It is null or empty.", "propertyName");
+
+         propertyValue = 0;
+
+         Parameter parameter = GetParameterFromName(element.Id, null, propertyName);
+
+         if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Integer)
+         {
+            switch (parameter.StorageType)
+            {
+               case StorageType.Double:
+                  {
+                     try
+                     {
+                        propertyValue = (int)parameter.AsDouble();
+                        return parameter;
+                     }
+                     catch
+                     {
+                        return null;
+                     }
+                  }
+               case StorageType.Integer:
+                  {
+                     propertyValue = parameter.AsInteger();
+                     return parameter;
+                  }
+               case StorageType.String:
+                  {
+                     string propValue;
+                     propValue = parameter.AsString();
+
+                     string propValuetrim = propValue.Trim();
+                     // This is kind of hack to quickly check whether we need to parse the parameter or not
+                     if (((propValuetrim.Length > 1 && propValuetrim[0] == '{') || (propValuetrim.Length > 2 && propValuetrim[1] == '{')) && (propValuetrim[propValuetrim.Length - 1] == '}'))
+                     {
+                        ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValuetrim);
+                        int? propertyIntValue = pResv.GetIntValue();
+                        if (propertyIntValue.HasValue)
+                        {
+                           propertyValue = propertyIntValue.Value;
+                           return parameter;
+                        }
+                     }
+
+                     try
+                     {
+                        propertyValue = Convert.ToInt32(parameter.AsString());
+                        return parameter;
+                     }
+                     catch
+                     {
+                        return null;
+                     }
+                  }
+            }
+         }
+         return null;
         }
 
         /// <summary>
@@ -219,17 +251,35 @@ namespace Revit.IFC.Export.Utility
 
             if (parameter != null && parameter.HasValue)
             {
-                switch (parameter.StorageType)
-                {
-                    case StorageType.Double:
-                        propertyValue = parameter.AsDouble();
-                        return parameter;
-                    case StorageType.Integer:
-                        propertyValue = parameter.AsInteger();
-                        return parameter;
-                    case StorageType.String:
-                        return Double.TryParse(parameter.AsString(), out propertyValue) ? parameter : null;
-                }
+               switch (parameter.StorageType)
+               {
+                  case StorageType.Double:
+                     propertyValue = parameter.AsDouble();
+                     return parameter;
+                  case StorageType.Integer:
+                     propertyValue = parameter.AsInteger();
+                     return parameter;
+                  case StorageType.String:
+                     {
+                        string propValue;
+                        propValue = parameter.AsString();
+
+                        string propValuetrim = propValue.Trim();
+                     // This is kind of hack to quickly check whether we need to parse the parameter or not
+                     if (((propValuetrim.Length > 1 && propValuetrim[0] == '{') || (propValuetrim.Length > 2 && propValuetrim[1] == '{')) && (propValuetrim[propValuetrim.Length - 1] == '}'))
+                     {
+                           ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValuetrim);
+                           double? propertyDoubleValue = pResv.GetDoubleValue();
+                           if (propertyDoubleValue.HasValue)
+                           {
+                              propertyValue = propertyDoubleValue.Value;
+                              return parameter;
+                           }
+                        }
+
+                        return Double.TryParse(propValue, out propertyValue) ? parameter : null;
+                     }
+               }
             }
 
             return null;
@@ -772,7 +822,7 @@ namespace Revit.IFC.Export.Utility
 
         private static Parameter GetStringValueFromElementOrSymbolBase(Element element, string propertyName, bool allowUnset, out string propertyValue)
         {
-            Parameter parameter = GetStringValueFromElementBase(element.Id, propertyName, allowUnset, out propertyValue);
+            Parameter parameter = GetStringValueFromElementBase(element, element.Id, propertyName, allowUnset, out propertyValue);
             if (parameter != null)
             {
                 if (!string.IsNullOrEmpty(propertyValue))
@@ -781,7 +831,7 @@ namespace Revit.IFC.Export.Utility
             
             ElementId typeId = element.GetTypeId();
             if (typeId != ElementId.InvalidElementId)
-                return GetStringValueFromElementBase(typeId, propertyName, allowUnset, out propertyValue);
+                return GetStringValueFromElementBase(element, typeId, propertyName, allowUnset, out propertyValue);
 
             return parameter;
         }

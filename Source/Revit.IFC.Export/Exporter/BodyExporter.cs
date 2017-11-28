@@ -312,7 +312,7 @@ namespace Revit.IFC.Export.Exporter
       public static void CreateSurfaceStyleForRepItem(ExporterIFC exporterIFC, Document document, IFCAnyHandle repItemHnd,
           ElementId overrideMatId)
       {
-         if (repItemHnd == null || ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
+         if (repItemHnd == null || ExporterCacheManager.ExportOptionsCache.ExportAs2x2 || ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
             return;
 
          // Restrict material to proper subtypes.
@@ -331,38 +331,44 @@ namespace Revit.IFC.Export.Exporter
          if (materialId == ElementId.InvalidElementId)
             return;
 
-         IFCAnyHandle presStyleHnd = ExporterCacheManager.PresentationStyleAssignmentCache.Find(materialId);
-         if (IFCAnyHandleUtil.IsNullOrHasNoValue(presStyleHnd))
+         IFCAnyHandle presStyleHnd = null;
+         if (!(ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView))
          {
-            IFCAnyHandle surfStyleHnd = CategoryUtil.GetOrCreateMaterialStyle(document, exporterIFC, materialId);
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(surfStyleHnd))
-               return;
+            presStyleHnd = ExporterCacheManager.PresentationStyleAssignmentCache.Find(materialId);
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(presStyleHnd))
+            {
+               IFCAnyHandle surfStyleHnd = CategoryUtil.GetOrCreateMaterialStyle(document, exporterIFC, materialId);
+               if (IFCAnyHandleUtil.IsNullOrHasNoValue(surfStyleHnd))
+                  return;
 
-            ISet<IFCAnyHandle> styles = new HashSet<IFCAnyHandle>();
-            styles.Add(surfStyleHnd);
+               ISet<IFCAnyHandle> styles = new HashSet<IFCAnyHandle>();
+               styles.Add(surfStyleHnd);
 
-            presStyleHnd = IFCInstanceExporter.CreatePresentationStyleAssignment(file, styles);
-            ExporterCacheManager.PresentationStyleAssignmentCache.Register(materialId, presStyleHnd);
+               presStyleHnd = IFCInstanceExporter.CreatePresentationStyleAssignment(file, styles);
+               ExporterCacheManager.PresentationStyleAssignmentCache.Register(materialId, presStyleHnd);
+            }
          }
-
 
          // Check if the IfcStyledItem has already been set for this representation item.  If so, don't set it
          // again.  This can happen in BodyExporter in certain cases where we call CreateSurfaceStyleForRepItem twice.
-         HashSet<IFCAnyHandle> styledByItemHandles = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(repItemHnd, "StyledByItem");
-         if (styledByItemHandles == null || styledByItemHandles.Count == 0)
+         if (presStyleHnd != null)
          {
-            HashSet<IFCAnyHandle> presStyleSet = new HashSet<IFCAnyHandle>();
-            presStyleSet.Add(presStyleHnd);
-            IFCAnyHandle styledItem = IFCInstanceExporter.CreateStyledItem(file, repItemHnd, presStyleSet, null);
-         }
-         else
-         {
-            IFCAnyHandle styledItem = styledByItemHandles.First();
-            HashSet<IFCAnyHandle> presStyleSet = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(styledItem, "Styles");
-            if (presStyleSet == null)
-               presStyleSet = new HashSet<IFCAnyHandle>();
-            presStyleSet.Add(presStyleHnd);
-            IFCAnyHandleUtil.SetAttribute(styledItem, "Styles", presStyleSet);
+            HashSet<IFCAnyHandle> styledByItemHandles = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(repItemHnd, "StyledByItem");
+            if (styledByItemHandles == null || styledByItemHandles.Count == 0)
+            {
+               HashSet<IFCAnyHandle> presStyleSet = new HashSet<IFCAnyHandle>();
+               presStyleSet.Add(presStyleHnd);
+               IFCAnyHandle styledItem = IFCInstanceExporter.CreateStyledItem(file, repItemHnd, presStyleSet, null);
+            }
+            else
+            {
+               IFCAnyHandle styledItem = styledByItemHandles.First();
+               HashSet<IFCAnyHandle> presStyleSet = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(styledItem, "Styles");
+               if (presStyleSet == null)
+                  presStyleSet = new HashSet<IFCAnyHandle>();
+               presStyleSet.Add(presStyleHnd);
+               IFCAnyHandleUtil.SetAttribute(styledItem, "Styles", presStyleSet);
+            }
          }
          return;
       }
@@ -377,7 +383,8 @@ namespace Revit.IFC.Export.Exporter
       /// <returns>The IfcCurveStyle handle.</returns>
       public static IFCAnyHandle CreateCurveStyleForRepItem(ExporterIFC exporterIFC, IFCAnyHandle repItemHnd, IFCData curveWidth, IFCAnyHandle colorHnd)
       {
-         if (repItemHnd == null)
+         // Styled Item is not allowed in IFC4RV
+         if (repItemHnd == null || ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
             return null;
 
          IFCAnyHandle presStyleHnd = null;
@@ -1949,9 +1956,10 @@ namespace Revit.IFC.Export.Exporter
                      bool faceWithHole = triMerge.NoOfHolesInFace(jj) > 0;
 
                      IList<int> outerBound = new List<int>();
-                     for (int kk = 0; kk < triMerge.IndexOuterboundOfFaceAt(jj).Count; ++kk)
+                     IList<int> faceIndexOuterbound = triMerge.IndexOuterboundOfFaceAt(jj);
+                     for (int kk = 0; kk < faceIndexOuterbound.Count; ++kk)
                      {
-                        outerBound.Add(triMerge.IndexOuterboundOfFaceAt(jj)[kk] + 1);   // IFC starts the index at 1
+                        outerBound.Add(faceIndexOuterbound[kk] + 1);   // IFC starts the index at 1
                      }
 
                      if (!faceWithHole)
@@ -2779,7 +2787,8 @@ namespace Revit.IFC.Export.Exporter
           IList<GeometryObject> geometryList,
           BodyExporterOptions options,
           IFCExtrusionCreationData exportBodyParams,
-          GeometryObject potentialPathGeom = null)
+          GeometryObject potentialPathGeom = null,
+          string profileName = null)
       {
          BodyData bodyData = new BodyData();
          if (geometryList.Count == 0)
@@ -2843,6 +2852,7 @@ namespace Revit.IFC.Export.Exporter
 
          MaterialAndProfile materialAndProfile = null;
          HashSet<FootPrintInfo> footprintInfoSet = new HashSet<FootPrintInfo>();
+         Plane extrusionBasePlane = null;
 
          using (IFCTransaction tr = new IFCTransaction(file))
          {
@@ -2867,7 +2877,7 @@ namespace Revit.IFC.Export.Exporter
                         XYZ planeXVec = options.ExtrusionLocalCoordinateSystem.BasisY.Normalize();
                         XYZ planeYVec = options.ExtrusionLocalCoordinateSystem.BasisZ.Normalize();
 
-                        Plane extrusionBasePlane = GeometryUtil.CreatePlaneByXYVectorsAtOrigin(planeXVec, planeYVec);
+                        extrusionBasePlane = GeometryUtil.CreatePlaneByXYVectorsAtOrigin(planeXVec, planeYVec);
                         XYZ extrusionDirection = options.ExtrusionLocalCoordinateSystem.BasisX;
 
                         GenerateAdditionalInfo footprintOrProfile = GenerateAdditionalInfo.None;
@@ -2879,14 +2889,14 @@ namespace Revit.IFC.Export.Exporter
                         bool completelyClipped;
                         HandleAndData extrusionData = ExtrusionExporter.CreateExtrusionWithClippingAndProperties(exporterIFC, element,
                             CategoryUtil.GetSafeCategoryId(element), geometryList[0] as Solid, extrusionBasePlane, options.ExtrusionLocalCoordinateSystem.Origin,
-                            extrusionDirection, null, out completelyClipped, addInfo:footprintOrProfile);
+                            extrusionDirection, null, out completelyClipped, addInfo:footprintOrProfile, profileName:profileName);
                         if (!completelyClipped && !IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionData.Handle))
                         {
                            // There are two valid cases here:
                            // 1. We actually created an extrusion.
                            // 2. We are in the Reference View, and we created a TriangulatedFaceSet.
                            if (extrusionData.BaseRepresentationItems != null && extrusionData.BaseRepresentationItems.Count == 1)
-                        {
+                           {
                               HashSet<ElementId> materialIds = extrusionData.MaterialIds;
 
                               // We skip setting and getting the material id from the exporter as unnecessary.
@@ -2898,8 +2908,8 @@ namespace Revit.IFC.Export.Exporter
                                  bodyData.AddMaterial(matId);
                               bodyData.RepresentationHnd = extrusionData.Handle;
                               bodyData.ShapeRepresentationType = extrusionData.ShapeRepresentationType;
-                           bodyData.materialAndProfile = extrusionData.MaterialAndProfile;
-                           bodyData.FootprintInfo = extrusionData.FootprintInfo;
+                              bodyData.materialAndProfile = extrusionData.MaterialAndProfile;
+                              bodyData.FootprintInfo = extrusionData.FootprintInfo;
 
                               bodyItems.Add(extrusionData.BaseRepresentationItems[0]);
 
@@ -2918,10 +2928,10 @@ namespace Revit.IFC.Export.Exporter
                               }
 
                               hasExtrusions = true;
-                           if ((footprintOrProfile & GenerateAdditionalInfo.GenerateFootprint) != 0)
-                               footprintInfoSet.Add(extrusionData.FootprintInfo);
-                           if ((footprintOrProfile & GenerateAdditionalInfo.GenerateProfileDef) != 0)
-                               materialAndProfile = extrusionData.MaterialAndProfile;
+                              if ((footprintOrProfile & GenerateAdditionalInfo.GenerateFootprint) != 0)
+                                  footprintInfoSet.Add(extrusionData.FootprintInfo);
+                              if ((footprintOrProfile & GenerateAdditionalInfo.GenerateProfileDef) != 0)
+                                  materialAndProfile = extrusionData.MaterialAndProfile;
 
                               extrusionTransaction.Commit();
                            }
@@ -3036,7 +3046,7 @@ namespace Revit.IFC.Export.Exporter
                                   // Must Check correctness for transform!!!!!
                                  FootPrintInfo fInfo = new FootPrintInfo();
                                  fInfo.LCSTransformUsed = bodyData.OffsetTransform;
-                                 fInfo.FootPrintHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, curveLoops[0], fInfo.LCSTransformUsed, extrusionDirection);
+                                 fInfo.FootPrintHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, curveLoops[0], fInfo.LCSTransformUsed, fInfo.LCSTransformUsed.BasisZ);
                                   footprintInfoSet.Add(fInfo);
                               }
                                if (options.CollectMaterialAndProfile)
@@ -3153,8 +3163,7 @@ namespace Revit.IFC.Export.Exporter
                                      // Get the handle to the extrusion Swept Area needed for creation of IfcMaterialProfile
                                      IFCData extrArea = sweptHandle.GetAttribute("SweptArea");
                                      materialAndProfile.Add(exporterIFC.GetMaterialIdForCurrentExportState(), extrArea.AsInstance());
-                                    //materialAndProfile.LCSTransformUsed = Transform.Identity;      // ?????
-                                    materialAndProfile.PathCurve = simpleSweptSolidAnalyzer.PathCurve;
+                                     materialAndProfile.PathCurve = simpleSweptSolidAnalyzer.PathCurve;
                                  }
                               }
                               else
@@ -3204,7 +3213,7 @@ namespace Revit.IFC.Export.Exporter
                            bodyData.RepresentationHnd =
                                RepresentationUtil.CreateTessellatedRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
                            bodyData.ShapeRepresentationType = ShapeRepresentationType.Tessellation;
-
+                          
                            // If there is footprint information that won't be used for Tessellation, delete them 
                            foreach (FootPrintInfo footPInfo in footprintInfoSet)
                               DeleteOrphanedFootprintHnd(footPInfo.FootPrintHandle);
@@ -3291,6 +3300,7 @@ namespace Revit.IFC.Export.Exporter
                   transformSetter.CreateLocalPlacementFromOffset(exporterIFC, bbox, exportBodyParams, lpOrig, unscaledTrfOrig);
                   tr.Commit();
                }
+
                return brepBodyData;
             }
          }

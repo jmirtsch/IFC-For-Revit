@@ -200,6 +200,8 @@ namespace Revit.IFC.Export.Exporter
          XYZ projDir = axisInfo.AxisNormal;
          Transform lcs = axisInfo.LCSAsTransform;
 
+         string representationTypeOpt = "Curve2D";  // This is by IFC2x2+ convention.
+
          XYZ curveOffset = XYZ.Zero;
          if (offsetTransform != null)
             curveOffset = -UnitUtil.UnscaleLength(offsetTransform.Origin);
@@ -212,15 +214,38 @@ namespace Revit.IFC.Export.Exporter
 
          Transform offsetLCS = new Transform(lcs);
          offsetLCS.Origin = XYZ.Zero;
-         IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, offsetLCS, projDir, false);
-         ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, curve, curveOffset, true);
+         IList<IFCAnyHandle> axis_items = null;
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+         {
+            IFCFile file = exporterIFC.GetFile();
+            IList<int> segmentIndex = null;
+            IList<IList<double>> pointList = GeometryUtil.PointListFromCurve(exporterIFC, curve, null, null, out segmentIndex);
 
-         IList<IFCAnyHandle> axis_items = info.GetCurves();
+            // For now because of no support in creating IfcLineIndex and IfcArcIndex yet, it is set to null
+            //IList<IList<int>> segmentIndexList = new List<IList<int>>();
+            //segmentIndexList.Add(segmentIndex);
+            IList<IList<int>> segmentIndexList = null;
+
+            IFCAnyHandle pointListHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, pointList);
+            IFCAnyHandle axisHnd = IFCInstanceExporter.CreateIndexedPolyCurve(file, pointListHnd, segmentIndexList, false);
+            axis_items = new List<IFCAnyHandle>();
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(axisHnd))
+            {
+               axis_items.Add(axisHnd);
+               representationTypeOpt = "Curve3D";        // We use Curve3D for IFC4RV Axis
+            }
+         }
+         else
+         {
+            IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, offsetLCS, projDir, false);
+            ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, curve, curveOffset, true);
+
+            axis_items = info.GetCurves();
+         }
 
          if (axis_items.Count > 0)
          {
             string identifierOpt = "Axis";   // This is by IFC2x2+ convention.
-            string representationTypeOpt = "Curve2D";  // This is by IFC2x2+ convention.
             IFCAnyHandle axisRep = RepresentationUtil.CreateShapeRepresentation(exporterIFC, element, catId, exporterIFC.Get3DContextHandle(identifierOpt),
                identifierOpt, representationTypeOpt, axis_items);
             return axisRep;

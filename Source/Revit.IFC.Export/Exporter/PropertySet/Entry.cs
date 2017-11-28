@@ -116,6 +116,19 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             m_PropertyName = value;
          }
       }
+      public PropertyCalculator PropertyCalculator
+      {
+         set
+         {
+            if (m_Entries.Count > 0)
+               m_Entries[0].PropertyCalculator = value;
+         }
+      }
+      public void AddLocalizedParameterName(LanguageType locale, string localizedName)
+      {
+         if (m_Entries.Count > 0)
+            m_Entries[0].AddLocalizedParameterName(locale, localizedName);
+      }
       public void AddEntry(T entry)
       {
          m_Entries.Add(entry);

@@ -422,7 +422,8 @@ namespace Revit.IFC.Export.Exporter
                return null;
             hasClipping = bodyItemHnd.Id != baseBodyItemHnd.Id;
 
-            if (expandedWallExtrusion && !hasClipping)
+            // If there is clipping in IFC4 RV, it also needs to rollback
+            if ((expandedWallExtrusion && !hasClipping) || (hasClipping && ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView))
             {
                // We expanded the wall base, expecting to find cutouts, but found none.  Delete the extrusion and try again below.
                tr.RollBack();
@@ -481,6 +482,7 @@ namespace Revit.IFC.Export.Exporter
             // Create TessellatedRep geometry if it is Reference View.
             if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
             {
+               
                List<GeometryObject> geomList = new List<GeometryObject>();
                // The native function AddClippingsToBaseExtrusion will create the IfcBooleanClippingResult entity and therefore here we need to delete it
                foreach (IFCAnyHandle item in bodyItems)
@@ -808,10 +810,33 @@ namespace Revit.IFC.Export.Exporter
 
                         string identifierOpt = "Axis";   // IFC2x2 convention
                         string representationTypeOpt = "Curve2D";  // IFC2x2 convention
+                        IList<IFCAnyHandle> axisItems = null;
 
-                        IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, orientationTrf, projDir, false);
-                        ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, trimmedCurve, XYZ.Zero, true);
-                        IList<IFCAnyHandle> axisItems = info.GetCurves();
+                        if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+                        {
+                           IList<int> segmentIndex = null;
+                           IList<IList<double>> pointList = GeometryUtil.PointListFromCurve(exporterIFC, trimmedCurve, null, null, out segmentIndex);
+
+                           // For now because of no support in creating IfcLineIndex and IfcArcIndex yet, it is set to null
+                           //IList<IList<int>> segmentIndexList = new List<IList<int>>();
+                           //segmentIndexList.Add(segmentIndex);
+                           IList<IList<int>> segmentIndexList = null;
+
+                           IFCAnyHandle pointListHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, pointList);
+                           IFCAnyHandle axisHnd = IFCInstanceExporter.CreateIndexedPolyCurve(file, pointListHnd, segmentIndexList, false);
+                           axisItems = new List<IFCAnyHandle>();
+                           if (!IFCAnyHandleUtil.IsNullOrHasNoValue(axisHnd))
+                           {
+                              axisItems.Add(axisHnd);
+                              representationTypeOpt = "Curve3D";     // We use Curve3D for IFC4RV
+                           }
+                        }
+                        else
+                        {
+                           IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, orientationTrf, projDir, false);
+                           ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, trimmedCurve, XYZ.Zero, true);
+                           axisItems = info.GetCurves();
+                        }
 
                         if (axisItems.Count == 0)
                         {
@@ -1022,7 +1047,7 @@ namespace Revit.IFC.Export.Exporter
                         {
                            scaledFootprintArea = MathUtil.AreaIsAlmostZero(scaledFootprintArea) ? extraParams.ScaledArea : scaledFootprintArea;
                            scaledLength = MathUtil.IsAlmostZero(scaledLength) ? extraParams.ScaledLength : scaledLength;
-                           PropertyUtil.CreateWallBaseQuantities(exporterIFC, wallElement, solids, meshes, wallHnd, scaledLength, depth, scaledFootprintArea);
+                           PropertyUtil.CreateWallBaseQuantities(exporterIFC, wallElement, solids, meshes, wallHnd, scaledLength, depth, scaledFootprintArea, extraParams);
                         }
                      }
                      else
@@ -1065,6 +1090,14 @@ namespace Revit.IFC.Export.Exporter
                                   exporterIFC, localPlacement, setter, localWrapper);
                            }
                         }
+
+                        // export Base Quantities if it is IFC4RV and the extrusion information is available
+                        if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView && ExporterCacheManager.ExportOptionsCache.ExportBaseQuantities)
+                        {
+                           scaledFootprintArea = MathUtil.AreaIsAlmostZero(scaledFootprintArea) ? extraParams.ScaledArea : scaledFootprintArea;
+                           scaledLength = MathUtil.IsAlmostZero(scaledLength) ? extraParams.ScaledLength : scaledLength;
+                           PropertyUtil.CreateWallBaseQuantities(exporterIFC, wallElement, solids, meshes, wallHnd, scaledLength, depth, scaledFootprintArea, extraParams);
+                        }
                      }
 
                      ElementId wallLevelId = (validRange) ? setter.LevelId : ElementId.InvalidElementId;
@@ -1074,7 +1107,7 @@ namespace Revit.IFC.Export.Exporter
                         HostObject hostObject = element as HostObject;
                         if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x2 || exportedAsWallWithAxis)
                            HostObjectExporter.ExportHostObjectMaterials(exporterIFC, hostObject, localWrapper.GetAnElement(),
-                               geometryElement, localWrapper, wallLevelId, Toolkit.IFCLayerSetDirection.Axis2, !exportedAsWallWithAxis);
+                               geometryElement, localWrapper, wallLevelId, Toolkit.IFCLayerSetDirection.Axis2, !exportedAsWallWithAxis, null);
                      }
 
                      ExportWallType(exporterIFC, localWrapper, wallHnd, element, matId, exportedAsWallWithAxis, exportAsFooting);

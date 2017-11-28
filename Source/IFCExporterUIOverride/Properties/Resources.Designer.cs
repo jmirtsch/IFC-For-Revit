@@ -448,6 +448,42 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Architectural Reference Exchange.
+        /// </summary>
+        public static string ER_Architecture {
+            get {
+                return ResourceManager.GetString("ER_Architecture", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to MEP Reference Exchange.
+        /// </summary>
+        public static string ER_BuildingService {
+            get {
+                return ResourceManager.GetString("ER_BuildingService", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Structural Reference Exchange.
+        /// </summary>
+        public static string ER_Structural {
+            get {
+                return ResourceManager.GetString("ER_Structural", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exchange Requirement.
+        /// </summary>
+        public static string ExchangeRequirement {
+            get {
+                return ResourceManager.GetString("ExchangeRequirement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Export.
         /// </summary>
         public static string Export {

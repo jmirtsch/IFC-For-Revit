@@ -210,7 +210,7 @@ namespace Revit.IFC.Export.Utility
         /// <summary>
         /// Get the current range index.
         /// </summary>
-        /// <returns>The current range index, or 0 if there are no ranges.
+        /// <returns>The current range index, or 0 if there are no ranges.</returns>
         static public int GetCurrentRangeIndex()
         {
             return m_RangeIndex;

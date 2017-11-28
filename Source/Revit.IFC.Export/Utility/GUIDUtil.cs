@@ -107,7 +107,7 @@ namespace Revit.IFC.Export.Utility
             if (projectInfo != null)
             {
                 string paramValue = null;
-                ParameterUtil.GetStringValueFromElement(projectInfo.Id, parameterName, out paramValue);
+                ParameterUtil.GetStringValueFromElement(projectInfo, projectInfo.Id, parameterName, out paramValue);
                 if ((paramValue != null) && (IsValidIFCGUID(paramValue)))
                     return paramValue;
             }
@@ -148,7 +148,7 @@ namespace Revit.IFC.Export.Utility
             if (projectInfo != null)
             {
                 string paramValue = null;
-                ParameterUtil.GetStringValueFromElement(projectInfo.Id, "IfcSiteGUID", out paramValue);
+                ParameterUtil.GetStringValueFromElement(projectInfo, projectInfo.Id, "IfcSiteGUID", out paramValue);
                 if ((paramValue != null) && (IsValidIFCGUID(paramValue)))
                     return paramValue;
             }
