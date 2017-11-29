@@ -1465,14 +1465,17 @@ namespace Revit.IFC.Export.Utility
          exportEntity = symbolClassName;
          predefinedTypeStr = string.Empty;
 
-         // We are expanding IfcExportAs format to support also format: <IfcTypeEntity>.<predefinedType>. Therefore we need to parse here. This format will override value in
-         // IFCExportType if any
-         string[] splitResult = symbolClassName.Split(new Char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
-         if (splitResult.Length > 1)
+         if (!string.IsNullOrEmpty(symbolClassName))
          {
-            // found <IfcTypeEntity>.<PredefinedType>
-            exportEntity = splitResult[0].Trim();
-            predefinedTypeStr = splitResult[1].Trim();
+            // We are expanding IfcExportAs format to support also format: <IfcTypeEntity>.<predefinedType>. Therefore we need to parse here. This format will override value in
+            // IFCExportType if any
+            string[] splitResult = symbolClassName.Split(new Char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+            if (splitResult.Length > 1)
+            {
+               // found <IfcTypeEntity>.<PredefinedType>
+               exportEntity = splitResult[0].Trim();
+               predefinedTypeStr = splitResult[1].Trim();
+            }
          }
       }
 

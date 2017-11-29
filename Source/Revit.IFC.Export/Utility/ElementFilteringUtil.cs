@@ -869,6 +869,8 @@ namespace Revit.IFC.Export.Utility
       /// <returns></returns>
       private static bool CompareAlphaOnly(String name, String baseNameAllCapsNoSpaces)
       {
+         if (string.IsNullOrEmpty(name))
+            return string.IsNullOrEmpty(baseNameAllCapsNoSpaces);
          string nameToUpper = name.ToUpper();
          int loc = 0;
          int maxLen = baseNameAllCapsNoSpaces.Length;
