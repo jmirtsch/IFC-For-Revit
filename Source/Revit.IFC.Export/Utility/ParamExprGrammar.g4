@@ -44,8 +44,8 @@ objref:           THIS | TYPE ;
 type:             TYPE;
 special_param:    ELEMENTID
                   | RUNNINGNUMBER 
-                  | RUNNINGNUMBERINSTANCE
-                  | AUTOCALCULATE ;
+                  | RUNNINGNUMBERINSTANCE ;
+//                  | AUTOCALCULATE ;
 param_name:       name | type name;
 //name:             '(' (ESC | NAMEWITHSPECIALCHAR)+ ')' ;
 name:             '(' STRING ')' ;

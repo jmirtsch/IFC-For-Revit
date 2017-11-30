@@ -596,9 +596,9 @@ namespace Revit.IFC.Export.Exporter
          }
 
          string[] typeStr = typeAsString.Split('.');
-         string desireTypeBase = "Revit.IFC.Export.Toolkit.";
-         string desireTypeBaseExtra = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? ".IFC4" : string.Empty;
-         string desireType = desireTypeBase + desireTypeBaseExtra + typeStr[typeStr.Length - 1];
+         string desiredTypeBase = "Revit.IFC.Export.Toolkit.";
+         string desiredTypeBaseExtra = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? "IFC4." : string.Empty;
+         string desiredType = desiredTypeBase + desiredTypeBaseExtra + typeStr[typeStr.Length - 1];
 
          object enumValue = null;
 
@@ -607,7 +607,7 @@ namespace Revit.IFC.Export.Exporter
             try
             {
                // Not all entity types have enum values before IFC4.
-               theEnumType = Type.GetType(desireType, true, true);
+               theEnumType = Type.GetType(desiredType, true, true);
             }
             catch
             {

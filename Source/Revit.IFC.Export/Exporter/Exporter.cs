@@ -970,190 +970,204 @@ namespace Revit.IFC.Export.Exporter
             CreateGlobalDirection(exporterIFC);
             CreateGlobalDirection2D(exporterIFC);
 
-            // Set relative transform depending on whether it is a linked transform or not.
-            IFCAnyHandle relativePlacement = null;
-            if (ExporterCacheManager.ExportOptionsCache.ExportingLink)
-            {
-               Transform linkTrf = ExporterCacheManager.ExportOptionsCache.GetLinkInstanceTransform(0);
-               relativePlacement = ExporterUtil.CreateAxis2Placement3D(file, linkTrf.Origin, linkTrf.BasisZ, linkTrf.BasisX);
-            }
-            else
-               relativePlacement = ExporterUtil.CreateAxis2Placement3D(file);
+            //// Set relative transform depending on whether it is a linked transform or not.
+            //IFCAnyHandle relativePlacement = null;
+            //if (ExporterCacheManager.ExportOptionsCache.ExportingLink)
+            //{
+            //   Transform linkTrf = ExporterCacheManager.ExportOptionsCache.GetLinkInstanceTransform(0);
+            //   relativePlacement = ExporterUtil.CreateAxis2Placement3D(file, linkTrf.Origin, linkTrf.BasisZ, linkTrf.BasisX);
+            //}
+            //else
+            //   relativePlacement = ExporterUtil.CreateAxis2Placement3D(file);
 
-            IFCAnyHandle buildingPlacement = IFCInstanceExporter.CreateLocalPlacement(file, null, relativePlacement);
+            //IFCAnyHandle buildingPlacement = IFCInstanceExporter.CreateLocalPlacement(file, null, relativePlacement);
+            IFCAnyHandle buildingPlacement = CreateBuildingPlacement(file);
 
             CreateProject(exporterIFC, document, applicationHandle);
 
             IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
             ProjectInfo projectInfo = document.ProjectInformation;
 
-            string buildingName = String.Empty;
-            string buildingDescription = null;
-            string buildingLongName = null;
-
-            COBieProjectInfo cobieProjectInfo = ExporterCacheManager.ExportOptionsCache.COBieProjectInfo;
-            if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieProjectInfo != null)
-            {
-               buildingName = cobieProjectInfo.BuildingName_Number;
-               buildingDescription = cobieProjectInfo.BuildingDescription;
-            }
-            else if (projectInfo != null)
-            {
-               try
-               {
-                  buildingName = projectInfo.BuildingName;
-               }
-               catch (Autodesk.Revit.Exceptions.InvalidOperationException)
-               {
-               }
-               buildingDescription = NamingUtil.GetOverrideStringValue(projectInfo, "BuildingDescription", null);
-               buildingLongName = NamingUtil.GetOverrideStringValue(projectInfo, "BuildingLongName", buildingName);
-            }
-
-            IFCAnyHandle buildingAddress = CreateIFCAddress(file, document, projectInfo);
-
-            string buildingGUID = GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building);
-            IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(file,
-                buildingGUID, ownerHistory, buildingName, buildingDescription, null, buildingPlacement, null, buildingLongName,
-                Toolkit.IFCElementComposition.Element, null, null, buildingAddress);
-            ExporterCacheManager.BuildingHandle = buildingHandle;
-
-            if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieProjectInfo != null)
-            {
-               string classificationName;
-               string classificationItemCode;
-               string classificationItemName;
-               string classificationParamValue = cobieProjectInfo.BuildingType;
-               int numRefItem = ClassificationUtil.parseClassificationCode(classificationParamValue, "dummy", out classificationName, out classificationItemCode, out classificationItemName);
-               if (numRefItem > 0 && !string.IsNullOrEmpty(classificationItemCode))
-               {
-                  IFCAnyHandle classifRef = IFCInstanceExporter.CreateClassificationReference(file, null, classificationItemCode, classificationItemName, null);
-                  IFCAnyHandle relClassif = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
-                                             ownerHistory, "BuildingType", null, new HashSet<IFCAnyHandle>() { buildingHandle }, classifRef);
-               }
-            }
-
-            // create levels
+            // Check if there is any level assigned as a building storey, if no at all, model will be exported without Building and BuildingStorey, all containment will be to Site
             List<Level> levels = LevelUtil.FindAllLevels(document);
-
-            bool exportAllLevels = true;
-            for (int ii = 0; ii < levels.Count && exportAllLevels; ii++)
+            bool exportBuilding = false;
+            foreach (Level level in levels)
             {
-               Level level = levels[ii];
-               Parameter isBuildingStorey = level.get_Parameter(BuiltInParameter.LEVEL_IS_BUILDING_STORY);
-               if (isBuildingStorey == null || (isBuildingStorey.AsInteger() != 0))
-               {
-                  exportAllLevels = false;
-                  break;
-               }
+               exportBuilding |= LevelUtil.IsBuildingStory(level);
             }
 
-            IList<Element> unassignedBaseLevels = new List<Element>();
-
-            ExporterCacheManager.ExportOptionsCache.ExportAllLevels = exportAllLevels;
-            double lengthScale = UnitUtil.ScaleLengthForRevitAPI();
-
-            IFCAnyHandle prevBuildingStorey = null;
-            IFCAnyHandle prevPlacement = null;
-            double prevHeight = 0.0;
-            double prevElev = 0.0;
-
-            for (int ii = 0; ii < levels.Count; ii++)
+            // Skip Building if there is no Storey to be exported
+            if (exportBuilding)
             {
-               Level level = levels[ii];
-               if (level == null)
-                  continue;
+               //string buildingName = String.Empty;
+               //string buildingDescription = null;
+               //string buildingLongName = null;
 
-               IFCLevelInfo levelInfo = null;
+               //COBieProjectInfo cobieProjectInfo = ExporterCacheManager.ExportOptionsCache.COBieProjectInfo;
+               //if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieProjectInfo != null)
+               //{
+               //   buildingName = cobieProjectInfo.BuildingName_Number;
+               //   buildingDescription = cobieProjectInfo.BuildingDescription;
+               //}
+               //else if (projectInfo != null)
+               //{
+               //   try
+               //   {
+               //      buildingName = projectInfo.BuildingName;
+               //   }
+               //   catch (Autodesk.Revit.Exceptions.InvalidOperationException)
+               //   {
+               //   }
+               //   buildingDescription = NamingUtil.GetOverrideStringValue(projectInfo, "BuildingDescription", null);
+               //   buildingLongName = NamingUtil.GetOverrideStringValue(projectInfo, "BuildingLongName", buildingName);
+               //}
 
-               if (!LevelUtil.IsBuildingStory(level))
+               //IFCAnyHandle buildingAddress = CreateIFCAddress(file, document, projectInfo);
+
+               //string buildingGUID = GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building);
+               //IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(file,
+               //    buildingGUID, ownerHistory, buildingName, buildingDescription, null, buildingPlacement, null, buildingLongName,
+               //    Toolkit.IFCElementComposition.Element, null, null, buildingAddress);
+               //ExporterCacheManager.SiteOrBuildingHandle = buildingHandle;
+
+               //if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieProjectInfo != null)
+               //{
+               //   string classificationName;
+               //   string classificationItemCode;
+               //   string classificationItemName;
+               //   string classificationParamValue = cobieProjectInfo.BuildingType;
+               //   int numRefItem = ClassificationUtil.parseClassificationCode(classificationParamValue, "dummy", out classificationName, out classificationItemCode, out classificationItemName);
+               //   if (numRefItem > 0 && !string.IsNullOrEmpty(classificationItemCode))
+               //   {
+               //      IFCAnyHandle classifRef = IFCInstanceExporter.CreateClassificationReference(file, null, classificationItemCode, classificationItemName, null);
+               //      IFCAnyHandle relClassif = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
+               //                                 ownerHistory, "BuildingType", null, new HashSet<IFCAnyHandle>() { buildingHandle }, classifRef);
+               //   }
+               //}
+               CreateBuildingFromProjectInfo(exporterIFC, document, buildingPlacement);
+
+               // create levels
+
+               //bool exportAllLevels = true;
+               //for (int ii = 0; ii < levels.Count && exportAllLevels; ii++)
+               //{
+               //   Level level = levels[ii];
+               //   Parameter isBuildingStorey = level.get_Parameter(BuiltInParameter.LEVEL_IS_BUILDING_STORY);
+               //   if (isBuildingStorey == null || (isBuildingStorey.AsInteger() != 0))
+               //   {
+               //      exportAllLevels = false;
+               //      break;
+               //   }
+               //}
+
+
+               IList<Element> unassignedBaseLevels = new List<Element>();
+
+               //ExporterCacheManager.ExportOptionsCache.ExportAllLevels = exportAllLevels;
+               double lengthScale = UnitUtil.ScaleLengthForRevitAPI();
+
+               IFCAnyHandle prevBuildingStorey = null;
+               IFCAnyHandle prevPlacement = null;
+               double prevHeight = 0.0;
+               double prevElev = 0.0;
+
+               for (int ii = 0; ii < levels.Count; ii++)
                {
-                  if (prevBuildingStorey == null)
-                     unassignedBaseLevels.Add(level);
-                  else
-                  {
-                     levelInfo = IFCLevelInfo.Create(prevBuildingStorey, prevPlacement, prevHeight, prevElev, lengthScale, true);
-                     ExporterCacheManager.LevelInfoCache.AddLevelInfo(exporterIFC, level.Id, levelInfo, false);
-                  }
-                  continue;
-               }
-
-               // When exporting to IFC 2x3, we have a limited capability to export some Revit view-specific
-               // elements, specifically Filled Regions and Text.  However, we do not have the
-               // capability to choose which views to export.  As such, we will choose (up to) one DBView per
-               // exported level.
-               // TODO: Let user choose which view(s) to export.  Ensure that the user know that only one view
-               // per level is supported.
-               View view = LevelUtil.FindViewByLevel(document, ViewType.FloorPlan, level);
-               if (view != null)
-               {
-                  ExporterCacheManager.DBViewsToExport[view.Id] = level.Id;
-               }
-
-               double elev = level.ProjectElevation;
-               double height = 0.0;
-               List<ElementId> coincidentLevels = new List<ElementId>();
-               for (int jj = ii + 1; jj < levels.Count; jj++)
-               {
-                  Level nextLevel = levels[jj];
-                  if (!LevelUtil.IsBuildingStory(nextLevel))
+                  Level level = levels[ii];
+                  if (level == null)
                      continue;
 
-                  double nextElev = nextLevel.ProjectElevation;
-                  if (!MathUtil.IsAlmostEqual(nextElev, elev))
+                  IFCLevelInfo levelInfo = null;
+
+                  if (!LevelUtil.IsBuildingStory(level))
                   {
-                     height = nextElev - elev;
-                     break;
+                     if (prevBuildingStorey == null)
+                        unassignedBaseLevels.Add(level);
+                     else
+                     {
+                        levelInfo = IFCLevelInfo.Create(prevBuildingStorey, prevPlacement, prevHeight, prevElev, lengthScale, true);
+                        ExporterCacheManager.LevelInfoCache.AddLevelInfo(exporterIFC, level.Id, levelInfo, false);
+                     }
+                     continue;
                   }
-                  else if (ExporterCacheManager.ExportOptionsCache.WallAndColumnSplitting)
-                     coincidentLevels.Add(nextLevel.Id);
-               }
 
-               double elevation = UnitUtil.ScaleLength(elev);
-               XYZ orig = new XYZ(0.0, 0.0, elevation);
-
-               IFCAnyHandle placement = ExporterUtil.CreateLocalPlacement(file, buildingPlacement, orig, null, null);
-               string levelName = NamingUtil.GetNameOverride(level, level.Name);
-               string objectType = NamingUtil.GetObjectTypeOverride(level, null);
-               string description = NamingUtil.GetDescriptionOverride(level, null);
-               string longName = NamingUtil.GetLongNameOverride(level, level.Name);
-               string levelGUID = GUIDUtil.GetLevelGUID(level);
-               IFCElementComposition ifcComposition = LevelUtil.GetElementCompositionTypeOverride(level);
-               IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(file,
-                   levelGUID, ExporterCacheManager.OwnerHistoryHandle,
-                   levelName, description, objectType, placement,
-                   null, longName, ifcComposition, elevation);
-
-               // Create classification reference when level has classification field name assigned to it
-               ClassificationUtil.CreateClassification(exporterIFC, file, level, buildingStorey);
-
-               if (prevBuildingStorey == null)
-               {
-                  foreach (Level baseLevel in unassignedBaseLevels)
+                  // When exporting to IFC 2x3, we have a limited capability to export some Revit view-specific
+                  // elements, specifically Filled Regions and Text.  However, we do not have the
+                  // capability to choose which views to export.  As such, we will choose (up to) one DBView per
+                  // exported level.
+                  // TODO: Let user choose which view(s) to export.  Ensure that the user know that only one view
+                  // per level is supported.
+                  View view = LevelUtil.FindViewByLevel(document, ViewType.FloorPlan, level);
+                  if (view != null)
                   {
-                     levelInfo = IFCLevelInfo.Create(buildingStorey, placement, height, elev, lengthScale, true);
-                     ExporterCacheManager.LevelInfoCache.AddLevelInfo(exporterIFC, baseLevel.Id, levelInfo, false);
+                     ExporterCacheManager.DBViewsToExport[view.Id] = level.Id;
                   }
-               }
-               prevBuildingStorey = buildingStorey;
-               prevPlacement = placement;
-               prevHeight = height;
-               prevElev = elev;
 
-               levelInfo = IFCLevelInfo.Create(buildingStorey, placement, height, elev, lengthScale, true);
-               ExporterCacheManager.LevelInfoCache.AddLevelInfo(exporterIFC, level.Id, levelInfo, true);
+                  double elev = level.ProjectElevation;
+                  double height = 0.0;
+                  List<ElementId> coincidentLevels = new List<ElementId>();
+                  for (int jj = ii + 1; jj < levels.Count; jj++)
+                  {
+                     Level nextLevel = levels[jj];
+                     if (!LevelUtil.IsBuildingStory(nextLevel))
+                        continue;
 
-               // if we have coincident levels, add buildingstoreys for them but use the old handle.
-               for (int jj = 0; jj < coincidentLevels.Count; jj++)
-               {
-                  level = levels[ii + jj + 1];
+                     double nextElev = nextLevel.ProjectElevation;
+                     if (!MathUtil.IsAlmostEqual(nextElev, elev))
+                     {
+                        height = nextElev - elev;
+                        break;
+                     }
+                     else if (ExporterCacheManager.ExportOptionsCache.WallAndColumnSplitting)
+                        coincidentLevels.Add(nextLevel.Id);
+                  }
+
+                  double elevation = UnitUtil.ScaleLength(elev);
+                  XYZ orig = new XYZ(0.0, 0.0, elevation);
+
+                  IFCAnyHandle placement = ExporterUtil.CreateLocalPlacement(file, buildingPlacement, orig, null, null);
+                  string levelName = NamingUtil.GetNameOverride(level, level.Name);
+                  string objectType = NamingUtil.GetObjectTypeOverride(level, null);
+                  string description = NamingUtil.GetDescriptionOverride(level, null);
+                  string longName = NamingUtil.GetLongNameOverride(level, level.Name);
+                  string levelGUID = GUIDUtil.GetLevelGUID(level);
+                  IFCElementComposition ifcComposition = LevelUtil.GetElementCompositionTypeOverride(level);
+                  IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(file,
+                      levelGUID, ExporterCacheManager.OwnerHistoryHandle,
+                      levelName, description, objectType, placement,
+                      null, longName, ifcComposition, elevation);
+
+                  // Create classification reference when level has classification field name assigned to it
+                  ClassificationUtil.CreateClassification(exporterIFC, file, level, buildingStorey);
+
+                  if (prevBuildingStorey == null)
+                  {
+                     foreach (Level baseLevel in unassignedBaseLevels)
+                     {
+                        levelInfo = IFCLevelInfo.Create(buildingStorey, placement, height, elev, lengthScale, true);
+                        ExporterCacheManager.LevelInfoCache.AddLevelInfo(exporterIFC, baseLevel.Id, levelInfo, false);
+                     }
+                  }
+                  prevBuildingStorey = buildingStorey;
+                  prevPlacement = placement;
+                  prevHeight = height;
+                  prevElev = elev;
+
                   levelInfo = IFCLevelInfo.Create(buildingStorey, placement, height, elev, lengthScale, true);
                   ExporterCacheManager.LevelInfoCache.AddLevelInfo(exporterIFC, level.Id, levelInfo, true);
+
+                  // if we have coincident levels, add buildingstoreys for them but use the old handle.
+                  for (int jj = 0; jj < coincidentLevels.Count; jj++)
+                  {
+                     level = levels[ii + jj + 1];
+                     levelInfo = IFCLevelInfo.Create(buildingStorey, placement, height, elev, lengthScale, true);
+                     ExporterCacheManager.LevelInfoCache.AddLevelInfo(exporterIFC, level.Id, levelInfo, true);
+                  }
+
+                  ii += coincidentLevels.Count;
+
+                  // We will export element properties, quantities and classifications when we decide to keep the level - we may delete it later.
                }
-
-               ii += coincidentLevels.Count;
-
-               // We will export element properties, quantities and classifications when we decide to keep the level - we may delete it later.
             }
             transaction.Commit();
          }
@@ -1247,7 +1261,20 @@ namespace Revit.IFC.Export.Exporter
             }
 
             ProjectInfo projectInfo = document.ProjectInformation;
-            IFCAnyHandle buildingHnd = ExporterCacheManager.BuildingHandle;
+            IFCAnyHandle siteOrbuildingHnd = null;
+            // if at this point the buildingHnd is null, which means that the model does not have Site nor any Level assigned to the BuildingStorey, 
+            //    create the IfcBuilding as the general container for all the elements (should be backward compatible)
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ExporterCacheManager.BuildingHandle) && IFCAnyHandleUtil.IsNullOrHasNoValue(ExporterCacheManager.SiteHandle))
+            {
+               IFCAnyHandle buildingPlacement = CreateBuildingPlacement(file);
+               IFCAnyHandle buildingHnd = CreateBuildingFromProjectInfo(exporterIFC, document, buildingPlacement);
+               ExporterCacheManager.BuildingHandle = buildingHnd;
+               siteOrbuildingHnd = buildingHnd;
+            }
+            else if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ExporterCacheManager.SiteHandle))
+               siteOrbuildingHnd = ExporterCacheManager.SiteHandle;
+            else if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ExporterCacheManager.BuildingHandle))
+               siteOrbuildingHnd = ExporterCacheManager.BuildingHandle;
 
             // relate assembly elements to assemblies
             foreach (KeyValuePair<ElementId, AssemblyInstanceInfo> assemblyInfoEntry in ExporterCacheManager.AssemblyInstanceCache)
@@ -1314,20 +1341,50 @@ namespace Revit.IFC.Export.Exporter
             if (buildingElements.Count > 0)
             {
                HashSet<IFCAnyHandle> relatedElementSet = new HashSet<IFCAnyHandle>(buildingElements);
+               if (siteOrbuildingHnd.IsTypeOf("IfcSite"))
+               {
+                  IFCAnyHandle siteObjectPlacement = IFCAnyHandleUtil.GetObjectPlacement(ExporterCacheManager.SiteHandle);
+                  Transform siteTrf = ExporterUtil.GetTotalTransformFromLocalPlacement(siteObjectPlacement);
+                  Transform siteInvTrf = siteTrf.Inverse;
+                  // If the object is supposed to be placed directly on Site, change the object placement to be relative to the Site
+                  foreach (IFCAnyHandle elemHnd in relatedElementSet)
+                  {
+                     IFCAnyHandle elemObjectPlacementHnd = IFCAnyHandleUtil.GetObjectPlacement(elemHnd);
+                     if (!elemObjectPlacementHnd.IsTypeOf("IfcLocalPlacement"))
+                        break;
+                     Transform ecs = ExporterUtil.GetTransformFromLocalPlacementHnd(elemObjectPlacementHnd);
+
+                     Transform newTrf = null;
+                     IFCAnyHandle refPlacement = IFCAnyHandleUtil.GetInstanceAttribute(elemObjectPlacementHnd, "PlacementRelTo");
+                     if (IFCAnyHandleUtil.IsNullOrHasNoValue(refPlacement))
+                        newTrf = ecs;
+                     else
+                     {
+                        Transform originalTotalTrf = ExporterUtil.GetTotalTransformFromLocalPlacement(elemObjectPlacementHnd);
+                        newTrf = siteInvTrf.Multiply(originalTotalTrf);
+                     }
+
+                     IFCAnyHandle newPlacement = ExporterUtil.CreateLocalPlacement(file, siteObjectPlacement, newTrf.Origin, newTrf.BasisZ, newTrf.BasisX);
+                     IFCAnyHandleUtil.SetAttribute(elemHnd, "ObjectPlacement", newPlacement);
+                     if (refPlacement != null)
+                        refPlacement.Delete();
+                     elemObjectPlacementHnd.Delete();
+                  }
+               }
                string guid = GUIDUtil.CreateSubElementGUID(projectInfo, (int)IFCBuildingSubElements.RelContainedInSpatialStructure);
                IFCInstanceExporter.CreateRelContainedInSpatialStructure(file, guid,
-                   ownerHistory, null, null, relatedElementSet, buildingHnd);
+                   ownerHistory, null, null, relatedElementSet, siteOrbuildingHnd);
             }
 
             // create an association between the IfcBuilding and spacial elements with no other containment.
             // The name "GetRelatedProducts()" is misleading; this only covers spaces.
-            HashSet<IFCAnyHandle> buildingSapces = RemoveContainedHandlesFromSet(ExporterCacheManager.LevelInfoCache.OrphanedSpaces);
-            buildingSapces.UnionWith(exporterIFC.GetRelatedProducts());
-            if (buildingSapces.Count > 0)
+            HashSet<IFCAnyHandle> buildingSpaces = RemoveContainedHandlesFromSet(ExporterCacheManager.LevelInfoCache.OrphanedSpaces);
+            buildingSpaces.UnionWith(exporterIFC.GetRelatedProducts());
+            if (buildingSpaces.Count > 0)
             {
                string guid = GUIDUtil.CreateSubElementGUID(projectInfo, (int)IFCBuildingSubElements.RelAggregatesProducts);
-               ExporterCacheManager.ContainmentCache.SetGUIDForRelation(buildingHnd, guid);
-               ExporterCacheManager.ContainmentCache.AddRelations(buildingHnd, buildingSapces);
+               ExporterCacheManager.ContainmentCache.SetGUIDForRelation(siteOrbuildingHnd, guid);
+               ExporterCacheManager.ContainmentCache.AddRelations(siteOrbuildingHnd, buildingSpaces);
             }
 
             // create a default site if we have latitude and longitude information.
@@ -1344,15 +1401,19 @@ namespace Revit.IFC.Export.Exporter
             {
                ExporterCacheManager.ContainmentCache.AddRelation(ExporterCacheManager.ProjectHandle, siteHandle);
 
-               // assoc. site to the building.
-               ExporterCacheManager.ContainmentCache.AddRelation(siteHandle, buildingHnd);
+               if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ExporterCacheManager.BuildingHandle))
+               {
+                  // assoc. site to the building.
+                  ExporterCacheManager.ContainmentCache.AddRelation(siteHandle, ExporterCacheManager.BuildingHandle);
 
-               ExporterUtil.UpdateBuildingRelToPlacement(buildingHnd, siteHandle);
+                  ExporterUtil.UpdateBuildingRelToPlacement(ExporterCacheManager.BuildingHandle, siteHandle);
+               }
             }
             else
             {
                // relate building and project if no site
-               ExporterCacheManager.ContainmentCache.AddRelation(ExporterCacheManager.ProjectHandle, buildingHnd);
+               if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ExporterCacheManager.BuildingHandle))
+                  ExporterCacheManager.ContainmentCache.AddRelation(ExporterCacheManager.ProjectHandle, ExporterCacheManager.BuildingHandle);
             }
 
             // relate levels and products.
@@ -1371,7 +1432,8 @@ namespace Revit.IFC.Export.Exporter
             // These elements are created internally, but we allow custom property sets for them.  Create them here.
             using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, true))
             {
-               productWrapper.AddBuilding(projectInfo, buildingHnd);
+               if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ExporterCacheManager.BuildingHandle))
+                  productWrapper.AddBuilding(projectInfo, ExporterCacheManager.BuildingHandle);
                if (projectInfo != null)
                   ExporterUtil.ExportRelatedProperties(exporterIFC, projectInfo, productWrapper);
             }
@@ -1528,7 +1590,8 @@ namespace Revit.IFC.Export.Exporter
 
             // Create systems.
             HashSet<IFCAnyHandle> relatedBuildings = new HashSet<IFCAnyHandle>();
-            relatedBuildings.Add(buildingHnd);
+            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ExporterCacheManager.BuildingHandle))
+               relatedBuildings.Add(ExporterCacheManager.BuildingHandle);
 
             using (ProductWrapper productWrapper = ProductWrapper.Create(exporterIFC, true))
             {
@@ -3287,6 +3350,77 @@ namespace Revit.IFC.Export.Exporter
          m_ElementExporter = null;
          m_PropertySetsToExport = null;
          m_QuantitiesToExport = null;
+      }
+
+      private IFCAnyHandle CreateBuildingPlacement(IFCFile file)
+      {
+         // Set relative transform depending on whether it is a linked transform or not.
+         IFCAnyHandle relativePlacement = null;
+         if (ExporterCacheManager.ExportOptionsCache.ExportingLink)
+         {
+            Transform linkTrf = ExporterCacheManager.ExportOptionsCache.GetLinkInstanceTransform(0);
+            relativePlacement = ExporterUtil.CreateAxis2Placement3D(file, linkTrf.Origin, linkTrf.BasisZ, linkTrf.BasisX);
+         }
+         else
+            relativePlacement = ExporterUtil.CreateAxis2Placement3D(file);
+
+         IFCAnyHandle buildingPlacement = IFCInstanceExporter.CreateLocalPlacement(file, null, relativePlacement);
+         return buildingPlacement;
+      }
+
+      private IFCAnyHandle CreateBuildingFromProjectInfo(ExporterIFC exporterIFC, Document document, IFCAnyHandle buildingPlacement)
+      {
+         ProjectInfo projectInfo = document.ProjectInformation;
+         IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
+
+         string buildingName = String.Empty;
+         string buildingDescription = null;
+         string buildingLongName = null;
+
+         COBieProjectInfo cobieProjectInfo = ExporterCacheManager.ExportOptionsCache.COBieProjectInfo;
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieProjectInfo != null)
+         {
+            buildingName = cobieProjectInfo.BuildingName_Number;
+            buildingDescription = cobieProjectInfo.BuildingDescription;
+         }
+         else if (projectInfo != null)
+         {
+            try
+            {
+               buildingName = projectInfo.BuildingName;
+            }
+            catch (Autodesk.Revit.Exceptions.InvalidOperationException)
+            {
+            }
+            buildingDescription = NamingUtil.GetOverrideStringValue(projectInfo, "BuildingDescription", null);
+            buildingLongName = NamingUtil.GetOverrideStringValue(projectInfo, "BuildingLongName", buildingName);
+         }
+
+         IFCFile file = exporterIFC.GetFile();
+         IFCAnyHandle buildingAddress = CreateIFCAddress(file, document, projectInfo);
+
+         string buildingGUID = GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building);
+         IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(file,
+             buildingGUID, ownerHistory, buildingName, buildingDescription, null, buildingPlacement, null, buildingLongName,
+             Toolkit.IFCElementComposition.Element, null, null, buildingAddress);
+         ExporterCacheManager.BuildingHandle = buildingHandle;
+
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieProjectInfo != null)
+         {
+            string classificationName;
+            string classificationItemCode;
+            string classificationItemName;
+            string classificationParamValue = cobieProjectInfo.BuildingType;
+            int numRefItem = ClassificationUtil.parseClassificationCode(classificationParamValue, "dummy", out classificationName, out classificationItemCode, out classificationItemName);
+            if (numRefItem > 0 && !string.IsNullOrEmpty(classificationItemCode))
+            {
+               IFCAnyHandle classifRef = IFCInstanceExporter.CreateClassificationReference(file, null, classificationItemCode, classificationItemName, null);
+               IFCAnyHandle relClassif = IFCInstanceExporter.CreateRelAssociatesClassification(file, GUIDUtil.CreateGUID(),
+                                          ownerHistory, "BuildingType", null, new HashSet<IFCAnyHandle>() { buildingHandle }, classifRef);
+            }
+         }
+
+         return buildingHandle;
       }
    }
 }

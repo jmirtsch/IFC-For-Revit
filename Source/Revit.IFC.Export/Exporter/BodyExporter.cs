@@ -3465,7 +3465,7 @@ namespace Revit.IFC.Export.Exporter
                MeshTriangle triangle = faceTriangulation.get_Triangle(ii);
                for (int tri = 0; tri < 3; ++tri)
                {
-                  XYZ vert = triangle.get_Vertex(tri);
+                  XYZ vert = UnitUtil.ScaleLength(triangle.get_Vertex(tri));
                   if (lcsToUse != null)
                      vert = lcsToUse.Inverse.OfPoint(vert);
 
@@ -3487,7 +3487,7 @@ namespace Revit.IFC.Export.Exporter
             MeshTriangle triangle = geomMesh.get_Triangle(ii);
             for (int tri = 0; tri < 3; ++tri)
             {
-               XYZ vert = triangle.get_Vertex(tri);
+               XYZ vert = UnitUtil.ScaleLength(triangle.get_Vertex(tri));
                if (lcsToUse != null)
                   vert = lcsToUse.Inverse.OfPoint(vert);
 
