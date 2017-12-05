@@ -695,7 +695,24 @@ namespace Revit.IFC.Export.Exporter
          foreach (LinkElementId linkElementId in part.GetSourceElementIds())
          {
             if (linkElementId.HostElementId == ElementId.InvalidElementId)
+            {
+               if(linkElementId.LinkInstanceId == ElementId.InvalidElementId)
+                  continue;
+               Element linkedElement = part.Document.GetElement(linkElementId.LinkInstanceId);
+
+               RevitLinkInstance linkInstance = linkedElement as RevitLinkInstance;
+               if(linkInstance != null)
+               {
+                  Document document = linkInstance.GetLinkDocument();
+                  if(document != null)
+                  {
+                     ElementId id = linkElementId.LinkedElementId;
+                     hostElement = document.GetElement(id);
+                     return hostElement;
+                  }
+               }
                continue;
+            }
 
             Element parentElement = part.Document.GetElement(linkElementId.HostElementId);
             // If the direct parent is a part, find its parent.
