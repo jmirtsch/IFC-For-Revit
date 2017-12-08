@@ -72,98 +72,98 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
         /// </returns>
         public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
         {
-         if (extrusionCreationData == null || MathUtil.IsAlmostZero(extrusionCreationData.ScaledLength))
-         {
+            // Check the override first from "IfcSpan" parameter, if not overriden use the geometry data from extrusion
             double spanVal;
-            // If the extrusion data is missing, look for an alternative value that may override it in form of parameter with the same name "Span"
-            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "Span", out spanVal) != null)
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcSpan", out spanVal) != null)
             {
                m_Span = UnitUtil.ScaleLength(spanVal);
                return true;
             }
-            else
-               return false;
-         }
-         m_Span = extrusionCreationData.ScaledLength;
-         AnalyticalModel elemAnalyticalModel = element.GetAnalyticalModel();
-         if (elemAnalyticalModel != null)
-         {
-            IList<AnalyticalModelSupport> supports = elemAnalyticalModel.GetAnalyticalModelSupports();
-            if (supports != null && supports.Count > 0)
+
+            if (extrusionCreationData == null || MathUtil.IsAlmostZero(extrusionCreationData.ScaledLength))
             {
-               if (supports.Count == 2)
+               return false;
+            }
+            m_Span = extrusionCreationData.ScaledLength;
+            AnalyticalModel elemAnalyticalModel = element.GetAnalyticalModel();
+            if (elemAnalyticalModel != null)
+            {
+               IList<AnalyticalModelSupport> supports = elemAnalyticalModel.GetAnalyticalModelSupports();
+               if (supports != null && supports.Count > 0)
                {
-                  AnalyticalSupportType supportType1 = supports[0].GetSupportType();
-                  AnalyticalSupportType supportType2 = supports[1].GetSupportType();
-                  // If there are exactly 2 supports, calculate the distance between the supports for Span (if the type is PointSupport)
-                  if (supportType1 == AnalyticalSupportType.PointSupport && supportType2 == AnalyticalSupportType.PointSupport)
+                  if (supports.Count == 2)
                   {
-                     XYZ support1 = supports[0].GetPoint();
-                     XYZ support2 = supports[1].GetPoint();
-                     m_Span = UnitUtil.ScaleLength(support1.DistanceTo(support2));
+                     AnalyticalSupportType supportType1 = supports[0].GetSupportType();
+                     AnalyticalSupportType supportType2 = supports[1].GetSupportType();
+                     // If there are exactly 2 supports, calculate the distance between the supports for Span (if the type is PointSupport)
+                     if (supportType1 == AnalyticalSupportType.PointSupport && supportType2 == AnalyticalSupportType.PointSupport)
+                     {
+                        XYZ support1 = supports[0].GetPoint();
+                        XYZ support2 = supports[1].GetPoint();
+                        m_Span = UnitUtil.ScaleLength(support1.DistanceTo(support2));
+                     }
+                     // CurveSUpport or SurfaceSupport??
+                     else
+                     {
+                        if (supportType1 == AnalyticalSupportType.PointSupport)
+                        {
+                           XYZ supportP = supports[0].GetPoint();
+                           if (supportType2 == AnalyticalSupportType.CurveSupport)
+                           {
+                              Curve supportC = supports[1].GetCurve();
+                              m_Span = UnitUtil.ScaleLength(supportC.Distance(supportP));
+                           }
+                           else if (supportType2 == AnalyticalSupportType.SurfaceSupport)
+                           {
+                              Face supportF = supports[1].GetFace();
+                              m_Span = UnitUtil.ScaleLength(supportF.Project(supportP).Distance);
+                           }
+                        }
+                        else if (supportType1 == AnalyticalSupportType.CurveSupport)
+                        {
+                           Curve supportC = supports[0].GetCurve();
+                           if (supportType2 == AnalyticalSupportType.PointSupport)
+                           {
+                              XYZ supportP = supports[1].GetPoint();
+                              m_Span = UnitUtil.ScaleLength(supportC.Distance(supportP));
+                           }
+                           else if (supportType2 == AnalyticalSupportType.SurfaceSupport)
+                           {
+                              Face supportF = supports[1].GetFace();
+                              // TODO, how to calculate a distance from a Curve to a Face?
+                           }
+                        }
+                        else if (supportType1 == AnalyticalSupportType.SurfaceSupport)
+                        {
+                           Face supportF = supports[0].GetFace();
+                           if (supportType2 == AnalyticalSupportType.PointSupport)
+                           {
+                              XYZ supportP = supports[1].GetPoint();
+                              m_Span = UnitUtil.ScaleLength(supportF.Project(supportP).Distance);
+                           }
+                           else if (supportType2 == AnalyticalSupportType.CurveSupport)
+                           {
+                              Curve supportC = supports[1].GetCurve();
+                              // TODO, how to calculate a distance from a Curve to a Face?
+                           }
+                        }
+                     }
                   }
-                  // CurveSUpport or SurfaceSupport??
+                  else if (supports.Count > 2)
+                  {
+                     // If there are more than 2 supports, which Span to take??
+                  }
                   else
                   {
-                     if (supportType1 == AnalyticalSupportType.PointSupport)
-                     {
-                        XYZ supportP = supports[0].GetPoint();
-                        if (supportType2 == AnalyticalSupportType.CurveSupport)
-                        {
-                           Curve supportC = supports[1].GetCurve();
-                           m_Span = UnitUtil.ScaleLength(supportC.Distance(supportP));
-                        }
-                        else if (supportType2 == AnalyticalSupportType.SurfaceSupport)
-                        {
-                           Face supportF = supports[1].GetFace();
-                           m_Span = UnitUtil.ScaleLength(supportF.Project(supportP).Distance);
-                        }
-                     }
-                     else if (supportType1 == AnalyticalSupportType.CurveSupport)
-                     {
-                        Curve supportC = supports[0].GetCurve();
-                        if (supportType2 == AnalyticalSupportType.PointSupport)
-                        {
-                           XYZ supportP = supports[1].GetPoint();
-                           m_Span = UnitUtil.ScaleLength(supportC.Distance(supportP));
-                        }
-                        else if (supportType2 == AnalyticalSupportType.SurfaceSupport)
-                        {
-                           Face supportF = supports[1].GetFace();
-                           // TODO, how to calculate a distance from a Curve to a Face?
-                        }
-                     }
-                     else if (supportType1 == AnalyticalSupportType.SurfaceSupport)
-                     {
-                        Face supportF = supports[0].GetFace();
-                        if (supportType2 == AnalyticalSupportType.PointSupport)
-                        {
-                           XYZ supportP = supports[1].GetPoint();
-                           m_Span = UnitUtil.ScaleLength(supportF.Project(supportP).Distance);
-                        }
-                        else if (supportType2 == AnalyticalSupportType.CurveSupport)
-                        {
-                           Curve supportC = supports[1].GetCurve();
-                           // TODO, how to calculate a distance from a Curve to a Face?
-                        }
-                     }
+                     // If only one or less support
+                     // Otherwise do nothing, leave it to the extrusion length
                   }
-               }
-               else if (supports.Count > 2)
-               {
-                  // If there are more than 2 supports, which Span to take??
                }
                else
                {
-                  // If only one or less support
-                  // Otherwise do nothing, leave it to the extrusion length
+                  // No support, do nothing. Leave the Span to be the length of the entire beam
                }
             }
-            else
-            {
-               // No support, do nothing. Leave the Span to be the length of the entire beam
-            }
-         }
             return true;
         }
 

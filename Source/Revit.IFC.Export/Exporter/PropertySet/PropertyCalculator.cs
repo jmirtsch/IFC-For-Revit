@@ -56,6 +56,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// If implemented in derived classes, may retrieve parameter data for a specific IFC handle.
         /// Designed to retrieve data for subelement parameter overrides.
         /// By default returns false.
+        /// </summary>
         /// <param name="element">
         /// The element to calculate the value.
         /// </param>

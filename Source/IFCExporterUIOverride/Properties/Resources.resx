@@ -693,4 +693,16 @@
   <data name="ExportIFC" xml:space="preserve">
     <value>Export IFC</value>
   </data>
+  <data name="ER_Architecture" xml:space="preserve">
+    <value>Architectural Reference Exchange</value>
+  </data>
+  <data name="ExchangeRequirement" xml:space="preserve">
+    <value>Exchange Requirement</value>
+  </data>
+  <data name="ER_BuildingService" xml:space="preserve">
+    <value>MEP Reference Exchange</value>
+  </data>
+  <data name="ER_Structural" xml:space="preserve">
+    <value>Structural Reference Exchange</value>
+  </data>
 </root>

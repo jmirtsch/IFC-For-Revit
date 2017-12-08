@@ -726,7 +726,8 @@ namespace Revit.IFC.Export.Utility
             {
                HashSet<IFCAnyHandle> repItems = null;
                string repType = IFCAnyHandleUtil.GetRepresentationType(repHnd);
-               if (repType.Equals("SweptSolid") || repType.Equals("AdvancedSweptSolid") || repType.Equals("Clipping"))
+               if (repType.Equals("SweptSolid") || repType.Equals("AdvancedSweptSolid") || repType.Equals("Clipping")
+                  || (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView && repType.Equals("Tessellation")))
                   repItems = IFCAnyHandleUtil.GetItems(repHnd);
                else if (repType.Equals("MappedRepresentation"))
                {
@@ -774,7 +775,8 @@ namespace Revit.IFC.Export.Utility
                       && (IFCAnyHandleUtil.IsTypeOf(repItem, Common.Enums.IFCEntityType.IfcSurfaceCurveSweptAreaSolid)
                         || IFCAnyHandleUtil.IsTypeOf(repItem, Common.Enums.IFCEntityType.IfcFixedReferenceSweptAreaSolid)
                         || IFCAnyHandleUtil.IsTypeOf(repItem, Common.Enums.IFCEntityType.IfcExtrudedAreaSolidTapered)
-                        || IFCAnyHandleUtil.IsTypeOf(repItem, Common.Enums.IFCEntityType.IfcRevolvedAreaSolid)))
+                        || IFCAnyHandleUtil.IsTypeOf(repItem, Common.Enums.IFCEntityType.IfcRevolvedAreaSolid))
+                        || (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView && IFCAnyHandleUtil.IsSubTypeOf(repItem, Common.Enums.IFCEntityType.IfcTessellatedFaceSet)))
                   {
                      validGeomCount++;
                      continue;

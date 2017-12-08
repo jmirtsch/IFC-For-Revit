@@ -273,7 +273,7 @@ namespace Revit.IFC.Export.Utility
       public static void CreateMaterialAssociation(ExporterIFC exporterIFC, FamilySymbol familySymbol, IFCAnyHandle typeStyle, MaterialAndProfile materialAndProfile)
       {
          ElementId typeId = familySymbol.Id;
-         IFCAnyHandle materialSet = GetOrCreateMaterialSet(exporterIFC, familySymbol, typeStyle, materialAndProfile);
+         IFCAnyHandle materialSet = GetOrCreateMaterialSet(exporterIFC, familySymbol, materialAndProfile);
          if (!IFCAnyHandleUtil.IsNullOrHasNoValue(materialSet))
             ExporterCacheManager.MaterialRelationsCache.Add(materialSet, typeStyle);
       }
@@ -441,14 +441,24 @@ namespace Revit.IFC.Export.Utility
          if (IFCAnyHandleUtil.IsNullOrHasNoValue(materialNameHandle))
          {
             string materialName = " <Unnamed>";
+            string description = null;
+            string category = null;
             if (materialId != ElementId.InvalidElementId)
             {
                Material material = document.GetElement(materialId) as Material;
                if (material != null)
                   materialName = NamingUtil.GetNameOverride(material, material.Name);
+
+               if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+               {
+                  category = NamingUtil.GetOverrideStringValue(material, "IfcCategory", material.Category.Name);
+                  if (string.IsNullOrEmpty(category))
+                     category = NamingUtil.GetOverrideStringValue(material, "Category", material.Category.Name);
+                  description = NamingUtil.GetOverrideStringValue(material, "IfcDescription", null);
+               }
             }
 
-            materialNameHandle = IFCInstanceExporter.CreateMaterial(exporterIFC.GetFile(), materialName);
+            materialNameHandle = IFCInstanceExporter.CreateMaterial(exporterIFC.GetFile(), materialName, description:description, category:category);
 
             ExporterCacheManager.MaterialHandleCache.Register(materialId, materialNameHandle);
 
@@ -472,7 +482,7 @@ namespace Revit.IFC.Export.Utility
 
                   IFCAnyHandle styledRepItem = null;
                   IFCAnyHandle matStyleHnd = CategoryUtil.GetOrCreateMaterialStyle(document, exporterIFC, materialId);
-                  if (!IFCAnyHandleUtil.IsNullOrHasNoValue(matStyleHnd))
+                  if (!IFCAnyHandleUtil.IsNullOrHasNoValue(matStyleHnd) && !ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
                   {
                      styles.Add(matStyleHnd);
 
@@ -499,6 +509,7 @@ namespace Revit.IFC.Export.Utility
                      string repId = "Style";
                      string repType = (hasFill) ? "Material and Cut Pattern" : "Material";
                      HashSet<IFCAnyHandle> repItems = new HashSet<IFCAnyHandle>();
+
                      repItems.Add(styledItemHnd);
 
                      IFCAnyHandle styleRepHnd = IFCInstanceExporter.CreateStyledRepresentation(file, contextOfItems, repId, repType, repItems);
@@ -514,7 +525,7 @@ namespace Revit.IFC.Export.Utility
          return materialNameHandle;
       }
 
-      public static IFCAnyHandle GetOrCreateMaterialSet(ExporterIFC exporterIFC, FamilySymbol familySymbol, IFCAnyHandle typeStyle, MaterialAndProfile materialAndProfile)
+      public static IFCAnyHandle GetOrCreateMaterialSet(ExporterIFC exporterIFC, FamilySymbol familySymbol, MaterialAndProfile materialAndProfile)
       {
          IFCFile file = exporterIFC.GetFile();
          ElementId typeId = familySymbol.Id;
@@ -526,7 +537,7 @@ namespace Revit.IFC.Export.Utility
             {
                IFCAnyHandle materialHnd = CategoryUtil.GetOrCreateMaterialHandle(exporterIFC, MnP.Key);
                if (materialHnd != null && ExporterCacheManager.ExportOptionsCache.ExportAs4)
-                  matProf.Add(IFCInstanceExporter.CreateMaterialProfile(file, MnP.Value, Material: materialHnd));
+                  matProf.Add(IFCInstanceExporter.CreateMaterialProfile(file, MnP.Value, Material: materialHnd, name: familySymbol.Name));
             }
 
             if (matProf.Count > 0)

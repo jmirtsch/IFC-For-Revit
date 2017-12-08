@@ -46,7 +46,7 @@ namespace Revit.IFC.Export.Toolkit
         RelAggregates = 2
     }
 
-    enum IFCCommonPSets
+    public enum IFCCommonPSets
     {
         PSetAirTerminalTypeCommon = 3048,
         PSetBeamCommon = 3049,
