@@ -1,1 +1,3 @@
+This is a fork of the .NET code used by the Revit 2015-2018 family of products to support IFC, and the Revit 2012-2014 families of products to support IFC export. The open source version can override the version that comes standard with shipped Revit. Revit 2013-2018 contain both IFC export and IFC export UI overrides, which contain options not available in the regular UI, such as ifcXML and ifcZIP support. The Revit 2014-2018 versions also work for Revit LT 2014-2018, respectively.
+
 As an alternative approach of the sourc forge repository (https://sourceforge.net/p/ifcexporter/code/HEAD/tree/ ), branches are used to build for different versions of Revit rather than multiple folders of similar code.
