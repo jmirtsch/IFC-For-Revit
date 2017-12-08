@@ -1137,7 +1137,7 @@ namespace Revit.IFC.Export.Utility
                            locallyUsedGUIDs.Add(guid);
 
                         string paramSetName = currDesc.Name;
-                        propertySet = IFCInstanceExporter.CreatePropertySet(file, guid, ownerHistory, paramSetName, null, props);
+                        propertySet = IFCInstanceExporter.CreatePropertySet(file, guid, ownerHistory, paramSetName, currDesc.DescriptionOfSet, props);
                         if (ifcParams == null)
                            createdPropertySets[propertySetKey] = propertySet;
                      }
@@ -1175,6 +1175,64 @@ namespace Revit.IFC.Export.Utility
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
             ExportPsetDraughtingFor2x2(exporterIFC, element, productWrapper);
+      }
+      internal static HashSet<IFCAnyHandle> ExtractElementTypeProperties(ExporterIFC exporterIFC, ElementType elementType, IFCAnyHandle typeHnd)
+      {
+         if (elementType == null)
+            return null;
+
+         IFCFile file = exporterIFC.GetFile();
+         HashSet<IFCAnyHandle> propertySets = new HashSet<IFCAnyHandle>();
+         using (IFCTransaction transaction = new IFCTransaction(file))
+         {
+            Document doc = elementType.Document;
+
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
+
+            IList<IList<PropertySetDescription>> psetsToCreate = ExporterCacheManager.ParameterCache.PropertySets;
+
+            ISet<string> locallyUsedGUIDs = new HashSet<string>();
+            IDictionary<Tuple<ElementType,  string>, IFCAnyHandle> createdPropertySets =
+                new Dictionary<Tuple<ElementType, string>, IFCAnyHandle>();
+            IList<PropertySetDescription> currPsetsToCreate = GetCurrPSetsToCreate(typeHnd, psetsToCreate);
+            if (currPsetsToCreate.Count == 0)
+               return null;
+
+            foreach (PropertySetDescription currDesc in currPsetsToCreate)
+            {
+               // Last conditional check: if the property set comes from a ViewSchedule, check if the element is in the schedule.
+               if (currDesc.ViewScheduleId != ElementId.InvalidElementId)
+                  if (!ExporterCacheManager.ViewScheduleElementCache[currDesc.ViewScheduleId].Contains(elementType.Id))
+                     continue;
+
+               Tuple<ElementType, string> propertySetKey = new Tuple<ElementType, string>(elementType, currDesc.Name);
+               IFCAnyHandle propertySet = null;
+               if (!createdPropertySets.TryGetValue(propertySetKey, out propertySet))
+               {
+                   ISet<IFCAnyHandle> props = currDesc.ProcessEntries(file, exporterIFC, null, elementType, null, typeHnd);
+                   if (props.Count > 0)
+                   {
+                       int subElementIndex = CheckElementTypeValidityForSubIndex(currDesc, typeHnd, elementType);
+
+                        string guid = GUIDUtil.CreateSubElementGUID(elementType, subElementIndex);
+                        if (locallyUsedGUIDs.Contains(guid))
+                           guid = GUIDUtil.CreateGUID();
+                        else
+                           locallyUsedGUIDs.Add(guid);
+
+                        string paramSetName = currDesc.Name;
+                        propertySet = IFCInstanceExporter.CreatePropertySet(file, guid, ownerHistory, paramSetName, currDesc.DescriptionOfSet, props);
+                        createdPropertySets[propertySetKey] = propertySet;
+                   }
+                  if (propertySet != null)
+                  {
+                     propertySets.Add(propertySet);
+                  }
+               }
+            }
+            transaction.Commit();
+         }
+         return propertySets;
       }
 
       /// <summary>
@@ -1407,14 +1465,17 @@ namespace Revit.IFC.Export.Utility
          exportEntity = symbolClassName;
          predefinedTypeStr = string.Empty;
 
-         // We are expanding IfcExportAs format to support also format: <IfcTypeEntity>.<predefinedType>. Therefore we need to parse here. This format will override value in
-         // IFCExportType if any
-         string[] splitResult = symbolClassName.Split(new Char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
-         if (splitResult.Length > 1)
+         if (!string.IsNullOrEmpty(symbolClassName))
          {
-            // found <IfcTypeEntity>.<PredefinedType>
-            exportEntity = splitResult[0].Trim();
-            predefinedTypeStr = splitResult[1].Trim();
+            // We are expanding IfcExportAs format to support also format: <IfcTypeEntity>.<predefinedType>. Therefore we need to parse here. This format will override value in
+            // IFCExportType if any
+            string[] splitResult = symbolClassName.Split(new Char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+            if (splitResult.Length > 1)
+            {
+               // found <IfcTypeEntity>.<PredefinedType>
+               exportEntity = splitResult[0].Trim();
+               predefinedTypeStr = splitResult[1].Trim();
+            }
          }
       }
 
@@ -1511,7 +1572,7 @@ namespace Revit.IFC.Export.Utility
       {
          Document doc = element.Document;
          ElementId typeElemId = element.GetTypeId();
-         Element elementType = doc.GetElement(typeElemId);
+         ElementType elementType = doc.GetElement(typeElemId) as ElementType;
          IFCAnyHandle entType = null;
 
          if (elementType != null)
@@ -1523,14 +1584,7 @@ namespace Revit.IFC.Export.Utility
                entType = ExporterCacheManager.ElementTypeToHandleCache.Find(typeElemId);
                if (IFCAnyHandleUtil.IsNullOrHasNoValue(entType))
                {
-                  string elemName = NamingUtil.GetNameOverride(elementType, elementType.Name);
-                  string elemDesc = NamingUtil.GetDescriptionOverride(elementType, null);
-                  string elemTag = NamingUtil.GetTagOverride(elementType, NamingUtil.CreateIFCElementId(elementType));
-                  string elemApplicableOccurence = NamingUtil.GetOverrideStringValue(elementType, "IfcApplicableOccurence", null);
-                  string elemElementType = NamingUtil.GetOverrideStringValue(elementType, "IfcElementType", null);
-
-                  entType = IFCInstanceExporter.CreateGenericIFCType(typeToCreate, file, typeGUID, ownerHistory, elemName, elemDesc, elemApplicableOccurence, null, null,
-                     null, null, predefinedType);
+                  entType = IFCInstanceExporter.CreateGenericIFCType(typeToCreate, elementType, file, null, null, predefinedType);
                   productWrapper.RegisterHandleWithElementType(elementType as ElementType, entType, null);
                }
             }

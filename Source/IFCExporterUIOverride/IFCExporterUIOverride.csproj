@@ -38,10 +38,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <Prefer32Bit>false</Prefer32Bit>
+    <OutputPath>bin\Debug\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <Prefer32Bit>false</Prefer32Bit>
-    <OutputPath>bin\x64\Release\</OutputPath>
+    <OutputPath>bin\Release\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Slow_Debug|x64'">
     <Prefer32Bit>false</Prefer32Bit>
@@ -103,6 +104,7 @@
     </Compile>
     <Compile Include="IFCExportResult.cs" />
     <Compile Include="IFCFileFormatAttributes.cs" />
+    <Compile Include="IFCSitePlacementAttributes.cs" />
     <Compile Include="IFCSpaceBoundaryAttributes.cs" />
     <Compile Include="IFCUIUtility.cs" />
     <Compile Include="IFCVersionAttributes.cs" />
@@ -211,6 +213,12 @@
       <Name>Revit.IFC.Common</Name>
       <Private>False</Private>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\load.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\save.ico" />
   </ItemGroup>
   <Import Project=".\IFCExporterUIOverride.props" />
   <PropertyGroup>

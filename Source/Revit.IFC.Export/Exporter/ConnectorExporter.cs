@@ -71,6 +71,9 @@ namespace Revit.IFC.Export.Exporter
                 connectorType == ConnectorType.Physical)
             {
 
+                Connector originalConnectorToUse = (originalConnector != null) ? originalConnector : connector;
+                FlowDirectionType flowDirection = supportsDirection ? connector.Direction : FlowDirectionType.Bidirectional;
+                bool isBiDirectional = (flowDirection == FlowDirectionType.Bidirectional);
                 if (connector.IsConnected)
                 {
                     ConnectorSet connectorSet = connector.AllRefs;
@@ -89,19 +92,65 @@ namespace Revit.IFC.Export.Exporter
                                     connectedType == ConnectorType.Curve ||
                                     connectedType == ConnectorType.Physical)
                                 {
-                                    Connector originalConnectorToUse = (originalConnector != null) ? originalConnector : connector;
-                                    FlowDirectionType flowDirection = supportsDirection ? connector.Direction : FlowDirectionType.Bidirectional;
                                     if (flowDirection == FlowDirectionType.Out)
                                     {
                                         AddConnection(exporterIFC, connected, originalConnectorToUse, false, isElectricalDomain);
                                     }
                                     else
                                     {
-                                        bool isBiDirectional = (flowDirection == FlowDirectionType.Bidirectional);
                                         AddConnection(exporterIFC, originalConnectorToUse, connected, isBiDirectional, isElectricalDomain);
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+                else
+                {
+                    string guid = GUIDUtil.CreateGUID();
+                    IFCFlowDirection flowDir = (isBiDirectional) ? IFCFlowDirection.SourceAndSink : (flowDirection == FlowDirectionType.Out ? IFCFlowDirection.Sink : IFCFlowDirection.Source);
+                    Element hostElement = connector.Owner;
+                    IFCAnyHandle hostElementIFCHandle = ExporterCacheManager.MEPCache.Find(hostElement.Id);
+                    IFCAnyHandle localPlacement = CreateLocalPlacementForConnector(exporterIFC, connector, hostElementIFCHandle, flowDir);
+                    IFCFile ifcFile = exporterIFC.GetFile();
+                    IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
+                    IFCAnyHandle port = IFCInstanceExporter.CreateDistributionPort(exporterIFC, null, guid, ownerHistory, localPlacement, null, flowDir);
+                    string portName = "Port_" + hostElement.Id;
+				IFCAnyHandleUtil.SetAttribute(port, "Name", portName);
+                    string portType = "Flow";   // Assigned as Port.Description
+				IFCAnyHandleUtil.SetAttribute(port, "Description", portType);
+                    
+                    // Attach the port to the element
+                    guid = GUIDUtil.CreateGUID();
+                    string connectionName = hostElement.Id + "|" + guid;
+                    IFCAnyHandle connectorHandle = IFCInstanceExporter.CreateRelConnectsPortToElement(ifcFile, guid, ownerHistory, connectionName, portType, port, hostElementIFCHandle);
+                    HashSet<MEPSystem> systemList = new HashSet<MEPSystem>();
+                    try
+                    {
+                        MEPSystem system = connector.MEPSystem;
+                        if (system != null)
+                            systemList.Add(system);
+                    }
+                    catch
+                    {
+                    }
+
+
+                    if (isElectricalDomain)
+                    {
+                        foreach (MEPSystem system in systemList)
+                        {
+                            ExporterCacheManager.SystemsCache.AddElectricalSystem(system.Id);
+                            ExporterCacheManager.SystemsCache.AddHandleToElectricalSystem(system.Id, hostElementIFCHandle);
+                            ExporterCacheManager.SystemsCache.AddHandleToElectricalSystem(system.Id, port);
+                        }
+                    }
+                    else
+                    {
+                        foreach (MEPSystem system in systemList)
+                        {
+                            ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, hostElementIFCHandle);
+                            ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, port);
                         }
                     }
                 }
@@ -163,6 +212,7 @@ namespace Revit.IFC.Export.Exporter
             }
             catch
             {
+
             }
             return null;
         }
@@ -231,7 +281,9 @@ namespace Revit.IFC.Export.Exporter
                 IFCAnyHandle localPlacement = CreateLocalPlacementForConnector(exporterIFC, connector, inElementIFCHandle, flowDir);
                 string portName = "InPort_" + inElement.Id;
                 string portType = "Flow";   // Assigned as Port.Description
-                portIn = IFCInstanceExporter.CreateDistributionPort(ifcFile, guid, ownerHistory, portName, portType, null, localPlacement, null, flowDir);
+                portIn = IFCInstanceExporter.CreateDistributionPort(exporterIFC, null, guid, ownerHistory, localPlacement, null, flowDir);
+				IFCAnyHandleUtil.SetAttribute(portIn, "Name", portName);
+				IFCAnyHandleUtil.SetAttribute(portIn, "Description", portType);
 
                 // Attach the port to the element
                 guid = GUIDUtil.CreateGUID();
@@ -247,10 +299,12 @@ namespace Revit.IFC.Export.Exporter
                 IFCAnyHandle localPlacement = CreateLocalPlacementForConnector(exporterIFC, connected, outElementIFCHandle, flowDir);
                 string portName = "OutPort_" + outElement.Id;
                 string portType = "Flow";   // Assigned as Port.Description
-                portOut = IFCInstanceExporter.CreateDistributionPort(ifcFile, guid, ownerHistory, portName, portType, null, localPlacement, null, flowDir);
+                portOut = IFCInstanceExporter.CreateDistributionPort(exporterIFC, null, guid, ownerHistory, localPlacement, null, flowDir);
+				IFCAnyHandleUtil.SetAttribute(portOut, "Name", portName);
+				IFCAnyHandleUtil.SetAttribute(portOut, "Description", portType);
 
-                // Attach the port to the element
-                guid = GUIDUtil.CreateGUID();
+				// Attach the port to the element
+				guid = GUIDUtil.CreateGUID();
                 string connectionName = outElement.Id + "|" + guid;
                 IFCAnyHandle connectorOut = IFCInstanceExporter.CreateRelConnectsPortToElement(ifcFile, guid, ownerHistory, connectionName, portType, portOut, outElementIFCHandle);
             }
@@ -279,15 +333,6 @@ namespace Revit.IFC.Export.Exporter
             {
             }
 
-            try
-            {
-                MEPSystem system = connected.MEPSystem;
-                if (system != null)
-                    systemList.Add(system);
-            }
-            catch
-            {
-            }
 
             if (isElectricalDomain)
             {

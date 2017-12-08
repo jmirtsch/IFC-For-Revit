@@ -40,11 +40,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <Prefer32Bit>false</Prefer32Bit>
-    <OutputPath>..\..\..\..\..\Debugx64\</OutputPath>
+    <OutputPath>bin\Debug\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <Prefer32Bit>false</Prefer32Bit>
-    <OutputPath>..\..\..\..\..\Releasex64\</OutputPath>
+    <OutputPath>bin\Release\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Slow_Debug|x64'">
     <Prefer32Bit>false</Prefer32Bit>
@@ -87,16 +87,17 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="GeometryGymIFC, Version=0.0.15.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Geometry Gym\source code\GeometryGym\BIM\IFC\GeometryGymIFC\GeometryGymIFC\bin\Debug\GeometryGymIFC.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Antlr4.Runtime, Version=4.6.0.0, Culture=neutral, PublicKeyToken=09abb75b9ed49849, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Antlr4.Runtime.4.6.4\lib\net45\Antlr4.Runtime.dll</HintPath>
       <Private>True</Private>
-    </Reference>
-    <Reference Include="RevitAPI, Version=17.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2017\RevitAPI.dll</HintPath>
-    </Reference>
-    <Reference Include="RevitAPIIFC">
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2017\RevitAPIIFC.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.XML" />
@@ -132,6 +133,9 @@
     <Compile Include="Exporter\PartExporter.cs" />
     <Compile Include="Exporter\PileExporter.cs" />
     <Compile Include="Exporter\PipeInsulationExporter.cs" />
+    <Compile Include="Exporter\PropertySet\AttributeEntryMap.cs" />
+    <Compile Include="Exporter\PropertySet\AttributeSetDescription.cs" />
+    <Compile Include="Exporter\PropertySet\AttributeEntry.cs" />
     <Compile Include="Exporter\PropertySetsInitialization.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamLoadBearingCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamMemberSpanCalculator.cs" />
@@ -179,6 +183,7 @@
     <Compile Include="Exporter\PropertySet\ClassificationUtil.cs" />
     <Compile Include="Exporter\PropertySet\ElectricalCurrentPropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\ElectricalVoltagePropertyUtil.cs" />
+    <Compile Include="Exporter\PropertySet\EntryMap.cs" />
     <Compile Include="Exporter\PropertySet\FrequencyPropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\PositivePlaneAnglePropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDefinition.cs" />
@@ -188,6 +193,7 @@
     <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC4_ADD2Enum.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDescription.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetEntry.cs" />
+    <Compile Include="Exporter\PropertySet\PropertySetEntryMap.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetEntryUtil.cs" />
     <Compile Include="Exporter\PropertySet\PropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\QuantityDescription.cs" />
@@ -202,6 +208,7 @@
     <Compile Include="Exporter\PropertySet\Calculators\SpaceLevelDescriptionCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpacePerimeterCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpaceVolumeCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\QuantityEntryMap.cs" />
     <Compile Include="Exporter\ProxyElementExporter.cs" />
     <Compile Include="Exporter\RailingExporter.cs" />
     <Compile Include="Exporter\RampExporter.cs" />
@@ -239,6 +246,7 @@
     <Compile Include="Toolkit\TransformSetter.cs" />
     <Compile Include="Utility\AllocatedGeometryObjectCache.cs" />
     <Compile Include="Utility\AssemblyInstanceCache.cs" />
+    <Compile Include="Utility\AttributeCache.cs" />
     <Compile Include="Utility\BooleanPropertyInfoCache.cs" />
     <Compile Include="Utility\CategoryUtil.cs" />
     <Compile Include="Utility\ClassificationLocationCache.cs" />
@@ -378,7 +386,9 @@
     -->
   <Import Project=".\Revit.IFC.Export.props" />
   <PropertyGroup>
-    <PostBuildEvent>Copy "$(TargetPath)" "C:\Program Files (x86)\Revit IFC 2017\"</PostBuildEvent>
+    <PostBuildEvent>Copy "$(TargetPath)" "C:\Program Files (x86)\Revit IFC 2017\"
+Copy "$(TargetDir)\GeometryGymIFC.dll" "C:\Program Files (x86)\Revit IFC 2017\"
+Copy "$(TargetDir)\Antlr4.Runtime.dll" "C:\Program Files (x86)\Revit IFC 2017\"</PostBuildEvent>
   </PropertyGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

@@ -224,10 +224,8 @@ namespace Revit.IFC.Export.Exporter
       public static IFCAnyHandle ExportGenericInstance(IFCExportType type,
          ExporterIFC exporterIFC, Element familyInstance,
          ProductWrapper wrapper, PlacementSetter setter, IFCExtrusionCreationData extraParams,
-         string instanceGUID, IFCAnyHandle ownerHistory,
-         string instanceName, string instanceDescription, string instanceObjectType,
-         IFCAnyHandle productRepresentation,
-         string instanceTag, string ifcEnumType, IFCAnyHandle overrideLocalPlacement)
+         string instanceGUID, IFCAnyHandle ownerHistory, IFCAnyHandle productRepresentation,
+         string ifcEnumType, IFCAnyHandle overrideLocalPlacement)
       {
          IFCFile file = exporterIFC.GetFile();
          Document doc = familyInstance.Document;
@@ -251,32 +249,31 @@ namespace Revit.IFC.Export.Exporter
             case IFCExportType.IfcBeamType:
                {
                   string preDefinedType = string.IsNullOrWhiteSpace(ifcEnumType) ? "BEAM" : ifcEnumType;
-                  instanceHandle = IFCInstanceExporter.CreateBeam(file, instanceGUID, ownerHistory,
-                     instanceName, instanceDescription, instanceObjectType, localPlacementToUse,
-                     productRepresentation, instanceTag, preDefinedType);
+                  instanceHandle = IFCInstanceExporter.CreateBeam(exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                      localPlacementToUse, productRepresentation, preDefinedType);
                   break;
                }
             case IFCExportType.IfcColumn:
             case IFCExportType.IfcColumnType:
                {
                   string preDefinedType = string.IsNullOrWhiteSpace(ifcEnumType) ? "COLUMN" : ifcEnumType;
-                  instanceHandle = IFCInstanceExporter.CreateColumn(file, instanceGUID, ownerHistory,
-                     instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag, preDefinedType);
+                  instanceHandle = IFCInstanceExporter.CreateColumn(exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                     localPlacementToUse, productRepresentation, preDefinedType);
                   break;
                }
             case IFCExportType.IfcCurtainWall:
             case IFCExportType.IfcCurtainWallType:
                {
-                  instanceHandle = IFCInstanceExporter.CreateCurtainWall(file, instanceGUID, ownerHistory,
-                     instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
+                  instanceHandle = IFCInstanceExporter.CreateCurtainWall(exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                     localPlacementToUse, productRepresentation);
                   break;
                }
             case IFCExportType.IfcMember:
             case IFCExportType.IfcMemberType:
                {
                   string preDefinedType = string.IsNullOrWhiteSpace(ifcEnumType) ? "BRACE" : ifcEnumType;
-                  instanceHandle = IFCInstanceExporter.CreateMember(file, instanceGUID, ownerHistory,
-                     instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag, preDefinedType);
+                  instanceHandle = IFCInstanceExporter.CreateMember(exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                     localPlacementToUse, productRepresentation, preDefinedType);
 
                   // Register the members's IFC handle for later use by truss export.
                   ExporterCacheManager.ElementToHandleCache.Register(familyInstance.Id, instanceHandle);
@@ -293,40 +290,39 @@ namespace Revit.IFC.Export.Exporter
                   }
 
                   string preDefinedType = string.IsNullOrWhiteSpace(ifcEnumType) ? "NOTDEFINED" : ifcEnumType;
-                  instanceHandle = IFCInstanceExporter.CreatePlate(file, instanceGUID, ownerHistory,
-                      instanceName, instanceDescription, instanceObjectType, localPlacement, productRepresentation, instanceTag, preDefinedType);
+                  instanceHandle = IFCInstanceExporter.CreatePlate(exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                      localPlacement, productRepresentation, preDefinedType);
                   break;
                }
             case IFCExportType.IfcDiscreteAccessoryType:
                {
-                  instanceHandle = IFCInstanceExporter.CreateDiscreteAccessory(file, instanceGUID, ownerHistory,
-                     instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
+                  instanceHandle = IFCInstanceExporter.CreateDiscreteAccessory(exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                     localPlacementToUse, productRepresentation);
                   break;
                }
             case IFCExportType.IfcDistributionControlElement:
                {
-                  instanceHandle = IFCInstanceExporter.CreateDistributionControlElement(file, instanceGUID, ownerHistory,
-                     instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag,
-                     null);
+                  instanceHandle = IFCInstanceExporter.CreateDistributionControlElement(exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                     localPlacementToUse, productRepresentation, null);
                   break;
                }
             case IFCExportType.IfcDistributionFlowElement:
                {
-                  instanceHandle = IFCInstanceExporter.CreateDistributionFlowElement(file, instanceGUID, ownerHistory,
-                     instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
+                  instanceHandle = IFCInstanceExporter.CreateDistributionFlowElement(exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                     localPlacementToUse, productRepresentation);
                   break;
                }
             case IFCExportType.IfcDistributionChamberElement:
             case IFCExportType.IfcDistributionChamberElementType:
                {
-                  instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(Common.Enums.IFCEntityType.IfcDistributionChamberElement, file, instanceGUID, ownerHistory,
-                      instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
+                  instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(Common.Enums.IFCEntityType.IfcDistributionChamberElement, exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                      localPlacementToUse, productRepresentation);
                   break;
                }
             case IFCExportType.IfcFastenerType:
                {
-                  instanceHandle = IFCInstanceExporter.CreateFastener(file, instanceGUID, ownerHistory,
-                     instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
+                  instanceHandle = IFCInstanceExporter.CreateFastener(exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                     localPlacementToUse, productRepresentation);
                   break;
                }
             case IFCExportType.IfcMechanicalFastenerType:
@@ -342,9 +338,8 @@ namespace Revit.IFC.Export.Exporter
 
                   string preDefinedType = string.IsNullOrWhiteSpace(ifcEnumType) ? "NOTDEFINED" : ifcEnumType;
 
-                  instanceHandle = IFCInstanceExporter.CreateMechanicalFastener(file, instanceGUID, ownerHistory,
-                     instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag,
-                     nominalDiameter, nominalLength, preDefinedType);
+                  instanceHandle = IFCInstanceExporter.CreateMechanicalFastener(exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                     localPlacementToUse, productRepresentation, nominalDiameter, nominalLength, preDefinedType);
                   break;
                }
             case IFCExportType.IfcRailingType:
@@ -353,26 +348,22 @@ namespace Revit.IFC.Export.Exporter
                   IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, familyInstance, out strEnumType);
                   if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
                   {
-                     instanceHandle = IFCInstanceExporter.CreateRailing(file, instanceGUID, ownerHistory, instanceName, instanceDescription,
-                         instanceObjectType, localPlacementToUse, productRepresentation, instanceTag,
-                         GetPreDefinedType<Toolkit.IFC4.IFCRailingType>(familyInstance, strEnumType).ToString());
+                     instanceHandle = IFCInstanceExporter.CreateRailing(exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                         localPlacementToUse, productRepresentation, GetPreDefinedType<Toolkit.IFC4.IFCRailingType>(familyInstance, strEnumType).ToString());
                   }
                   else
                   {
-                     instanceHandle = IFCInstanceExporter.CreateRailing(file, instanceGUID, ownerHistory, instanceName, instanceDescription,
-                         instanceObjectType, localPlacementToUse, productRepresentation, instanceTag,
-                         GetPreDefinedType<Toolkit.IFCRailingType>(familyInstance, strEnumType).ToString());
+                     instanceHandle = IFCInstanceExporter.CreateRailing(exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                         localPlacementToUse, productRepresentation, GetPreDefinedType<Toolkit.IFCRailingType>(familyInstance, strEnumType).ToString());
                   }
                   break;
                }
             case IFCExportType.IfcSpace:
                {
-                  string instanceLongName = NamingUtil.GetLongNameOverride(familyInstance, NamingUtil.GetLongNameOverride(familyInstance, instanceName));
                   IFCInternalOrExternal internalOrExternal = CategoryUtil.IsElementExternal(familyInstance) ? IFCInternalOrExternal.External : IFCInternalOrExternal.Internal;
 
-                  instanceHandle = IFCInstanceExporter.CreateSpace(file, instanceGUID, ownerHistory, instanceName, instanceDescription,
-                      instanceObjectType, localPlacementToUse, productRepresentation, instanceLongName, IFCElementComposition.Element,
-                      internalOrExternal, null);
+                  instanceHandle = IFCInstanceExporter.CreateSpace(exporterIFC, familyInstance, instanceGUID, ownerHistory, 
+                      localPlacementToUse, productRepresentation, IFCElementComposition.Element, internalOrExternal, null);
                   break;
                }
             default:
@@ -395,8 +386,8 @@ namespace Revit.IFC.Export.Exporter
                      Common.Enums.IFCEntityType exportEntity = Common.Enums.IFCEntityType.UnKnown;
                      if (Enum.TryParse(type.ToString(), out exportEntity))
                      {
-                        instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(exportEntity, file, instanceGUID, ownerHistory,
-                           instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
+                        instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(exportEntity, exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                           localPlacementToUse, productRepresentation);
                      }
                   }
                   else if ((type == IFCExportType.IfcPile) ||
@@ -432,8 +423,8 @@ namespace Revit.IFC.Export.Exporter
 
                      if (exportEntity != Common.Enums.IFCEntityType.UnKnown)
                      {
-                        instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(exportEntity, file, instanceGUID, ownerHistory,
-                           instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
+                        instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(exportEntity, exporterIFC, familyInstance, instanceGUID, ownerHistory,
+                           localPlacementToUse, productRepresentation);
                      }
                   }
                   break;
@@ -475,29 +466,22 @@ namespace Revit.IFC.Export.Exporter
       public static IFCAnyHandle ExportGenericType(ExporterIFC exporterIFC,
          IFCExportType type,
          string ifcEnumType,
-         string guid,
-         string name,
-         string description,
-         string applicableOccurrence,
          HashSet<IFCAnyHandle> propertySets,
          IList<IFCAnyHandle> representationMapList,
-         string elemId,
-         string typeName,
          Element instance,
          ElementType symbol)
       {
          IFCFile file = exporterIFC.GetFile();
-         IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
          IFCAnyHandle typeHandle = null;
 
+          
          try
          {
             // Skip export type object that does not have associated IfcTypeObject
             if (type != IFCExportType.IfcSite && type != IFCExportType.IfcBuildingStorey && type != IFCExportType.IfcSystem
                      && type != IFCExportType.IfcZone && type != IFCExportType.IfcGroup && type != IFCExportType.IfcGrid)
             {
-               string elemIdToUse = elemId;
-               string instanceElementType = null;
+               string elemIdToUse = null;
                switch (type)
                {
                   case IFCExportType.IfcFurnitureType:
@@ -505,13 +489,13 @@ namespace Revit.IFC.Export.Exporter
                   case IFCExportType.IfcPlateType:
                      {
                         elemIdToUse = NamingUtil.GetTagOverride(instance, NamingUtil.CreateIFCElementId(instance));
-                        instanceElementType = NamingUtil.GetOverrideStringValue(instance, "IfcElementType", typeName);
                         break;
                      }
                }
 
-               typeHandle = ExportGenericTypeBase(file, type, ifcEnumType, guid, ownerHistory, name, description, applicableOccurrence,
-                  null, representationMapList, elemIdToUse, instanceElementType, instance, symbol);
+               typeHandle = ExportGenericTypeBase(file, type, ifcEnumType, propertySets, representationMapList, instance, symbol);
+			      if(!string.IsNullOrEmpty(elemIdToUse))
+				      IFCAnyHandleUtil.SetAttribute(typeHandle, "Tag", elemIdToUse);
             }
          }
          catch
@@ -542,15 +526,8 @@ namespace Revit.IFC.Export.Exporter
       private static IFCAnyHandle ExportGenericTypeBase(IFCFile file,
          IFCExportType originalType,
          string ifcEnumType,
-         string guid,
-         IFCAnyHandle ownerHistory,
-         string name,
-         string description,
-         string applicableOccurrence,
          HashSet<IFCAnyHandle> propertySets,
          IList<IFCAnyHandle> representationMapList,
-         string elementTag,
-         string typeName,
          Element instance,
          ElementType symbol)
       {
@@ -592,9 +569,28 @@ namespace Revit.IFC.Export.Exporter
                   IFCTypeEntity = Common.Enums.IFCEntityType.IfcElectricHeaterType;
                   typeAsString = IFCExportType.IfcElectricHeaterType.ToString();
                   break;
+               case Common.Enums.IFCEntityType.IfcDoorType:
+                  IFCTypeEntity = Common.Enums.IFCEntityType.IfcDoorStyle;
+                  break;
+               case Common.Enums.IFCEntityType.IfcWindowType:
+                  IFCTypeEntity = Common.Enums.IFCEntityType.IfcWindowStyle;
+                  break;
             }
          }
-
+         switch (IFCTypeEntity) //Use SuperType if Abstract, not all listed yet.
+         {
+            case Common.Enums.IFCEntityType.IfcEnergyConversionDeviceType:
+            case Common.Enums.IFCEntityType.IfcFlowControllerType:
+            case Common.Enums.IFCEntityType.IfcFlowFittingType:
+            case Common.Enums.IFCEntityType.IfcFlowMovingDeviceType:
+            case Common.Enums.IFCEntityType.IfcFlowSegmentType:
+            case Common.Enums.IFCEntityType.IfcFlowStorageDeviceType:
+            case Common.Enums.IFCEntityType.IfcFlowTerminalType:
+            case Common.Enums.IFCEntityType.IfcFlowTreatmentDeviceType:
+               IFCTypeEntity = Common.Enums.IFCEntityType.IfcDistributionElementType;
+               typeAsString = "IfcDistributionElementType";
+               break;
+         }
          string[] typeStr = typeAsString.Split('.');
          string desireTypeBase = "Revit.IFC.Export.Toolkit.";
          string desireTypeBaseExtra = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? ".IFC4" : string.Empty;
@@ -647,9 +643,7 @@ namespace Revit.IFC.Export.Exporter
          }
 
          string enumValueAsString = (enumValue == null) ? null : enumValue.ToString();
-         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, file, guid, ownerHistory, name,
-                     description, applicableOccurrence, propertySets, representationMapList, elementTag,
-                     typeName, enumValueAsString);
+         return IFCInstanceExporter.CreateGenericIFCType(IFCTypeEntity, symbol, file, propertySets, representationMapList, enumValueAsString);
       }
 
       /// <summary>

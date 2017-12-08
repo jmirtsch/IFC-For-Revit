@@ -250,8 +250,8 @@ namespace Revit.IFC.Export.Exporter
          IFCAnyHandle relativePlacement = ExporterUtil.CreateAxis(file, origin, zDir, xDir);
          GeometryUtil.SetRelativePlacement(localPlacement, relativePlacement);
 
-         IFCAnyHandle annotation = IFCInstanceExporter.CreateAnnotation(file, GUIDUtil.CreateGUID(), ExporterCacheManager.OwnerHistoryHandle,
-            null, null, null, localPlacement, prodShapeHnd);
+         IFCAnyHandle annotation = IFCInstanceExporter.CreateAnnotation(exporterIFC, curveElement, GUIDUtil.CreateGUID(), 
+            ExporterCacheManager.OwnerHistoryHandle, localPlacement, prodShapeHnd);
 
          return annotation;
       }

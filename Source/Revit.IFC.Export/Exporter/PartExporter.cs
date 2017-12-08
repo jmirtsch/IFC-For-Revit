@@ -340,16 +340,12 @@ namespace Revit.IFC.Export.Exporter
                   IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
                   string partGUID = GUIDUtil.CreateGUID(partElement);
-                  string partName = NamingUtil.GetNameOverride(partElement, NamingUtil.GetIFCName(partElement));
-                  string partDescription = NamingUtil.GetDescriptionOverride(partElement, null);
-                  string partObjectType = NamingUtil.GetObjectTypeOverride(partElement, NamingUtil.CreateIFCObjectName(exporterIFC, partElement));
-                  string partTag = NamingUtil.GetTagOverride(partElement, NamingUtil.CreateIFCElementId(partElement));
 
                   IFCAnyHandle ifcPart = null;
                   if (!asBuildingElement)
                   {
-                     ifcPart = IFCInstanceExporter.CreateBuildingElementPart(file, partGUID, ownerHistory, partName, partDescription,
-                         partObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, partTag);
+                     ifcPart = IFCInstanceExporter.CreateBuildingElementPart(exporterIFC, partElement, partGUID, ownerHistory, 
+						 extrusionCreationData.GetLocalPlacement(), prodRep);
                   }
                   else
                   {
@@ -366,36 +362,36 @@ namespace Revit.IFC.Export.Exporter
                      switch (exportType)
                      {
                         case IFCExportType.IfcColumnType:
-                           ifcPart = IFCInstanceExporter.CreateColumn(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
-                               extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
+                           ifcPart = IFCInstanceExporter.CreateColumn(exporterIFC, partElement, partGUID, ownerHistory,
+                               extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
                         case IFCExportType.IfcCovering:
-                           ifcPart = IFCInstanceExporter.CreateCovering(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
-                               extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
+                           ifcPart = IFCInstanceExporter.CreateCovering(exporterIFC, partElement, partGUID, ownerHistory,
+                               extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
                         case IFCExportType.IfcFooting:
-                           ifcPart = IFCInstanceExporter.CreateFooting(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
-                               extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
+                           ifcPart = IFCInstanceExporter.CreateFooting(exporterIFC, partElement, partGUID, ownerHistory, 
+                               extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
                         case IFCExportType.IfcPile:
-                           ifcPart = IFCInstanceExporter.CreatePile(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
-                               extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType, null);
+                           ifcPart = IFCInstanceExporter.CreatePile(exporterIFC, partElement, partGUID, ownerHistory, 
+                               extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType, null);
                            break;
                         case IFCExportType.IfcRoof:
-                           ifcPart = IFCInstanceExporter.CreateRoof(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
-                               extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
+                           ifcPart = IFCInstanceExporter.CreateRoof(exporterIFC, partElement, partGUID, ownerHistory, 
+                               extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
                         case IFCExportType.IfcSlab:
-                           ifcPart = IFCInstanceExporter.CreateSlab(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
-                               extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
+                           ifcPart = IFCInstanceExporter.CreateSlab(exporterIFC, partElement, partGUID, ownerHistory, 
+                               extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
                         case IFCExportType.IfcWall:
-                           ifcPart = IFCInstanceExporter.CreateWall(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
-                           extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
+                           ifcPart = IFCInstanceExporter.CreateWall(exporterIFC, partElement, partGUID, ownerHistory, 
+                           extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
                         default:
-                           ifcPart = IFCInstanceExporter.CreateBuildingElementProxy(file, partGUID, ownerHistory, partName, partDescription,
-                               partObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, partTag, null);
+                           ifcPart = IFCInstanceExporter.CreateBuildingElementProxy(exporterIFC, partElement, partGUID, ownerHistory, 
+                               extrusionCreationData.GetLocalPlacement(), prodRep, null);
                            break;
                      }
                   }
@@ -699,7 +695,24 @@ namespace Revit.IFC.Export.Exporter
          foreach (LinkElementId linkElementId in part.GetSourceElementIds())
          {
             if (linkElementId.HostElementId == ElementId.InvalidElementId)
+            {
+               if(linkElementId.LinkInstanceId == ElementId.InvalidElementId)
+                  continue;
+               Element linkedElement = part.Document.GetElement(linkElementId.LinkInstanceId);
+
+               RevitLinkInstance linkInstance = linkedElement as RevitLinkInstance;
+               if(linkInstance != null)
+               {
+                  Document document = linkInstance.GetLinkDocument();
+                  if(document != null)
+                  {
+                     ElementId id = linkElementId.LinkedElementId;
+                     hostElement = document.GetElement(id);
+                     return hostElement;
+                  }
+               }
                continue;
+            }
 
             Element parentElement = part.Document.GetElement(linkElementId.HostElementId);
             // If the direct parent is a part, find its parent.

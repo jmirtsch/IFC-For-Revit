@@ -124,12 +124,8 @@ namespace Revit.IFC.Export.Exporter
                         string guid = GUIDUtil.CreateGUID(sheet);
                         IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                         string revitObjectType = exporterIFC.GetFamilyName();
-                        string name = NamingUtil.GetNameOverride(sheet, revitObjectType);
-                        string description = NamingUtil.GetDescriptionOverride(sheet, null);
-                        string objectType = NamingUtil.GetObjectTypeOverride(sheet, revitObjectType);
 
                         IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
-                        string elementTag = NamingUtil.CreateIFCElementId(sheet);
 
                         string steelGrade = NamingUtil.GetOverrideStringValue(sheet, "SteelGrade", null);
                         double? meshLength = sheet.CutOverallLength;
@@ -197,11 +193,9 @@ namespace Revit.IFC.Export.Exporter
                         }
                         IFCAnyHandle prodRep = (shapeReps != null) ? IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps) : null;
 
-                        IFCAnyHandle fabricSheet = IFCInstanceExporter.CreateReinforcingMesh(file, guid,
-                            ownerHistory, name, description, objectType, localPlacement, prodRep, elementTag,
-                            steelGrade, meshLength, meshWidth, longitudinalBarNominalDiameter, transverseBarNominalDiameter,
-                            longitudinalBarCrossSectionArea, transverseBarCrossSectionArea,
-                            longitudinalBarSpacing, transverseBarSpacing);
+                        IFCAnyHandle fabricSheet = IFCInstanceExporter.CreateReinforcingMesh(exporterIFC, sheet, guid, ownerHistory, localPlacement,
+							prodRep, steelGrade, meshLength, meshWidth, longitudinalBarNominalDiameter, transverseBarNominalDiameter,
+                            longitudinalBarCrossSectionArea, transverseBarCrossSectionArea, longitudinalBarSpacing, transverseBarSpacing);
 
                         ElementId fabricAreaId = sheet.FabricAreaOwnerId;
                         if (fabricAreaId != ElementId.InvalidElementId)

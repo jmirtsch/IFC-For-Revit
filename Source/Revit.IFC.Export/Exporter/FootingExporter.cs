@@ -114,15 +114,12 @@ namespace Revit.IFC.Export.Exporter
                   }
 
                   string instanceGUID = GUIDUtil.CreateGUID(element);
-                  string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-                  string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
-                  string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
-                  string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
+                  
                   string footingType = GetIFCFootingType(ifcEnumType);    // need to keep it for legacy support when original data follows slightly diff naming
                   footingType = IFCValidateEntry.GetValidIFCType(element, footingType);
 
-                  IFCAnyHandle footing = IFCInstanceExporter.CreateFooting(file, instanceGUID, ExporterCacheManager.OwnerHistoryHandle,
-                      instanceName, instanceDescription, instanceObjectType, ecData.GetLocalPlacement(), prodRep, instanceTag, footingType);
+                  IFCAnyHandle footing = IFCInstanceExporter.CreateFooting(exporterIFC, element, instanceGUID, ExporterCacheManager.OwnerHistoryHandle,
+                      ecData.GetLocalPlacement(), prodRep, footingType);
 
                   if (exportParts)
                   {

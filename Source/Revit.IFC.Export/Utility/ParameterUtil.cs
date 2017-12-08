@@ -72,8 +72,9 @@ namespace Revit.IFC.Export.Utility
          if (elementId == ElementId.InvalidElementId)
                throw new ArgumentNullException("element");
 
+         propertyValue = string.Empty;
          if (String.IsNullOrEmpty(propertyName))
-               throw new ArgumentException("It is null or empty.", "propertyName");
+            return null;
 
          propertyValue = string.Empty;
 
@@ -809,7 +810,7 @@ namespace Revit.IFC.Export.Utility
         /// <param name="group">The optional parameter group.</param>
         /// <param name="propertyName">The property name.</param>
         /// <returns>The Parameter.</returns>
-        static Parameter GetParameterFromName(ElementId elemId, BuiltInParameterGroup? group, string propertyName)
+        internal static Parameter GetParameterFromName(ElementId elemId, BuiltInParameterGroup? group, string propertyName)
         {
             if (!m_IFCParameters.ContainsKey(elemId))
                 CacheParametersForElement(elemId);

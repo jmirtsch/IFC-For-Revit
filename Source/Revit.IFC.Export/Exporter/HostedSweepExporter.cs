@@ -84,8 +84,6 @@ namespace Revit.IFC.Export.Exporter
                         ecData.ClearOpenings();
                      return;
                   }
-
-                  IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                   string originalTag = NamingUtil.CreateIFCElementId(element);
 
                   // In Revit, we don't have a corresponding type, so we create one for every gutter.
@@ -96,9 +94,12 @@ namespace Revit.IFC.Export.Exporter
                   string elementTypeName = NamingUtil.CreateIFCObjectName(exporterIFC, element);
 
                   string typeGuid = GUIDUtil.CreateSubElementGUID(element, (int)IFCHostedSweepSubElements.PipeSegmentType);
-                  IFCAnyHandle style = IFCInstanceExporter.CreatePipeSegmentType(file, typeGuid, ownerHistory,
-                      elementTypeName, null, null, null, repMapList, originalTag,
-                      elementTypeName, IFCPipeSegmentType.Gutter);
+                  IFCAnyHandle style = IFCInstanceExporter.CreatePipeSegmentType(file, null, null, repMapList, IFCPipeSegmentType.Gutter);
+						IFCAnyHandleUtil.SetAttribute(style, "Name", elementTypeName);
+
+                  IFCAnyHandleUtil.SetAttribute(style, "Tag", originalTag);
+                  IFCAnyHandleUtil.SetAttribute(style, "GlobalId", typeGuid);
+                  IFCAnyHandleUtil.SetAttribute(style, "ElementType", elementTypeName);
 
                   List<IFCAnyHandle> representationMaps = GeometryUtil.GetRepresentationMaps(style);
                   IFCAnyHandle mappedItem = ExporterUtil.CreateDefaultMappedItem(file, representationMaps[0]);
@@ -125,13 +126,9 @@ namespace Revit.IFC.Export.Exporter
                      localPlacementToUse = ecData.GetLocalPlacement();
 
                   string guid = GUIDUtil.CreateGUID(element);
-                  string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-                  string description = NamingUtil.GetDescriptionOverride(element, null);
-                  string objectType = NamingUtil.GetObjectTypeOverride(element, elementTypeName);
-                  string tag = NamingUtil.GetTagOverride(element, originalTag);
 
-                  IFCAnyHandle elemHnd = IFCInstanceExporter.CreateFlowSegment(file, guid,
-                      ownerHistory, name, description, objectType, localPlacementToUse, prodRep, tag);
+                  IFCAnyHandle elemHnd = IFCInstanceExporter.CreateFlowSegment(exporterIFC, element, guid,
+                      ExporterCacheManager.OwnerHistoryHandle, localPlacementToUse, prodRep);
 
                   bool containedInSpace = (roomId != ElementId.InvalidElementId);
                   productWrapper.AddElement(element, elemHnd, setter.LevelInfo, ecData, !containedInSpace);

@@ -186,20 +186,19 @@ namespace Revit.IFC.Export.Exporter
             bool found = currentTypeInfo.IsValid();
             if (!found)
             {
-               string typeGUID = GUIDUtil.CreateGUID(type);
-               string typeName = NamingUtil.GetIFCName(type);
                string typeObjectType = NamingUtil.CreateIFCObjectName(exporterIFC, type);
-               string applicableOccurance = NamingUtil.GetObjectTypeOverride(type, typeObjectType);
-               string typeDescription = NamingUtil.GetDescriptionOverride(type, null);
-               string typeElemId = NamingUtil.CreateIFCElementId(type);
 
                HashSet<IFCAnyHandle> propertySetsOpt = new HashSet<IFCAnyHandle>();
                IList<IFCAnyHandle> repMapListOpt = new List<IFCAnyHandle>();
 
-               styleHandle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, typeGUID, typeName,
-                   typeDescription, applicableOccurance, propertySetsOpt, repMapListOpt, typeElemId, typeName, element, type);
+               styleHandle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, propertySetsOpt, repMapListOpt, element, type);
                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(styleHandle))
                {
+                  propertySetsOpt = ExporterUtil.ExtractElementTypeProperties(exporterIFC, type, styleHandle);
+                  productWrapper.RegisterHandleWithElementType(type, styleHandle, propertySetsOpt);
+                  string applicableOccurrence = NamingUtil.GetObjectTypeOverride(type, typeObjectType);
+                  if(!string.IsNullOrEmpty(applicableOccurrence))
+                     IFCAnyHandleUtil.SetAttribute(styleHandle, "ApplicableOccurrence", applicableOccurrence);
                   currentTypeInfo.Style = styleHandle;
                   ExporterCacheManager.FamilySymbolToTypeInfoCache.Register(typeId, false, exportType, currentTypeInfo);
                }
@@ -211,12 +210,7 @@ namespace Revit.IFC.Export.Exporter
          }
 
          string instanceGUID = GUIDUtil.CreateGUID(element);
-         string instanceName = NamingUtil.GetIFCName(element);
-         string objectType = NamingUtil.CreateIFCObjectName(exporterIFC, element);
-         string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, objectType);
-         string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
-         string instanceElemId = NamingUtil.CreateIFCElementId(element);
-         string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
+         
 
          bool roomRelated = !FamilyExporterUtil.IsDistributionFlowElementSubType(exportType);
 
@@ -237,8 +231,8 @@ namespace Revit.IFC.Export.Exporter
          if (Enum.TryParse(exportEntityStr, out exportEntity))
          {
             // For MEP object creation
-            instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(exportEntity, file, instanceGUID, ownerHistory,
-               instanceName, instanceDescription, instanceObjectType, localPlacementToUse, productRepresentation, instanceTag);
+            instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(exportEntity, exporterIFC, element, instanceGUID, ownerHistory,
+               localPlacementToUse, productRepresentation);
          }
 
          if (IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))

@@ -19,7 +19,7 @@ namespace BIM.IFC.Export.UI.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
@@ -610,6 +610,15 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Export Selected Setup.
+        /// </summary>
+        public static string ExportSelectedSetup {
+            get {
+                return ResourceManager.GetString("ExportSelectedSetup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Allow use of mixed &quot;Solid Model&quot; representation.
         /// </summary>
         public static string ExportSolidModelsWhenPossible {
@@ -1159,6 +1168,25 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        public static System.Drawing.Icon load {
+            get {
+                object obj = ResourceManager.GetObject("load", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Load Setup from Disk.
+        /// </summary>
+        public static string LoadSetup {
+            get {
+                return ResourceManager.GetString("LoadSetup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Mandatory fields Name, Source or Publisher, and Edition cannot be empty..
         /// </summary>
         public static string ManditoryFieldsNotEmpty {
@@ -1501,6 +1529,25 @@ namespace BIM.IFC.Export.UI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        public static System.Drawing.Icon save {
+            get {
+                object obj = ResourceManager.GetObject("save", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save Selected Setup.
+        /// </summary>
+        public static string SaveSelectedSetup {
+            get {
+                return ResourceManager.GetString("SaveSelectedSetup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Save Setup &amp;amp; Close.
         /// </summary>
         public static string SaveSetupAndClose {
@@ -1533,6 +1580,15 @@ namespace BIM.IFC.Export.UI.Properties {
         public static string Site {
             get {
                 return ResourceManager.GetString("Site", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Basis for Site Transform placement.
+        /// </summary>
+        public static string SiteTransformOrigin {
+            get {
+                return ResourceManager.GetString("SiteTransformOrigin", resourceCulture);
             }
         }
         

@@ -1029,8 +1029,10 @@ namespace Revit.IFC.Export.Utility
             string origOpeningName = NamingUtil.GetIFCNamePlusIndex(doorWindowElement, 1);
             string openingName = NamingUtil.GetNameOverride(doorWindowElement, origOpeningName);
 
-            IFCAnyHandle openingHnd = IFCInstanceExporter.CreateOpeningElement(file, openingGUID, ownerHistory, openingName, null,
-                openingObjectType, openingPlacement, openingRepHnd, null);
+            IFCAnyHandle openingHnd = IFCInstanceExporter.CreateOpeningElement(exporterIFC, doorWindowElement, openingGUID, ownerHistory, 
+                openingPlacement, openingRepHnd);
+			IFCAnyHandleUtil.SetAttribute(openingHnd, "Name", openingName);
+			IFCAnyHandleUtil.SetAttribute(openingHnd, "ObjectType", openingObjectType);
 
             string openingVoidsGUID = GUIDUtil.CreateSubElementGUID(doorWindowElement, (int)IFCDoorSubElements.DoorOpeningRelVoid);
             IFCInstanceExporter.CreateRelVoidsElement(file, openingVoidsGUID, ownerHistory, null, null, hostObjHnd, openingHnd);
