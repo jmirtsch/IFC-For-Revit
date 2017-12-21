@@ -287,10 +287,10 @@ namespace Revit.IFC.Export.Utility
                }
                nodeP.nodePropertyValue = lastNumber;
             }
-            else if (spParCtx.AUTOCALCULATE() != null)
-            {
+            //else if (spParCtx.AUTOCALCULATE() != null)
+            //{
                
-            }
+            //}
             else
             {
                // Not supported
