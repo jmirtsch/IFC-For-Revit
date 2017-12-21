@@ -2286,7 +2286,7 @@ namespace Revit.IFC.Export.Utility
             xDirection = new XYZ(1.0, 0.0, 0.0);
          }
 
-         XYZ yDirection = xDirection.CrossProduct(zDirection);
+         XYZ yDirection = zDirection.CrossProduct(xDirection);
          IList<double> posCoords = IFCAnyHandleUtil.GetAggregateDoubleAttribute<List<double>>(pos, "Coordinates");
          XYZ position = new XYZ(posCoords[0], posCoords[1], posCoords[2]);
 
@@ -2297,6 +2297,36 @@ namespace Revit.IFC.Export.Utility
          ecsFromHnd.Origin = position;
 
          return ecsFromHnd;
+      }
+
+      /// <summary>
+      /// Compute the total tansform of a local placement
+      /// </summary>
+      /// <param name="localPlacementHnd">the local placement handle</param>
+      /// <returns>the resulting total transform</returns>
+      public static Transform GetTotalTransformFromLocalPlacement(IFCAnyHandle localPlacementHnd)
+      {
+         Transform totalTrf = Transform.Identity;
+
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(localPlacementHnd))
+            return totalTrf;
+
+         if (!localPlacementHnd.IsTypeOf("IfcLocalPlacement"))
+            return totalTrf;
+
+         totalTrf = GetTransformFromLocalPlacementHnd(localPlacementHnd);
+
+         IFCAnyHandle placementRelTo = IFCAnyHandleUtil.GetInstanceAttribute(localPlacementHnd, "PlacementRelTo");
+         while (!IFCAnyHandleUtil.IsNullOrHasNoValue(placementRelTo))
+         {
+            Transform trf = GetTransformFromLocalPlacementHnd(placementRelTo);
+            if (trf == null)
+               return null;        // the placementRelTo is not the type of IfcLocalPlacement, return null. We don't handle this
+
+            totalTrf = trf.Multiply(totalTrf);
+         }
+
+         return totalTrf;
       }
 
       /// <summary>

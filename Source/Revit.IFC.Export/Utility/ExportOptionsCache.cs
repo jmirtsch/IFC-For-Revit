@@ -190,7 +190,7 @@ namespace Revit.IFC.Export.Utility
          // Export Part element only if 'Current View Only' is checked and 'Show Parts' is selected. 
          cache.ExportParts = filterView != null && filterView.PartsVisibility == PartsVisibility.ShowPartsOnly;
          cache.ExportPartsAsBuildingElementsOverride = null;
-         cache.ExportAllLevels = false;
+         //cache.ExportAllLevels = false;
          cache.ExportAnnotationsOverride = null;
 
          // There is a bug in the native code that doesn't allow us to cast the filterView to any sub-type of View.  Work around this by re-getting the element pointer.
@@ -930,11 +930,11 @@ namespace Revit.IFC.Export.Utility
       /// Whether or not to export all levels, or just export building stories.
       /// This will be set to true by default if there are no building stories in the file.
       /// </summary>
-      public bool ExportAllLevels
-      {
-         get;
-         set;
-      }
+      //public bool ExportAllLevels
+      //{
+      //   get;
+      //   set;
+      //}
 
       /// <summary>
       /// Determines how to generate space volumes on export.  True means that we use the 2D room boundary and extrude it upwards based
