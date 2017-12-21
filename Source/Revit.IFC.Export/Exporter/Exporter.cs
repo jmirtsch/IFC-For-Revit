@@ -3418,8 +3418,8 @@ namespace Revit.IFC.Export.Exporter
          IFCAnyHandle buildingAddress = CreateIFCAddress(file, document, projectInfo);
 
          string buildingGUID = GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building);
-         IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(file,
-             buildingGUID, ownerHistory, buildingName, buildingDescription, null, buildingPlacement, null, buildingLongName,
+         IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(exporterIFC,
+             buildingGUID, ownerHistory, buildingName, buildingDescription, buildingPlacement, null, buildingLongName,
              Toolkit.IFCElementComposition.Element, null, null, buildingAddress);
          ExporterCacheManager.BuildingHandle = buildingHandle;
 
