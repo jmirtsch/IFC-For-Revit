@@ -119,10 +119,12 @@ namespace Revit.IFC.Export.Utility
       /// Ramp.
       /// </summary>
       IfcRamp,
+      IfcRampType,
       /// <summary>
       /// Roof.
       /// </summary>
       IfcRoof,
+      IfcRoofType,
       /// <summary>
       /// Site.
       /// </summary>
@@ -131,6 +133,7 @@ namespace Revit.IFC.Export.Utility
       /// Slab.
       /// </summary>
       IfcSlab,
+      IfcSlabType,
       /// <summary>
       /// Space.
       /// </summary>
@@ -139,6 +142,7 @@ namespace Revit.IFC.Export.Utility
       /// Stair.
       /// </summary>
       IfcStair,
+      IfcStairType,
       /// <summary>
       /// Transport element type.
       /// </summary>
@@ -148,10 +152,12 @@ namespace Revit.IFC.Export.Utility
       /// Wall.
       /// </summary>
       IfcWall,
+      IfcWallType,
       /// <summary>
       /// Reinforcing bar.
       /// </summary>
       IfcReinforcingBar,
+      IfcReinforcingBarType,
       /// <summary>
       /// Reinforcing mesh.
       /// </summary>
@@ -165,6 +171,7 @@ namespace Revit.IFC.Export.Utility
       /// Furnishing element and their subclasses.
       /// </summary>
       IfcFurnishingElement,
+      IfcFurnishingElementType,
       /// <summary>
       /// Direct subclass of FurnishingElement.
       /// </summary>
@@ -179,55 +186,12 @@ namespace Revit.IFC.Export.Utility
       /// Distribution elements and their subclasses.
       /// </summary>
       IfcDistributionElement,
+      IfcDistributionElementType,
       /// <summary>
       /// Direct subclasses of DistributionElement.
       /// </summary>
       IfcDistributionControlElement,
-      /// <summary>
-      /// Distribution flow element.
-      /// </summary>
-      IfcDistributionFlowElement,
-      /// <summary>
-      /// Distribution Chamber Element
-      /// </summary>
-      IfcDistributionChamberElement,
-      /// <summary>
-      /// Direct subclass of DistributionFlowElement.
-      /// </summary>
-      IfcDistributionChamberElementType,
-      /// <summary>
-      /// Energy conversion device.
-      /// </summary>
-      IfcEnergyConversionDevice,
-      /// <summary>
-      /// Flow fitting.
-      /// </summary>
-      IfcFlowFitting,
-      /// <summary>
-      /// Flow moving device.
-      /// </summary>
-      IfcFlowMovingDevice,
-      /// <summary>
-      /// Flow segment.
-      /// </summary>
-      IfcFlowSegment,
-      /// <summary>
-      /// Flow storage device.
-      /// </summary>
-      IfcFlowStorageDevice,
-      /// <summary>
-      /// Flow terminal.
-      /// </summary>
-      IfcFlowTerminal,
-      /// <summary>
-      /// Flow treatment device.
-      /// </summary>
-      IfcFlowTreatmentDevice,
-      /// <summary>
-      /// Flow controller.
-      /// </summary>
-      IfcFlowController,
-      // direct subclass of FlowController
+      IfcDistributionControlElementType,
       // types of DistributionControlElementType
       /// <summary>
       /// Actuator.
@@ -264,311 +228,199 @@ namespace Revit.IFC.Export.Utility
       /// </summary>
       IfcUnitaryControlElement,
       IfcUnitaryControlElementType,
-      // types of EnergyConversionDeviceType
       /// <summary>
-      /// Air to air heat recovery.
+      /// Distribution flow element.
       /// </summary>
+      IfcDistributionFlowElement,
+
+      /// Direct subclass of DistributionFlowElement.
+      /// <summary>
+      /// Distribution Chamber Element
+      /// </summary>
+      IfcDistributionChamberElement,
+      IfcDistributionChamberElementType,
+      
+      /// <summary>
+      /// Energy conversion device.
+      /// </summary>
+      IfcEnergyConversionDevice,
+      IfcEnergyConversionDeviceType,
+
+      // direct subclass of EnergyConversionDevice
       IfcAirToAirHeatRecovery,
       IfcAirToAirHeatRecoveryType,
-      /// <summary>
-      /// Boiler type.
-      /// </summary>
       IfcBoiler,
       IfcBoilerType,
-      /// <summary>
-      /// Burner Type
-      /// </summary>
       IfcBurner,
       IfcBurnerType,
-      /// <summary>
-      /// Chiller type.
-      /// </summary>
       IfcChiller,
       IfcChillerType,
-      /// <summary>
-      /// Coil type.
-      /// </summary>
       IfcCoil,
       IfcCoilType,
-      /// <summary>
-      /// Condenser type.
-      /// </summary>
       IfcCondenser,
       IfcCondenserType,
-      /// <summary>
-      /// Cooled beam type.
-      /// </summary>
       IfcCooledBeam,
       IfcCooledBeamType,
-      /// <summary>
-      /// Cooling tower type.
-      /// </summary>
       IfcCoolingTower,
       IfcCoolingTowerType,
-      /// <summary>
-      /// Electric generator type.
-      /// </summary>
       IfcElectricGenerator,
       IfcElectricGeneratorType,
-      /// <summary>
-      /// Electric motor type.
-      /// </summary>
       IfcElectricMotor,
       IfcElectricMotorType,
-      /// <summary>
-      /// Engine type (new in IFC4)
-      /// </summary>
       IfcEngine,
       IfcEngineType,
-      /// <summary>
-      /// Evaporative cooler type.
-      /// </summary>
       IfcEvaporativeCooler,
       IfcEvaporativeCoolerType,
-      /// <summary>
-      /// Evaporator type.
-      /// </summary>
       IfcEvaporator,
       IfcEvaporatorType,
-      /// <summary>
-      /// Heat exchanger type.
-      /// </summary>
       IfcHeatExchanger,
       IfcHeatExchangerType,
-      /// <summary>
-      /// Humidifier type.
-      /// </summary>
       IfcHumidifier,
       IfcHumidifierType,
-      /// <summary>
-      /// Motor connection type.
-      /// </summary>
       IfcMotorConnection,
       IfcMotorConnectionType,
-      /// <summary>
-      /// Solar Device type (new in IFC4)
-      /// </summary>
       IfcSolarDevice,
       IfcSolarDeviceType,
-      /// <summary>
-      /// Transformer type.
-      /// </summary>
       IfcTransformer,
       IfcTransformerType,
-      /// <summary>
-      /// Tube bundle type.
-      /// </summary>
       IfcTubeBundle,
       IfcTubeBundleType,
-      /// <summary>
-      /// Unitary equipment type.
-      /// </summary>
       IfcUnitaryEquipment,
       IfcUnitaryEquipmentType,
-      // types of FlowControllerType
       /// <summary>
-      /// Air terminal box type.
+      /// Flow controller.
       /// </summary>
+      IfcFlowController,
+      IfcFlowControllerType,
+
+      // direct subclass of FlowController
       IfcAirTerminalBox,
       IfcAirTerminalBoxType,
-      /// <summary>
-      /// Damper type.
-      /// </summary>
       IfcDamper,
       IfcDamperType,
-      /// <summary>
-      /// Electric Distribution Board type (new in IFC4)
-      /// </summary>
       IfcElectricDistributionBoard,
       IfcElectricDistributionBoardType,
-      /// <summary>
-      /// Electric time control type.
-      /// </summary>
       IfcElectricTimeControl,
       IfcElectricTimeControlType,
-      /// <summary>
-      /// Flow meter type.
-      /// </summary>
       IfcFlowMeter,
       IfcFlowMeterType,
-      /// <summary>
-      /// Protective device type.
-      /// </summary>
       IfcProtectiveDevice,
       IfcProtectiveDeviceType,
-      /// <summary>
-      /// Switching device type.
-      /// </summary>
       IfcSwitchingDevice,
       IfcSwitchingDeviceType,
-      /// <summary>
-      /// Valve type.
-      /// </summary>
       IfcValve,
       IfcValveType,
-      // types of FlowFittingType
       /// <summary>
-      /// Cable carrier fitting type.
+      /// Flow fitting.
       /// </summary>
+      IfcFlowFitting,
+      IfcFlowFittingType,
+
+      // direct subclass of FlowFitting
       IfcCableCarrierFitting,
       IfcCableCarrierFittingType,
-      /// <summary>
-      /// Cable Fitting type (new in IFC4)
-      /// </summary>
       IfcCableFitting,
       IfcCableFittingType,
-      /// <summary>
-      /// Duct fitting type.
-      /// </summary>
       IfcDuctFitting,
       IfcDuctFittingType,
-      /// <summary>
-      /// Junction box type.
-      /// </summary>
       IfcJunctionBox,
       IfcJunctionBoxType,
-      /// <summary>
-      /// Pipe fitting type.
-      /// </summary>
       IfcPipeFitting,
       IfcPipeFittingType,
-      // types of FlowMovingDeviceType
       /// <summary>
-      /// Compressor type.
+      /// Flow moving device.
       /// </summary>
+      IfcFlowMovingDevice,
+      IfcFlowMovingDeviceType,
+
+      // direct subclass of FlowMovingDevice
       IfcCompressor,
       IfcCompressorType,
-      /// <summary>
-      /// Fan type.
-      /// </summary>
       IfcFan,
       IfcFanType,
-      /// <summary>
-      /// Pump type.
-      /// </summary>
       IfcPump,
       IfcPumpType,
-      // types of FlowSegmentType
       /// <summary>
-      /// Cable carrier segment type.
+      /// Flow segment.
       /// </summary>
+      IfcFlowSegment,
+      IfcFlowSegmentTypeType,
+
+      // direct subclass of FlowSegment
       IfcCableCarrierSegment,
       IfcCableCarrierSegmentType,
-      /// <summary>
-      /// Cable segment type.
-      /// </summary>
       IfcCableSegment,
       IfcCableSegmentType,
-      /// <summary>
-      /// Duct segment type.
-      /// </summary>
-      IfcDuctSegmentType,
       IfcDuctSegment,
-      /// <summary>
-      /// Pipe segment type.
-      /// </summary>
+      IfcDuctSegmentType,
       IfcPipeSegment,
       IfcPipeSegmentType,
-      // types of FlowStorageDeviceType
       /// <summary>
-      /// Electric flow storage device type.
+      /// Flow storage device.
       /// </summary>
+      IfcFlowStorageDevice,
+      IfcFlowStorageDeviceType,
+
+      // direct subclass of FlowStorageDevice
       IfcElectricFlowStorageDevice,
       IfcElectricFlowStorageDeviceType,
-      /// <summary>
-      /// Tank type.
-      /// </summary>
       IfcTank,
       IfcTankType,
-      // types of FlowTreatmentDeviceType
       /// <summary>
-      /// Duct silencer type.
+      /// Flow terminal.
       /// </summary>
-      IfcDuctSilencer,
-      IfcDuctSilencerType,
-      /// <summary>
-      /// Filter type.
-      /// </summary>
-      IfcFilter,
-      IfcFilterType,
-      /// <summary>
-      /// Interceptor type (new in IFC4)
-      /// </summary>
-      IfcInterceptor,
-      IfcInterceptorType,
-      // types of FlowTerminalType
-      /// <summary>
-      /// Air terminal type.
-      /// </summary>
+      IfcFlowTerminal,
+      IfcFlowTerminalType,
+
+      // direct subclass of FlowTerminal
       IfcAirTerminal,
       IfcAirTerminalType,
-      /// <summary>
-      /// Audio Visual Applicance type (new in IFC4)
-      /// </summary>
       IfcAudioVisualAppliance,
-      /// <summary>
-      /// Gas Terminal type. (Only up to IFC2x3)
-      /// </summary>
-      IfcGasTerminalType,
-      /// <summary>
-      /// Communication Applicance type (new in IFC4)
-      /// </summary>
+      IfcAudioVisualApplianceType,
       IfcCommunicationsAppliance,
       IfcCommunicationsApplianceType,
-      /// <summary>
-      /// Electric appliance type.
-      /// </summary>
       IfcElectricAppliance,
       IfcElectricApplianceType,
       /// <summary>
       /// Electic heater type (only up to IFC2x3)
       /// </summary>
       IfcElectricHeaterType,
-      /// <summary>
-      /// Fire suppression terminal type.
-      /// </summary>
       IfcFireSuppressionTerminal,
       IfcFireSuppressionTerminalType,
       /// <summary>
-      /// Lamp type.
+      /// Gas Terminal type. (Only up to IFC2x3)
       /// </summary>
+      IfcGasTerminalType,
       IfcLamp,
       IfcLampType,
-      /// <summary>
-      /// Light fixture type.
-      /// </summary>
       IfcLightFixture,
       IfcLightFixtureType,
-      /// <summary>
-      /// Medical Device type (new in IFC4)
-      /// </summary>
       IfcMedicalDevice,
       IfcMedicalDeviceType,
-      /// <summary>
-      /// Outlet type.
-      /// </summary>
       IfcOutlet,
       IfcOutletType,
-      /// <summary>
-      /// Sanitary terminal type.
-      /// </summary>
       IfcSanitaryTerminal,
       IfcSanitaryTerminalType,
-      /// <summary>
-      /// Space heater type
-      /// </summary>
       IfcSpaceHeater,
       IfcSpaceHeaterType,
-      /// <summary>
-      /// Stack terminal type.
-      /// </summary>
       IfcStackTerminal,
       IfcStackTerminalType,
-      /// <summary>
-      /// Waste terminal type.
-      /// </summary>
       IfcWasteTerminal,
       IfcWasteTerminalType,
+      /// <summary>
+      /// Flow treatment device.
+      /// </summary>
+      IfcFlowTreatmentDevice,
+      IfcFlowTreatmentDeviceType,
+
+      // direct subclass of FlowTreatmentDevice
+      IfcDuctSilencer,
+      IfcDuctSilencerType,
+      IfcFilter,
+      IfcFilterType,
+      IfcInterceptor,
+      IfcInterceptorType,
+      
       /// <summary>
       /// Fastener type.
       /// </summary>
@@ -583,6 +435,7 @@ namespace Revit.IFC.Export.Utility
       /// Pile - no type in IFC2x3.
       /// </summary>
       IfcPile,
+      IfcPileType,
       /// <summary>
       /// Zone - no type in IFC2x3.
       /// </summary>
