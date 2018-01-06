@@ -87,12 +87,8 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="GeometryGymIFC, Version=0.0.15.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Geometry Gym\source code\GeometryGym\BIM\IFC\GeometryGymIFC\GeometryGymIFC\bin\Debug\GeometryGymIFC.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="GeometryGymIFC, Version=0.0.16.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\GeometryGymIFC.0.0.16\lib\net45\GeometryGymIFC.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Antlr4.Runtime, Version=4.6.0.0, Culture=neutral, PublicKeyToken=09abb75b9ed49849, processorArchitecture=MSIL">
@@ -372,6 +368,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
     <Antlr4 Include="Utility\ParamExprGrammar.g4">
       <Generator>MSBuild:Compile</Generator>
