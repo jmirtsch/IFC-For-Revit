@@ -111,47 +111,50 @@ namespace Revit.IFC.Export.Exporter
                     IFCFlowDirection flowDir = (isBiDirectional) ? IFCFlowDirection.SourceAndSink : (flowDirection == FlowDirectionType.Out ? IFCFlowDirection.Sink : IFCFlowDirection.Source);
                     Element hostElement = connector.Owner;
                     IFCAnyHandle hostElementIFCHandle = ExporterCacheManager.MEPCache.Find(hostElement.Id);
-                    IFCAnyHandle localPlacement = CreateLocalPlacementForConnector(exporterIFC, connector, hostElementIFCHandle, flowDir);
-                    IFCFile ifcFile = exporterIFC.GetFile();
-                    IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
-                    IFCAnyHandle port = IFCInstanceExporter.CreateDistributionPort(exporterIFC, null, guid, ownerHistory, localPlacement, null, flowDir);
-                    string portName = "Port_" + hostElement.Id;
-				IFCAnyHandleUtil.SetAttribute(port, "Name", portName);
-                    string portType = "Flow";   // Assigned as Port.Description
-				IFCAnyHandleUtil.SetAttribute(port, "Description", portType);
-                    
-                    // Attach the port to the element
-                    guid = GUIDUtil.CreateGUID();
-                    string connectionName = hostElement.Id + "|" + guid;
-                    IFCAnyHandle connectorHandle = IFCInstanceExporter.CreateRelConnectsPortToElement(ifcFile, guid, ownerHistory, connectionName, portType, port, hostElementIFCHandle);
-                    HashSet<MEPSystem> systemList = new HashSet<MEPSystem>();
-                    try
+                    if (hostElementIFCHandle != null)
                     {
-                        MEPSystem system = connector.MEPSystem;
-                        if (system != null)
-                            systemList.Add(system);
-                    }
-                    catch
-                    {
-                    }
+						IFCAnyHandle localPlacement = CreateLocalPlacementForConnector(exporterIFC, connector, hostElementIFCHandle, flowDir);
+						IFCFile ifcFile = exporterIFC.GetFile();
+						IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
+						IFCAnyHandle port = IFCInstanceExporter.CreateDistributionPort(exporterIFC, null, guid, ownerHistory, localPlacement, null, flowDir);
+						string portName = "Port_" + hostElement.Id;
+						IFCAnyHandleUtil.SetAttribute(port, "Name", portName);
+						string portType = "Flow";   // Assigned as Port.Description
+						IFCAnyHandleUtil.SetAttribute(port, "Description", portType);
+
+						// Attach the port to the element
+						guid = GUIDUtil.CreateGUID();
+						string connectionName = hostElement.Id + "|" + guid;
+						IFCAnyHandle connectorHandle = IFCInstanceExporter.CreateRelConnectsPortToElement(ifcFile, guid, ownerHistory, connectionName, portType, port, hostElementIFCHandle);
+						HashSet<MEPSystem> systemList = new HashSet<MEPSystem>();
+						try
+						{
+							MEPSystem system = connector.MEPSystem;
+							if (system != null)
+								systemList.Add(system);
+						}
+						catch
+						{
+						}
 
 
-                    if (isElectricalDomain)
-                    {
-                        foreach (MEPSystem system in systemList)
-                        {
-                            ExporterCacheManager.SystemsCache.AddElectricalSystem(system.Id);
-                            ExporterCacheManager.SystemsCache.AddHandleToElectricalSystem(system.Id, hostElementIFCHandle);
-                            ExporterCacheManager.SystemsCache.AddHandleToElectricalSystem(system.Id, port);
-                        }
-                    }
-                    else
-                    {
-                        foreach (MEPSystem system in systemList)
-                        {
-                            ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, hostElementIFCHandle);
-                            ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, port);
-                        }
+						if (isElectricalDomain)
+						{
+							foreach (MEPSystem system in systemList)
+							{
+								ExporterCacheManager.SystemsCache.AddElectricalSystem(system.Id);
+								ExporterCacheManager.SystemsCache.AddHandleToElectricalSystem(system.Id, hostElementIFCHandle);
+								ExporterCacheManager.SystemsCache.AddHandleToElectricalSystem(system.Id, port);
+							}
+						}
+						else
+						{
+							foreach (MEPSystem system in systemList)
+							{
+								ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, hostElementIFCHandle);
+								ExporterCacheManager.SystemsCache.AddHandleToBuiltInSystem(system, port);
+							}
+						}
                     }
                 }
             }

@@ -47,7 +47,7 @@ namespace Revit.IFC.Export.Exporter
       /// </returns>
       public static bool IsDistributionControlElementSubType(IFCExportType exportType)
       {
-         return (exportType >= IFCExportType.IfcActuatorType && exportType <= IFCExportType.IfcUnitaryControlElementType);
+         return (exportType >= IFCExportType.IfcDistributionControlElement && exportType <= IFCExportType.IfcUnitaryControlElementType);
       }
 
       /// <summary>
@@ -62,7 +62,7 @@ namespace Revit.IFC.Export.Exporter
       public static bool IsDistributionFlowElementSubType(IFCExportType exportType)
       {
          return (exportType >= IFCExportType.IfcDistributionChamberElementType &&
-            exportType <= IFCExportType.IfcFlowController);
+            exportType <= IFCExportType.IfcInterceptorType);
       }
 
       /// <summary>
@@ -77,8 +77,8 @@ namespace Revit.IFC.Export.Exporter
       public static bool IsEnergyConversionDeviceSubType(IFCExportType exportType)
       {
          // Note: Implementer's agreement #CV-2x3-166 changes IfcSpaceHeaterType from IfcEnergyConversionDevice to IfcFlowTerminal.
-         return (exportType >= IFCExportType.IfcAirToAirHeatRecoveryType &&
-            exportType <= IFCExportType.IfcUnitaryEquipmentType) && (exportType != IFCExportType.IfcSpaceHeaterType);
+         return (exportType >= IFCExportType.IfcAirToAirHeatRecovery &&
+            exportType <= IFCExportType.IfcUnitaryEquipmentType) && (exportType != IFCExportType.IfcSpaceHeaterType && exportType != IFCExportType.IfcSpaceHeater);
       }
 
       /// <summary>
@@ -92,7 +92,7 @@ namespace Revit.IFC.Export.Exporter
       /// </returns>
       public static bool IsFlowFittingSubType(IFCExportType exportType)
       {
-         return (exportType >= IFCExportType.IfcCableCarrierFittingType &&
+         return (exportType >= IFCExportType.IfcCableCarrierFitting &&
             exportType <= IFCExportType.IfcPipeFittingType);
       }
 
@@ -107,7 +107,7 @@ namespace Revit.IFC.Export.Exporter
       /// </returns>
       public static bool IsFlowMovingDeviceSubType(IFCExportType exportType)
       {
-         return (exportType >= IFCExportType.IfcCompressorType &&
+         return (exportType >= IFCExportType.IfcCompressor &&
             exportType <= IFCExportType.IfcPumpType);
       }
 
@@ -122,7 +122,7 @@ namespace Revit.IFC.Export.Exporter
       /// </returns>
       public static bool IsFlowSegmentSubType(IFCExportType exportType)
       {
-         return (exportType >= IFCExportType.IfcCableCarrierSegmentType &&
+         return (exportType >= IFCExportType.IfcCableCarrierSegment &&
             exportType <= IFCExportType.IfcPipeSegmentType);
       }
 
@@ -137,7 +137,7 @@ namespace Revit.IFC.Export.Exporter
       /// </returns>
       public static bool IsFlowStorageDeviceSubType(IFCExportType exportType)
       {
-         return (exportType >= IFCExportType.IfcElectricFlowStorageDeviceType &&
+         return (exportType >= IFCExportType.IfcElectricFlowStorageDevice &&
             exportType <= IFCExportType.IfcTankType);
       }
 
@@ -153,8 +153,8 @@ namespace Revit.IFC.Export.Exporter
       public static bool IsFlowTerminalSubType(IFCExportType exportType)
       {
          // Note: Implementer's agreement #CV-2x3-166 changes IfcSpaceHeaterType from IfcEnergyConversionDevice to IfcFlowTerminal.
-         return (exportType >= IFCExportType.IfcAirTerminalType &&
-            exportType <= IFCExportType.IfcWasteTerminalType) || (exportType == IFCExportType.IfcSpaceHeaterType);
+         return (exportType >= IFCExportType.IfcAirTerminal && exportType <= IFCExportType.IfcWasteTerminalType) || 
+            (exportType == IFCExportType.IfcSpaceHeaterType || exportType == IFCExportType.IfcSpaceHeater);
       }
 
       /// <summary>
@@ -168,8 +168,8 @@ namespace Revit.IFC.Export.Exporter
       /// </returns>
       public static bool IsFlowTreatmentDeviceSubType(IFCExportType exportType)
       {
-         return (exportType >= IFCExportType.IfcDuctSilencerType &&
-            exportType <= IFCExportType.IfcFilterType);
+         return (exportType >= IFCExportType.IfcDuctSilencer &&
+            exportType <= IFCExportType.IfcInterceptorType);
       }
 
       /// <summary>
@@ -183,7 +183,7 @@ namespace Revit.IFC.Export.Exporter
       /// </returns>
       public static bool IsFlowControllerSubType(IFCExportType exportType)
       {
-         return (exportType >= IFCExportType.IfcAirTerminalBoxType &&
+         return (exportType >= IFCExportType.IfcAirTerminalBox &&
             exportType <= IFCExportType.IfcValveType);
       }
 
@@ -592,9 +592,9 @@ namespace Revit.IFC.Export.Exporter
                break;
          }
          string[] typeStr = typeAsString.Split('.');
-         string desireTypeBase = "Revit.IFC.Export.Toolkit.";
-         string desireTypeBaseExtra = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? ".IFC4" : string.Empty;
-         string desireType = desireTypeBase + desireTypeBaseExtra + typeStr[typeStr.Length - 1];
+         string desiredTypeBase = "Revit.IFC.Export.Toolkit.";
+         string desiredTypeBaseExtra = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? "IFC4." : string.Empty;
+         string desiredType = desiredTypeBase + desiredTypeBaseExtra + typeStr[typeStr.Length - 1];
 
          object enumValue = null;
 
@@ -603,7 +603,7 @@ namespace Revit.IFC.Export.Exporter
             try
             {
                // Not all entity types have enum values before IFC4.
-               theEnumType = Type.GetType(desireType, true, true);
+               theEnumType = Type.GetType(desiredType, true, true);
             }
             catch
             {
