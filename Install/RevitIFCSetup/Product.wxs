@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
-  <Product Id="*" Name="Revit IFC 2017" Language="1033" Version="17.4.4.0" Manufacturer="Autodesk" UpgradeCode="5559280E-E7F0-4C92-ACF0-927D5BCEC71F">
+  <Product Id="*" Name="Revit IFC 2017" Language="1033" Version="17.4.5.0" Manufacturer="Autodesk" UpgradeCode="5559280E-E7F0-4C92-ACF0-927D5BCEC71F">
     <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
@@ -87,6 +87,9 @@
       </Component>-->
       <Component Id = "COMP_IFC_ExternalUI_DLL" Guid="D7F89B58-029F-4062-B226-6F3D2EB7FE5D">
         <File Id ="FILE_Ifc_ExternalUI_DLL" Name="IFCExportUIOverride.dll" Source="$(var.IFCExporterUIOverride.TargetDir)IFCExportUIOverride.dll" KeyPath="yes" />
+      </Component>
+      <Component Id = "COMP_UserInterfaceUtility" Guid="1C11FFB0-45ED-4735-97AE-A823B708B548">
+        <File Id ="FILE_UserInterfaceUtility_DLL" Name="UserInterfaceUtility.dll" Source="$(var.IFCExporterUIOverride.TargetDir)UserInterfaceUtility.dll" KeyPath="yes" />
       </Component>
       <!--<Component Id = "COMP_UserInterfaceUtility_DLL" Guid="9D697BF6-A30F-4ABE-8D18-D71846C68065">
         <File Id ="FILE_UserInterfaceUtility_DLL" Name="UserInterfaceUtility.dll" Source="$(var.ProjectDir)..\..\..\..\..\..\ReleaseX64\UserInterfaceUtility.dll" KeyPath="yes" />
