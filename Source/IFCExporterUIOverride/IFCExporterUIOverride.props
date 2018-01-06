@@ -42,7 +42,7 @@
      <Reference Include="UserInterfaceUtility">
       <SpecificVersion>False</SpecificVersion>
     <!-- Change to your directory of Revit installation. -->
-      <HintPath>C:\Program Files\Autodesk\Revit 2017\UserInterfaceUtility.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\Revit 2017\AddIns\IFCExporterUI\UserInterfaceUtility.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>  
