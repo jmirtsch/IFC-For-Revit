@@ -2538,7 +2538,8 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandle building = CreateInstance(file, IFCEntityType.IfcBuilding);
          IFCAnyHandleUtil.SetAttribute(building, "ElevationOfRefHeight", elevationOfRefHeight);
          IFCAnyHandleUtil.SetAttribute(building, "ElevationOfTerrain", elevationOfTerrain);
-         IFCAnyHandleUtil.SetAttribute(building, "BuildingAddress", buildingAddress);
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(buildingAddress))
+            IFCAnyHandleUtil.SetAttribute(building, "BuildingAddress", buildingAddress);
          SetSpatialStructureElement(building, guid, ownerHistory, name, description, objectType, objectPlacement, representation, longName, compositionType);
          return building;
       }
@@ -8464,7 +8465,8 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandleUtil.SetAttribute(site, "RefLongitude", longitude);
          IFCAnyHandleUtil.SetAttribute(site, "RefElevation", elevation);
          IFCAnyHandleUtil.SetAttribute(site, "LandTitleNumber", landTitleNumber);
-         IFCAnyHandleUtil.SetAttribute(site, "SiteAddress", address);
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(address))
+            IFCAnyHandleUtil.SetAttribute(site, "SiteAddress", address);
          SetSpatialStructureElement(site, guid, ownerHistory, name, description, objectType, objectPlacement, representation, longName, compositionType);
          return site;
       }

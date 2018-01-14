@@ -247,8 +247,14 @@ namespace Revit.IFC.Export.Exporter
 
             if (exportSite)
             {
+               bool assignToBldg = false;
+               bool assignToSite = false;
+               IFCAnyHandle address = Exporter.CreateIFCAddress(file, doc, projectInfo, out assignToBldg, out assignToSite);
+               if (!assignToSite)
+                  address = null;
+
                siteHandle = IFCInstanceExporter.CreateSite(file, siteGUID, ownerHistory, siteName, siteDescription, siteObjectType, localPlacement,
-                  siteRepresentation, siteLongName, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, siteLandTitleNumber, null);
+                  siteRepresentation, siteLongName, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, siteLandTitleNumber, address);
                productWrapper.AddSite(mainSiteElement, siteHandle);
                ExporterCacheManager.SiteHandle = siteHandle;
             }
