@@ -72,8 +72,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
         public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
         {
             double vol = 0;
-            GeometryElement geomElem = element.get_Geometry(GeometryUtil.GetIFCExportGeometryOptions());
-            SolidMeshGeometryInfo geomInfo = GeometryUtil.GetSolidMeshGeometry(geomElem, Transform.Identity);
+            SolidMeshGeometryInfo geomInfo = GeometryUtil.GetSolidMeshGeometry(element);
             if (geomInfo.SolidsCount() > 0)
             {
                for (int ii = 0; ii <geomInfo.SolidsCount(); ++ii)

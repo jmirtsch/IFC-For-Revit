@@ -429,6 +429,18 @@ namespace Revit.IFC.Export.Utility
       }
 
       /// <summary>
+      /// Collects all solids and meshes within a GeometryElement, given the input the Element
+      /// </summary>
+      /// <param name="element">the Element</param>
+      /// <returns>SolidMeshGeometryInfo</returns>
+      public static SolidMeshGeometryInfo GetSolidMeshGeometry(Element element)
+      {
+         Options options = GetIFCExportGeometryOptions();
+         GeometryElement geomElem = element.get_Geometry(options);
+         return GetSolidMeshGeometry(geomElem, Transform.Identity);
+      }
+
+      /// <summary>
       /// Collects all meshes within a GeometryElement and all solids clipped between a given IFCRange.
       /// </summary>
       /// <remarks>

@@ -1921,6 +1921,32 @@ namespace Revit.IFC.Export.Exporter
          Document document = element.Document;
          IList<IFCAnyHandle> polygonalFaceSetList = null;
 
+         Color matColor = null;
+         Color surfPatternColor = null;
+         Color cutPatternColor = null;
+         double? opacity = null;
+         CategoryUtil.GetElementColorAndTransparency(element, out matColor, out surfPatternColor, out cutPatternColor, out opacity);
+         if (opacity == null || !opacity.HasValue)
+            opacity = 1.0;
+
+         IFCAnyHandle ifcColourRgbList = null;
+
+         // For now we will only support a single color for the tessellation since there is no good way to associate the face and the color
+         if (matColor != null)
+         {
+            ifcColourRgbList = ColourRgbListFromColor(file, matColor);
+         }
+         else if (surfPatternColor != null)
+         {
+            ifcColourRgbList = ColourRgbListFromColor(file, surfPatternColor);
+         }
+         else if (cutPatternColor != null)
+         {
+            ifcColourRgbList = ColourRgbListFromColor(file, cutPatternColor);
+         }
+
+         IList<int> colourIndex = new List<int>();
+
          if (geomObject is Solid)
          {
             try
@@ -1992,7 +2018,13 @@ namespace Revit.IFC.Export.Exporter
 
                   IFCAnyHandle coordinatesHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, coordList);
                   IFCAnyHandle polygonalFaceSet = IFCInstanceExporter.CreatePolygonalFaceSet(file, coordinatesHnd, true, Faces, null);
-
+                  for (int faceCnt=0; faceCnt<Faces.Count; ++faceCnt)
+                  {
+                     colourIndex.Add(1);     // Currently each face will refer to just a single color in ColourRgbList
+                  }
+                  if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ifcColourRgbList))
+                     IFCInstanceExporter.CreateIndexedColourMap(file, polygonalFaceSet, opacity, ifcColourRgbList, colourIndex);
+                  
                   if (polygonalFaceSetList == null)
                      polygonalFaceSetList = new List<IFCAnyHandle>();
                   polygonalFaceSetList.Add(polygonalFaceSet);
@@ -2033,7 +2065,38 @@ namespace Revit.IFC.Export.Exporter
          IFCFile file = exporterIFC.GetFile();
          Document document = element.Document;
 
+         ICollection<ElementId> matIdsPaintedFaces = element.GetMaterialIds(true);
+         ICollection<ElementId> matIds = element.GetMaterialIds(false);
+         ElementId materialId = ElementId.InvalidElementId;
+         ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.MATERIAL_ID_PARAM, out materialId);
+
          IList<IFCAnyHandle> triangulatedBodyList = new List<IFCAnyHandle>();
+
+         Color matColor = null;
+         Color surfPatternColor = null;
+         Color cutPatternColor = null;
+         double? opacity = null;
+         CategoryUtil.GetElementColorAndTransparency(element, out matColor, out surfPatternColor, out cutPatternColor, out opacity);
+         if (opacity == null || !opacity.HasValue)
+            opacity = 1.0;
+
+         IFCAnyHandle ifcColourRgbList = null;
+
+         // For now we will only support a single color for the tessellation since there is no good way to associate the face and the color
+         if (matColor != null)
+         {
+            ifcColourRgbList = ColourRgbListFromColor(file, matColor);
+         }
+         else if (surfPatternColor != null)
+         {
+            ifcColourRgbList = ColourRgbListFromColor(file, surfPatternColor);
+         }
+         else if (cutPatternColor != null)
+         {
+            ifcColourRgbList = ColourRgbListFromColor(file, cutPatternColor);
+         }
+
+         IList<int> colourIndex = new List<int>();
 
          if (geomObject is Solid)
          {
@@ -2101,6 +2164,13 @@ namespace Revit.IFC.Export.Exporter
                      IFCAnyHandleUtil.SetAttribute(triangulatedBody, "Coordinates", coordPointLists);
                      IFCAnyHandleUtil.SetAttribute(triangulatedBody, "CoordIndex", coordIdx, 1, null, 3, 3);
 
+                     for (int faceCnt = 0; faceCnt < numberOfTriangles; ++faceCnt)
+                     {
+                        colourIndex.Add(1);     // Currently each face will refer to just a single color in ColourRgbList
+                     }
+                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ifcColourRgbList))
+                        IFCInstanceExporter.CreateIndexedColourMap(file, triangulatedBody, opacity, ifcColourRgbList, colourIndex);
+
                      triangulatedBodyList.Add(triangulatedBody);
                   }
                }
@@ -2165,6 +2235,32 @@ namespace Revit.IFC.Export.Exporter
       {
          IFCFile file = exporterIFC.GetFile();
 
+         Color matColor = null;
+         Color surfPatternColor = null;
+         Color cutPatternColor = null;
+         double? opacity = null;
+         CategoryUtil.GetElementColorAndTransparency(element, out matColor, out surfPatternColor, out cutPatternColor, out opacity);
+         if (opacity == null || !opacity.HasValue)
+            opacity = 1.0;
+
+         IFCAnyHandle ifcColourRgbList = null;
+
+         // For now we will only support a single color for the tessellation since there is no good way to associate the face and the color
+         if (matColor != null)
+         {
+            ifcColourRgbList = ColourRgbListFromColor(file, matColor);
+         }
+         else if (surfPatternColor != null)
+         {
+            ifcColourRgbList = ColourRgbListFromColor(file, surfPatternColor);
+         }
+         else if (cutPatternColor != null)
+         {
+            ifcColourRgbList = ColourRgbListFromColor(file, cutPatternColor);
+         }
+
+         IList<int> colourIndex = new List<int>();
+
          List<List<XYZ>> triangleList = new List<List<XYZ>>();
 
          if (geomObject is Solid)
@@ -2192,7 +2288,15 @@ namespace Revit.IFC.Export.Exporter
                }
             }
          }
-         return GeometryUtil.GetIndexedTriangles(file, triangleList);
+         IFCAnyHandle indexedTriangles = GeometryUtil.GetIndexedTriangles(file, triangleList);
+         for (int faceCnt = 0; faceCnt < triangleList.Count; ++faceCnt)
+         {
+            colourIndex.Add(1);     // Currently each face will refer to just a single color in ColourRgbList
+         }
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ifcColourRgbList))
+            IFCInstanceExporter.CreateIndexedColourMap(file, indexedTriangles, opacity, ifcColourRgbList, colourIndex);
+
+         return indexedTriangles;
       }
 
       private static bool AreTessellationControlsEqual(SolidOrShellTessellationControls first, SolidOrShellTessellationControls second)
@@ -3504,6 +3608,17 @@ namespace Revit.IFC.Export.Exporter
             triangleList.Add(triangleVertices);
          }
          return triangleList;
+      }
+
+      static IFCAnyHandle ColourRgbListFromColor (IFCFile file, Color matColor)
+      {
+         double blueVal = matColor.Blue / 255.0;
+         double greenVal = matColor.Green / 255.0;
+         double redVal = matColor.Red / 255.0;
+         IList<IList<double>> colourRgbList = new List<IList<double>>();
+         IList<double> rgbVal = new List<double>() { redVal, greenVal, blueVal };
+         colourRgbList.Add(rgbVal);
+         return IFCInstanceExporter.CreateColourRgbList(file, colourRgbList);
       }
    }
 }

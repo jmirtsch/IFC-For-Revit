@@ -93,7 +93,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
             else
                m_Length = extrusionCreationData.ScaledLength;
 
-         if (m_Length > MathUtil.Eps())
+            if (m_Length > MathUtil.Eps())
                return true;
             else
             {
