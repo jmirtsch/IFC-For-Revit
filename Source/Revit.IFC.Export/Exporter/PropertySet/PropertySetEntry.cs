@@ -202,57 +202,213 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// Mass Density
       /// </summary>
       MassDensity,
+      /// <summary>
+      /// Reference to IfcPerson instance
+      /// </summary>
       IfcPerson,
+      /// <summary>
+      ///  Ifc TimeSeries
+      /// </summary>
       IfcTimeSeries,
+      /// <summary>
+      /// Torque
+      /// </summary>
       Torque,
+      /// <summary>
+      /// Reference to IfcMaterial instance
+      /// </summary>
       IfcMaterial,
+      /// <summary>
+      ///  Mass
+      /// </summary>
       Mass,
+      /// <summary>
+      ///  Sound power
+      /// </summary>
       SoundPower,
+      /// <summary>
+      ///  Time
+      /// </summary>
       Time,
+      /// <summary>
+      ///  Local time
+      /// </summary>
       LocalTime,
+      /// <summary>
+      ///  Energy
+      /// </summary>
       Energy,
+      /// <summary>
+      ///  Planar force
+      /// </summary>
       PlanarForce,
+      /// <summary>
+      ///  Monetary
+      /// </summary>
       Monetary,
+      /// <summary>
+      /// Thermal conductivity
+      /// </summary>
       ThermalConductivity,
+      /// <summary>
+      /// Electric current
+      /// </summary>
       ElectricCurrent,
+      /// <summary>
+      ///  Electric voltage
+      /// </summary>
       ElectricVoltage,
+      /// <summary>
+      ///  Reference to IfcMaterialDefinition instance
+      /// </summary>
       IfcMaterialDefinition,
+      /// <summary>
+      /// Rotational frequency
+      /// </summary>
       RotationalFrequency,
+      /// <summary>
+      ///  Area Density
+      /// </summary>
       AreaDensity,
+      /// <summary>
+      ///  Date
+      /// </summary>
       Date,
+      /// <summary>
+      /// Reference to IfcExternalReference instance
+      /// </summary>
       IfcExternalReference,
+      /// <summary>
+      ///  Mass Flowrate
+      /// </summary>
       MassFlowRate,
+      /// <summary>
+      /// Ekectric resistance
+      /// </summary>
       ElectricResistance,
+      /// <summary>
+      /// Mass per length
+      /// </summary>
       MassPerLength,
+      /// <summary>
+      /// Ifc calendar date
+      /// </summary>
       IfcCalendarDate,
+      /// <summary>
+      /// Refernece to IfcOrganization instance
+      /// </summary>
       IfcOrganization,
+      /// <summary>
+      /// Specific heat capacity
+      /// </summary>
       SpecificHeatCapacity,
+      /// <summary>
+      /// Molecular weight
+      /// </summary>
       MolecularWeight,
+      /// <summary>
+      /// Heating value
+      /// </summary>
       HeatingValue,
+      /// <summary>
+      /// IsothermalMoistureCapacity
+      /// </summary>
       IsothermalMoistureCapacity,
+      /// <summary>
+      /// Vapor permeability
+      /// </summary>
       VaporPermeability,
+      /// <summary>
+      /// Moisture diffusivity
+      /// </summary>
       MoistureDiffusivity,
+      /// <summary>
+      /// Dynamic viscousity
+      /// </summary>
       DynamicViscosity,
+      /// <summary>
+      /// Modulus of Elasticity
+      /// </summary>
       ModulusOfElasticity,
+      /// <summary>
+      /// Thermal expansion coefficient
+      /// </summary>
       ThermalExpansionCoefficient,
+      /// <summary>
+      ///  Ion concentration
+      /// </summary>
       IonConcentration,
+      /// <summary>
+      /// PH
+      /// </summary>
       PH,
+      /// <summary>
+      /// Date-time
+      /// </summary>
       DateTime,
+      /// <summary>
+      /// IfcDateAndTime
+      /// </summary>
       IfcDateAndTime,
+      /// <summary>
+      /// IfcLocaltime
+      /// </summary>
       IfcLocalTime,
+      /// <summary>
+      /// Refernece to IfcClassificationReference instance
+      /// </summary>
       IfcClassificationReference,
+      /// <summary>
+      /// Non-negative length
+      /// </summary>
       NonNegativeLength,
+      /// <summary>
+      /// Moment of inertia
+      /// </summary>
       MomentOfInertia,
+      /// <summary>
+      /// Warping constant
+      /// </summary>
       WarpingConstant,
+      /// <summary>
+      /// Section modulus
+      /// </summary>
       SectionModulus,
+      /// <summary>
+      /// Duration
+      /// </summary>
       Duration,
+      /// <summary>
+      /// Electric conductance
+      /// </summary>
       ElectricConductance,
+      /// <summary>
+      /// Temperature rate of change
+      /// </summary>
       TemperatureRateOfChange,
+      /// <summary>
+      /// Radioactivity
+      /// </summary>
       RadioActivity,
+      /// <summary>
+      /// Sound pressure
+      /// </summary>
       SoundPressure,
+      /// <summary>
+      /// HeatFlux density
+      /// </summary>
       HeatFluxDensity,
+      /// <summary>
+      /// Conplex number
+      /// </summary>
       ComplexNumber,
+      /// <summary>
+      /// Thermal resistance
+      /// </summary>
       ThermalResistance,
+      /// <summary>
+      /// Numeric
+      /// </summary>
       Numeric,
    }
 
@@ -1148,6 +1304,63 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                {
                   propHnd = PropertyUtil.CreateLinearVelocityPropertyFromElementOrSymbol(file, exporterIFC, element, revitParamNameToUse,
                       ifcPropertyName, valueType);
+                  break;
+               }
+            case PropertyType.IfcTimeSeries:
+            case PropertyType.Torque:
+            case PropertyType.Mass:
+            case PropertyType.SoundPower:
+            case PropertyType.Time:
+            case PropertyType.LocalTime:
+            case PropertyType.Energy:
+            case PropertyType.PlanarForce:
+            case PropertyType.Monetary:
+            case PropertyType.ThermalConductivity:
+            case PropertyType.ElectricCurrent:
+            case PropertyType.ElectricVoltage:
+            case PropertyType.RotationalFrequency:
+            case PropertyType.AreaDensity:
+            case PropertyType.Date:
+            case PropertyType.MassFlowRate:
+            case PropertyType.ElectricResistance:
+            case PropertyType.MassPerLength:
+            case PropertyType.IfcCalendarDate:
+            case PropertyType.SpecificHeatCapacity:
+            case PropertyType.MolecularWeight:
+            case PropertyType.HeatingValue:
+            case PropertyType.IsothermalMoistureCapacity:
+            case PropertyType.VaporPermeability:
+            case PropertyType.MoistureDiffusivity:
+            case PropertyType.DynamicViscosity:
+            case PropertyType.ModulusOfElasticity:
+            case PropertyType.ThermalExpansionCoefficient:
+            case PropertyType.IonConcentration:
+            case PropertyType.PH:
+            case PropertyType.DateTime:
+            case PropertyType.IfcDateAndTime:
+            case PropertyType.IfcLocalTime:
+            case PropertyType.NonNegativeLength:
+            case PropertyType.MomentOfInertia:
+            case PropertyType.WarpingConstant:
+            case PropertyType.SectionModulus:
+            case PropertyType.Duration:
+            case PropertyType.ElectricConductance:
+            case PropertyType.TemperatureRateOfChange:
+            case PropertyType.RadioActivity:
+            case PropertyType.SoundPressure:
+            case PropertyType.HeatFluxDensity:
+            case PropertyType.ComplexNumber:
+            case PropertyType.ThermalResistance:
+            case PropertyType.Numeric:
+            case PropertyType.IfcPerson:
+            case PropertyType.IfcMaterial:
+            case PropertyType.IfcMaterialDefinition:
+            case PropertyType.IfcExternalReference:
+            case PropertyType.IfcOrganization:
+            case PropertyType.IfcClassificationReference:
+               {
+                  // TODO: Not supported currently
+                  propHnd = null;
                   break;
                }
             default:

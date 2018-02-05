@@ -2022,7 +2022,7 @@ namespace Revit.IFC.Export.Exporter
                   {
                      colourIndex.Add(1);     // Currently each face will refer to just a single color in ColourRgbList
                   }
-                  if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ifcColourRgbList))
+                  if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ifcColourRgbList) && !IFCAnyHandleUtil.IsNullOrHasNoValue(polygonalFaceSet))
                      IFCInstanceExporter.CreateIndexedColourMap(file, polygonalFaceSet, opacity, ifcColourRgbList, colourIndex);
                   
                   if (polygonalFaceSetList == null)
@@ -2168,7 +2168,7 @@ namespace Revit.IFC.Export.Exporter
                      {
                         colourIndex.Add(1);     // Currently each face will refer to just a single color in ColourRgbList
                      }
-                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ifcColourRgbList))
+                     if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ifcColourRgbList) && !IFCAnyHandleUtil.IsNullOrHasNoValue(triangulatedBody))
                         IFCInstanceExporter.CreateIndexedColourMap(file, triangulatedBody, opacity, ifcColourRgbList, colourIndex);
 
                      triangulatedBodyList.Add(triangulatedBody);
@@ -2293,7 +2293,7 @@ namespace Revit.IFC.Export.Exporter
          {
             colourIndex.Add(1);     // Currently each face will refer to just a single color in ColourRgbList
          }
-         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ifcColourRgbList))
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ifcColourRgbList) && !IFCAnyHandleUtil.IsNullOrHasNoValue(indexedTriangles))
             IFCInstanceExporter.CreateIndexedColourMap(file, indexedTriangles, opacity, ifcColourRgbList, colourIndex);
 
          return indexedTriangles;

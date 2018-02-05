@@ -2536,7 +2536,7 @@ namespace Revit.IFC.Export.Utility
          if (coord1.Count != coord2.Count)
             return false;     // Cannot compare lists of different number of members
 
-         for (int ii=0; ii<coord1.Count; ++ii)
+         for (int ii = 0; ii < coord1.Count; ++ii)
          {
             isAlmostEqual &= MathUtil.IsAlmostEqual(coord1[ii], coord2[ii]);
          }
@@ -2549,12 +2549,77 @@ namespace Revit.IFC.Export.Utility
          if (reverse)
             segmentIndex.Reverse();
 
-         for (int ii=0; ii<segmentIndex.Count; ++ii)
+         for (int ii = 0; ii < segmentIndex.Count; ++ii)
          {
             segmentIndex[ii] = segmentIndex[ii] + offsetIndex;
          }
       }
 
+      /// <summary>
+      /// Create IFC4 IfcIndexedPolyCurve from Revit Curve
+      /// </summary>
+      /// <param name="exporterIFC">the ExporterIFC</param>
+      /// <param name="curve">the Revit curve</param>
+      /// <param name="lcs">Transform for the LCS (default=null)</param>
+      /// <param name="projectDir">Projection direction (default=null)</param>
+      /// <returns>IFCAnyHandle for the created IfcIndexedPolyCurve</returns>
+      public static IFCAnyHandle CreatePolyCurveFromCurve(ExporterIFC exporterIFC, Curve curve, Transform lcs = null, XYZ projectDir = null)
+      {
+         IList<int> segmentIndex = null;
+         IList<IList<double>> pointList = GeometryUtil.PointListFromCurve(exporterIFC, curve, lcs, projectDir, out segmentIndex);
+
+         // For now because of no support in creating IfcLineIndex and IfcArcIndex yet, it is set to null
+         //IList<IList<int>> segmentIndexList = new List<IList<int>>();
+         //segmentIndexList.Add(segmentIndex);
+         IList<IList<int>> segmentIndexList = null;
+
+         IFCFile file = exporterIFC.GetFile();
+         IFCAnyHandle pointListHnd;
+         if (Is2DPointList(ref pointList))
+            pointListHnd = IFCInstanceExporter.CreateCartesianPointList2D(file, pointList);
+         else
+            pointListHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, pointList);
+         IFCAnyHandle curveHnd = IFCInstanceExporter.CreateIndexedPolyCurve(file, pointListHnd, segmentIndexList, false);
+
+         return curveHnd;
+      }
+
+      static bool Is2DPointList(ref IList<IList<double>> pointList)
+      {
+         bool contains2DPoint = false;
+         bool contains3DPoint = false;
+
+         foreach (IList<double> pointCoord in pointList)
+         {
+            if (pointCoord.Count == 2)
+               contains2DPoint |= true;
+            else if (pointCoord.Count == 3)
+               contains3DPoint |= true;
+            else
+               throw (new ArgumentOutOfRangeException("pointList", "Only 2D or 3D point coordinates are valid!"));
+         }
+         if (contains2DPoint && contains3DPoint)
+         {
+            // Something is not right because of a mix of 2D and 3D coordinates. It will normalize below and discard the 3rd ordinate of 3D coordinates to 2D
+            for (int ii=0; ii<pointList.Count; ++ii)
+            {
+               if (pointList[ii].Count == 3)
+                  pointList[ii].RemoveAt(2);
+            }
+         }
+
+         return contains2DPoint;
+      }
+
+      /// <summary>
+      /// Create IFC4 IfcIndexedPolyCurve from Revit CurveLoop
+      /// </summary>
+      /// <param name="exporterIFC">the exporterIFC</param>
+      /// <param name="curveLoop">Revit CurveLoop</param>
+      /// <param name="lcs">Transform for the LCS</param>
+      /// <param name="projectDir">Projection direction</param>
+      /// <param name="indexedPolyCurve">Output IFCAnyHandle for the IfcIndexedPolyCurve</param>
+      /// <returns>return true/false</returns>
       public static bool CreatePolyCurveFromCurveLoop(ExporterIFC exporterIFC, CurveLoop curveLoop, Transform lcs, XYZ projectDir, out IFCAnyHandle indexedPolyCurve)
       {
          IFCFile file = exporterIFC.GetFile();

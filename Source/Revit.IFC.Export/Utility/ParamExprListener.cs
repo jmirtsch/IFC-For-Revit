@@ -382,7 +382,7 @@ namespace Revit.IFC.Export.Utility
             ParamExprGrammarParser.RealliteralContext realCtx = context.GetChild(0) as ParamExprGrammarParser.RealliteralContext;
             if (realCtx.UNITTYPEENUM() != null)
             {
-               hasUnit = Enum.TryParse<UnitType>(realCtx.UNITTYPEENUM().GetText(), out convertUnit);
+               hasUnit = Enum.TryParse<UnitType>(realCtx.UNITTYPEENUM().GetText(), true, out convertUnit);
             }
 
             valueStr = realCtx.signed_number().GetText();

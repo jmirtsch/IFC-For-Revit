@@ -752,16 +752,17 @@ namespace Revit.IFC.Export.Exporter
 
                               Curve curve = gObj as Curve;
 
-                              IList<int> segmentIndex = null;
-                              IList<IList<double>> pointList = GeometryUtil.PointListFromCurve(exporterIFC, curve, null, null, out segmentIndex);
+                              IFCAnyHandle curveHnd = GeometryUtil.CreatePolyCurveFromCurve(exporterIFC, curve);
+                              //IList<int> segmentIndex = null;
+                              //IList<IList<double>> pointList = GeometryUtil.PointListFromCurve(exporterIFC, curve, null, null, out segmentIndex);
 
-                              // For now because of no support in creating IfcLineIndex and IfcArcIndex yet, it is set to null
-                              //IList<IList<int>> segmentIndexList = new List<IList<int>>();
-                              //segmentIndexList.Add(segmentIndex);
-                              IList<IList<int>> segmentIndexList = null;
+                              //// For now because of no support in creating IfcLineIndex and IfcArcIndex yet, it is set to null
+                              ////IList<IList<int>> segmentIndexList = new List<IList<int>>();
+                              ////segmentIndexList.Add(segmentIndex);
+                              //IList<IList<int>> segmentIndexList = null;
 
-                              IFCAnyHandle pointListHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, pointList);
-                              IFCAnyHandle curveHnd = IFCInstanceExporter.CreateIndexedPolyCurve(file, pointListHnd, segmentIndexList, false);
+                              //IFCAnyHandle pointListHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, pointList);
+                              //IFCAnyHandle curveHnd = IFCInstanceExporter.CreateIndexedPolyCurve(file, pointListHnd, segmentIndexList, false);
                               if (curveSet == null)
                                  curveSet = new HashSet<IFCAnyHandle>();
                               if (!IFCAnyHandleUtil.IsNullOrHasNoValue(curveHnd))

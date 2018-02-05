@@ -324,13 +324,21 @@ namespace Revit.IFC.Export.Exporter
 
             // Get the handle of curve.
             XYZ projectionDirection = lcs.BasisZ;
-            IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, lcs, projectionDirection, false);
-            ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, grid.Curve, XYZ.Zero, false);
-            IList<IFCAnyHandle> curves = info.GetCurves();
-            if (curves.Count != 1)
-               throw new Exception("IFC: expected 1 curve when export curve element.");
+            IFCAnyHandle axisCurve;
+            if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+            {
+               axisCurve = GeometryUtil.CreatePolyCurveFromCurve(exporterIFC, grid.Curve, lcs, projectionDirection);
+            }
+            else
+            {
+               IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, lcs, projectionDirection, false);
+               ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, grid.Curve, XYZ.Zero, false);
+               IList<IFCAnyHandle> curves = info.GetCurves();
+               if (curves.Count != 1)
+                  throw new Exception("IFC: expected 1 curve when export curve element.");
 
-            IFCAnyHandle axisCurve = curves[0];
+               axisCurve = curves[0];
+            }
 
             bool sameSense = true;
             if (baseGrid.Curve is Line)
@@ -360,16 +368,19 @@ namespace Revit.IFC.Export.Exporter
                curveWidth = IFCDataUtil.CreateAsPositiveLengthMeasure(width);
             }
 
-            int outColor;
-            int color =
-                (ParameterUtil.GetIntValueFromElement(gridType, BuiltInParameter.GRID_END_SEGMENT_COLOR, out outColor) != null) ? outColor : 0;
-            double blueVal = 0.0;
-            double greenVal = 0.0;
-            double redVal = 0.0;
-            GeometryUtil.GetRGBFromIntValue(color, out blueVal, out greenVal, out redVal);
-            IFCAnyHandle colorHnd = IFCInstanceExporter.CreateColourRgb(ifcFile, null, redVal, greenVal, blueVal);
+            if (!ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+            {
+               int outColor;
+               int color =
+                   (ParameterUtil.GetIntValueFromElement(gridType, BuiltInParameter.GRID_END_SEGMENT_COLOR, out outColor) != null) ? outColor : 0;
+               double blueVal = 0.0;
+               double greenVal = 0.0;
+               double redVal = 0.0;
+               GeometryUtil.GetRGBFromIntValue(color, out blueVal, out greenVal, out redVal);
+               IFCAnyHandle colorHnd = IFCInstanceExporter.CreateColourRgb(ifcFile, null, redVal, greenVal, blueVal);
 
-            BodyExporter.CreateCurveStyleForRepItem(exporterIFC, repItemHnd, curveWidth, colorHnd);
+               BodyExporter.CreateCurveStyleForRepItem(exporterIFC, repItemHnd, curveWidth, colorHnd);
+            }
 
             HashSet<IFCAnyHandle> curveSet = new HashSet<IFCAnyHandle>();
             curveSet.Add(repItemHnd);

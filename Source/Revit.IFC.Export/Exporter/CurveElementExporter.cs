@@ -147,17 +147,17 @@ namespace Revit.IFC.Export.Exporter
                   }
 
                   Curve curve = (geometryElement as GeometryObject) as Curve;
+                  IFCAnyHandle curveHnd = GeometryUtil.CreatePolyCurveFromCurve(exporterIFC, curve, trf);
+                  //IList<int> segmentIndex = null;
+                  //IList<IList<double>> pointList = GeometryUtil.PointListFromCurve(exporterIFC, curve, trf, null, out segmentIndex);
 
-                  IList<int> segmentIndex = null;
-                  IList<IList<double>> pointList = GeometryUtil.PointListFromCurve(exporterIFC, curve, trf, null, out segmentIndex);
+                  //// For now because of no support in creating IfcLineIndex and IfcArcIndex yet, it is set to null
+                  ////IList<IList<int>> segmentIndexList = new List<IList<int>>();
+                  ////segmentIndexList.Add(segmentIndex);
+                  //IList<IList<int>> segmentIndexList = null;
 
-                  // For now because of no support in creating IfcLineIndex and IfcArcIndex yet, it is set to null
-                  //IList<IList<int>> segmentIndexList = new List<IList<int>>();
-                  //segmentIndexList.Add(segmentIndex);
-                  IList<IList<int>> segmentIndexList = null;
-
-                  IFCAnyHandle pointListHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, pointList);
-                  IFCAnyHandle curveHnd = IFCInstanceExporter.CreateIndexedPolyCurve(file, pointListHnd, segmentIndexList, false);
+                  //IFCAnyHandle pointListHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, pointList);
+                  //IFCAnyHandle curveHnd = IFCInstanceExporter.CreateIndexedPolyCurve(file, pointListHnd, segmentIndexList, false);
                   curves = new List<IFCAnyHandle>();
                   if (!IFCAnyHandleUtil.IsNullOrHasNoValue(curveHnd))
                      curves.Add(curveHnd);
