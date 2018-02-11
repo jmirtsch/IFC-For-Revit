@@ -3742,7 +3742,7 @@ namespace Revit.IFC.Export.Utility
             // For IFC4 RV, only IfcIndexedPolyCurve can be created, use CreateIFCCurveFromCurveLoop to create the IFC curve and use the default/identity transform for it
             IFCAnyHandle curveHandle = null;
             if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
-               curveHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, faceBoundaries[0], Transform.Identity, XYZ.BasisZ);
+               curveHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, faceBoundaries[0], Transform.Identity, faceBoundaries[0].GetPlane().Normal);
             else
                curveHandle = CreateCompositeCurve(exporterIFC, faceBoundaries[0].ToList());
 
@@ -3757,7 +3757,7 @@ namespace Revit.IFC.Export.Utility
                {
                   IFCAnyHandle innerCurveHandle = null;
                   if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
-                     innerCurveHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, faceBoundaries[ii], Transform.Identity, XYZ.BasisZ);
+                     innerCurveHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, faceBoundaries[ii], Transform.Identity, faceBoundaries[ii].GetPlane().Normal);
                   else
                      innerCurveHandle = CreateCompositeCurve(exporterIFC, faceBoundaries[ii].ToList());
 
@@ -3798,7 +3798,14 @@ namespace Revit.IFC.Export.Utility
             // What if there are multiple materials or multiple profiles in the family??
             IFCAnyHandle compCurveHandle = null;
             if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
-               compCurveHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, CurveLoop.Create(profileCurves), Transform.Identity, XYZ.BasisZ);
+            {
+               CurveLoop curveloop = CurveLoop.Create(profileCurves);
+               XYZ projDir = XYZ.BasisZ;
+               if (curveloop.HasPlane())
+                  projDir = curveloop.GetPlane().Normal;
+
+               compCurveHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, curveloop, Transform.Identity, projDir);
+            }
             else
                compCurveHandle = GeometryUtil.CreateCompositeCurve(exporterIFC, profileCurves);
 
