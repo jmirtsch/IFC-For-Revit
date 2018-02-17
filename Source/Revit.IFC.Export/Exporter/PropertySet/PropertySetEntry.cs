@@ -1079,10 +1079,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType, IFCAnyHandle handle)
       {
          IFCAnyHandle propHnd = null;
+         bool isType = IFCAnyHandleUtil.IsSubTypeOf(handle, IFCEntityType.IfcTypeObject);
 
          if (ParameterNameIsValid)
          {
-            propHnd = CreatePropertyFromElementOrSymbol(file, exporterIFC, element);
+            propHnd = CreatePropertyFromElementOrSymbol(file, exporterIFC, element, isType);
          }
 
          if (IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
@@ -1377,7 +1378,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <param name="exporterIFC">The ExporterIFC.</param>
       /// <param name="element">The element.</param>
       /// <returns>The property handle.</returns>
-      IFCAnyHandle CreatePropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element element)
+      IFCAnyHandle CreatePropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element element, bool isType)
       {
          PropertyType propertyType = PropertyType;
          PropertyValueType valueType = PropertyValueType;
@@ -1392,15 +1393,23 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          if (localizedRevitParameterName != null)
          {
             propHnd = PropertySetEntry.CreatePropertyFromElementOrSymbolBase(file, exporterIFC, element,
-                 localizedRevitParameterName, ifcPropertyName, BuiltInParameter.INVALID,
-                 propertyType, valueType, propertyEnumerationType);
+               localizedRevitParameterName, ifcPropertyName, BuiltInParameter.INVALID,
+               propertyType, valueType, propertyEnumerationType);
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd) && isType)
+               propHnd = PropertySetEntry.CreatePropertyFromElementOrSymbolBase(file, exporterIFC, element,
+                  localizedRevitParameterName + "[Type]", ifcPropertyName, BuiltInParameter.INVALID,
+                  propertyType, valueType, propertyEnumerationType);
          }
 
          if (IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
          {
             propHnd = PropertySetEntry.CreatePropertyFromElementOrSymbolBase(file, exporterIFC, element,
-                 revitParameterName, ifcPropertyName, RevitBuiltInParameter,
-                 propertyType, valueType, propertyEnumerationType);
+               revitParameterName, ifcPropertyName, RevitBuiltInParameter,
+               propertyType, valueType, propertyEnumerationType);
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd) && isType)
+               propHnd = PropertySetEntry.CreatePropertyFromElementOrSymbolBase(file, exporterIFC, element,
+                  revitParameterName + "[Type]", ifcPropertyName, RevitBuiltInParameter,
+                  propertyType, valueType, propertyEnumerationType);
          }
          return propHnd;
       }

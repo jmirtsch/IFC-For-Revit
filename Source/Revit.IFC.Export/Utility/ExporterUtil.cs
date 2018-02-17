@@ -964,10 +964,34 @@ namespace Revit.IFC.Export.Utility
       {
          List<PropertySetDescription> currPsetsToCreate = new List<PropertySetDescription>();
          IFCEntityType prodHndType = IFCAnyHandleUtil.GetEntityType(prodHnd);
+         string hndTypeStr = prodHndType.ToString();
+         IFCEntityType altProdHndType = IFCEntityType.UnKnown;
+
+         // PropertySetEntry will only have an information about IFC entity (or type) for the Pset definition but may not be both
+         // Here we will check for both and assign Pset to create equally for both Element or ElementType
+         if (IFCAnyHandleUtil.IsSubTypeOf(prodHnd, IFCEntityType.IfcObject))
+            Enum.TryParse<IFCEntityType>(hndTypeStr + "Type", out altProdHndType);
+         else if (IFCAnyHandleUtil.IsSubTypeOf(prodHnd, IFCEntityType.IfcTypeObject))
+            Enum.TryParse<IFCEntityType>(hndTypeStr.Substring(0, hndTypeStr.Length - 4), out altProdHndType);
+
          string predefinedType = null;
 
-         IList<PropertySetDescription> cachedPsets = null;
-         if (!ExporterCacheManager.PropertySetsForTypeCache.TryGetValue(prodHndType, out cachedPsets))
+         IList<PropertySetDescription> cachedPsets = null ;
+         ExporterCacheManager.PropertySetsForTypeCache.TryGetValue(prodHndType, out cachedPsets);
+         //if (altProdHndType != IFCEntityType.UnKnown)
+         //{
+         //   IList<PropertySetDescription> altCachedPsets = null;
+         //   ExporterCacheManager.PropertySetsForTypeCache.TryGetValue(altProdHndType, out altCachedPsets);
+         //   if (altCachedPsets != null && altCachedPsets.Count > 0)
+         //      foreach (PropertySetDescription psd in altCachedPsets)
+         //      {
+         //         if (cachedPsets == null)
+         //            cachedPsets = new List<PropertySetDescription>();
+         //         cachedPsets.Add(psd);
+         //      }
+         //}
+
+         if (cachedPsets == null || cachedPsets.Count == 0)
          {
             IList<PropertySetDescription> unconditionalPsetsToCreate = new List<PropertySetDescription>();
             IList<PropertySetDescription> conditionalPsetsToCreate = new List<PropertySetDescription>();
@@ -976,7 +1000,7 @@ namespace Revit.IFC.Export.Utility
             {
                foreach (PropertySetDescription currDesc in currStandard)
                {
-                  if (currDesc.IsAppropriateEntityType(prodHnd))
+                  if (currDesc.IsAppropriateEntityType(prodHnd) || currDesc.IsSubTypeOfEntityTypes(altProdHndType))
                   {
                      if (currDesc.IsAppropriateObjectType(prodHnd) && currDesc.IsAppropriatePredefinedType(prodHnd, predefinedType))
                         currPsetsToCreate.Add(currDesc);
