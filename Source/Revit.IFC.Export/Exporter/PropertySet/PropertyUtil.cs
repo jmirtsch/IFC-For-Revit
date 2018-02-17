@@ -193,13 +193,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateTextPropertyFromElementOrSymbol(file, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType,
-                propertyEnumerationType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateTextPropertyFromElementOrSymbol(file, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType,
+         //       propertyEnumerationType);
+         //else
             return null;
       }
 
@@ -1143,12 +1143,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateColorTemperaturePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateColorTemperaturePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -1179,12 +1179,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateElectricalEfficacyPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateElectricalEfficacyPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -1215,12 +1215,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateCurrencyPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateCurrencyPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -1251,12 +1251,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateThermodynamicTemperaturePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateThermodynamicTemperaturePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -1287,12 +1287,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateVolumetricFlowRatePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateVolumetricFlowRatePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -1537,12 +1537,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateClassificationReferencePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateClassificationReferencePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName);
+         //else
             return null;
       }
 
@@ -1573,12 +1573,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateForcePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateForcePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -1609,12 +1609,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreatePowerPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreatePowerPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -1645,12 +1645,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateMassDensityPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateMassDensityPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
       
@@ -1681,12 +1681,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateLuminousFluxMeasurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateLuminousFluxMeasurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -1717,12 +1717,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateLuminousIntensityPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateLuminousIntensityPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -1753,12 +1753,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateIlluminancePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateIlluminancePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -1789,12 +1789,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreatePressurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreatePressurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -1825,12 +1825,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateThermalTransmittancePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateThermalTransmittancePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -1887,13 +1887,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateLabelPropertyFromElementOrSymbol(file, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType,
-                propertyEnumerationType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateLabelPropertyFromElementOrSymbol(file, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType,
+         //       propertyEnumerationType);
+         //else
             return null;
       }
 
@@ -1945,12 +1945,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateIdentifierPropertyFromElementOrSymbol(file, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateIdentifierPropertyFromElementOrSymbol(file, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -1972,13 +1972,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          if (ParameterUtil.GetIntValueFromElement(elem, ifcPropertyName, out propertyValue) != null)
             return CreateBooleanPropertyFromCache(file, ifcPropertyName, propertyValue != 0, valueType);
 
-         // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateBooleanPropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
-         else
+         //// For Symbol
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateBooleanPropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -2000,15 +2000,15 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          {
             ifcLogical = propertyValue != 0 ? IFCLogical.True : IFCLogical.False;
          }
-         else
-         {
-            // For Symbol
-            Document document = elem.Document;
-            ElementId typeId = elem.GetTypeId();
-            Element elemType = document.GetElement(typeId);
-            if (elemType != null)
-               return CreateLogicalPropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
-         }
+         //else
+         //{
+         //   // For Symbol
+         //   Document document = elem.Document;
+         //   ElementId typeId = elem.GetTypeId();
+         //   Element elemType = document.GetElement(typeId);
+         //   if (elemType != null)
+         //      return CreateLogicalPropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
+         //}
 
          return CreateLogicalPropertyFromCache(file, ifcPropertyName, ifcLogical, valueType);
       }
@@ -2030,12 +2030,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             return CreateIntegerPropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateIntegerPropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateIntegerPropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -2056,12 +2056,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             return CreateRealPropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateRealPropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateRealPropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -2144,12 +2144,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             return propHnd;
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateLengthMeasurePropertyFromElement(file, exporterIFC, elemType, revitParameterName, builtInParamName, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateLengthMeasurePropertyFromElement(file, exporterIFC, elemType, revitParameterName, builtInParamName, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -2176,12 +2176,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             return propHnd;
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreatePositiveLengthMeasurePropertyFromElement(file, exporterIFC, elemType, revitParameterName, builtInParamName, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreatePositiveLengthMeasurePropertyFromElement(file, exporterIFC, elemType, revitParameterName, builtInParamName, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -2203,13 +2203,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             return CreateRatioMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType == null)
-            return null;
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType == null)
+         return null;
 
-         return CreateRatioPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, ifcPropertyName, valueType);
+         //return CreateRatioPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, ifcPropertyName, valueType);
       }
 
       /// <summary>
@@ -2232,13 +2232,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             return CreateNormalisedRatioMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType == null)
-            return null;
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType == null)
+         return null;
 
-         return CreateNormalisedRatioPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, ifcPropertyName, valueType);
+         //return CreateNormalisedRatioPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, ifcPropertyName, valueType);
       }
 
       private static IFCAnyHandle CreateLinearVelocityPropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
@@ -2297,13 +2297,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             return CreatePositiveRatioMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType == null)
-            return null;
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType == null)
+         return null;
 
-         return CreatePositiveRatioPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, ifcPropertyName, valueType);
+         //return CreatePositiveRatioPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, ifcPropertyName, valueType);
       }
 
       /// <summary>
@@ -2324,12 +2324,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             return CreatePlaneAngleMeasurePropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
          }
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreatePlaneAngleMeasurePropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreatePlaneAngleMeasurePropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -2426,12 +2426,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -2462,12 +2462,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateVolumeMeasurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateVolumeMeasurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 
@@ -2498,12 +2498,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          // For Symbol
-         Document document = elem.Document;
-         ElementId typeId = elem.GetTypeId();
-         Element elemType = document.GetElement(typeId);
-         if (elemType != null)
-            return CreateCountMeasurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-         else
+         //Document document = elem.Document;
+         //ElementId typeId = elem.GetTypeId();
+         //Element elemType = document.GetElement(typeId);
+         //if (elemType != null)
+         //   return CreateCountMeasurePropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         //else
             return null;
       }
 

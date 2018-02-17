@@ -36,7 +36,7 @@ namespace Revit.IFC.Export.Exporter
    /// </summary>
    class GridExporter
    {
-      public class TupleLevelIdElevComparer : IEqualityComparer<Tuple<ElementId, double>>
+      class TupleGridElevComparer : IEqualityComparer<Tuple<ElementId, double>>
       {
          public bool Equals(Tuple<ElementId, double> tup1, Tuple<ElementId, double> tup2)
          {
@@ -53,7 +53,6 @@ namespace Revit.IFC.Export.Exporter
             int intValFromDouble = (int)(tup.Item2 / MathUtil.Eps());
             int hashCode = tup.Item1.GetHashCode() ^ intValFromDouble.GetHashCode();
             return hashCode;
-            //return tup.GetHashCode();
          }
       }
 
@@ -428,6 +427,7 @@ namespace Revit.IFC.Export.Exporter
             currentLevel = currentView.GenLevel;
          }
          SortedDictionary<double,ElementId> levelIds = new SortedDictionary<double,ElementId>();
+         
          if (currentLevel != null)
          {
             levelIds.Add(currentLevel.Elevation, currentLevel.Id);
@@ -441,24 +441,9 @@ namespace Revit.IFC.Export.Exporter
             }
          }
 
-         ////IDictionary<ElementId, double> LevelHeightMap = new Dictionary<ElementId, double>();
-         //SortedDictionary<double, ElementId> levelHeightDict = new SortedDictionary<double, ElementId>();
-
-         //foreach (ElementId levelId in levelIds)
-         //{
-         //   IFCLevelInfo levelInfo = ExporterCacheManager.LevelInfoCache.GetLevelInfo(exporterIFC, levelId);
-         //   if (levelInfo == null)
-         //      continue;
-         //   if (!LevelHeightMap.ContainsKey(levelId))
-         //   {
-         //      LevelHeightMap.Add(levelId, levelInfo.Elevation);
-         //   }
-         //}
-
          double eps = MathUtil.Eps();
          // The Dictionary key is a tuple of the containing level id, and the elevation of the Grid
-         IEqualityComparer<Tuple<ElementId, double>> keyComparer = new TupleLevelIdElevComparer();
-         IDictionary<Tuple<ElementId,double>, List<Grid>> levelGrids = new Dictionary<Tuple<ElementId, double>, List<Grid>>(keyComparer);
+         IDictionary<Tuple<ElementId,double>, List<Grid>> levelGrids = new Dictionary<Tuple<ElementId, double>, List<Grid>>(new TupleGridElevComparer());
 
          // Group grids based on their elevation (the same elevation will be the same IfcGrid)
          foreach (Element element in ExporterCacheManager.GridCache)
@@ -467,19 +452,8 @@ namespace Revit.IFC.Export.Exporter
             XYZ minPoint = grid.GetExtents().MinimumPoint;
             XYZ maxPoint = grid.GetExtents().MaximumPoint;
 
-            //levelIds.Min((minPoint.Z);
-            //foreach (ElementId levelId in LevelHeightMap.Keys)
-            //{
-            //   if (minPoint.Z <= LevelHeightMap[levelId] + eps && LevelHeightMap[levelId] - eps <= maxPoint.Z)
-            //   {
-            //      if (!levelGrids.ContainsKey(levelId))
-            //         levelGrids.Add(levelId, new List<Grid>());
-            //      levelGrids[levelId].Add(grid);
-            //   }
-            //}
-
             // Find level where the Grid min point is at higher elevation but lower than the next level
-            KeyValuePair<double, ElementId> levelGrid = levelIds.Min();
+            KeyValuePair<double, ElementId> levelGrid = levelIds.First();
             foreach (KeyValuePair<double,ElementId> levelInfo in levelIds)
             {
                if (levelInfo.Key > minPoint.Z)
