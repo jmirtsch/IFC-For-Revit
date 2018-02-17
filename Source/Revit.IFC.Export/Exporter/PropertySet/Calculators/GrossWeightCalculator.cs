@@ -28,65 +28,68 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate gross weight.
-    /// </summary>
-    class GrossWeightCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Weight = 0;
-
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static GrossWeightCalculator s_Instance = new GrossWeightCalculator();
+   /// <summary>
+   /// A calculation class to calculate gross weight.
+   /// </summary>
+   class GrossWeightCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Weight = 0;
 
       /// <summary>
-      /// The GrossWeightCalculator instance.
+      /// A static instance of this class.
       /// </summary>
-      public static GrossWeightCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      static GrossWeightCalculator s_Instance = new GrossWeightCalculator();
 
-        /// <summary>
-        /// Calculates gross weight from parameter.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyGrossWeight", out m_Weight);
-            if (m_Weight < MathUtil.Eps())
-               return false;
-            else
-               return true;
-        }
+   /// <summary>
+   /// The GrossWeightCalculator instance.
+   /// </summary>
+   public static GrossWeightCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Weight;
-        }
-    }
+      /// <summary>
+      /// Calculates gross weight from parameter.
+      /// </summary>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="extrusionCreationData">
+      /// The IFCExtrusionCreationData.
+      /// </param>
+      /// <param name="element">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="elementType">
+      /// The element type.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyGrossWeight", out m_Weight) == null)
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcGrossWeight", out m_Weight) == null)
+               ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "GrossWeight", out m_Weight);
+
+         if (m_Weight > MathUtil.Eps())
+            return true;
+
+         return false;
+      }
+
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Weight;
+      }
+   }
 }

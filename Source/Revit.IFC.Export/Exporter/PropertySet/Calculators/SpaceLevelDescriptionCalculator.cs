@@ -23,52 +23,53 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    ///    The description calculator for the COBIE BaseQuantities from a spatial element
-    ///    to its associated level.
-    /// </summary>
-    class SpaceLevelDescriptionCalculator : DescriptionCalculator
-    {
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static SpaceLevelDescriptionCalculator s_Instance = new SpaceLevelDescriptionCalculator();
+   /// <summary>
+   ///    The description calculator for the COBIE BaseQuantities from a spatial element
+   ///    to its associated level.
+   /// </summary>
+   class SpaceLevelDescriptionCalculator : DescriptionCalculator
+   {
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static SpaceLevelDescriptionCalculator s_Instance = new SpaceLevelDescriptionCalculator();
 
-        /// <summary>
-        /// The SpaceLevelDescriptionCalculator instance.
-        /// </summary>
-        public static SpaceLevelDescriptionCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The SpaceLevelDescriptionCalculator instance.
+      /// </summary>
+      public static SpaceLevelDescriptionCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Finds the spatial element to its associated level.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        /// <returns>
-        /// The handle.
-        /// </returns>
-        public override IFCAnyHandle RedirectDescription(ExporterIFC exporterIFC, Element element)
-        {
-            SpatialElement spatialElem = element as SpatialElement;
-            if (spatialElem != null)
-            {
-                ElementId levelId = spatialElem.LevelId;
-                IFCLevelInfo levelInfo = exporterIFC.GetLevelInfo(levelId);
-                if (levelInfo != null)
-                    return levelInfo.GetBuildingStorey();
-            }
+      /// <summary>
+      /// Finds the spatial element to its associated level.
+      /// </summary>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="element">
+      /// The element.
+      /// </param>
+      /// <returns>
+      /// The handle.
+      /// </returns>
+      public override IFCAnyHandle RedirectDescription(ExporterIFC exporterIFC, Element element)
+      {
+         SpatialElement spatialElem = element as SpatialElement;
+         if (spatialElem != null)
+         {
+               ElementId levelId = spatialElem.LevelId;
+               IFCLevelInfo levelInfo = exporterIFC.GetLevelInfo(levelId);
+               if (levelInfo != null)
+                  return levelInfo.GetBuildingStorey();
+         }
 
-            return null;
-        }
-    }
+         return null;
+      }
+   }
 }

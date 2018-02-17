@@ -27,62 +27,68 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate external value for an element.
-    /// </summary>
-    class ExternalCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A boolean variable to keep the calculated value.
-        /// </summary>
-        private bool m_IsExternal = false;
+   /// <summary>
+   /// A calculation class to calculate external value for an element.
+   /// </summary>
+   class ExternalCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A boolean variable to keep the calculated value.
+      /// </summary>
+      private bool m_IsExternal = false;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static ExternalCalculator s_Instance = new ExternalCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static ExternalCalculator s_Instance = new ExternalCalculator();
 
-        /// <summary>
-        /// The ExternalCalculator instance.
-        /// </summary>
-        public static ExternalCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The ExternalCalculator instance.
+      /// </summary>
+      public static ExternalCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates external value for an element.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            m_IsExternal = CategoryUtil.IsElementExternal(element);
-            return true;
-        }
+      /// <summary>
+      /// Calculates external value for an element.
+      /// </summary>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="extrusionCreationData">
+      /// The IFCExtrusionCreationData.
+      /// </param>
+      /// <param name="element">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="elementType">
+      /// The element type.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         int isExternalInt = 0;
+         if (ParameterUtil.GetIntValueFromElementOrSymbol(element, "IfcIsExternal", out isExternalInt) == null)
+            ParameterUtil.GetIntValueFromElementOrSymbol(element, "IsExternal", out isExternalInt);
+         if (isExternalInt != 0)
+            m_IsExternal = true;
 
-        /// <summary>
-        /// Gets the calculated boolean value.
-        /// </summary>
-        /// <returns>
-        /// The boolean value.
-        /// </returns>
-        public override bool GetBooleanValue()
-        {
-            return m_IsExternal;
-        }
-    }
+         m_IsExternal = CategoryUtil.IsElementExternal(element);
+         return true;
+      }
+
+      /// <summary>
+      /// Gets the calculated boolean value.
+      /// </summary>
+      /// <returns>
+      /// The boolean value.
+      /// </returns>
+      public override bool GetBooleanValue()
+      {
+         return m_IsExternal;
+      }
+   }
 }

@@ -36,6 +36,27 @@ namespace Revit.IFC.Export.Exporter
    /// </summary>
    class GridExporter
    {
+      public class TupleLevelIdElevComparer : IEqualityComparer<Tuple<ElementId, double>>
+      {
+         public bool Equals(Tuple<ElementId, double> tup1, Tuple<ElementId, double> tup2)
+         {
+            bool sameLevelId = tup1.Item1 == tup2.Item1;
+            bool sameElev = MathUtil.IsAlmostEqual(tup1.Item2, tup2.Item2);
+            if (sameLevelId && sameElev)
+               return true;
+            else
+               return false;
+         }
+
+         public int GetHashCode(Tuple<ElementId, double> tup)
+         {
+            int intValFromDouble = (int)(tup.Item2 / MathUtil.Eps());
+            int hashCode = tup.Item1.GetHashCode() ^ intValFromDouble.GetHashCode();
+            return hashCode;
+            //return tup.GetHashCode();
+         }
+      }
+
       /// <summary>
       /// Export the Grids.
       /// </summary>
@@ -47,10 +68,11 @@ namespace Revit.IFC.Export.Exporter
             return;
 
          // Get all the grids from cache and sorted in levels.
-         IDictionary<ElementId, List<Grid>> levelGrids = GetAllGrids(exporterIFC);
+         //IDictionary<ElementId, List<Grid>> levelGrids = GetAllGrids(exporterIFC);
+         IDictionary<Tuple<ElementId, double>, List<Grid>> levelGrids = GetAllGrids(document, exporterIFC);
 
          // Get grids in each level and export.
-         foreach (ElementId levelId in levelGrids.Keys)
+         foreach (Tuple<ElementId,double> levelId in levelGrids.Keys)
          {
             IDictionary<XYZ, List<Grid>> linearGrids = new Dictionary<XYZ, List<Grid>>(new GeometryUtil.XYZComparer());
             IDictionary<XYZ, List<Grid>> radialGrids = new Dictionary<XYZ, List<Grid>>(new GeometryUtil.XYZComparer());
@@ -62,19 +84,19 @@ namespace Revit.IFC.Export.Exporter
             // Export radial grids first.
             if (radialGrids.Count > 0)
             {
-               ExportRadialGrids(exporterIFC, levelId, radialGrids, linearGrids);
+               ExportRadialGrids(exporterIFC, levelId.Item1, radialGrids, linearGrids);
             }
 
             // Export the rectangular and duplex rectangular grids.
             if (linearGrids.Count > 1)
             {
-               ExportRectangularGrids(exporterIFC, levelId, linearGrids);
+               ExportRectangularGrids(exporterIFC, levelId.Item1, linearGrids);
             }
 
             // Export the triangular grids
             if (linearGrids.Count > 1)
             {
-               ExportTriangularGrids(exporterIFC, levelId, linearGrids);
+               ExportTriangularGrids(exporterIFC, levelId.Item1, linearGrids);
             }
 
             // TODO: warn user about orphaned grid lines.
@@ -324,13 +346,21 @@ namespace Revit.IFC.Export.Exporter
 
             // Get the handle of curve.
             XYZ projectionDirection = lcs.BasisZ;
-            IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, lcs, projectionDirection, false);
-            ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, grid.Curve, XYZ.Zero, false);
-            IList<IFCAnyHandle> curves = info.GetCurves();
-            if (curves.Count != 1)
-               throw new Exception("IFC: expected 1 curve when export curve element.");
+            IFCAnyHandle axisCurve;
+            if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+            {
+               axisCurve = GeometryUtil.CreatePolyCurveFromCurve(exporterIFC, grid.Curve, lcs, projectionDirection);
+            }
+            else
+            {
+               IFCGeometryInfo info = IFCGeometryInfo.CreateCurveGeometryInfo(exporterIFC, lcs, projectionDirection, false);
+               ExporterIFCUtils.CollectGeometryInfo(exporterIFC, info, grid.Curve, XYZ.Zero, false);
+               IList<IFCAnyHandle> curves = info.GetCurves();
+               if (curves.Count != 1)
+                  throw new Exception("IFC: expected 1 curve when export curve element.");
 
-            IFCAnyHandle axisCurve = curves[0];
+               axisCurve = curves[0];
+            }
 
             bool sameSense = true;
             if (baseGrid.Curve is Line)
@@ -360,16 +390,19 @@ namespace Revit.IFC.Export.Exporter
                curveWidth = IFCDataUtil.CreateAsPositiveLengthMeasure(width);
             }
 
-            int outColor;
-            int color =
-                (ParameterUtil.GetIntValueFromElement(gridType, BuiltInParameter.GRID_END_SEGMENT_COLOR, out outColor) != null) ? outColor : 0;
-            double blueVal = 0.0;
-            double greenVal = 0.0;
-            double redVal = 0.0;
-            GeometryUtil.GetRGBFromIntValue(color, out blueVal, out greenVal, out redVal);
-            IFCAnyHandle colorHnd = IFCInstanceExporter.CreateColourRgb(ifcFile, null, redVal, greenVal, blueVal);
+            if (!ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+            {
+               int outColor;
+               int color =
+                   (ParameterUtil.GetIntValueFromElement(gridType, BuiltInParameter.GRID_END_SEGMENT_COLOR, out outColor) != null) ? outColor : 0;
+               double blueVal = 0.0;
+               double greenVal = 0.0;
+               double redVal = 0.0;
+               GeometryUtil.GetRGBFromIntValue(color, out blueVal, out greenVal, out redVal);
+               IFCAnyHandle colorHnd = IFCInstanceExporter.CreateColourRgb(ifcFile, null, redVal, greenVal, blueVal);
 
-            BodyExporter.CreateCurveStyleForRepItem(exporterIFC, repItemHnd, curveWidth, colorHnd);
+               BodyExporter.CreateCurveStyleForRepItem(exporterIFC, repItemHnd, curveWidth, colorHnd);
+            }
 
             HashSet<IFCAnyHandle> curveSet = new HashSet<IFCAnyHandle>();
             curveSet.Add(repItemHnd);
@@ -386,7 +419,7 @@ namespace Revit.IFC.Export.Exporter
       /// </summary>
       /// <param name="exporterIFC">The ExporterIFC object.</param>
       /// <returns>The map with sorted grids by level.</returns>
-      private static IDictionary<ElementId, List<Grid>> GetAllGrids(ExporterIFC exporterIFC)
+      private static IDictionary<Tuple<ElementId, double>, List<Grid>> GetAllGrids(Document document, ExporterIFC exporterIFC)
       {
          View currentView = ExporterCacheManager.ExportOptionsCache.FilterViewForExport;
          Level currentLevel = null;
@@ -394,45 +427,69 @@ namespace Revit.IFC.Export.Exporter
          {
             currentLevel = currentView.GenLevel;
          }
-         IList<ElementId> levelIds = new List<ElementId>();
+         SortedDictionary<double,ElementId> levelIds = new SortedDictionary<double,ElementId>();
          if (currentLevel != null)
          {
-            levelIds.Add(currentLevel.Id);
+            levelIds.Add(currentLevel.Elevation, currentLevel.Id);
          }
          else
          {
-            levelIds = ExporterCacheManager.LevelInfoCache.BuildingStoreysByElevation;
-         }
-
-         IDictionary<ElementId, double> LevelHeightMap = new Dictionary<ElementId, double>();
-         foreach (ElementId levelId in levelIds)
-         {
-            IFCLevelInfo levelInfo = ExporterCacheManager.LevelInfoCache.GetLevelInfo(exporterIFC, levelId);
-            if (levelInfo == null)
-               continue;
-            if (!LevelHeightMap.ContainsKey(levelId))
+            foreach (ElementId levelId in ExporterCacheManager.LevelInfoCache.BuildingStoreysByElevation)
             {
-               LevelHeightMap.Add(levelId, levelInfo.Elevation);
+               Level level =  document.GetElement(levelId) as Level;
+               levelIds.Add(level.Elevation, levelId);
             }
          }
 
+         ////IDictionary<ElementId, double> LevelHeightMap = new Dictionary<ElementId, double>();
+         //SortedDictionary<double, ElementId> levelHeightDict = new SortedDictionary<double, ElementId>();
+
+         //foreach (ElementId levelId in levelIds)
+         //{
+         //   IFCLevelInfo levelInfo = ExporterCacheManager.LevelInfoCache.GetLevelInfo(exporterIFC, levelId);
+         //   if (levelInfo == null)
+         //      continue;
+         //   if (!LevelHeightMap.ContainsKey(levelId))
+         //   {
+         //      LevelHeightMap.Add(levelId, levelInfo.Elevation);
+         //   }
+         //}
+
          double eps = MathUtil.Eps();
-         IDictionary<ElementId, List<Grid>> levelGrids = new Dictionary<ElementId, List<Grid>>();
+         // The Dictionary key is a tuple of the containing level id, and the elevation of the Grid
+         IEqualityComparer<Tuple<ElementId, double>> keyComparer = new TupleLevelIdElevComparer();
+         IDictionary<Tuple<ElementId,double>, List<Grid>> levelGrids = new Dictionary<Tuple<ElementId, double>, List<Grid>>(keyComparer);
+
+         // Group grids based on their elevation (the same elevation will be the same IfcGrid)
          foreach (Element element in ExporterCacheManager.GridCache)
          {
             Grid grid = element as Grid;
             XYZ minPoint = grid.GetExtents().MinimumPoint;
             XYZ maxPoint = grid.GetExtents().MaximumPoint;
 
-            foreach (ElementId levelId in LevelHeightMap.Keys)
+            //levelIds.Min((minPoint.Z);
+            //foreach (ElementId levelId in LevelHeightMap.Keys)
+            //{
+            //   if (minPoint.Z <= LevelHeightMap[levelId] + eps && LevelHeightMap[levelId] - eps <= maxPoint.Z)
+            //   {
+            //      if (!levelGrids.ContainsKey(levelId))
+            //         levelGrids.Add(levelId, new List<Grid>());
+            //      levelGrids[levelId].Add(grid);
+            //   }
+            //}
+
+            // Find level where the Grid min point is at higher elevation but lower than the next level
+            KeyValuePair<double, ElementId> levelGrid = levelIds.Min();
+            foreach (KeyValuePair<double,ElementId> levelInfo in levelIds)
             {
-               if (minPoint.Z <= LevelHeightMap[levelId] + eps && LevelHeightMap[levelId] - eps <= maxPoint.Z)
-               {
-                  if (!levelGrids.ContainsKey(levelId))
-                     levelGrids.Add(levelId, new List<Grid>());
-                  levelGrids[levelId].Add(grid);
-               }
+               if (levelInfo.Key > minPoint.Z)
+                  break;
+               levelGrid = levelInfo;
             }
+            Tuple<ElementId, double> gridGroupKey = new Tuple<ElementId, double>(levelGrid.Value, minPoint.Z);
+            if (!levelGrids.ContainsKey(gridGroupKey))
+               levelGrids.Add(gridGroupKey, new List<Grid>());
+            levelGrids[gridGroupKey].Add(grid);
          }
          return levelGrids;
       }

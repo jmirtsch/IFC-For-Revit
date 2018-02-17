@@ -274,15 +274,15 @@ namespace Revit.IFC.Export.Exporter
          return true;
       }
 
-      private static IFCAnyHandle CreateCircleProfileDefIfPossible(ExporterIFC exporterIFC, string profileName, CurveLoop curveLoop, Transform lcs,
+      private static IFCAnyHandle CreateCircleBasedProfileDefIfPossible(ExporterIFC exporterIFC, string profileName, CurveLoop curveLoop, Transform lcs,
           XYZ projDir)
       {
          IList<CurveLoop> curveLoops = new List<CurveLoop>();
          curveLoops.Add(curveLoop);
-         return CreateCircleProfileDefIfPossible(exporterIFC, profileName, curveLoops, lcs, projDir);
+         return CreateCircleBasedProfileDefIfPossible(exporterIFC, profileName, curveLoops, lcs, projDir);
       }
 
-      private static IFCAnyHandle CreateCircleProfileDefIfPossible(ExporterIFC exporterIFC, string profileName, IList<CurveLoop> curveLoops, Transform lcs,
+      private static IFCAnyHandle CreateCircleBasedProfileDefIfPossible(ExporterIFC exporterIFC, string profileName, IList<CurveLoop> curveLoops, Transform lcs,
           XYZ projDir)
       {
          int numLoops = curveLoops.Count;
@@ -326,47 +326,100 @@ namespace Revit.IFC.Export.Exporter
                return null;
          }
 
-         IList<Arc> arcs = new List<Arc>();
          XYZ ctr;
          double radius, innerRadius = 0.0;
          if (!GetCenterAndRadiusOfCurveLoop(curveLoops[0], out ctr, out radius))
             return null;
 
-         if (numLoops == 2)
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
          {
-            XYZ checkCtr;
-            if (!GetCenterAndRadiusOfCurveLoop(curveLoops[1], out checkCtr, out innerRadius))
-               return null;
-            if (!ctr.IsAlmostEqualTo(checkCtr))
-               return null;
+            XYZ xDir = lcs.BasisX;
+            XYZ yDir = lcs.BasisY;
+            XYZ zDir = lcs.BasisZ;
+            XYZ orig = lcs.Origin;
+
+            ctr -= orig;
+
+            IList<double> newCtr = new List<double>();
+            newCtr.Add(UnitUtil.ScaleLength(xDir.DotProduct(ctr)));
+            newCtr.Add(UnitUtil.ScaleLength(yDir.DotProduct(ctr)));
+            newCtr.Add(UnitUtil.ScaleLength(zDir.DotProduct(ctr)));
+
+            IFCAnyHandle location = IFCInstanceExporter.CreateCartesianPoint(file, newCtr);
+
+            XYZ projDirToUse = projDir;
+            XYZ refDirToUse = new XYZ(1.0, 0.0, 0.0);
+            if (curveLoops[0].HasPlane())
+            {
+               projDirToUse = curveLoops[0].GetPlane().Normal;
+               refDirToUse = curveLoops[0].GetPlane().XVec;
+            }
+
+            IList<double> axisDir = new List<double>();
+            axisDir.Add(projDirToUse.X);
+            axisDir.Add(projDirToUse.Y);
+            axisDir.Add(projDirToUse.Z);
+            IFCAnyHandle axisDirectionOpt = ExporterUtil.CreateDirection(file, axisDir);
+
+            IList<double> refDir = new List<double>();
+            refDir.Add(1.0);
+            refDir.Add(0.0);
+            refDir.Add(0.0);
+            IFCAnyHandle refDirectionOpt = ExporterUtil.CreateDirection(file, refDirToUse);
+
+            IFCAnyHandle defPosition = IFCInstanceExporter.CreateAxis2Placement3D(file, location, axisDirectionOpt, refDirectionOpt);
+
+            IFCAnyHandle outerCurve = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, curveLoops[0], lcs, projDirToUse);
+            if (MathUtil.IsAlmostZero(innerRadius))
+               return IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Area, profileName, outerCurve);
+            else
+            {
+               IFCAnyHandle innerCurve = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, curveLoops[1], lcs, projDirToUse);
+               HashSet<IFCAnyHandle> innerCurves = new HashSet<IFCAnyHandle>();
+               innerCurves.Add(innerCurve);
+               return IFCInstanceExporter.CreateArbitraryProfileDefWithVoids(file, IFCProfileType.Area, profileName, outerCurve, innerCurves);
+            }
          }
-
-         radius = UnitUtil.ScaleLength(radius);
-         innerRadius = UnitUtil.ScaleLength(innerRadius);
-
-         XYZ xDir = lcs.BasisX;
-         XYZ yDir = lcs.BasisY;
-         XYZ orig = lcs.Origin;
-
-         ctr -= orig;
-
-         IList<double> newCtr = new List<double>();
-         newCtr.Add(UnitUtil.ScaleLength(xDir.DotProduct(ctr)));
-         newCtr.Add(UnitUtil.ScaleLength(yDir.DotProduct(ctr)));
-
-         IFCAnyHandle location = IFCInstanceExporter.CreateCartesianPoint(file, newCtr);
-
-         IList<double> refDir = new List<double>();
-         refDir.Add(1.0);
-         refDir.Add(0.0);
-         IFCAnyHandle refDirectionOpt = ExporterUtil.CreateDirection(file, refDir);
-
-         IFCAnyHandle defPosition = IFCInstanceExporter.CreateAxis2Placement2D(file, location, null, refDirectionOpt);
-
-         if (MathUtil.IsAlmostZero(innerRadius))
-            return IFCInstanceExporter.CreateCircleProfileDef(file, IFCProfileType.Area, profileName, defPosition, radius);
          else
-            return IFCInstanceExporter.CreateCircleHollowProfileDef(file, IFCProfileType.Area, profileName, defPosition, radius, radius - innerRadius);
+         {
+            IList<Arc> arcs = new List<Arc>();
+
+            if (numLoops == 2)
+            {
+               XYZ checkCtr;
+               if (!GetCenterAndRadiusOfCurveLoop(curveLoops[1], out checkCtr, out innerRadius))
+                  return null;
+               if (!ctr.IsAlmostEqualTo(checkCtr))
+                  return null;
+            }
+
+            radius = UnitUtil.ScaleLength(radius);
+            innerRadius = UnitUtil.ScaleLength(innerRadius);
+
+            XYZ xDir = lcs.BasisX;
+            XYZ yDir = lcs.BasisY;
+            XYZ orig = lcs.Origin;
+
+            ctr -= orig;
+
+            IList<double> newCtr = new List<double>();
+            newCtr.Add(UnitUtil.ScaleLength(xDir.DotProduct(ctr)));
+            newCtr.Add(UnitUtil.ScaleLength(yDir.DotProduct(ctr)));
+
+            IFCAnyHandle location = IFCInstanceExporter.CreateCartesianPoint(file, newCtr);
+
+            IList<double> refDir = new List<double>();
+            refDir.Add(1.0);
+            refDir.Add(0.0);
+            IFCAnyHandle refDirectionOpt = ExporterUtil.CreateDirection(file, refDir);
+
+            IFCAnyHandle defPosition = IFCInstanceExporter.CreateAxis2Placement2D(file, location, null, refDirectionOpt);
+
+            if (MathUtil.IsAlmostZero(innerRadius))
+               return IFCInstanceExporter.CreateCircleProfileDef(file, IFCProfileType.Area, profileName, defPosition, radius);
+            else
+               return IFCInstanceExporter.CreateCircleHollowProfileDef(file, IFCProfileType.Area, profileName, defPosition, radius, radius - innerRadius);
+         }
       }
 
       /// <summary>
@@ -951,18 +1004,18 @@ namespace Revit.IFC.Export.Exporter
             if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
             {
                // Only Circle profile and IndexedPolyCurve are allowed in IFC4RV
-               sweptArea = CreateCircleProfileDefIfPossible(exporterIFC, profileName, curveLoops[0], lcs, sweptDirection);
+               sweptArea = CreateCircleBasedProfileDefIfPossible(exporterIFC, profileName, curveLoops[0], lcs, sweptDirection);
             }
             else
             {
                sweptArea = CreateRectangleProfileDefIfPossible(exporterIFC, profileName, curveLoops[0], lcs, sweptDirection);
-               if (sweptArea == null) sweptArea = CreateCircleProfileDefIfPossible(exporterIFC, profileName, curveLoops[0], lcs, sweptDirection);
+               if (sweptArea == null) sweptArea = CreateCircleBasedProfileDefIfPossible(exporterIFC, profileName, curveLoops[0], lcs, sweptDirection);
                if (sweptArea == null) sweptArea = CreateIShapeProfileDefIfPossible(exporterIFC, profileName, curveLoops[0], lcs, sweptDirection);
             }
          }
          else if (curveLoops.Count == 2)
          {
-            sweptArea = CreateCircleProfileDefIfPossible(exporterIFC, profileName, curveLoops, lcs, sweptDirection);
+            sweptArea = CreateCircleBasedProfileDefIfPossible(exporterIFC, profileName, curveLoops, lcs, sweptDirection);
          }
 
          if (sweptArea == null)
@@ -1813,16 +1866,17 @@ namespace Revit.IFC.Export.Exporter
          // A list of IfcCurve entities.
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
          {
-            IList<int> segmentIndex = null;
-            IList<IList<double>> pointList = GeometryUtil.PointListFromCurve(exporterIFC, baseCurve, extrusionLCS, extrusionDir, out segmentIndex);
+            IFCAnyHandle curveHnd = GeometryUtil.CreatePolyCurveFromCurve(exporterIFC, baseCurve, extrusionLCS, extrusionDir);
+            //IList<int> segmentIndex = null;
+            //IList<IList<double>> pointList = GeometryUtil.PointListFromCurve(exporterIFC, baseCurve, extrusionLCS, extrusionDir, out segmentIndex);
 
-            // For now because of no support in creating IfcLineIndex and IfcArcIndex yet, it is set to null
-            //IList<IList<int>> segmentIndexList = new List<IList<int>>();
-            //segmentIndexList.Add(segmentIndex);
-            IList<IList<int>> segmentIndexList = null;
+            //// For now because of no support in creating IfcLineIndex and IfcArcIndex yet, it is set to null
+            ////IList<IList<int>> segmentIndexList = new List<IList<int>>();
+            ////segmentIndexList.Add(segmentIndex);
+            //IList<IList<int>> segmentIndexList = null;
 
-            IFCAnyHandle pointListHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, pointList);
-            IFCAnyHandle curveHnd = IFCInstanceExporter.CreateIndexedPolyCurve(file, pointListHnd, segmentIndexList, false);
+            //IFCAnyHandle pointListHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, pointList);
+            //IFCAnyHandle curveHnd = IFCInstanceExporter.CreateIndexedPolyCurve(file, pointListHnd, segmentIndexList, false);
             profileCurves = new List<IFCAnyHandle>();
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(curveHnd))
                profileCurves.Add(curveHnd);

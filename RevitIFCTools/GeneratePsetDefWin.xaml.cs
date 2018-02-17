@@ -477,13 +477,14 @@ namespace RevitIFCTools
          }
 
          // Method to initialize all the prosertysets
-         outF.WriteLine("\t\tpublic static void InitializeAllPropertySets()");
+         outF.WriteLine("\t\tpublic static void InitCommonPropertySets(IList<IList<PropertySetDescription>> propertySets)");
          outF.WriteLine("\t\t{");
          outF.WriteLine("\t\t\tIList<PropertySetDescription> commonPropertySets = new List<PropertySetDescription>();");
          foreach (KeyValuePair<string, IList<VersionSpecificPropertyDef>> psetDefEntry in allPDefDict)
          {
             outF.WriteLine("\t\t\tInit" + psetDefEntry.Key + "(commonPropertySets);");
          }
+         outF.WriteLine("\n\t\t\tpropertySets.Add(commonPropertySets);");
          outF.WriteLine("\t\t}");
          outF.WriteLine("");
 
@@ -497,7 +498,6 @@ namespace RevitIFCTools
             string varName = psetDefEntry.Key.Replace("Pset_", "propertySet");
 
             outF.WriteLine("\t\t\tPropertySetDescription {0} = new PropertySetDescription();", varName);
-            outF.WriteLine("\t\t\t{0}.Name = \"{1}\";", varName, psetName);
 
             string psetEnumStr = psetName.Replace("PSet_", "PSet");
             try
@@ -512,7 +512,7 @@ namespace RevitIFCTools
 #endif
             }
 
-            outF.WriteLine("\t\t\tPropertySetEntry ifcPSE;");
+            outF.WriteLine("\t\t\tPropertySetEntry ifcPSE = null;");
             outF.WriteLine("\t\t\tType calcType = null;");
 
             foreach (VersionSpecificPropertyDef vspecPDef in psetDefEntry.Value)
@@ -592,7 +592,11 @@ namespace RevitIFCTools
                }
                outF.WriteLine("\t\t\t}");
             }
-            outF.WriteLine("\t\t\tcommonPropertySets.Add({0});", varName);
+            outF.WriteLine("\t\t\tif (ifcPSE != null)");
+            outF.WriteLine("\t\t\t{");
+            outF.WriteLine("\t\t\t\t{0}.Name = \"{1}\";", varName, psetName);
+            outF.WriteLine("\t\t\t\tcommonPropertySets.Add({0});", varName);
+            outF.WriteLine("\t\t\t}");
             outF.WriteLine("\t\t}");
             outF.WriteLine("\n");
          }
@@ -784,7 +788,10 @@ namespace RevitIFCTools
 
       void processSimpleProperty(StreamWriter outF, PsetProperty prop, string propNamePrefix, string IfcVersion, string schemaVersion, string varName)
       {
-         outF.WriteLine("\t\t\t\tifcPSE = new PropertySetEntry(\"{0}.{1}\");", propNamePrefix, prop.Name);
+         // For now, keep the same approach for naming the properties (i.e. without prefix)
+         //outF.WriteLine("\t\t\t\tifcPSE = new PropertySetEntry(\"{0}.{1}\");", propNamePrefix, prop.Name);
+         outF.WriteLine("\t\t\t\tifcPSE = new PropertySetEntry(\"{0}\");", prop.Name);
+         outF.WriteLine("\t\t\t\tifcPSE.PropertyName = \"{0}\";", prop.Name);
          if (prop.PropertyType != null)
          {
             if (prop.PropertyType is PropertyEnumeratedValue)
@@ -804,14 +811,14 @@ namespace RevitIFCTools
             else if (prop.PropertyType is PropertyReferenceValue)
             {
                PropertyReferenceValue propRef = prop.PropertyType as PropertyReferenceValue;
-               outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.{0};", propRef.RefEntity);
+               outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.{0};", propRef.RefEntity.Trim());
                outF.WriteLine("\t\t\t\tifcPSE.PropertyValueType = PropertyValueType.ReferenceValue;");
             }
             else if (prop.PropertyType is PropertyListValue)
             {
                PropertyListValue propList = prop.PropertyType as PropertyListValue;
                if (propList.DataType != null)
-                  outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.{0};", propList.DataType.ToString().Replace("Ifc", "").Replace("Measure", ""));
+                  outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.{0};", propList.DataType.ToString().Replace("Ifc", "").Replace("Measure", "").Trim());
                else
                   outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.Label;");    // default to Label if not defined
 
@@ -822,14 +829,14 @@ namespace RevitIFCTools
                PropertyTableValue propTab = prop.PropertyType as PropertyTableValue;
                // TableValue has 2 types: DefiningValue and DefinedValue. This is not fully implemented yet
                if (propTab.DefinedValueType != null)
-                  outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.{0};", propTab.DefinedValueType.ToString().Replace("Ifc", "").Replace("Measure", ""));
+                  outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.{0};", propTab.DefinedValueType.ToString().Replace("Ifc", "").Replace("Measure", "").Trim());
                else
                   outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.Label;");    // default to Label if missing
 
                outF.WriteLine("\t\t\t\tifcPSE.PropertyValueType = PropertyValueType.TableValue;");
             }
             else
-               outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.{0};", prop.PropertyType.ToString().Replace("Ifc", "").Replace("Measure", ""));
+               outF.WriteLine("\t\t\t\tifcPSE.PropertyType = PropertyType.{0};", prop.PropertyType.ToString().Replace("Ifc", "").Replace("Measure", "").Trim());
          }
 
          if (prop.NameAliases != null)
