@@ -28,20 +28,20 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate cross section area.
-    /// </summary>
-    class CrossSectionAreaCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Area = 0;
+   /// <summary>
+   /// A calculation class to calculate cross section area.
+   /// </summary>
+   class CrossSectionAreaCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Area = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static CrossSectionAreaCalculator s_Instance = new CrossSectionAreaCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static CrossSectionAreaCalculator s_Instance = new CrossSectionAreaCalculator();
 
       /// <summary>
       /// The CrossSectionAreaCalculator instance.
@@ -91,15 +91,15 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
          return m_Area > MathUtil.Eps() * MathUtil.Eps();
       }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Area;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Area;
+      }
+   }
 }

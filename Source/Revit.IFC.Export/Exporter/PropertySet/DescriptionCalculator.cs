@@ -26,26 +26,26 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
-    /// <summary>
-    /// A special calculator that is used to reassign a set of values from one entity to another.
-    /// </summary>
-    /// <remarks>
-    /// There are cases where properties or quantities are calculated by one entity, but assigned to another.  This object
-    /// describes an override in which a different entity is associated with the property set or quantity description.
-    /// At this time, it is not possible to define a new type of this class externally. The class contains
-    /// static utilities to obtain instances of the currently supported types of redirections.
-    /// </remarks>
-    abstract public class DescriptionCalculator
-    {
-        /// <summary>
-        /// Causes the calculation to be reassigned per the implementation of this particular redirection calculator.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="element">
-        /// The element.
-        /// </param>
-        abstract public IFCAnyHandle RedirectDescription(ExporterIFC exporterIFC, Element element);
-    }
+   /// <summary>
+   /// A special calculator that is used to reassign a set of values from one entity to another.
+   /// </summary>
+   /// <remarks>
+   /// There are cases where properties or quantities are calculated by one entity, but assigned to another.  This object
+   /// describes an override in which a different entity is associated with the property set or quantity description.
+   /// At this time, it is not possible to define a new type of this class externally. The class contains
+   /// static utilities to obtain instances of the currently supported types of redirections.
+   /// </remarks>
+   abstract public class DescriptionCalculator
+   {
+      /// <summary>
+      /// Causes the calculation to be reassigned per the implementation of this particular redirection calculator.
+      /// </summary>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="element">
+      /// The element.
+      /// </param>
+      abstract public IFCAnyHandle RedirectDescription(ExporterIFC exporterIFC, Element element);
+   }
 }

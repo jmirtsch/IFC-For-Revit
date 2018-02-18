@@ -27,42 +27,42 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// A class that controls how Revit elements are named on export.
-    /// </summary>
-    public class NamingOptions
-    {
-        /// <summary>
-        /// public default constructor.
-        /// </summary>
-        public NamingOptions()
-        {
-            UseFamilyAndTypeNameForReference = false;
-            UseVisibleRevitNameAsEntityName = false;
-        }
+   /// <summary>
+   /// A class that controls how Revit elements are named on export.
+   /// </summary>
+   public class NamingOptions
+   {
+      /// <summary>
+      /// public default constructor.
+      /// </summary>
+      public NamingOptions()
+      {
+         UseFamilyAndTypeNameForReference = false;
+         UseVisibleRevitNameAsEntityName = false;
+      }
 
-        /// <summary>
-        /// Determines how to generate the Reference value for elements.  There are two possibilities:
-        /// 1. true: use the family name and the type name.  Ex.  Basic Wall: Generic -8".  This allows distinguishing between two
-        /// identical type names in different families.
-        /// 2. false: use the type name only.  Ex:  Generic -8".  This allows for proper tagging when the type name is determined
-        /// by code (e.g. a construction type).
-        /// </summary>
-        public bool UseFamilyAndTypeNameForReference
-        {
-            get;
-            set;
-        }
+      /// <summary>
+      /// Determines how to generate the Reference value for elements.  There are two possibilities:
+      /// 1. true: use the family name and the type name.  Ex.  Basic Wall: Generic -8".  This allows distinguishing between two
+      /// identical type names in different families.
+      /// 2. false: use the type name only.  Ex:  Generic -8".  This allows for proper tagging when the type name is determined
+      /// by code (e.g. a construction type).
+      /// </summary>
+      public bool UseFamilyAndTypeNameForReference
+      {
+         get;
+         set;
+      }
 
-        /// <summary>
-        /// Determines how to set the base IFC entity name based on the Revit element name.
-        /// 1. true: Constructs the name from FamilyName:TypeName:ElementId.  Uses naming override, if one is set by user.
-        /// 2. false: Constructs the name from Category:FamilyName:TypeName.  Ignores naming overrides.
-        /// </summary>
-        public bool UseVisibleRevitNameAsEntityName
-        {
-            get;
-            set;
-        }
-    }
+      /// <summary>
+      /// Determines how to set the base IFC entity name based on the Revit element name.
+      /// 1. true: Constructs the name from FamilyName:TypeName:ElementId.  Uses naming override, if one is set by user.
+      /// 2. false: Constructs the name from Category:FamilyName:TypeName.  Ignores naming overrides.
+      /// </summary>
+      public bool UseVisibleRevitNameAsEntityName
+      {
+         get;
+         set;
+      }
+   }
 }

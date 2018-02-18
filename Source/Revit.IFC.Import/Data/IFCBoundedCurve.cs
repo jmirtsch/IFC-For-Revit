@@ -31,43 +31,43 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class that represents IFCBoundedCurve entity
-    /// </summary>
-    public abstract class IFCBoundedCurve : IFCCurve
-    {
-        protected IFCBoundedCurve()
-        {
-        }
+   /// <summary>
+   /// Class that represents IFCBoundedCurve entity
+   /// </summary>
+   public abstract class IFCBoundedCurve : IFCCurve
+   {
+      protected IFCBoundedCurve()
+      {
+      }
 
-        protected IFCBoundedCurve(IFCAnyHandle bSplineCurve)
-        {
-            Process(bSplineCurve);
-        }
+      protected IFCBoundedCurve(IFCAnyHandle bSplineCurve)
+      {
+         Process(bSplineCurve);
+      }
 
-        protected override void Process(IFCAnyHandle ifcCurve)
-        {
-            base.Process(ifcCurve);
-        }
+      protected override void Process(IFCAnyHandle ifcCurve)
+      {
+         base.Process(ifcCurve);
+      }
 
-        public static IFCBoundedCurve ProcessIFCBoundedCurve(IFCAnyHandle ifcBoundedCurve)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcBoundedCurve))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcBoundedCurve);
-                return null;
-            }
-            if (IFCImportFile.TheFile.SchemaVersion > IFCSchemaVersion.IFC2x && IFCAnyHandleUtil.IsSubTypeOf(ifcBoundedCurve, IFCEntityType.IfcBSplineCurve))
-                return IFCBSplineCurve.ProcessIFCBSplineCurve(ifcBoundedCurve);
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcBoundedCurve, IFCEntityType.IfcCompositeCurve))
-                return IFCCompositeCurve.ProcessIFCCompositeCurve(ifcBoundedCurve);
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcBoundedCurve, IFCEntityType.IfcPolyline))
-                return IFCPolyline.ProcessIFCPolyline(ifcBoundedCurve);
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcBoundedCurve, IFCEntityType.IfcTrimmedCurve))
-                return IFCTrimmedCurve.ProcessIFCTrimmedCurve(ifcBoundedCurve);
-
-            Importer.TheLog.LogUnhandledSubTypeError(ifcBoundedCurve, IFCEntityType.IfcBoundedCurve, true);
+      public static IFCBoundedCurve ProcessIFCBoundedCurve(IFCAnyHandle ifcBoundedCurve)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcBoundedCurve))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcBoundedCurve);
             return null;
-        }
-    }
+         }
+         if (IFCImportFile.TheFile.SchemaVersion > IFCSchemaVersion.IFC2x && IFCAnyHandleUtil.IsSubTypeOf(ifcBoundedCurve, IFCEntityType.IfcBSplineCurve))
+            return IFCBSplineCurve.ProcessIFCBSplineCurve(ifcBoundedCurve);
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcBoundedCurve, IFCEntityType.IfcCompositeCurve))
+            return IFCCompositeCurve.ProcessIFCCompositeCurve(ifcBoundedCurve);
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcBoundedCurve, IFCEntityType.IfcPolyline))
+            return IFCPolyline.ProcessIFCPolyline(ifcBoundedCurve);
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcBoundedCurve, IFCEntityType.IfcTrimmedCurve))
+            return IFCTrimmedCurve.ProcessIFCTrimmedCurve(ifcBoundedCurve);
+
+         Importer.TheLog.LogUnhandledSubTypeError(ifcBoundedCurve, IFCEntityType.IfcBoundedCurve, true);
+         return null;
+      }
+   }
 }

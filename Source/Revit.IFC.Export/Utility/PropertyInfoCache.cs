@@ -31,300 +31,300 @@ using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Manages caches necessary for caching properties for IFC export.
-    /// </summary>
-    public class PropertyInfoCache
-    {
-        /// <summary>
-        /// The DoublePropertyInfoCache object.
-        /// </summary>
-        IDictionary<PropertyType, DoublePropertyInfoCache> m_DoublePropertyInfoCacheMap = null;
+   /// <summary>
+   /// Manages caches necessary for caching properties for IFC export.
+   /// </summary>
+   public class PropertyInfoCache
+   {
+      /// <summary>
+      /// The DoublePropertyInfoCache object.
+      /// </summary>
+      IDictionary<PropertyType, DoublePropertyInfoCache> m_DoublePropertyInfoCacheMap = null;
 
-        /// <summary>
-        /// The StringPropertyInfoCache object.
-        /// </summary>
-        IDictionary<PropertyType, StringPropertyInfoCache> m_StringPropertyInfoCacheMap = null;
+      /// <summary>
+      /// The StringPropertyInfoCache object.
+      /// </summary>
+      IDictionary<PropertyType, StringPropertyInfoCache> m_StringPropertyInfoCacheMap = null;
 
-        /// <summary>
-        /// The BooleanPropertyInfoCache object.
-        /// </summary>
-        BooleanPropertyInfoCache m_BooleanPropertyInfoCache = null;
+      /// <summary>
+      /// The BooleanPropertyInfoCache object.
+      /// </summary>
+      BooleanPropertyInfoCache m_BooleanPropertyInfoCache = null;
 
-        /// <summary>
-        /// The LogicalPropertyInfoCache object.
-        /// </summary>
-        LogicalPropertyInfoCache m_LogicalPropertyInfoCache = null;
+      /// <summary>
+      /// The LogicalPropertyInfoCache object.
+      /// </summary>
+      LogicalPropertyInfoCache m_LogicalPropertyInfoCache = null;
 
-        /// <summary>
-        /// The IntegerPropertyInfoCache object.
-        /// </summary>
-        IntegerPropertyInfoCache m_IntegerPropertyInfoCache = null;
+      /// <summary>
+      /// The IntegerPropertyInfoCache object.
+      /// </summary>
+      IntegerPropertyInfoCache m_IntegerPropertyInfoCache = null;
 
-        private IDictionary<PropertyType, DoublePropertyInfoCache> DoubleCacheMap
-        {
-            get
+      private IDictionary<PropertyType, DoublePropertyInfoCache> DoubleCacheMap
+      {
+         get
+         {
+            if (m_DoublePropertyInfoCacheMap == null)
+               m_DoublePropertyInfoCacheMap = new Dictionary<PropertyType, DoublePropertyInfoCache>();
+            return m_DoublePropertyInfoCacheMap;
+         }
+      }
+
+      /// <summary>
+      /// The StringPropertyInfoCache object.
+      /// </summary>
+      private IDictionary<PropertyType, StringPropertyInfoCache> StringCacheMap
+      {
+         get
+         {
+            if (m_StringPropertyInfoCacheMap == null)
+               m_StringPropertyInfoCacheMap = new Dictionary<PropertyType, StringPropertyInfoCache>();
+            return m_StringPropertyInfoCacheMap;
+         }
+      }
+
+      /// <summary>
+      /// The BooleanPropertyInfoCache object.
+      /// </summary>
+      public BooleanPropertyInfoCache BooleanCache
+      {
+         get
+         {
+            if (m_BooleanPropertyInfoCache == null)
+               m_BooleanPropertyInfoCache = new BooleanPropertyInfoCache();
+            return m_BooleanPropertyInfoCache;
+         }
+      }
+
+      /// <summary>
+      /// The LogicalPropertyInfoCache object.
+      /// </summary>
+      public LogicalPropertyInfoCache LogicalCache
+      {
+         get
+         {
+            if (m_LogicalPropertyInfoCache == null)
+               m_LogicalPropertyInfoCache = new LogicalPropertyInfoCache();
+            return m_LogicalPropertyInfoCache;
+         }
+      }
+
+      /// <summary>
+      /// The IntegerPropertyInfoCache object.
+      /// </summary>
+      public IntegerPropertyInfoCache IntegerCache
+      {
+         get
+         {
+            if (m_IntegerPropertyInfoCache == null)
+               m_IntegerPropertyInfoCache = new IntegerPropertyInfoCache();
+            return m_IntegerPropertyInfoCache;
+         }
+      }
+
+      /// <summary>
+      /// The StringPropertyInfoCache object for Text property type.
+      /// </summary>
+      public StringPropertyInfoCache TextCache
+      {
+         get
+         {
+            StringPropertyInfoCache textPropertyInfoCache;
+            if (!StringCacheMap.TryGetValue(PropertyType.Text, out textPropertyInfoCache))
             {
-                if (m_DoublePropertyInfoCacheMap == null)
-                    m_DoublePropertyInfoCacheMap = new Dictionary<PropertyType, DoublePropertyInfoCache>();
-                return m_DoublePropertyInfoCacheMap;
+               textPropertyInfoCache = new StringPropertyInfoCache();
+               StringCacheMap[PropertyType.Text] = textPropertyInfoCache;
             }
-        }
+            return textPropertyInfoCache;
+         }
+      }
 
-        /// <summary>
-        /// The StringPropertyInfoCache object.
-        /// </summary>
-        private IDictionary<PropertyType, StringPropertyInfoCache> StringCacheMap
-        {
-            get
+      /// <summary>
+      /// The StringPropertyInfoCache object for Label property type.
+      /// </summary>
+      public StringPropertyInfoCache LabelCache
+      {
+         get
+         {
+            StringPropertyInfoCache labelPropertyInfoCache;
+            if (!StringCacheMap.TryGetValue(PropertyType.Label, out labelPropertyInfoCache))
             {
-                if (m_StringPropertyInfoCacheMap == null)
-                    m_StringPropertyInfoCacheMap = new Dictionary<PropertyType, StringPropertyInfoCache>();
-                return m_StringPropertyInfoCacheMap;
+               labelPropertyInfoCache = new StringPropertyInfoCache();
+               StringCacheMap[PropertyType.Label] = labelPropertyInfoCache;
             }
-        }
+            return labelPropertyInfoCache;
+         }
+      }
 
-        /// <summary>
-        /// The BooleanPropertyInfoCache object.
-        /// </summary>
-        public BooleanPropertyInfoCache BooleanCache
-        {
-            get
+      /// <summary>
+      /// The StringPropertyInfoCache object for Label property type.
+      /// </summary>
+      public StringPropertyInfoCache IdentifierCache
+      {
+         get
+         {
+            StringPropertyInfoCache identifierCache;
+            if (!StringCacheMap.TryGetValue(PropertyType.Identifier, out identifierCache))
             {
-                if (m_BooleanPropertyInfoCache == null)
-                    m_BooleanPropertyInfoCache = new BooleanPropertyInfoCache();
-                return m_BooleanPropertyInfoCache;
+               identifierCache = new StringPropertyInfoCache();
+               StringCacheMap[PropertyType.Identifier] = identifierCache;
             }
-        }
+            return identifierCache;
+         }
+      }
 
-        /// <summary>
-        /// The LogicalPropertyInfoCache object.
-        /// </summary>
-        public LogicalPropertyInfoCache LogicalCache
-        {
-            get
+      /// <summary>
+      /// The DoublePropertyInfoCache object for Real parameter types.
+      /// </summary>
+      public DoublePropertyInfoCache RealCache
+      {
+         get
+         {
+            DoublePropertyInfoCache realPropertyInfoCache;
+            if (!DoubleCacheMap.TryGetValue(PropertyType.Real, out realPropertyInfoCache))
             {
-                if (m_LogicalPropertyInfoCache == null)
-                    m_LogicalPropertyInfoCache = new LogicalPropertyInfoCache();
-                return m_LogicalPropertyInfoCache;
+               realPropertyInfoCache = new DoublePropertyInfoCache();
+               DoubleCacheMap[PropertyType.Real] = realPropertyInfoCache;
             }
-        }
+            return realPropertyInfoCache;
+         }
+      }
 
-        /// <summary>
-        /// The IntegerPropertyInfoCache object.
-        /// </summary>
-        public IntegerPropertyInfoCache IntegerCache
-        {
-            get
+      /// <summary>
+      /// The DoublePropertyInfoCache object for LengthMeasure parameter types.
+      /// </summary>
+      public DoublePropertyInfoCache LengthMeasureCache
+      {
+         get
+         {
+            DoublePropertyInfoCache lengthMeasurePropertyInfoCache;
+            if (!DoubleCacheMap.TryGetValue(PropertyType.Length, out lengthMeasurePropertyInfoCache))
             {
-                if (m_IntegerPropertyInfoCache == null)
-                    m_IntegerPropertyInfoCache = new IntegerPropertyInfoCache();
-                return m_IntegerPropertyInfoCache;
+               lengthMeasurePropertyInfoCache = new DoublePropertyInfoCache();
+               DoubleCacheMap[PropertyType.Length] = lengthMeasurePropertyInfoCache;
             }
-        }
+            return lengthMeasurePropertyInfoCache;
+         }
+      }
 
-        /// <summary>
-        /// The StringPropertyInfoCache object for Text property type.
-        /// </summary>
-        public StringPropertyInfoCache TextCache
-        {
-            get
+      /// <summary>
+      /// The DoublePropertyInfoCache object for PlaneAngle parameter types.
+      /// </summary>
+      public DoublePropertyInfoCache PlaneAngleCache
+      {
+         get
+         {
+            DoublePropertyInfoCache planeAngleCache;
+            if (!DoubleCacheMap.TryGetValue(PropertyType.PlaneAngle, out planeAngleCache))
             {
-                StringPropertyInfoCache textPropertyInfoCache;
-                if (!StringCacheMap.TryGetValue(PropertyType.Text, out textPropertyInfoCache))
-                {
-                    textPropertyInfoCache = new StringPropertyInfoCache();
-                    StringCacheMap[PropertyType.Text] = textPropertyInfoCache;
-                }
-                return textPropertyInfoCache;
+               planeAngleCache = new DoublePropertyInfoCache();
+               DoubleCacheMap[PropertyType.PlaneAngle] = planeAngleCache;
             }
-        }
+            return planeAngleCache;
+         }
+      }
 
-        /// <summary>
-        /// The StringPropertyInfoCache object for Label property type.
-        /// </summary>
-        public StringPropertyInfoCache LabelCache
-        {
-            get
+      /// <summary>
+      /// The DoublePropertyInfoCache object for ElectricalCurrent parameter types.
+      /// </summary>
+      public DoublePropertyInfoCache ElectricalCurrentCache
+      {
+         get
+         {
+            DoublePropertyInfoCache electricalCurrentCache;
+            if (!DoubleCacheMap.TryGetValue(PropertyType.ElectricalCurrent, out electricalCurrentCache))
             {
-                StringPropertyInfoCache labelPropertyInfoCache;
-                if (!StringCacheMap.TryGetValue(PropertyType.Label, out labelPropertyInfoCache))
-                {
-                    labelPropertyInfoCache = new StringPropertyInfoCache();
-                    StringCacheMap[PropertyType.Label] = labelPropertyInfoCache;
-                }
-                return labelPropertyInfoCache;
+               electricalCurrentCache = new DoublePropertyInfoCache();
+               DoubleCacheMap[PropertyType.ElectricalCurrent] = electricalCurrentCache;
             }
-        }
+            return electricalCurrentCache;
+         }
+      }
 
-        /// <summary>
-        /// The StringPropertyInfoCache object for Label property type.
-        /// </summary>
-        public StringPropertyInfoCache IdentifierCache
-        {
-            get
+      /// <summary>
+      /// The DoublePropertyInfoCache object for ElectricalVoltage parameter types.
+      /// </summary>
+      public DoublePropertyInfoCache ElectricalVoltageCache
+      {
+         get
+         {
+            DoublePropertyInfoCache electricalVoltageCache;
+            if (!DoubleCacheMap.TryGetValue(PropertyType.ElectricalVoltage, out electricalVoltageCache))
             {
-                StringPropertyInfoCache identifierCache;
-                if (!StringCacheMap.TryGetValue(PropertyType.Identifier, out identifierCache))
-                {
-                    identifierCache = new StringPropertyInfoCache();
-                    StringCacheMap[PropertyType.Identifier] = identifierCache;
-                }
-                return identifierCache;
+               electricalVoltageCache = new DoublePropertyInfoCache();
+               DoubleCacheMap[PropertyType.ElectricalVoltage] = electricalVoltageCache;
             }
-        }
-        
-        /// <summary>
-        /// The DoublePropertyInfoCache object for Real parameter types.
-        /// </summary>
-        public DoublePropertyInfoCache RealCache
-        {
-            get
-            {
-                DoublePropertyInfoCache realPropertyInfoCache;
-                if (!DoubleCacheMap.TryGetValue(PropertyType.Real, out realPropertyInfoCache))
-                {
-                    realPropertyInfoCache = new DoublePropertyInfoCache();
-                    DoubleCacheMap[PropertyType.Real] = realPropertyInfoCache;
-                }
-                return realPropertyInfoCache;
-            }
-        }
+            return electricalVoltageCache;
+         }
+      }
 
-        /// <summary>
-        /// The DoublePropertyInfoCache object for LengthMeasure parameter types.
-        /// </summary>
-        public DoublePropertyInfoCache LengthMeasureCache
-        {
-            get
+      /// <summary>
+      /// The DoublePropertyInfoCache object for PositivePlaneAngle parameter types.
+      /// </summary>
+      public DoublePropertyInfoCache PositivePlaneAngleCache
+      {
+         get
+         {
+            DoublePropertyInfoCache planeAngleCache;
+            if (!DoubleCacheMap.TryGetValue(PropertyType.PlaneAngle, out planeAngleCache))
             {
-                DoublePropertyInfoCache lengthMeasurePropertyInfoCache;
-                if (!DoubleCacheMap.TryGetValue(PropertyType.Length, out lengthMeasurePropertyInfoCache))
-                {
-                    lengthMeasurePropertyInfoCache = new DoublePropertyInfoCache();
-                    DoubleCacheMap[PropertyType.Length] = lengthMeasurePropertyInfoCache;
-                }
-                return lengthMeasurePropertyInfoCache;
+               planeAngleCache = new DoublePropertyInfoCache();
+               DoubleCacheMap[PropertyType.PositivePlaneAngle] = planeAngleCache;
             }
-        }
+            return planeAngleCache;
+         }
+      }
 
-        /// <summary>
-        /// The DoublePropertyInfoCache object for PlaneAngle parameter types.
-        /// </summary>
-        public DoublePropertyInfoCache PlaneAngleCache
-        {
-            get
+      /// <summary>
+      /// The DoublePropertyInfoCache object for ThermodynamicTemperature parameter types.
+      /// </summary>
+      public DoublePropertyInfoCache ThermodynamicTemperatureCache
+      {
+         get
+         {
+            DoublePropertyInfoCache thermodynamicTemperaturePropertyInfoCache;
+            if (!DoubleCacheMap.TryGetValue(PropertyType.ThermodynamicTemperature, out thermodynamicTemperaturePropertyInfoCache))
             {
-                DoublePropertyInfoCache planeAngleCache;
-                if (!DoubleCacheMap.TryGetValue(PropertyType.PlaneAngle, out planeAngleCache))
-                {
-                    planeAngleCache = new DoublePropertyInfoCache();
-                    DoubleCacheMap[PropertyType.PlaneAngle] = planeAngleCache;
-                }
-                return planeAngleCache;
+               thermodynamicTemperaturePropertyInfoCache = new DoublePropertyInfoCache();
+               DoubleCacheMap[PropertyType.ThermodynamicTemperature] = thermodynamicTemperaturePropertyInfoCache;
             }
-        }
+            return thermodynamicTemperaturePropertyInfoCache;
+         }
+      }
 
-        /// <summary>
-        /// The DoublePropertyInfoCache object for ElectricalCurrent parameter types.
-        /// </summary>
-        public DoublePropertyInfoCache ElectricalCurrentCache
-        {
-            get
+      /// <summary>
+      /// The DoublePropertyInfoCache object for ThermalTransmittance parameter types.
+      /// </summary>
+      public DoublePropertyInfoCache ThermalTransmittanceCache
+      {
+         get
+         {
+            DoublePropertyInfoCache thermalTransmittancePropertyInfoCache;
+            if (!DoubleCacheMap.TryGetValue(PropertyType.ThermalTransmittance, out thermalTransmittancePropertyInfoCache))
             {
-                DoublePropertyInfoCache electricalCurrentCache;
-                if (!DoubleCacheMap.TryGetValue(PropertyType.ElectricalCurrent, out electricalCurrentCache))
-                {
-                    electricalCurrentCache = new DoublePropertyInfoCache();
-                    DoubleCacheMap[PropertyType.ElectricalCurrent] = electricalCurrentCache;
-                }
-                return electricalCurrentCache;
+               thermalTransmittancePropertyInfoCache = new DoublePropertyInfoCache();
+               DoubleCacheMap[PropertyType.ThermalTransmittance] = thermalTransmittancePropertyInfoCache;
             }
-        }
+            return thermalTransmittancePropertyInfoCache;
+         }
+      }
 
-        /// <summary>
-        /// The DoublePropertyInfoCache object for ElectricalVoltage parameter types.
-        /// </summary>
-        public DoublePropertyInfoCache ElectricalVoltageCache
-        {
-            get
+      /// <summary>
+      /// The DoublePropertyInfoCache object for Power parameter types.
+      /// </summary>
+      public DoublePropertyInfoCache PowerCache
+      {
+         get
+         {
+            DoublePropertyInfoCache powerPropertyInfoCache;
+            if (!DoubleCacheMap.TryGetValue(PropertyType.Power, out powerPropertyInfoCache))
             {
-                DoublePropertyInfoCache electricalVoltageCache;
-                if (!DoubleCacheMap.TryGetValue(PropertyType.ElectricalVoltage, out electricalVoltageCache))
-                {
-                    electricalVoltageCache = new DoublePropertyInfoCache();
-                    DoubleCacheMap[PropertyType.ElectricalVoltage] = electricalVoltageCache;
-                }
-                return electricalVoltageCache;
+               powerPropertyInfoCache = new DoublePropertyInfoCache();
+               DoubleCacheMap[PropertyType.Power] = powerPropertyInfoCache;
             }
-        }
-        
-        /// <summary>
-        /// The DoublePropertyInfoCache object for PositivePlaneAngle parameter types.
-        /// </summary>
-        public DoublePropertyInfoCache PositivePlaneAngleCache
-        {
-            get
-            {
-                DoublePropertyInfoCache planeAngleCache;
-                if (!DoubleCacheMap.TryGetValue(PropertyType.PlaneAngle, out planeAngleCache))
-                {
-                    planeAngleCache = new DoublePropertyInfoCache();
-                    DoubleCacheMap[PropertyType.PositivePlaneAngle] = planeAngleCache;
-                }
-                return planeAngleCache;
-            }
-        }
-
-        /// <summary>
-        /// The DoublePropertyInfoCache object for ThermodynamicTemperature parameter types.
-        /// </summary>
-        public DoublePropertyInfoCache ThermodynamicTemperatureCache
-        {
-            get
-            {
-                DoublePropertyInfoCache thermodynamicTemperaturePropertyInfoCache;
-                if (!DoubleCacheMap.TryGetValue(PropertyType.ThermodynamicTemperature, out thermodynamicTemperaturePropertyInfoCache))
-                {
-                    thermodynamicTemperaturePropertyInfoCache = new DoublePropertyInfoCache();
-                    DoubleCacheMap[PropertyType.ThermodynamicTemperature] = thermodynamicTemperaturePropertyInfoCache;
-                }
-                return thermodynamicTemperaturePropertyInfoCache;
-            }
-        }
-
-        /// <summary>
-        /// The DoublePropertyInfoCache object for ThermalTransmittance parameter types.
-        /// </summary>
-        public DoublePropertyInfoCache ThermalTransmittanceCache
-        {
-            get
-            {
-                DoublePropertyInfoCache thermalTransmittancePropertyInfoCache;
-                if (!DoubleCacheMap.TryGetValue(PropertyType.ThermalTransmittance, out thermalTransmittancePropertyInfoCache))
-                {
-                    thermalTransmittancePropertyInfoCache = new DoublePropertyInfoCache();
-                    DoubleCacheMap[PropertyType.ThermalTransmittance] = thermalTransmittancePropertyInfoCache;
-                }
-                return thermalTransmittancePropertyInfoCache;
-            }
-        }
-
-        /// <summary>
-        /// The DoublePropertyInfoCache object for Power parameter types.
-        /// </summary>
-        public DoublePropertyInfoCache PowerCache
-        {
-            get
-            {
-                DoublePropertyInfoCache powerPropertyInfoCache;
-                if (!DoubleCacheMap.TryGetValue(PropertyType.Power, out powerPropertyInfoCache))
-                {
-                    powerPropertyInfoCache = new DoublePropertyInfoCache();
-                    DoubleCacheMap[PropertyType.Power] = powerPropertyInfoCache;
-                }
-                return powerPropertyInfoCache;
-            }
-        }
-    }
+            return powerPropertyInfoCache;
+         }
+      }
+   }
 }

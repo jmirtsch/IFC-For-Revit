@@ -26,86 +26,86 @@ using Autodesk.Revit.DB.IFC;
 
 namespace BIM.IFC.Export.UI
 {
-    /// <summary>
-    /// Represents the types of files that can be produced during IFC export.
-    /// </summary>
-    public class IFCFileFormatAttributes
-    {
-        /// <summary>
-        /// The IFC file format into which a file may be exported.
-        /// </summary>
-        public IFCFileFormat FileType { get; set; }
+   /// <summary>
+   /// Represents the types of files that can be produced during IFC export.
+   /// </summary>
+   public class IFCFileFormatAttributes
+   {
+      /// <summary>
+      /// The IFC file format into which a file may be exported.
+      /// </summary>
+      public IFCFileFormat FileType { get; set; }
 
-        /// <summary>
-        /// Constructs the file format choices.
-        /// </summary>
-        /// <param name="fileType"></param>
-        public IFCFileFormatAttributes(IFCFileFormat fileType)
-        {
-            FileType = fileType;
-        }
+      /// <summary>
+      /// Constructs the file format choices.
+      /// </summary>
+      /// <param name="fileType"></param>
+      public IFCFileFormatAttributes(IFCFileFormat fileType)
+      {
+         FileType = fileType;
+      }
 
-        /// <summary>
-        /// Converts the IFCFileFormat to string.
-        /// </summary>
-        /// <returns>The string of IFCFileFormat.</returns>
-        public override String ToString()
-        {
-            switch (FileType)
-            {
-                case IFCFileFormat.Ifc:
-                    return Properties.Resources.IFC;
-                case IFCFileFormat.IfcXML:
-                    return Properties.Resources.IFCXML;
-                case IFCFileFormat.IfcZIP:
-                    return Properties.Resources.IFCZIP;
-                case IFCFileFormat.IfcXMLZIP:
-                    return Properties.Resources.IFCXMLZIP;
-                default:
-                    return Properties.Resources.IFCUnknown;
-            }
-        }
+      /// <summary>
+      /// Converts the IFCFileFormat to string.
+      /// </summary>
+      /// <returns>The string of IFCFileFormat.</returns>
+      public override String ToString()
+      {
+         switch (FileType)
+         {
+            case IFCFileFormat.Ifc:
+               return Properties.Resources.IFC;
+            case IFCFileFormat.IfcXML:
+               return Properties.Resources.IFCXML;
+            case IFCFileFormat.IfcZIP:
+               return Properties.Resources.IFCZIP;
+            case IFCFileFormat.IfcXMLZIP:
+               return Properties.Resources.IFCXMLZIP;
+            default:
+               return Properties.Resources.IFCUnknown;
+         }
+      }
 
-        /// <summary>
-        /// Gets the string of IFCFileFormat extension.
-        /// </summary>
-        /// <returns>The string of IFCFileFormat extension.</returns>
-        public String GetFileExtension()
-        {
-            switch (FileType)
-            {
-                case IFCFileFormat.Ifc:
-                    return Properties.Resources.IFCExt;
-                case IFCFileFormat.IfcXML:
-                    return Properties.Resources.IFCXMLExt;
-                case IFCFileFormat.IfcZIP:
-                    return Properties.Resources.IFCZIPExt;
-                case IFCFileFormat.IfcXMLZIP:
-                    return Properties.Resources.IFCXMLZIPExt;
-                default:
-                    return Properties.Resources.IFCUnknown;
-            }
-        }
+      /// <summary>
+      /// Gets the string of IFCFileFormat extension.
+      /// </summary>
+      /// <returns>The string of IFCFileFormat extension.</returns>
+      public String GetFileExtension()
+      {
+         switch (FileType)
+         {
+            case IFCFileFormat.Ifc:
+               return Properties.Resources.IFCExt;
+            case IFCFileFormat.IfcXML:
+               return Properties.Resources.IFCXMLExt;
+            case IFCFileFormat.IfcZIP:
+               return Properties.Resources.IFCZIPExt;
+            case IFCFileFormat.IfcXMLZIP:
+               return Properties.Resources.IFCXMLZIPExt;
+            default:
+               return Properties.Resources.IFCUnknown;
+         }
+      }
 
-        /// <summary>
-        /// Gets the string of IFCFileFormat filter.
-        /// </summary>
-        /// <returns>The string of IFCFileFormat filter.</returns>
-        public String GetFileFilter()
-        {
-            switch (FileType)
-            {
-                case IFCFileFormat.Ifc:
-                    return Properties.Resources.IFCFiles;
-                case IFCFileFormat.IfcXML:
-                    return Properties.Resources.IFCXMLFiles;
-                case IFCFileFormat.IfcZIP:
-                    return Properties.Resources.IFCZIPFiles;
-                case IFCFileFormat.IfcXMLZIP:
-                    return Properties.Resources.IFCZIPFiles;
-                default:
-                    return Properties.Resources.IFCUnknown;
-            }
-        }
-    }
+      /// <summary>
+      /// Gets the string of IFCFileFormat filter.
+      /// </summary>
+      /// <returns>The string of IFCFileFormat filter.</returns>
+      public String GetFileFilter()
+      {
+         switch (FileType)
+         {
+            case IFCFileFormat.Ifc:
+               return Properties.Resources.IFCFiles;
+            case IFCFileFormat.IfcXML:
+               return Properties.Resources.IFCXMLFiles;
+            case IFCFileFormat.IfcZIP:
+               return Properties.Resources.IFCZIPFiles;
+            case IFCFileFormat.IfcXMLZIP:
+               return Properties.Resources.IFCZIPFiles;
+            default:
+               return Properties.Resources.IFCUnknown;
+         }
+      }
+   }
 }

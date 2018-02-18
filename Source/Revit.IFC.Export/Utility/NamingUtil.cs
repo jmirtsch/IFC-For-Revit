@@ -135,13 +135,13 @@ namespace Revit.IFC.Export.Utility
                //// This is kind of hack to quickly check whether we need to parse the parameter or not by checking that the value is enclosed by "{ }" or "u{ }" for unique value
                //if (((paramValuetrim.Length > 1 && paramValuetrim[0] == '{') || (paramValuetrim.Length > 2 && paramValuetrim[1] == '{')) && (paramValuetrim[paramValuetrim.Length-1] == '}'))
                //{
-                  //ParamExprResolver pResv = new ParamExprResolver(element, paramName, paramValuetrim);
-                  //propertyValue = pResv.GetStringValue();
-                  //if (string.IsNullOrEmpty(propertyValue))
-                     //propertyValue = paramValue;   // return the original paramValue
+               //ParamExprResolver pResv = new ParamExprResolver(element, paramName, paramValuetrim);
+               //propertyValue = pResv.GetStringValue();
+               //if (string.IsNullOrEmpty(propertyValue))
+               //propertyValue = paramValue;   // return the original paramValue
                //}
                //else
-                  propertyValue = paramValue;   // return the original paramValue
+               propertyValue = paramValue;   // return the original paramValue
 
                //return paramValue;
                return propertyValue;
@@ -293,7 +293,7 @@ namespace Revit.IFC.Export.Utility
       {
          string nameOverride = "IfcDescription";
          string overrideValue = GetOverrideStringValue(element, nameOverride, originalValue);
-         if (!string.IsNullOrEmpty(overrideValue) && overrideValue.Equals(originalValue) 
+         if (!string.IsNullOrEmpty(overrideValue) && overrideValue.Equals(originalValue)
             && (element is ElementType || element is FamilySymbol))
          {
             nameOverride = "IfcDescription[Type]";

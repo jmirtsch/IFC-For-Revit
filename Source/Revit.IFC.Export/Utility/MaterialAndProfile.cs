@@ -64,12 +64,12 @@ namespace Revit.IFC.Export.Utility
          return m_MaterialAndProfileDict.ContainsKey(materialId);
       }
 
-      public IReadOnlyCollection<KeyValuePair<ElementId,IFCAnyHandle>> GetKeyValuePairs()
+      public IReadOnlyCollection<KeyValuePair<ElementId, IFCAnyHandle>> GetKeyValuePairs()
       {
          IList<KeyValuePair<ElementId, IFCAnyHandle>> theList = new List<KeyValuePair<ElementId, IFCAnyHandle>>();
-         foreach (KeyValuePair<ElementId,HashSet<IFCAnyHandle>> matProf in m_MaterialAndProfileDict)
+         foreach (KeyValuePair<ElementId, HashSet<IFCAnyHandle>> matProf in m_MaterialAndProfileDict)
          {
-            foreach(IFCAnyHandle profileHnd in matProf.Value)
+            foreach (IFCAnyHandle profileHnd in matProf.Value)
             {
                KeyValuePair<ElementId, IFCAnyHandle> pairValue = new KeyValuePair<ElementId, IFCAnyHandle>(matProf.Key, profileHnd);
                theList.Add(pairValue);
@@ -78,8 +78,8 @@ namespace Revit.IFC.Export.Utility
          return theList.ToList();
       }
 
-      public IReadOnlyCollection<IFCAnyHandle> GetProfileHandles (ElementId materialId)
-      { 
+      public IReadOnlyCollection<IFCAnyHandle> GetProfileHandles(ElementId materialId)
+      {
          HashSet<IFCAnyHandle> profileColl;
          m_MaterialAndProfileDict.TryGetValue(materialId, out profileColl);
          return profileColl.ToList();

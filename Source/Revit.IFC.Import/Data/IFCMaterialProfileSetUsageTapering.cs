@@ -25,62 +25,62 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    public class IFCMaterialProfileSetUsageTapering : IFCMaterialProfileSetUsage, IIFCMaterialSelect
-    {
-        IFCMaterialProfileSet m_ForProfileEndSet = null;
-        int? m_CardinalEndPoint = null;
+   public class IFCMaterialProfileSetUsageTapering : IFCMaterialProfileSetUsage, IIFCMaterialSelect
+   {
+      IFCMaterialProfileSet m_ForProfileEndSet = null;
+      int? m_CardinalEndPoint = null;
 
-        /// <summary>
-        /// Get the associated IfcMaterialProfileSet
-        /// </summary>
-        public IFCMaterialProfileSet ForProfileEndSet
-        {
-            get { return m_ForProfileEndSet; }
-            protected set { m_ForProfileEndSet = value; }
-        }
+      /// <summary>
+      /// Get the associated IfcMaterialProfileSet
+      /// </summary>
+      public IFCMaterialProfileSet ForProfileEndSet
+      {
+         get { return m_ForProfileEndSet; }
+         protected set { m_ForProfileEndSet = value; }
+      }
 
-        /// <summary>
-        /// Get the optional attribute CardinalPoint
-        /// </summary>
-        public int? CardinalEndPoint
-        {
-            get { return m_CardinalEndPoint; }
-            protected set { m_CardinalEndPoint = value; }
-        }
+      /// <summary>
+      /// Get the optional attribute CardinalPoint
+      /// </summary>
+      public int? CardinalEndPoint
+      {
+         get { return m_CardinalEndPoint; }
+         protected set { m_CardinalEndPoint = value; }
+      }
 
-        protected IFCMaterialProfileSetUsageTapering()
-        {
-        }
+      protected IFCMaterialProfileSetUsageTapering()
+      {
+      }
 
-        protected IFCMaterialProfileSetUsageTapering(IFCAnyHandle ifcMaterialProfileSetUsageTapering)
-        {
-            Process(ifcMaterialProfileSetUsageTapering);
-        }
+      protected IFCMaterialProfileSetUsageTapering(IFCAnyHandle ifcMaterialProfileSetUsageTapering)
+      {
+         Process(ifcMaterialProfileSetUsageTapering);
+      }
 
-        protected override void Process(IFCAnyHandle ifcMaterialProfileSetUsageTapering)
-        {
-            base.Process(ifcMaterialProfileSetUsageTapering);
+      protected override void Process(IFCAnyHandle ifcMaterialProfileSetUsageTapering)
+      {
+         base.Process(ifcMaterialProfileSetUsageTapering);
 
-            IFCAnyHandle ifcMaterialProfileSet = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcMaterialProfileSetUsageTapering, "ForProfileEndSet", true);
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialProfileSet))
-                ForProfileSet = IFCMaterialProfileSet.ProcessIFCMaterialProfileSet(ifcMaterialProfileSet);
+         IFCAnyHandle ifcMaterialProfileSet = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcMaterialProfileSetUsageTapering, "ForProfileEndSet", true);
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialProfileSet))
+            ForProfileSet = IFCMaterialProfileSet.ProcessIFCMaterialProfileSet(ifcMaterialProfileSet);
 
-            bool found = false;
-            CardinalPoint = IFCImportHandleUtil.GetOptionalIntegerAttribute(ifcMaterialProfileSetUsageTapering, "CardinalEndPoint", out found);
-        }
+         bool found = false;
+         CardinalPoint = IFCImportHandleUtil.GetOptionalIntegerAttribute(ifcMaterialProfileSetUsageTapering, "CardinalEndPoint", out found);
+      }
 
-        public static IFCMaterialProfileSetUsage ProcessIFCMaterialProfileSetUsageTapering(IFCAnyHandle ifcMaterialProfileSetUsageTapering)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialProfileSetUsageTapering))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialProfileSetUsageTapering);
-                return null;
-            }
+      public static IFCMaterialProfileSetUsage ProcessIFCMaterialProfileSetUsageTapering(IFCAnyHandle ifcMaterialProfileSetUsageTapering)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialProfileSetUsageTapering))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialProfileSetUsageTapering);
+            return null;
+         }
 
-            IFCEntity materialProfileSetUsageTapering;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcMaterialProfileSetUsageTapering.StepId, out materialProfileSetUsageTapering))
-                materialProfileSetUsageTapering = new IFCMaterialProfileSetUsageTapering(ifcMaterialProfileSetUsageTapering);
-            return (materialProfileSetUsageTapering as IFCMaterialProfileSetUsageTapering);
-        }
-    }
+         IFCEntity materialProfileSetUsageTapering;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcMaterialProfileSetUsageTapering.StepId, out materialProfileSetUsageTapering))
+            materialProfileSetUsageTapering = new IFCMaterialProfileSetUsageTapering(ifcMaterialProfileSetUsageTapering);
+         return (materialProfileSetUsageTapering as IFCMaterialProfileSetUsageTapering);
+      }
+   }
 }

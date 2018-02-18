@@ -95,7 +95,7 @@ namespace Revit.IFC.Export.Exporter
 
                   string typeGuid = GUIDUtil.CreateSubElementGUID(element, (int)IFCHostedSweepSubElements.PipeSegmentType);
                   IFCAnyHandle style = IFCInstanceExporter.CreatePipeSegmentType(file, null, null, repMapList, IFCPipeSegmentType.Gutter);
-						IFCAnyHandleUtil.SetAttribute(style, "Name", elementTypeName);
+                  IFCAnyHandleUtil.SetAttribute(style, "Name", elementTypeName);
 
                   IFCAnyHandleUtil.SetAttribute(style, "Tag", originalTag);
                   IFCAnyHandleUtil.SetAttribute(style, "GlobalId", typeGuid);

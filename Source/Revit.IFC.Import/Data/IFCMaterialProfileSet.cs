@@ -30,133 +30,133 @@ using Revit.IFC.Import.Properties;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class to represent IfcMaterialProfileSet
-    /// </summary>
-    public class IFCMaterialProfileSet : IFCEntity, IIFCMaterialSelect
-    {
-        string m_Name = null;
-        string m_Description = null;
-        IList<IFCMaterialProfile> m_MaterialProfileSet = null;
-        IFCCompositeProfile m_CompositeProfile = null;
+   /// <summary>
+   /// Class to represent IfcMaterialProfileSet
+   /// </summary>
+   public class IFCMaterialProfileSet : IFCEntity, IIFCMaterialSelect
+   {
+      string m_Name = null;
+      string m_Description = null;
+      IList<IFCMaterialProfile> m_MaterialProfileSet = null;
+      IFCCompositeProfile m_CompositeProfile = null;
 
-        /// <summary>
-        /// Get the Name attribute
-        /// </summary>
-        public string Name
-        {
-            get { return m_Name; }
-            protected set { m_Name = value; }
-        }
+      /// <summary>
+      /// Get the Name attribute
+      /// </summary>
+      public string Name
+      {
+         get { return m_Name; }
+         protected set { m_Name = value; }
+      }
 
-        // Get the Description attribute
-        public string Description
-        {
-            get { return m_Description; }
-            protected set { m_Description = value; }
-        }
+      // Get the Description attribute
+      public string Description
+      {
+         get { return m_Description; }
+         protected set { m_Description = value; }
+      }
 
-        /// <summary>
-        /// Get the associated list of MaterialProfiles
-        /// </summary>
-        public IList<IFCMaterialProfile> MaterialProfileSet
-        {
-            get
-            {
-                if (m_MaterialProfileSet == null)
-                    m_MaterialProfileSet = new List<IFCMaterialProfile>();
-                return m_MaterialProfileSet;
-            }
-        }
+      /// <summary>
+      /// Get the associated list of MaterialProfiles
+      /// </summary>
+      public IList<IFCMaterialProfile> MaterialProfileSet
+      {
+         get
+         {
+            if (m_MaterialProfileSet == null)
+               m_MaterialProfileSet = new List<IFCMaterialProfile>();
+            return m_MaterialProfileSet;
+         }
+      }
 
-        /// <summary>
-        /// Get the associated optional IfcCompositeCurve
-        /// </summary>
-        public IFCCompositeProfile CompositeProfile
-        {
-            get { return m_CompositeProfile; }
-            protected set { m_CompositeProfile = value; }
-        }
+      /// <summary>
+      /// Get the associated optional IfcCompositeCurve
+      /// </summary>
+      public IFCCompositeProfile CompositeProfile
+      {
+         get { return m_CompositeProfile; }
+         protected set { m_CompositeProfile = value; }
+      }
 
-        public void Create(Document doc)
-        {
-            foreach (IFCMaterialProfile materialprofile in MaterialProfileSet)
-                materialprofile.Create(doc);
-        }
+      public void Create(Document doc)
+      {
+         foreach (IFCMaterialProfile materialprofile in MaterialProfileSet)
+            materialprofile.Create(doc);
+      }
 
-        /// <summary>
-        /// Get the list of associated Materials
-        /// </summary>
-        /// <returns></returns>
-        public IList<IFCMaterial> GetMaterials()
-        {
-            HashSet<IFCMaterial> materials = new HashSet<IFCMaterial>();
-            foreach (IFCMaterialProfile materialProfile in MaterialProfileSet)
-            {
-                IList<IFCMaterial> profileMaterials = materialProfile.GetMaterials();
-                foreach (IFCMaterial material in profileMaterials)
-                    materials.Add(material);
-            }
-            return materials.ToList();
-        }
+      /// <summary>
+      /// Get the list of associated Materials
+      /// </summary>
+      /// <returns></returns>
+      public IList<IFCMaterial> GetMaterials()
+      {
+         HashSet<IFCMaterial> materials = new HashSet<IFCMaterial>();
+         foreach (IFCMaterialProfile materialProfile in MaterialProfileSet)
+         {
+            IList<IFCMaterial> profileMaterials = materialProfile.GetMaterials();
+            foreach (IFCMaterial material in profileMaterials)
+               materials.Add(material);
+         }
+         return materials.ToList();
+      }
 
-        protected IFCMaterialProfileSet()
-        {
-        }
+      protected IFCMaterialProfileSet()
+      {
+      }
 
-        protected IFCMaterialProfileSet(IFCAnyHandle ifcMaterialProfileSet)
-        {
-            Process(ifcMaterialProfileSet);
-        }
+      protected IFCMaterialProfileSet(IFCAnyHandle ifcMaterialProfileSet)
+      {
+         Process(ifcMaterialProfileSet);
+      }
 
-        protected override void Process(IFCAnyHandle ifcMaterialProfileSet)
-        {
-            base.Process(ifcMaterialProfileSet);
+      protected override void Process(IFCAnyHandle ifcMaterialProfileSet)
+      {
+         base.Process(ifcMaterialProfileSet);
 
-            IList<IFCAnyHandle> ifcMaterialProfiles =
-                IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcMaterialProfileSet, "MaterialProfiles");
-            if (ifcMaterialProfiles == null)
-            {
-                Importer.TheLog.LogError(ifcMaterialProfileSet.Id, "Expected at least 1 MaterialProfile, found none.", false);
-                return;
-            }
+         IList<IFCAnyHandle> ifcMaterialProfiles =
+             IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcMaterialProfileSet, "MaterialProfiles");
+         if (ifcMaterialProfiles == null)
+         {
+            Importer.TheLog.LogError(ifcMaterialProfileSet.Id, "Expected at least 1 MaterialProfile, found none.", false);
+            return;
+         }
 
-            foreach (IFCAnyHandle ifcMaterialProfile in ifcMaterialProfiles)
-            {
-               IFCMaterialProfile materialProfile = null;
-               if (IFCAnyHandleUtil.IsTypeOf(ifcMaterialProfile, IFCEntityType.IfcMaterialProfileWithOffsets))
-                  materialProfile = IFCMaterialProfileWithOffsets.ProcessIFCMaterialProfileWithOffsets(ifcMaterialProfile);
-               else
-                  materialProfile = IFCMaterialProfile.ProcessIFCMaterialProfile(ifcMaterialProfile);
+         foreach (IFCAnyHandle ifcMaterialProfile in ifcMaterialProfiles)
+         {
+            IFCMaterialProfile materialProfile = null;
+            if (IFCAnyHandleUtil.IsTypeOf(ifcMaterialProfile, IFCEntityType.IfcMaterialProfileWithOffsets))
+               materialProfile = IFCMaterialProfileWithOffsets.ProcessIFCMaterialProfileWithOffsets(ifcMaterialProfile);
+            else
+               materialProfile = IFCMaterialProfile.ProcessIFCMaterialProfile(ifcMaterialProfile);
 
-               if (materialProfile != null)
-                  MaterialProfileSet.Add(materialProfile);
-            }
+            if (materialProfile != null)
+               MaterialProfileSet.Add(materialProfile);
+         }
 
-            Name = IFCImportHandleUtil.GetOptionalStringAttribute(ifcMaterialProfileSet, "Name", null);
-            Description = IFCImportHandleUtil.GetOptionalStringAttribute(ifcMaterialProfileSet, "Description", null);
-            IFCAnyHandle compositeProfileHnd = IFCImportHandleUtil.GetOptionalInstanceAttribute(ifcMaterialProfileSet, "CompositeProfile");
-            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(compositeProfileHnd))
-                CompositeProfile = IFCCompositeProfile.ProcessIFCCompositeProfile(compositeProfileHnd);
-        }
+         Name = IFCImportHandleUtil.GetOptionalStringAttribute(ifcMaterialProfileSet, "Name", null);
+         Description = IFCImportHandleUtil.GetOptionalStringAttribute(ifcMaterialProfileSet, "Description", null);
+         IFCAnyHandle compositeProfileHnd = IFCImportHandleUtil.GetOptionalInstanceAttribute(ifcMaterialProfileSet, "CompositeProfile");
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(compositeProfileHnd))
+            CompositeProfile = IFCCompositeProfile.ProcessIFCCompositeProfile(compositeProfileHnd);
+      }
 
-        /// <summary>
-        /// Processes an IFCMaterialProfileSet entity.
-        /// </summary>
-        /// <param name="IFCMaterialProfileSet">The IFCMaterialProfileSet handle.</param>
-        /// <returns>The IFCMaterialProfileSet object.</returns>
-        public static IFCMaterialProfileSet ProcessIFCMaterialProfileSet(IFCAnyHandle ifcMaterialProfileSet)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialProfileSet))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialProfileSet);
-                return null;
-            }
+      /// <summary>
+      /// Processes an IFCMaterialProfileSet entity.
+      /// </summary>
+      /// <param name="IFCMaterialProfileSet">The IFCMaterialProfileSet handle.</param>
+      /// <returns>The IFCMaterialProfileSet object.</returns>
+      public static IFCMaterialProfileSet ProcessIFCMaterialProfileSet(IFCAnyHandle ifcMaterialProfileSet)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialProfileSet))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialProfileSet);
+            return null;
+         }
 
-            IFCEntity materialProfileSet;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcMaterialProfileSet.StepId, out materialProfileSet))
-                materialProfileSet = new IFCMaterialProfileSet(ifcMaterialProfileSet);
-            return (materialProfileSet as IFCMaterialProfileSet);
-        }
-    }
+         IFCEntity materialProfileSet;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcMaterialProfileSet.StepId, out materialProfileSet))
+            materialProfileSet = new IFCMaterialProfileSet(ifcMaterialProfileSet);
+         return (materialProfileSet as IFCMaterialProfileSet);
+      }
+   }
 }

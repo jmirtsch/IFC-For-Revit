@@ -27,31 +27,31 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter
 {
-    /// <summary>
-    /// Provides methods to export a wall sweep.
-    /// </summary>
-    class WallSweepExporter
-    {
-        /// <summary>
-        /// Exports a wall swepp.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="wallSweep">The WallSweep.</param>
-        /// <param name="geometryElement">The geometry element.</param>
-        /// <param name="productWrapper">The ProductWrapper.</param>
-        public static void Export(ExporterIFC exporterIFC, WallSweep wallSweep, GeometryElement geometryElement, ProductWrapper productWrapper)
-        {
-            WallSweepInfo wallSweepInfo = wallSweep.GetWallSweepInfo();
-            //Reveals are exported as openings with wall exporter.
-            if (wallSweepInfo.WallSweepType == WallSweepType.Reveal)
-                return;
+   /// <summary>
+   /// Provides methods to export a wall sweep.
+   /// </summary>
+   class WallSweepExporter
+   {
+      /// <summary>
+      /// Exports a wall swepp.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="wallSweep">The WallSweep.</param>
+      /// <param name="geometryElement">The geometry element.</param>
+      /// <param name="productWrapper">The ProductWrapper.</param>
+      public static void Export(ExporterIFC exporterIFC, WallSweep wallSweep, GeometryElement geometryElement, ProductWrapper productWrapper)
+      {
+         WallSweepInfo wallSweepInfo = wallSweep.GetWallSweepInfo();
+         //Reveals are exported as openings with wall exporter.
+         if (wallSweepInfo.WallSweepType == WallSweepType.Reveal)
+            return;
 
-            if (!ProxyElementExporter.Export(exporterIFC, wallSweep, geometryElement, productWrapper))
-                return;
+         if (!ProxyElementExporter.Export(exporterIFC, wallSweep, geometryElement, productWrapper))
+            return;
 
-            HostObjectExporter.ExportHostObjectMaterials(exporterIFC, wallSweep, productWrapper.GetAnElement(),
-                geometryElement, productWrapper,
-                ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis2, null, null);
-        }
-    }
+         HostObjectExporter.ExportHostObjectMaterials(exporterIFC, wallSweep, productWrapper.GetAnElement(),
+             geometryElement, productWrapper,
+             ElementId.InvalidElementId, Toolkit.IFCLayerSetDirection.Axis2, null, null);
+      }
+   }
 }

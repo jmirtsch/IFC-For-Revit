@@ -26,33 +26,33 @@ using Autodesk.Revit.DB;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// This class aggregates all allocated geometry objects so that they can be disposed of before returning from the IFC export.
-    /// Although the garbage collector would eventually catch up and dispose of these objects on its own, doing it preemptively is 
-    /// necessary in order to avoid debug errors triggered by Revit when running automated tests.
-    /// </summary>
-    public class AllocatedGeometryObjectCache
-    {
-        private List<GeometryObject> m_geometryObjects = new List<GeometryObject>();
+   /// <summary>
+   /// This class aggregates all allocated geometry objects so that they can be disposed of before returning from the IFC export.
+   /// Although the garbage collector would eventually catch up and dispose of these objects on its own, doing it preemptively is 
+   /// necessary in order to avoid debug errors triggered by Revit when running automated tests.
+   /// </summary>
+   public class AllocatedGeometryObjectCache
+   {
+      private List<GeometryObject> m_geometryObjects = new List<GeometryObject>();
 
-        /// <summary>
-        /// Adds a new object to the cache.   
-        /// </summary>
-        /// <param name="geometryObject">The object.</param>
-        public void AddGeometryObject(GeometryObject geometryObject)
-        {
-            m_geometryObjects.Add(geometryObject);
-        }
+      /// <summary>
+      /// Adds a new object to the cache.   
+      /// </summary>
+      /// <param name="geometryObject">The object.</param>
+      public void AddGeometryObject(GeometryObject geometryObject)
+      {
+         m_geometryObjects.Add(geometryObject);
+      }
 
-        /// <summary>
-        /// Executes Dispose for all geometry objects contained in the cache.
-        /// </summary>
-        public void DisposeCache()
-        {
-            foreach (GeometryObject geometryObject in m_geometryObjects)
-            {
-                geometryObject.Dispose();
-            }
-        }
-    }
+      /// <summary>
+      /// Executes Dispose for all geometry objects contained in the cache.
+      /// </summary>
+      public void DisposeCache()
+      {
+         foreach (GeometryObject geometryObject in m_geometryObjects)
+         {
+            geometryObject.Dispose();
+         }
+      }
+   }
 }

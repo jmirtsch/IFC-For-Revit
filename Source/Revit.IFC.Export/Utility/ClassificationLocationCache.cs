@@ -27,10 +27,10 @@ using Revit.IFC.Export.Toolkit;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of the created Classification Locations.
-    /// </summary>
-    public class ClassificationLocationCache : Dictionary<string, string>
-    {
-    }
+   /// <summary>
+   /// Used to keep a cache of the created Classification Locations.
+   /// </summary>
+   public class ClassificationLocationCache : Dictionary<string, string>
+   {
+   }
 }

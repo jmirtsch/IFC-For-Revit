@@ -27,71 +27,71 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    class SpecificZoneCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A string list to keep the calculated value.
-        /// </summary>
-        private List<string> m_SpecificZones = new List<string>();
+   class SpecificZoneCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A string list to keep the calculated value.
+      /// </summary>
+      private List<string> m_SpecificZones = new List<string>();
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static SpecificZoneCalculator s_Instance = new SpecificZoneCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static SpecificZoneCalculator s_Instance = new SpecificZoneCalculator();
 
-        /// <summary>
-        /// The SpecificZoneCalculator instance.
-        /// </summary>
-        public static SpecificZoneCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The SpecificZoneCalculator instance.
+      /// </summary>
+      public static SpecificZoneCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates specific zones for a space.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
-        /// <param name="element">The element to calculate the value.</param>
-        /// <param name="elementType">The element type.</param>
-        /// <returns>True if the operation succeed, false otherwise.</returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            string basePropSpecZoneString = "Project Specific Zone";
-            int val = 0;
-            while (++val < 1000)   // prevent infinite loop.
-            {
-                string propSpecZoneString;
-                if (val == 1)
-                    propSpecZoneString = basePropSpecZoneString;
-                else
-                    propSpecZoneString = basePropSpecZoneString + " " + val;
+      /// <summary>
+      /// Calculates specific zones for a space.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
+      /// <param name="element">The element to calculate the value.</param>
+      /// <param name="elementType">The element type.</param>
+      /// <returns>True if the operation succeed, false otherwise.</returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         string basePropSpecZoneString = "Project Specific Zone";
+         int val = 0;
+         while (++val < 1000)   // prevent infinite loop.
+         {
+            string propSpecZoneString;
+            if (val == 1)
+               propSpecZoneString = basePropSpecZoneString;
+            else
+               propSpecZoneString = basePropSpecZoneString + " " + val;
 
-                string value;
-                if ((ParameterUtil.GetStringValueFromElementOrSymbol(element, propSpecZoneString, out value) == null)
-                    || string.IsNullOrEmpty(value))
-                    break;
+            string value;
+            if ((ParameterUtil.GetStringValueFromElementOrSymbol(element, propSpecZoneString, out value) == null)
+                || string.IsNullOrEmpty(value))
+               break;
 
-                m_SpecificZones.Add(value);
-            }
+            m_SpecificZones.Add(value);
+         }
 
-            return m_SpecificZones.Count > 0;
-        }
+         return m_SpecificZones.Count > 0;
+      }
 
-        public override bool CalculatesMutipleValues
-        {
-            get { return true; }
-        }
+      public override bool CalculatesMutipleValues
+      {
+         get { return true; }
+      }
 
-        /// <summary>
-        /// Gets the calculated string values.
-        /// </summary>
-        /// <returns>
-        /// The string values.
-        /// </returns>
-        public override IList<string> GetStringValues()
-        {
-            return m_SpecificZones;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated string values.
+      /// </summary>
+      /// <returns>
+      /// The string values.
+      /// </returns>
+      public override IList<string> GetStringValues()
+      {
+         return m_SpecificZones;
+      }
+   }
 }

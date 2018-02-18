@@ -133,7 +133,7 @@ namespace Revit.IFC.Export.Exporter
                             ownerHistory, localPlacement, representation, ifcEnumType);
                         break;
                      default:
-						string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
+                        string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
                         IFCElementAssemblyType assemblyPredefinedType = GetPredefinedTypeFromObjectType(objectType);
                         assemblyInstanceHnd = IFCInstanceExporter.CreateElementAssembly(exporterIFC, element, guid,
                             ownerHistory, localPlacement, representation, IFCAssemblyPlace.NotDefined, assemblyPredefinedType);
@@ -260,7 +260,7 @@ namespace Revit.IFC.Export.Exporter
                IFCAnyHandle localPlacement = placementSetter.LocalPlacement;
 
                string guid = GUIDUtil.CreateGUID(assemblyElem);
-               
+
 
                IFCAnyHandle assemblyInstanceHnd = IFCInstanceExporter.CreateElementAssembly(exporterIFC, assemblyElem, guid,
                    ownerHistory, localPlacement, null, IFCAssemblyPlace.NotDefined, assemblyType);

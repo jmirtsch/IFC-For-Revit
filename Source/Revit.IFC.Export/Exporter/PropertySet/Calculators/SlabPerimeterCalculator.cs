@@ -28,64 +28,64 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate perimeter for a slab.
-    /// </summary>
-    class SlabPerimeterCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Perimeter = 0;
+   /// <summary>
+   /// A calculation class to calculate perimeter for a slab.
+   /// </summary>
+   class SlabPerimeterCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Perimeter = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static SlabPerimeterCalculator s_Instance = new SlabPerimeterCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static SlabPerimeterCalculator s_Instance = new SlabPerimeterCalculator();
 
-        /// <summary>
-        /// The SlabPerimeterCalculator instance.
-        /// </summary>
-        public static SlabPerimeterCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The SlabPerimeterCalculator instance.
+      /// </summary>
+      public static SlabPerimeterCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates perimeter for a slab.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            if (extrusionCreationData == null)
-                return false;
-            m_Perimeter = extrusionCreationData.ScaledOuterPerimeter;
-            return m_Perimeter > MathUtil.Eps();
-        }
+      /// <summary>
+      /// Calculates perimeter for a slab.
+      /// </summary>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="extrusionCreationData">
+      /// The IFCExtrusionCreationData.
+      /// </param>
+      /// <param name="element">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="elementType">
+      /// The element type.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         if (extrusionCreationData == null)
+            return false;
+         m_Perimeter = extrusionCreationData.ScaledOuterPerimeter;
+         return m_Perimeter > MathUtil.Eps();
+      }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Perimeter;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Perimeter;
+      }
+   }
 }

@@ -29,79 +29,79 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate shape parameter "C" for a rebar.
-    /// </summary>
-    class ISOCD3766ShapeParameterCCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_ShapeParameterC = 0;
+   /// <summary>
+   /// A calculation class to calculate shape parameter "C" for a rebar.
+   /// </summary>
+   class ISOCD3766ShapeParameterCCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_ShapeParameterC = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static ISOCD3766ShapeParameterCCalculator s_Instance = new ISOCD3766ShapeParameterCCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static ISOCD3766ShapeParameterCCalculator s_Instance = new ISOCD3766ShapeParameterCCalculator();
 
-        /// <summary>
-        /// The ISOCD3766ShapeParameterCCalculator instance.
-        /// </summary>
-        public static ISOCD3766ShapeParameterCCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The ISOCD3766ShapeParameterCCalculator instance.
+      /// </summary>
+      public static ISOCD3766ShapeParameterCCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates shape parameter C for a rebar.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
-        /// <param name="element">The element to calculate the value.</param>
-        /// <param name="elementType">The element type.</param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            bool ret = (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameterGroup.PG_GEOMETRY, "C", out m_ShapeParameterC) != null);
-            if (ret)
-                m_ShapeParameterC = UnitUtil.ScaleLength(m_ShapeParameterC);
-            return ret;
-        }
+      /// <summary>
+      /// Calculates shape parameter C for a rebar.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
+      /// <param name="element">The element to calculate the value.</param>
+      /// <param name="elementType">The element type.</param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         bool ret = (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameterGroup.PG_GEOMETRY, "C", out m_ShapeParameterC) != null);
+         if (ret)
+            m_ShapeParameterC = UnitUtil.ScaleLength(m_ShapeParameterC);
+         return ret;
+      }
 
-        /// <summary>
-        /// Retrieves shape parameter C for a rebar subelement, from the subelement cache.
-        /// </summary>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="handle">
-        /// The IFC handle that may offer parameter overrides.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool GetParameterFromSubelementCache(Element element, IFCAnyHandle handle)
-        {
-            DoubleParameterValue paramVal = ParameterUtil.getParameterValueByNameFromSubelementCache(element.Id, handle, "C") as DoubleParameterValue;
-            if (paramVal != null)
-            {
-                m_ShapeParameterC = UnitUtil.ScaleLength(paramVal.Value);
-                return true;
-            }
-            return false;
-        }
+      /// <summary>
+      /// Retrieves shape parameter C for a rebar subelement, from the subelement cache.
+      /// </summary>
+      /// <param name="element">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="handle">
+      /// The IFC handle that may offer parameter overrides.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool GetParameterFromSubelementCache(Element element, IFCAnyHandle handle)
+      {
+         DoubleParameterValue paramVal = ParameterUtil.getParameterValueByNameFromSubelementCache(element.Id, handle, "C") as DoubleParameterValue;
+         if (paramVal != null)
+         {
+            m_ShapeParameterC = UnitUtil.ScaleLength(paramVal.Value);
+            return true;
+         }
+         return false;
+      }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_ShapeParameterC;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_ShapeParameterC;
+      }
+   }
 }

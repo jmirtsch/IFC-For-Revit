@@ -114,7 +114,7 @@ namespace Revit.IFC.Export.Exporter
                   }
 
                   string instanceGUID = GUIDUtil.CreateGUID(element);
-                  
+
                   string footingType = GetIFCFootingType(ifcEnumType);    // need to keep it for legacy support when original data follows slightly diff naming
                   footingType = IFCValidateEntry.GetValidIFCType(element, footingType);
 

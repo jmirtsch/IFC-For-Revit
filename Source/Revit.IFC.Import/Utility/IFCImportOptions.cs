@@ -244,11 +244,11 @@ namespace Revit.IFC.Import.Utility
          get { return m_CreateDuplicateContainerGeometry; }
          protected set { m_CreateDuplicateContainerGeometry = value; }
       }
-      
+
       /// <summary>
-       /// If true, process the HasAssignments INVERSE attribute.  If false, ignore.
-       /// This is necessary because the default IFC2x3_TC1 EXPRESS schema file is (incorrectly) missing this inverse attribute.
-       /// </summary>
+      /// If true, process the HasAssignments INVERSE attribute.  If false, ignore.
+      /// This is necessary because the default IFC2x3_TC1 EXPRESS schema file is (incorrectly) missing this inverse attribute.
+      /// </summary>
       public bool AllowUseHasAssignments
       {
          get { return m_AllowUseHasAssignments; }

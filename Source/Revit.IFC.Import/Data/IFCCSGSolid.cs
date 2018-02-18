@@ -30,86 +30,86 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    public class IFCCSGSolid : IFCSolidModel
-    {
-        IFCBooleanResult m_TreeRootExpression = null;
+   public class IFCCSGSolid : IFCSolidModel
+   {
+      IFCBooleanResult m_TreeRootExpression = null;
 
-        public IFCBooleanResult BooleanResult
-        {
-            get { return m_TreeRootExpression; }
-            protected set { m_TreeRootExpression = value; }
-        }
+      public IFCBooleanResult BooleanResult
+      {
+         get { return m_TreeRootExpression; }
+         protected set { m_TreeRootExpression = value; }
+      }
 
-        protected IFCCSGSolid()
-        {
-        }
+      protected IFCCSGSolid()
+      {
+      }
 
-        protected override IList<GeometryObject> CreateGeometryInternal(
-           IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
-        {
-            if (BooleanResult != null)
-                return BooleanResult.CreateGeometry(shapeEditScope, lcs, scaledLcs, guid);
+      protected override IList<GeometryObject> CreateGeometryInternal(
+         IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
+      {
+         if (BooleanResult != null)
+            return BooleanResult.CreateGeometry(shapeEditScope, lcs, scaledLcs, guid);
+         return null;
+      }
+
+      /// <summary>
+      /// Create geometry for a particular representation item.
+      /// </summary>
+      /// <param name="shapeEditScope">The geometry creation scope.</param>
+      /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
+      /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
+      /// <param name="guid">The guid of an element for which represntation is being created.</param>
+      protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
+      {
+         base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
+
+         IList<GeometryObject> csgGeometries = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, guid);
+         if (csgGeometries != null)
+         {
+            foreach (GeometryObject csgGeometry in csgGeometries)
+            {
+               shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, csgGeometry));
+            }
+         }
+      }
+
+      override protected void Process(IFCAnyHandle solid)
+      {
+         base.Process(solid);
+
+         IFCAnyHandle treeRootExpression = IFCImportHandleUtil.GetRequiredInstanceAttribute(solid, "TreeRootExpression", false);
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(treeRootExpression))
+         {
+            if (IFCAnyHandleUtil.IsSubTypeOf(treeRootExpression, IFCEntityType.IfcBooleanResult))
+               BooleanResult = IFCBooleanResult.ProcessIFCBooleanResult(treeRootExpression);
+            else
+               Importer.TheLog.LogUnhandledSubTypeError(treeRootExpression, "IfcCsgSelect", false);
+         }
+      }
+
+      protected IFCCSGSolid(IFCAnyHandle solid)
+      {
+         Process(solid);
+      }
+
+      /// <summary>
+      /// Create an IFCCSGSolid object from a handle of type IfcCSGSolid.
+      /// </summary>
+      /// <param name="ifcSweptAreaSolid">The IFC handle.</param>
+      /// <returns>The IFCCSGSolid object.</returns>
+      public static IFCCSGSolid ProcessIFCCSGSolid(IFCAnyHandle ifcCSGSolid)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcCSGSolid))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcCsgSolid);
             return null;
-        }
+         }
 
-        /// <summary>
-        /// Create geometry for a particular representation item.
-        /// </summary>
-        /// <param name="shapeEditScope">The geometry creation scope.</param>
-        /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
-        /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
-        {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
+         IFCEntity csgSolid;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcCSGSolid.StepId, out csgSolid))
+            csgSolid = new IFCCSGSolid(ifcCSGSolid);
 
-            IList<GeometryObject> csgGeometries = CreateGeometryInternal(shapeEditScope, lcs, scaledLcs, guid);
-            if (csgGeometries != null)
-            {
-                foreach (GeometryObject csgGeometry in csgGeometries)
-                {
-                    shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, csgGeometry));
-                }
-            }
-        }
-        
-        override protected void Process(IFCAnyHandle solid)
-        {
-            base.Process(solid);
-
-            IFCAnyHandle treeRootExpression = IFCImportHandleUtil.GetRequiredInstanceAttribute(solid, "TreeRootExpression", false);
-            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(treeRootExpression))
-            {
-                if (IFCAnyHandleUtil.IsSubTypeOf(treeRootExpression, IFCEntityType.IfcBooleanResult))
-                    BooleanResult = IFCBooleanResult.ProcessIFCBooleanResult(treeRootExpression);
-                else
-                    Importer.TheLog.LogUnhandledSubTypeError(treeRootExpression, "IfcCsgSelect", false);
-            }
-        }
-
-        protected IFCCSGSolid(IFCAnyHandle solid)
-        {
-            Process(solid);
-        }
-
-        /// <summary>
-        /// Create an IFCCSGSolid object from a handle of type IfcCSGSolid.
-        /// </summary>
-        /// <param name="ifcSweptAreaSolid">The IFC handle.</param>
-        /// <returns>The IFCCSGSolid object.</returns>
-        public static IFCCSGSolid ProcessIFCCSGSolid(IFCAnyHandle ifcCSGSolid)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcCSGSolid))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcCsgSolid);
-                return null;
-            }
-
-            IFCEntity csgSolid;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcCSGSolid.StepId, out csgSolid))
-                csgSolid = new IFCCSGSolid(ifcCSGSolid);
-
-            return (csgSolid as IFCCSGSolid);
-        }
-    }
+         return (csgSolid as IFCCSGSolid);
+      }
+   }
 }

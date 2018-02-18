@@ -29,99 +29,99 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
-    /// <summary>
-    /// Provides static methods to create varies IFC properties.
-    /// </summary>
-    public class ElectricalCurrentPropertyUtil : PropertyUtil
-    {
-        /// <summary>
-        /// Create a label property.
-        /// </summary>
-        /// <param name="file">The IFC file.</param>
-        /// <param name="propertyName">The name of the property.</param>
-        /// <param name="value">The value of the property.</param>
-        /// <param name="valueType">The value type of the property.</param>
-        /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateElectricalCurrentMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
-        {
-            switch (valueType)
-            {
-                case PropertyValueType.EnumeratedValue:
-                    {
-                        IList<IFCData> valueList = new List<IFCData>();
-                        valueList.Add(IFCDataUtil.CreateAsElectricalCurrentMeasure(value));
-                        return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
-                    }
-                case PropertyValueType.SingleValue:
-                    return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsElectricalCurrentMeasure(value), null);
-                default:
-                    throw new InvalidOperationException("Missing case!");
-            }
-        }
+   /// <summary>
+   /// Provides static methods to create varies IFC properties.
+   /// </summary>
+   public class ElectricalCurrentPropertyUtil : PropertyUtil
+   {
+      /// <summary>
+      /// Create a label property.
+      /// </summary>
+      /// <param name="file">The IFC file.</param>
+      /// <param name="propertyName">The name of the property.</param>
+      /// <param name="value">The value of the property.</param>
+      /// <param name="valueType">The value type of the property.</param>
+      /// <returns>The created property handle.</returns>
+      public static IFCAnyHandle CreateElectricalCurrentMeasureProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+      {
+         switch (valueType)
+         {
+            case PropertyValueType.EnumeratedValue:
+               {
+                  IList<IFCData> valueList = new List<IFCData>();
+                  valueList.Add(IFCDataUtil.CreateAsElectricalCurrentMeasure(value));
+                  return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
+               }
+            case PropertyValueType.SingleValue:
+               return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsElectricalCurrentMeasure(value), null);
+            default:
+               throw new InvalidOperationException("Missing case!");
+         }
+      }
 
-        /// <summary>
-        /// Create a label property, or retrieve from cache.
-        /// </summary>
-        /// <param name="file">The IFC file.</param>
-        /// <param name="propertyName">The name of the property.</param>
-        /// <param name="value">The value of the property.</param>
-        /// <param name="valueType">The value type of the property.</param>
-        /// <returns>The created or cached property handle.</returns>
-        public static IFCAnyHandle CreateElectricalCurrentMeasurePropertyFromCache(IFCFile file, string propertyName, double value, PropertyValueType valueType)
-        {
-            // We have a partial cache here - we will only cache multiples of 15 degrees.
-            bool canCache = false;
-            double ampsDiv5 = Math.Floor(value / 5.0 + 0.5);
-            double integerAmps = ampsDiv5 * 5.0;
-            if (MathUtil.IsAlmostEqual(value, integerAmps))
-            {
-                canCache = true;
-                value = integerAmps;
-            }
+      /// <summary>
+      /// Create a label property, or retrieve from cache.
+      /// </summary>
+      /// <param name="file">The IFC file.</param>
+      /// <param name="propertyName">The name of the property.</param>
+      /// <param name="value">The value of the property.</param>
+      /// <param name="valueType">The value type of the property.</param>
+      /// <returns>The created or cached property handle.</returns>
+      public static IFCAnyHandle CreateElectricalCurrentMeasurePropertyFromCache(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+      {
+         // We have a partial cache here - we will only cache multiples of 15 degrees.
+         bool canCache = false;
+         double ampsDiv5 = Math.Floor(value / 5.0 + 0.5);
+         double integerAmps = ampsDiv5 * 5.0;
+         if (MathUtil.IsAlmostEqual(value, integerAmps))
+         {
+            canCache = true;
+            value = integerAmps;
+         }
 
-            IFCAnyHandle propertyHandle;
-            if (canCache)
-            {
-                propertyHandle = ExporterCacheManager.PropertyInfoCache.ElectricalCurrentCache.Find(propertyName, value);
-                if (propertyHandle != null)
-                    return propertyHandle;
-            }
+         IFCAnyHandle propertyHandle;
+         if (canCache)
+         {
+            propertyHandle = ExporterCacheManager.PropertyInfoCache.ElectricalCurrentCache.Find(propertyName, value);
+            if (propertyHandle != null)
+               return propertyHandle;
+         }
 
-            propertyHandle = CreateElectricalCurrentMeasureProperty(file, propertyName, value, valueType);
+         propertyHandle = CreateElectricalCurrentMeasureProperty(file, propertyName, value, valueType);
 
-            if (canCache && !IFCAnyHandleUtil.IsNullOrHasNoValue(propertyHandle))
-            {
-                ExporterCacheManager.PropertyInfoCache.ElectricalCurrentCache.Add(propertyName, value, propertyHandle);
-            }
+         if (canCache && !IFCAnyHandleUtil.IsNullOrHasNoValue(propertyHandle))
+         {
+            ExporterCacheManager.PropertyInfoCache.ElectricalCurrentCache.Add(propertyName, value, propertyHandle);
+         }
 
-            return propertyHandle;
-        }
+         return propertyHandle;
+      }
 
-        /// <summary>
-        /// Create an electrical current measure property from the element's or type's parameter.
-        /// </summary>
-        /// <param name="file">The IFC file.</param>
-        /// <param name="elem">The Element.</param>
-        /// <param name="revitParameterName">The name of the parameter.</param>
-        /// <param name="ifcPropertyName">The name of the property.</param>
-        /// <param name="valueType">The value type of the property.</param>
-        /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateElectricalCurrentMeasurePropertyFromElementOrSymbol(IFCFile file, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
-        {
-            double propertyValue;
-            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
-            {
-                propertyValue = UnitUtil.ScaleElectricalCurrent(propertyValue);
-                return CreateElectricalCurrentMeasurePropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
-            }
-            // For Symbol
-            Document document = elem.Document;
-            ElementId typeId = elem.GetTypeId();
-            Element elemType = document.GetElement(typeId);
-            if (elemType != null)
-                return CreateElectricalCurrentMeasurePropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
-            else
-                return null;
-        }
-    }
+      /// <summary>
+      /// Create an electrical current measure property from the element's or type's parameter.
+      /// </summary>
+      /// <param name="file">The IFC file.</param>
+      /// <param name="elem">The Element.</param>
+      /// <param name="revitParameterName">The name of the parameter.</param>
+      /// <param name="ifcPropertyName">The name of the property.</param>
+      /// <param name="valueType">The value type of the property.</param>
+      /// <returns>The created property handle.</returns>
+      public static IFCAnyHandle CreateElectricalCurrentMeasurePropertyFromElementOrSymbol(IFCFile file, Element elem, string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+      {
+         double propertyValue;
+         if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
+         {
+            propertyValue = UnitUtil.ScaleElectricalCurrent(propertyValue);
+            return CreateElectricalCurrentMeasurePropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
+         }
+         // For Symbol
+         Document document = elem.Document;
+         ElementId typeId = elem.GetTypeId();
+         Element elemType = document.GetElement(typeId);
+         if (elemType != null)
+            return CreateElectricalCurrentMeasurePropertyFromElementOrSymbol(file, elemType, revitParameterName, ifcPropertyName, valueType);
+         else
+            return null;
+      }
+   }
 }

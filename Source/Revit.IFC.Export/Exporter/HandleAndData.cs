@@ -28,45 +28,45 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter
 {
-    /// <summary>
-    /// A simple class to store both handle and ExtrusionCreationData.
-    /// </summary>
-    public class HandleAndData
-    {
-        /// <summary>
-        /// The handle of the created representation.
-        /// </summary>
-        public IFCAnyHandle Handle = null;
+   /// <summary>
+   /// A simple class to store both handle and ExtrusionCreationData.
+   /// </summary>
+   public class HandleAndData
+   {
+      /// <summary>
+      /// The handle of the created representation.
+      /// </summary>
+      public IFCAnyHandle Handle = null;
 
-        /// <summary>
-        /// The type of shape representation created.
-        /// </summary>
-        public ShapeRepresentationType ShapeRepresentationType = ShapeRepresentationType.Undefined;
+      /// <summary>
+      /// The type of shape representation created.
+      /// </summary>
+      public ShapeRepresentationType ShapeRepresentationType = ShapeRepresentationType.Undefined;
 
-        /// <summary>
-        /// The extra parameters for the extrusion.
-        /// </summary>
-        public IFCExtrusionCreationData Data = null;
+      /// <summary>
+      /// The extra parameters for the extrusion.
+      /// </summary>
+      public IFCExtrusionCreationData Data = null;
 
-        /// <summary>
-        /// The material ids for the extrusion.
-        /// </summary>
-        public HashSet<ElementId> MaterialIds = null;
+      /// <summary>
+      /// The material ids for the extrusion.
+      /// </summary>
+      public HashSet<ElementId> MaterialIds = null;
 
-        /// <summary>
-        /// The handles that represent the base representation items inside the final shape representation, without any openings or clippings.
-        /// In general, these are extrusions, but could be triangulated face sets for the Reference View.
-        /// </summary>
-        public IList<IFCAnyHandle> BaseRepresentationItems = null;
+      /// <summary>
+      /// The handles that represent the base representation items inside the final shape representation, without any openings or clippings.
+      /// In general, these are extrusions, but could be triangulated face sets for the Reference View.
+      /// </summary>
+      public IList<IFCAnyHandle> BaseRepresentationItems = null;
 
-        /// <summary>
-        /// A handle for the Footprint representation
-        /// </summary>
-        public FootPrintInfo FootprintInfo = null;
+      /// <summary>
+      /// A handle for the Footprint representation
+      /// </summary>
+      public FootPrintInfo FootprintInfo = null;
 
-         /// <summary>
-         /// A Dictionary for Material Profile
-         /// </summary>
-         public MaterialAndProfile MaterialAndProfile = null;
-    }
+      /// <summary>
+      /// A Dictionary for Material Profile
+      /// </summary>
+      public MaterialAndProfile MaterialAndProfile = null;
+   }
 }

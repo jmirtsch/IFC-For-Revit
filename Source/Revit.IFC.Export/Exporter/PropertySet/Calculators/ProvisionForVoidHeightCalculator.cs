@@ -30,70 +30,70 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate the height of a provision for void.
-    /// </summary>
-    class ProvisionForVoidHeightCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Height = 0.0;
+   /// <summary>
+   /// A calculation class to calculate the height of a provision for void.
+   /// </summary>
+   class ProvisionForVoidHeightCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Height = 0.0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static ProvisionForVoidHeightCalculator s_Instance = new ProvisionForVoidHeightCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static ProvisionForVoidHeightCalculator s_Instance = new ProvisionForVoidHeightCalculator();
 
-        /// <summary>
-        /// The ProvisionForVoidDiameterCalculator instance.
-        /// </summary>
-        public static ProvisionForVoidHeightCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The ProvisionForVoidDiameterCalculator instance.
+      /// </summary>
+      public static ProvisionForVoidHeightCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates the diameter of a provision for void.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
-        /// <param name="element">The element to calculate the value.</param>
-        /// <param name="elementType">The element type.</param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            if (extrusionCreationData == null)
-                return false;
+      /// <summary>
+      /// Calculates the diameter of a provision for void.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
+      /// <param name="element">The element to calculate the value.</param>
+      /// <param name="elementType">The element type.</param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         if (extrusionCreationData == null)
+            return false;
 
-            ProvisionForVoidShapeCalculator shapeCalculator = ProvisionForVoidShapeCalculator.Instance;
-            if (shapeCalculator == null || shapeCalculator.GetCurrentElement() != element)
-                return false;
+         ProvisionForVoidShapeCalculator shapeCalculator = ProvisionForVoidShapeCalculator.Instance;
+         if (shapeCalculator == null || shapeCalculator.GetCurrentElement() != element)
+            return false;
 
-            if (String.Compare(shapeCalculator.GetStringValue(), IFCProvisionForVoidShapeType.Rectangle.ToString()) != 0)
-                return false;
+         if (String.Compare(shapeCalculator.GetStringValue(), IFCProvisionForVoidShapeType.Rectangle.ToString()) != 0)
+            return false;
 
-            IFCAnyHandle rectProfile = shapeCalculator.GetCurrentProfileHandle();
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(rectProfile))
-                return false;
+         IFCAnyHandle rectProfile = shapeCalculator.GetCurrentProfileHandle();
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(rectProfile))
+            return false;
 
-            // This is already scaled.
-            double? height = IFCAnyHandleUtil.GetDoubleAttribute(rectProfile, "YDim");
-            m_Height = height.HasValue ? height.Value : 0.0;
-            return (m_Height > MathUtil.Eps());
-        }
+         // This is already scaled.
+         double? height = IFCAnyHandleUtil.GetDoubleAttribute(rectProfile, "YDim");
+         m_Height = height.HasValue ? height.Value : 0.0;
+         return (m_Height > MathUtil.Eps());
+      }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Height;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Height;
+      }
+   }
 }

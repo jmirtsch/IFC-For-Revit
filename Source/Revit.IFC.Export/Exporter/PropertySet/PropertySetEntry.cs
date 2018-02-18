@@ -24,32 +24,32 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
-    /// <summary>
-    /// Represents the type of the container for a property.
-    /// </summary>
-    public enum PropertyValueType
-    {
-        /// <summary>
-        /// A single property (IfcPropertySingleValue)
-        /// </summary>
-        SingleValue,
-        /// <summary>
-        /// An enumerated property (IfcPropertyEnumeratedValue)
-        /// </summary>
-        EnumeratedValue,
-        /// <summary>
-        /// A list property (IfcPropertyListValue)
-        /// </summary>
-        ListValue,
-        /// <summary>
-        /// A reference property (IfcPropertyReferenceValue)
-        /// </summary>
-        ReferenceValue,
-        /// <summary>
-        /// A Table property (IfcPropertyTableValue)
-        /// </summary>
-        TableValue
-    }
+   /// <summary>
+   /// Represents the type of the container for a property.
+   /// </summary>
+   public enum PropertyValueType
+   {
+      /// <summary>
+      /// A single property (IfcPropertySingleValue)
+      /// </summary>
+      SingleValue,
+      /// <summary>
+      /// An enumerated property (IfcPropertyEnumeratedValue)
+      /// </summary>
+      EnumeratedValue,
+      /// <summary>
+      /// A list property (IfcPropertyListValue)
+      /// </summary>
+      ListValue,
+      /// <summary>
+      /// A reference property (IfcPropertyReferenceValue)
+      /// </summary>
+      ReferenceValue,
+      /// <summary>
+      /// A Table property (IfcPropertyTableValue)
+      /// </summary>
+      TableValue
+   }
 
    /// <summary>
    /// Represents the type of a property.
@@ -329,20 +329,20 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
       }
 
-        /// <summary>
-        /// The value type of the IFC property set entry.
-        /// </summary>
-        public PropertyValueType PropertyValueType
-        {
-            get
-            {
-                return m_PropertyValueType;
-            }
-            set
-            {
-                m_PropertyValueType = value;
-            }
-        }
+      /// <summary>
+      /// The value type of the IFC property set entry.
+      /// </summary>
+      public PropertyValueType PropertyValueType
+      {
+         get
+         {
+            return m_PropertyValueType;
+         }
+         set
+         {
+            m_PropertyValueType = value;
+         }
+      }
 
       /// <summary>
       /// The type of the Enum that will validate the value for an enumeration.
@@ -366,15 +366,15 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          {
             //if (m_DefaultValue != null)
             //{
-               //switch (PropertyType)
-               //{
-                  //case PropertyType.Label:
-                     //return m_DefaultProperty = PropertyUtil.CreateLabelProperty(file, PropertyName, m_DefaultValue.ValueString, PropertyValueType, PropertyEnumerationType);
-                  //case PropertyType.Text:
-                     //return m_DefaultProperty = PropertyUtil.CreateTextProperty(file, PropertyName, m_DefaultValue.ValueString, PropertyValueType);
-                  //case PropertyType.Identifier:
-                     //return m_DefaultProperty = PropertyUtil.CreateIdentifierProperty(file, PropertyName, m_DefaultValue.ValueString, PropertyValueType);
-               //}
+            //switch (PropertyType)
+            //{
+            //case PropertyType.Label:
+            //return m_DefaultProperty = PropertyUtil.CreateLabelProperty(file, PropertyName, m_DefaultValue.ValueString, PropertyValueType, PropertyEnumerationType);
+            //case PropertyType.Text:
+            //return m_DefaultProperty = PropertyUtil.CreateTextProperty(file, PropertyName, m_DefaultValue.ValueString, PropertyValueType);
+            //case PropertyType.Identifier:
+            //return m_DefaultProperty = PropertyUtil.CreateIdentifierProperty(file, PropertyName, m_DefaultValue.ValueString, PropertyValueType);
+            //}
             //}
          }
          return m_DefaultProperty;

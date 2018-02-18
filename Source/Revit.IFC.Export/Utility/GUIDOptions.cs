@@ -27,39 +27,39 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// A class that controls how IFC GUIDs are generated on export.
-    /// </summary>
-    public class GUIDOptions
-    {
-        /// <summary>
-        /// public default constructor.
-        /// </summary>
-        public GUIDOptions()
-        {
-            AllowGUIDParameterOverride = true;
-            Use2009BuildingStoreyGUIDs = false;
-        }
+   /// <summary>
+   /// A class that controls how IFC GUIDs are generated on export.
+   /// </summary>
+   public class GUIDOptions
+   {
+      /// <summary>
+      /// public default constructor.
+      /// </summary>
+      public GUIDOptions()
+      {
+         AllowGUIDParameterOverride = true;
+         Use2009BuildingStoreyGUIDs = false;
+      }
 
-        /// <summary>
-        /// Determines whether to use the "IFCGuid" parameter, if set, to generate the IFC GUID on export.
-        /// 1. true: Use the "IFCGuid" parameter, if set. (default)
-        /// 2. false: Ignore the "IFCGuid" parameter; always use the Revit API DWF/IFC GUID creation function.
-        /// </summary>
-        public bool AllowGUIDParameterOverride { get; set; }
+      /// <summary>
+      /// Determines whether to use the "IFCGuid" parameter, if set, to generate the IFC GUID on export.
+      /// 1. true: Use the "IFCGuid" parameter, if set. (default)
+      /// 2. false: Ignore the "IFCGuid" parameter; always use the Revit API DWF/IFC GUID creation function.
+      /// </summary>
+      public bool AllowGUIDParameterOverride { get; set; }
 
-        /// <summary>
-        /// Whether or not to use R2009 GUIDs for exporting Levels.  If this option is set, export will write the old
-        /// GUID value into an IfcGUID parameter for the Level, requiring the user to save the file if they want to
-        /// ensure that the old GUID is used permanently.
-        /// To set this to true, add the environment variable Assign2009GUIDToBuildingStoriesOnIFCExport and set the value to 1.
-        /// </summary>
-        public bool Use2009BuildingStoreyGUIDs { get; set; }
+      /// <summary>
+      /// Whether or not to use R2009 GUIDs for exporting Levels.  If this option is set, export will write the old
+      /// GUID value into an IfcGUID parameter for the Level, requiring the user to save the file if they want to
+      /// ensure that the old GUID is used permanently.
+      /// To set this to true, add the environment variable Assign2009GUIDToBuildingStoriesOnIFCExport and set the value to 1.
+      /// </summary>
+      public bool Use2009BuildingStoreyGUIDs { get; set; }
 
-        /// <summary>
-        /// Whether or not to store the IFC GUIDs generated during export.  The user is required to save the file if they want to
-        /// ensure that the GUID parameter is used permanently.
-        /// </summary>
-        public bool StoreIFCGUID { get; set; }
-    }
+      /// <summary>
+      /// Whether or not to store the IFC GUIDs generated during export.  The user is required to save the file if they want to
+      /// ensure that the GUID parameter is used permanently.
+      /// </summary>
+      public bool StoreIFCGUID { get; set; }
+   }
 }

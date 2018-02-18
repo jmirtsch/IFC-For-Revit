@@ -99,7 +99,7 @@ namespace Revit.IFC.Export.Exporter
                Line line = curve as Line;
                XYZ planeY;
 
-               XYZ LCSorigin = line.GetEndPoint(0);               
+               XYZ LCSorigin = line.GetEndPoint(0);
                structMemberDirection = line.Direction.Normalize();
                if (Math.Abs(structMemberDirection.Z) < 0.707)  // approx 1.0/sqrt(2.0)
                {

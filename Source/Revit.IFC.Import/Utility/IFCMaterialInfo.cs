@@ -31,62 +31,62 @@ using UnitName = Autodesk.Revit.DB.DisplayUnitType;
 
 namespace Revit.IFC.Import.Utility
 {
-    /// <summary>
-    /// A class that contains the settable values of Material from IFC.
-    /// Used to determine "equivalence".
-    /// </summary>
-    public class IFCMaterialInfo
-    {
-        /// <summary>
-        /// The color of the material.
-        /// </summary>
-        public Color Color { get; set; }
+   /// <summary>
+   /// A class that contains the settable values of Material from IFC.
+   /// Used to determine "equivalence".
+   /// </summary>
+   public class IFCMaterialInfo
+   {
+      /// <summary>
+      /// The color of the material.
+      /// </summary>
+      public Color Color { get; set; }
 
-        /// <summary>
-        /// The optional transparency of the material, from 0 to 100 (fully transparent).
-        /// </summary>
-        public int? Transparency { get; set; }
+      /// <summary>
+      /// The optional transparency of the material, from 0 to 100 (fully transparent).
+      /// </summary>
+      public int? Transparency { get; set; }
 
-        /// <summary>
-        /// The optional shininess of the material.
-        /// </summary>
-        public int? Shininess { get; set; }
+      /// <summary>
+      /// The optional shininess of the material.
+      /// </summary>
+      public int? Shininess { get; set; }
 
-        /// <summary>
-        /// The optional smoothness of the material.
-        /// </summary>
-        public int? Smoothness { get; set; }
+      /// <summary>
+      /// The optional smoothness of the material.
+      /// </summary>
+      public int? Smoothness { get; set; }
 
-        /// <summary>
-        /// The element id of the associated Revit material.
-        /// </summary>
-        public ElementId ElementId { get; set; }
+      /// <summary>
+      /// The element id of the associated Revit material.
+      /// </summary>
+      public ElementId ElementId { get; set; }
 
-        protected IFCMaterialInfo()
-        {
-        }
+      protected IFCMaterialInfo()
+      {
+      }
 
-        protected IFCMaterialInfo(Color color, int? transparency, int? shininess, int? smoothness, ElementId id)
-        {
-            Color = color;
-            Transparency = transparency;
-            Shininess = shininess;
-            Smoothness = smoothness;
-            ElementId = id;
-        }
+      protected IFCMaterialInfo(Color color, int? transparency, int? shininess, int? smoothness, ElementId id)
+      {
+         Color = color;
+         Transparency = transparency;
+         Shininess = shininess;
+         Smoothness = smoothness;
+         ElementId = id;
+      }
 
-        /// <summary>
-        /// Create an IFCMaterialInfo from the imported values of materials.
-        /// </summary>
-        /// <param name="color">The color.</param>
-        /// <param name="transparency">The optional transparency.</param>
-        /// <param name="shininess">The optional shininess.</param>
-        /// <param name="smoothness">The optional smoothness.</param>
-        /// <param name="id">The element id of the material, if it exists, otherwise invalidElementId.</param>
-        /// <returns>The IFCMaterialInfo container.</returns>
-        public static IFCMaterialInfo Create(Color color, int? transparency, int? shininess, int? smoothness, ElementId id)
-        {
-            return new IFCMaterialInfo(color, transparency, shininess, smoothness, id);
-        }
-    }
+      /// <summary>
+      /// Create an IFCMaterialInfo from the imported values of materials.
+      /// </summary>
+      /// <param name="color">The color.</param>
+      /// <param name="transparency">The optional transparency.</param>
+      /// <param name="shininess">The optional shininess.</param>
+      /// <param name="smoothness">The optional smoothness.</param>
+      /// <param name="id">The element id of the material, if it exists, otherwise invalidElementId.</param>
+      /// <returns>The IFCMaterialInfo container.</returns>
+      public static IFCMaterialInfo Create(Color color, int? transparency, int? shininess, int? smoothness, ElementId id)
+      {
+         return new IFCMaterialInfo(color, transparency, shininess, smoothness, id);
+      }
+   }
 }

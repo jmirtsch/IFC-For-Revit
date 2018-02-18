@@ -429,7 +429,7 @@ namespace Revit.IFC.Import.Data
                // For Link IFC, we will delete any unused levels at the end.  Instead, we want to try to reuse them.
                // The for loop does a little unnecessary work if deleteLevelsNow, but the performance implications are very small.
                bool deleteLevelsNow = (Importer.TheOptions.Action != IFCImportAction.Link);
-               
+
                FilteredElementCollector levelCollector = new FilteredElementCollector(doc);
                ICollection<Element> levels = levelCollector.OfClass(typeof(Level)).ToElements();
                ICollection<ElementId> levelIdsToDelete = new HashSet<ElementId>();
@@ -1014,8 +1014,8 @@ namespace Revit.IFC.Import.Data
             }
             else if (File.Exists(ifc4Add1Path))
             {
-                modelOptions.SchemaFile = ifc4Add1Path;
-                schemaVersion = IFCSchemaVersion.IFC4Add1;
+               modelOptions.SchemaFile = ifc4Add1Path;
+               schemaVersion = IFCSchemaVersion.IFC4Add1;
             }
             else
             {

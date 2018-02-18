@@ -27,108 +27,108 @@ using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents an IfcComplexProperty.
-    /// </summary>-
-    public class IFCComplexProperty : IFCProperty
-    {
-        /// <summary>
-        /// The properties in the complex property.
-        /// </summary>
-        IDictionary<string, IFCProperty> m_IFCProperties = new Dictionary<string, IFCProperty>();
+   /// <summary>
+   /// Represents an IfcComplexProperty.
+   /// </summary>-
+   public class IFCComplexProperty : IFCProperty
+   {
+      /// <summary>
+      /// The properties in the complex property.
+      /// </summary>
+      IDictionary<string, IFCProperty> m_IFCProperties = new Dictionary<string, IFCProperty>();
 
-        /// <summary>
-        /// The usage name.
-        /// </summary>
-        string m_UsageName;
+      /// <summary>
+      /// The usage name.
+      /// </summary>
+      string m_UsageName;
 
-        /// <summary>
-        /// The usage name.
-        /// </summary>
-        public string UsageName
-        {
-            get { return m_UsageName; }
-            protected set { m_UsageName = value; }
-        }
+      /// <summary>
+      /// The usage name.
+      /// </summary>
+      public string UsageName
+      {
+         get { return m_UsageName; }
+         protected set { m_UsageName = value; }
+      }
 
-        /// <summary>
-        /// The IFC properties.
-        /// </summary>
-        public IDictionary<string, IFCProperty> IFCProperties
-        {
-            get { return m_IFCProperties; }
-        }
+      /// <summary>
+      /// The IFC properties.
+      /// </summary>
+      public IDictionary<string, IFCProperty> IFCProperties
+      {
+         get { return m_IFCProperties; }
+      }
 
-        /// <summary>
-        /// Returns the property value as a string, for SetValueString().
-        /// </summary>
-        /// <returns>The property value as a string.</returns>
-        public override string PropertyValueAsString()
-        {
-            int numValues = (IFCProperties != null) ? IFCProperties.Count : 0;
-            if (numValues == 0)
-                return "";
+      /// <summary>
+      /// Returns the property value as a string, for SetValueString().
+      /// </summary>
+      /// <returns>The property value as a string.</returns>
+      public override string PropertyValueAsString()
+      {
+         int numValues = (IFCProperties != null) ? IFCProperties.Count : 0;
+         if (numValues == 0)
+            return "";
 
-            string propertyValue = "";
-            foreach (KeyValuePair<string, IFCProperty> property in IFCProperties)
-            {
-                if (propertyValue != "")
-                    propertyValue += "; ";
-                propertyValue += property.Key + ": " + property.Value.PropertyValueAsString();
-            }
+         string propertyValue = "";
+         foreach (KeyValuePair<string, IFCProperty> property in IFCProperties)
+         {
+            if (propertyValue != "")
+               propertyValue += "; ";
+            propertyValue += property.Key + ": " + property.Value.PropertyValueAsString();
+         }
 
-            return propertyValue;
-        }
+         return propertyValue;
+      }
 
-        protected IFCComplexProperty()
-        {
-        }
+      protected IFCComplexProperty()
+      {
+      }
 
-        protected IFCComplexProperty(IFCAnyHandle property)
-        {
-            Process(property);
-        }
+      protected IFCComplexProperty(IFCAnyHandle property)
+      {
+         Process(property);
+      }
 
-        protected override void Process(IFCAnyHandle complexProperty)
-        {
-            base.Process(complexProperty);
-            Name = IFCAnyHandleUtil.GetStringAttribute(complexProperty, "Name");
-            UsageName = IFCAnyHandleUtil.GetStringAttribute(complexProperty, "UsageName");
+      protected override void Process(IFCAnyHandle complexProperty)
+      {
+         base.Process(complexProperty);
+         Name = IFCAnyHandleUtil.GetStringAttribute(complexProperty, "Name");
+         UsageName = IFCAnyHandleUtil.GetStringAttribute(complexProperty, "UsageName");
 
-            HashSet<IFCAnyHandle> properties = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(complexProperty, "HasProperties");
+         HashSet<IFCAnyHandle> properties = IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(complexProperty, "HasProperties");
 
-            foreach (IFCAnyHandle property in properties)
-            {
-                IFCProperty containedProperty = IFCProperty.ProcessIFCProperty(property);
-                if (containedProperty != null)
-                    IFCProperties[containedProperty.Name] = containedProperty;
-            }
+         foreach (IFCAnyHandle property in properties)
+         {
+            IFCProperty containedProperty = IFCProperty.ProcessIFCProperty(property);
+            if (containedProperty != null)
+               IFCProperties[containedProperty.Name] = containedProperty;
+         }
 
-        }
+      }
 
-        /// <summary>
-        /// Processes an IFC complex property.
-        /// </summary>
-        /// <param name="complexProperty">The IfcComplexProperty object.</param>
-        /// <returns>The IFCComplexProperty object.</returns>
-        public static IFCComplexProperty ProcessIFCComplexProperty(IFCAnyHandle ifcComplexProperty)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcComplexProperty))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcComplexProperty);
-                return null;
-            }
+      /// <summary>
+      /// Processes an IFC complex property.
+      /// </summary>
+      /// <param name="complexProperty">The IfcComplexProperty object.</param>
+      /// <returns>The IFCComplexProperty object.</returns>
+      public static IFCComplexProperty ProcessIFCComplexProperty(IFCAnyHandle ifcComplexProperty)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcComplexProperty))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcComplexProperty);
+            return null;
+         }
 
-            if (!IFCAnyHandleUtil.IsSubTypeOf(ifcComplexProperty, IFCEntityType.IfcComplexProperty))
-            {
-                //LOG: ERROR: Not an IfcComplexProperty.
-                return null;
-            }
+         if (!IFCAnyHandleUtil.IsSubTypeOf(ifcComplexProperty, IFCEntityType.IfcComplexProperty))
+         {
+            //LOG: ERROR: Not an IfcComplexProperty.
+            return null;
+         }
 
-            IFCEntity complexProperty;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcComplexProperty.StepId, out complexProperty))
-                complexProperty = new IFCComplexProperty(ifcComplexProperty);
-            return (complexProperty as IFCComplexProperty); 
-        }
-    }
+         IFCEntity complexProperty;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcComplexProperty.StepId, out complexProperty))
+            complexProperty = new IFCComplexProperty(ifcComplexProperty);
+         return (complexProperty as IFCComplexProperty);
+      }
+   }
 }

@@ -26,24 +26,24 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of IfcRepresentation handles for a layer name.
-    /// </summary>
-    public class PresentationLayerSetCache : Dictionary<string, ICollection<IFCAnyHandle>>
-    {
-        public void AddRepresentationToLayer(string layerName, IFCAnyHandle repHnd)
-        {
-            if (string.IsNullOrWhiteSpace(layerName))
-                throw new ArgumentException("Empty or null layer name.");
-            
-            ICollection<IFCAnyHandle> layerList = null;
-            if (!TryGetValue(layerName, out layerList))
-            {
-                layerList = new HashSet<IFCAnyHandle>();
-                this[layerName] = layerList;
-            }
-            layerList.Add(repHnd);
-        }
-    }
+   /// <summary>
+   /// Used to keep a cache of IfcRepresentation handles for a layer name.
+   /// </summary>
+   public class PresentationLayerSetCache : Dictionary<string, ICollection<IFCAnyHandle>>
+   {
+      public void AddRepresentationToLayer(string layerName, IFCAnyHandle repHnd)
+      {
+         if (string.IsNullOrWhiteSpace(layerName))
+            throw new ArgumentException("Empty or null layer name.");
+
+         ICollection<IFCAnyHandle> layerList = null;
+         if (!TryGetValue(layerName, out layerList))
+         {
+            layerList = new HashSet<IFCAnyHandle>();
+            this[layerName] = layerList;
+         }
+         layerList.Add(repHnd);
+      }
+   }
 }
 

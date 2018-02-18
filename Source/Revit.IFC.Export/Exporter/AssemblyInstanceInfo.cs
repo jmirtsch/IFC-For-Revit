@@ -25,28 +25,28 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Exporter
 {
-    public class AssemblyInstanceInfo
-    {
-        private IFCAnyHandle m_AssemblyInstanceHandle = null;
+   public class AssemblyInstanceInfo
+   {
+      private IFCAnyHandle m_AssemblyInstanceHandle = null;
 
-        private HashSet<IFCAnyHandle> m_ElementHandles = new HashSet<IFCAnyHandle>();
+      private HashSet<IFCAnyHandle> m_ElementHandles = new HashSet<IFCAnyHandle>();
 
-        /// <summary>
-        /// The Assembly Instance handle.
-        /// </summary>
-        public IFCAnyHandle AssemblyInstanceHandle
-        {
-            get { return m_AssemblyInstanceHandle; }
-            set { m_AssemblyInstanceHandle = value; }
-        }
+      /// <summary>
+      /// The Assembly Instance handle.
+      /// </summary>
+      public IFCAnyHandle AssemblyInstanceHandle
+      {
+         get { return m_AssemblyInstanceHandle; }
+         set { m_AssemblyInstanceHandle = value; }
+      }
 
-        /// <summary>
-        /// The Assembly Instance handle.
-        /// </summary>
-        public HashSet<IFCAnyHandle> ElementHandles
-        {
-            get { return m_ElementHandles; }
-            set { m_ElementHandles = value; }
-        }
-    }
+      /// <summary>
+      /// The Assembly Instance handle.
+      /// </summary>
+      public HashSet<IFCAnyHandle> ElementHandles
+      {
+         get { return m_ElementHandles; }
+         set { m_ElementHandles = value; }
+      }
+   }
 }

@@ -97,7 +97,7 @@ namespace Revit.IFC.Import.Utility
             Importer.TheLog.LogWarning(id, "Creating DirectShape or DirectShapeType with disallowed category id: " + categoryId + ", reverting to Generic Models.", true);
             return new ElementId(BuiltInCategory.OST_GenericModel);
          }
-         
+
          return categoryId;
       }
 

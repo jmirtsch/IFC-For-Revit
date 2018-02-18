@@ -31,168 +31,168 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    public class IFCManifoldSolidBrep : IFCSolidModel, IIFCBooleanOperand
-    {
-        IFCClosedShell m_Outer = null;
+   public class IFCManifoldSolidBrep : IFCSolidModel, IIFCBooleanOperand
+   {
+      IFCClosedShell m_Outer = null;
 
-        /// <summary>
-        /// The outer shell of the solid.
-        /// </summary>
-        public IFCClosedShell Outer
-        {
-            get { return m_Outer; }
-            protected set { m_Outer = value; }
-        }
+      /// <summary>
+      /// The outer shell of the solid.
+      /// </summary>
+      public IFCClosedShell Outer
+      {
+         get { return m_Outer; }
+         protected set { m_Outer = value; }
+      }
 
-        protected IFCManifoldSolidBrep()
-        {
-        }
+      protected IFCManifoldSolidBrep()
+      {
+      }
 
-        /// <summary>
-        /// Return geometry for a particular representation item.
-        /// </summary>
-        /// <param name="shapeEditScope">The shape edit scope.</param>
-        /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
-        /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        /// <returns>The created geometry.</returns>
-        protected override IList<GeometryObject> CreateGeometryInternal(
-           IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
-        {
-            if (Outer == null || Outer.Faces.Count == 0)
-                return null;
+      /// <summary>
+      /// Return geometry for a particular representation item.
+      /// </summary>
+      /// <param name="shapeEditScope">The shape edit scope.</param>
+      /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
+      /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
+      /// <param name="guid">The guid of an element for which represntation is being created.</param>
+      /// <returns>The created geometry.</returns>
+      protected override IList<GeometryObject> CreateGeometryInternal(
+         IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
+      {
+         if (Outer == null || Outer.Faces.Count == 0)
+            return null;
 
-            IList<GeometryObject> geomObjs = null;
-            bool canRevertToMesh = false;
-            
-            using (BuilderScope bs = shapeEditScope.InitializeBuilder(IFCShapeBuilderType.TessellatedShapeBuilder))
+         IList<GeometryObject> geomObjs = null;
+         bool canRevertToMesh = false;
+
+         using (BuilderScope bs = shapeEditScope.InitializeBuilder(IFCShapeBuilderType.TessellatedShapeBuilder))
+         {
+            TessellatedShapeBuilderScope tsBuilderScope = bs as TessellatedShapeBuilderScope;
+
+            tsBuilderScope.StartCollectingFaceSet();
+            Outer.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
+
+            if (tsBuilderScope.CreatedFacesCount == Outer.Faces.Count)
             {
-                TessellatedShapeBuilderScope tsBuilderScope = bs as TessellatedShapeBuilderScope;
-
-                tsBuilderScope.StartCollectingFaceSet();
-                Outer.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
-
-                if (tsBuilderScope.CreatedFacesCount == Outer.Faces.Count)
-                {
-                    geomObjs = tsBuilderScope.CreateGeometry(guid);
-                }
-
-                canRevertToMesh = tsBuilderScope.CanRevertToMesh();
+               geomObjs = tsBuilderScope.CreateGeometry(guid);
             }
 
+            canRevertToMesh = tsBuilderScope.CanRevertToMesh();
+         }
 
-            if (geomObjs == null || geomObjs.Count == 0)
+
+         if (geomObjs == null || geomObjs.Count == 0)
+         {
+            if (canRevertToMesh)
             {
-                if (canRevertToMesh)
-                {
-                    using (IFCImportShapeEditScope.BuildPreferenceSetter setter =
-                        new IFCImportShapeEditScope.BuildPreferenceSetter(shapeEditScope, IFCImportShapeEditScope.BuildPreferenceType.AnyMesh))
-                    {
-                        using (BuilderScope newBuilderScope = shapeEditScope.InitializeBuilder(IFCShapeBuilderType.TessellatedShapeBuilder))
-                        {
-                            TessellatedShapeBuilderScope newTsBuilderScope = newBuilderScope as TessellatedShapeBuilderScope;
-                            // Let's see if we can loosen the requirements a bit, and try again.
-                            newTsBuilderScope.StartCollectingFaceSet();
+               using (IFCImportShapeEditScope.BuildPreferenceSetter setter =
+                   new IFCImportShapeEditScope.BuildPreferenceSetter(shapeEditScope, IFCImportShapeEditScope.BuildPreferenceType.AnyMesh))
+               {
+                  using (BuilderScope newBuilderScope = shapeEditScope.InitializeBuilder(IFCShapeBuilderType.TessellatedShapeBuilder))
+                  {
+                     TessellatedShapeBuilderScope newTsBuilderScope = newBuilderScope as TessellatedShapeBuilderScope;
+                     // Let's see if we can loosen the requirements a bit, and try again.
+                     newTsBuilderScope.StartCollectingFaceSet();
 
-                            Outer.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
+                     Outer.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
 
-                            // This needs to be in scope so that we keep the mesh tolerance for vertices.
-                            if (newTsBuilderScope.CreatedFacesCount != 0)
-                            {
-                                if (newTsBuilderScope.CreatedFacesCount != Outer.Faces.Count)
-                                    Importer.TheLog.LogWarning
-                                        (Outer.Id, "Processing " + newTsBuilderScope.CreatedFacesCount + " valid faces out of " + Outer.Faces.Count + " total.", false);
+                     // This needs to be in scope so that we keep the mesh tolerance for vertices.
+                     if (newTsBuilderScope.CreatedFacesCount != 0)
+                     {
+                        if (newTsBuilderScope.CreatedFacesCount != Outer.Faces.Count)
+                           Importer.TheLog.LogWarning
+                               (Outer.Id, "Processing " + newTsBuilderScope.CreatedFacesCount + " valid faces out of " + Outer.Faces.Count + " total.", false);
 
-                                geomObjs = newTsBuilderScope.CreateGeometry(guid);
-                            }
+                        geomObjs = newTsBuilderScope.CreateGeometry(guid);
+                     }
 
-                        }
-                    }
-                }
+                  }
+               }
             }
-            
-            if (geomObjs == null || geomObjs.Count == 0)
+         }
+
+         if (geomObjs == null || geomObjs.Count == 0)
+         {
+            // Couldn't use fallback, or fallback didn't work.
+            Importer.TheLog.LogWarning(Id, "Couldn't create any geometry.", false);
+            return null;
+         }
+
+         return geomObjs;
+      }
+
+      override protected void Process(IFCAnyHandle ifcManifoldSolidBrep)
+      {
+         base.Process(ifcManifoldSolidBrep);
+
+         // We will not fail if the transform is not given, but instead assume it to be the identity.
+         IFCAnyHandle ifcOuter = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcManifoldSolidBrep, "Outer", true);
+         Outer = IFCClosedShell.ProcessIFCClosedShell(ifcOuter);
+
+
+      }
+
+      /// <summary>
+      /// Create geometry for a particular representation item.
+      /// </summary>
+      /// <param name="shapeEditScope">The geometry creation scope.</param>
+      /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
+      /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
+      /// <param name="guid">The guid of an element for which represntation is being created.</param>
+      protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
+      {
+         base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
+
+         // Ignoring Inner shells for now.
+         if (Outer != null)
+         {
+            try
             {
-                // Couldn't use fallback, or fallback didn't work.
-                Importer.TheLog.LogWarning(Id, "Couldn't create any geometry.", false);
-                return null;
+               IList<GeometryObject> solids = CreateGeometry(shapeEditScope, lcs, scaledLcs, guid);
+               if (solids != null)
+               {
+                  foreach (GeometryObject solid in solids)
+                  {
+                     shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, solid));
+                  }
+               }
+               else
+                  Importer.TheLog.LogError(Outer.Id, "cannot create valid solid, ignoring.", false);
             }
-
-            return geomObjs;
-        }
-        
-        override protected void Process(IFCAnyHandle ifcManifoldSolidBrep)
-        {
-            base.Process(ifcManifoldSolidBrep);
-
-            // We will not fail if the transform is not given, but instead assume it to be the identity.
-            IFCAnyHandle ifcOuter = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcManifoldSolidBrep, "Outer", true);
-            Outer = IFCClosedShell.ProcessIFCClosedShell(ifcOuter);
-
-            
-        }
-
-        /// <summary>
-        /// Create geometry for a particular representation item.
-        /// </summary>
-        /// <param name="shapeEditScope">The geometry creation scope.</param>
-        /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
-        /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
-        {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
-
-            // Ignoring Inner shells for now.
-            if (Outer != null)
+            catch (Exception ex)
             {
-                try
-                {
-                    IList<GeometryObject> solids = CreateGeometry(shapeEditScope, lcs, scaledLcs, guid);
-                    if (solids != null)
-                    {
-                        foreach (GeometryObject solid in solids)
-                        {
-                            shapeEditScope.AddGeometry(IFCSolidInfo.Create(Id, solid));
-                        }
-                    }
-                    else
-                        Importer.TheLog.LogError(Outer.Id, "cannot create valid solid, ignoring.", false);
-                }
-                catch (Exception ex)
-                {
-                    Importer.TheLog.LogError(Outer.Id, ex.Message, false);
-                }
+               Importer.TheLog.LogError(Outer.Id, ex.Message, false);
             }
-        }
+         }
+      }
 
-        protected IFCManifoldSolidBrep(IFCAnyHandle item)
-        {
-            Process(item);
-        }
+      protected IFCManifoldSolidBrep(IFCAnyHandle item)
+      {
+         Process(item);
+      }
 
-        /// <summary>
-        /// Create an IFCManifoldSolidBrep object from a handle of type IfcManifoldSolidBrep.
-        /// </summary>
-        /// <param name="ifcManifoldSolidBrep">The IFC handle.</param>
-        /// <returns>The IFCManifoldSolidBrep object.</returns>
-        public static IFCManifoldSolidBrep ProcessIFCManifoldSolidBrep(IFCAnyHandle ifcManifoldSolidBrep)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcManifoldSolidBrep))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcManifoldSolidBrep);
-                return null;
-            }
+      /// <summary>
+      /// Create an IFCManifoldSolidBrep object from a handle of type IfcManifoldSolidBrep.
+      /// </summary>
+      /// <param name="ifcManifoldSolidBrep">The IFC handle.</param>
+      /// <returns>The IFCManifoldSolidBrep object.</returns>
+      public static IFCManifoldSolidBrep ProcessIFCManifoldSolidBrep(IFCAnyHandle ifcManifoldSolidBrep)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcManifoldSolidBrep))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcManifoldSolidBrep);
+            return null;
+         }
 
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcManifoldSolidBrep, IFCEntityType.IfcFacetedBrep))
-                return IFCFacetedBrep.ProcessIFCFacetedBrep(ifcManifoldSolidBrep);
-            if (IFCImportFile.TheFile.SchemaVersion > IFCSchemaVersion.IFC2x3 && IFCAnyHandleUtil.IsSubTypeOf(ifcManifoldSolidBrep, IFCEntityType.IfcAdvancedBrep))
-                return IFCAdvancedBrep.ProcessIFCAdvancedBrep(ifcManifoldSolidBrep);
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcManifoldSolidBrep, IFCEntityType.IfcFacetedBrep))
+            return IFCFacetedBrep.ProcessIFCFacetedBrep(ifcManifoldSolidBrep);
+         if (IFCImportFile.TheFile.SchemaVersion > IFCSchemaVersion.IFC2x3 && IFCAnyHandleUtil.IsSubTypeOf(ifcManifoldSolidBrep, IFCEntityType.IfcAdvancedBrep))
+            return IFCAdvancedBrep.ProcessIFCAdvancedBrep(ifcManifoldSolidBrep);
 
-            IFCEntity manifoldSolidBrep;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcManifoldSolidBrep.StepId, out manifoldSolidBrep))
-                manifoldSolidBrep = new IFCManifoldSolidBrep(ifcManifoldSolidBrep);
-            return (manifoldSolidBrep as IFCManifoldSolidBrep);
-        }
-    }
+         IFCEntity manifoldSolidBrep;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcManifoldSolidBrep.StepId, out manifoldSolidBrep))
+            manifoldSolidBrep = new IFCManifoldSolidBrep(ifcManifoldSolidBrep);
+         return (manifoldSolidBrep as IFCManifoldSolidBrep);
+      }
+   }
 }

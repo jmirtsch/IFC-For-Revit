@@ -30,124 +30,124 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents a base class for IfcDoor/IfcWindow Lining and Panel Properties.
-    /// </summary>
-    public abstract class IFCDoorWindowPropertyBase : IFCPropertySetDefinition
-    {
-        /// <summary>
-        /// The contained set of double IFC properties, values already scaled.
-        /// </summary>
-        IDictionary<Tuple<string, UnitType, AllowedValues>, double> m_DoubleProperties = null;
+   /// <summary>
+   /// Represents a base class for IfcDoor/IfcWindow Lining and Panel Properties.
+   /// </summary>
+   public abstract class IFCDoorWindowPropertyBase : IFCPropertySetDefinition
+   {
+      /// <summary>
+      /// The contained set of double IFC properties, values already scaled.
+      /// </summary>
+      IDictionary<Tuple<string, UnitType, AllowedValues>, double> m_DoubleProperties = null;
 
-        /// <summary>
-        /// The contained set of string IFC properties.
-        /// </summary>
-        IDictionary<string, string> m_StringProperties = null;
-        
-        /// <summary>
-        /// The double properties, values already scaled.
-        /// </summary>
-        public IDictionary<Tuple<string, UnitType, AllowedValues>, double> DoubleProperties
-        {
-            get 
+      /// <summary>
+      /// The contained set of string IFC properties.
+      /// </summary>
+      IDictionary<string, string> m_StringProperties = null;
+
+      /// <summary>
+      /// The double properties, values already scaled.
+      /// </summary>
+      public IDictionary<Tuple<string, UnitType, AllowedValues>, double> DoubleProperties
+      {
+         get
+         {
+            if (m_DoubleProperties == null)
+               m_DoubleProperties = new Dictionary<Tuple<string, UnitType, AllowedValues>, double>();
+            return m_DoubleProperties;
+         }
+      }
+
+      /// <summary>
+      /// The string properties.
+      /// </summary>
+      public IDictionary<string, string> StringProperties
+      {
+         get
+         {
+            if (m_StringProperties == null)
+               m_StringProperties = new Dictionary<string, string>();
+            return m_StringProperties;
+         }
+      }
+
+      /// <summary>
+      /// The default constructor.
+      /// </summary>
+      protected IFCDoorWindowPropertyBase()
+      {
+      }
+
+      /// <summary>
+      /// Processes an IFCDoorWindowPropertyBase entity.
+      /// </summary>
+      /// <param name="ifcDoorWindowPropertyBase">The ifcDoorWindowPropertyBase handle.</param>
+      protected override void Process(IFCAnyHandle ifcDoorWindowPropertyBase)
+      {
+         base.Process(ifcDoorWindowPropertyBase);
+
+         IFCAnyHandle shapeAspectStyle = IFCImportHandleUtil.GetOptionalInstanceAttribute(ifcDoorWindowPropertyBase, "ShapeAspectStyle");
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(shapeAspectStyle))
+            Importer.TheLog.LogError(Id, "ShapeAspectStyle unsupported.", false);
+      }
+
+      /// <summary>
+      /// Create a property set for a given element.
+      /// </summary>
+      /// <param name="doc">The document.</param>
+      /// <param name="element">The element being created.</param>
+      /// <param name="parameterGroupMap">The parameters of the element.  Cached for performance.</param>
+      /// <returns>The name of the property set created, if it was created, and a Boolean value if it should be added to the property set list.</returns>
+      public override KeyValuePair<string, bool> CreatePropertySet(Document doc, Element element, IFCParameterSetByGroup parameterGroupMap)
+      {
+         IDictionary<string, IFCData> parametersToAdd = new Dictionary<string, IFCData>();
+
+         foreach (KeyValuePair<Tuple<string, UnitType, AllowedValues>, double> property in DoubleProperties)
+         {
+            string name = property.Key.Item1;
+            Parameter existingParameter = null;
+            if (!parameterGroupMap.TryFindParameter(name, out existingParameter))
             {
-                if (m_DoubleProperties == null)
-                    m_DoubleProperties = new Dictionary<Tuple<string, UnitType, AllowedValues>, double>();
-                return m_DoubleProperties; 
-            }
-        }
-
-        /// <summary>
-        /// The string properties.
-        /// </summary>
-        public IDictionary<string, string> StringProperties
-        {
-            get
-            {
-                if (m_StringProperties == null)
-                    m_StringProperties = new Dictionary<string, string>();
-                return m_StringProperties;
-            }
-        }
-        
-        /// <summary>
-        /// The default constructor.
-        /// </summary>
-        protected IFCDoorWindowPropertyBase()
-        {
-        }
-
-        /// <summary>
-        /// Processes an IFCDoorWindowPropertyBase entity.
-        /// </summary>
-        /// <param name="ifcDoorWindowPropertyBase">The ifcDoorWindowPropertyBase handle.</param>
-        protected override void Process(IFCAnyHandle ifcDoorWindowPropertyBase)
-        {
-            base.Process(ifcDoorWindowPropertyBase);
-
-            IFCAnyHandle shapeAspectStyle = IFCImportHandleUtil.GetOptionalInstanceAttribute(ifcDoorWindowPropertyBase, "ShapeAspectStyle");
-            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(shapeAspectStyle))
-                Importer.TheLog.LogError(Id, "ShapeAspectStyle unsupported.", false);
-        }
-
-        /// <summary>
-        /// Create a property set for a given element.
-        /// </summary>
-        /// <param name="doc">The document.</param>
-        /// <param name="element">The element being created.</param>
-        /// <param name="parameterGroupMap">The parameters of the element.  Cached for performance.</param>
-        /// <returns>The name of the property set created, if it was created, and a Boolean value if it should be added to the property set list.</returns>
-        public override KeyValuePair<string, bool> CreatePropertySet(Document doc, Element element, IFCParameterSetByGroup parameterGroupMap)
-        {
-            IDictionary<string, IFCData> parametersToAdd = new Dictionary<string, IFCData>();
-
-            foreach (KeyValuePair<Tuple<string, UnitType, AllowedValues>, double> property in DoubleProperties)
-            {
-                string name = property.Key.Item1;
-                Parameter existingParameter = null;
-                if (!parameterGroupMap.TryFindParameter(name, out existingParameter))
-                {
-                    IFCPropertySet.AddParameterDouble(doc, element, name, property.Key.Item2, property.Value, Id);
-                    continue;
-                }
-
-                switch (existingParameter.StorageType)
-                {
-                    case StorageType.String:
-                        existingParameter.Set(property.Value.ToString());
-                        break;
-                    case StorageType.Double:
-                        existingParameter.Set(property.Value);
-                        break;
-                    default:   
-                        Importer.TheLog.LogError(Id, "couldn't create parameter: " + name + " of storage type: " + existingParameter.StorageType.ToString(), false);
-                        break;
-                }                    
+               IFCPropertySet.AddParameterDouble(doc, element, name, property.Key.Item2, property.Value, Id);
+               continue;
             }
 
-            foreach (KeyValuePair<string, string> property in StringProperties)
+            switch (existingParameter.StorageType)
             {
-                string name = property.Key;
-                Parameter existingParameter = null;
-                if (!parameterGroupMap.TryFindParameter(name, out existingParameter))
-                {
-                    IFCPropertySet.AddParameterString(doc, element, property.Key, property.Value, Id);
-                    continue;
-                }
+               case StorageType.String:
+                  existingParameter.Set(property.Value.ToString());
+                  break;
+               case StorageType.Double:
+                  existingParameter.Set(property.Value);
+                  break;
+               default:
+                  Importer.TheLog.LogError(Id, "couldn't create parameter: " + name + " of storage type: " + existingParameter.StorageType.ToString(), false);
+                  break;
+            }
+         }
 
-                switch (existingParameter.StorageType)
-                {
-                    case StorageType.String:
-                        existingParameter.Set(property.Value);
-                        break;
-                    default:
-                        Importer.TheLog.LogError(Id, "couldn't create parameter: " + name + " of storage type: " + existingParameter.StorageType.ToString(), false);
-                        break;
-                }
+         foreach (KeyValuePair<string, string> property in StringProperties)
+         {
+            string name = property.Key;
+            Parameter existingParameter = null;
+            if (!parameterGroupMap.TryFindParameter(name, out existingParameter))
+            {
+               IFCPropertySet.AddParameterString(doc, element, property.Key, property.Value, Id);
+               continue;
             }
 
-            return new KeyValuePair<string,bool>("\"" + EntityType.ToString() + "\"", false);
-        }
-    }
+            switch (existingParameter.StorageType)
+            {
+               case StorageType.String:
+                  existingParameter.Set(property.Value);
+                  break;
+               default:
+                  Importer.TheLog.LogError(Id, "couldn't create parameter: " + name + " of storage type: " + existingParameter.StorageType.ToString(), false);
+                  break;
+            }
+         }
+
+         return new KeyValuePair<string, bool>("\"" + EntityType.ToString() + "\"", false);
+      }
+   }
 }

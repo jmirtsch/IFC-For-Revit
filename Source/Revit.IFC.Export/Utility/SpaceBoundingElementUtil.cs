@@ -27,19 +27,19 @@ using Revit.IFC.Export.Toolkit;
 
 namespace Revit.IFC.Export.Utility
 {
-    public class SpaceBoundingElementUtil
-    {
-        static public void RegisterSpaceBoundingElementHandle(ExporterIFC exporterIFC, IFCAnyHandle elemHnd, ElementId elementId,
-            ElementId levelId)
-        {
-            int idx;
-            if (!ExporterCacheManager.HostObjectsLevelIndex.TryGetValue(levelId, out idx))
-            {
-                int nextIndex = ExporterCacheManager.HostObjectsLevelIndex.Count;
-                ExporterCacheManager.HostObjectsLevelIndex.Add(levelId, nextIndex);
-            }
+   public class SpaceBoundingElementUtil
+   {
+      static public void RegisterSpaceBoundingElementHandle(ExporterIFC exporterIFC, IFCAnyHandle elemHnd, ElementId elementId,
+          ElementId levelId)
+      {
+         int idx;
+         if (!ExporterCacheManager.HostObjectsLevelIndex.TryGetValue(levelId, out idx))
+         {
+            int nextIndex = ExporterCacheManager.HostObjectsLevelIndex.Count;
+            ExporterCacheManager.HostObjectsLevelIndex.Add(levelId, nextIndex);
+         }
 
-            exporterIFC.RegisterSpaceBoundingElementHandle(elemHnd, elementId, levelId);
-        }
-    }
+         exporterIFC.RegisterSpaceBoundingElementHandle(elemHnd, elementId, levelId);
+      }
+   }
 }

@@ -490,12 +490,12 @@ namespace Revit.IFC.Import.Data
          {
             foreach (IFCAnyHandle hasAssociation in hasAssociations)
             {
-                    if (IFCAnyHandleUtil.IsSubTypeOf(hasAssociation, IFCEntityType.IfcRelAssociatesMaterial))
-                        ProcessIFCRelAssociatesMaterial(hasAssociation);
-                    else if (IFCAnyHandleUtil.IsSubTypeOf(hasAssociation, IFCEntityType.IfcRelAssociatesClassification))
-                        ProcessRelAssociatesClassification(hasAssociation);
-                    else
-                        Importer.TheLog.LogUnhandledSubTypeError(hasAssociation, IFCEntityType.IfcRelAssociates, false);
+               if (IFCAnyHandleUtil.IsSubTypeOf(hasAssociation, IFCEntityType.IfcRelAssociatesMaterial))
+                  ProcessIFCRelAssociatesMaterial(hasAssociation);
+               else if (IFCAnyHandleUtil.IsSubTypeOf(hasAssociation, IFCEntityType.IfcRelAssociatesClassification))
+                  ProcessRelAssociatesClassification(hasAssociation);
+               else
+                  Importer.TheLog.LogUnhandledSubTypeError(hasAssociation, IFCEntityType.IfcRelAssociates, false);
             }
          }
 
@@ -527,34 +527,34 @@ namespace Revit.IFC.Import.Data
             return;
          }
 
-            // Deal with various types of IFCMaterialSelect.
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterial))
-                MaterialSelect = IFCMaterial.ProcessIFCMaterial(ifcMaterialSelect);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialLayer))
-                MaterialSelect = IFCMaterialLayer.ProcessIFCMaterialLayer(ifcMaterialSelect);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialLayerSet))
-                MaterialSelect = IFCMaterialLayerSet.ProcessIFCMaterialLayerSet(ifcMaterialSelect);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialLayerSetUsage))
-                MaterialSelect = IFCMaterialLayerSetUsage.ProcessIFCMaterialLayerSetUsage(ifcMaterialSelect);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialList))
-                MaterialSelect = IFCMaterialList.ProcessIFCMaterialList(ifcMaterialSelect);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialProfile))
-                MaterialSelect = IFCMaterialProfile.ProcessIFCMaterialProfile(ifcMaterialSelect);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialProfileSet))
-                MaterialSelect = IFCMaterialProfileSet.ProcessIFCMaterialProfileSet(ifcMaterialSelect);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialProfileSetUsage))
-            {
-                if (IFCAnyHandleUtil.IsTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialProfileSetUsageTapering))
-                    MaterialSelect = IFCMaterialProfileSetUsageTapering.ProcessIFCMaterialProfileSetUsageTapering(ifcMaterialSelect);
-                else
-                    MaterialSelect = IFCMaterialProfileSetUsage.ProcessIFCMaterialProfileSetUsage(ifcMaterialSelect);
-            }
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialConstituent))
-                MaterialSelect = IFCMaterialConstituent.ProcessIFCMaterialConstituent(ifcMaterialSelect);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialConstituentSet))
-                MaterialSelect = IFCMaterialConstituentSet.ProcessIFCMaterialConstituentSet(ifcMaterialSelect);
+         // Deal with various types of IFCMaterialSelect.
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterial))
+            MaterialSelect = IFCMaterial.ProcessIFCMaterial(ifcMaterialSelect);
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialLayer))
+            MaterialSelect = IFCMaterialLayer.ProcessIFCMaterialLayer(ifcMaterialSelect);
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialLayerSet))
+            MaterialSelect = IFCMaterialLayerSet.ProcessIFCMaterialLayerSet(ifcMaterialSelect);
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialLayerSetUsage))
+            MaterialSelect = IFCMaterialLayerSetUsage.ProcessIFCMaterialLayerSetUsage(ifcMaterialSelect);
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialList))
+            MaterialSelect = IFCMaterialList.ProcessIFCMaterialList(ifcMaterialSelect);
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialProfile))
+            MaterialSelect = IFCMaterialProfile.ProcessIFCMaterialProfile(ifcMaterialSelect);
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialProfileSet))
+            MaterialSelect = IFCMaterialProfileSet.ProcessIFCMaterialProfileSet(ifcMaterialSelect);
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialProfileSetUsage))
+         {
+            if (IFCAnyHandleUtil.IsTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialProfileSetUsageTapering))
+               MaterialSelect = IFCMaterialProfileSetUsageTapering.ProcessIFCMaterialProfileSetUsageTapering(ifcMaterialSelect);
             else
-                Importer.TheLog.LogUnhandledSubTypeError(ifcMaterialSelect, "IfcMaterialSelect", false);
+               MaterialSelect = IFCMaterialProfileSetUsage.ProcessIFCMaterialProfileSetUsage(ifcMaterialSelect);
+         }
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialConstituent))
+            MaterialSelect = IFCMaterialConstituent.ProcessIFCMaterialConstituent(ifcMaterialSelect);
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcMaterialSelect, IFCEntityType.IfcMaterialConstituentSet))
+            MaterialSelect = IFCMaterialConstituentSet.ProcessIFCMaterialConstituentSet(ifcMaterialSelect);
+         else
+            Importer.TheLog.LogUnhandledSubTypeError(ifcMaterialSelect, "IfcMaterialSelect", false);
       }
 
       /// <summary>
@@ -608,7 +608,7 @@ namespace Revit.IFC.Import.Data
       /// Finds all related objects in IfcRelDecomposes.
       /// </summary>
       /// <param name="ifcRelDecomposes">The IfcRelDecomposes handle.</param>
-        void ProcessIFCRelDecomposes(IFCAnyHandle ifcRelDecomposes)
+      void ProcessIFCRelDecomposes(IFCAnyHandle ifcRelDecomposes)
       {
          ComposedObjectDefinitions.UnionWith(ProcessIFCRelation.ProcessRelatedObjects(this, ifcRelDecomposes));
       }
@@ -869,18 +869,18 @@ namespace Revit.IFC.Import.Data
             }
 
             // Set additional parameters (if any), e.g. for Classification assignments
-            if (AdditionalIntParameters.Count > 0) 
+            if (AdditionalIntParameters.Count > 0)
             {
                foreach (KeyValuePair<string, object> parItem in AdditionalIntParameters)
                {
                   if (parItem.Value is string)
-                     IFCPropertySet.AddParameterString(doc, element, parItem.Key, (string) parItem.Value, Id);
+                     IFCPropertySet.AddParameterString(doc, element, parItem.Key, (string)parItem.Value, Id);
                   else if (parItem.Value is double)
-                     IFCPropertySet.AddParameterDouble(doc, element, parItem.Key, UnitType.UT_Custom, (double) parItem.Value, Id);
+                     IFCPropertySet.AddParameterDouble(doc, element, parItem.Key, UnitType.UT_Custom, (double)parItem.Value, Id);
                   else if (parItem.Value is int)
-                     IFCPropertySet.AddParameterInt(doc, element, parItem.Key, (int) parItem.Value, Id);
+                     IFCPropertySet.AddParameterInt(doc, element, parItem.Key, (int)parItem.Value, Id);
                   else if (parItem.Value is bool)
-                     IFCPropertySet.AddParameterBoolean(doc, element, parItem.Key, (bool) parItem.Value, Id);
+                     IFCPropertySet.AddParameterBoolean(doc, element, parItem.Key, (bool)parItem.Value, Id);
                }
             }
          }

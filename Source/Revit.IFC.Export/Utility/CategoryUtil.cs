@@ -458,7 +458,7 @@ namespace Revit.IFC.Export.Utility
                }
             }
 
-            materialNameHandle = IFCInstanceExporter.CreateMaterial(exporterIFC.GetFile(), materialName, description:description, category:category);
+            materialNameHandle = IFCInstanceExporter.CreateMaterial(exporterIFC.GetFile(), materialName, description: description, category: category);
 
             ExporterCacheManager.MaterialHandleCache.Register(materialId, materialNameHandle);
 

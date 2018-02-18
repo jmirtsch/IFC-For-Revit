@@ -26,67 +26,67 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// The cache which holds host element and associated parts.
-    /// </summary>
-    public class HostPartsCache
-    {
-        /// <summary>
-        /// The dictionary mapping from a host element to its parts. 
-        /// </summary>
-        private Dictionary<ElementId, Dictionary<ElementId, List<KeyValuePair<Part, IFCRange>>>> m_HostToPartsDictionary = new Dictionary<ElementId, Dictionary<ElementId, List<KeyValuePair<Part, IFCRange>>>>();
+   /// <summary>
+   /// The cache which holds host element and associated parts.
+   /// </summary>
+   public class HostPartsCache
+   {
+      /// <summary>
+      /// The dictionary mapping from a host element to its parts. 
+      /// </summary>
+      private Dictionary<ElementId, Dictionary<ElementId, List<KeyValuePair<Part, IFCRange>>>> m_HostToPartsDictionary = new Dictionary<ElementId, Dictionary<ElementId, List<KeyValuePair<Part, IFCRange>>>>();
 
-        /// <summary>
-        /// Finds the parts from the dictionary.
-        /// </summary>
-        /// <param name="hostId">
-        /// The id of host element.
-        /// </param>
-        /// <param name="LevelId">
-        /// The id of level to finding the parts.
-        /// </param>
-        /// <returns>
-        /// The list of parts.
-        /// </returns>
-        public List<KeyValuePair<Part, IFCRange>> Find(ElementId hostId, ElementId LevelId)
-        {
-            Dictionary<ElementId, List<KeyValuePair<Part, IFCRange>>> levelParts;
-            List<KeyValuePair<Part, IFCRange>> partsList;
-            if (m_HostToPartsDictionary.TryGetValue(hostId, out levelParts))
-            {
-                if (levelParts.TryGetValue(LevelId, out partsList))
-                    return partsList;
-            }
-            return null;
-        }
+      /// <summary>
+      /// Finds the parts from the dictionary.
+      /// </summary>
+      /// <param name="hostId">
+      /// The id of host element.
+      /// </param>
+      /// <param name="LevelId">
+      /// The id of level to finding the parts.
+      /// </param>
+      /// <returns>
+      /// The list of parts.
+      /// </returns>
+      public List<KeyValuePair<Part, IFCRange>> Find(ElementId hostId, ElementId LevelId)
+      {
+         Dictionary<ElementId, List<KeyValuePair<Part, IFCRange>>> levelParts;
+         List<KeyValuePair<Part, IFCRange>> partsList;
+         if (m_HostToPartsDictionary.TryGetValue(hostId, out levelParts))
+         {
+            if (levelParts.TryGetValue(LevelId, out partsList))
+               return partsList;
+         }
+         return null;
+      }
 
-        /// <summary>
-        /// Adds the list of parts to the dictionary.
-        /// </summary>
-        /// <param name="hostId">
-        /// The host element elementId.
-        /// </param>
-        /// <param name="partsList">
-        /// The list of parts.
-        /// </param>
-        public void Register(ElementId hostId, Dictionary<ElementId, List<KeyValuePair<Part, IFCRange>>> levelParts)
-        {
-            if (HasRegistered(hostId))
-                return;
+      /// <summary>
+      /// Adds the list of parts to the dictionary.
+      /// </summary>
+      /// <param name="hostId">
+      /// The host element elementId.
+      /// </param>
+      /// <param name="partsList">
+      /// The list of parts.
+      /// </param>
+      public void Register(ElementId hostId, Dictionary<ElementId, List<KeyValuePair<Part, IFCRange>>> levelParts)
+      {
+         if (HasRegistered(hostId))
+            return;
 
-            m_HostToPartsDictionary[hostId] = levelParts;
-        }
+         m_HostToPartsDictionary[hostId] = levelParts;
+      }
 
-        /// <summary>
-        /// Identifies if the host element beem registered.
-        /// </summary>
-        /// <param name="hostId">The id of host element.</param>
-        /// <returns>True if registered, false otherwise.</returns>
-        public bool HasRegistered(ElementId hostId)
-        {
-            if (m_HostToPartsDictionary.ContainsKey(hostId))
-                return true;
-            return false;
-        }
-    }
+      /// <summary>
+      /// Identifies if the host element beem registered.
+      /// </summary>
+      /// <param name="hostId">The id of host element.</param>
+      /// <returns>True if registered, false otherwise.</returns>
+      public bool HasRegistered(ElementId hostId)
+      {
+         if (m_HostToPartsDictionary.ContainsKey(hostId))
+            return true;
+         return false;
+      }
+   }
 }

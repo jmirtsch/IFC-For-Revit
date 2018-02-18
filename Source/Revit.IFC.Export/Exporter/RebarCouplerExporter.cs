@@ -46,10 +46,10 @@ namespace Revit.IFC.Export.Exporter
       {
          if (coupler == null)
             return;
-         
+
          FamilySymbol familySymbol = ExporterCacheManager.Document.GetElement(coupler.GetTypeId()) as FamilySymbol;
          if (familySymbol == null)
-             return;
+            return;
 
          // Check the intended IFC entity or type name is in the exclude list specified in the UI
          Common.Enums.IFCEntityType elementClassTypeEnum;
@@ -90,7 +90,7 @@ namespace Revit.IFC.Export.Exporter
                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(styleHandle))
                {
                   string applicableOccurrence = NamingUtil.GetObjectTypeOverride(familySymbol, typeObjectType);
-                  if(!string.IsNullOrEmpty(applicableOccurrence))
+                  if (!string.IsNullOrEmpty(applicableOccurrence))
                      IFCAnyHandleUtil.SetAttribute(styleHandle, "ApplicableOccurrence", applicableOccurrence);
                   currentTypeInfo.Style = styleHandle;
                   ExporterCacheManager.FamilySymbolToTypeInfoCache.Register(coupler.GetTypeId(), false, exportType, currentTypeInfo);
@@ -98,7 +98,7 @@ namespace Revit.IFC.Export.Exporter
             }
 
             int nCouplerQuantity = coupler.GetCouplerQuantity();
-            if ( nCouplerQuantity <= 0)
+            if (nCouplerQuantity <= 0)
                return;
 
             ISet<IFCAnyHandle> createdRebarCouplerHandles = new HashSet<IFCAnyHandle>();
@@ -111,7 +111,7 @@ namespace Revit.IFC.Export.Exporter
                IFCAnyHandle style = currentTypeInfo.Style;
                if (IFCAnyHandleUtil.IsNullOrHasNoValue(style))
                   return;
-               
+
                IList<IFCAnyHandle> repMapList = GeometryUtil.GetRepresentationMaps(style);
                if (repMapList == null)
                   return;
@@ -134,8 +134,8 @@ namespace Revit.IFC.Export.Exporter
                   IFCAnyHandle instanceHandle = null;
                   instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(Common.Enums.IFCEntityType.IfcMechanicalFastener, exporterIFC, coupler, instanceGUID, ownerHistory,
                                       setter.LocalPlacement, productRepresentation);
-               string instanceName = NamingUtil.GetNameOverride(instanceHandle, coupler, origInstanceName + ": " + idx);
-						IFCAnyHandleUtil.SetAttribute(instanceHandle, "Name", instanceName);
+                  string instanceName = NamingUtil.GetNameOverride(instanceHandle, coupler, origInstanceName + ": " + idx);
+                  IFCAnyHandleUtil.SetAttribute(instanceHandle, "Name", instanceName);
 
                   if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
                   {
@@ -160,7 +160,7 @@ namespace Revit.IFC.Export.Exporter
             {
                // Create a group to hold all of the created IFC entities, if the coupler aren't already in an assembly.  
                // We want to avoid nested groups of groups of couplers.
-               if ( coupler.AssemblyInstanceId == ElementId.InvalidElementId )
+               if (coupler.AssemblyInstanceId == ElementId.InvalidElementId)
                {
                   string revitObjectType = exporterIFC.GetFamilyName();
                   string name = NamingUtil.GetNameOverride(coupler, revitObjectType);

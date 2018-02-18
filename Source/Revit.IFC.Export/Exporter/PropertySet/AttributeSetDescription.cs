@@ -40,14 +40,14 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <summary>
       /// The entries stored in this property set description.
       /// </summary>
-      Dictionary<Tuple<PropertyType,string>, AttributeEntry> m_Entries = new Dictionary<Tuple<PropertyType,string>, AttributeEntry>();
+      Dictionary<Tuple<PropertyType, string>, AttributeEntry> m_Entries = new Dictionary<Tuple<PropertyType, string>, AttributeEntry>();
 
       /// <summary>
       /// The entries stored in this property set description.
       /// </summary>
       public void AddEntry(AttributeEntry entry)
-      { 
-         m_Entries[new Tuple<PropertyType,string>(entry.PropertyType, entry.PropertyName)] = entry;
+      {
+         m_Entries[new Tuple<PropertyType, string>(entry.PropertyType, entry.PropertyName)] = entry;
       }
 
       public AttributeEntry GetEntry(PropertyType propertyType, string name)

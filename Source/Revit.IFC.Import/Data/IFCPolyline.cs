@@ -31,91 +31,91 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class that represents IFCPolyline entity
-    /// </summary>
-    public class IFCPolyline : IFCBoundedCurve
-    {
-        protected IFCPolyline()
-        {
-        }
+   /// <summary>
+   /// Class that represents IFCPolyline entity
+   /// </summary>
+   public class IFCPolyline : IFCBoundedCurve
+   {
+      protected IFCPolyline()
+      {
+      }
 
-        protected IFCPolyline(IFCAnyHandle polyline)
-        {
-            Process(polyline);
-        }
+      protected IFCPolyline(IFCAnyHandle polyline)
+      {
+         Process(polyline);
+      }
 
-        protected override void Process(IFCAnyHandle ifcCurve)
-        {
-            base.Process(ifcCurve);
+      protected override void Process(IFCAnyHandle ifcCurve)
+      {
+         base.Process(ifcCurve);
 
-            IList<IFCAnyHandle> points = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcCurve, "Points");
-            int numPoints = points.Count;
-            if (numPoints < 2)
+         IList<IFCAnyHandle> points = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcCurve, "Points");
+         int numPoints = points.Count;
+         if (numPoints < 2)
+         {
+            string msg = "IfcPolyLine had " + numPoints + ", expected at least 2, ignoring";
+            Importer.TheLog.LogError(Id, msg, false);
+            return;
+         }
+
+         IList<XYZ> pointXYZs = new List<XYZ>();
+         foreach (IFCAnyHandle point in points)
+         {
+            XYZ pointXYZ = IFCPoint.ProcessScaledLengthIFCCartesianPoint(point);
+            pointXYZs.Add(pointXYZ);
+         }
+         if (pointXYZs.Count != numPoints)
+         {
+            Importer.TheLog.LogError(Id, "Some of the IFC points cannot be converted to Revit points", true);
+         }
+
+         CurveLoop = IFCGeometryUtil.CreatePolyCurveLoop(pointXYZs, points, Id, false);
+         if (pointXYZs.Count == 2)
+         {
+            Curve = Line.CreateBound(pointXYZs[0], pointXYZs[1]);
+         }
+         else
+         {
+            // if we go here we are sure that the number of point must be at least 3
+            XYZ firstPoint = pointXYZs[0];
+            XYZ secondPoint = pointXYZs[1];
+            XYZ vectorToTest = (secondPoint - firstPoint).Normalize();
+
+            bool allAreCollinear = true;
+            for (int ii = 2; ii < numPoints; ii++)
             {
-                string msg = "IfcPolyLine had " + numPoints + ", expected at least 2, ignoring";
-                Importer.TheLog.LogError(Id, msg, false);
-                return;
+               XYZ vectorTmp = (pointXYZs[ii] - firstPoint).Normalize();
+               if (!vectorTmp.IsAlmostEqualTo(vectorToTest))
+               {
+                  allAreCollinear = false;
+                  break;
+               }
             }
-
-            IList<XYZ> pointXYZs = new List<XYZ>();
-            foreach (IFCAnyHandle point in points)
+            if (allAreCollinear)
             {
-                XYZ pointXYZ = IFCPoint.ProcessScaledLengthIFCCartesianPoint(point);
-                pointXYZs.Add(pointXYZ);
+               Curve = Line.CreateBound(firstPoint, pointXYZs[numPoints - 1]);
             }
-            if (pointXYZs.Count != numPoints)
-            {
-                Importer.TheLog.LogError(Id, "Some of the IFC points cannot be converted to Revit points", true);
-            }
+         }
+      }
 
-            CurveLoop = IFCGeometryUtil.CreatePolyCurveLoop(pointXYZs, points, Id, false);
-            if (pointXYZs.Count == 2)
-            {
-                Curve = Line.CreateBound(pointXYZs[0], pointXYZs[1]);
-            }
-            else 
-            {
-                // if we go here we are sure that the number of point must be at least 3
-                XYZ firstPoint = pointXYZs[0];
-                XYZ secondPoint = pointXYZs[1];
-                XYZ vectorToTest = (secondPoint - firstPoint).Normalize();
-                
-                bool allAreCollinear = true;
-                for (int ii = 2; ii < numPoints; ii++)
-                {
-                    XYZ vectorTmp = (pointXYZs[ii] - firstPoint).Normalize();
-                    if (!vectorTmp.IsAlmostEqualTo(vectorToTest))
-                    {
-                        allAreCollinear = false;
-                        break;
-                    }
-                }
-                if (allAreCollinear)
-                {
-                    Curve = Line.CreateBound(firstPoint, pointXYZs[numPoints-1]);
-                }
-            }
-        }
+      /// <summary>
+      /// Create an IFCPolyline object from a handle of type IfcPolyline
+      /// </summary>
+      /// <param name="ifcPolyline">The IFC handle</param>
+      /// <returns>The IFCPolyline object</returns>
+      public static IFCPolyline ProcessIFCPolyline(IFCAnyHandle ifcPolyline)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPolyline))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcPolyline);
+            return null;
+         }
 
-        /// <summary>
-        /// Create an IFCPolyline object from a handle of type IfcPolyline
-        /// </summary>
-        /// <param name="ifcPolyline">The IFC handle</param>
-        /// <returns>The IFCPolyline object</returns>
-        public static IFCPolyline ProcessIFCPolyline(IFCAnyHandle ifcPolyline)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPolyline))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcPolyline);
-                return null;
-            }
+         IFCEntity polyline = null;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcPolyline.StepId, out polyline))
+            polyline = new IFCPolyline(ifcPolyline);
 
-            IFCEntity polyline = null;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcPolyline.StepId, out polyline))
-                polyline = new IFCPolyline(ifcPolyline);
-
-            return (polyline as IFCPolyline);
-        }
-    }
+         return (polyline as IFCPolyline);
+      }
+   }
 }

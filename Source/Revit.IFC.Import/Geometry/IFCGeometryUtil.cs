@@ -269,11 +269,11 @@ namespace Revit.IFC.Import.Geometry
          for (int ii = 1; ii < numPointsToCheck; ii++)
          {
             int nextIndex = (ii % numPoints);
-            int nextNextIndex = (nextIndex == numPoints-1 && wasAlreadyClosed) ? 1 : ((ii + 1) % numPoints);
-            
+            int nextNextIndex = (nextIndex == numPoints - 1 && wasAlreadyClosed) ? 1 : ((ii + 1) % numPoints);
+
             // Only check if the last segment overlaps the first segment if we have a closed curve.
             bool doSegmentOverlapCheck = (ii < numPointsToCheck - 1) || wasClosed;
-            if (LineSegmentIsTooShort(finalPoints[numNewPoints - 1], pointXYZs[nextIndex]) || 
+            if (LineSegmentIsTooShort(finalPoints[numNewPoints - 1], pointXYZs[nextIndex]) ||
                (doSegmentOverlapCheck && LineSegmentsOverlap(finalPoints[numNewPoints - 1], pointXYZs[nextIndex], pointXYZs[nextNextIndex])))
             {
                if (points != null)
@@ -531,7 +531,7 @@ namespace Revit.IFC.Import.Geometry
             {
                if (ii < 2)
                   continue;
-               
+
                Importer.TheLog.LogError(id, ex.Message, false);
                resultSolid = firstSolid;
             }
@@ -540,8 +540,8 @@ namespace Revit.IFC.Import.Geometry
             {
                // If we got here not on out first attempt, generate a warning, unless we got here because we gave up on our 3rd attempt.
                if (ii > 0 && !failedAllAttempts)
-                  Importer.TheLog.LogWarning(id, "The second argument in the Boolean " + 
-                     opType.ToString() + 
+                  Importer.TheLog.LogWarning(id, "The second argument in the Boolean " +
+                     opType.ToString() +
                      " operation was shifted by 1mm to allow the operation to succeed.  This may result in a very small difference in appearance.", false);
                return resultSolid;
             }
@@ -698,26 +698,26 @@ namespace Revit.IFC.Import.Geometry
       /// <param name="knotMultiplicities">The list of knots multiplicities</param>
       /// <param name="knots">The list of distinct knots</param>
       /// <returns>The list of knots</returns>
-      public static IList<double> ConvertIFCKnotsToRevitKnots(IList<int> knotMultiplicities, IList<double> knots) 
+      public static IList<double> ConvertIFCKnotsToRevitKnots(IList<int> knotMultiplicities, IList<double> knots)
       {
-          if (knotMultiplicities == null || knots == null)
-              return null;
-          if (knotMultiplicities.Count != knots.Count)
-              return null;
+         if (knotMultiplicities == null || knots == null)
+            return null;
+         if (knotMultiplicities.Count != knots.Count)
+            return null;
 
-          IList<double> revitKnots = new List<double>();
-          for (int ii = 0; ii < knots.Count; ii++)
-          {
-              int multiplicity = knotMultiplicities[ii];
-              double knotValue = knots[ii];
+         IList<double> revitKnots = new List<double>();
+         for (int ii = 0; ii < knots.Count; ii++)
+         {
+            int multiplicity = knotMultiplicities[ii];
+            double knotValue = knots[ii];
 
-              for (int count = 0; count < multiplicity; count++)
-              {
-                  revitKnots.Add(knotValue);
-              }
-          }
+            for (int count = 0; count < multiplicity; count++)
+            {
+               revitKnots.Add(knotValue);
+            }
+         }
 
-          return revitKnots;
+         return revitKnots;
       }
    }
 }

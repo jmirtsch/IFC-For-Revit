@@ -879,7 +879,7 @@ namespace Revit.IFC.Export.Exporter
 
          IFCLevelInfo levelInfo = exporterIFC.GetLevelInfo(levelId);
 
-        
+
 
          IFCFile file = exporterIFC.GetFile();
 
@@ -958,7 +958,7 @@ namespace Revit.IFC.Export.Exporter
                extraParams.ScaledHeight = scaledRoomHeight;
                extraParams.ScaledArea = dArea;
 
-               
+
 
                double? spaceElevationWithFlooring = null;
                double elevationWithFlooring = 0.0;

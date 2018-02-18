@@ -31,61 +31,61 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class that represents IFCLine entity
-    /// </summary>
-    public class IFCLine : IFCCurve
-    {
-        protected IFCLine()
-        {
-        }
+   /// <summary>
+   /// Class that represents IFCLine entity
+   /// </summary>
+   public class IFCLine : IFCCurve
+   {
+      protected IFCLine()
+      {
+      }
 
-        protected IFCLine(IFCAnyHandle line)
-        {
-            Process(line);
-        }
+      protected IFCLine(IFCAnyHandle line)
+      {
+         Process(line);
+      }
 
-        protected override void Process(IFCAnyHandle ifcCurve)
-        {
-            base.Process(ifcCurve);
-            IFCAnyHandle pnt = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcCurve, "Pnt", false);
-            if (pnt == null)
-                return;
+      protected override void Process(IFCAnyHandle ifcCurve)
+      {
+         base.Process(ifcCurve);
+         IFCAnyHandle pnt = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcCurve, "Pnt", false);
+         if (pnt == null)
+            return;
 
-            IFCAnyHandle dir = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcCurve, "Dir", false);
-            if (dir == null)
-                return;
+         IFCAnyHandle dir = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcCurve, "Dir", false);
+         if (dir == null)
+            return;
 
-            XYZ pntXYZ = IFCPoint.ProcessScaledLengthIFCCartesianPoint(pnt);
-            XYZ dirXYZ = IFCUnitUtil.ScaleLength(IFCPoint.ProcessIFCVector(dir));
-            ParametericScaling = dirXYZ.GetLength();
-            if (MathUtil.IsAlmostZero(ParametericScaling))
-            {
-                Importer.TheLog.LogWarning(ifcCurve.StepId, "Line has zero length, ignoring.", false);
-                return;
-            }
+         XYZ pntXYZ = IFCPoint.ProcessScaledLengthIFCCartesianPoint(pnt);
+         XYZ dirXYZ = IFCUnitUtil.ScaleLength(IFCPoint.ProcessIFCVector(dir));
+         ParametericScaling = dirXYZ.GetLength();
+         if (MathUtil.IsAlmostZero(ParametericScaling))
+         {
+            Importer.TheLog.LogWarning(ifcCurve.StepId, "Line has zero length, ignoring.", false);
+            return;
+         }
 
-            Curve = Line.CreateUnbound(pntXYZ, dirXYZ / ParametericScaling);
-        }
+         Curve = Line.CreateUnbound(pntXYZ, dirXYZ / ParametericScaling);
+      }
 
-        /// <summary>
-        /// Create an IFCLine object from a handle of type IfcLine
-        /// </summary>
-        /// <param name="ifcLine">The IFC handle</param>
-        /// <returns>The IFCLine object</returns>
-        public static IFCLine ProcessIFCLine(IFCAnyHandle ifcLine)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcLine))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcBSplineCurveWithKnots);
-                return null;
-            }
+      /// <summary>
+      /// Create an IFCLine object from a handle of type IfcLine
+      /// </summary>
+      /// <param name="ifcLine">The IFC handle</param>
+      /// <returns>The IFCLine object</returns>
+      public static IFCLine ProcessIFCLine(IFCAnyHandle ifcLine)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcLine))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcBSplineCurveWithKnots);
+            return null;
+         }
 
-            IFCEntity line = null;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcLine.StepId, out line))
-                line = new IFCLine(ifcLine);
+         IFCEntity line = null;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcLine.StepId, out line))
+            line = new IFCLine(ifcLine);
 
-            return (line as IFCLine);
-        }
-    }
+         return (line as IFCLine);
+      }
+   }
 }

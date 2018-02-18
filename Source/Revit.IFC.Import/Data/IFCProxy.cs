@@ -58,10 +58,10 @@ namespace Revit.IFC.Import.Data
          get { return m_ProxyType; }
          protected set { m_ProxyType = value; }
       }
-      
+
       /// <summary>
-       /// Default constructor.
-       /// </summary>
+      /// Default constructor.
+      /// </summary>
       protected IFCProxy()
       {
 

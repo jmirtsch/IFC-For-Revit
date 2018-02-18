@@ -96,9 +96,9 @@ namespace Revit.IFC.Export.Exporter
          /// </summary>
          public ICollection<ElementId> Materials { get; set; }
 
-          /// <summary>
-          /// The material profile set for the extruded Beam
-          /// </summary>
+         /// <summary>
+         /// The material profile set for the extruded Beam
+         /// </summary>
          public MaterialAndProfile materialAndProfile { get; set; }
 
          /// <summary>
@@ -293,7 +293,7 @@ namespace Revit.IFC.Export.Exporter
          Plane beamExtrusionBasePlane = GeometryUtil.CreatePlaneByXYVectorsAtOrigin(planeXVec, planeYVec);
          info.RepresentationHandle = ExtrusionExporter.CreateExtrusionWithClipping(exporterIFC, element,
              catId, solid, beamExtrusionBasePlane, orientTrf.Origin, beamDirection, null, out completelyClipped,
-             out footPrintInfo, out materialAndProfile, addInfo:GenerateAdditionalInfo.GenerateProfileDef);
+             out footPrintInfo, out materialAndProfile, addInfo: GenerateAdditionalInfo.GenerateProfileDef);
          if (completelyClipped)
          {
             info.DontExport = true;
@@ -313,7 +313,7 @@ namespace Revit.IFC.Export.Exporter
          }
 
          if (materialAndProfile != null)
-             info.materialAndProfile = materialAndProfile;
+            info.materialAndProfile = materialAndProfile;
 
          return info;
       }
@@ -543,19 +543,19 @@ namespace Revit.IFC.Export.Exporter
 
       static IFCBeamType GetBeamType(Element element, string beamType)
       {
-          string value = null;
-          if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
-              value = beamType;
+         string value = null;
+         if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
+            value = beamType;
 
-          if (String.IsNullOrEmpty(value))
-              return IFCBeamType.Beam;
+         if (String.IsNullOrEmpty(value))
+            return IFCBeamType.Beam;
 
-          string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
+         string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
-          if (String.Compare(newValue, "USERDEFINED", true) == 0)
-              return IFCBeamType.UserDefined;
+         if (String.Compare(newValue, "USERDEFINED", true) == 0)
+            return IFCBeamType.UserDefined;
 
-          return IFCBeamType.Beam;
+         return IFCBeamType.Beam;
       }
    }
 }

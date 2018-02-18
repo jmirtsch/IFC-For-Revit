@@ -28,28 +28,28 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate gross area.
-    /// </summary>
-    class GrossAreaCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Area = 0;
+   /// <summary>
+   /// A calculation class to calculate gross area.
+   /// </summary>
+   class GrossAreaCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Area = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static GrossAreaCalculator s_Instance = new GrossAreaCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static GrossAreaCalculator s_Instance = new GrossAreaCalculator();
 
-        /// <summary>
-        /// The GrossAreaCalculator instance.
-        /// </summary>
-        public static GrossAreaCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The GrossAreaCalculator instance.
+      /// </summary>
+      public static GrossAreaCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
       /// <summary>
       /// Calculates cross area.
@@ -101,15 +101,15 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
          }
       }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Area;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Area;
+      }
+   }
 }

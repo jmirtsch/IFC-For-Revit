@@ -94,12 +94,12 @@ namespace Revit.IFC.Export.Exporter
                   if (exportSlab)
                   {
                      string slabGUID = GUIDUtil.CreateSubElementGUID(roof, (int)IFCRoofSubElements.RoofSlabStart);
-                     string slabName = IFCAnyHandleUtil.GetStringAttribute(roofHnd,"Name") + ":1";
+                     string slabName = IFCAnyHandleUtil.GetStringAttribute(roofHnd, "Name") + ":1";
                      IFCAnyHandle slabLocalPlacementHnd = ExporterUtil.CopyLocalPlacement(file, localPlacement);
 
-                     IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(exporterIFC, roof, slabGUID, ownerHistory, 
+                     IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(exporterIFC, roof, slabGUID, ownerHistory,
                         slabLocalPlacementHnd, representation, "ROOF");
-							IFCAnyHandleUtil.SetAttribute(slabHnd, "Name", slabName);
+                     IFCAnyHandleUtil.SetAttribute(slabHnd, "Name", slabName);
                      Transform offsetTransform = (bodyData != null) ? bodyData.OffsetTransform : Transform.Identity;
                      OpeningUtil.CreateOpeningsIfNecessary(slabHnd, roof, ecData, offsetTransform,
                          exporterIFC, slabLocalPlacementHnd, placementSetter, productWrapper);
@@ -225,12 +225,12 @@ namespace Revit.IFC.Export.Exporter
                         IFCAnyHandle prodRepHnd = null;
 
                         string elementGUID = GUIDUtil.CreateGUID(element);
-                       
+
                         string hostObjectType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
 
                         IFCAnyHandle hostObjectHandle = null;
                         if (elementIsRoof)
-                           hostObjectHandle = IFCInstanceExporter.CreateRoof(exporterIFC, element, elementGUID, ownerHistory, 
+                           hostObjectHandle = IFCInstanceExporter.CreateRoof(exporterIFC, element, elementGUID, ownerHistory,
                             localPlacement, prodRepHnd, hostObjectType);
                         else
                            hostObjectHandle = IFCInstanceExporter.CreateSlab(exporterIFC, element, elementGUID, ownerHistory,
@@ -296,7 +296,7 @@ namespace Revit.IFC.Export.Exporter
                               string slabGUID = (loopNum < 256) ? GUIDUtil.CreateSubElementGUID(element, subElementStart + loopNum) : GUIDUtil.CreateGUID();
 
                               IFCAnyHandle slabPlacement = ExporterUtil.CreateLocalPlacement(file, slabExtrusionCreationData.GetLocalPlacement(), null);
-                              IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(exporterIFC, element, slabGUID, ownerHistory, 
+                              IFCAnyHandle slabHnd = IFCInstanceExporter.CreateSlab(exporterIFC, element, slabGUID, ownerHistory,
                                  slabPlacement, repHnd, subSlabType);
 
                               //slab quantities
@@ -362,13 +362,13 @@ namespace Revit.IFC.Export.Exporter
                IFCAnyHandle prodRepHnd = null;
 
                string elementGUID = GUIDUtil.CreateGUID(element);
-               
+
 
                //need to convert the string to enum
                string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, element);
                ifcEnumType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
 
-               IFCAnyHandle roofHandle = IFCInstanceExporter.CreateRoof(exporterIFC, element, elementGUID, ownerHistory, 
+               IFCAnyHandle roofHandle = IFCInstanceExporter.CreateRoof(exporterIFC, element, elementGUID, ownerHistory,
                    localPlacement, prodRepHnd, ifcEnumType);
 
                // Export the parts

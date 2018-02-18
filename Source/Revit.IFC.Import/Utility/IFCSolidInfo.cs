@@ -31,50 +31,50 @@ using UnitName = Autodesk.Revit.DB.DisplayUnitType;
 
 namespace Revit.IFC.Import.Utility
 {
-    /// <summary>
-    /// A class that contains the GeometryObject, Id, and material information for created Revit geometry.
-    /// </summary>
-    /// <remarks>TODO: Rename to IFCGeometryObjectInfo, as it can contain Solids, Meshes, and Curves.</remarks>
-    public class IFCSolidInfo
-    {
-        /// <summary>
-        /// The id of the geometry.
-        /// </summary>
-        public int Id { get; set; }
+   /// <summary>
+   /// A class that contains the GeometryObject, Id, and material information for created Revit geometry.
+   /// </summary>
+   /// <remarks>TODO: Rename to IFCGeometryObjectInfo, as it can contain Solids, Meshes, and Curves.</remarks>
+   public class IFCSolidInfo
+   {
+      /// <summary>
+      /// The id of the geometry.
+      /// </summary>
+      public int Id { get; set; }
 
-        /// <summary>
-        /// The representation that created the geometry.
-        /// </summary>
-        public IFCRepresentationIdentifier RepresentationType { get; set; }
+      /// <summary>
+      /// The representation that created the geometry.
+      /// </summary>
+      public IFCRepresentationIdentifier RepresentationType { get; set; }
 
-        /// <summary>
-        /// The created geometry.
-        /// </summary>
-        public GeometryObject GeometryObject { get; set; }
+      /// <summary>
+      /// The created geometry.
+      /// </summary>
+      public GeometryObject GeometryObject { get; set; }
 
-        protected IFCSolidInfo()
-        {
-            Id = -1;
-            RepresentationType = IFCRepresentationIdentifier.Unhandled;
-            GeometryObject = null;
-        }
+      protected IFCSolidInfo()
+      {
+         Id = -1;
+         RepresentationType = IFCRepresentationIdentifier.Unhandled;
+         GeometryObject = null;
+      }
 
-        protected IFCSolidInfo(int id, GeometryObject geometryObject)
-        {
-            Id = id;
-            GeometryObject = geometryObject;
-        }
+      protected IFCSolidInfo(int id, GeometryObject geometryObject)
+      {
+         Id = id;
+         GeometryObject = geometryObject;
+      }
 
-        /// <summary>
-        /// Create an IFCSolidInfo from the created geometry.
-        /// </summary>
-        /// <param name="id">The id associated with the geometry in the IFC file.</param>
-        /// <param name="geometryObject">The created geometry.</param>
-        /// <returns>The IFCSolidInfo class.</returns>
-        /// <remarks>The RepresentationType is intended to be added in the AddGeometry function call.</remarks>
-        public static IFCSolidInfo Create(int id, GeometryObject geometryObject)
-        {
-            return new IFCSolidInfo(id, geometryObject);
-        }
-    }
+      /// <summary>
+      /// Create an IFCSolidInfo from the created geometry.
+      /// </summary>
+      /// <param name="id">The id associated with the geometry in the IFC file.</param>
+      /// <param name="geometryObject">The created geometry.</param>
+      /// <returns>The IFCSolidInfo class.</returns>
+      /// <remarks>The RepresentationType is intended to be added in the AddGeometry function call.</remarks>
+      public static IFCSolidInfo Create(int id, GeometryObject geometryObject)
+      {
+         return new IFCSolidInfo(id, geometryObject);
+      }
+   }
 }

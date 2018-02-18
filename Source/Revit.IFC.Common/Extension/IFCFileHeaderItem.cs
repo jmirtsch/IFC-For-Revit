@@ -32,8 +32,9 @@ namespace Revit.IFC.Common.Extensions
       /// The File Description field of IFC File header.
       /// </summary>
       private string fileDescription;
-      public string FileDescription {
-         get {return fileDescription; } 
+      public string FileDescription
+      {
+         get { return fileDescription; }
          set
          {
             fileDescription = value;
@@ -46,8 +47,9 @@ namespace Revit.IFC.Common.Extensions
       /// The Source file name field of IFC File header.
       /// </summary>
       private string sourceFileName;
-      public string SourceFileName {
-         get {return sourceFileName; } 
+      public string SourceFileName
+      {
+         get { return sourceFileName; }
          set
          {
             sourceFileName = value;
@@ -60,8 +62,9 @@ namespace Revit.IFC.Common.Extensions
       /// Thee Author's first name field of IFC File header.
       /// </summary>
       private string authorName;
-      public string AuthorName {
-         get {return authorName; } 
+      public string AuthorName
+      {
+         get { return authorName; }
          set
          {
             authorName = value;
@@ -74,8 +77,9 @@ namespace Revit.IFC.Common.Extensions
       /// The Author's last name field of IFC File header.
       /// </summary>
       private string authorEmail;
-      public string AuthorEmail {
-         get {return authorEmail; } 
+      public string AuthorEmail
+      {
+         get { return authorEmail; }
          set
          {
             authorEmail = value;
@@ -88,8 +92,9 @@ namespace Revit.IFC.Common.Extensions
       /// The Organization field of IFC File header.
       /// </summary>
       private string organization;
-      public string Organization {
-         get {return organization; } 
+      public string Organization
+      {
+         get { return organization; }
          set
          {
             organization = value;
@@ -102,8 +107,9 @@ namespace Revit.IFC.Common.Extensions
       /// The Authorization field of IFC File header.
       /// </summary>
       private string authorization;
-      public string Authorization {
-         get {return authorization; } 
+      public string Authorization
+      {
+         get { return authorization; }
          set
          {
             authorization = value;
@@ -116,8 +122,9 @@ namespace Revit.IFC.Common.Extensions
       /// The Application Name field of IFC File header.
       /// </summary>
       private string applicationName;
-      public string ApplicationName {
-         get {return applicationName; } 
+      public string ApplicationName
+      {
+         get { return applicationName; }
          set
          {
             applicationName = value;
@@ -130,8 +137,9 @@ namespace Revit.IFC.Common.Extensions
       /// The Version number field of IFC File header.
       /// </summary>
       private string versionNumber;
-      public string VersionNumber {
-         get {return versionNumber; } 
+      public string VersionNumber
+      {
+         get { return versionNumber; }
          set
          {
             versionNumber = value;
@@ -139,13 +147,14 @@ namespace Revit.IFC.Common.Extensions
             OnPropertyChanged("VersionNumberTextBox");
          }
       }
-        
+
       /// <summary>
       /// The Location field of IFC File header.
       /// </summary>
       private string fileSchema;
-      public string FileSchema {
-         get { return fileSchema; } 
+      public string FileSchema
+      {
+         get { return fileSchema; }
          set
          {
             fileSchema = value;

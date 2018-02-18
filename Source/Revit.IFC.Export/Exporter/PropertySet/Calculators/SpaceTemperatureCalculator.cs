@@ -27,75 +27,75 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    class SpaceTemperatureCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Temperature = 0.0;
+   class SpaceTemperatureCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Temperature = 0.0;
 
-        private string m_Name;
+      private string m_Name;
 
-        /// <summary>
-        /// The SpaceTemperatureCalculator instance.
-        /// </summary>
-        public SpaceTemperatureCalculator(string name)
-        {
-            m_Name = name;
-        }
-        
-        /// <summary>
-        /// Calculates temperature value for a space.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
-        /// <param name="element">The element to calculate the value.</param>
-        /// <param name="elementType">The element type.</param>
-        /// <returns>True if the operation succeed, false otherwise.</returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            if (!string.IsNullOrEmpty(m_Name))
+      /// <summary>
+      /// The SpaceTemperatureCalculator instance.
+      /// </summary>
+      public SpaceTemperatureCalculator(string name)
+      {
+         m_Name = name;
+      }
+
+      /// <summary>
+      /// Calculates temperature value for a space.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
+      /// <param name="element">The element to calculate the value.</param>
+      /// <param name="elementType">The element type.</param>
+      /// <returns>True if the operation succeed, false otherwise.</returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         if (!string.IsNullOrEmpty(m_Name))
+         {
+            string temperatureName, temperatureNameMax, temperatureNameMin;
+            if (string.Compare(m_Name, "SpaceTemperatureSummer") == 0)
             {
-                string temperatureName, temperatureNameMax, temperatureNameMin;
-                if (string.Compare(m_Name, "SpaceTemperatureSummer") == 0)
-                {
-                    temperatureName = "SpaceTemperatureSummer";
-                    temperatureNameMax = "SpaceTemperatureSummerMax";
-                    temperatureNameMin = "SpaceTemperatureSummerMin";
-                }
-                else if (string.Compare(m_Name, "SpaceTemperatureWinter") == 0)
-                {
-                    temperatureName = "SpaceTemperatureWinter";
-                    temperatureNameMax = "SpaceTemperatureWinterMax";
-                    temperatureNameMin = "SpaceTemperatureWinterMin";
-                }
-                else
-                    return false;
-
-                if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, temperatureName, out m_Temperature) != null)
-                    return true;
-
-                double maxValue = 0, minValue = 0;
-                if ((ParameterUtil.GetDoubleValueFromElementOrSymbol(element, temperatureNameMax, out maxValue) != null) &&
-                    (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, temperatureNameMin, out minValue) != null))
-                {
-                    m_Temperature = (maxValue + minValue) / 2.0;
-                    return true;
-                }
+               temperatureName = "SpaceTemperatureSummer";
+               temperatureNameMax = "SpaceTemperatureSummerMax";
+               temperatureNameMin = "SpaceTemperatureSummerMin";
             }
+            else if (string.Compare(m_Name, "SpaceTemperatureWinter") == 0)
+            {
+               temperatureName = "SpaceTemperatureWinter";
+               temperatureNameMax = "SpaceTemperatureWinterMax";
+               temperatureNameMin = "SpaceTemperatureWinterMin";
+            }
+            else
+               return false;
 
-            return false;
-        }
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, temperatureName, out m_Temperature) != null)
+               return true;
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Temperature;
-        }
-    }
+            double maxValue = 0, minValue = 0;
+            if ((ParameterUtil.GetDoubleValueFromElementOrSymbol(element, temperatureNameMax, out maxValue) != null) &&
+                (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, temperatureNameMin, out minValue) != null))
+            {
+               m_Temperature = (maxValue + minValue) / 2.0;
+               return true;
+            }
+         }
+
+         return false;
+      }
+
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Temperature;
+      }
+   }
 }

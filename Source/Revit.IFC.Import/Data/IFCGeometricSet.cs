@@ -31,88 +31,88 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    public class IFCGeometricSet : IFCRepresentationItem
-    {
-        IList<IFCCurve> m_Curves = null;
+   public class IFCGeometricSet : IFCRepresentationItem
+   {
+      IList<IFCCurve> m_Curves = null;
 
-        /// <summary>
-        /// Get the Curve representation of IFCCurve.  It could be null.
-        /// </summary>
-        public IList<IFCCurve> Curves
-        {
-            get 
+      /// <summary>
+      /// Get the Curve representation of IFCCurve.  It could be null.
+      /// </summary>
+      public IList<IFCCurve> Curves
+      {
+         get
+         {
+            if (m_Curves == null)
+               m_Curves = new List<IFCCurve>();
+            return m_Curves;
+         }
+      }
+
+      protected IFCGeometricSet()
+      {
+      }
+
+      override protected void Process(IFCAnyHandle ifcGeometricSet)
+      {
+         base.Process(ifcGeometricSet);
+
+         IList<IFCAnyHandle> elements = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcGeometricSet, "Elements");
+         if (elements != null)
+         {
+            foreach (IFCAnyHandle element in elements)
             {
-                if (m_Curves == null)
-                    m_Curves = new List<IFCCurve>();
-                return m_Curves; 
+               if (IFCAnyHandleUtil.IsSubTypeOf(element, IFCEntityType.IfcCurve))
+               {
+                  IFCCurve curve = IFCCurve.ProcessIFCCurve(element);
+                  if (curve != null)
+                     Curves.Add(curve);
+               }
+               else
+                  Importer.TheLog.LogError(Id, "Unhandled entity type in IfcGeometricSet: " + IFCAnyHandleUtil.GetEntityType(element).ToString(), false);
             }
-        }
+         }
+      }
 
-        protected IFCGeometricSet()
-        {
-        }
+      protected IFCGeometricSet(IFCAnyHandle geometricSet)
+      {
+         Process(geometricSet);
+      }
 
-        override protected void Process(IFCAnyHandle ifcGeometricSet)
-        {
-            base.Process(ifcGeometricSet);
+      /// <summary>
+      /// Create an IFCGeometricSet object from a handle of type IfcGeometricSet.
+      /// </summary>
+      /// <param name="ifcGeometricSet">The IFC handle.</param>
+      /// <returns>The IFCGeometricSet object.</returns>
+      public static IFCGeometricSet ProcessIFCGeometricSet(IFCAnyHandle ifcGeometricSet)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcGeometricSet))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcGeometricSet);
+            return null;
+         }
 
-            IList<IFCAnyHandle> elements = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcGeometricSet, "Elements");
-            if (elements != null)
-            {
-                foreach (IFCAnyHandle element in elements)
-                {
-                    if (IFCAnyHandleUtil.IsSubTypeOf(element, IFCEntityType.IfcCurve))
-                    {
-                        IFCCurve curve = IFCCurve.ProcessIFCCurve(element);
-                        if (curve != null)
-                            Curves.Add(curve);
-                    }
-                    else
-                        Importer.TheLog.LogError(Id, "Unhandled entity type in IfcGeometricSet: " + IFCAnyHandleUtil.GetEntityType(element).ToString(), false);
-                }
-            }
-        }
+         IFCEntity geometricSet;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcGeometricSet.StepId, out geometricSet))
+            geometricSet = new IFCGeometricSet(ifcGeometricSet);
+         return (geometricSet as IFCGeometricSet);
+      }
 
-        protected IFCGeometricSet(IFCAnyHandle geometricSet)
-        {
-            Process(geometricSet);
-        }
+      /// <summary>
+      /// Create geometry for a particular representation item, and add to scope.
+      /// </summary>
+      /// <param name="shapeEditScope">The geometry creation scope.</param>
+      /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
+      /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
+      /// <param name="guid">The guid of an element for which represntation is being created.</param>
+      /// <remarks>This currently assumes that we are creating plan view curves.</remarks>
+      protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
+      {
+         base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
 
-        /// <summary>
-        /// Create an IFCGeometricSet object from a handle of type IfcGeometricSet.
-        /// </summary>
-        /// <param name="ifcGeometricSet">The IFC handle.</param>
-        /// <returns>The IFCGeometricSet object.</returns>
-        public static IFCGeometricSet ProcessIFCGeometricSet(IFCAnyHandle ifcGeometricSet)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcGeometricSet))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcGeometricSet); 
-                return null;
-            }
-
-            IFCEntity geometricSet;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcGeometricSet.StepId, out geometricSet))
-                geometricSet = new IFCGeometricSet(ifcGeometricSet);
-            return (geometricSet as IFCGeometricSet); 
-        }
-
-        /// <summary>
-        /// Create geometry for a particular representation item, and add to scope.
-        /// </summary>
-        /// <param name="shapeEditScope">The geometry creation scope.</param>
-        /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
-        /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        /// <remarks>This currently assumes that we are creating plan view curves.</remarks>
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
-        {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
-
-            foreach (IFCCurve curve in Curves)
-            {
-                curve.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
-            }
-        }
-    }
+         foreach (IFCCurve curve in Curves)
+         {
+            curve.CreateShape(shapeEditScope, lcs, scaledLcs, guid);
+         }
+      }
+   }
 }

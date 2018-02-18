@@ -51,7 +51,7 @@ namespace Revit.IFC.Export.Exporter
          CurveElementType curveElementType = curveElement.CurveElementType;
          bool exported = false;
          if (curveElementType == CurveElementType.ModelCurve || curveElementType == CurveElementType.CurveByPoints)
-               exported = true;
+            exported = true;
 
          if (exported)
          {
@@ -72,7 +72,7 @@ namespace Revit.IFC.Export.Exporter
                   XYZ end1 = curve.GetEndPoint(0);
                   XYZ end2 = curve.GetEndPoint(1);
                   if (end1.IsAlmostEqualTo(end2))
-                        exported = false;
+                     exported = false;
                }
             }
          }
@@ -208,21 +208,21 @@ namespace Revit.IFC.Export.Exporter
          }
       }
 
-   /// <summary>
-   ///  Creates a new IfcAnnotation object.
-   /// </summary>
-   /// <param name="exporterIFC">The exporter.</param>
-   /// <param name="curveElement">The curve element.</param>
-   /// <param name="categoryId">The category id.</param>
-   /// <param name="sketchPlaneId">The sketch plane id.</param>
-   /// <param name="curveLCS">The curve local coordinate system.</param>
-   /// <param name="curveStyle">The curve style.</param>
-   /// <param name="placementSetter">The placemenet setter.</param>
-   /// <param name="localPlacement">The local placement.</param>
-   /// <param name="repItemHnd">The representation item.</param>
-   /// <returns>The handle.</returns>
-   static IFCAnyHandle CreateCurveAnnotation(ExporterIFC exporterIFC, Element curveElement, ElementId categoryId, ElementId sketchPlaneId,
-         Transform curveLCS, IFCAnyHandle curveStyle, PlacementSetter placementSetter, IFCAnyHandle localPlacement, IFCAnyHandle repItemHnd)
+      /// <summary>
+      ///  Creates a new IfcAnnotation object.
+      /// </summary>
+      /// <param name="exporterIFC">The exporter.</param>
+      /// <param name="curveElement">The curve element.</param>
+      /// <param name="categoryId">The category id.</param>
+      /// <param name="sketchPlaneId">The sketch plane id.</param>
+      /// <param name="curveLCS">The curve local coordinate system.</param>
+      /// <param name="curveStyle">The curve style.</param>
+      /// <param name="placementSetter">The placemenet setter.</param>
+      /// <param name="localPlacement">The local placement.</param>
+      /// <param name="repItemHnd">The representation item.</param>
+      /// <returns>The handle.</returns>
+      static IFCAnyHandle CreateCurveAnnotation(ExporterIFC exporterIFC, Element curveElement, ElementId categoryId, ElementId sketchPlaneId,
+            Transform curveLCS, IFCAnyHandle curveStyle, PlacementSetter placementSetter, IFCAnyHandle localPlacement, IFCAnyHandle repItemHnd)
       {
          HashSet<IFCAnyHandle> bodyItems = new HashSet<IFCAnyHandle>();
          bodyItems.Add(repItemHnd);
@@ -250,12 +250,12 @@ namespace Revit.IFC.Export.Exporter
          IFCAnyHandle relativePlacement = ExporterUtil.CreateAxis(file, origin, zDir, xDir);
          GeometryUtil.SetRelativePlacement(localPlacement, relativePlacement);
 
-         IFCAnyHandle annotation = IFCInstanceExporter.CreateAnnotation(exporterIFC, curveElement, GUIDUtil.CreateGUID(), 
+         IFCAnyHandle annotation = IFCInstanceExporter.CreateAnnotation(exporterIFC, curveElement, GUIDUtil.CreateGUID(),
             ExporterCacheManager.OwnerHistoryHandle, localPlacement, prodShapeHnd);
 
          return annotation;
       }
-        
+
       /// <summary>
       ///  Adds IfcCurve handles to the IfcAnnotation handle.
       /// </summary>

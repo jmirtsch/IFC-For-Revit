@@ -286,7 +286,7 @@ namespace Revit.IFC.Export.Utility
          if (siteTransformation != null)
          {
             try
-            { 
+            {
                cache.SiteTransformation = (SiteTransformBasis)siteTransformation;
             }
             catch (Exception) { }
@@ -312,7 +312,7 @@ namespace Revit.IFC.Export.Utility
             int levelOfDetail = (int)(tessellationLOD.Value * 4.0 + 0.5);
             // Ensure LOD is between 1 to 4, inclusive.
             levelOfDetail = Math.Min(Math.Max(levelOfDetail, 1), 4);
-            cache.LevelOfDetail = (ExportTessellationLevel) levelOfDetail;
+            cache.LevelOfDetail = (ExportTessellationLevel)levelOfDetail;
          }
 
          bool? useOnlyTriangulation = GetNamedBooleanOption(options, "UseOnlyTriangulation");
@@ -414,8 +414,8 @@ namespace Revit.IFC.Export.Utility
          // Get COBie specific information
          //if (cache.ExportAs2x3COBIE24DesignDeliverable)
          //{
-            //cache.COBieCompanyInfo = JsonConvert.DeserializeObject<COBieCompanyInfo>(GetNamedStringOption(options, "COBieCompanyInfo"));
-            //cache.COBieProjectInfo = JsonConvert.DeserializeObject<COBieProjectInfo>(GetNamedStringOption(options, "COBieProjectInfo"));
+         //cache.COBieCompanyInfo = JsonConvert.DeserializeObject<COBieCompanyInfo>(GetNamedStringOption(options, "COBieCompanyInfo"));
+         //cache.COBieProjectInfo = JsonConvert.DeserializeObject<COBieProjectInfo>(GetNamedStringOption(options, "COBieProjectInfo"));
          //}
          return cache;
       }

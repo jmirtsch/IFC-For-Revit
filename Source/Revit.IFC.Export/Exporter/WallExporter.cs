@@ -482,7 +482,7 @@ namespace Revit.IFC.Export.Exporter
             // Create TessellatedRep geometry if it is Reference View.
             if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
             {
-               
+
                List<GeometryObject> geomList = new List<GeometryObject>();
                // The native function AddClippingsToBaseExtrusion will create the IfcBooleanClippingResult entity and therefore here we need to delete it
                foreach (IFCAnyHandle item in bodyItems)
@@ -1010,7 +1010,7 @@ namespace Revit.IFC.Export.Exporter
 
                            if (exportAsWall)
                            {
-                              wallHnd = IFCInstanceExporter.CreateWall(exporterIFC, element, elemGUID, ownerHistory, 
+                              wallHnd = IFCInstanceExporter.CreateWall(exporterIFC, element, elemGUID, ownerHistory,
                                       localPlacement, prodRep, ifcType);
                            }
                            else
@@ -1054,12 +1054,12 @@ namespace Revit.IFC.Export.Exporter
                      {
                         if (exportAsFooting)
                         {
-                           wallHnd = IFCInstanceExporter.CreateFooting(exporterIFC, element, elemGUID, ownerHistory, 
+                           wallHnd = IFCInstanceExporter.CreateFooting(exporterIFC, element, elemGUID, ownerHistory,
                                localPlacement, exportParts ? null : prodRep, ifcType);
                         }
                         else
                         {
-                           wallHnd = IFCInstanceExporter.CreateWall(exporterIFC, element, elemGUID, ownerHistory, 
+                           wallHnd = IFCInstanceExporter.CreateWall(exporterIFC, element, elemGUID, ownerHistory,
                                localPlacement, exportParts ? null : prodRep, ifcType);
                         }
 
@@ -1331,7 +1331,7 @@ namespace Revit.IFC.Export.Exporter
             using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, element, null, orientationTrf, overrideLevelId))
             {
                IFCAnyHandle localPlacement = setter.LocalPlacement;
-               wallHnd = IFCInstanceExporter.CreateWall(exporterIFC, element, elemGUID, ownerHistory, 
+               wallHnd = IFCInstanceExporter.CreateWall(exporterIFC, element, elemGUID, ownerHistory,
                    localPlacement, null, "NOTDEFINED");
 
                if (exportParts)
@@ -1384,7 +1384,7 @@ namespace Revit.IFC.Export.Exporter
          if (asFooting)
             wallType = IFCInstanceExporter.CreateFootingType(exporterIFC.GetFile(), elementType, null, null, null);
          else
-            wallType = IFCInstanceExporter.CreateWallType(exporterIFC.GetFile(), elementType,  null, null, isStandard ? "STANDARD" : "NOTDEFINED");
+            wallType = IFCInstanceExporter.CreateWallType(exporterIFC.GetFile(), elementType, null, null, isStandard ? "STANDARD" : "NOTDEFINED");
 
          wrapper.RegisterHandleWithElementType(elementType as ElementType, wallType, null);
 

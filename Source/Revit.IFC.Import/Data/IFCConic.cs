@@ -31,59 +31,59 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class that represents IFCConic entity
-    /// </summary>
-    public abstract class IFCConic : IFCCurve
-    {
-        private Transform m_Position;
+   /// <summary>
+   /// Class that represents IFCConic entity
+   /// </summary>
+   public abstract class IFCConic : IFCCurve
+   {
+      private Transform m_Position;
 
-        public Transform Position
-        {
-            get { return m_Position; }
-            set { m_Position = value; }
-        }
+      public Transform Position
+      {
+         get { return m_Position; }
+         set { m_Position = value; }
+      }
 
-        protected IFCConic()
-        {
-        }
+      protected IFCConic()
+      {
+      }
 
-        protected IFCConic(IFCAnyHandle conic)
-        {
-            Process(conic);
-        }
+      protected IFCConic(IFCAnyHandle conic)
+      {
+         Process(conic);
+      }
 
-        protected override void Process(IFCAnyHandle ifcCurve)
-        {
-            base.Process(ifcCurve);
+      protected override void Process(IFCAnyHandle ifcCurve)
+      {
+         base.Process(ifcCurve);
 
-            IFCAnyHandle position = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcCurve, "Position", false);
-            if (position == null)
-                return;
+         IFCAnyHandle position = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcCurve, "Position", false);
+         if (position == null)
+            return;
 
-            Position = IFCLocation.ProcessIFCAxis2Placement(position);
-        }
+         Position = IFCLocation.ProcessIFCAxis2Placement(position);
+      }
 
-        /// <summary>
-        /// Create an IFCConic object from a handle of type IfcConic
-        /// </summary>
-        /// <param name="ifcConic">The IFC handle</param>
-        /// <returns>The IFCConic object</returns>
-        public static IFCConic ProcessIFCConic(IFCAnyHandle ifcConic)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcConic))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcConic);
-                return null;
-            }
-
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcConic, IFCEntityType.IfcCircle))
-                return IFCCircle.ProcessIFCCircle(ifcConic);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcConic, IFCEntityType.IfcEllipse))
-                return IFCEllipse.ProcessIFCEllipse(ifcConic);
-
-            Importer.TheLog.LogUnhandledSubTypeError(ifcConic, IFCEntityType.IfcConic, true);
+      /// <summary>
+      /// Create an IFCConic object from a handle of type IfcConic
+      /// </summary>
+      /// <param name="ifcConic">The IFC handle</param>
+      /// <returns>The IFCConic object</returns>
+      public static IFCConic ProcessIFCConic(IFCAnyHandle ifcConic)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcConic))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcConic);
             return null;
-        }
-    }
+         }
+
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcConic, IFCEntityType.IfcCircle))
+            return IFCCircle.ProcessIFCCircle(ifcConic);
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcConic, IFCEntityType.IfcEllipse))
+            return IFCEllipse.ProcessIFCEllipse(ifcConic);
+
+         Importer.TheLog.LogUnhandledSubTypeError(ifcConic, IFCEntityType.IfcConic, true);
+         return null;
+      }
+   }
 }

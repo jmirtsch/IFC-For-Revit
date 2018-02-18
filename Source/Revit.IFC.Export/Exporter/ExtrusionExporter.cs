@@ -29,12 +29,12 @@ using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Export.Exporter
 {
-    public enum GenerateAdditionalInfo
-    {
-        GenerateFootprint = 0x01,
-        GenerateProfileDef = 0x10,
-        None = 0x00
-    }
+   public enum GenerateAdditionalInfo
+   {
+      GenerateFootprint = 0x01,
+      GenerateProfileDef = 0x10,
+      None = 0x00
+   }
 
    /// <summary>
    /// Provides methods to export extrusions.
@@ -1188,7 +1188,7 @@ namespace Revit.IFC.Export.Exporter
 
       private class HandleAndAnalyzer
       {
-         public IFCAnyHandle Handle = null;                 
+         public IFCAnyHandle Handle = null;
          public ExtrusionAnalyzer Analyzer = null;
          public IList<IFCAnyHandle> BaseRepresentationItems = new List<IFCAnyHandle>();
          public ShapeRepresentationType ShapeRepresentationType = ShapeRepresentationType.Undefined;
@@ -1220,15 +1220,15 @@ namespace Revit.IFC.Export.Exporter
                if (m_FootprintInfo == null)
                   m_FootprintInfo = new FootPrintInfo();
                return m_FootprintInfo;
-      }
+            }
             set { m_FootprintInfo = value; }
          }
       }
 
 
       private static HandleAndAnalyzer CreateExtrusionWithClippingBase(ExporterIFC exporterIFC, Element element,
-          ElementId catId, IList<Solid> solids, Plane basePlane, XYZ planeOrigin, XYZ projDir, IFCRange range, out bool completelyClipped, 
-          out HashSet<ElementId> materialIds, GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None, string profileName=null)
+          ElementId catId, IList<Solid> solids, Plane basePlane, XYZ planeOrigin, XYZ projDir, IFCRange range, out bool completelyClipped,
+          out HashSet<ElementId> materialIds, GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None, string profileName = null)
       {
          IFCFile file = exporterIFC.GetFile();
          bool mustUseTessellation = false;
@@ -1249,7 +1249,7 @@ namespace Revit.IFC.Export.Exporter
                bool hasBooleanResult = false;
                ElementId materialId = ElementId.InvalidElementId;
                HandleAndAnalyzer currRetVal = CreateExtrusionWithClippingAndOpening(exporterIFC, element, catId, solid, basePlane, planeOrigin, projDir, range,
-                   out completelyClipped, out hasClippingResult, out hasBooleanResult, out materialId, ref materialAndProfile, addInfo: addInfo, profileName:profileName);
+                   out completelyClipped, out hasClippingResult, out hasBooleanResult, out materialId, ref materialAndProfile, addInfo: addInfo, profileName: profileName);
 
                if (currRetVal != null && currRetVal.Handle != null)
                {
@@ -1325,66 +1325,66 @@ namespace Revit.IFC.Export.Exporter
             }
             else
             {
-                if (extrusionBodyItems.Count > 0 && (extrusionClippingBodyItems.Count == 0 && extrusionBooleanBodyItems.Count == 0))
-                {
-                    retVal.Handle = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, catId, contextOfItemsBody,
-                        extrusionBodyItems, null);
-                    retVal.ShapeRepresentationType = ShapeRepresentationType.SweptSolid;
+               if (extrusionBodyItems.Count > 0 && (extrusionClippingBodyItems.Count == 0 && extrusionBooleanBodyItems.Count == 0))
+               {
+                  retVal.Handle = RepresentationUtil.CreateSweptSolidRep(exporterIFC, element, catId, contextOfItemsBody,
+                      extrusionBodyItems, null);
+                  retVal.ShapeRepresentationType = ShapeRepresentationType.SweptSolid;
 
-                    if (ExporterCacheManager.ExportOptionsCache.ExportAs4 && (addInfo & GenerateAdditionalInfo.GenerateFootprint) != 0)
-                    {
-                        // Only when it is SweptSolid that we need to keep the footprint information for use with *StandardCase entity later on
-                        IFCAnyHandle contextOfItemsFootprint = exporterIFC.Get3DContextHandle("FootPrint");
-                        ISet<IFCAnyHandle> repItem = new HashSet<IFCAnyHandle>();
-                        repItem.Add(extrusionFootprintItems[0].FootPrintHandle);    // Take the first item that should be the outerbound (for the cases with island(s))
-                        IFCAnyHandle footprintShapeRepresentation = RepresentationUtil.CreateBaseShapeRepresentation(exporterIFC, contextOfItemsFootprint, "FootPrint", "Curve2D", repItem);
-                        retVal.FootPrintInfo.FootPrintHandle = footprintShapeRepresentation;
-                    }
-                }
-                else if (extrusionClippingBodyItems.Count > 0 && (extrusionBodyItems.Count == 0 && extrusionBooleanBodyItems.Count == 0))
-                {
-                    retVal.Handle = RepresentationUtil.CreateClippingRep(exporterIFC, element, catId, contextOfItemsBody,
-                        extrusionClippingBodyItems);
-                    retVal.ShapeRepresentationType = ShapeRepresentationType.Clipping;
-                }
-                else if (extrusionBooleanBodyItems.Count > 0 && (extrusionBodyItems.Count == 0 && extrusionClippingBodyItems.Count == 0))
-                {
-                    retVal.Handle = RepresentationUtil.CreateCSGRep(exporterIFC, element, catId, contextOfItemsBody,
-                        extrusionBooleanBodyItems);
-                    retVal.ShapeRepresentationType = ShapeRepresentationType.CSG;
+                  if (ExporterCacheManager.ExportOptionsCache.ExportAs4 && (addInfo & GenerateAdditionalInfo.GenerateFootprint) != 0)
+                  {
+                     // Only when it is SweptSolid that we need to keep the footprint information for use with *StandardCase entity later on
+                     IFCAnyHandle contextOfItemsFootprint = exporterIFC.Get3DContextHandle("FootPrint");
+                     ISet<IFCAnyHandle> repItem = new HashSet<IFCAnyHandle>();
+                     repItem.Add(extrusionFootprintItems[0].FootPrintHandle);    // Take the first item that should be the outerbound (for the cases with island(s))
+                     IFCAnyHandle footprintShapeRepresentation = RepresentationUtil.CreateBaseShapeRepresentation(exporterIFC, contextOfItemsFootprint, "FootPrint", "Curve2D", repItem);
+                     retVal.FootPrintInfo.FootPrintHandle = footprintShapeRepresentation;
+                  }
+               }
+               else if (extrusionClippingBodyItems.Count > 0 && (extrusionBodyItems.Count == 0 && extrusionBooleanBodyItems.Count == 0))
+               {
+                  retVal.Handle = RepresentationUtil.CreateClippingRep(exporterIFC, element, catId, contextOfItemsBody,
+                      extrusionClippingBodyItems);
+                  retVal.ShapeRepresentationType = ShapeRepresentationType.Clipping;
+               }
+               else if (extrusionBooleanBodyItems.Count > 0 && (extrusionBodyItems.Count == 0 && extrusionClippingBodyItems.Count == 0))
+               {
+                  retVal.Handle = RepresentationUtil.CreateCSGRep(exporterIFC, element, catId, contextOfItemsBody,
+                      extrusionBooleanBodyItems);
+                  retVal.ShapeRepresentationType = ShapeRepresentationType.CSG;
                   retVal.MaterialAndProfile.Clear();          // Clear material and profile info as it is only for StandardCase element
-                }
-                else
-                {
-                    // If both Clipping and extrusion exist, they will become boolean body Union
-                    IFCAnyHandle finalBodyItemHnd = null;
+               }
+               else
+               {
+                  // If both Clipping and extrusion exist, they will become boolean body Union
+                  IFCAnyHandle finalBodyItemHnd = null;
 
-                    ICollection<IFCAnyHandle> booleanBodyItems = extrusionClippingBodyItems.Union<IFCAnyHandle>(extrusionBooleanBodyItems).ToList();
+                  ICollection<IFCAnyHandle> booleanBodyItems = extrusionClippingBodyItems.Union<IFCAnyHandle>(extrusionBooleanBodyItems).ToList();
 
-                    finalBodyItemHnd = booleanBodyItems.ElementAt(0);
-                    booleanBodyItems.Remove(finalBodyItemHnd);
+                  finalBodyItemHnd = booleanBodyItems.ElementAt(0);
+                  booleanBodyItems.Remove(finalBodyItemHnd);
 
-                    // union non-boolean result first with a boolean result
-                    foreach (IFCAnyHandle bodyRep in extrusionBodyItems)
-                    {
-                        finalBodyItemHnd = IFCInstanceExporter.CreateBooleanResult(exporterIFC.GetFile(), IFCBooleanOperator.Union,
-                             finalBodyItemHnd, bodyRep);
-                    }
+                  // union non-boolean result first with a boolean result
+                  foreach (IFCAnyHandle bodyRep in extrusionBodyItems)
+                  {
+                     finalBodyItemHnd = IFCInstanceExporter.CreateBooleanResult(exporterIFC.GetFile(), IFCBooleanOperator.Union,
+                          finalBodyItemHnd, bodyRep);
+                  }
 
-                    foreach (IFCAnyHandle bodyRep in booleanBodyItems)
-                    {
-                        finalBodyItemHnd = IFCInstanceExporter.CreateBooleanResult(exporterIFC.GetFile(), IFCBooleanOperator.Union,
-                             finalBodyItemHnd, bodyRep);
-                    }
+                  foreach (IFCAnyHandle bodyRep in booleanBodyItems)
+                  {
+                     finalBodyItemHnd = IFCInstanceExporter.CreateBooleanResult(exporterIFC.GetFile(), IFCBooleanOperator.Union,
+                          finalBodyItemHnd, bodyRep);
+                  }
 
-                    extrusionBodyItems.Clear();
-                    extrusionBodyItems.Add(finalBodyItemHnd);
+                  extrusionBodyItems.Clear();
+                  extrusionBodyItems.Add(finalBodyItemHnd);
                   retVal.MaterialAndProfile.Clear();          // Clear material and profile info as it is only for StandardCase element
 
-                    retVal.Handle = RepresentationUtil.CreateCSGRep(exporterIFC, element, catId, contextOfItemsBody,
-                        extrusionBodyItems);
-                    retVal.ShapeRepresentationType = ShapeRepresentationType.CSG;
-                }
+                  retVal.Handle = RepresentationUtil.CreateCSGRep(exporterIFC, element, catId, contextOfItemsBody,
+                      extrusionBodyItems);
+                  retVal.ShapeRepresentationType = ShapeRepresentationType.CSG;
+               }
             }
 
             tr.Commit();
@@ -1397,11 +1397,11 @@ namespace Revit.IFC.Export.Exporter
          return !(cuttingElementCategoryId == new ElementId(BuiltInCategory.OST_Doors) ||
              cuttingElementCategoryId == new ElementId(BuiltInCategory.OST_Windows));
       }
-      
+
       private static HandleAndAnalyzer CreateExtrusionWithClippingAndOpening(ExporterIFC exporterIFC, Element element,
-          ElementId catId, Solid solid, Plane basePlane, XYZ planeOrigin, XYZ projDir, IFCRange range, 
+          ElementId catId, Solid solid, Plane basePlane, XYZ planeOrigin, XYZ projDir, IFCRange range,
           out bool completelyClipped, out bool hasClippingResult, out bool hasBooleanResult, out ElementId materialId, ref MaterialAndProfile materialAndProfile,
-          GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None, string profileName=null)
+          GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None, string profileName = null)
       {
          completelyClipped = false;
          materialId = ElementId.InvalidElementId;
@@ -1511,8 +1511,8 @@ namespace Revit.IFC.Export.Exporter
                   }
 
                   finalExtrusionBodyItemHnd = extrusionBodyItemHnd;
-                   IDictionary<ElementId, ICollection<ICollection<Face>>> elementCutouts =
-                       GeometryUtil.GetCuttingElementFaces(element, elementAnalyzer);
+                  IDictionary<ElementId, ICollection<ICollection<Face>>> elementCutouts =
+                      GeometryUtil.GetCuttingElementFaces(element, elementAnalyzer);
 
                   // A litle explanation is necessary here.
                   // We would like to ensure that, on export, we have a stable ordering of the clip planes that we create.
@@ -1526,8 +1526,8 @@ namespace Revit.IFC.Export.Exporter
                   IComparer<ICollection<PlanarFace>> planarFaceCollectionComparer = new PlanarFaceCollectionComparer();
 
                   // We will have three groups of faces:
-                  
-                  
+
+
                   // 1. Groups of PlanarFaces that allow only for simple cutouts (as determined by AllowMultipleClipPlanesForCategory).
                   // 2. Groups of PlanarFaces that don't have the restriction above (as determined by AllowMultipleClipPlanesForCategory).
                   // These two groups are in a list to avoid duplicated code later.
@@ -1540,16 +1540,16 @@ namespace Revit.IFC.Export.Exporter
                   ICollection<ICollection<Face>> unhandledElementCutouts = new HashSet<ICollection<Face>>();
 
                   // Go through the return value from GeometryUtil.GetCuttingElementFaces and populate the groups above.
-                   foreach (KeyValuePair<ElementId, ICollection<ICollection<Face>>> elementCutoutsForElement in elementCutouts)
-                   {
+                  foreach (KeyValuePair<ElementId, ICollection<ICollection<Face>>> elementCutoutsForElement in elementCutouts)
+                  {
                      // allowMultipleClipPlanes is based on category, as determined in AllowMultipleClipPlanesForCategory.  Default is true.
-                       Element cuttingElement = document.GetElement(elementCutoutsForElement.Key);
+                     Element cuttingElement = document.GetElement(elementCutoutsForElement.Key);
                      bool allowMultipleClipPlanes = true;
                      if (cuttingElement != null && cuttingElement.Category != null)
                         AllowMultipleClipPlanesForCategory(cuttingElement.Category.Id);
 
-                       foreach (ICollection<Face> elementCutout in elementCutoutsForElement.Value)
-                       {
+                     foreach (ICollection<Face> elementCutout in elementCutoutsForElement.Value)
+                     {
                         // Need to make sure that all of the faces in elementCotout are all planar; otherwise add to the unhandled list.
                         ICollection<PlanarFace> planarFacesByNormal = new SortedSet<PlanarFace>(planarFaceComparer);
 
@@ -1616,7 +1616,7 @@ namespace Revit.IFC.Export.Exporter
 
                            // Even if we created a clipping, we may have faces to further process as openings.  
                            if (skippedFaces != null && skippedFaces.Count != 0)
-                           unhandledElementCutouts.Add(skippedFaces);
+                              unhandledElementCutouts.Add(skippedFaces);
                         }
                      }
                   }
@@ -1632,7 +1632,7 @@ namespace Revit.IFC.Export.Exporter
                      }
                      catch
                      {
-                           unhandledOpening = true;
+                        unhandledOpening = true;
                      }
 
                      if (finalExtrusionBodyItemHnd == null || unhandledOpening)
@@ -1659,8 +1659,8 @@ namespace Revit.IFC.Export.Exporter
                      }
                   }
 
-                   materialId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(solid, exporterIFC, element);
-                   BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document, extrusionBodyItemHnd, materialId);
+                  materialId = BodyExporter.GetBestMaterialIdFromGeometryOrParameter(solid, exporterIFC, element);
+                  BodyExporter.CreateSurfaceStyleForRepItem(exporterIFC, document, extrusionBodyItemHnd, materialId);
 
                }
                tr.Commit();
@@ -1691,15 +1691,15 @@ namespace Revit.IFC.Export.Exporter
       public static IFCAnyHandle CreateExtrusionWithClipping(ExporterIFC exporterIFC, Element element, ElementId catId,
           Solid solid, Plane basePlane, XYZ planeOrigin, XYZ projDir, IFCRange range, out bool completelyClipped,
           out FootPrintInfo footPrintInfo, out MaterialAndProfile materialAndProfile,
-          GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None, string profileName=null)
+          GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None, string profileName = null)
       {
          footPrintInfo = null;
-          materialAndProfile = null;
+         materialAndProfile = null;
          IList<Solid> solids = new List<Solid>();
          solids.Add(solid);
          HashSet<ElementId> materialIds = null;
          HandleAndAnalyzer handleAndAnalyzer = CreateExtrusionWithClippingBase(exporterIFC, element, catId,
-             solids, basePlane, planeOrigin, projDir, range, out completelyClipped, out materialIds, addInfo: addInfo, profileName:profileName);
+             solids, basePlane, planeOrigin, projDir, range, out completelyClipped, out materialIds, addInfo: addInfo, profileName: profileName);
          if ((addInfo & GenerateAdditionalInfo.GenerateFootprint) != 0)
          {
             footPrintInfo = handleAndAnalyzer.FootPrintInfo;
@@ -1730,13 +1730,13 @@ namespace Revit.IFC.Export.Exporter
       public static IFCAnyHandle CreateExtrusionWithClipping(ExporterIFC exporterIFC, Element element, ElementId catId,
             IList<Solid> solids, Plane basePlane, XYZ planeOrigin, XYZ projDir, IFCRange range, out bool completelyClipped, out HashSet<ElementId> materialIds,
           out FootPrintInfo footPrintInfo, out MaterialAndProfile materialAndProfile, out IFCExtrusionCreationData extrusionData,
-          GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None, string profileName=null)
+          GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None, string profileName = null)
       {
          footPrintInfo = null;
-          materialAndProfile = null;
+         materialAndProfile = null;
          extrusionData = null;
          HandleAndAnalyzer handleAndAnalyzer = CreateExtrusionWithClippingBase(exporterIFC, element, catId,
-             solids, basePlane, planeOrigin, projDir, range, out completelyClipped, out materialIds, addInfo: addInfo, profileName:profileName);
+             solids, basePlane, planeOrigin, projDir, range, out completelyClipped, out materialIds, addInfo: addInfo, profileName: profileName);
 
          if ((addInfo & GenerateAdditionalInfo.GenerateFootprint) != 0)
          {
@@ -1767,23 +1767,23 @@ namespace Revit.IFC.Export.Exporter
       /// <returns>The extrusion handle.</returns>
       public static HandleAndData CreateExtrusionWithClippingAndProperties(ExporterIFC exporterIFC,
             Element element, ElementId catId, Solid solid, Plane basePlane, XYZ planeOrig, XYZ projDir, IFCRange range, out bool completelyClipped,
-          GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None, string profileName=null)
+          GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None, string profileName = null)
       {
          IList<Solid> solids = new List<Solid>();
          solids.Add(solid);
 
          HashSet<ElementId> materialIds = null;
          HandleAndAnalyzer handleAndAnalyzer = CreateExtrusionWithClippingBase(exporterIFC, element, catId,
-             solids, basePlane, planeOrig, projDir, range, out completelyClipped, out materialIds, addInfo: addInfo, profileName:profileName);
+             solids, basePlane, planeOrig, projDir, range, out completelyClipped, out materialIds, addInfo: addInfo, profileName: profileName);
 
          HandleAndData ret = new HandleAndData();
-         ret.Handle= handleAndAnalyzer.Handle;     // Add the "Body" representation
+         ret.Handle = handleAndAnalyzer.Handle;     // Add the "Body" representation
          ret.FootprintInfo = handleAndAnalyzer.FootPrintInfo;    //Add the "FootPrint" representation
          ret.BaseRepresentationItems = handleAndAnalyzer.BaseRepresentationItems;
          ret.ShapeRepresentationType = handleAndAnalyzer.ShapeRepresentationType;
          ret.MaterialIds = materialIds;
          if (handleAndAnalyzer.Analyzer != null)
-             ret.Data = GetExtrusionCreationDataFromAnalyzer(exporterIFC, projDir, handleAndAnalyzer.Analyzer);
+            ret.Data = GetExtrusionCreationDataFromAnalyzer(exporterIFC, projDir, handleAndAnalyzer.Analyzer);
          if ((addInfo & GenerateAdditionalInfo.GenerateProfileDef) != 0)
             ret.MaterialAndProfile = handleAndAnalyzer.MaterialAndProfile;
          return ret;

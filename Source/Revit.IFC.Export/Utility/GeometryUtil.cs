@@ -2524,7 +2524,7 @@ namespace Revit.IFC.Export.Utility
          if (coord1.Count != coord2.Count)
             return false;     // Cannot compare lists of different number of members
 
-         for (int ii=0; ii<coord1.Count; ++ii)
+         for (int ii = 0; ii < coord1.Count; ++ii)
          {
             isAlmostEqual &= MathUtil.IsAlmostEqual(coord1[ii], coord2[ii]);
          }
@@ -2537,7 +2537,7 @@ namespace Revit.IFC.Export.Utility
          if (reverse)
             segmentIndex.Reverse();
 
-         for (int ii=0; ii<segmentIndex.Count; ++ii)
+         for (int ii = 0; ii < segmentIndex.Count; ++ii)
          {
             segmentIndex[ii] = segmentIndex[ii] + offsetIndex;
          }
@@ -2564,7 +2564,7 @@ namespace Revit.IFC.Export.Utility
                {
                   // If it is a continous line, continue to add it into the same line segment
                   if (CoordinatesAreAlmostEqual(curveCoords[0], lastEndPoint))
-                     lastEndPoint = curveCoords[curveCoords.Count -1];
+                     lastEndPoint = curveCoords[curveCoords.Count - 1];
                   else
                      lastEndPoint = curveCoords[0];
                   pointList.Add(lastEndPoint);
@@ -2664,7 +2664,7 @@ namespace Revit.IFC.Export.Utility
          IFCFile file = exporterIFC.GetFile();
          IList<IList<double>> pointList = new List<IList<double>>();
          segmentIndex = null;
-         
+
          bool use3DPoint = false;
          if (lcs == null || projectDir == null)
             use3DPoint = true;
@@ -2724,7 +2724,7 @@ namespace Revit.IFC.Export.Utility
          return coordList;
       }
 
-      private static void PointListFromLine(ExporterIFC exporterIFC, Line line, Transform lcs, XYZ projectDir, 
+      private static void PointListFromLine(ExporterIFC exporterIFC, Line line, Transform lcs, XYZ projectDir,
             out IList<IList<double>> pointList, out IList<int> segmentIndex)
       {
          IFCFile file = exporterIFC.GetFile();
@@ -2750,7 +2750,7 @@ namespace Revit.IFC.Export.Utility
 
       private static void PointListFromArc(ExporterIFC exporterIFC, Arc arc, Transform lcs, XYZ projectDir,
             out IList<IList<double>> pointList, out IList<int> segmentIndex,
-            bool useTessellation=true)
+            bool useTessellation = true)
       {
          IFCFile file = exporterIFC.GetFile();
          bool use3DPoint = false;
@@ -3599,7 +3599,7 @@ namespace Revit.IFC.Export.Utility
                {
                   // For ordinary extrusion, there will be no unaligned faces. The end faces of extrusion should be fully aligned. 
                   //   The idetification will be based on their normal = the extrusion base plane normal
-                  if (!tryNonPerpendicularExtrusion  
+                  if (!tryNonPerpendicularExtrusion
                      && (item.Key.ComputeNormal(UV.Zero).IsAlmostEqualTo(basePlane.Normal) || item.Key.ComputeNormal(UV.Zero).IsAlmostEqualTo(basePlane.Normal.Negate())))
                      candidateEndFaces.Add(item.Key);
                   else
@@ -3708,7 +3708,7 @@ namespace Revit.IFC.Export.Utility
 
          // Check for swept profile
          try
-         { 
+         {
             SweptProfile sweptProfileFromFamInst = familyInstance.GetSweptProfile();
 
             IList<Curve> profileCurves = new List<Curve>();
@@ -3788,7 +3788,7 @@ namespace Revit.IFC.Export.Utility
          return true;
       }
 
-      public static bool PlaneIntersect (Plane P1, Plane P2, out Line intersectingLine)
+      public static bool PlaneIntersect(Plane P1, Plane P2, out Line intersectingLine)
       {
          intersectingLine = null;
          if (P1.Normal.IsAlmostEqualTo(P2.Normal))
@@ -3856,7 +3856,7 @@ namespace Revit.IFC.Export.Utility
          // Get end points
          XYZ P1 = curve.GetEndPoint(0);
          XYZ P2 = curve.GetEndPoint(1);
-         XYZ vec1 = new XYZ((P2.X-P1.X), (P2.Y-P1.Y), (P2.Z-P1.Z)).Normalize();
+         XYZ vec1 = new XYZ((P2.X - P1.X), (P2.Y - P1.Y), (P2.Z - P1.Z)).Normalize();
 
          // Get the third point on the curve by getting a point in the middle of the curve using parameter
          XYZ P3 = null;

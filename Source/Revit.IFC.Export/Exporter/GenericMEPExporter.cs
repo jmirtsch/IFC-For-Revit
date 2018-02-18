@@ -197,7 +197,7 @@ namespace Revit.IFC.Export.Exporter
                   propertySetsOpt = ExporterUtil.ExtractElementTypeProperties(exporterIFC, type, styleHandle);
                   productWrapper.RegisterHandleWithElementType(type, styleHandle, propertySetsOpt);
                   string applicableOccurrence = NamingUtil.GetObjectTypeOverride(type, typeObjectType);
-                  if(!string.IsNullOrEmpty(applicableOccurrence))
+                  if (!string.IsNullOrEmpty(applicableOccurrence))
                      IFCAnyHandleUtil.SetAttribute(styleHandle, "ApplicableOccurrence", applicableOccurrence);
                   currentTypeInfo.Style = styleHandle;
                   ExporterCacheManager.FamilySymbolToTypeInfoCache.Register(typeId, false, exportType, currentTypeInfo);
@@ -210,7 +210,7 @@ namespace Revit.IFC.Export.Exporter
          }
 
          string instanceGUID = GUIDUtil.CreateGUID(element);
-         
+
 
          bool roomRelated = !FamilyExporterUtil.IsDistributionFlowElementSubType(exportType);
 

@@ -46,7 +46,7 @@ namespace Revit.IFC.Export.Utility
       /// The dictionary mapping from an ElementId to an IfcMaterialConstituentSet handle. 
       /// </summary>
       private Dictionary<ElementId, IFCAnyHandle> m_ElementIdToMatConstituentSetDictionary = new Dictionary<ElementId, IFCAnyHandle>();
-      
+
       /// <summary>
       /// The dictionary mapping from an ElementId to a primary IfcMaterial handle. 
       /// </summary>
@@ -135,12 +135,12 @@ namespace Revit.IFC.Export.Utility
 
          m_ElementIdToMatConstituentSetDictionary[elementId] = handle;
       }
-      
+
       /// <summary>
-       /// Finds the primary IfcMaterial handle from the dictionary.
-       /// </summary>
-       /// <param name="id">The element id.</param>
-       /// <returns>The IfcMaterial handle.</returns>
+      /// Finds the primary IfcMaterial handle from the dictionary.
+      /// </summary>
+      /// <param name="id">The element id.</param>
+      /// <returns>The IfcMaterial handle.</returns>
       public IFCAnyHandle FindPrimaryMaterialHnd(ElementId id)
       {
          IFCAnyHandle handle;

@@ -338,7 +338,7 @@ namespace Revit.IFC.Export.Utility
       /// A list of elements contained in assemblies, to be removed from the level spatial structure.
       /// </summary>
       static ISet<IFCAnyHandle> m_ElementsInAssembliesCache;
-        
+
       /// <summary>
       /// The default IfcCartesianTransformationOperator3D, scale 1.0 and origin =  { 0., 0., 0. };
       /// </summary>
@@ -368,7 +368,7 @@ namespace Revit.IFC.Export.Utility
       /// This is redundant with a native list that is being deprecated, which has inadequate API access.
       /// </summary>
       static IDictionary<ElementId, int> m_HostObjectsLevelIndex;
-        
+
       /// <summary>
       /// The ElementToTypeCache cache that maps Revit element type id to the IFC element type handle.
       /// </summary>
@@ -691,7 +691,7 @@ namespace Revit.IFC.Export.Utility
             return m_MEPCache;
          }
       }
-        
+
 
       /// <summary>
       /// The SpaceBoundaryCache object.
@@ -758,15 +758,15 @@ namespace Revit.IFC.Export.Utility
       //   }
       //}
 
-   public static MaterialConstituentSetCache MaterialConstituentSetCache
-   {
-      get
+      public static MaterialConstituentSetCache MaterialConstituentSetCache
       {
-         if (m_MaterialConstituentSetCache == null)
-            m_MaterialConstituentSetCache = new MaterialConstituentSetCache();
-         return m_MaterialConstituentSetCache;
+         get
+         {
+            if (m_MaterialConstituentSetCache == null)
+               m_MaterialConstituentSetCache = new MaterialConstituentSetCache();
+            return m_MaterialConstituentSetCache;
+         }
       }
-   }
 
       /// <summary>
       /// The MaterialRelationsCache object.
@@ -912,9 +912,9 @@ namespace Revit.IFC.Export.Utility
       }
 
       /// <summary>
-   /// The FamilySymbolToTypeInfoCache object.  This maps a FamilySymbol id to the related created IFC information (the TypeObjectsCache).
+      /// The FamilySymbolToTypeInfoCache object.  This maps a FamilySymbol id to the related created IFC information (the TypeObjectsCache).
       /// </summary>
-   public static TypeObjectsCache FamilySymbolToTypeInfoCache
+      public static TypeObjectsCache FamilySymbolToTypeInfoCache
       {
          get
          {
@@ -964,7 +964,7 @@ namespace Revit.IFC.Export.Utility
       }
 
       /// <summary>
-   /// The ElementToHandleCache object, used to cache Revit element ids to IFC entity handles.
+      /// The ElementToHandleCache object, used to cache Revit element ids to IFC entity handles.
       /// </summary>
       public static ElementToHandleCache ElementToHandleCache
       {
@@ -977,19 +977,19 @@ namespace Revit.IFC.Export.Utility
       }
 
       /// <summary>
-   /// The ElementTypeToHandleCache object, used to cache Revit element type ids to IFC entity handles.
-   /// </summary>
-   public static ElementToHandleCache ElementTypeToHandleCache
-   {
-      get
+      /// The ElementTypeToHandleCache object, used to cache Revit element type ids to IFC entity handles.
+      /// </summary>
+      public static ElementToHandleCache ElementTypeToHandleCache
       {
-         if (m_ElementTypeToHandleCache == null)
-            m_ElementTypeToHandleCache = new ElementToHandleCache();
-         return m_ElementTypeToHandleCache;
+         get
+         {
+            if (m_ElementTypeToHandleCache == null)
+               m_ElementTypeToHandleCache = new ElementToHandleCache();
+            return m_ElementTypeToHandleCache;
+         }
       }
-   }
 
-   /// <summary>
+      /// <summary>
       /// The ExportOptionsCache object.
       /// </summary>
       public static ExportOptionsCache ExportOptionsCache
@@ -1115,7 +1115,7 @@ namespace Revit.IFC.Export.Utility
             return m_PropertyInfoCache;
          }
       }
-        
+
       /// <summary>
       /// The common property sets to be exported for an entity type, regardless of Object Type.
       /// </summary>

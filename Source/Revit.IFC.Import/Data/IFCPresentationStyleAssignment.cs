@@ -30,73 +30,73 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    public class IFCPresentationStyleAssignment : IFCEntity
-    {
-        ISet<IFCPresentationStyle> m_Styles = null;
+   public class IFCPresentationStyleAssignment : IFCEntity
+   {
+      ISet<IFCPresentationStyle> m_Styles = null;
 
-        public ISet<IFCPresentationStyle> Styles
-        {
-            get
+      public ISet<IFCPresentationStyle> Styles
+      {
+         get
+         {
+            if (m_Styles == null)
+               m_Styles = new HashSet<IFCPresentationStyle>();
+            return m_Styles;
+         }
+      }
+
+      protected IFCPresentationStyleAssignment()
+      {
+      }
+
+      override protected void Process(IFCAnyHandle item)
+      {
+         base.Process(item);
+
+         HashSet<IFCData> styles = IFCAnyHandleUtil.GetAggregateAttribute<HashSet<IFCData>>(item, "Styles");
+         if (styles != null)
+         {
+            foreach (IFCData styleData in styles)
             {
-                if (m_Styles == null)
-                    m_Styles = new HashSet<IFCPresentationStyle>();
-                return m_Styles;
+               if (styleData.PrimitiveType == IFCDataPrimitiveType.Instance)
+               {
+                  IFCAnyHandle style = styleData.AsInstance();
+                  try
+                  {
+                     IFCPresentationStyle presentationStyle = IFCPresentationStyle.ProcessIFCPresentationStyle(style);
+                     if (presentationStyle != null)
+                        Styles.Add(presentationStyle);
+                  }
+                  catch (Exception ex)
+                  {
+                     Importer.TheLog.LogError(item.StepId, ex.Message, false);
+                  }
+               }
             }
-        }
+         }
+      }
 
-        protected IFCPresentationStyleAssignment()
-        {
-        }
+      protected IFCPresentationStyleAssignment(IFCAnyHandle item)
+      {
+         Process(item);
+      }
 
-        override protected void Process(IFCAnyHandle item)
-        {
-            base.Process(item);
+      /// <summary>
+      /// Processes an IfcPresentationStyleAssignment entity handle.
+      /// </summary>
+      /// <param name="ifcPresentationStyleAssignment">The IfcPresentationStyleAssignment handle.</param>
+      /// <returns>The IFCPresentationStyleAssignment object.</returns>
+      public static IFCPresentationStyleAssignment ProcessIFCPresentationStyleAssignment(IFCAnyHandle ifcPresentationStyleAssignment)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPresentationStyleAssignment))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcPresentationStyleAssignment);
+            return null;
+         }
 
-            HashSet<IFCData> styles = IFCAnyHandleUtil.GetAggregateAttribute<HashSet<IFCData>>(item, "Styles");
-            if (styles != null)
-            {
-                foreach (IFCData styleData in styles)
-                {
-                    if (styleData.PrimitiveType == IFCDataPrimitiveType.Instance)
-                    {
-                        IFCAnyHandle style = styleData.AsInstance();
-                        try
-                        {
-                            IFCPresentationStyle presentationStyle = IFCPresentationStyle.ProcessIFCPresentationStyle(style);
-                            if (presentationStyle != null)
-                                Styles.Add(presentationStyle);
-                        }
-                        catch (Exception ex)
-                        {
-                            Importer.TheLog.LogError(item.StepId, ex.Message, false);
-                        }
-                    }
-                }
-            }
-        }
-
-        protected IFCPresentationStyleAssignment(IFCAnyHandle item)
-        {
-            Process(item);
-        }
-
-        /// <summary>
-        /// Processes an IfcPresentationStyleAssignment entity handle.
-        /// </summary>
-        /// <param name="ifcPresentationStyleAssignment">The IfcPresentationStyleAssignment handle.</param>
-        /// <returns>The IFCPresentationStyleAssignment object.</returns>
-        public static IFCPresentationStyleAssignment ProcessIFCPresentationStyleAssignment(IFCAnyHandle ifcPresentationStyleAssignment)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPresentationStyleAssignment))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcPresentationStyleAssignment);
-                return null;
-            }
-
-            IFCEntity presentationStyleAssignment;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcPresentationStyleAssignment.StepId, out presentationStyleAssignment))
-                presentationStyleAssignment = new IFCPresentationStyleAssignment(ifcPresentationStyleAssignment);
-            return (presentationStyleAssignment as IFCPresentationStyleAssignment); 
-        }
-    }
+         IFCEntity presentationStyleAssignment;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcPresentationStyleAssignment.StepId, out presentationStyleAssignment))
+            presentationStyleAssignment = new IFCPresentationStyleAssignment(ifcPresentationStyleAssignment);
+         return (presentationStyleAssignment as IFCPresentationStyleAssignment);
+      }
+   }
 }

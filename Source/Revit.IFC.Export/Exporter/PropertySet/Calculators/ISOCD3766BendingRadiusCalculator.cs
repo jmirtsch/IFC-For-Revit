@@ -29,65 +29,65 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate the bending radius for a rebar.
-    /// </summary>
-    class ISOCD3766BendingRadiusCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Radius = 0;
+   /// <summary>
+   /// A calculation class to calculate the bending radius for a rebar.
+   /// </summary>
+   class ISOCD3766BendingRadiusCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Radius = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static ISOCD3766BendingRadiusCalculator s_Instance = new ISOCD3766BendingRadiusCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static ISOCD3766BendingRadiusCalculator s_Instance = new ISOCD3766BendingRadiusCalculator();
 
-        /// <summary>
-        /// The ISOCD3766BendingRadiusCalculator instance.
-        /// </summary>
-        public static ISOCD3766BendingRadiusCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The ISOCD3766BendingRadiusCalculator instance.
+      /// </summary>
+      public static ISOCD3766BendingRadiusCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates the bending radius for a rebar.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
-        /// <param name="element">The element to calculate the value.</param>
-        /// <param name="elementType">The element type.</param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            RebarBendData bendData = null;
-            if (element is Rebar)
-                bendData = (element as Rebar).GetBendData();
-            else if (element is RebarInSystem)
-                bendData = (element as RebarInSystem).GetBendData();
+      /// <summary>
+      /// Calculates the bending radius for a rebar.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
+      /// <param name="element">The element to calculate the value.</param>
+      /// <param name="elementType">The element type.</param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         RebarBendData bendData = null;
+         if (element is Rebar)
+            bendData = (element as Rebar).GetBendData();
+         else if (element is RebarInSystem)
+            bendData = (element as RebarInSystem).GetBendData();
 
-            if (bendData != null)
-            {
-                m_Radius = UnitUtil.ScaleLength(bendData.BendRadius);
-                if (m_Radius > MathUtil.Eps())
-                    return true;
-            }
-            return false;
-        }
+         if (bendData != null)
+         {
+            m_Radius = UnitUtil.ScaleLength(bendData.BendRadius);
+            if (m_Radius > MathUtil.Eps())
+               return true;
+         }
+         return false;
+      }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Radius;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Radius;
+      }
+   }
 }

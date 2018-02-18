@@ -31,68 +31,68 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class that represents IFCCircle entity
-    /// </summary>
-    public class IFCCircle : IFCConic
-    {
-        protected IFCCircle()
-        {
-        }
+   /// <summary>
+   /// Class that represents IFCCircle entity
+   /// </summary>
+   public class IFCCircle : IFCConic
+   {
+      protected IFCCircle()
+      {
+      }
 
-        protected IFCCircle(IFCAnyHandle circle)
-        {
-            Process(circle);
-        }
+      protected IFCCircle(IFCAnyHandle circle)
+      {
+         Process(circle);
+      }
 
-        protected override void Process(IFCAnyHandle ifcCurve)
-        {
-            base.Process(ifcCurve);
+      protected override void Process(IFCAnyHandle ifcCurve)
+      {
+         base.Process(ifcCurve);
 
-            bool found = false;
-            double radius = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(ifcCurve, "Radius", out found);
-            if (!found)
+         bool found = false;
+         double radius = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(ifcCurve, "Radius", out found);
+         if (!found)
+         {
+            Importer.TheLog.LogError(ifcCurve.StepId, "Cannot find the radius of this circle", false);
+            return;
+         }
+
+         try
+         {
+            Curve = Arc.Create(Position.Origin, radius, 0, 2.0 * Math.PI, Position.BasisX, Position.BasisY);
+         }
+         catch (Exception ex)
+         {
+            if (ex.Message.Contains("too small"))
             {
-               Importer.TheLog.LogError(ifcCurve.StepId, "Cannot find the radius of this circle", false);
-               return;
-            }
-
-            try
-            {
-               Curve = Arc.Create(Position.Origin, radius, 0, 2.0 * Math.PI, Position.BasisX, Position.BasisY);
-            }
-            catch (Exception ex)
-            {
-               if (ex.Message.Contains("too small"))
-               {
-                  string lengthAsString = UnitFormatUtils.Format(IFCImportFile.TheFile.Document.GetUnits(), UnitType.UT_Length, radius, true, false);
-                  Importer.TheLog.LogError(Id, "Found a circle with radius of " + lengthAsString + ", ignoring.", false);
-                  Curve = null;
-               }
-               else
-                  Importer.TheLog.LogError(Id, ex.Message, false);
+               string lengthAsString = UnitFormatUtils.Format(IFCImportFile.TheFile.Document.GetUnits(), UnitType.UT_Length, radius, true, false);
+               Importer.TheLog.LogError(Id, "Found a circle with radius of " + lengthAsString + ", ignoring.", false);
                Curve = null;
             }
-        }
+            else
+               Importer.TheLog.LogError(Id, ex.Message, false);
+            Curve = null;
+         }
+      }
 
-        /// <summary>
-        /// Create an IFCCircle from a handle of type IfcCircle
-        /// </summary>
-        /// <param name="ifcCircle">The IFC handle</param>
-        /// <returns>The IFCCircle object</returns>
-        public static IFCCircle ProcessIFCCircle(IFCAnyHandle ifcCircle)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcCircle))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcCircle);
-                return null;
-            }
+      /// <summary>
+      /// Create an IFCCircle from a handle of type IfcCircle
+      /// </summary>
+      /// <param name="ifcCircle">The IFC handle</param>
+      /// <returns>The IFCCircle object</returns>
+      public static IFCCircle ProcessIFCCircle(IFCAnyHandle ifcCircle)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcCircle))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcCircle);
+            return null;
+         }
 
-            IFCEntity circle = null;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcCircle.StepId, out circle))
-                circle = new IFCCircle(ifcCircle);
+         IFCEntity circle = null;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcCircle.StepId, out circle))
+            circle = new IFCCircle(ifcCircle);
 
-            return (circle as IFCCircle);
-        }
-    }
+         return (circle as IFCCircle);
+      }
+   }
 }

@@ -26,16 +26,16 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Import.Enums
 {
-    /// <summary>
-    /// IFC supported schema versions, ordered by date.
-    /// </summary>
-    public enum IFCSchemaVersion
-    {
-        IFC2x,
-        IFC2x2,
-        IFC2x3,
-        IFC4,  // This will be eventually obsoleted.
-        IFC4Add1,
-        IFC4Add2
-    }
+   /// <summary>
+   /// IFC supported schema versions, ordered by date.
+   /// </summary>
+   public enum IFCSchemaVersion
+   {
+      IFC2x,
+      IFC2x2,
+      IFC2x3,
+      IFC4,  // This will be eventually obsoleted.
+      IFC4Add1,
+      IFC4Add2
+   }
 }

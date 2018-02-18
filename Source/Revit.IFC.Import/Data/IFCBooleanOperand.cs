@@ -31,25 +31,25 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    class IFCBooleanOperand
-    {
-        public static IIFCBooleanOperand ProcessIFCBooleanOperand(IFCAnyHandle ifcBooleanOperand)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcBooleanOperand))
-            {
-                //LOG: ERROR: IfcSolidModel is null or has no value
-                return null;
-            }
-
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcBooleanOperand, IFCEntityType.IfcBooleanResult))
-                return IFCBooleanResult.ProcessIFCBooleanResult(ifcBooleanOperand);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcBooleanOperand, IFCEntityType.IfcHalfSpaceSolid))
-                return IFCHalfSpaceSolid.ProcessIFCHalfSpaceSolid(ifcBooleanOperand);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcBooleanOperand, IFCEntityType.IfcSolidModel))
-                return IFCSolidModel.ProcessIFCSolidModel(ifcBooleanOperand);
-
-            Importer.TheLog.LogUnhandledSubTypeError(ifcBooleanOperand, "IfcBooleanOperand", true);
+   class IFCBooleanOperand
+   {
+      public static IIFCBooleanOperand ProcessIFCBooleanOperand(IFCAnyHandle ifcBooleanOperand)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcBooleanOperand))
+         {
+            //LOG: ERROR: IfcSolidModel is null or has no value
             return null;
-        }
-    }
+         }
+
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcBooleanOperand, IFCEntityType.IfcBooleanResult))
+            return IFCBooleanResult.ProcessIFCBooleanResult(ifcBooleanOperand);
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcBooleanOperand, IFCEntityType.IfcHalfSpaceSolid))
+            return IFCHalfSpaceSolid.ProcessIFCHalfSpaceSolid(ifcBooleanOperand);
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcBooleanOperand, IFCEntityType.IfcSolidModel))
+            return IFCSolidModel.ProcessIFCSolidModel(ifcBooleanOperand);
+
+         Importer.TheLog.LogUnhandledSubTypeError(ifcBooleanOperand, "IfcBooleanOperand", true);
+         return null;
+      }
+   }
 }

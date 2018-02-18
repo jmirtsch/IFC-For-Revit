@@ -27,43 +27,43 @@ using Revit.IFC.Export.Exporter;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of the geometry of elements in groups.
-    /// This may be used by BodyExporter to create a set of mapped items to an already existing geometry.
-    /// </summary>
-    public class GroupElementGeometryCache : Dictionary<BodyGroupKey, BodyGroupData>
-    {
-        /// <summary>
-        /// Adds a new geometry to the cache.
-        /// </summary>
-        /// <param name="groupKey">
-        ///  The group key.
-        /// </param>
-        /// <param name="groupData">
-        /// The group data.
-        /// </param>
-        public void Register(BodyGroupKey groupKey, BodyGroupData groupData)
-        {
-            this[groupKey] = groupData;
-        }
+   /// <summary>
+   /// Used to keep a cache of the geometry of elements in groups.
+   /// This may be used by BodyExporter to create a set of mapped items to an already existing geometry.
+   /// </summary>
+   public class GroupElementGeometryCache : Dictionary<BodyGroupKey, BodyGroupData>
+   {
+      /// <summary>
+      /// Adds a new geometry to the cache.
+      /// </summary>
+      /// <param name="groupKey">
+      ///  The group key.
+      /// </param>
+      /// <param name="groupData">
+      /// The group data.
+      /// </param>
+      public void Register(BodyGroupKey groupKey, BodyGroupData groupData)
+      {
+         this[groupKey] = groupData;
+      }
 
-        /// <summary>
-        /// Retrieves the group data from the dictionary.
-        /// </summary>
-        /// <param name="groupKey">
-        /// The group key.
-        /// </param>
-        /// <returns>
-        /// The group data.
-        /// </returns>
-        public BodyGroupData Find(BodyGroupKey groupKey)
-        {
-            BodyGroupData groupData = null;
+      /// <summary>
+      /// Retrieves the group data from the dictionary.
+      /// </summary>
+      /// <param name="groupKey">
+      /// The group key.
+      /// </param>
+      /// <returns>
+      /// The group data.
+      /// </returns>
+      public BodyGroupData Find(BodyGroupKey groupKey)
+      {
+         BodyGroupData groupData = null;
 
-            if (TryGetValue(groupKey, out groupData))
-                return groupData;
+         if (TryGetValue(groupKey, out groupData))
+            return groupData;
 
-            return null;
-        }
-    }
+         return null;
+      }
+   }
 }

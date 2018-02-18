@@ -31,51 +31,51 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    public class IFCClosedShell : IFCConnectedFaceSet
-    {
-        protected IFCClosedShell()
-        {
-        }
+   public class IFCClosedShell : IFCConnectedFaceSet
+   {
+      protected IFCClosedShell()
+      {
+      }
 
-        override protected void Process(IFCAnyHandle ifcClosedShell)
-        {
-            base.Process(ifcClosedShell);
-        }
+      override protected void Process(IFCAnyHandle ifcClosedShell)
+      {
+         base.Process(ifcClosedShell);
+      }
 
-        /// <summary>
-        /// Create geometry for a particular representation item.
-        /// </summary>
-        /// <param name="shapeEditScope">The geometry creation scope.</param>
-        /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
-        /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
-        /// <param name="guid">The guid of an element for which represntation is being created.</param>
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
-        {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
-        }
+      /// <summary>
+      /// Create geometry for a particular representation item.
+      /// </summary>
+      /// <param name="shapeEditScope">The geometry creation scope.</param>
+      /// <param name="lcs">Local coordinate system for the geometry, without scale.</param>
+      /// <param name="scaledLcs">Local coordinate system for the geometry, including scale, potentially non-uniform.</param>
+      /// <param name="guid">The guid of an element for which represntation is being created.</param>
+      protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
+      {
+         base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
+      }
 
-        protected IFCClosedShell(IFCAnyHandle item)
-        {
-            Process(item);
-        }
+      protected IFCClosedShell(IFCAnyHandle item)
+      {
+         Process(item);
+      }
 
-        /// <summary>
-        /// Create an IFCClosedShell object from a handle of type IfcClosedShell.
-        /// </summary>
-        /// <param name="ifcClosedShell">The IFC handle.</param>
-        /// <returns>The IFClosedShell object.</returns>
-        public static IFCClosedShell ProcessIFCClosedShell(IFCAnyHandle ifcClosedShell)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcClosedShell))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcClosedShell);
-                return null;
-            }
+      /// <summary>
+      /// Create an IFCClosedShell object from a handle of type IfcClosedShell.
+      /// </summary>
+      /// <param name="ifcClosedShell">The IFC handle.</param>
+      /// <returns>The IFClosedShell object.</returns>
+      public static IFCClosedShell ProcessIFCClosedShell(IFCAnyHandle ifcClosedShell)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcClosedShell))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcClosedShell);
+            return null;
+         }
 
-            IFCEntity closedShell;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcClosedShell.StepId, out closedShell))
-                closedShell = new IFCClosedShell(ifcClosedShell);
-            return (closedShell as IFCClosedShell);
-        }
-    }
+         IFCEntity closedShell;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcClosedShell.StepId, out closedShell))
+            closedShell = new IFCClosedShell(ifcClosedShell);
+         return (closedShell as IFCClosedShell);
+      }
+   }
 }

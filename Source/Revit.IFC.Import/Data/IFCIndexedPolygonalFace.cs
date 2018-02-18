@@ -13,62 +13,62 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    public class IFCIndexedPolygonalFace : IFCRepresentationItem
-    {
-        IList<int> m_CoordIndex = null;
-        IList<IList<int>> m_InnerCoordIndices = null;
+   public class IFCIndexedPolygonalFace : IFCRepresentationItem
+   {
+      IList<int> m_CoordIndex = null;
+      IList<IList<int>> m_InnerCoordIndices = null;
 
-        protected IFCIndexedPolygonalFace()
-        {
-        }
+      protected IFCIndexedPolygonalFace()
+      {
+      }
 
-        public IList<int> CoordIndex
-        {
-            get { return m_CoordIndex; }
-            protected set { m_CoordIndex = value; }
-        }
+      public IList<int> CoordIndex
+      {
+         get { return m_CoordIndex; }
+         protected set { m_CoordIndex = value; }
+      }
 
-        public IList<IList<int>> InnerCoordIndices
-        {
-            get { return m_InnerCoordIndices; }
-            protected set { m_InnerCoordIndices = value; }
-        }
+      public IList<IList<int>> InnerCoordIndices
+      {
+         get { return m_InnerCoordIndices; }
+         protected set { m_InnerCoordIndices = value; }
+      }
 
-        protected IFCIndexedPolygonalFace(IFCAnyHandle item)
-        {
-            Process(item);
-        }
+      protected IFCIndexedPolygonalFace(IFCAnyHandle item)
+      {
+         Process(item);
+      }
 
-        protected override void Process(IFCAnyHandle ifcIndexPolygonalFace)
-        {
-            base.Process(ifcIndexPolygonalFace);
+      protected override void Process(IFCAnyHandle ifcIndexPolygonalFace)
+      {
+         base.Process(ifcIndexPolygonalFace);
 
-            IList<int> coordIndex = IFCAnyHandleUtil.GetAggregateIntAttribute<List<int>>(ifcIndexPolygonalFace, "CoordIndex");
-            if (coordIndex != null)
-                if (coordIndex.Count >= 3)
-                    CoordIndex = coordIndex;
+         IList<int> coordIndex = IFCAnyHandleUtil.GetAggregateIntAttribute<List<int>>(ifcIndexPolygonalFace, "CoordIndex");
+         if (coordIndex != null)
+            if (coordIndex.Count >= 3)
+               CoordIndex = coordIndex;
 
-            if (IFCAnyHandleUtil.IsTypeOf(ifcIndexPolygonalFace, IFCEntityType.IfcIndexedPolygonalFaceWithVoids))
-            {
-                IList<IList<int>> innerCoordIndices = IFCImportHandleUtil.GetListOfListOfIntegerAttribute(ifcIndexPolygonalFace, "InnerCoordIndices");
-                if (innerCoordIndices != null)
-                    if (innerCoordIndices.Count > 0)
-                        InnerCoordIndices = innerCoordIndices;
-            }
-        }
+         if (IFCAnyHandleUtil.IsTypeOf(ifcIndexPolygonalFace, IFCEntityType.IfcIndexedPolygonalFaceWithVoids))
+         {
+            IList<IList<int>> innerCoordIndices = IFCImportHandleUtil.GetListOfListOfIntegerAttribute(ifcIndexPolygonalFace, "InnerCoordIndices");
+            if (innerCoordIndices != null)
+               if (innerCoordIndices.Count > 0)
+                  InnerCoordIndices = innerCoordIndices;
+         }
+      }
 
-        public static IFCIndexedPolygonalFace ProcessIFCIndexedPolygonalFace(IFCAnyHandle ifcIndexedPolygonalFace)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcIndexedPolygonalFace))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcIndexedPolygonalFace);
-                return null;
-            }
+      public static IFCIndexedPolygonalFace ProcessIFCIndexedPolygonalFace(IFCAnyHandle ifcIndexedPolygonalFace)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcIndexedPolygonalFace))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcIndexedPolygonalFace);
+            return null;
+         }
 
-            IFCEntity indexedPolygonalFace;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcIndexedPolygonalFace.StepId, out indexedPolygonalFace))
-                indexedPolygonalFace = new IFCIndexedPolygonalFace(ifcIndexedPolygonalFace);
-            return (indexedPolygonalFace as IFCIndexedPolygonalFace);
-        }
-    }
+         IFCEntity indexedPolygonalFace;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcIndexedPolygonalFace.StepId, out indexedPolygonalFace))
+            indexedPolygonalFace = new IFCIndexedPolygonalFace(ifcIndexedPolygonalFace);
+         return (indexedPolygonalFace as IFCIndexedPolygonalFace);
+      }
+   }
 }

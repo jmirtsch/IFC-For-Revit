@@ -24,24 +24,24 @@ using System.Text;
 
 namespace BIM.IFC.Export.UI
 {
-    /// <summary>
-    /// The available user choices from the IFCExporter main export dialog.
-    /// </summary>
-    public enum IFCExportResult
-    {
-        /// <summary>
-        /// Invalid selection before dialog is closed.
-        /// </summary>
-        Invalid,
+   /// <summary>
+   /// The available user choices from the IFCExporter main export dialog.
+   /// </summary>
+   public enum IFCExportResult
+   {
+      /// <summary>
+      /// Invalid selection before dialog is closed.
+      /// </summary>
+      Invalid,
 
-        /// <summary>
-        /// Export and save settings (if modified)
-        /// </summary>
-        ExportAndSaveSettings,
+      /// <summary>
+      /// Export and save settings (if modified)
+      /// </summary>
+      ExportAndSaveSettings,
 
-        /// <summary>
-        /// Cancel all changes
-        /// </summary>
-        Cancel
-    }
+      /// <summary>
+      /// Cancel all changes
+      /// </summary>
+      Cancel
+   }
 }

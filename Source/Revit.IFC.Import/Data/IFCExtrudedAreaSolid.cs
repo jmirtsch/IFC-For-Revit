@@ -568,7 +568,7 @@ namespace Revit.IFC.Import.Data
          return extrusionSolids;
       }
 
-      private GeometryObject CreateGeometryFromMaterialProfile(IFCImportShapeEditScope shapeEditScope, 
+      private GeometryObject CreateGeometryFromMaterialProfile(IFCImportShapeEditScope shapeEditScope,
          IList<CurveLoop> loops, XYZ extrusionDirection, double currDepth, SolidOptions solidOptions, out bool shouldWarn)
       {
          GeometryObject extrusionSolid = null;

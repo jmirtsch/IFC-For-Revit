@@ -30,83 +30,83 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents an IfcWindowLiningProperties
-    /// </summary>
-    public class IFCWindowLiningProperties : IFCDoorWindowPropertyBase
-    {
-        /// <summary>
-        /// The list of properties contained in IFCWindowLiningProperties.
-        /// </summary>
-        static IList<Tuple<string, UnitType, AllowedValues>> m_WindowLiningPropertyDescs = null;
+   /// <summary>
+   /// Represents an IfcWindowLiningProperties
+   /// </summary>
+   public class IFCWindowLiningProperties : IFCDoorWindowPropertyBase
+   {
+      /// <summary>
+      /// The list of properties contained in IFCWindowLiningProperties.
+      /// </summary>
+      static IList<Tuple<string, UnitType, AllowedValues>> m_WindowLiningPropertyDescs = null;
 
-        /// <summary>
-        /// Processes IfcWindowLiningProperties attributes.
-        /// </summary>
-        /// <param name="ifcWindowLiningProperties">The IfcWindowLiningProperties handle.</param>
-        protected IFCWindowLiningProperties(IFCAnyHandle ifcWindowLiningProperties)
-        {
-            Process(ifcWindowLiningProperties);
-        }
+      /// <summary>
+      /// Processes IfcWindowLiningProperties attributes.
+      /// </summary>
+      /// <param name="ifcWindowLiningProperties">The IfcWindowLiningProperties handle.</param>
+      protected IFCWindowLiningProperties(IFCAnyHandle ifcWindowLiningProperties)
+      {
+         Process(ifcWindowLiningProperties);
+      }
 
-        /// <summary>
-        /// Processes an IfcWindowLiningProperties entity.
-        /// </summary>
-        /// <param name="ifcWindowLiningProperties">The IfcWindowLiningProperties handle.</param>
-        protected override void Process(IFCAnyHandle ifcWindowLiningProperties)
-        {
-            base.Process(ifcWindowLiningProperties);
+      /// <summary>
+      /// Processes an IfcWindowLiningProperties entity.
+      /// </summary>
+      /// <param name="ifcWindowLiningProperties">The IfcWindowLiningProperties handle.</param>
+      protected override void Process(IFCAnyHandle ifcWindowLiningProperties)
+      {
+         base.Process(ifcWindowLiningProperties);
 
-            if (m_WindowLiningPropertyDescs == null)
-            {
-                m_WindowLiningPropertyDescs = new List<Tuple<string, UnitType, AllowedValues>>();
-                m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("LiningDepth", UnitType.UT_Length, AllowedValues.Positive));
-                m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("LiningThickness", UnitType.UT_Length, AllowedValues.Positive));
-                m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("TransomThickness", UnitType.UT_Length, AllowedValues.Positive));
-                m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("MullionThickness", UnitType.UT_Length, AllowedValues.Positive));
-                m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("FirstTransomOffset", UnitType.UT_Length, AllowedValues.NonNegative));
-                m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("SecondTransomOffset", UnitType.UT_Length, AllowedValues.NonNegative));
-                m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("FirstMullionOffset", UnitType.UT_Length, AllowedValues.NonNegative));
-                m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("SecondMullionOffset", UnitType.UT_Length, AllowedValues.NonNegative));
-            }
+         if (m_WindowLiningPropertyDescs == null)
+         {
+            m_WindowLiningPropertyDescs = new List<Tuple<string, UnitType, AllowedValues>>();
+            m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("LiningDepth", UnitType.UT_Length, AllowedValues.Positive));
+            m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("LiningThickness", UnitType.UT_Length, AllowedValues.Positive));
+            m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("TransomThickness", UnitType.UT_Length, AllowedValues.Positive));
+            m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("MullionThickness", UnitType.UT_Length, AllowedValues.Positive));
+            m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("FirstTransomOffset", UnitType.UT_Length, AllowedValues.NonNegative));
+            m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("SecondTransomOffset", UnitType.UT_Length, AllowedValues.NonNegative));
+            m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("FirstMullionOffset", UnitType.UT_Length, AllowedValues.NonNegative));
+            m_WindowLiningPropertyDescs.Add(new Tuple<string, UnitType, AllowedValues>("SecondMullionOffset", UnitType.UT_Length, AllowedValues.NonNegative));
+         }
 
-            for (int ii = 0; ii < 4; ii++)
-            {
-                Tuple<string, UnitType, AllowedValues> propertyDesc = m_WindowLiningPropertyDescs[ii];
-                // Default is nonsense value.
-                double currPropertyValue = IFCImportHandleUtil.GetOptionalScaledLengthAttribute(ifcWindowLiningProperties, propertyDesc.Item1, -1e+30);
-                if (!MathUtil.IsAlmostEqual(currPropertyValue , -1e+30))
-                    DoubleProperties[propertyDesc] = currPropertyValue;
-            }
+         for (int ii = 0; ii < 4; ii++)
+         {
+            Tuple<string, UnitType, AllowedValues> propertyDesc = m_WindowLiningPropertyDescs[ii];
+            // Default is nonsense value.
+            double currPropertyValue = IFCImportHandleUtil.GetOptionalScaledLengthAttribute(ifcWindowLiningProperties, propertyDesc.Item1, -1e+30);
+            if (!MathUtil.IsAlmostEqual(currPropertyValue, -1e+30))
+               DoubleProperties[propertyDesc] = currPropertyValue;
+         }
 
-            for (int ii = 4; ii < 8; ii++)
-            {
-                Tuple<string, UnitType, AllowedValues> propertyDesc = m_WindowLiningPropertyDescs[ii];
-                // Default is nonsense value.
-                double currPropertyValue = IFCImportHandleUtil.GetOptionalDoubleAttribute(ifcWindowLiningProperties, propertyDesc.Item1, -1e+30);
-                if (!MathUtil.IsAlmostEqual(currPropertyValue, -1e+30))
-                    DoubleProperties[propertyDesc] = currPropertyValue;
-            }
-        }
+         for (int ii = 4; ii < 8; ii++)
+         {
+            Tuple<string, UnitType, AllowedValues> propertyDesc = m_WindowLiningPropertyDescs[ii];
+            // Default is nonsense value.
+            double currPropertyValue = IFCImportHandleUtil.GetOptionalDoubleAttribute(ifcWindowLiningProperties, propertyDesc.Item1, -1e+30);
+            if (!MathUtil.IsAlmostEqual(currPropertyValue, -1e+30))
+               DoubleProperties[propertyDesc] = currPropertyValue;
+         }
+      }
 
-        /// <summary>
-        /// Processes an IfcWindowLiningProperties set.
-        /// </summary>
-        /// <param name="ifcWindowLiningProperties">The IfcWindowLiningProperties object.</param>
-        /// <returns>The IFCWindowLiningProperties object.</returns>
-        public static IFCWindowLiningProperties ProcessIFCWindowLiningProperties(IFCAnyHandle ifcWindowLiningProperties)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcWindowLiningProperties))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcWindowLiningProperties);
-                return null;
-            }
+      /// <summary>
+      /// Processes an IfcWindowLiningProperties set.
+      /// </summary>
+      /// <param name="ifcWindowLiningProperties">The IfcWindowLiningProperties object.</param>
+      /// <returns>The IFCWindowLiningProperties object.</returns>
+      public static IFCWindowLiningProperties ProcessIFCWindowLiningProperties(IFCAnyHandle ifcWindowLiningProperties)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcWindowLiningProperties))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcWindowLiningProperties);
+            return null;
+         }
 
-            IFCEntity windowLiningProperties;
-            if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcWindowLiningProperties.StepId, out windowLiningProperties))
-                return (windowLiningProperties as IFCWindowLiningProperties);
+         IFCEntity windowLiningProperties;
+         if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcWindowLiningProperties.StepId, out windowLiningProperties))
+            return (windowLiningProperties as IFCWindowLiningProperties);
 
-            return new IFCWindowLiningProperties(ifcWindowLiningProperties);
-        }
-    }
+         return new IFCWindowLiningProperties(ifcWindowLiningProperties);
+      }
+   }
 }

@@ -28,48 +28,48 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents an IfcSystem.
-    /// </summary>
-    public class IFCSystem : IFCGroup
-    {
-        // <summary>
-        /// Processes IfcSystem attributes.
-        /// </summary>
-        /// <param name="ifcSystem">The IfcSystem handle.</param>
-        protected override void Process(IFCAnyHandle ifcSystem)
-        {
-            base.Process(ifcSystem);
-        }
+   /// <summary>
+   /// Represents an IfcSystem.
+   /// </summary>
+   public class IFCSystem : IFCGroup
+   {
+      // <summary>
+      /// Processes IfcSystem attributes.
+      /// </summary>
+      /// <param name="ifcSystem">The IfcSystem handle.</param>
+      protected override void Process(IFCAnyHandle ifcSystem)
+      {
+         base.Process(ifcSystem);
+      }
 
-        protected IFCSystem()
-        {
-        }
+      protected IFCSystem()
+      {
+      }
 
-        protected IFCSystem(IFCAnyHandle group)
-        {
-            Process(group);
-        }
+      protected IFCSystem(IFCAnyHandle group)
+      {
+         Process(group);
+      }
 
-        /// <summary>
-        /// Processes IfcSystem handle.
-        /// </summary>
-        /// <param name="ifcSystem">The IfcSystem handle.</param>
-        /// <returns>The IFCSystem object.</returns>
-        public static IFCSystem ProcessIFCSystem(IFCAnyHandle ifcSystem)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSystem))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcSystem);
-                return null;
-            }
+      /// <summary>
+      /// Processes IfcSystem handle.
+      /// </summary>
+      /// <param name="ifcSystem">The IfcSystem handle.</param>
+      /// <returns>The IFCSystem object.</returns>
+      public static IFCSystem ProcessIFCSystem(IFCAnyHandle ifcSystem)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSystem))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcSystem);
+            return null;
+         }
 
-            IFCEntity cachedIFCSystem;
-            IFCImportFile.TheFile.EntityMap.TryGetValue(ifcSystem.StepId, out cachedIFCSystem);
-            if (cachedIFCSystem != null)
-                return cachedIFCSystem as IFCSystem;
+         IFCEntity cachedIFCSystem;
+         IFCImportFile.TheFile.EntityMap.TryGetValue(ifcSystem.StepId, out cachedIFCSystem);
+         if (cachedIFCSystem != null)
+            return cachedIFCSystem as IFCSystem;
 
-            return new IFCSystem(ifcSystem);
-        }
-    }
+         return new IFCSystem(ifcSystem);
+      }
+   }
 }

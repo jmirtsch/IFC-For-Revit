@@ -25,93 +25,93 @@ using Revit.IFC.Import.Enums;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class that represents IFCFaceSurface entity
-    /// </summary>
-    public class IFCFaceSurface : IFCFace
-    {
-        IFCSurface m_FaceSurface = null;
-        bool m_SameSense = true;
+   /// <summary>
+   /// Class that represents IFCFaceSurface entity
+   /// </summary>
+   public class IFCFaceSurface : IFCFace
+   {
+      IFCSurface m_FaceSurface = null;
+      bool m_SameSense = true;
 
-        /// <summary>
-        /// Indicates whether the sense of the surface normal agrees with the sense of the topological normal to the face.
-        /// </summary>
-        public bool SameSense
-        {
-            get { return m_SameSense; }
-            set { m_SameSense = value; }
-        }
+      /// <summary>
+      /// Indicates whether the sense of the surface normal agrees with the sense of the topological normal to the face.
+      /// </summary>
+      public bool SameSense
+      {
+         get { return m_SameSense; }
+         set { m_SameSense = value; }
+      }
 
-        /// <summary>
-        /// The surface which defines the internal shape of the face. 
-        /// This surface may be unbounded. 
-        /// </summary>
-        public IFCSurface FaceSurface
-        {
-            get { return m_FaceSurface; }
-            set { m_FaceSurface = value; }
-        }
+      /// <summary>
+      /// The surface which defines the internal shape of the face. 
+      /// This surface may be unbounded. 
+      /// </summary>
+      public IFCSurface FaceSurface
+      {
+         get { return m_FaceSurface; }
+         set { m_FaceSurface = value; }
+      }
 
-        protected IFCFaceSurface()
-        { 
-        }
+      protected IFCFaceSurface()
+      {
+      }
 
-        protected IFCFaceSurface(IFCAnyHandle ifcFaceSurface) 
-        {
-            Process(ifcFaceSurface);
-        }
+      protected IFCFaceSurface(IFCAnyHandle ifcFaceSurface)
+      {
+         Process(ifcFaceSurface);
+      }
 
-        protected override void Process(IFCAnyHandle ifcFaceSurface)
-        {
-            base.Process(ifcFaceSurface);
+      protected override void Process(IFCAnyHandle ifcFaceSurface)
+      {
+         base.Process(ifcFaceSurface);
 
-            // Only allow IfcFaceSurface for certain supported surfaces.
-            IFCAnyHandle faceSurface = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcFaceSurface, "FaceSurface", false);
-            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(faceSurface))
-            {
-                FaceSurface = IFCSurface.ProcessIFCSurface(faceSurface);
-                bool validSurface = (FaceSurface is IFCPlane) || (FaceSurface is IFCCylindricalSurface) || (FaceSurface is IFCBSplineSurface) ||
-                   (FaceSurface is IFCSurfaceOfLinearExtrusion) || (FaceSurface is IFCSurfaceOfRevolution);
-                if (!validSurface)
-                    Importer.TheLog.LogError(ifcFaceSurface.StepId,
-                        "cannot handle IfcFaceSurface with FaceSurface of type " + IFCAnyHandleUtil.GetEntityType(faceSurface).ToString(), true);
-            }
+         // Only allow IfcFaceSurface for certain supported surfaces.
+         IFCAnyHandle faceSurface = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcFaceSurface, "FaceSurface", false);
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(faceSurface))
+         {
+            FaceSurface = IFCSurface.ProcessIFCSurface(faceSurface);
+            bool validSurface = (FaceSurface is IFCPlane) || (FaceSurface is IFCCylindricalSurface) || (FaceSurface is IFCBSplineSurface) ||
+               (FaceSurface is IFCSurfaceOfLinearExtrusion) || (FaceSurface is IFCSurfaceOfRevolution);
+            if (!validSurface)
+               Importer.TheLog.LogError(ifcFaceSurface.StepId,
+                   "cannot handle IfcFaceSurface with FaceSurface of type " + IFCAnyHandleUtil.GetEntityType(faceSurface).ToString(), true);
+         }
 
-            bool found = false;
-            bool sameSense = IFCImportHandleUtil.GetRequiredBooleanAttribute(ifcFaceSurface, "SameSense", out found);
-            if (found)
-            {
-                SameSense = sameSense;
-            }
-            else
-            {
-                Importer.TheLog.LogWarning(ifcFaceSurface.StepId,
-                    "cannot find SameSense attribute, defaulting to true", false);
-                SameSense = true;
-            }
-        }
+         bool found = false;
+         bool sameSense = IFCImportHandleUtil.GetRequiredBooleanAttribute(ifcFaceSurface, "SameSense", out found);
+         if (found)
+         {
+            SameSense = sameSense;
+         }
+         else
+         {
+            Importer.TheLog.LogWarning(ifcFaceSurface.StepId,
+                "cannot find SameSense attribute, defaulting to true", false);
+            SameSense = true;
+         }
+      }
 
-        /// <summary>
-        /// Create an IFCFaceSurface object from a handle of type IfcFaceSurface.
-        /// </summary>
-        /// <param name="ifcFaceSurface">The IFC handle.</param>
-        /// <returns>The IFCFace object.</returns>
-        public static IFCFaceSurface ProcessIFCFaceSurface(IFCAnyHandle ifcFaceSurface)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcFaceSurface))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcFaceSurface);
-                return null;
-            }
+      /// <summary>
+      /// Create an IFCFaceSurface object from a handle of type IfcFaceSurface.
+      /// </summary>
+      /// <param name="ifcFaceSurface">The IFC handle.</param>
+      /// <returns>The IFCFace object.</returns>
+      public static IFCFaceSurface ProcessIFCFaceSurface(IFCAnyHandle ifcFaceSurface)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcFaceSurface))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcFaceSurface);
+            return null;
+         }
 
-            if (IFCImportFile.TheFile.SchemaVersion > IFCSchemaVersion.IFC2x3 && IFCAnyHandleUtil.IsSubTypeOf(ifcFaceSurface, IFCEntityType.IfcAdvancedFace))
-            {
-                return IFCAdvancedFace.ProcessIFCAdvancedFace(ifcFaceSurface);
-            }
-            IFCEntity face;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcFaceSurface.StepId, out face))
-                face = new IFCFaceSurface(ifcFaceSurface);
-            return (face as IFCFaceSurface);
-        }
-    }
+         if (IFCImportFile.TheFile.SchemaVersion > IFCSchemaVersion.IFC2x3 && IFCAnyHandleUtil.IsSubTypeOf(ifcFaceSurface, IFCEntityType.IfcAdvancedFace))
+         {
+            return IFCAdvancedFace.ProcessIFCAdvancedFace(ifcFaceSurface);
+         }
+         IFCEntity face;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcFaceSurface.StepId, out face))
+            face = new IFCFaceSurface(ifcFaceSurface);
+         return (face as IFCFaceSurface);
+      }
+   }
 }

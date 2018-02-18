@@ -25,42 +25,42 @@ using Revit.IFC.Export.Exporter;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of information to create zones.
-    /// </summary>
-    public class ZoneInfoCache : Dictionary<string, ZoneInfo>
-    {
-        /// <summary>
-        /// Adds the ZoneInfo to the dictionary.
-        /// </summary>
-        /// <param name="name">
-        /// The name of the zone.
-        /// </param>
-        /// <param name="zoneInfo">
-        /// The ZoneInfo object.
-        /// </param>
-        public void Register(string name, ZoneInfo zoneInfo)
-        {
-            this[name] = zoneInfo;
-        }
+   /// <summary>
+   /// Used to keep a cache of information to create zones.
+   /// </summary>
+   public class ZoneInfoCache : Dictionary<string, ZoneInfo>
+   {
+      /// <summary>
+      /// Adds the ZoneInfo to the dictionary.
+      /// </summary>
+      /// <param name="name">
+      /// The name of the zone.
+      /// </param>
+      /// <param name="zoneInfo">
+      /// The ZoneInfo object.
+      /// </param>
+      public void Register(string name, ZoneInfo zoneInfo)
+      {
+         this[name] = zoneInfo;
+      }
 
-        /// <summary>
-        /// Finds the ZoneInfo from the dictionary.
-        /// </summary>
-        /// <param name="name">
-        /// The name of the zone.
-        /// </param>
-        /// <returns>
-        /// The ZoneInfo object.
-        /// </returns>
-        public ZoneInfo Find(string name)
-        {
-            ZoneInfo zoneInfo;
+      /// <summary>
+      /// Finds the ZoneInfo from the dictionary.
+      /// </summary>
+      /// <param name="name">
+      /// The name of the zone.
+      /// </param>
+      /// <returns>
+      /// The ZoneInfo object.
+      /// </returns>
+      public ZoneInfo Find(string name)
+      {
+         ZoneInfo zoneInfo;
 
-            if (TryGetValue(name, out zoneInfo))
-                return zoneInfo;
+         if (TryGetValue(name, out zoneInfo))
+            return zoneInfo;
 
-            return null;
-        }
-    }
+         return null;
+      }
+   }
 }

@@ -15,7 +15,7 @@ namespace Revit.IFC.Common.Utility
       public string ProjectName { get; set; }
       public string ProjectDescription { get; set; }
       public string ProjectPhase { get; set; }
-      public string SiteLocation { get ; set; }
+      public string SiteLocation { get; set; }
       public string SiteDescription { get; set; }
 
       public COBieProjectInfo()

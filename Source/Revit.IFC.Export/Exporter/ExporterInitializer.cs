@@ -159,7 +159,7 @@ namespace Revit.IFC.Export.Exporter
             {
                AttributeSetDescription attributeDescription = new AttributeSetDescription();
                ExporterCacheManager.AttributeCache.AddAttributeSet(attributeDescription);
-               foreach(PropertyDef prop in psetDef.propertyDefs)
+               foreach (PropertyDef prop in psetDef.propertyDefs)
                {
                   PropertyType dataType;
 
@@ -458,24 +458,24 @@ namespace Revit.IFC.Export.Exporter
          // sub type of IfcElement
          propertySetManufacturer.EntityTypes.Add(IFCEntityType.IfcElement);
 
-         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Identifier,"ArticleNumber");
+         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Identifier, "ArticleNumber");
          propertySetManufacturer.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Label,"ModelReference");
+         ifcPSE = new PropertySetEntry(PropertyType.Label, "ModelReference");
          propertySetManufacturer.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Label,"ModelLabel");
+         ifcPSE = new PropertySetEntry(PropertyType.Label, "ModelLabel");
          propertySetManufacturer.AddEntry(ifcPSE);
 
          ifcPSE = new PropertySetEntry(PropertyType.Label, "Manufacturer", BuiltInParameter.ALL_MODEL_MANUFACTURER);
          propertySetManufacturer.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Label,"ProductionYear");
+         ifcPSE = new PropertySetEntry(PropertyType.Label, "ProductionYear");
          propertySetManufacturer.AddEntry(ifcPSE);
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            propertySetManufacturer.AddEntry(new PropertySetEntry(PropertyType.Identifier,"GlobalTradeItemNumber"));
+            propertySetManufacturer.AddEntry(new PropertySetEntry(PropertyType.Identifier, "GlobalTradeItemNumber"));
             propertySetManufacturer.AddEntry(PropertySetEntry.CreateEnumeratedValue("AssemblyPlace",
                 PropertyType.Label, typeof(Toolkit.IFC4.PsetManufacturerTypeInformation_AssemblyPlace)));
          }
@@ -580,15 +580,15 @@ namespace Revit.IFC.Export.Exporter
          propertySetCoveringCommon.AddEntry(ifcPSE);
 
          propertySetCoveringCommon.AddEntry(PropertySetEntryUtil.CreateAcousticRatingEntry());
-         propertySetCoveringCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"FlammabilityRating"));
+         propertySetCoveringCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "FlammabilityRating"));
          propertySetCoveringCommon.AddEntry(PropertySetEntryUtil.CreateSurfaceSpreadOfFlameEntry());
          propertySetCoveringCommon.AddEntry(PropertySetEntryUtil.CreateCombustibleEntry());
 
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-            propertySetCoveringCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"FragilityRating"));
+            propertySetCoveringCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "FragilityRating"));
          else
-            propertySetCoveringCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"Fragility"));
+            propertySetCoveringCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "Fragility"));
 
          ifcPSE = new PropertySetEntry(PropertyType.Text, "Finish", CoveringFinishCalculator.Instance);
          propertySetCoveringCommon.AddEntry(ifcPSE);
@@ -602,7 +602,7 @@ namespace Revit.IFC.Export.Exporter
          }
          else
          {
-			ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "TotalThickness", BuiltInParameter.CEILING_THICKNESS);
+            ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "TotalThickness", BuiltInParameter.CEILING_THICKNESS);
             propertySetCoveringCommon.AddEntry(ifcPSE);
          }
 
@@ -635,20 +635,20 @@ namespace Revit.IFC.Export.Exporter
          propertySetDoorCommon.AddEntry(ifcPSE);
 
          propertySetDoorCommon.AddEntry(PropertySetEntryUtil.CreateAcousticRatingEntry());
-         propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"SecurityRating"));
+         propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "SecurityRating"));
          propertySetDoorCommon.AddEntry(PropertySetEntryUtil.CreateHandicapAccessibleEntry());
-         propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"FireExit"));
-         propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"SelfClosing"));
-         propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"SmokeStop"));
-         propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Real,"GlazingAreaFraction"));
-         propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.VolumetricFlowRate,"Infiltration"));
+         propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "FireExit"));
+         propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "SelfClosing"));
+         propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "SmokeStop"));
+         propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Real, "GlazingAreaFraction"));
+         propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.VolumetricFlowRate, "Infiltration"));
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             propertySetDoorCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
-            propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"DurabilityRating"));
-            propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"HygrothermalRating"));
-            propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"HasDrive"));
+            propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "DurabilityRating"));
+            propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "HygrothermalRating"));
+            propertySetDoorCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "HasDrive"));
          }
 
          commonPropertySets.Add(propertySetDoorCommon);
@@ -668,37 +668,37 @@ namespace Revit.IFC.Export.Exporter
          propertySetDoorWindowGlazingType.EntityTypes.Add(IFCEntityType.IfcDoor);
          propertySetDoorWindowGlazingType.EntityTypes.Add(IFCEntityType.IfcWindow);
 
-         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.Count,"GlassLayers"));
-         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"GlassThickness1"));
-         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"GlassThickness2"));
-         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"GlassThickness3"));
-         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.Label,"FillGas"));
-         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.Label,"GlassColor"));
-         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.Boolean,"IsTempered"));
-         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.Boolean,"IsLaminated"));
-         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.Boolean,"IsCoated"));
-         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.Boolean,"IsWired"));
+         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.Count, "GlassLayers"));
+         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "GlassThickness1"));
+         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "GlassThickness2"));
+         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "GlassThickness3"));
+         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.Label, "FillGas"));
+         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.Label, "GlassColor"));
+         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.Boolean, "IsTempered"));
+         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.Boolean, "IsLaminated"));
+         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.Boolean, "IsCoated"));
+         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.Boolean, "IsWired"));
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio,"VisibleLightReflectance"));
-            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio,"VisibleLightTransmittance"));
-            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio,"SolarAbsorption"));
-            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio,"SolarReflectance"));
-            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio,"SolarTransmittance"));
-            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio,"SolarHeatGainTransmittance"));
-            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio,"ShadingCoefficient"));
+            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio, "VisibleLightReflectance"));
+            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio, "VisibleLightTransmittance"));
+            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio, "SolarAbsorption"));
+            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio, "SolarReflectance"));
+            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio, "SolarTransmittance"));
+            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio, "SolarHeatGainTransmittance"));
+            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio, "ShadingCoefficient"));
          }
          else
          {
-            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio,"Translucency"));
-            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio,"Reflectivity"));
-            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio,"BeamRadiationTransmittance"));
-            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio,"SolarHeatGainTransmittance"));
+            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio, "Translucency"));
+            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio, "Reflectivity"));
+            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio, "BeamRadiationTransmittance"));
+            propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio, "SolarHeatGainTransmittance"));
          }
 
-         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.ThermalTransmittance,"ThermalTransmittanceSummer"));
-         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.ThermalTransmittance,"ThermalTransmittanceWinter"));
+         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.ThermalTransmittance, "ThermalTransmittanceSummer"));
+         propertySetDoorWindowGlazingType.AddEntry(new PropertySetEntry(PropertyType.ThermalTransmittance, "ThermalTransmittanceWinter"));
 
          commonPropertySets.Add(propertySetDoorWindowGlazingType);
       }
@@ -720,12 +720,12 @@ namespace Revit.IFC.Export.Exporter
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             // Note: This conflicts with the property of the same name in Pset_DoorWindowGlazingType.
-            propertySetDoorWindowShadingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio,"ShadingCoefficient"));
+            propertySetDoorWindowShadingType.AddEntry(new PropertySetEntry(PropertyType.NormalisedRatio, "ShadingCoefficient"));
          }
 
-         propertySetDoorWindowShadingType.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio,"ExternalShadingCoefficient"));
-         propertySetDoorWindowShadingType.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio,"InternalShadingCoefficient"));
-         propertySetDoorWindowShadingType.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio,"InsetShadingCoefficient"));
+         propertySetDoorWindowShadingType.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio, "ExternalShadingCoefficient"));
+         propertySetDoorWindowShadingType.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio, "InternalShadingCoefficient"));
+         propertySetDoorWindowShadingType.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio, "InsetShadingCoefficient"));
 
          commonPropertySets.Add(propertySetDoorWindowShadingType);
       }
@@ -756,41 +756,41 @@ namespace Revit.IFC.Export.Exporter
          propertySetWindowCommon.AddEntry(ifcPSE);
 
          propertySetWindowCommon.AddEntry(PropertySetEntryUtil.CreateAcousticRatingEntry());
-         propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"SecurityRating"));
+         propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "SecurityRating"));
 
-         propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"SmokeStop"));
-         propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.Real,"GlazingAreaFraction"));
-         propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.VolumetricFlowRate,"Infiltration"));
+         propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "SmokeStop"));
+         propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.Real, "GlazingAreaFraction"));
+         propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.VolumetricFlowRate, "Infiltration"));
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             propertySetWindowCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
-            propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"HasSillExternal"));
-            propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"HasSillInternal"));
-            propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"HasDrive"));
-            propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"FireExit"));
+            propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "HasSillExternal"));
+            propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "HasSillInternal"));
+            propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "HasDrive"));
+            propertySetWindowCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "FireExit"));
          }
 
          commonPropertySets.Add(propertySetWindowCommon);
       }
 
-		/// <summary>
-		/// Initializes common LightFixtureType property sets.
-		/// </summary>
-		/// <param name="commonPropertySets">List to store property sets.</param>
-		private static void InitPropertySetLightFixtureTypeCommon(IList<PropertySetDescription> commonPropertySets)
-		{
-			//property beam common
-			PropertySetDescription propertySetLightFixtureTypeCommon = new PropertySetDescription();
-			propertySetLightFixtureTypeCommon.Name = "Pset_LightFixtureTypeCommon";
-			propertySetLightFixtureTypeCommon.SubElementIndex = (int)IFCCommonPSets.PSetLightFixtureTypeCommon;
+      /// <summary>
+      /// Initializes common LightFixtureType property sets.
+      /// </summary>
+      /// <param name="commonPropertySets">List to store property sets.</param>
+      private static void InitPropertySetLightFixtureTypeCommon(IList<PropertySetDescription> commonPropertySets)
+      {
+         //property beam common
+         PropertySetDescription propertySetLightFixtureTypeCommon = new PropertySetDescription();
+         propertySetLightFixtureTypeCommon.Name = "Pset_LightFixtureTypeCommon";
+         propertySetLightFixtureTypeCommon.SubElementIndex = (int)IFCCommonPSets.PSetLightFixtureTypeCommon;
 
-			propertySetLightFixtureTypeCommon.EntityTypes.Add(IFCEntityType.IfcLightFixtureType);
+         propertySetLightFixtureTypeCommon.EntityTypes.Add(IFCEntityType.IfcLightFixtureType);
 
-			PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Integer,"NumberOfSources");
-			propertySetLightFixtureTypeCommon.AddEntry(ifcPSE);
+         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Integer, "NumberOfSources");
+         propertySetLightFixtureTypeCommon.AddEntry(ifcPSE);
 
-			ifcPSE = new PropertySetEntry(PropertyType.Power, "TotalWattage", BuiltInParameter.LIGHTING_FIXTURE_WATTAGE);
+         ifcPSE = new PropertySetEntry(PropertyType.Power, "TotalWattage", BuiltInParameter.LIGHTING_FIXTURE_WATTAGE);
          propertySetLightFixtureTypeCommon.AddEntry(ifcPSE);
 
          ifcPSE = PropertySetEntry.CreateEnumeratedValue("LightFixtureMountingType", PropertyType.Label,
@@ -801,7 +801,7 @@ namespace Revit.IFC.Export.Exporter
              typeof(PSetLightFixtureTypeCommon_LightFixturePlacingType));
          propertySetLightFixtureTypeCommon.AddEntry(ifcPSE);
 
-         propertySetLightFixtureTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Real,"MaintenanceFactor"));
+         propertySetLightFixtureTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Real, "MaintenanceFactor"));
 
          // The value below is incorrect.  Although it is specified in IFC2x3, it is a duplicate of Pset_ManufacturerTypeInformation,
          // where it is correctly labelled as IfcIdentifier.
@@ -811,12 +811,12 @@ namespace Revit.IFC.Export.Exporter
          {
             propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntryUtil.CreateReferenceEntry());
             propertySetLightFixtureTypeCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
-            propertySetLightFixtureTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Power,"MaximumPlenumSensibleLoad"));
-            propertySetLightFixtureTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Power,"MaximumSpaceSensibleLoad"));
-            propertySetLightFixtureTypeCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio,"SensibleLoadToRadiant"));
+            propertySetLightFixtureTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Power, "MaximumPlenumSensibleLoad"));
+            propertySetLightFixtureTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Power, "MaximumSpaceSensibleLoad"));
+            propertySetLightFixtureTypeCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio, "SensibleLoadToRadiant"));
          }
          else
-            propertySetLightFixtureTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Text,"ManufacturersSpecificInformation"));
+            propertySetLightFixtureTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Text, "ManufacturersSpecificInformation"));
 
          commonPropertySets.Add(propertySetLightFixtureTypeCommon);
       }
@@ -852,8 +852,8 @@ namespace Revit.IFC.Export.Exporter
 
          propertySetElectricalCircuit.EntityTypes.Add(IFCEntityType.IfcElectricalCircuit);
 
-         propertySetElectricalCircuit.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio,"Diversity"));
-         propertySetElectricalCircuit.AddEntry(new PropertySetEntry(PropertyType.Integer,"NumberOfPhases"));
+         propertySetElectricalCircuit.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio, "Diversity"));
+         propertySetElectricalCircuit.AddEntry(new PropertySetEntry(PropertyType.Integer, "NumberOfPhases"));
          //propertySetElectricalCircuit.AddEntry(PropertySetEntry.CreateElectricVoltage("MaximumAllowedVoltageDrop"));
          //propertySetElectricalCircuit.AddEntry(PropertySetEntry.CreateElectricResistance("NetImpedance"));
 
@@ -872,29 +872,29 @@ namespace Revit.IFC.Export.Exporter
 
          propertySetElectricalDeviceCommon.EntityTypes.Add(IFCEntityType.IfcDistributionElement);
 
-         propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.Frequency,"NominalFrequencyRange"));
-         propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.Integer,"NumberOfPoles"));
-         propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"HasProtectiveEarth"));
-         propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"IP_Code"));
+         propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.Frequency, "NominalFrequencyRange"));
+         propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.Integer, "NumberOfPoles"));
+         propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "HasProtectiveEarth"));
+         propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "IP_Code"));
          propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("InsulationStandardClass",
              PropertyType.Label, typeof(PSetElectricalDeviceCommon_InsulationStandardClass)));
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.ElectricalCurrent,"RatedCurrent"));
-            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.ElectricalVoltage,"RatedVoltage"));
-            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.Ratio,"PowerFactor"));
+            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.ElectricalCurrent, "RatedCurrent"));
+            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.ElectricalVoltage, "RatedVoltage"));
+            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.Ratio, "PowerFactor"));
             propertySetElectricalDeviceCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("ConductorFunction", PropertyType.Label,
                 typeof(Toolkit.IFC4.PsetElectricalDeviceCommon_ConductorFunction)));
          }
          else
          {
-            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.ElectricalCurrent,"NominalCurrent"));
-            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.ElectricalCurrent,"UsageCurrent"));
-            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.ElectricalVoltage,"NominalVoltage"));
-            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.Power,"ElectricalDeviceNominalPower"));
-            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.PositivePlaneAngle,"PhaseAngle"));
-            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.Identifier,"PhaseReference"));
+            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.ElectricalCurrent, "NominalCurrent"));
+            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.ElectricalCurrent, "UsageCurrent"));
+            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.ElectricalVoltage, "NominalVoltage"));
+            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.Power, "ElectricalDeviceNominalPower"));
+            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.PositivePlaneAngle, "PhaseAngle"));
+            propertySetElectricalDeviceCommon.AddEntry(new PropertySetEntry(PropertyType.Identifier, "PhaseReference"));
          }
 
          commonPropertySets.Add(propertySetElectricalDeviceCommon);
@@ -938,40 +938,40 @@ namespace Revit.IFC.Export.Exporter
              typeof(PSetAirTerminalTypeCommon_AirTerminalShape)));
          propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("FlowPattern", PropertyType.Label,
              typeof(PSetAirTerminalTypeCommon_AirTerminalFlowPattern)));
-         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.VolumetricFlowRate,"AirFlowrateRange"));
-         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature,"TemperatureRange"));
+         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.VolumetricFlowRate, "AirFlowrateRange"));
+         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature, "TemperatureRange"));
          propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("DischargeDirection", PropertyType.Label,
              typeof(PSetAirTerminalTypeCommon_AirTerminalDischargeDirection)));
-         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Length,"ThrowLength"));
-         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Real,"AirDiffusionPerformanceIndex"));
+         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Length, "ThrowLength"));
+         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Real, "AirDiffusionPerformanceIndex"));
          //propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateMaterial("Material"));
          propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("FinishType", PropertyType.Label,
              typeof(PSetAirTerminalTypeCommon_AirTerminalFinishType)));
-         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"FinishColor"));
+         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "FinishColor"));
          propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("MountingType", PropertyType.Label,
              typeof(PSetAirTerminalTypeCommon_AirTerminalMountingType)));
          propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("CoreType", PropertyType.Label,
              typeof(PSetAirTerminalTypeCommon_AirTerminalCoreType)));
-         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle,"CoreSetHorizontal"));
-         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle,"CoreSetVertical"));
-         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"HasIntegralControl"));
+         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle, "CoreSetHorizontal"));
+         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle, "CoreSetVertical"));
+         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "HasIntegralControl"));
          propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("FlowControlType", PropertyType.Label,
              typeof(PSetAirTerminalTypeCommon_AirTerminalFlowControlType)));
-         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"HasSoundAttenuator"));
-         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"HasThermalInsulation"));
-         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Area,"NeckArea"));
-         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Area,"EffectiveArea"));
+         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "HasSoundAttenuator"));
+         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "HasThermalInsulation"));
+         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Area, "NeckArea"));
+         propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Area, "EffectiveArea"));
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
             propertyAirTerminalTypeCommon.AddEntry(ifcPSE);
             propertyAirTerminalTypeCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
-            propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"FaceType"));
-            propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Length,"SlotWidth"));
-            propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Length,"SlotLength"));
-            propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Integer,"NumberOfSlots"));
-            propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio,"AirFlowrateVersusFlowControlElement"));
+            propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "FaceType"));
+            propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Length, "SlotWidth"));
+            propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Length, "SlotLength"));
+            propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Integer, "NumberOfSlots"));
+            propertyAirTerminalTypeCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio, "AirFlowrateVersusFlowControlElement"));
          }
          //propertyAirTerminalTypeCommon.AddEntry(PropertySetEntry.CreateMass("Weight"));
          //AirFlowrateVersusFlowControlElement: IfcPropertyTableValue not supported.
@@ -1025,33 +1025,33 @@ namespace Revit.IFC.Export.Exporter
          commonPropertySets.Add(propertySetBeamCommon);
       }
 
-		/// <summary>
-		/// Initializes common IfcMember property sets.
-		/// </summary>
-		/// <param name="commonPropertySets">List to store property sets.</param>
-		/// <remarks>Reuses beam calculators for some values.</remarks>
-		private static void InitPropertySetMemberCommon(IList<PropertySetDescription> commonPropertySets)
-		{
-			//property beam common
-			PropertySetDescription propertySetMemberCommon = new PropertySetDescription();
-			propertySetMemberCommon.Name = "Pset_MemberCommon";
-			propertySetMemberCommon.SubElementIndex = (int)IFCCommonPSets.PSetMemberCommon;
+      /// <summary>
+      /// Initializes common IfcMember property sets.
+      /// </summary>
+      /// <param name="commonPropertySets">List to store property sets.</param>
+      /// <remarks>Reuses beam calculators for some values.</remarks>
+      private static void InitPropertySetMemberCommon(IList<PropertySetDescription> commonPropertySets)
+      {
+         //property beam common
+         PropertySetDescription propertySetMemberCommon = new PropertySetDescription();
+         propertySetMemberCommon.Name = "Pset_MemberCommon";
+         propertySetMemberCommon.SubElementIndex = (int)IFCCommonPSets.PSetMemberCommon;
 
-			propertySetMemberCommon.EntityTypes.Add(IFCEntityType.IfcMember);
+         propertySetMemberCommon.EntityTypes.Add(IFCEntityType.IfcMember);
 
-			PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
-			propertySetMemberCommon.AddEntry(ifcPSE);
+         PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
+         propertySetMemberCommon.AddEntry(ifcPSE);
 
-			ifcPSE = PropertySetEntryUtil.CreateLoadBearingEntry(BeamLoadBearingCalculator.Instance);
-			propertySetMemberCommon.AddEntry(ifcPSE);
+         ifcPSE = PropertySetEntryUtil.CreateLoadBearingEntry(BeamLoadBearingCalculator.Instance);
+         propertySetMemberCommon.AddEntry(ifcPSE);
 
-			ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
-			propertySetMemberCommon.AddEntry(ifcPSE);
+         ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
+         propertySetMemberCommon.AddEntry(ifcPSE);
 
-			ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
-			propertySetMemberCommon.AddEntry(ifcPSE);
+         ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
+         propertySetMemberCommon.AddEntry(ifcPSE);
 
-			ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "Span", BuiltInParameter.INSTANCE_LENGTH_PARAM, BeamMemberSpanCalculator.Instance);
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "Span", BuiltInParameter.INSTANCE_LENGTH_PARAM, BeamMemberSpanCalculator.Instance);
          propertySetMemberCommon.AddEntry(ifcPSE);
 
          ifcPSE = new PropertySetEntry(PropertyType.PlaneAngle, "Slope", SlopeCalculator.Instance);
@@ -1108,16 +1108,16 @@ namespace Revit.IFC.Export.Exporter
 
          propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
 
-         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"BECBarShapeCode"));
+         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "BECBarShapeCode"));
          for (char shapeParameterSuffix = 'a'; shapeParameterSuffix <= 'l'; shapeParameterSuffix++)
-            propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"BECShapeParameter_" + shapeParameterSuffix.ToString()));
-         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle,"BECBendingParameter_u"));
-         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle,"BECBendingParameter_v"));
-         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle,"BECBendingParameter_ul"));
-         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle,"BECBendingParameter_vl"));
-         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"BECShapeAid_x"));
-         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"BECShapeAid_y"));
-         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"BECRollerDiameter"));
+            propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "BECShapeParameter_" + shapeParameterSuffix.ToString()));
+         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle, "BECBendingParameter_u"));
+         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle, "BECBendingParameter_v"));
+         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle, "BECBendingParameter_ul"));
+         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle, "BECBendingParameter_vl"));
+         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "BECShapeAid_x"));
+         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "BECShapeAid_y"));
+         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "BECRollerDiameter"));
 
          commonPropertySets.Add(propertySetReinforcingBarCommon);
       }
@@ -1134,10 +1134,10 @@ namespace Revit.IFC.Export.Exporter
 
          propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
 
-         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"BS8666ShapeCode"));
+         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "BS8666ShapeCode"));
          for (char shapeParameterSuffix = 'A'; shapeParameterSuffix <= 'E'; shapeParameterSuffix++)
-            propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"BS8666ShapeParameter_" + shapeParameterSuffix.ToString()));
-         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"BS8666ShapeParameter_R"));
+            propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "BS8666ShapeParameter_" + shapeParameterSuffix.ToString()));
+         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "BS8666ShapeParameter_R"));
 
          commonPropertySets.Add(propertySetReinforcingBarCommon);
       }
@@ -1154,10 +1154,10 @@ namespace Revit.IFC.Export.Exporter
 
          propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
 
-         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"DIN135610ShapeCode"));
+         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "DIN135610ShapeCode"));
          for (char shapeParameterSuffix = 'a'; shapeParameterSuffix <= 'e'; shapeParameterSuffix++)
-            propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"DIN135610ShapeParameter_" + shapeParameterSuffix.ToString()));
-         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"DIN135610ShapeParameter_z"));
+            propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "DIN135610ShapeParameter_" + shapeParameterSuffix.ToString()));
+         propertySetReinforcingBarCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "DIN135610ShapeParameter_z"));
 
          commonPropertySets.Add(propertySetReinforcingBarCommon);
       }
@@ -1174,31 +1174,31 @@ namespace Revit.IFC.Export.Exporter
 
          propertySetReinforcingBarCommon.EntityTypes.Add(IFCEntityType.IfcReinforcingBar);
 
-         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Label,"ISOCD3766ShapeCode", ISOCD3766ShapeCodeCalculator.Instance);
+         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Label, "ISOCD3766ShapeCode", ISOCD3766ShapeCodeCalculator.Instance);
          propertySetReinforcingBarCommon.AddEntry(ifcPSE);
 
          ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "ISOCD3766ShapeParameter_a", ISOCD3766ShapeParameterACalculator.Instance);
          propertySetReinforcingBarCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength,"ISOCD3766ShapeParameter_b", ISOCD3766ShapeParameterBCalculator.Instance);
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "ISOCD3766ShapeParameter_b", ISOCD3766ShapeParameterBCalculator.Instance);
          propertySetReinforcingBarCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength,"ISOCD3766ShapeParameter_c", ISOCD3766ShapeParameterCCalculator.Instance);
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "ISOCD3766ShapeParameter_c", ISOCD3766ShapeParameterCCalculator.Instance);
          propertySetReinforcingBarCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength,"ISOCD3766ShapeParameter_d", ISOCD3766ShapeParameterDCalculator.Instance);
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "ISOCD3766ShapeParameter_d", ISOCD3766ShapeParameterDCalculator.Instance);
          propertySetReinforcingBarCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength,"ISOCD3766ShapeParameter_e", ISOCD3766ShapeParameterECalculator.Instance);
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "ISOCD3766ShapeParameter_e", ISOCD3766ShapeParameterECalculator.Instance);
          propertySetReinforcingBarCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength,"ISOCD3766ShapeParameter_R", ISOCD3766BendingRadiusCalculator.Instance);
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "ISOCD3766ShapeParameter_R", ISOCD3766BendingRadiusCalculator.Instance);
          propertySetReinforcingBarCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PlaneAngle,"ISOCD3766BendingStartHook", ISOCD3766BendingStartHookCalculator.Instance);
+         ifcPSE = new PropertySetEntry(PropertyType.PlaneAngle, "ISOCD3766BendingStartHook", ISOCD3766BendingStartHookCalculator.Instance);
          propertySetReinforcingBarCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PlaneAngle,"ISOCD3766BendingEndHook", ISOCD3766BendingEndHookCalculator.Instance);
+         ifcPSE = new PropertySetEntry(PropertyType.PlaneAngle, "ISOCD3766BendingEndHook", ISOCD3766BendingEndHookCalculator.Instance);
          propertySetReinforcingBarCommon.AddEntry(ifcPSE);
 
          commonPropertySets.Add(propertySetReinforcingBarCommon);
@@ -1268,16 +1268,16 @@ namespace Revit.IFC.Export.Exporter
 
          if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
          {
-            ifcPSE = new PropertySetEntry(PropertyType.Area,"TotalArea", BuiltInParameter.HOST_AREA_COMPUTED);
+            ifcPSE = new PropertySetEntry(PropertyType.Area, "TotalArea", BuiltInParameter.HOST_AREA_COMPUTED);
             propertySetRoofCommon.AddEntry(ifcPSE);
 
-            ifcPSE = new PropertySetEntry(PropertyType.Area,"ProjectedArea", RoofProjectedAreaCalculator.Instance);
+            ifcPSE = new PropertySetEntry(PropertyType.Area, "ProjectedArea", RoofProjectedAreaCalculator.Instance);
             propertySetRoofCommon.AddEntry(ifcPSE);
 
             if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
             {
                propertySetRoofCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
-               propertySetRoofCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"AcousticRating"));
+               propertySetRoofCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "AcousticRating"));
                propertySetRoofCommon.AddEntry(PropertySetEntryUtil.CreateThermalTransmittanceEntry());
             }
          }
@@ -1325,7 +1325,7 @@ namespace Revit.IFC.Export.Exporter
          ifcPSE = PropertySetEntryUtil.CreateThermalTransmittanceEntry();
          propertySetSlabCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PlaneAngle,"PitchAngle", SlopeCalculator.Instance);
+         ifcPSE = new PropertySetEntry(PropertyType.PlaneAngle, "PitchAngle", SlopeCalculator.Instance);
          propertySetSlabCommon.AddEntry(ifcPSE);
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
@@ -1352,7 +1352,7 @@ namespace Revit.IFC.Export.Exporter
          ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
          propertySetRailingCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength,"Height", RailingHeightCalculator.Instance);
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "Height", RailingHeightCalculator.Instance);
          propertySetRailingCommon.AddEntry(ifcPSE);
 
          // Railing diameter not supported.
@@ -1386,10 +1386,10 @@ namespace Revit.IFC.Export.Exporter
          propertySetRampCommon.AddEntry(ifcPSE);
 
          propertySetRampCommon.AddEntry(PropertySetEntryUtil.CreateHandicapAccessibleEntry());
-         propertySetRampCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"FireExit"));
-         propertySetRampCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"HasNonSkidSurface"));
-         propertySetRampCommon.AddEntry(new PropertySetEntry(PropertyType.Real,"RequiredHeadroom"));
-         propertySetRampCommon.AddEntry(new PropertySetEntry(PropertyType.Real,"RequiredSlope"));
+         propertySetRampCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "FireExit"));
+         propertySetRampCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "HasNonSkidSurface"));
+         propertySetRampCommon.AddEntry(new PropertySetEntry(PropertyType.Real, "RequiredHeadroom"));
+         propertySetRampCommon.AddEntry(new PropertySetEntry(PropertyType.Real, "RequiredSlope"));
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
             propertySetRampCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
@@ -1414,34 +1414,34 @@ namespace Revit.IFC.Export.Exporter
          propertySetStairFlightCommon.AddEntry(ifcPSE);
 
          PropertyCalculator stairRiserAndTreadsCalculator = StairRiserTreadsCalculator.Instance;
-         ifcPSE = new PropertySetEntry(PropertyType.Count,"NumberOfRiser", stairRiserAndTreadsCalculator);
+         ifcPSE = new PropertySetEntry(PropertyType.Count, "NumberOfRiser", stairRiserAndTreadsCalculator);
          propertySetStairFlightCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Count,"NumberOfTreads", stairRiserAndTreadsCalculator);
+         ifcPSE = new PropertySetEntry(PropertyType.Count, "NumberOfTreads", stairRiserAndTreadsCalculator);
          propertySetStairFlightCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength,"RiserHeight", stairRiserAndTreadsCalculator);
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "RiserHeight", stairRiserAndTreadsCalculator);
          propertySetStairFlightCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength,"TreadLength", stairRiserAndTreadsCalculator);
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "TreadLength", stairRiserAndTreadsCalculator);
          propertySetStairFlightCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength,"TreadLengthAtOffset", stairRiserAndTreadsCalculator);
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "TreadLengthAtOffset", stairRiserAndTreadsCalculator);
          propertySetStairFlightCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength,"TreadLengthAtInnerSide", stairRiserAndTreadsCalculator);
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "TreadLengthAtInnerSide", stairRiserAndTreadsCalculator);
          propertySetStairFlightCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Length,"NosingLength", stairRiserAndTreadsCalculator);
+         ifcPSE = new PropertySetEntry(PropertyType.Length, "NosingLength", stairRiserAndTreadsCalculator);
          propertySetStairFlightCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength,"WalkingLineOffset", stairRiserAndTreadsCalculator);
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "WalkingLineOffset", stairRiserAndTreadsCalculator);
          propertySetStairFlightCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength,"WaistThickness", stairRiserAndTreadsCalculator);
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "WaistThickness", stairRiserAndTreadsCalculator);
          propertySetStairFlightCommon.AddEntry(ifcPSE);
 
-         propertySetStairFlightCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"Headroom"));
+         propertySetStairFlightCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "Headroom"));
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
             propertySetStairFlightCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
@@ -1464,14 +1464,14 @@ namespace Revit.IFC.Export.Exporter
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetRampFlightCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PlaneAngle,"Slope", RampFlightSlopeCalculator.Instance);
+         ifcPSE = new PropertySetEntry(PropertyType.PlaneAngle, "Slope", RampFlightSlopeCalculator.Instance);
          propertySetRampFlightCommon.AddEntry(ifcPSE);
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             propertySetRampFlightCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
-            propertySetRampFlightCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"ClearWidth"));
-            propertySetRampFlightCommon.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle,"CounterSlope"));
+            propertySetRampFlightCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "ClearWidth"));
+            propertySetRampFlightCommon.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle, "CounterSlope"));
          }
 
          commonPropertySets.Add(propertySetRampFlightCommon);
@@ -1500,31 +1500,31 @@ namespace Revit.IFC.Export.Exporter
          propertySetStairCommon.AddEntry(ifcPSE);
 
          PropertyCalculator stairRiserAndTreadsCalculator = StairRiserTreadsCalculator.Instance;
-         ifcPSE = new PropertySetEntry(PropertyType.Count,"NumberOfRiser", stairRiserAndTreadsCalculator);
+         ifcPSE = new PropertySetEntry(PropertyType.Count, "NumberOfRiser", stairRiserAndTreadsCalculator);
          propertySetStairCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Count,"NumberOfTreads", stairRiserAndTreadsCalculator);
+         ifcPSE = new PropertySetEntry(PropertyType.Count, "NumberOfTreads", stairRiserAndTreadsCalculator);
          propertySetStairCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength,"RiserHeight", stairRiserAndTreadsCalculator);
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "RiserHeight", stairRiserAndTreadsCalculator);
          propertySetStairCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength,"TreadLength", stairRiserAndTreadsCalculator);
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "TreadLength", stairRiserAndTreadsCalculator);
          propertySetStairCommon.AddEntry(ifcPSE);
 
          propertySetStairCommon.AddEntry(PropertySetEntryUtil.CreateHandicapAccessibleEntry());
-         propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"FireExit"));
-         propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"HasNonSkidSurface"));
-         propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"RequiredHeadroom"));
+         propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "FireExit"));
+         propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "HasNonSkidSurface"));
+         propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "RequiredHeadroom"));
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             propertySetStairCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
-            propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.Length,"NosingLength"));
-            propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"WalkingLineOffset"));
-            propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"TreadLengthAtOffset"));
-            propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"TreadLengthAtInnerSide"));
-            propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"WaistThickness"));
+            propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.Length, "NosingLength"));
+            propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "WalkingLineOffset"));
+            propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "TreadLengthAtOffset"));
+            propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "TreadLengthAtInnerSide"));
+            propertySetStairCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "WaistThickness"));
          }
 
          commonPropertySets.Add(propertySetStairCommon);
@@ -1587,24 +1587,24 @@ namespace Revit.IFC.Export.Exporter
          propertySetLevelCommon.EntityTypes.Add(IFCEntityType.IfcBuildingStorey);
          propertySetLevelCommon.SubElementIndex = (int)IFCCommonPSets.PSetBuildingStoreyCommon;
 
-         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Boolean,"EntranceLevel");
+         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Boolean, "EntranceLevel");
          propertySetLevelCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Logical,"AboveGround");
+         ifcPSE = new PropertySetEntry(PropertyType.Logical, "AboveGround");
          propertySetLevelCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Boolean,"SprinklerProtection");
+         ifcPSE = new PropertySetEntry(PropertyType.Boolean, "SprinklerProtection");
          propertySetLevelCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Boolean,"SprinklerProtectionAutomatic");
+         ifcPSE = new PropertySetEntry(PropertyType.Boolean, "SprinklerProtectionAutomatic");
          propertySetLevelCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Real,"GrossAreaPlanned");
+         ifcPSE = new PropertySetEntry(PropertyType.Real, "GrossAreaPlanned");
          propertySetLevelCommon.AddEntry(ifcPSE);
 
          if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
          {
-            ifcPSE = new PropertySetEntry(PropertyType.Real,"NetAreaPlanned");
+            ifcPSE = new PropertySetEntry(PropertyType.Real, "NetAreaPlanned");
             propertySetLevelCommon.AddEntry(ifcPSE);
          }
 
@@ -1623,22 +1623,22 @@ namespace Revit.IFC.Export.Exporter
          propertySetSiteCommon.EntityTypes.Add(IFCEntityType.IfcSite);
          propertySetSiteCommon.SubElementIndex = (int)IFCCommonPSets.PSetSiteCommon;
 
-         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Area,"BuildableArea");
+         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Area, "BuildableArea");
          propertySetSiteCommon.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength,"BuildingHeightLimit");
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "BuildingHeightLimit");
          propertySetSiteCommon.AddEntry(ifcPSE);
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             propertySetSiteCommon.AddEntry(PropertySetEntryUtil.CreateReferenceEntry());
-            propertySetSiteCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio,"SiteCoverageRatio"));
-            propertySetSiteCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio,"FloorAreaRatio"));
-            propertySetSiteCommon.AddEntry(new PropertySetEntry(PropertyType.Area,"TotalArea"));
+            propertySetSiteCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio, "SiteCoverageRatio"));
+            propertySetSiteCommon.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio, "FloorAreaRatio"));
+            propertySetSiteCommon.AddEntry(new PropertySetEntry(PropertyType.Area, "TotalArea"));
          }
          else
          {
-            ifcPSE = new PropertySetEntry(PropertyType.Area,"GrossAreaPlanned");
+            ifcPSE = new PropertySetEntry(PropertyType.Area, "GrossAreaPlanned");
             propertySetSiteCommon.AddEntry(ifcPSE);
          }
 
@@ -1666,7 +1666,7 @@ namespace Revit.IFC.Export.Exporter
             propertySetBuildingElementProxyCommon.AddEntry(ifcPSE);
 
             propertySetBuildingElementProxyCommon.AddEntry(PropertySetEntryUtil.CreateThermalTransmittanceEntry());
-            propertySetBuildingElementProxyCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"LoadBearing"));
+            propertySetBuildingElementProxyCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "LoadBearing"));
 
             ifcPSE = PropertySetEntryUtil.CreateFireRatingEntry();
             propertySetBuildingElementProxyCommon.AddEntry(ifcPSE);
@@ -1690,21 +1690,21 @@ namespace Revit.IFC.Export.Exporter
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetSpaceCommon.AddEntry(ifcPSE);
 
-         propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"PubliclyAccessible"));
+         propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "PubliclyAccessible"));
          propertySetSpaceCommon.AddEntry(PropertySetEntryUtil.CreateHandicapAccessibleEntry());
-         propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Area,"GrossPlannedArea"));
+         propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Area, "GrossPlannedArea"));
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
          {
-            propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"OccupancyType"));
-            propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Real,"OccupancyNumber"));
+            propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "OccupancyType"));
+            propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Real, "OccupancyNumber"));
 
-            ifcPSE = new PropertySetEntry(PropertyType.Boolean,"Concealed", SpaceConcealCalculator.Instance);
+            ifcPSE = new PropertySetEntry(PropertyType.Boolean, "Concealed", SpaceConcealCalculator.Instance);
             propertySetSpaceCommon.AddEntry(ifcPSE);
          }
          else if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Area,"NetPlannedArea"));
+            propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Area, "NetPlannedArea"));
 
             ifcPSE = PropertySetEntryUtil.CreateIsExternalEntry();
             propertySetSpaceCommon.AddEntry(ifcPSE);
@@ -1716,16 +1716,16 @@ namespace Revit.IFC.Export.Exporter
             ifcPSE = new PropertySetEntry(PropertyType.Label, "CeilingCovering", BuiltInParameter.ROOM_FINISH_CEILING);
             propertySetSpaceCommon.AddEntry(ifcPSE);
 
-            ifcPSE = new PropertySetEntry(PropertyType.Label,"WallCovering", BuiltInParameter.ROOM_FINISH_WALL);
+            ifcPSE = new PropertySetEntry(PropertyType.Label, "WallCovering", BuiltInParameter.ROOM_FINISH_WALL);
             propertySetSpaceCommon.AddEntry(ifcPSE);
 
-            ifcPSE = new PropertySetEntry(PropertyType.Label,"FloorCovering", BuiltInParameter.ROOM_FINISH_FLOOR);
+            ifcPSE = new PropertySetEntry(PropertyType.Label, "FloorCovering", BuiltInParameter.ROOM_FINISH_FLOOR);
             propertySetSpaceCommon.AddEntry(ifcPSE);
 
             propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "SkirtingBoard"));
-            propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Area,"NetPlannedArea"));
-            propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"ConcealedFlooring"));
-            propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"ConcealedCeiling"));
+            propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Area, "NetPlannedArea"));
+            propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "ConcealedFlooring"));
+            propertySetSpaceCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "ConcealedCeiling"));
          }
 
          commonPropertySets.Add(propertySetSpaceCommon);
@@ -1743,13 +1743,13 @@ namespace Revit.IFC.Export.Exporter
 
          propertySetSpaceOccupancyRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-         propertySetSpaceOccupancyRequirements.AddEntry(new PropertySetEntry(PropertyType.Label,"OccupancyType"));
-         propertySetSpaceOccupancyRequirements.AddEntry(new PropertySetEntry(PropertyType.Count,"OccupancyNumber"));
-         propertySetSpaceOccupancyRequirements.AddEntry(new PropertySetEntry(PropertyType.Count,"OccupancyNumberPeak"));
+         propertySetSpaceOccupancyRequirements.AddEntry(new PropertySetEntry(PropertyType.Label, "OccupancyType"));
+         propertySetSpaceOccupancyRequirements.AddEntry(new PropertySetEntry(PropertyType.Count, "OccupancyNumber"));
+         propertySetSpaceOccupancyRequirements.AddEntry(new PropertySetEntry(PropertyType.Count, "OccupancyNumberPeak"));
          //propertySetSpaceOccupancyRequirements.AddEntry(PropertySetEntry.CreateTime("OccupancyTimePerDay"));
-         propertySetSpaceOccupancyRequirements.AddEntry(new PropertySetEntry(PropertyType.Area,"AreaPerOccupant"));
-         propertySetSpaceOccupancyRequirements.AddEntry(new PropertySetEntry(PropertyType.Length,"MinimumHeadroom"));
-         propertySetSpaceOccupancyRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean,"IsOutlookDesirable"));
+         propertySetSpaceOccupancyRequirements.AddEntry(new PropertySetEntry(PropertyType.Area, "AreaPerOccupant"));
+         propertySetSpaceOccupancyRequirements.AddEntry(new PropertySetEntry(PropertyType.Length, "MinimumHeadroom"));
+         propertySetSpaceOccupancyRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean, "IsOutlookDesirable"));
 
          commonPropertySets.Add(propertySetSpaceOccupancyRequirements);
       }
@@ -1769,21 +1769,21 @@ namespace Revit.IFC.Export.Exporter
          PropertySetEntry ifcPSE = PropertySetEntryUtil.CreateReferenceEntry();
          propertySetZoneCommon.AddEntry(ifcPSE);
 
-         propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"Category"));
-         propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Area,"GrossAreaPlanned"));
-         propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Area,"NetAreaPlanned"));
-         propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"PubliclyAccessible"));
+         propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "Category"));
+         propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Area, "GrossAreaPlanned"));
+         propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Area, "NetAreaPlanned"));
+         propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "PubliclyAccessible"));
          propertySetZoneCommon.AddEntry(PropertySetEntryUtil.CreateHandicapAccessibleEntry());
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
             propertySetZoneCommon.AddEntry(PropertySetEntryUtil.CreateIsExternalEntry());
          else
          {
-            propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"OccupancyType"));
-            propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Count,"OccupancyNumber"));
-            propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"NaturalVentilation"));
-            propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Count,"NaturalVentilationRate"));
-            propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Count,"MechanicalVentilationRate"));
+            propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "OccupancyType"));
+            propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Count, "OccupancyNumber"));
+            propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "NaturalVentilation"));
+            propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Count, "NaturalVentilationRate"));
+            propertySetZoneCommon.AddEntry(new PropertySetEntry(PropertyType.Count, "MechanicalVentilationRate"));
          }
 
          commonPropertySets.Add(propertySetZoneCommon);
@@ -1802,16 +1802,16 @@ namespace Revit.IFC.Export.Exporter
 
          if (!ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Label,"MainFireUse"));
-            propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Label,"AncillaryFireUse"));
-            propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Label,"FireHazardFactor"));
+            propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Label, "MainFireUse"));
+            propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Label, "AncillaryFireUse"));
+            propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Label, "FireHazardFactor"));
          }
-         propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Label,"FireRiskFactor"));
-         propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean,"FlammableStorage"));
-         propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean,"FireExit"));
-         propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean,"SprinklerProtection"));
-         propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean,"SprinklerProtectionAutomatic"));
-         propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean,"AirPressurization"));
+         propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Label, "FireRiskFactor"));
+         propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean, "FlammableStorage"));
+         propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean, "FireExit"));
+         propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean, "SprinklerProtection"));
+         propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean, "SprinklerProtectionAutomatic"));
+         propertySetSpaceFireSafetyRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean, "AirPressurization"));
 
          commonPropertySets.Add(propertySetSpaceFireSafetyRequirements);
       }
@@ -1827,8 +1827,8 @@ namespace Revit.IFC.Export.Exporter
 
          propertySetSpaceLightingRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-         propertySetSpaceLightingRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean,"ArtificialLighting"));
-         propertySetSpaceLightingRequirements.AddEntry(new PropertySetEntry(PropertyType.Real,"Illuminance"));
+         propertySetSpaceLightingRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean, "ArtificialLighting"));
+         propertySetSpaceLightingRequirements.AddEntry(new PropertySetEntry(PropertyType.Real, "Illuminance"));
 
          commonPropertySets.Add(propertySetSpaceLightingRequirements);
       }
@@ -1845,42 +1845,42 @@ namespace Revit.IFC.Export.Exporter
          propertySetSpaceThermalRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
 
 
-         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature,"SpaceTemperatureMax"));
-         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature,"SpaceTemperatureMin"));
-         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Ratio,"SpaceHumidity"));
-         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Ratio,"SpaceHumiditySummer"));
-         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Ratio,"SpaceHumidityWinter"));
-         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean,"DiscontinuedHeating"));
-         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean,"NaturalVentilation"));
-         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Count,"NaturalVentilationRate"));
-         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Count,"MechanicalVentilationRate"));
-         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean,"AirConditioning"));
-         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean,"AirConditioningCentral"));
+         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature, "SpaceTemperatureMax"));
+         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature, "SpaceTemperatureMin"));
+         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Ratio, "SpaceHumidity"));
+         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Ratio, "SpaceHumiditySummer"));
+         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Ratio, "SpaceHumidityWinter"));
+         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean, "DiscontinuedHeating"));
+         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean, "NaturalVentilation"));
+         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Count, "NaturalVentilationRate"));
+         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Count, "MechanicalVentilationRate"));
+         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean, "AirConditioning"));
+         propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean, "AirConditioningCentral"));
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
          {
-            PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.ThermodynamicTemperature,"SpaceTemperatureSummer", new SpaceTemperatureCalculator("SpaceTemperatureSummer"));
+            PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.ThermodynamicTemperature, "SpaceTemperatureSummer", new SpaceTemperatureCalculator("SpaceTemperatureSummer"));
             propertySetSpaceThermalRequirements.AddEntry(ifcPSE);
 
-            ifcPSE = new PropertySetEntry(PropertyType.ThermodynamicTemperature,"SpaceTemperatureWinter", new SpaceTemperatureCalculator("SpaceTemperatureWinter"));
+            ifcPSE = new PropertySetEntry(PropertyType.ThermodynamicTemperature, "SpaceTemperatureWinter", new SpaceTemperatureCalculator("SpaceTemperatureWinter"));
             propertySetSpaceThermalRequirements.AddEntry(ifcPSE);
          }
          else if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature,"SpaceTemperature"));
-            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature,"SpaceTemperatureSummerMax"));
-            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature,"SpaceTemperatureSummerMin"));
-            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature,"SpaceTemperatureWinterMax"));
-            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature,"SpaceTemperatureWinterMin"));
-            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature,"SpaceHumidityMax"));
-            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature,"SpaceHumidityMin"));
+            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature, "SpaceTemperature"));
+            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature, "SpaceTemperatureSummerMax"));
+            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature, "SpaceTemperatureSummerMin"));
+            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature, "SpaceTemperatureWinterMax"));
+            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature, "SpaceTemperatureWinterMin"));
+            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature, "SpaceHumidityMax"));
+            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature, "SpaceHumidityMin"));
          }
          else
          {
-            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature,"SpaceTemperatureSummerMax"));
-            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature,"SpaceTemperatureSummerMin"));
-            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature,"SpaceTemperatureWinterMax"));
-            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature,"SpaceTemperatureWinterMin"));
+            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature, "SpaceTemperatureSummerMax"));
+            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature, "SpaceTemperatureSummerMin"));
+            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature, "SpaceTemperatureWinterMax"));
+            propertySetSpaceThermalRequirements.AddEntry(new PropertySetEntry(PropertyType.ThermodynamicTemperature, "SpaceTemperatureWinterMin"));
          }
 
          commonPropertySets.Add(propertySetSpaceThermalRequirements);
@@ -1893,24 +1893,24 @@ namespace Revit.IFC.Export.Exporter
 
          propertySetSpaceCoveringRequirements.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Label,"CeilingCovering", BuiltInParameter.ROOM_FINISH_CEILING);
+         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Label, "CeilingCovering", BuiltInParameter.ROOM_FINISH_CEILING);
          propertySetSpaceCoveringRequirements.AddEntry(ifcPSE);
-         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Real,"CeilingCoveringThickness"));
+         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Real, "CeilingCoveringThickness"));
 
-         ifcPSE = new PropertySetEntry(PropertyType.Label,"WallCovering", BuiltInParameter.ROOM_FINISH_WALL);
+         ifcPSE = new PropertySetEntry(PropertyType.Label, "WallCovering", BuiltInParameter.ROOM_FINISH_WALL);
          propertySetSpaceCoveringRequirements.AddEntry(ifcPSE);
-         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Real,"WallCoveringThickness"));
+         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Real, "WallCoveringThickness"));
 
-         ifcPSE = new PropertySetEntry(PropertyType.Label,"FloorCovering", BuiltInParameter.ROOM_FINISH_FLOOR);
+         ifcPSE = new PropertySetEntry(PropertyType.Label, "FloorCovering", BuiltInParameter.ROOM_FINISH_FLOOR);
          propertySetSpaceCoveringRequirements.AddEntry(ifcPSE);
-         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Real,"FloorCoveringThickness"));
+         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Real, "FloorCoveringThickness"));
 
-         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Label,"SkirtingBoard"));
-         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Real,"SkirtingBoardHeight"));
-         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Label,"Molding"));
-         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Real,"MoldingHeight"));
-         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean,"ConcealedFlooring"));
-         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean,"ConcealedCeiling"));
+         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Label, "SkirtingBoard"));
+         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Real, "SkirtingBoardHeight"));
+         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Label, "Molding"));
+         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Real, "MoldingHeight"));
+         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean, "ConcealedFlooring"));
+         propertySetSpaceCoveringRequirements.AddEntry(new PropertySetEntry(PropertyType.Boolean, "ConcealedCeiling"));
 
          commonPropertySets.Add(propertySetSpaceCoveringRequirements);
       }
@@ -1926,9 +1926,9 @@ namespace Revit.IFC.Export.Exporter
 
          propertySetGSASpaceCategories.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-         propertySetGSASpaceCategories.AddEntry(new PropertySetEntry(PropertyType.Label,"GSA STAR Space Type"));
-         propertySetGSASpaceCategories.AddEntry(new PropertySetEntry(PropertyType.Label,"GSA STAR Space Category"));
-         propertySetGSASpaceCategories.AddEntry(new PropertySetEntry(PropertyType.Label,"ANSI/BOMA Space Category"));
+         propertySetGSASpaceCategories.AddEntry(new PropertySetEntry(PropertyType.Label, "GSA STAR Space Type"));
+         propertySetGSASpaceCategories.AddEntry(new PropertySetEntry(PropertyType.Label, "GSA STAR Space Category"));
+         propertySetGSASpaceCategories.AddEntry(new PropertySetEntry(PropertyType.Label, "ANSI/BOMA Space Category"));
 
          commonPropertySets.Add(propertySetGSASpaceCategories);
       }
@@ -1944,11 +1944,11 @@ namespace Revit.IFC.Export.Exporter
 
          propertySetSpaceOccupant.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-         propertySetSpaceOccupant.AddEntry(new PropertySetEntry(PropertyType.Label,"Occupant Organization Code"));
-         propertySetSpaceOccupant.AddEntry(new PropertySetEntry(PropertyType.Label,"Occupant Organization Abbreviation"));
-         propertySetSpaceOccupant.AddEntry(new PropertySetEntry(PropertyType.Label,"Occupant Organization Name"));
-         propertySetSpaceOccupant.AddEntry(new PropertySetEntry(PropertyType.Label,"Occupant Sub-Organization Code"));
-         propertySetSpaceOccupant.AddEntry(new PropertySetEntry(PropertyType.Label,"Occupant Billing ID"));
+         propertySetSpaceOccupant.AddEntry(new PropertySetEntry(PropertyType.Label, "Occupant Organization Code"));
+         propertySetSpaceOccupant.AddEntry(new PropertySetEntry(PropertyType.Label, "Occupant Organization Abbreviation"));
+         propertySetSpaceOccupant.AddEntry(new PropertySetEntry(PropertyType.Label, "Occupant Organization Name"));
+         propertySetSpaceOccupant.AddEntry(new PropertySetEntry(PropertyType.Label, "Occupant Sub-Organization Code"));
+         propertySetSpaceOccupant.AddEntry(new PropertySetEntry(PropertyType.Label, "Occupant Billing ID"));
 
          commonPropertySets.Add(propertySetSpaceOccupant);
       }
@@ -1964,16 +1964,16 @@ namespace Revit.IFC.Export.Exporter
 
          propertySetSpaceZones.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-         propertySetSpaceZones.AddEntry(new PropertySetEntry(PropertyType.Label,"Security Zone"));
-         propertySetSpaceZones.AddEntry(new PropertySetEntry(PropertyType.Label,"Preservation Zone"));
-         propertySetSpaceZones.AddEntry(new PropertySetEntry(PropertyType.Label,"Privacy Zone"));
+         propertySetSpaceZones.AddEntry(new PropertySetEntry(PropertyType.Label, "Security Zone"));
+         propertySetSpaceZones.AddEntry(new PropertySetEntry(PropertyType.Label, "Preservation Zone"));
+         propertySetSpaceZones.AddEntry(new PropertySetEntry(PropertyType.Label, "Privacy Zone"));
          if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
          {
-            propertySetSpaceZones.AddEntry(new PropertySetEntry(PropertyType.Label,"Zone GrossAreaPlanned"));
-            propertySetSpaceZones.AddEntry(new PropertySetEntry(PropertyType.Label,"Zone NetAreaPlanned"));
+            propertySetSpaceZones.AddEntry(new PropertySetEntry(PropertyType.Label, "Zone GrossAreaPlanned"));
+            propertySetSpaceZones.AddEntry(new PropertySetEntry(PropertyType.Label, "Zone NetAreaPlanned"));
          }
 
-			PropertySetEntryMap map = new PropertySetEntryMap(SpecificZoneCalculator.Instance) { UseCalculatorOnly = true };
+         PropertySetEntryMap map = new PropertySetEntryMap(SpecificZoneCalculator.Instance) { UseCalculatorOnly = true };
          PropertySetEntry ifcPSE = PropertySetEntry.CreateListValue("Project Specific Zone", PropertyType.Label, map);
          propertySetSpaceZones.AddEntry(ifcPSE);
 
@@ -1990,9 +1990,9 @@ namespace Revit.IFC.Export.Exporter
          propertySetBuildingWaterStorage.Name = "Pset_BuildingWaterStorage";
          propertySetBuildingWaterStorage.EntityTypes.Add(IFCEntityType.IfcBuilding);
 
-         propertySetBuildingWaterStorage.AddEntry(new PropertySetEntry(PropertyType.Real,"OneDayPotableWater"));
-         propertySetBuildingWaterStorage.AddEntry(new PropertySetEntry(PropertyType.Real,"OneDayProcessOrProductionWater"));
-         propertySetBuildingWaterStorage.AddEntry(new PropertySetEntry(PropertyType.Real,"OneDayCoolingTowerMakeupWater"));
+         propertySetBuildingWaterStorage.AddEntry(new PropertySetEntry(PropertyType.Real, "OneDayPotableWater"));
+         propertySetBuildingWaterStorage.AddEntry(new PropertySetEntry(PropertyType.Real, "OneDayProcessOrProductionWater"));
+         propertySetBuildingWaterStorage.AddEntry(new PropertySetEntry(PropertyType.Real, "OneDayCoolingTowerMakeupWater"));
 
          commonPropertySets.Add(propertySetBuildingWaterStorage);
       }
@@ -2010,14 +2010,14 @@ namespace Revit.IFC.Export.Exporter
 
          propertySetElementShading.AddEntry(PropertySetEntry.CreateEnumeratedValue("ShadingDeviceType", PropertyType.Label,
              typeof(PSetElementShading_ShadingDeviceType)));
-         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle,"Azimuth"));
-         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle,"Inclination"));
-         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle,"TiltRange"));
-         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio,"AverageSolarTransmittance"));
-         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio,"AverageVisibleTransmittance"));
-         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio,"Reflectance"));
-         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"Roughness"));
-         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.Label,"Color"));
+         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle, "Azimuth"));
+         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle, "Inclination"));
+         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.PlaneAngle, "TiltRange"));
+         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio, "AverageSolarTransmittance"));
+         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio, "AverageVisibleTransmittance"));
+         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.PositiveRatio, "Reflectance"));
+         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "Roughness"));
+         propertySetElementShading.AddEntry(new PropertySetEntry(PropertyType.Label, "Color"));
 
          commonPropertySets.Add(propertySetElementShading);
       }
@@ -2053,7 +2053,7 @@ namespace Revit.IFC.Export.Exporter
          ifcPSE = new PropertySetEntry(PropertyType.PositiveLength, "Depth", ProvisionForVoidDepthCalculator.Instance);
          propertySetProvisionForVoid.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Label,"System");
+         ifcPSE = new PropertySetEntry(PropertyType.Label, "System");
          propertySetProvisionForVoid.AddEntry(ifcPSE);
 
          commonPropertySets.Add(propertySetProvisionForVoid);
@@ -2072,15 +2072,15 @@ namespace Revit.IFC.Export.Exporter
 
          propertySetBath.AddEntry(PropertySetEntry.CreateEnumeratedValue("BathType", PropertyType.Label,
              typeof(PsetSanitaryTerminalTypeBath_BathType)));
-         propertySetBath.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"NominalLength"));
-         propertySetBath.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"NominalWidth"));
-         propertySetBath.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"NominalDepth"));
+         propertySetBath.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "NominalLength"));
+         propertySetBath.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "NominalWidth"));
+         propertySetBath.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "NominalDepth"));
 
          //propertySetBath.AddEntry(PropertySetEntry.CreateMaterial("Material"));
-         propertySetBath.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"MaterialThickness"));
-         propertySetBath.AddEntry(new PropertySetEntry(PropertyType.Text,"Color"));
-         propertySetBath.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"DrainSize"));
-         propertySetBath.AddEntry(new PropertySetEntry(PropertyType.Boolean,"HasGrabHandles"));
+         propertySetBath.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "MaterialThickness"));
+         propertySetBath.AddEntry(new PropertySetEntry(PropertyType.Text, "Color"));
+         propertySetBath.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "DrainSize"));
+         propertySetBath.AddEntry(new PropertySetEntry(PropertyType.Boolean, "HasGrabHandles"));
 
          commonPropertySets.Add(propertySetBath);
       }
@@ -2098,16 +2098,16 @@ namespace Revit.IFC.Export.Exporter
 
          propertySetShower.AddEntry(PropertySetEntry.CreateEnumeratedValue("ShowerType", PropertyType.Label,
              typeof(PsetSanitaryTerminalTypeShower_ShowerType)));
-         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.Boolean,"HasTray"));
-         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"NominalLength"));
-         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"NominalWidth"));
-         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"NominalDepth"));
+         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.Boolean, "HasTray"));
+         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "NominalLength"));
+         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "NominalWidth"));
+         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "NominalDepth"));
 
          //propertySetShower.AddEntry(PropertySetEntry.CreateMaterial("Material"));
-         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"MaterialThickness"));
-         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.Text,"Color"));
-         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.Text,"ShowerHeadDescription"));
-         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"DrainSize"));
+         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "MaterialThickness"));
+         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.Text, "Color"));
+         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.Text, "ShowerHeadDescription"));
+         propertySetShower.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "DrainSize"));
 
          commonPropertySets.Add(propertySetShower);
       }
@@ -2128,13 +2128,13 @@ namespace Revit.IFC.Export.Exporter
          // PsetSanitaryTerminalTypeToiletPan_SanitaryMounting is purposely reused, as it is identical.
          propertySetSink.AddEntry(PropertySetEntry.CreateEnumeratedValue("SinkMounting", PropertyType.Label,
              typeof(PsetSanitaryTerminalTypeToiletPan_SanitaryMounting)));
-         propertySetSink.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"NominalLength"));
-         propertySetSink.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"NominalWidth"));
-         propertySetSink.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"NominalDepth"));
+         propertySetSink.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "NominalLength"));
+         propertySetSink.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "NominalWidth"));
+         propertySetSink.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "NominalDepth"));
 
          //propertySetSink.AddEntry(PropertySetEntry.CreateMaterial("Material"));
-         propertySetSink.AddEntry(new PropertySetEntry(PropertyType.Text,"Color"));
-         propertySetSink.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"DrainSize"));
+         propertySetSink.AddEntry(new PropertySetEntry(PropertyType.Text, "Color"));
+         propertySetSink.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "DrainSize"));
 
          commonPropertySets.Add(propertySetSink);
       }
@@ -2158,13 +2158,13 @@ namespace Revit.IFC.Export.Exporter
              typeof(PsetSanitaryTerminalTypeToiletPan_SanitaryMounting)));
          //propertySetToiletPan.AddEntry(PropertySetEntry.CreateMaterial("PanMaterial"));
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-            propertySetToiletPan.AddEntry(new PropertySetEntry(PropertyType.Label,"Color"));
+            propertySetToiletPan.AddEntry(new PropertySetEntry(PropertyType.Label, "Color"));
          else
-            propertySetToiletPan.AddEntry(new PropertySetEntry(PropertyType.Text,"PanColor"));
-         propertySetToiletPan.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"SpilloverLevel"));
-         propertySetToiletPan.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"NominalLength"));
-         propertySetToiletPan.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"NominalWidth"));
-         propertySetToiletPan.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"NominalDepth"));
+            propertySetToiletPan.AddEntry(new PropertySetEntry(PropertyType.Text, "PanColor"));
+         propertySetToiletPan.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "SpilloverLevel"));
+         propertySetToiletPan.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "NominalLength"));
+         propertySetToiletPan.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "NominalWidth"));
+         propertySetToiletPan.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "NominalDepth"));
 
          commonPropertySets.Add(propertySetToiletPan);
       }
@@ -2186,11 +2186,11 @@ namespace Revit.IFC.Export.Exporter
          propertySetWashHandBasin.AddEntry(PropertySetEntry.CreateEnumeratedValue("WashHandBasinMounting", PropertyType.Label,
              typeof(PsetSanitaryTerminalTypeToiletPan_SanitaryMounting)));
          //propertySetWashHandBasin.AddEntry(PropertySetEntry.CreateMaterial("Material"));
-         propertySetWashHandBasin.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"NominalLength"));
-         propertySetWashHandBasin.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"NominalWidth"));
-         propertySetWashHandBasin.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"NominalDepth"));
-         propertySetWashHandBasin.AddEntry(new PropertySetEntry(PropertyType.Text,"Color"));
-         propertySetWashHandBasin.AddEntry(new PropertySetEntry(PropertyType.PositiveLength,"DrainSize"));
+         propertySetWashHandBasin.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "NominalLength"));
+         propertySetWashHandBasin.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "NominalWidth"));
+         propertySetWashHandBasin.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "NominalDepth"));
+         propertySetWashHandBasin.AddEntry(new PropertySetEntry(PropertyType.Text, "Color"));
+         propertySetWashHandBasin.AddEntry(new PropertySetEntry(PropertyType.PositiveLength, "DrainSize"));
 
          commonPropertySets.Add(propertySetWashHandBasin);
       }
@@ -2205,17 +2205,17 @@ namespace Revit.IFC.Export.Exporter
          propertySetSwitchingDeviceTypeCommon.Name = "Pset_SwitchingDeviceTypeCommon";
          propertySetSwitchingDeviceTypeCommon.EntityTypes.Add(IFCEntityType.IfcSwitchingDeviceType);
 
-         propertySetSwitchingDeviceTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Integer,"NumberOfGangs"));
+         propertySetSwitchingDeviceTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Integer, "NumberOfGangs"));
          propertySetSwitchingDeviceTypeCommon.AddEntry(PropertySetEntry.CreateEnumeratedValue("SwitchFunction",
              PropertyType.Label, typeof(PsetSwitchingDeviceTypeCommon_SwitchFunction)));
-         propertySetSwitchingDeviceTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"HasLock"));
+         propertySetSwitchingDeviceTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "HasLock"));
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             propertySetSwitchingDeviceTypeCommon.AddEntry(PropertySetEntryUtil.CreateReferenceEntry());
             propertySetSwitchingDeviceTypeCommon.AddEntry(PropertySetEntryUtil.CreateStatusEntry());
-            propertySetSwitchingDeviceTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean,"IsIlluminated"));
-            propertySetSwitchingDeviceTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Label,"Legend"));
+            propertySetSwitchingDeviceTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Boolean, "IsIlluminated"));
+            propertySetSwitchingDeviceTypeCommon.AddEntry(new PropertySetEntry(PropertyType.Label, "Legend"));
             // cannot support table value: skip SetPoint property
          }
 
@@ -2243,8 +2243,8 @@ namespace Revit.IFC.Export.Exporter
          if (!ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             // properties have been removed in IFc4
-            propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(new PropertySetEntry(PropertyType.Boolean,"IsIlluminated"));
-            propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(new PropertySetEntry(PropertyType.Label,"Legend"));
+            propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(new PropertySetEntry(PropertyType.Boolean, "IsIlluminated"));
+            propertySetSwitchingDeviceTypeToggleSwitch.AddEntry(new PropertySetEntry(PropertyType.Label, "Legend"));
          }
 
          commonPropertySets.Add(propertySetSwitchingDeviceTypeToggleSwitch);
@@ -2275,31 +2275,31 @@ namespace Revit.IFC.Export.Exporter
          propertySetSpaceThermalSimulationProperties.Name = "ePset_SpaceThermalSimulationProperties";
          propertySetSpaceThermalSimulationProperties.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Label,"Space Thermal Simulation Type");
+         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Label, "Space Thermal Simulation Type");
          ifcPSE.PropertyName = "SpaceThermalSimulationType";
          propertySetSpaceThermalSimulationProperties.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Label,"Space Conditioning Requirement");
+         ifcPSE = new PropertySetEntry(PropertyType.Label, "Space Conditioning Requirement");
          ifcPSE.PropertyName = "SpaceConditioningRequirement";
          propertySetSpaceThermalSimulationProperties.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Real,"Space Occupant Density");
+         ifcPSE = new PropertySetEntry(PropertyType.Real, "Space Occupant Density");
          ifcPSE.PropertyName = "SpaceOccupantDensity";
          propertySetSpaceThermalSimulationProperties.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Real,"Space Occupant Heat Rate");
+         ifcPSE = new PropertySetEntry(PropertyType.Real, "Space Occupant Heat Rate");
          ifcPSE.PropertyName = "SpaceOccupantHeatRate";
          propertySetSpaceThermalSimulationProperties.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Real,"Space Occupant Load");
+         ifcPSE = new PropertySetEntry(PropertyType.Real, "Space Occupant Load");
          ifcPSE.PropertyName = "SpaceOccupantLoad";
          propertySetSpaceThermalSimulationProperties.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Real,"Space Equipment Load");
+         ifcPSE = new PropertySetEntry(PropertyType.Real, "Space Equipment Load");
          ifcPSE.PropertyName = "SpaceEquipmentLoad";
          propertySetSpaceThermalSimulationProperties.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Real,"Space Lighting Load");
+         ifcPSE = new PropertySetEntry(PropertyType.Real, "Space Lighting Load");
          ifcPSE.PropertyName = "SpaceLightingLoad";
          propertySetSpaceThermalSimulationProperties.AddEntry(ifcPSE);
 
@@ -2316,44 +2316,44 @@ namespace Revit.IFC.Export.Exporter
          propertySetSpaceThermalDesign.Name = "Pset_SpaceThermalDesign";
          propertySetSpaceThermalDesign.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.VolumetricFlowRate,"CoolingDesignAirflow");
+         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.VolumetricFlowRate, "CoolingDesignAirflow");
          propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.VolumetricFlowRate,"HeatingDesignAirflow");
+         ifcPSE = new PropertySetEntry(PropertyType.VolumetricFlowRate, "HeatingDesignAirflow");
          propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Power,"TotalSensibleHeatGain");
+         ifcPSE = new PropertySetEntry(PropertyType.Power, "TotalSensibleHeatGain");
          propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Power,"TotalHeatGain");
+         ifcPSE = new PropertySetEntry(PropertyType.Power, "TotalHeatGain");
          propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Power,"TotalHeatLoss");
+         ifcPSE = new PropertySetEntry(PropertyType.Power, "TotalHeatLoss");
          propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.ThermodynamicTemperature,"Inside Dry Bulb Temperature - Cooling");
+         ifcPSE = new PropertySetEntry(PropertyType.ThermodynamicTemperature, "Inside Dry Bulb Temperature - Cooling");
          ifcPSE.PropertyName = "CoolingDryBulb";
          propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveRatio,"Inside Relative Humidity - Cooling");
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveRatio, "Inside Relative Humidity - Cooling");
          ifcPSE.PropertyName = "CoolingRelativeHumidity";
          propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.ThermodynamicTemperature,"Inside Dry Bulb Temperature - Heating");
+         ifcPSE = new PropertySetEntry(PropertyType.ThermodynamicTemperature, "Inside Dry Bulb Temperature - Heating");
          ifcPSE.PropertyName = "HeatingDryBulb";
          propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.PositiveRatio,"Inside Relative Humidity - Heating");
+         ifcPSE = new PropertySetEntry(PropertyType.PositiveRatio, "Inside Relative Humidity - Heating");
          ifcPSE.PropertyName = "HeatingRelativeHumidity";
          propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.VolumetricFlowRate,"VentilationAirFlowrate");
+         ifcPSE = new PropertySetEntry(PropertyType.VolumetricFlowRate, "VentilationAirFlowrate");
          propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.VolumetricFlowRate,"ExhaustAirFlowrate");
+         ifcPSE = new PropertySetEntry(PropertyType.VolumetricFlowRate, "ExhaustAirFlowrate");
          propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Boolean,"Inside Return Air Plenum");
+         ifcPSE = new PropertySetEntry(PropertyType.Boolean, "Inside Return Air Plenum");
          ifcPSE.PropertyName = "CeilingRAPlenum";
          propertySetSpaceThermalDesign.AddEntry(ifcPSE);
 
@@ -2372,11 +2372,11 @@ namespace Revit.IFC.Export.Exporter
          propertySetSpaceVentilationCriteria.Name = "ePset_SpaceVentilationCriteria";
          propertySetSpaceVentilationCriteria.EntityTypes.Add(IFCEntityType.IfcSpace);
 
-         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Label,"Ventilation Type");
+         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Label, "Ventilation Type");
          ifcPSE.PropertyName = "VentilationType";
          propertySetSpaceVentilationCriteria.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Real,"Outside Air Per Person");
+         ifcPSE = new PropertySetEntry(PropertyType.Real, "Outside Air Per Person");
          ifcPSE.PropertyName = "OutsideAirPerPerson";
          propertySetSpaceVentilationCriteria.AddEntry(ifcPSE);
 
@@ -2393,11 +2393,11 @@ namespace Revit.IFC.Export.Exporter
          propertySetBuildingEnergyTarget.Name = "ePset_BuildingEnergyTarget";
          propertySetBuildingEnergyTarget.EntityTypes.Add(IFCEntityType.IfcBuilding);
 
-         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Real,"Building Energy Target Value");
+         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Real, "Building Energy Target Value");
          ifcPSE.PropertyName = "BuildingEnergyTargetValue";
          propertySetBuildingEnergyTarget.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Label,"Building Energy Target Units");
+         ifcPSE = new PropertySetEntry(PropertyType.Label, "Building Energy Target Units");
          ifcPSE.PropertyName = "BuildingEnergyTargetUnits";
          propertySetBuildingEnergyTarget.AddEntry(ifcPSE);
 
@@ -2414,7 +2414,7 @@ namespace Revit.IFC.Export.Exporter
          propertySetGlazingPropertiesEnergyAnalysis.Name = "ePset_GlazingPropertiesEnergyAnalysis";
          propertySetGlazingPropertiesEnergyAnalysis.EntityTypes.Add(IFCEntityType.IfcCurtainWall);
 
-         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Label,"Windows 6 Glazing System Name");
+         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Label, "Windows 6 Glazing System Name");
          ifcPSE.PropertyName = "Windows6GlazingSystemName";
          propertySetGlazingPropertiesEnergyAnalysis.AddEntry(ifcPSE);
 
@@ -2433,23 +2433,23 @@ namespace Revit.IFC.Export.Exporter
          propertySetPhotovoltaicArray.EntityTypes.Add(IFCEntityType.IfcWall);
          propertySetPhotovoltaicArray.EntityTypes.Add(IFCEntityType.IfcSlab);
 
-         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Boolean,"Hosts Photovoltaic Array");
+         PropertySetEntry ifcPSE = new PropertySetEntry(PropertyType.Boolean, "Hosts Photovoltaic Array");
          ifcPSE.PropertyName = "HostsPhotovoltaicArray";
          propertySetPhotovoltaicArray.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Real,"Active Area Ratio");
+         ifcPSE = new PropertySetEntry(PropertyType.Real, "Active Area Ratio");
          ifcPSE.PropertyName = "ActiveAreaRatio";
          propertySetPhotovoltaicArray.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Real,"DC to AC Conversion Efficiency");
+         ifcPSE = new PropertySetEntry(PropertyType.Real, "DC to AC Conversion Efficiency");
          ifcPSE.PropertyName = "DcToAcConversionEfficiency";
          propertySetPhotovoltaicArray.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Label,"Photovoltaic Surface Integration");
+         ifcPSE = new PropertySetEntry(PropertyType.Label, "Photovoltaic Surface Integration");
          ifcPSE.PropertyName = "PhotovoltaicSurfaceIntegration";
          propertySetPhotovoltaicArray.AddEntry(ifcPSE);
 
-         ifcPSE = new PropertySetEntry(PropertyType.Real,"Photovoltaic Cell Efficiency");
+         ifcPSE = new PropertySetEntry(PropertyType.Real, "Photovoltaic Cell Efficiency");
          ifcPSE.PropertyName = "PhotovoltaicCellEfficiency";
          propertySetPhotovoltaicArray.AddEntry(ifcPSE);
 
@@ -2465,7 +2465,7 @@ namespace Revit.IFC.Export.Exporter
       private static void InitCeilingBaseQuantities(IList<QuantityDescription> baseQuantities)
       {
          QuantityDescription ifcCeilingQuantity = new QuantityDescription();
-		 BuiltInParameter builtInParameter = BuiltInParameter.HOST_AREA_COMPUTED;
+         BuiltInParameter builtInParameter = BuiltInParameter.HOST_AREA_COMPUTED;
          QuantityEntry ifcQE;
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
@@ -2613,7 +2613,7 @@ namespace Revit.IFC.Export.Exporter
          ExportOptionsCache exportOptionsCache = ExporterCacheManager.ExportOptionsCache;
          if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable)   // FMHandOver view exclude NetArea, GrossArea, NetVolume and GrossVolumne
          {
-            ifcQE = new QuantityEntry("NetFloorArea" , SpaceLevelAreaCalculator.Instance);
+            ifcQE = new QuantityEntry("NetFloorArea", SpaceLevelAreaCalculator.Instance);
             ifcQE.QuantityType = QuantityType.Area;
             ifcBaseQuantity.AddEntry(ifcQE);
 

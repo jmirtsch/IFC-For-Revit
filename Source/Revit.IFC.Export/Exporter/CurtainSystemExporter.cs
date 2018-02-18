@@ -103,7 +103,7 @@ namespace Revit.IFC.Export.Exporter
                                     exportType = IFCExportType.IfcMemberType;
                                     ifcEnumType = "MULLION";
                                  }
-                                 
+
                                  FamilyInstanceExporter.ExportFamilyInstanceAsMappedItem(exporterIFC, subElem as Mullion, exportType, ifcEnumType, productWrapper,
                                      ElementId.InvalidElementId, null, currLocalPlacement);
                               }
@@ -120,7 +120,7 @@ namespace Revit.IFC.Export.Exporter
                                  exportType = ElementFilteringUtil.GetExportTypeFromCategoryId(catId, out ifcEnumType);
                               }
 
-             
+
                               if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
                               {
                                  if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.IfcPlateType) ||
@@ -690,8 +690,8 @@ namespace Revit.IFC.Export.Exporter
 
          // Property sets will be set later.
          wallType = IFCInstanceExporter.CreateCurtainWallType(exporterIFC.GetFile(), elementType,
-             null, null,  elemElementType, (elemElementType != null) ? "USERDEFINED" : "NOTDEFINED");
-         
+             null, null, elemElementType, (elemElementType != null) ? "USERDEFINED" : "NOTDEFINED");
+
          string elemTag = NamingUtil.GetTagOverride(elementType, NamingUtil.CreateIFCElementId(elementType));
          IFCAnyHandleUtil.SetAttribute(wallType, "Tag", elemTag);
          wrapper.RegisterHandleWithElementType(elementType as ElementType, wallType, null);

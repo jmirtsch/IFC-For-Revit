@@ -58,7 +58,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       {
 
       }
-	   
+
       /// <summary>
       /// Process to create element property.
       /// </summary>

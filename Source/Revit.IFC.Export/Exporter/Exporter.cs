@@ -1126,11 +1126,11 @@ namespace Revit.IFC.Export.Exporter
                   double elevation = UnitUtil.ScaleLength(elev);
                   XYZ orig = new XYZ(0.0, 0.0, elevation);
 
-               IFCAnyHandle placement = ExporterUtil.CreateLocalPlacement(file, buildingPlacement, orig, null, null);
+                  IFCAnyHandle placement = ExporterUtil.CreateLocalPlacement(file, buildingPlacement, orig, null, null);
 
-               IFCElementComposition ifcComposition = LevelUtil.GetElementCompositionTypeOverride(level);
-               IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(exporterIFC, level, ExporterCacheManager.OwnerHistoryHandle,
-                       placement, ifcComposition, elevation);
+                  IFCElementComposition ifcComposition = LevelUtil.GetElementCompositionTypeOverride(level);
+                  IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(exporterIFC, level, ExporterCacheManager.OwnerHistoryHandle,
+                          placement, ifcComposition, elevation);
 
 
                   // Create classification reference when level has classification field name assigned to it
@@ -2011,7 +2011,7 @@ namespace Revit.IFC.Export.Exporter
             ProjectLocation projLocation = doc.ActiveProjectLocation;
             Transform siteSharedCoordinatesTrf = projLocation == null ? Transform.Identity : projLocation.GetTransform().Inverse;
             XYZ unscaledOrigin = new XYZ(0, 0, 0);
-		  if (transformBasis == ExportOptionsCache.SiteTransformBasis.Project)
+            if (transformBasis == ExportOptionsCache.SiteTransformBasis.Project)
             {
                BasePoint basePoint = new FilteredElementCollector(doc).WherePasses(new ElementCategoryFilter(BuiltInCategory.OST_ProjectBasePoint)).First() as BasePoint;
                if (basePoint != null)
@@ -2223,7 +2223,7 @@ namespace Revit.IFC.Export.Exporter
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieCompInfo != null)
          {
-            IFCAnyHandle postalAddress = IFCInstanceExporter.CreatePostalAddress(file, null, null, null, null, new List<string>() { cobieCompInfo.StreetAddress }, 
+            IFCAnyHandle postalAddress = IFCInstanceExporter.CreatePostalAddress(file, null, null, null, null, new List<string>() { cobieCompInfo.StreetAddress },
                null, cobieCompInfo.City, cobieCompInfo.State_Region, cobieCompInfo.PostalCode, cobieCompInfo.Country);
             IFCAnyHandle telecomAddress = IFCInstanceExporter.CreateTelecomAddress(file, null, null, null, new List<string>() { cobieCompInfo.CompanyPhone },
                null, null, new List<string>() { cobieCompInfo.CompanyEmail }, null);
@@ -2296,13 +2296,13 @@ namespace Revit.IFC.Export.Exporter
             // Get project description if it is set in the Project info
             projectDescription = (projectInfo != null) ? NamingUtil.GetDescriptionOverride(projectInfo, null) : null;
 
-         if (projectInfo != null)
-            ParameterUtil.GetStringValueFromElement(projectInfo, projectInfo.Id, "Project Phase", out projectPhase);
+            if (projectInfo != null)
+               ParameterUtil.GetStringValueFromElement(projectInfo, projectInfo.Id, "Project Phase", out projectPhase);
          }
 
          string projectGUID = GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Project);
          IFCAnyHandle projectHandle = IFCInstanceExporter.CreateProject(exporterIFC, projectInfo, projectGUID, ownerHistory,
-             projectName, projectDescription,  projectLongName, projectPhase, repContexts, units);
+             projectName, projectDescription, projectLongName, projectPhase, repContexts, units);
          ExporterCacheManager.ProjectHandle = projectHandle;
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAsCOBIE)

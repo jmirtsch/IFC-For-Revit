@@ -27,65 +27,65 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate load bearing value for a column.
-    /// </summary>
-    class ColumnLoadBearingCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A boolean variable to keep the calculated value.
-        /// </summary>
-        private bool m_LoadBearing = false;
+   /// <summary>
+   /// A calculation class to calculate load bearing value for a column.
+   /// </summary>
+   class ColumnLoadBearingCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A boolean variable to keep the calculated value.
+      /// </summary>
+      private bool m_LoadBearing = false;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static ColumnLoadBearingCalculator s_Instance = new ColumnLoadBearingCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static ColumnLoadBearingCalculator s_Instance = new ColumnLoadBearingCalculator();
 
-        /// <summary>
-        /// The ColumnLoadBearingCalculator instance.
-        /// </summary>
-        public static ColumnLoadBearingCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The ColumnLoadBearingCalculator instance.
+      /// </summary>
+      public static ColumnLoadBearingCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates load bearing value for a column.
-        /// </summary>
-        /// <remarks>
-        /// True for structural columns, and false for architectural ones.
-        /// </remarks>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            m_LoadBearing = CategoryUtil.GetSafeCategoryId(element) == new ElementId(BuiltInCategory.OST_StructuralColumns);
-            return true;
-        }
+      /// <summary>
+      /// Calculates load bearing value for a column.
+      /// </summary>
+      /// <remarks>
+      /// True for structural columns, and false for architectural ones.
+      /// </remarks>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="extrusionCreationData">
+      /// The IFCExtrusionCreationData.
+      /// </param>
+      /// <param name="element">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="elementType">
+      /// The element type.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         m_LoadBearing = CategoryUtil.GetSafeCategoryId(element) == new ElementId(BuiltInCategory.OST_StructuralColumns);
+         return true;
+      }
 
-        /// <summary>
-        /// Gets the calculated boolean value.
-        /// </summary>
-        /// <returns>
-        /// The boolean value.
-        /// </returns>
-        public override bool GetBooleanValue()
-        {
-            return m_LoadBearing;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated boolean value.
+      /// </summary>
+      /// <returns>
+      /// The boolean value.
+      /// </returns>
+      public override bool GetBooleanValue()
+      {
+         return m_LoadBearing;
+      }
+   }
 }

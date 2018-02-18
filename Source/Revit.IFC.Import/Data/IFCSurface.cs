@@ -24,66 +24,66 @@ using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class that represents IFCSurface entity
-    /// </summary>
-    public abstract class IFCSurface : IFCRepresentationItem
-    {
-        protected IFCSurface()
-        {
-        }
-        
-        override protected void Process(IFCAnyHandle ifcCurve)
-        {
-            base.Process(ifcCurve);
-        }
+   /// <summary>
+   /// Class that represents IFCSurface entity
+   /// </summary>
+   public abstract class IFCSurface : IFCRepresentationItem
+   {
+      protected IFCSurface()
+      {
+      }
 
-        /// <summary>
-        /// Get the local surface transform at a given point on the surface.
-        /// </summary>
-        /// <param name="pointOnSurface">The point.</param>
-        /// <returns>The transform.</returns>
-        public virtual Transform GetTransformAtPoint(XYZ pointOnSurface)
-        {
+      override protected void Process(IFCAnyHandle ifcCurve)
+      {
+         base.Process(ifcCurve);
+      }
+
+      /// <summary>
+      /// Get the local surface transform at a given point on the surface.
+      /// </summary>
+      /// <param name="pointOnSurface">The point.</param>
+      /// <returns>The transform.</returns>
+      public virtual Transform GetTransformAtPoint(XYZ pointOnSurface)
+      {
+         return null;
+      }
+
+      /// <summary>
+      /// Create an IFCSurface object from a handle of type IfcSurface.
+      /// </summary>
+      /// <param name="ifcSurface">The IFC handle.</param>
+      /// <returns>The IFCSurface object.</returns>
+      public static IFCSurface ProcessIFCSurface(IFCAnyHandle ifcSurface)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSurface))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcSurface);
             return null;
-        }
+         }
 
-        /// <summary>
-        /// Create an IFCSurface object from a handle of type IfcSurface.
-        /// </summary>
-        /// <param name="ifcSurface">The IFC handle.</param>
-        /// <returns>The IFCSurface object.</returns>
-        public static IFCSurface ProcessIFCSurface(IFCAnyHandle ifcSurface)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcSurface))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcSurface);
-                return null;
-            }
+         IFCEntity surface;
+         if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcSurface.StepId, out surface))
+            return (surface as IFCSurface);
 
-            IFCEntity surface;
-            if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcSurface.StepId, out surface))
-                return (surface as IFCSurface);
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcSurface, IFCEntityType.IfcElementarySurface))
+            return IFCElementarySurface.ProcessIFCElementarySurface(ifcSurface);
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcSurface, IFCEntityType.IfcSweptSurface))
+            return IFCSweptSurface.ProcessIFCSweptSurface(ifcSurface);
+         else if (IFCAnyHandleUtil.IsSubTypeOf(ifcSurface, IFCEntityType.IfcBSplineSurface))
+            return IFCBSplineSurface.ProcessIFCBSplineSurface(ifcSurface);
 
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcSurface, IFCEntityType.IfcElementarySurface))
-                return IFCElementarySurface.ProcessIFCElementarySurface(ifcSurface);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcSurface, IFCEntityType.IfcSweptSurface))
-                return IFCSweptSurface.ProcessIFCSweptSurface(ifcSurface);
-            else if (IFCAnyHandleUtil.IsSubTypeOf(ifcSurface, IFCEntityType.IfcBSplineSurface))
-                return IFCBSplineSurface.ProcessIFCBSplineSurface(ifcSurface);
+         Importer.TheLog.LogUnhandledSubTypeError(ifcSurface, IFCEntityType.IfcSurface, true);
+         return null;
+      }
 
-            Importer.TheLog.LogUnhandledSubTypeError(ifcSurface, IFCEntityType.IfcSurface, true);
-            return null;
-        }
-
-        /// <summary>
-        /// Returns the surface which defines the internal shape of the face
-        /// </summary>
-        /// <param name="lcs">The local coordinate system for the surface.  Can be null.</param>
-        /// <returns>The surface which defines the internal shape of the face</returns>
-        public virtual Surface GetSurface(Transform lcs)
-        {
-            return null;
-        }
-    }
+      /// <summary>
+      /// Returns the surface which defines the internal shape of the face
+      /// </summary>
+      /// <param name="lcs">The local coordinate system for the surface.  Can be null.</param>
+      /// <returns>The surface which defines the internal shape of the face</returns>
+      public virtual Surface GetSurface(Transform lcs)
+      {
+         return null;
+      }
+   }
 }

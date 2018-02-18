@@ -31,20 +31,20 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Interface that contains shared functions for IfcMaterialSelect
-    /// </summary>
-    public interface IIFCMaterialSelect
-    {
-        /// <summary>
-        /// Return the material list for this IFCMaterialSelect.
-        /// </summary>
-        IList<IFCMaterial> GetMaterials();
+   /// <summary>
+   /// Interface that contains shared functions for IfcMaterialSelect
+   /// </summary>
+   public interface IIFCMaterialSelect
+   {
+      /// <summary>
+      /// Return the material list for this IFCMaterialSelect.
+      /// </summary>
+      IList<IFCMaterial> GetMaterials();
 
-        /// <summary>
-        /// Create the elements associated with the IFCMaterialSelect.
-        /// </summary>
-        /// <param name="doc">The document.</param>
-        void Create(Document doc);
-    }
+      /// <summary>
+      /// Create the elements associated with the IFCMaterialSelect.
+      /// </summary>
+      /// <param name="doc">The document.</param>
+      void Create(Document doc);
+   }
 }

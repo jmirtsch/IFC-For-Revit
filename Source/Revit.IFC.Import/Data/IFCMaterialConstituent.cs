@@ -27,121 +27,121 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class representing IFCMaterialConstituent
-    /// </summary>
-    public class IFCMaterialConstituent : IFCEntity, IIFCMaterialSelect
-    {
-        string m_Name = null;
-        string m_Description = null;
-        IFCMaterial m_Material = null;
-        double? m_Fraction = null;
-        string m_Category = null;
+   /// <summary>
+   /// Class representing IFCMaterialConstituent
+   /// </summary>
+   public class IFCMaterialConstituent : IFCEntity, IIFCMaterialSelect
+   {
+      string m_Name = null;
+      string m_Description = null;
+      IFCMaterial m_Material = null;
+      double? m_Fraction = null;
+      string m_Category = null;
 
-        /// <summary>
-        /// Get the Name attribute
-        /// </summary>
-        public string Name
-        {
-            get { return m_Name; }
-            protected set { m_Name = value; }
-        }
+      /// <summary>
+      /// Get the Name attribute
+      /// </summary>
+      public string Name
+      {
+         get { return m_Name; }
+         protected set { m_Name = value; }
+      }
 
-        // Get the Description attribute
-        public string Description
-        {
-            get { return m_Description; }
-            protected set { m_Description = value; }
-        }
+      // Get the Description attribute
+      public string Description
+      {
+         get { return m_Description; }
+         protected set { m_Description = value; }
+      }
 
-        /// <summary>
-        /// Get the associated IFCMaterial
-        /// </summary>
-        public IFCMaterial Material
-        {
-            get { return m_Material; }
-            protected set { m_Material = value; }
-        }
+      /// <summary>
+      /// Get the associated IFCMaterial
+      /// </summary>
+      public IFCMaterial Material
+      {
+         get { return m_Material; }
+         protected set { m_Material = value; }
+      }
 
-        /// <summary>
-        /// Get the Priority attribute
-        /// </summary>
-        public double? Fraction
-        {
-            get { return m_Fraction; }
-            protected set { m_Fraction = value; }
-        }
+      /// <summary>
+      /// Get the Priority attribute
+      /// </summary>
+      public double? Fraction
+      {
+         get { return m_Fraction; }
+         protected set { m_Fraction = value; }
+      }
 
-        /// <summary>
-        ///  Get the Category attribute
-        /// </summary>
-        public string Category
-        {
-            get { return m_Category; }
-            set { m_Category = value; }
-        }
+      /// <summary>
+      ///  Get the Category attribute
+      /// </summary>
+      public string Category
+      {
+         get { return m_Category; }
+         set { m_Category = value; }
+      }
 
-        public void Create(Document doc)
-        {
-            if (Material != null)
-                Material.Create(doc);
-        }
+      public void Create(Document doc)
+      {
+         if (Material != null)
+            Material.Create(doc);
+      }
 
-        /// <summary>
-        /// Return the material (in list) for this IFCMaterialSelect
-        /// </summary>
-        /// <returns></returns>
-        public IList<IFCMaterial> GetMaterials()
-        {
-            IList<IFCMaterial> materials = new List<IFCMaterial>();
-            if (Material != null)
-                materials.Add(Material);
-            return materials;
-        }
+      /// <summary>
+      /// Return the material (in list) for this IFCMaterialSelect
+      /// </summary>
+      /// <returns></returns>
+      public IList<IFCMaterial> GetMaterials()
+      {
+         IList<IFCMaterial> materials = new List<IFCMaterial>();
+         if (Material != null)
+            materials.Add(Material);
+         return materials;
+      }
 
-        protected IFCMaterialConstituent()
-        {
-        }
+      protected IFCMaterialConstituent()
+      {
+      }
 
-        protected IFCMaterialConstituent(IFCAnyHandle ifcMaterialConstituent)
-        {
-            Process(ifcMaterialConstituent);
-        }
+      protected IFCMaterialConstituent(IFCAnyHandle ifcMaterialConstituent)
+      {
+         Process(ifcMaterialConstituent);
+      }
 
-        protected override void Process(IFCAnyHandle ifcMaterialConstituent)
-        {
-            base.Process(ifcMaterialConstituent);
+      protected override void Process(IFCAnyHandle ifcMaterialConstituent)
+      {
+         base.Process(ifcMaterialConstituent);
 
-            IFCAnyHandle ifcMaterial = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcMaterialConstituent, "Material", true);
-            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterial))
-                Material = IFCMaterial.ProcessIFCMaterial(ifcMaterial);
+         IFCAnyHandle ifcMaterial = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcMaterialConstituent, "Material", true);
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterial))
+            Material = IFCMaterial.ProcessIFCMaterial(ifcMaterial);
 
-            Name = IFCImportHandleUtil.GetOptionalStringAttribute(ifcMaterialConstituent, "Name", null);
-            Description = IFCImportHandleUtil.GetOptionalStringAttribute(ifcMaterialConstituent, "Description", null);
-            double fraction = IFCImportHandleUtil.GetOptionalRealAttribute(ifcMaterialConstituent, "Fraction", -1);
-            if (fraction >= 0)
-                Fraction = fraction;
-            Category = IFCImportHandleUtil.GetOptionalStringAttribute(ifcMaterialConstituent, "Category", null);
-            return;
-        }
+         Name = IFCImportHandleUtil.GetOptionalStringAttribute(ifcMaterialConstituent, "Name", null);
+         Description = IFCImportHandleUtil.GetOptionalStringAttribute(ifcMaterialConstituent, "Description", null);
+         double fraction = IFCImportHandleUtil.GetOptionalRealAttribute(ifcMaterialConstituent, "Fraction", -1);
+         if (fraction >= 0)
+            Fraction = fraction;
+         Category = IFCImportHandleUtil.GetOptionalStringAttribute(ifcMaterialConstituent, "Category", null);
+         return;
+      }
 
-        /// <summary>
-        /// Process an IFCMaterialConstituent entity
-        /// </summary>
-        /// <param name="ifcMaterialConstituent">the material constituent</param>
-        /// <returns>returns IFCMaterialCOnstituent object</returns>
-        public static IFCMaterialConstituent ProcessIFCMaterialConstituent(IFCAnyHandle ifcMaterialConstituent)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialConstituent))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialConstituent);
-                return null;
-            }
+      /// <summary>
+      /// Process an IFCMaterialConstituent entity
+      /// </summary>
+      /// <param name="ifcMaterialConstituent">the material constituent</param>
+      /// <returns>returns IFCMaterialCOnstituent object</returns>
+      public static IFCMaterialConstituent ProcessIFCMaterialConstituent(IFCAnyHandle ifcMaterialConstituent)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialConstituent))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialConstituent);
+            return null;
+         }
 
-            IFCEntity materialConstituent;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcMaterialConstituent.StepId, out materialConstituent))
-                materialConstituent = new IFCMaterialConstituent(ifcMaterialConstituent);
-            return (materialConstituent as IFCMaterialConstituent);
-        }
-    }
+         IFCEntity materialConstituent;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcMaterialConstituent.StepId, out materialConstituent))
+            materialConstituent = new IFCMaterialConstituent(ifcMaterialConstituent);
+         return (materialConstituent as IFCMaterialConstituent);
+      }
+   }
 }

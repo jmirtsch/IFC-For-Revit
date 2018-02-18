@@ -30,23 +30,23 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter
 {
-    /// <summary>
-    /// Provides methods to export a Revit element as IfcCovering of type INSULATION.
-    /// </summary>
-    class DuctInsulationExporter : InsulationExporter
-    {
-        /// <summary>
-        /// Exports an element as a covering of type insulation.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="element">The element.</param>
-        /// <param name="geometryElement">The geometry element.</param>
-        /// <param name="productWrapper">The ProductWrapper.</param>
-        /// <returns>True if exported successfully, false otherwise.</returns>
-        public static bool ExportDuctInsulation(ExporterIFC exporterIFC, Element element,
-            GeometryElement geometryElement, ProductWrapper productWrapper)
-        {
-            return ExportInsulation(exporterIFC, element, geometryElement, productWrapper);
-        }
-    }
+   /// <summary>
+   /// Provides methods to export a Revit element as IfcCovering of type INSULATION.
+   /// </summary>
+   class DuctInsulationExporter : InsulationExporter
+   {
+      /// <summary>
+      /// Exports an element as a covering of type insulation.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="element">The element.</param>
+      /// <param name="geometryElement">The geometry element.</param>
+      /// <param name="productWrapper">The ProductWrapper.</param>
+      /// <returns>True if exported successfully, false otherwise.</returns>
+      public static bool ExportDuctInsulation(ExporterIFC exporterIFC, Element element,
+          GeometryElement geometryElement, ProductWrapper productWrapper)
+      {
+         return ExportInsulation(exporterIFC, element, geometryElement, productWrapper);
+      }
+   }
 }

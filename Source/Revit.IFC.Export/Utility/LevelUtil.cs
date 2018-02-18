@@ -401,7 +401,7 @@ namespace Revit.IFC.Export.Utility
       /// </summary>
       /// <param name="element">The element </param>
       public static IFCElementComposition GetElementCompositionTypeOverride(Element element)
-      {      
+      {
          string nameOverride = "IfcElementCompositionType";
 
          // If the IfcElementCompositionType is not set by the user, 
@@ -409,14 +409,14 @@ namespace Revit.IFC.Export.Utility
          string overrideValue = NamingUtil.GetOverrideStringValue(element, nameOverride, "Element");
 
          IFCElementComposition ifcElementCompositionType;
-         
+
          if (Enum.TryParse<IFCElementComposition>(overrideValue, true, out ifcElementCompositionType))
          {
             return ifcElementCompositionType;
          }
 
-         return IFCElementComposition.Element;   
-    
+         return IFCElementComposition.Element;
+
       }
 
    }

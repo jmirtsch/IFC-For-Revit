@@ -56,7 +56,7 @@ namespace Revit.IFC.Common.Utility
                   parentName = parentComplexType.BaseTypeName.Name;
             }
 
-            IfcSchemaEntityTree.Add(entityName, parentName, isAbstract:ct.IsAbstract);
+            IfcSchemaEntityTree.Add(entityName, parentName, isAbstract: ct.IsAbstract);
          }
          return true;
       }

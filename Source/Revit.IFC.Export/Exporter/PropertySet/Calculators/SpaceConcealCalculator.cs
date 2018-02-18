@@ -27,63 +27,63 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    class SpaceConcealCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A boolean variable to keep the calculated value.
-        /// </summary>
-        private bool m_Concealed = false;
+   class SpaceConcealCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A boolean variable to keep the calculated value.
+      /// </summary>
+      private bool m_Concealed = false;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static SpaceConcealCalculator s_Instance = new SpaceConcealCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static SpaceConcealCalculator s_Instance = new SpaceConcealCalculator();
 
-        /// <summary>
-        /// The SpaceConcealCalculator instance.
-        /// </summary>
-        public static SpaceConcealCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The SpaceConcealCalculator instance.
+      /// </summary>
+      public static SpaceConcealCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates concealed value for a space.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
-        /// <param name="element">The element to calculate the value.</param>
-        /// <param name="elementType">The element type.</param>
-        /// <returns>True if the operation succeed, false otherwise.</returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            int concealed = 0;
-            if (ParameterUtil.GetIntValueFromElementOrSymbol(element, "Concealed", out concealed) != null)
-            {
-                m_Concealed = concealed != 0;
-                return true;
-            }
+      /// <summary>
+      /// Calculates concealed value for a space.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
+      /// <param name="element">The element to calculate the value.</param>
+      /// <param name="elementType">The element type.</param>
+      /// <returns>True if the operation succeed, false otherwise.</returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         int concealed = 0;
+         if (ParameterUtil.GetIntValueFromElementOrSymbol(element, "Concealed", out concealed) != null)
+         {
+            m_Concealed = concealed != 0;
+            return true;
+         }
 
-            int concealedFlooring = 0, concealedCovering = 0;
-            if ((ParameterUtil.GetIntValueFromElementOrSymbol(element, "ConcealedFlooring", out concealedFlooring) != null) ||
-                (ParameterUtil.GetIntValueFromElementOrSymbol(element, "ConcealedCovering", out concealedCovering) != null))
-            {
-                m_Concealed = concealedFlooring != 0 || concealedCovering != 0;
-                return true;
-            }
+         int concealedFlooring = 0, concealedCovering = 0;
+         if ((ParameterUtil.GetIntValueFromElementOrSymbol(element, "ConcealedFlooring", out concealedFlooring) != null) ||
+             (ParameterUtil.GetIntValueFromElementOrSymbol(element, "ConcealedCovering", out concealedCovering) != null))
+         {
+            m_Concealed = concealedFlooring != 0 || concealedCovering != 0;
+            return true;
+         }
 
-            return false;
-        }
+         return false;
+      }
 
-        /// <summary>
-        /// Gets the calculated boolean value.
-        /// </summary>
-        /// <returns>
-        /// The boolean value.
-        /// </returns>
-        public override bool GetBooleanValue()
-        {
-            return m_Concealed;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated boolean value.
+      /// </summary>
+      /// <returns>
+      /// The boolean value.
+      /// </returns>
+      public override bool GetBooleanValue()
+      {
+         return m_Concealed;
+      }
+   }
 }

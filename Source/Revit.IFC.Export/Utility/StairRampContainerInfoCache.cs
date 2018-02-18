@@ -26,60 +26,60 @@ using Revit.IFC.Export.Exporter;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of the element ids mapping to a StairRampContainerInfo.
-    /// </summary>
-    public class StairRampContainerInfoCache : Dictionary<ElementId, StairRampContainerInfo>
-    {
-        /// <summary>
-        /// Adds a StairRampContainerInfo for an element.
-        /// </summary>
-        /// <param name="elementId">The element id.</param>
-        /// <param name="stairRampContainerInfo">The StairRampContainerInfo.</param>
-        public void AddStairRampContainerInfo(ElementId elementId, StairRampContainerInfo stairRampContainerInfo)
-        {
-            this[elementId] = stairRampContainerInfo;
-        }
+   /// <summary>
+   /// Used to keep a cache of the element ids mapping to a StairRampContainerInfo.
+   /// </summary>
+   public class StairRampContainerInfoCache : Dictionary<ElementId, StairRampContainerInfo>
+   {
+      /// <summary>
+      /// Adds a StairRampContainerInfo for an element.
+      /// </summary>
+      /// <param name="elementId">The element id.</param>
+      /// <param name="stairRampContainerInfo">The StairRampContainerInfo.</param>
+      public void AddStairRampContainerInfo(ElementId elementId, StairRampContainerInfo stairRampContainerInfo)
+      {
+         this[elementId] = stairRampContainerInfo;
+      }
 
-        /// <summary>
-        /// Appends information of a StairRampContainerInfo to an existing one in the cache or add it if there is no existing one.
-        /// </summary>
-        /// <param name="elementId">The element id.</param>
-        /// <param name="stairRampContainerInfo">The StairRampContainerInfo.</param>
-        public void AppendStairRampContainerInfo(ElementId elementId, StairRampContainerInfo stairRampContainerInfo)
-        {
-            StairRampContainerInfo existStairRampContainerInfo = null;
+      /// <summary>
+      /// Appends information of a StairRampContainerInfo to an existing one in the cache or add it if there is no existing one.
+      /// </summary>
+      /// <param name="elementId">The element id.</param>
+      /// <param name="stairRampContainerInfo">The StairRampContainerInfo.</param>
+      public void AppendStairRampContainerInfo(ElementId elementId, StairRampContainerInfo stairRampContainerInfo)
+      {
+         StairRampContainerInfo existStairRampContainerInfo = null;
 
-            if (!TryGetValue(elementId, out existStairRampContainerInfo))
-                AddStairRampContainerInfo(elementId, stairRampContainerInfo);
-            else
-            {
-                existStairRampContainerInfo.StairOrRampHandles.AddRange(stairRampContainerInfo.StairOrRampHandles);
-                existStairRampContainerInfo.Components.AddRange(stairRampContainerInfo.Components);
-                existStairRampContainerInfo.LocalPlacements.AddRange(stairRampContainerInfo.LocalPlacements);
-            }
-        }
+         if (!TryGetValue(elementId, out existStairRampContainerInfo))
+            AddStairRampContainerInfo(elementId, stairRampContainerInfo);
+         else
+         {
+            existStairRampContainerInfo.StairOrRampHandles.AddRange(stairRampContainerInfo.StairOrRampHandles);
+            existStairRampContainerInfo.Components.AddRange(stairRampContainerInfo.Components);
+            existStairRampContainerInfo.LocalPlacements.AddRange(stairRampContainerInfo.LocalPlacements);
+         }
+      }
 
-        /// <summary>
-        /// Checks if it contains a StairRampContainerInfo of an element.
-        /// </summary>
-        /// <param name="elementId">The element id.</param>
-        /// <returns>True if there is, false if there is none.</returns>
-        public bool ContainsStairRampContainerInfo(ElementId elementId)
-        {
-            return this.ContainsKey(elementId);
-        }
+      /// <summary>
+      /// Checks if it contains a StairRampContainerInfo of an element.
+      /// </summary>
+      /// <param name="elementId">The element id.</param>
+      /// <returns>True if there is, false if there is none.</returns>
+      public bool ContainsStairRampContainerInfo(ElementId elementId)
+      {
+         return this.ContainsKey(elementId);
+      }
 
-        /// <summary>
-        /// Gets the StairRampContainerInfo of an element.
-        /// </summary>
-        /// <param name="elementId">The element id.</param>
-        /// <returns>The StairRampContainerInfo.</returns>
-        public StairRampContainerInfo GetStairRampContainerInfo(ElementId elementId)
-        {
-            StairRampContainerInfo existStairRampContainerInfo = null;
-            TryGetValue(elementId, out existStairRampContainerInfo);
-            return existStairRampContainerInfo;
-        }
-    }
+      /// <summary>
+      /// Gets the StairRampContainerInfo of an element.
+      /// </summary>
+      /// <param name="elementId">The element id.</param>
+      /// <returns>The StairRampContainerInfo.</returns>
+      public StairRampContainerInfo GetStairRampContainerInfo(ElementId elementId)
+      {
+         StairRampContainerInfo existStairRampContainerInfo = null;
+         TryGetValue(elementId, out existStairRampContainerInfo);
+         return existStairRampContainerInfo;
+      }
+   }
 }

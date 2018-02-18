@@ -29,7 +29,7 @@ namespace Revit.IFC.Common.Utility
       {
          if (!string.IsNullOrEmpty(compInfoStr))
          {
-            COBieCompanyInfo compInfo = JsonConvert.DeserializeObject< COBieCompanyInfo>(compInfoStr);
+            COBieCompanyInfo compInfo = JsonConvert.DeserializeObject<COBieCompanyInfo>(compInfoStr);
             CompanyType = compInfo.CompanyType;
             CompanyName = compInfo.CompanyName;
             StreetAddress = compInfo.StreetAddress;

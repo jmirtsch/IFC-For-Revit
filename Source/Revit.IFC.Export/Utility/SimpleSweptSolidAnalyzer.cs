@@ -81,7 +81,7 @@ namespace Revit.IFC.Export.Utility
       /// <param name="solid">The solid geometry.</param>
       /// <param name="normal">The normal of the reference plane that a path might lie on.  If it is null, try to guess based on the geometry.</param>
       /// <returns>The analyzer.</returns>
-        public static SimpleSweptSolidAnalyzer Create(Solid solid, XYZ normal, GeometryObject potentialPathGeom=null)
+      public static SimpleSweptSolidAnalyzer Create(Solid solid, XYZ normal, GeometryObject potentialPathGeom = null)
       {
          if (solid == null)
             throw new ArgumentNullException();
@@ -91,111 +91,111 @@ namespace Revit.IFC.Export.Utility
          {
             faces.Add(face);
          }
-            return Create(faces, normal, potentialPathGeom);
-        }
-
-        /// <summary>
-        /// Creates a SimpleSweptSolidAnalyzer and computes the swept solid. This method should be used when a swept curve (directrix) is already known. Even when it is missing (null)
-        /// it will simplu call the original one where it will try to determine the swept curve (directrix) using the connecting faces
-        /// </summary>
-        /// <param name="faces">The faces of a solid.</param>
-        /// <param name="normal">The normal of the reference plane that a path might lie on.  If it is null, try to guess based on the geometry.</param>
-        /// <param name="potentialPathGeom">The potential swept path (e.g. in Revit MEP pipe/duct/fitting may already have this defined as part of the model)</param>
-        /// <returns>The analyzer.</returns>
-        /// <remarks>This is a simple analyzer, and is not intended to be general - it works in some simple, real-world cases.</remarks>
-        public static SimpleSweptSolidAnalyzer Create(ICollection<Face> faces, XYZ normal, GeometryObject potentialPathGeom)
-        {
-            SimpleSweptSolidAnalyzer simpleSweptSolidAnalyzer = null;
-            IList<Tuple<PlanarFace,XYZ>> potentialSweptAreaFaces = new List<Tuple<PlanarFace,XYZ>>();
-            Curve directrix = potentialPathGeom as Curve;
-
-            bool pathGeomExists = potentialPathGeom != null;
-
-            if (!pathGeomExists)
-         return Create(faces, normal);
-
-            // Collect plannar faces as candidates for the swept area
-            foreach (Face face in faces)
-            {
-                if (!(face is PlanarFace))
-                    continue;
-                PlanarFace planarFace = face as PlanarFace;
-                // Candidate face must be Orthogonal to the plane where the directrix curve is
-                if (MathUtil.VectorsAreOrthogonal(normal, planarFace.FaceNormal))
-                {
-                    // We are also interested to get only end faces where the Curve intersect the Face at the same point as the Curve start or end point
-                    IntersectionResultArray intersectResults;
-                    if (planarFace.Intersect(directrix, out intersectResults) == SetComparisonResult.Overlap)
-                    {
-                        foreach(IntersectionResult res in intersectResults)
-                        {
-                            if (res.XYZPoint.IsAlmostEqualTo(directrix.GetEndPoint(0))
-                                || res.XYZPoint.IsAlmostEqualTo(directrix.GetEndPoint(1)))
-                            {
-                                Tuple<PlanarFace, XYZ> potentialEndFaceAndPoint = new Tuple<PlanarFace, XYZ>(planarFace, res.XYZPoint);
-                                potentialSweptAreaFaces.Add(potentialEndFaceAndPoint);
-                            }
-                        }
-                    }
-                }
-            }
-
-            // If there are more than 1 candidates, we need to find the congruent faces, and they cannot be on the same plane
-            IList<Tuple<PlanarFace, XYZ>> sweptEndFaces = new List<Tuple<PlanarFace, XYZ>>();
-
-            while (potentialSweptAreaFaces.Count > 1)
-            {
-                bool foundPair = false;
-                PlanarFace face0 = potentialSweptAreaFaces[0].Item1;
-                XYZ ptDirectrix = potentialSweptAreaFaces[0].Item2;
-                potentialSweptAreaFaces.RemoveAt(0);    // remove the item from the List
-
-                IList<Tuple<PlanarFace, XYZ>> potentialPairList = potentialSweptAreaFaces;
-
-                foreach(Tuple<PlanarFace, XYZ> potentialPair in potentialPairList)
-                {
-                    PlanarFace face1 = potentialPair.Item1;
-
-                    // Cannot handle faces that are on the same plane or intersecting (will cause self-intersection when being swept)
-                    // -- Can't do the intersection way because Revit returns intersection of the planes where those faces are defines (unbound)
-                    //if (face0.Intersect(face1) == FaceIntersectionFaceResult.Intersecting)
-                    //    continue;
-                    // If the faces are facing the same direction (or opposite) they may be of the same plane. Skip those of the same plane
-                    if (face0.FaceNormal.IsAlmostEqualTo(face1.FaceNormal) || face0.FaceNormal.IsAlmostEqualTo(face1.FaceNormal.Negate()))
-                    {
-                        // chose any point in face0 and face1
-                        XYZ pF0TopF1 = (face0.EdgeLoops.get_Item(0).get_Item(0).AsCurve().GetEndPoint(0)
-                                        - face1.EdgeLoops.get_Item(0).get_Item(0).AsCurve().GetEndPoint(0)).Normalize();
-                        
-                        if (pF0TopF1 == null || pF0TopF1.IsZeroLength())
-                            continue;
-                        // If the vector created from a point in Face0 and a point in Face1 against the face normal is orthogonal, it means the faces are on the same plane
-                        if (MathUtil.VectorsAreOrthogonal(face0.FaceNormal, pF0TopF1))
-                            continue;
-                    }
-
-                    if (AreFacesSimpleCongruent(face0, face1))
-                    {
-                        sweptEndFaces.Add(new Tuple<PlanarFace, XYZ>(face0, ptDirectrix));
-                        sweptEndFaces.Add(new Tuple<PlanarFace, XYZ>(face1, potentialPair.Item2));
-                        foundPair = true;
-                        break;
+         return Create(faces, normal, potentialPathGeom);
       }
-                }
-                if (foundPair)
-                    break;
-            }
 
-            if (sweptEndFaces.Count >= 2)
+      /// <summary>
+      /// Creates a SimpleSweptSolidAnalyzer and computes the swept solid. This method should be used when a swept curve (directrix) is already known. Even when it is missing (null)
+      /// it will simplu call the original one where it will try to determine the swept curve (directrix) using the connecting faces
+      /// </summary>
+      /// <param name="faces">The faces of a solid.</param>
+      /// <param name="normal">The normal of the reference plane that a path might lie on.  If it is null, try to guess based on the geometry.</param>
+      /// <param name="potentialPathGeom">The potential swept path (e.g. in Revit MEP pipe/duct/fitting may already have this defined as part of the model)</param>
+      /// <returns>The analyzer.</returns>
+      /// <remarks>This is a simple analyzer, and is not intended to be general - it works in some simple, real-world cases.</remarks>
+      public static SimpleSweptSolidAnalyzer Create(ICollection<Face> faces, XYZ normal, GeometryObject potentialPathGeom)
+      {
+         SimpleSweptSolidAnalyzer simpleSweptSolidAnalyzer = null;
+         IList<Tuple<PlanarFace, XYZ>> potentialSweptAreaFaces = new List<Tuple<PlanarFace, XYZ>>();
+         Curve directrix = potentialPathGeom as Curve;
+
+         bool pathGeomExists = potentialPathGeom != null;
+
+         if (!pathGeomExists)
+            return Create(faces, normal);
+
+         // Collect plannar faces as candidates for the swept area
+         foreach (Face face in faces)
+         {
+            if (!(face is PlanarFace))
+               continue;
+            PlanarFace planarFace = face as PlanarFace;
+            // Candidate face must be Orthogonal to the plane where the directrix curve is
+            if (MathUtil.VectorsAreOrthogonal(normal, planarFace.FaceNormal))
             {
-                simpleSweptSolidAnalyzer = new SimpleSweptSolidAnalyzer();
-                simpleSweptSolidAnalyzer.m_ProfileFace = sweptEndFaces[0].Item1;
-                simpleSweptSolidAnalyzer.m_PathCurve = directrix;
-                simpleSweptSolidAnalyzer.m_ReferencePlaneNormal = normal;
+               // We are also interested to get only end faces where the Curve intersect the Face at the same point as the Curve start or end point
+               IntersectionResultArray intersectResults;
+               if (planarFace.Intersect(directrix, out intersectResults) == SetComparisonResult.Overlap)
+               {
+                  foreach (IntersectionResult res in intersectResults)
+                  {
+                     if (res.XYZPoint.IsAlmostEqualTo(directrix.GetEndPoint(0))
+                         || res.XYZPoint.IsAlmostEqualTo(directrix.GetEndPoint(1)))
+                     {
+                        Tuple<PlanarFace, XYZ> potentialEndFaceAndPoint = new Tuple<PlanarFace, XYZ>(planarFace, res.XYZPoint);
+                        potentialSweptAreaFaces.Add(potentialEndFaceAndPoint);
+                     }
+                  }
+               }
             }
+         }
 
-            return simpleSweptSolidAnalyzer;
-        }
+         // If there are more than 1 candidates, we need to find the congruent faces, and they cannot be on the same plane
+         IList<Tuple<PlanarFace, XYZ>> sweptEndFaces = new List<Tuple<PlanarFace, XYZ>>();
+
+         while (potentialSweptAreaFaces.Count > 1)
+         {
+            bool foundPair = false;
+            PlanarFace face0 = potentialSweptAreaFaces[0].Item1;
+            XYZ ptDirectrix = potentialSweptAreaFaces[0].Item2;
+            potentialSweptAreaFaces.RemoveAt(0);    // remove the item from the List
+
+            IList<Tuple<PlanarFace, XYZ>> potentialPairList = potentialSweptAreaFaces;
+
+            foreach (Tuple<PlanarFace, XYZ> potentialPair in potentialPairList)
+            {
+               PlanarFace face1 = potentialPair.Item1;
+
+               // Cannot handle faces that are on the same plane or intersecting (will cause self-intersection when being swept)
+               // -- Can't do the intersection way because Revit returns intersection of the planes where those faces are defines (unbound)
+               //if (face0.Intersect(face1) == FaceIntersectionFaceResult.Intersecting)
+               //    continue;
+               // If the faces are facing the same direction (or opposite) they may be of the same plane. Skip those of the same plane
+               if (face0.FaceNormal.IsAlmostEqualTo(face1.FaceNormal) || face0.FaceNormal.IsAlmostEqualTo(face1.FaceNormal.Negate()))
+               {
+                  // chose any point in face0 and face1
+                  XYZ pF0TopF1 = (face0.EdgeLoops.get_Item(0).get_Item(0).AsCurve().GetEndPoint(0)
+                                  - face1.EdgeLoops.get_Item(0).get_Item(0).AsCurve().GetEndPoint(0)).Normalize();
+
+                  if (pF0TopF1 == null || pF0TopF1.IsZeroLength())
+                     continue;
+                  // If the vector created from a point in Face0 and a point in Face1 against the face normal is orthogonal, it means the faces are on the same plane
+                  if (MathUtil.VectorsAreOrthogonal(face0.FaceNormal, pF0TopF1))
+                     continue;
+               }
+
+               if (AreFacesSimpleCongruent(face0, face1))
+               {
+                  sweptEndFaces.Add(new Tuple<PlanarFace, XYZ>(face0, ptDirectrix));
+                  sweptEndFaces.Add(new Tuple<PlanarFace, XYZ>(face1, potentialPair.Item2));
+                  foundPair = true;
+                  break;
+               }
+            }
+            if (foundPair)
+               break;
+         }
+
+         if (sweptEndFaces.Count >= 2)
+         {
+            simpleSweptSolidAnalyzer = new SimpleSweptSolidAnalyzer();
+            simpleSweptSolidAnalyzer.m_ProfileFace = sweptEndFaces[0].Item1;
+            simpleSweptSolidAnalyzer.m_PathCurve = directrix;
+            simpleSweptSolidAnalyzer.m_ReferencePlaneNormal = normal;
+         }
+
+         return simpleSweptSolidAnalyzer;
+      }
 
       /// <summary>
       /// Creates a SimpleSweptSolidAnalyzer and computes the swept solid.
@@ -375,9 +375,9 @@ namespace Revit.IFC.Export.Utility
                profileFace.Intersect(pathCurve, out intersectionResults);
                if (intersectionResults != null)
                {
-                        foreach (IntersectionResult intersectionResult in intersectionResults)
+                  foreach (IntersectionResult intersectionResult in intersectionResults)
                   {
-                            XYZ intersectPoint = intersectionResult.XYZPoint;
+                     XYZ intersectPoint = intersectionResult.XYZPoint;
                      if (intersectPoint.IsAlmostEqualTo(endPoint0))
                      {
                         simpleSweptSolidAnalyzer.m_ProfileFace = profileFace;
@@ -445,66 +445,66 @@ namespace Revit.IFC.Export.Utility
          return alignedFaces;
       }
 
-        private static bool AreFacesSimpleCongruent(Face face0, Face face1)
-        {
-            if (!MathUtil.IsAlmostEqual(face0.Area, face1.Area))
-                return false;
+      private static bool AreFacesSimpleCongruent(Face face0, Face face1)
+      {
+         if (!MathUtil.IsAlmostEqual(face0.Area, face1.Area))
+            return false;
 
-            BoundingBoxUV BB0 = face0.GetBoundingBox();
-            BoundingBoxUV BB1 = face1.GetBoundingBox();
-            if (!(face0.GetBoundingBox().Min.IsAlmostEqualTo(face0.GetBoundingBox().Min) 
-                && face0.GetBoundingBox().Max.IsAlmostEqualTo(face0.GetBoundingBox().Max)))
-                return false;
+         BoundingBoxUV BB0 = face0.GetBoundingBox();
+         BoundingBoxUV BB1 = face1.GetBoundingBox();
+         if (!(face0.GetBoundingBox().Min.IsAlmostEqualTo(face0.GetBoundingBox().Min)
+             && face0.GetBoundingBox().Max.IsAlmostEqualTo(face0.GetBoundingBox().Max)))
+            return false;
 
-            EdgeArrayArray EArrArr0 = face0.EdgeLoops;
-            EdgeArrayArray EArrArr1 = face1.EdgeLoops;
-            if (EArrArr0.Size != EArrArr1.Size)
-                return false;
+         EdgeArrayArray EArrArr0 = face0.EdgeLoops;
+         EdgeArrayArray EArrArr1 = face1.EdgeLoops;
+         if (EArrArr0.Size != EArrArr1.Size)
+            return false;
 
-            // Collect all the edges in a simple list. To be congruent both list must be exactly the same (number of edges, edge type, edge properties)
-            IList<Edge> simpleEdgeList0 = new List<Edge>();
-            foreach (EdgeArray EArr in EArrArr0)
-                foreach (Edge edge in EArr)
-                    simpleEdgeList0.Add(edge);
+         // Collect all the edges in a simple list. To be congruent both list must be exactly the same (number of edges, edge type, edge properties)
+         IList<Edge> simpleEdgeList0 = new List<Edge>();
+         foreach (EdgeArray EArr in EArrArr0)
+            foreach (Edge edge in EArr)
+               simpleEdgeList0.Add(edge);
 
-            IList<Edge> simpleEdgeList1 = new List<Edge>();
-            foreach (EdgeArray EArr in EArrArr1)
-                foreach (Edge edge in EArr)
-                    simpleEdgeList1.Add(edge);
+         IList<Edge> simpleEdgeList1 = new List<Edge>();
+         foreach (EdgeArray EArr in EArrArr1)
+            foreach (Edge edge in EArr)
+               simpleEdgeList1.Add(edge);
 
-            if (simpleEdgeList0.Count != simpleEdgeList1.Count)
-                return false;
+         if (simpleEdgeList0.Count != simpleEdgeList1.Count)
+            return false;
 
-            for (int ii=0; ii<simpleEdgeList0.Count; ++ii)
+         for (int ii = 0; ii < simpleEdgeList0.Count; ++ii)
+         {
+            Curve curve0 = simpleEdgeList0[ii].AsCurve();
+            Curve curve1 = simpleEdgeList1[ii].AsCurve();
+
+            if (curve0 is Line)
             {
-                Curve curve0 = simpleEdgeList0[ii].AsCurve();
-                Curve curve1 = simpleEdgeList1[ii].AsCurve();
-
-                if (curve0 is Line)
-                {
-                    if (!(curve1 is Line))
-                        return false;
-                    if (!MathUtil.IsAlmostEqual(curve0.Length, curve1.Length))
-                        return false;
-                    continue;
-                }
-                else if (curve0 is Arc)
-                {
-                    if (!(curve1 is Arc))
-                        return false;
-                    if (!MathUtil.IsAlmostEqual(curve0.Length, curve1.Length))
-                        return false;
-                    if (!MathUtil.IsAlmostEqual((curve0 as Arc).Radius, (curve1 as Arc).Radius))
-                        return false;
-                    continue;
-                }
-
-                // not support other types of curves for now
-                return false;
+               if (!(curve1 is Line))
+                  return false;
+               if (!MathUtil.IsAlmostEqual(curve0.Length, curve1.Length))
+                  return false;
+               continue;
+            }
+            else if (curve0 is Arc)
+            {
+               if (!(curve1 is Arc))
+                  return false;
+               if (!MathUtil.IsAlmostEqual(curve0.Length, curve1.Length))
+                  return false;
+               if (!MathUtil.IsAlmostEqual((curve0 as Arc).Radius, (curve1 as Arc).Radius))
+                  return false;
+               continue;
             }
 
-            return true;
-        }
+            // not support other types of curves for now
+            return false;
+         }
+
+         return true;
+      }
 
       /// <summary>
       /// Checks if two faces are congruent.

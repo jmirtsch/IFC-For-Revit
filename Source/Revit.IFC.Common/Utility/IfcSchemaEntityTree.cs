@@ -45,14 +45,14 @@ namespace Revit.IFC.Common.Utility
       /// </summary>
       /// <param name="entityName">the entity name</param>
       /// <param name="parentNodeName">the name of the supertype entity</param>
-      static public void Add(string entityName, string parentNodeName, bool isAbstract=false)
+      static public void Add(string entityName, string parentNodeName, bool isAbstract = false)
       {
          if (string.IsNullOrEmpty(entityName))
             return;
 
          // We will skip the entityname or its parent name that does not start with Ifc (except Entity)
          if (string.Compare(entityName, 0, "Ifc", 0, 3, ignoreCase: true) != 0
-            || (string.Compare(parentNodeName, 0, "Ifc", 0, 3, ignoreCase: true) != 0 && string.Compare(parentNodeName,"Entity",ignoreCase:true)!=0) )
+            || (string.Compare(parentNodeName, 0, "Ifc", 0, 3, ignoreCase: true) != 0 && string.Compare(parentNodeName, "Entity", ignoreCase: true) != 0))
             return;
 
          IfcSchemaEntityNode parentNode = null;
@@ -77,12 +77,12 @@ namespace Revit.IFC.Common.Utility
          {
             if (parentNode != null)
             {
-               entityNode = new IfcSchemaEntityNode(entityName, parentNode, abstractEntity:isAbstract);
+               entityNode = new IfcSchemaEntityNode(entityName, parentNode, abstractEntity: isAbstract);
                parentNode.AddChildNode(entityNode);
             }
             else
             {
-               entityNode = new IfcSchemaEntityNode(entityName, abstractEntity:isAbstract);
+               entityNode = new IfcSchemaEntityNode(entityName, abstractEntity: isAbstract);
                // Add into the set of root nodes when parent is null/no parent
                rootNodes.Add(entityNode);
             }
@@ -161,8 +161,8 @@ namespace Revit.IFC.Common.Utility
                         + "\n\t/// </summary>"
                         + "\n\tpublic enum IFCEntityType"
                      + "\n\t{";
-          
-         foreach (KeyValuePair<string,IfcSchemaEntityNode> ent in IfcEntityDict)
+
+         foreach (KeyValuePair<string, IfcSchemaEntityNode> ent in IfcEntityDict)
          {
             entityList += "\n\t\t/// <summary>"
                            + "\n\t\t/// " + ent.Key + " enumeration"
@@ -183,7 +183,7 @@ namespace Revit.IFC.Common.Utility
       static public string DumpTree()
       {
          string tree = string.Empty;
-         foreach(IfcSchemaEntityNode rootNode in rootNodes)
+         foreach (IfcSchemaEntityNode rootNode in rootNodes)
          {
             tree += rootNode.PrintBranch();
          }

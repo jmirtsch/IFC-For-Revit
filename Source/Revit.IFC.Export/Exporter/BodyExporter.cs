@@ -1907,7 +1907,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="geomObject">the geometry object of the element</param>
       /// <returns>a handle to the created IFCPolygonalFaceSet</returns>
       public static IList<IFCAnyHandle> ExportBodyAsPolygonalFaceSet(ExporterIFC exporterIFC, Element element, BodyExporterOptions options,
-                  GeometryObject geomObject, Transform lcs=null)
+                  GeometryObject geomObject, Transform lcs = null)
       {
          IFCFile file = exporterIFC.GetFile();
          Document document = element.Document;
@@ -1970,7 +1970,7 @@ namespace Revit.IFC.Export.Exporter
                      else
                      {
                         IList<IList<int>> innerBounds = new List<IList<int>>();
-                        foreach(IList<int> inner in triMerge.IndexInnerBoundariesOfFaceAt(jj))
+                        foreach (IList<int> inner in triMerge.IndexInnerBoundariesOfFaceAt(jj))
                         {
                            IList<int> innerBound = new List<int>();
                            foreach (int vIdx in inner)
@@ -2020,7 +2020,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="geomObject">geometry objects</param>
       /// <returns>returns a handle</returns>
       public static IList<IFCAnyHandle> ExportBodyAsTriangulatedFaceSet(ExporterIFC exporterIFC, Element element, BodyExporterOptions options,
-                  GeometryObject geomObject, Transform lcs=null)
+                  GeometryObject geomObject, Transform lcs = null)
       {
          IFCFile file = exporterIFC.GetFile();
          Document document = element.Document;
@@ -2123,7 +2123,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="geomObject">geometry objects</param>
       /// <returns>returns a handle</returns>
       public static IFCAnyHandle ExportBodyAsTessellatedFaceSet(ExporterIFC exporterIFC, Element element, BodyExporterOptions options,
-                  GeometryObject geomObject, Transform lcs=null)
+                  GeometryObject geomObject, Transform lcs = null)
       {
          IList<IFCAnyHandle> tessellatedBodyList = null;
          IFCAnyHandle tessellatedBody = null;
@@ -2153,7 +2153,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="geomObject">the geometry object</param>
       /// <returns>returns the handle</returns>
       private static IFCAnyHandle ExportSurfaceAsTriangulatedFaceSet(ExporterIFC exporterIFC, Element element, BodyExporterOptions options,
-                  GeometryObject geomObject, Transform lcsToUse=null)
+                  GeometryObject geomObject, Transform lcsToUse = null)
       {
          IFCFile file = exporterIFC.GetFile();
 
@@ -2164,9 +2164,9 @@ namespace Revit.IFC.Export.Exporter
             triangleList = GetTriangleListFromSolid(geomObject, options, lcsToUse);
          }
          else if (geomObject is Mesh)
-            {
+         {
             triangleList = GetTriangleListFromMesh(geomObject, options, lcsToUse);
-                  }
+         }
          // There is also a possibility that the geomObject is an GeometryElement thaat is a collection of GeometryObjects. Go through the collection and get the Mesh, Solid, or Face in it
          else if (geomObject is GeometryElement)
          {
@@ -2882,14 +2882,14 @@ namespace Revit.IFC.Export.Exporter
 
                         GenerateAdditionalInfo footprintOrProfile = GenerateAdditionalInfo.None;
                         if (options.CollectFootprintHandle)
-                            footprintOrProfile |= GenerateAdditionalInfo.GenerateFootprint;
+                           footprintOrProfile |= GenerateAdditionalInfo.GenerateFootprint;
                         if (options.CollectMaterialAndProfile)
-                            footprintOrProfile |= GenerateAdditionalInfo.GenerateProfileDef;
+                           footprintOrProfile |= GenerateAdditionalInfo.GenerateProfileDef;
 
                         bool completelyClipped;
                         HandleAndData extrusionData = ExtrusionExporter.CreateExtrusionWithClippingAndProperties(exporterIFC, element,
                             CategoryUtil.GetSafeCategoryId(element), geometryList[0] as Solid, extrusionBasePlane, options.ExtrusionLocalCoordinateSystem.Origin,
-                            extrusionDirection, null, out completelyClipped, addInfo:footprintOrProfile, profileName:profileName);
+                            extrusionDirection, null, out completelyClipped, addInfo: footprintOrProfile, profileName: profileName);
                         if (!completelyClipped && !IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionData.Handle))
                         {
                            // There are two valid cases here:
@@ -2929,9 +2929,9 @@ namespace Revit.IFC.Export.Exporter
 
                               hasExtrusions = true;
                               if ((footprintOrProfile & GenerateAdditionalInfo.GenerateFootprint) != 0)
-                                  footprintInfoSet.Add(extrusionData.FootprintInfo);
+                                 footprintInfoSet.Add(extrusionData.FootprintInfo);
                               if ((footprintOrProfile & GenerateAdditionalInfo.GenerateProfileDef) != 0)
-                                  materialAndProfile = extrusionData.MaterialAndProfile;
+                                 materialAndProfile = extrusionData.MaterialAndProfile;
 
                               extrusionTransaction.Commit();
                            }
@@ -2939,8 +2939,8 @@ namespace Revit.IFC.Export.Exporter
 
                         if (!hasExtrusions)
                            extrusionTransaction.RollBack();
-                        }
                      }
+                  }
 
                   // Only try if ExtrusionAnalyzer wasn't called, or failed.
                   if (!hasExtrusions)
@@ -3043,20 +3043,20 @@ namespace Revit.IFC.Export.Exporter
                               XYZ extrusionDirection = extrusionLists[ii][0].ExtrusionDirection;
                               if (options.CollectFootprintHandle)
                               {
-                                  // Must Check correctness for transform!!!!!
+                                 // Must Check correctness for transform!!!!!
                                  FootPrintInfo fInfo = new FootPrintInfo();
                                  fInfo.LCSTransformUsed = bodyData.OffsetTransform;
                                  fInfo.FootPrintHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, curveLoops[0], fInfo.LCSTransformUsed, fInfo.LCSTransformUsed.BasisZ);
-                                  footprintInfoSet.Add(fInfo);
+                                 footprintInfoSet.Add(fInfo);
                               }
-                               if (options.CollectMaterialAndProfile)
-                               {
-                                   // Get the handle to the extrusion Swept Area needed for creation of IfcMaterialProfile
-                                   IFCData extrArea = extrusionHandle.GetAttribute("SweptArea");
-                                    if (materialAndProfile == null)
-                                        materialAndProfile = new MaterialAndProfile();
-                                    materialAndProfile.Add(exporterIFC.GetMaterialIdForCurrentExportState(), extrArea.AsInstance());
-                               }
+                              if (options.CollectMaterialAndProfile)
+                              {
+                                 // Get the handle to the extrusion Swept Area needed for creation of IfcMaterialProfile
+                                 IFCData extrArea = extrusionHandle.GetAttribute("SweptArea");
+                                 if (materialAndProfile == null)
+                                    materialAndProfile = new MaterialAndProfile();
+                                 materialAndProfile.Add(exporterIFC.GetMaterialIdForCurrentExportState(), extrArea.AsInstance());
+                              }
 
                               if (exportBodyParams != null)
                               {
@@ -3132,11 +3132,11 @@ namespace Revit.IFC.Export.Exporter
                         {
                            if (!tryToExportAsSweptSolidAsTessellation)
                            {
-                               GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None;
-                               if (options.CollectFootprintHandle)
-                                    addInfo |= GenerateAdditionalInfo.GenerateFootprint;
+                              GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None;
+                              if (options.CollectFootprintHandle)
+                                 addInfo |= GenerateAdditionalInfo.GenerateFootprint;
 
-                               SweptSolidExporter sweptSolidExporter = SweptSolidExporter.Create(exporterIFC, element, simpleSweptSolidAnalyzer, solid, addInfo:addInfo);
+                              SweptSolidExporter sweptSolidExporter = SweptSolidExporter.Create(exporterIFC, element, simpleSweptSolidAnalyzer, solid, addInfo: addInfo);
                               IFCAnyHandle sweptHandle = (sweptSolidExporter != null) ? sweptSolidExporter.RepresentationItem : null;
 
                               if (!IFCAnyHandleUtil.IsNullOrHasNoValue(sweptHandle))
@@ -3155,15 +3155,15 @@ namespace Revit.IFC.Export.Exporter
 
                                  if (options.CollectFootprintHandle)
                                  {
-                                     if (sweptSolidExporter.FootprintInfo!= null)
-                                         footprintInfoSet.Add(sweptSolidExporter.FootprintInfo);
-                              }
+                                    if (sweptSolidExporter.FootprintInfo != null)
+                                       footprintInfoSet.Add(sweptSolidExporter.FootprintInfo);
+                                 }
                                  if (options.CollectMaterialAndProfile)
                                  {
-                                     // Get the handle to the extrusion Swept Area needed for creation of IfcMaterialProfile
-                                     IFCData extrArea = sweptHandle.GetAttribute("SweptArea");
-                                     materialAndProfile.Add(exporterIFC.GetMaterialIdForCurrentExportState(), extrArea.AsInstance());
-                                     materialAndProfile.PathCurve = simpleSweptSolidAnalyzer.PathCurve;
+                                    // Get the handle to the extrusion Swept Area needed for creation of IfcMaterialProfile
+                                    IFCData extrArea = sweptHandle.GetAttribute("SweptArea");
+                                    materialAndProfile.Add(exporterIFC.GetMaterialIdForCurrentExportState(), extrArea.AsInstance());
+                                    materialAndProfile.PathCurve = simpleSweptSolidAnalyzer.PathCurve;
                                  }
                               }
                               else
@@ -3213,7 +3213,7 @@ namespace Revit.IFC.Export.Exporter
                            bodyData.RepresentationHnd =
                                RepresentationUtil.CreateTessellatedRep(exporterIFC, element, categoryId, contextOfItems, bodyItemSet, bodyData.RepresentationHnd);
                            bodyData.ShapeRepresentationType = ShapeRepresentationType.Tessellation;
-                          
+
                            // If there is footprint information that won't be used for Tessellation, delete them 
                            foreach (FootPrintInfo footPInfo in footprintInfoSet)
                               DeleteOrphanedFootprintHnd(footPInfo.FootPrintHandle);
@@ -3235,7 +3235,7 @@ namespace Revit.IFC.Export.Exporter
                      XYZ lpOrig = ((bodyData != null) && (bodyData.OffsetTransform != null)) ? bodyData.OffsetTransform.Origin : new XYZ();
                      transformSetter.CreateLocalPlacementFromOffset(exporterIFC, bbox, exportBodyParams, lpOrig, unscaledTrfOrig);
                      tr.Commit();
-                     
+
                      return bodyData;
                   }
                }

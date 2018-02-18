@@ -31,79 +31,79 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class that represents IFCFacetedBrep entity
-    /// </summary>
-    public class IFCFacetedBrep : IFCManifoldSolidBrep
-    {
+   /// <summary>
+   /// Class that represents IFCFacetedBrep entity
+   /// </summary>
+   public class IFCFacetedBrep : IFCManifoldSolidBrep
+   {
 
-        ISet<IFCClosedShell> m_Inners = null;
+      ISet<IFCClosedShell> m_Inners = null;
 
-        /// <summary>
-        /// The list of optional voids of the solid.
-        /// </summary>
-        public ISet<IFCClosedShell> Inners
-        {
-            get
+      /// <summary>
+      /// The list of optional voids of the solid.
+      /// </summary>
+      public ISet<IFCClosedShell> Inners
+      {
+         get
+         {
+            if (m_Inners == null)
+               m_Inners = new HashSet<IFCClosedShell>();
+            return m_Inners;
+         }
+
+      }
+      protected IFCFacetedBrep()
+      {
+      }
+
+      protected IFCFacetedBrep(IFCAnyHandle item)
+      {
+         Process(item);
+      }
+
+      override protected void Process(IFCAnyHandle ifcFacetedBrep)
+      {
+         base.Process(ifcFacetedBrep);
+
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcFacetedBrep, IFCEntityType.IfcFacetedBrepWithVoids))
+         {
+            HashSet<IFCAnyHandle> ifcVoids =
+                IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcFacetedBrep, "Voids");
+            if (ifcVoids != null)
             {
-                if (m_Inners == null)
-                    m_Inners = new HashSet<IFCClosedShell>();
-                return m_Inners;
+               foreach (IFCAnyHandle ifcVoid in ifcVoids)
+               {
+                  try
+                  {
+                     Inners.Add(IFCClosedShell.ProcessIFCClosedShell(ifcVoid));
+                  }
+                  catch
+                  {
+                     Importer.TheLog.LogWarning(ifcVoid.StepId, "Invalid inner shell, ignoring", false);
+                  }
+               }
             }
+         }
 
-        }
-        protected IFCFacetedBrep()
-        {
-        }
+      }
 
-        protected IFCFacetedBrep(IFCAnyHandle item)
-        {
-            Process(item);
-        }
+      /// <summary>
+      /// Create an IFCFacetedBrep object from a handle of type IfcFacetedBrep.
+      /// </summary>
+      /// <param name="ifcFacetedBrep">The IFC handle.</param>
+      /// <returns>The IFCFacetedBrep object.</returns>
+      public static IFCFacetedBrep ProcessIFCFacetedBrep(IFCAnyHandle ifcFacetedBrep)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcFacetedBrep))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcFacetedBrep);
+            return null;
+         }
 
-        override protected void Process(IFCAnyHandle ifcFacetedBrep)
-        {
-            base.Process(ifcFacetedBrep);
-
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcFacetedBrep, IFCEntityType.IfcFacetedBrepWithVoids))
-            {
-                HashSet<IFCAnyHandle> ifcVoids =
-                    IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcFacetedBrep, "Voids");
-                if (ifcVoids != null)
-                {
-                    foreach (IFCAnyHandle ifcVoid in ifcVoids)
-                    {
-                        try
-                        {
-                            Inners.Add(IFCClosedShell.ProcessIFCClosedShell(ifcVoid));
-                        }
-                        catch
-                        {
-                            Importer.TheLog.LogWarning(ifcVoid.StepId, "Invalid inner shell, ignoring", false);
-                        }
-                    }
-                }
-            }
-
-        }
-
-        /// <summary>
-        /// Create an IFCFacetedBrep object from a handle of type IfcFacetedBrep.
-        /// </summary>
-        /// <param name="ifcFacetedBrep">The IFC handle.</param>
-        /// <returns>The IFCFacetedBrep object.</returns>
-        public static IFCFacetedBrep ProcessIFCFacetedBrep(IFCAnyHandle ifcFacetedBrep)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcFacetedBrep))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcFacetedBrep);
-                return null;
-            }
-
-            IFCEntity facetedBrep;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcFacetedBrep.StepId, out facetedBrep))
-                facetedBrep = new IFCFacetedBrep(ifcFacetedBrep);
-            return (facetedBrep as IFCFacetedBrep);
-        }
-    }
+         IFCEntity facetedBrep;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcFacetedBrep.StepId, out facetedBrep))
+            facetedBrep = new IFCFacetedBrep(ifcFacetedBrep);
+         return (facetedBrep as IFCFacetedBrep);
+      }
+   }
 }

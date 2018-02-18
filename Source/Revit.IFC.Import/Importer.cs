@@ -330,7 +330,7 @@ namespace Revit.IFC.Import
             return true;
 
          string revitFileName = IFCImportFile.GetRevitFileName(ifcFileName);
-         
+
          // If the RVT file doesn't exist, we'll reload.  Otherwise, look at saved file size and timestamp.
          if (!File.Exists(revitFileName))
             return true;

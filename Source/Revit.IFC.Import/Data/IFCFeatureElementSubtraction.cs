@@ -27,70 +27,70 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents an IfcFeatureElementSubtraction.
-    /// </summary>
-    public class IFCFeatureElementSubtraction : IFCFeatureElement
-    {
-        protected IFCElement m_VoidsElement = null;
+   /// <summary>
+   /// Represents an IfcFeatureElementSubtraction.
+   /// </summary>
+   public class IFCFeatureElementSubtraction : IFCFeatureElement
+   {
+      protected IFCElement m_VoidsElement = null;
 
-        /// <summary>
-        /// The element this opening is voiding (e.g., a wall).
-        /// This is set initially by the host object.
-        /// </summary>
-        public IFCElement VoidsElement
-        {
-            get { return m_VoidsElement; }
-            set { m_VoidsElement = value; }
-        }
+      /// <summary>
+      /// The element this opening is voiding (e.g., a wall).
+      /// This is set initially by the host object.
+      /// </summary>
+      public IFCElement VoidsElement
+      {
+         get { return m_VoidsElement; }
+         set { m_VoidsElement = value; }
+      }
 
-        /// <summary>
-        /// Default constructor.
-        /// </summary>
-        protected IFCFeatureElementSubtraction()
-        {
+      /// <summary>
+      /// Default constructor.
+      /// </summary>
+      protected IFCFeatureElementSubtraction()
+      {
 
-        }
+      }
 
-        /// <summary>
-        /// Constructs an IFCFeatureElementSubtraction from the IfcFeatureElementSubtraction handle.
-        /// </summary>
-        /// <param name="ifcFeatureElementSubtraction">The IfcFeatureElementSubtraction handle.</param>
-        protected IFCFeatureElementSubtraction(IFCAnyHandle ifcFeatureElementSubtraction)
-        {
-            Process(ifcFeatureElementSubtraction);
-        }
+      /// <summary>
+      /// Constructs an IFCFeatureElementSubtraction from the IfcFeatureElementSubtraction handle.
+      /// </summary>
+      /// <param name="ifcFeatureElementSubtraction">The IfcFeatureElementSubtraction handle.</param>
+      protected IFCFeatureElementSubtraction(IFCAnyHandle ifcFeatureElementSubtraction)
+      {
+         Process(ifcFeatureElementSubtraction);
+      }
 
-        /// <summary>
-        /// Processes IfcFeatureElementSubtraction attributes.
-        /// </summary>
-        /// <param name="ifcFeatureElementSubtraction">The IfcFeatureElementSubtraction handle.</param>
-        protected override void Process(IFCAnyHandle ifcFeatureElementSubtraction)
-        {
-            base.Process(ifcFeatureElementSubtraction);
-        }
+      /// <summary>
+      /// Processes IfcFeatureElementSubtraction attributes.
+      /// </summary>
+      /// <param name="ifcFeatureElementSubtraction">The IfcFeatureElementSubtraction handle.</param>
+      protected override void Process(IFCAnyHandle ifcFeatureElementSubtraction)
+      {
+         base.Process(ifcFeatureElementSubtraction);
+      }
 
-        /// <summary>
-        /// Processes an IfcFeatureElementSubtraction object.
-        /// </summary>
-        /// <param name="ifcFeatureElementSubtraction">The IfcFeatureElementSubtraction handle.</param>
-        /// <returns>The iFCFeatureElementSubtraction object.</returns>
-        public static IFCFeatureElementSubtraction ProcessIFCFeatureElementSubtraction(IFCAnyHandle ifcFeatureElementSubtraction)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcFeatureElementSubtraction))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcFeatureElementSubtraction);
-                return null;
-            }
+      /// <summary>
+      /// Processes an IfcFeatureElementSubtraction object.
+      /// </summary>
+      /// <param name="ifcFeatureElementSubtraction">The IfcFeatureElementSubtraction handle.</param>
+      /// <returns>The iFCFeatureElementSubtraction object.</returns>
+      public static IFCFeatureElementSubtraction ProcessIFCFeatureElementSubtraction(IFCAnyHandle ifcFeatureElementSubtraction)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcFeatureElementSubtraction))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcFeatureElementSubtraction);
+            return null;
+         }
 
-            IFCEntity cachedFeatureElementSubtraction;
-            if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcFeatureElementSubtraction.StepId, out cachedFeatureElementSubtraction))
-                return (cachedFeatureElementSubtraction as IFCFeatureElementSubtraction);
-            
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcFeatureElementSubtraction, IFCEntityType.IfcOpeningElement))
-                return IFCOpeningElement.ProcessIFCOpeningElement(ifcFeatureElementSubtraction);
+         IFCEntity cachedFeatureElementSubtraction;
+         if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcFeatureElementSubtraction.StepId, out cachedFeatureElementSubtraction))
+            return (cachedFeatureElementSubtraction as IFCFeatureElementSubtraction);
 
-            return new IFCFeatureElementSubtraction(ifcFeatureElementSubtraction);
-        }
-    }
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcFeatureElementSubtraction, IFCEntityType.IfcOpeningElement))
+            return IFCOpeningElement.ProcessIFCOpeningElement(ifcFeatureElementSubtraction);
+
+         return new IFCFeatureElementSubtraction(ifcFeatureElementSubtraction);
+      }
+   }
 }
