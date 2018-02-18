@@ -201,6 +201,16 @@ namespace Revit.IFC.Common.Extensions
       public Boolean UpdateProjectInformation { get; set; }
 
       /// <summary>
+      /// The Checkbox to indicate that the Address should be assigned to IfcSite
+      /// </summary>
+      public bool AssignAddressToSite { get; set; }
+
+      /// <summary>
+      /// The Checkbox to indicate that the Address should be assigned to IfcBuilding (this is the default in the original code)
+      /// </summary>
+      public bool AssignAddressToBuilding { get; set; }
+
+      /// <summary>
       /// Check whether the addresses are the same
       /// </summary>
       public Boolean isUnchanged(IFCAddressItem addressToCheck)
@@ -216,9 +226,10 @@ namespace Revit.IFC.Common.Extensions
       public Boolean isInitial()
       {
          if (this.Purpose == null && this.Description == null && this.UserDefinedPurpose == null
-                 && this.AddressLine1 == null && this.AddressLine2 == null && this.POBox == null
-                 && this.TownOrCity == null && this.RegionOrState == null && this.PostalCode == null
-                 && this.Country == null && this.UpdateProjectInformation == false)
+               && this.AddressLine1 == null && this.AddressLine2 == null && this.POBox == null
+               && this.TownOrCity == null && this.RegionOrState == null && this.PostalCode == null
+               && this.Country == null && this.UpdateProjectInformation == false
+               && this.AssignAddressToBuilding == true && this.AssignAddressToSite == false)
             return true;
          return false;
       }
@@ -265,6 +276,8 @@ namespace Revit.IFC.Common.Extensions
          this.PostalCode = other.PostalCode;
          this.Country = other.Country;
          this.UpdateProjectInformation = other.UpdateProjectInformation;
+         this.AssignAddressToBuilding = other.AssignAddressToBuilding;
+         this.AssignAddressToSite = other.AssignAddressToSite;
       }
 
    }

@@ -45,6 +45,8 @@ namespace Revit.IFC.Common.Extensions
       private const String s_addressRegionOrState = "Region";
       private const String s_addressPostalCode = "PostalCode";
       private const String s_addressCountry = "Country";
+      private const String s_saveAddrToBldg = "SaveToIfcBuilding";
+      private const String s_saveAddrToSite = "SaveToIfcSite";
 
       /// <summary>
       /// IFC address initialization
@@ -132,6 +134,8 @@ namespace Revit.IFC.Common.Extensions
             if (addressItem.RegionOrState != null) mapData.Add(s_addressRegionOrState, addressItem.RegionOrState.ToString());
             if (addressItem.PostalCode != null) mapData.Add(s_addressPostalCode, addressItem.PostalCode.ToString());
             if (addressItem.Country != null) mapData.Add(s_addressCountry, addressItem.Country.ToString());
+            if (addressItem.AssignAddressToBuilding) mapData.Add(s_saveAddrToBldg, "Y");
+            if (addressItem.AssignAddressToSite) mapData.Add(s_saveAddrToSite, "Y");
 
             mapEntity.Set<IDictionary<string, String>>(s_addressMapField, mapData);
             addressStorage.SetEntity(mapEntity);
@@ -186,7 +190,10 @@ namespace Revit.IFC.Common.Extensions
                   addressItemSaved.PostalCode = savedAddressMap[s_addressPostalCode];
                if (savedAddressMap.ContainsKey(s_addressCountry))
                   addressItemSaved.Country = savedAddressMap[s_addressCountry];
-
+               if (savedAddressMap.ContainsKey(s_saveAddrToBldg))
+                  addressItemSaved.AssignAddressToBuilding = savedAddressMap[s_saveAddrToBldg].Equals("Y");
+               if (savedAddressMap.ContainsKey(s_saveAddrToSite))
+                  addressItemSaved.AssignAddressToSite = savedAddressMap[s_saveAddrToSite].Equals("Y");
                address = addressItemSaved;
                return true;
             }

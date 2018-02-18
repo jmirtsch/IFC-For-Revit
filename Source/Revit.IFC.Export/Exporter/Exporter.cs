@@ -2361,13 +2361,18 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="file"></param>
       /// <param name="document"></param>
       /// <returns>The handle of IFC file.</returns>
-      private IFCAnyHandle CreateIFCAddressFromExtStorage(IFCFile file, Document document)
+      static public IFCAnyHandle CreateIFCAddressFromExtStorage(IFCFile file, Document document, out bool assignToBldg, out bool assignToSite)
       {
          IFCAddress savedAddress = new IFCAddress();
          IFCAddressItem savedAddressItem;
+         assignToBldg = false;
+         assignToSite = false;
 
          if (savedAddress.GetSavedAddress(document, out savedAddressItem) == true)
          {
+            assignToBldg = savedAddressItem.AssignAddressToBuilding;
+            assignToSite = savedAddressItem.AssignAddressToSite;
+
             IFCAnyHandle postalAddress;
 
             // We have address saved in the extensible storage
@@ -2412,10 +2417,10 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="address">The address string.</param>
       /// <param name="town">The town string.</param>
       /// <returns>The handle of IFC file.</returns>
-      private IFCAnyHandle CreateIFCAddress(IFCFile file, Document document, ProjectInfo projInfo)
+      static public IFCAnyHandle CreateIFCAddress(IFCFile file, Document document, ProjectInfo projInfo, out bool assignToBldg, out bool assignToSite)
       {
          IFCAnyHandle postalAddress = null;
-         postalAddress = CreateIFCAddressFromExtStorage(file, document);
+         postalAddress = CreateIFCAddressFromExtStorage(file, document, out assignToBldg, out assignToSite);
          if (postalAddress != null)
             return postalAddress;
 
@@ -3415,12 +3420,16 @@ namespace Revit.IFC.Export.Exporter
          }
 
          IFCFile file = exporterIFC.GetFile();
-         IFCAnyHandle buildingAddress = CreateIFCAddress(file, document, projectInfo);
+         bool assignToBldg = false;
+         bool assignToSite = false;
+         IFCAnyHandle address = CreateIFCAddress(file, document, projectInfo, out assignToBldg, out assignToSite);
+         if (!assignToBldg)
+            address = null;
 
          string buildingGUID = GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building);
          IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(exporterIFC,
              buildingGUID, ownerHistory, buildingName, buildingDescription, buildingPlacement, null, buildingLongName,
-             Toolkit.IFCElementComposition.Element, null, null, buildingAddress);
+             Toolkit.IFCElementComposition.Element, null, null, address);
          ExporterCacheManager.BuildingHandle = buildingHandle;
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieProjectInfo != null)
