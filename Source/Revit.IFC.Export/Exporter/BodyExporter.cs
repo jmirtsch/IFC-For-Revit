@@ -1226,10 +1226,10 @@ namespace Revit.IFC.Export.Exporter
       }
 
       private static IFCAnyHandle CreateProfileCurveFromCurve(IFCFile file, ExporterIFC exporterIFC, Curve curve, string profileName,
-         IDictionary<IFCFuzzyXYZ, IFCAnyHandle> cartesianPoints)
+         IDictionary<IFCFuzzyXYZ, IFCAnyHandle> cartesianPoints, Transform additionalTrf = null)
       {
          bool allowAdvancedCurve = ExporterCacheManager.ExportOptionsCache.ExportAs4;
-         IFCAnyHandle ifcCurve = GeometryUtil.CreateIFCCurveFromRevitCurve(file, exporterIFC, curve, allowAdvancedCurve, cartesianPoints);
+         IFCAnyHandle ifcCurve = GeometryUtil.CreateIFCCurveFromRevitCurve(file, exporterIFC, curve, allowAdvancedCurve, cartesianPoints, additionalTrf);
          IFCAnyHandle sweptCurve = null;
 
          bool isBound = false;
@@ -1252,8 +1252,8 @@ namespace Revit.IFC.Export.Exporter
             }
             else
             {
-               edgeStart = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, curve.GetEndPoint(0), cartesianPoints);
-               edgeEnd = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, curve.GetEndPoint(1), cartesianPoints);
+               edgeStart = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, curve.GetEndPoint(0), cartesianPoints, additionalTrf);
+               edgeEnd = GeometryUtil.XYZtoIfcCartesianPoint(exporterIFC, curve.GetEndPoint(1), cartesianPoints, additionalTrf);
                isBound = true;
             }
          }
@@ -1275,7 +1275,7 @@ namespace Revit.IFC.Export.Exporter
             bool senseAgreement = true;
             trimmedCurve = IFCInstanceExporter.CreateTrimmedCurve(file, ifcCurve, trim1, trim2, senseAgreement, IFCTrimmingPreference.Cartesian);
 
-            sweptCurve = IFCInstanceExporter.CreateArbitraryClosedProfileDef(file, IFCProfileType.Curve, profileName, trimmedCurve);
+            sweptCurve = IFCInstanceExporter.CreateArbitraryOpenProfileDef(file, IFCProfileType.Curve, profileName, trimmedCurve);
          }
 
          return sweptCurve;
@@ -1838,15 +1838,23 @@ namespace Revit.IFC.Export.Exporter
                            return null;
                         }
 
-                        IFCAnyHandle direction = GeometryUtil.VectorToIfcDirection(exporterIFC, zdir);
-
-                        IFCAnyHandle sweptCurve = CreateProfileCurveFromCurve(file, exporterIFC, firstProfileCurve, Resources.RuledFaceProfileCurve, cartesianPoints);
+                        // Extrusion direction is fixed on the +Z axis of the local coordinate system of the extrusion
+                        IFCAnyHandle direction = GeometryUtil.VectorToIfcDirection(exporterIFC, new XYZ(0, 0, 1));
 
                         // Create arbitrary plane with z direction as normal.
                         Plane arbitraryPlane = GeometryUtil.CreatePlaneByNormalAtOrigin(zdir);
 
-
                         IFCAnyHandle position = CreatePositionForFace(exporterIFC, location, zdir, arbitraryPlane.XVec);
+                        Transform faceTrf = Transform.Identity;
+                        faceTrf.BasisZ = zdir;
+                        faceTrf.BasisX = arbitraryPlane.XVec;
+                        faceTrf.BasisY = faceTrf.BasisZ.CrossProduct(faceTrf.BasisX);
+
+                        IList<double> locationOrds = IFCAnyHandleUtil.GetCoordinates(location);
+                        faceTrf.Origin = new XYZ(locationOrds[0], locationOrds[1], locationOrds[2]);
+                        //Curve curveProfile = firstProfileCurve.CreateTransformed(faceTrf.Inverse);
+
+                        IFCAnyHandle sweptCurve = CreateProfileCurveFromCurve(file, exporterIFC, firstProfileCurve, Resources.RuledFaceProfileCurve, cartesianPoints, faceTrf.Inverse);
 
                         surface = IFCInstanceExporter.CreateSurfaceOfLinearExtrusion(file, sweptCurve, position, direction, depth);
                      }
