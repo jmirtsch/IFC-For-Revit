@@ -27,94 +27,144 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of the element ids mapping to a IfcMaterial___Set handle (includes IfcMaterialLayerSet, IfcMaterialProfileSet, IfcMaterialConstituentSet in IFC4).
-    /// </summary>
-    public class MaterialSetCache
-    {
-        /// <summary>
-        /// The dictionary mapping from an ElementId to an IfcMaterial___Set handle. 
-        /// </summary>
-        private Dictionary<ElementId, IFCAnyHandle> m_ElementIdToMatLayerSetDictionary = new Dictionary<ElementId, IFCAnyHandle>();
+   /// <summary>
+   /// Used to keep a cache of the element ids mapping to a IfcMaterial___Set handle (includes IfcMaterialLayerSet, IfcMaterialProfileSet, IfcMaterialConstituentSet in IFC4).
+   /// </summary>
+   public class MaterialSetCache
+   {
+      /// <summary>
+      /// The dictionary mapping from an ElementId to an IfcMaterialLayerSet handle. 
+      /// </summary>
+      private Dictionary<ElementId, IFCAnyHandle> m_ElementIdToMatLayerSetDictionary = new Dictionary<ElementId, IFCAnyHandle>();
 
-        /// <summary>
-        /// The dictionary mapping from an ElementId to a primary IfcMaterial handle. 
-        /// </summary>
-        private Dictionary<ElementId, IFCAnyHandle> m_ElementIdToMaterialHndDictionary = new Dictionary<ElementId, IFCAnyHandle>();
+      /// <summary>
+      /// The dictionary mapping from an ElementId to an IfcMaterialProfileSet handle. 
+      /// </summary>
+      private Dictionary<ElementId, IFCAnyHandle> m_ElementIdToMatProfileSetDictionary = new Dictionary<ElementId, IFCAnyHandle>();
 
-        /// <summary>
-        /// Finds the IfcMaterial___Set handle from the dictionary.
-        /// </summary>
-        /// <param name="id">
-        /// The element id.
-        /// </param>
-        /// <returns>
-        /// The IfcMaterial___Set handle.
-        /// </returns>
-        public IFCAnyHandle Find(ElementId id)
-        {
-            IFCAnyHandle handle;
-            if (m_ElementIdToMatLayerSetDictionary.TryGetValue(id, out handle))
-            {
-                return handle;
-            }
-            return null;
-        }
+      /// <summary>
+      /// The dictionary mapping from an ElementId to an IfcMaterialConstituentSet handle. 
+      /// </summary>
+      private Dictionary<ElementId, IFCAnyHandle> m_ElementIdToMatConstituentSetDictionary = new Dictionary<ElementId, IFCAnyHandle>();
+      
+      /// <summary>
+      /// The dictionary mapping from an ElementId to a primary IfcMaterial handle. 
+      /// </summary>
+      private Dictionary<ElementId, IFCAnyHandle> m_ElementIdToMaterialHndDictionary = new Dictionary<ElementId, IFCAnyHandle>();
 
-        /// <summary>
-        /// Adds the IfcMaterial___Set handle to the dictionary.
-        /// </summary>
-        /// <param name="elementId">
-        /// The element elementId.
-        /// </param>
-        /// <param name="handle">
-        /// The IfcMaterial___Set handle.
-        /// </param>
-        public void Register(ElementId elementId, IFCAnyHandle handle)
-        {
-            if (m_ElementIdToMatLayerSetDictionary.ContainsKey(elementId))
-                return;
+      /// <summary>
+      /// Finds the IfcMaterialLayerSet handle from the dictionary.
+      /// </summary>
+      /// <param name="id">The element id.</param>
+      /// <returns>The IfcMaterialLayerSet handle.</returns>
+      public IFCAnyHandle FindLayerSet(ElementId id)
+      {
+         IFCAnyHandle handle;
+         if (m_ElementIdToMatLayerSetDictionary.TryGetValue(id, out handle))
+         {
+            return handle;
+         }
+         return null;
+      }
 
-            m_ElementIdToMatLayerSetDictionary[elementId] = handle;
-        }
+      /// <summary>
+      /// Finds the IfcMaterialProfileSet handle from the dictionary.
+      /// </summary>
+      /// <param name="id">The element id.</param>
+      /// <returns>The IfcMaterialProfileSet handle.</returns>
+      public IFCAnyHandle FindProfileSet(ElementId id)
+      {
+         IFCAnyHandle handle;
+         if (m_ElementIdToMatProfileSetDictionary.TryGetValue(id, out handle))
+         {
+            return handle;
+         }
+         return null;
+      }
 
-        /// <summary>
-        /// Finds the primary IfcMaterial handle from the dictionary.
-        /// </summary>
-        /// <param name="id">
-        /// The element id.
-        /// </param>
-        /// <returns>
-        /// The IfcMaterial handle.
-        /// </returns>
-        public IFCAnyHandle FindPrimaryMaterialHnd(ElementId id)
-        {
-            IFCAnyHandle handle;
-            if (m_ElementIdToMaterialHndDictionary.TryGetValue(id, out handle))
-            {
-                return handle;
-            }
-            return null;
-        }
+      /// <summary>
+      /// Finds the IfcMaterialConsituentSet handle from the dictionary.
+      /// </summary>
+      /// <param name="id">The element id.</param>
+      /// <returns>The IfcMaterialConsituentSet handle.</returns>
+      public IFCAnyHandle FindConstituentSet(ElementId id)
+      {
+         IFCAnyHandle handle;
+         if (m_ElementIdToMatConstituentSetDictionary.TryGetValue(id, out handle))
+         {
+            return handle;
+         }
+         return null;
+      }
 
-        /// <summary>
-        /// Adds the primary IfcMaterial handle to the dictionary.
-        /// </summary>
-        /// <param name="elementId">
-        /// The element elementId.
-        /// </param>
-        /// <param name="handle">
-        /// The IfcMaterial handle.
-        /// </param>
-        public void RegisterPrimaryMaterialHnd(ElementId elementId, IFCAnyHandle handle)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(handle))
-                return;
+      /// <summary>
+      /// Adds the IfcMaterialLayerSet handle to the dictionary.
+      /// </summary>
+      /// <param name="elementId">The element elementId.</param>
+      /// <param name="handle">The IfcMaterialLayerSet handle.</param>
+      public void RegisterLayerSet(ElementId elementId, IFCAnyHandle handle)
+      {
+         if (m_ElementIdToMatLayerSetDictionary.ContainsKey(elementId))
+            return;
 
-            if (m_ElementIdToMaterialHndDictionary.ContainsKey(elementId))
-                return;
+         m_ElementIdToMatLayerSetDictionary[elementId] = handle;
+      }
 
-            m_ElementIdToMaterialHndDictionary[elementId] = handle;
-        }
-    }
+      /// <summary>
+      /// Adds the IfcMaterialProfileSet handle to the dictionary.
+      /// </summary>
+      /// <param name="elementId">The element elementId.</param>
+      /// <param name="handle">The IfcMaterialLayerSet handle.</param>
+      public void RegisterProfileSet(ElementId elementId, IFCAnyHandle handle)
+      {
+         if (m_ElementIdToMatProfileSetDictionary.ContainsKey(elementId))
+            return;
+
+         m_ElementIdToMatProfileSetDictionary[elementId] = handle;
+      }
+
+      /// <summary>
+      /// Adds the IfcMaterialConstituentSet handle to the dictionary.
+      /// </summary>
+      /// <param name="elementId">The element elementId.</param>
+      /// <param name="handle">The IfcMaterialConstituentSet handle.</param>
+      public void RegisterConstituentSet(ElementId elementId, IFCAnyHandle handle)
+      {
+         if (m_ElementIdToMatConstituentSetDictionary.ContainsKey(elementId))
+            return;
+
+         m_ElementIdToMatConstituentSetDictionary[elementId] = handle;
+      }
+      
+      /// <summary>
+       /// Finds the primary IfcMaterial handle from the dictionary.
+       /// </summary>
+       /// <param name="id">The element id.</param>
+       /// <returns>The IfcMaterial handle.</returns>
+      public IFCAnyHandle FindPrimaryMaterialHnd(ElementId id)
+      {
+         IFCAnyHandle handle;
+         if (m_ElementIdToMaterialHndDictionary.TryGetValue(id, out handle))
+         {
+            return handle;
+         }
+         return null;
+      }
+
+      /// <summary>
+      /// Adds the primary IfcMaterial handle to the dictionary.
+      /// </summary>
+      /// <param name="elementId">The element elementId.</param>
+      /// <param name="handle">The IfcMaterial handle.</param>
+      public void RegisterPrimaryMaterialHnd(ElementId elementId, IFCAnyHandle handle)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(handle))
+            return;
+
+         if (m_ElementIdToMaterialHndDictionary.ContainsKey(elementId))
+            return;
+
+         m_ElementIdToMaterialHndDictionary[elementId] = handle;
+      }
+   }
 }

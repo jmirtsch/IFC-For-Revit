@@ -17,37 +17,52 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Autodesk.Revit.DB.IFC;
-using Revit.IFC.Common.Utility;
+using Revit.IFC.Export.Exporter.PropertySet;
 
 namespace Revit.IFC.Export.Utility
 {
    /// <summary>
-   /// Used to keep a cache of the IfcObject handles mapping to a IfcTypeObject handle.
+   /// Used to keep a cache of Attribute Mapping when exporting an element.
    /// </summary>
-   public class TypeRelationsCache : Dictionary<IFCAnyHandle, HashSet<IFCAnyHandle>>
+   public class AttributeCache
    {
       /// <summary>
-      /// Adds the IfcObject to the dictionary.
+      /// List of Attribute Maps.
       /// </summary>
-      /// <param name="typeObj">The IfcTypeObject handle.</param>
-      /// <param name="obj">The IfcObject handle.</param>
-      public void Add(IFCAnyHandle typeObj, IFCAnyHandle obj)
-      {
-         if (IFCAnyHandleUtil.IsNullOrHasNoValue(typeObj))
-            return;
+      private List<AttributeSetDescription> m_AttributeSets;
 
-         if (ContainsKey(typeObj))
-         {
-            this[typeObj].Add(obj);
-         }
-         else
-         {
-            HashSet<IFCAnyHandle> objs = new HashSet<IFCAnyHandle>();
-            objs.Add(obj);
-            this[typeObj] = objs;
-         }
+      /// <summary>
+      /// Constructs a default AttributeCache object.
+      /// </summary>
+      public AttributeCache()
+      {
+         m_AttributeSets = new List<AttributeSetDescription>();
       }
+
+      public void AddAttributeSet(AttributeSetDescription attribute)
+      {
+         m_AttributeSets.Add(attribute);
+      }
+
+      public List<AttributeEntry> GetEntry(IFCAnyHandle handle, PropertyType propertyType, string name)
+      {
+         List<AttributeEntry> result = new List<AttributeEntry>();
+         foreach (AttributeSetDescription set in m_AttributeSets)
+         {
+            if (set.IsAppropriateType(handle))
+            {
+               AttributeEntry entry = set.GetEntry(propertyType, name);
+               if (entry != null)
+                  result.Add(entry);
+            }
+         }
+         return result;
+      }
+
    }
 }

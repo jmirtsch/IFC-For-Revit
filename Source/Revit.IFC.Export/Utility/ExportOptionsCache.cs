@@ -38,6 +38,15 @@ namespace Revit.IFC.Export.Utility
    /// </summary>
    public class ExportOptionsCache
    {
+      public enum SiteTransformBasis
+      {
+         Shared = 0,
+         Site = 1,
+         Project = 2,
+         Internal = 3,
+      }
+      public SiteTransformBasis SiteTransformation { get; set; } = ExportOptionsCache.SiteTransformBasis.Shared;
+
       public enum ExportTessellationLevel
       {
          ExtraLow = 1,
@@ -45,7 +54,6 @@ namespace Revit.IFC.Export.Utility
          Medium = 3,
          High = 4
       }
-
 
       private GUIDOptions m_GUIDOptions;
       private bool m_ExportAs4_ADD1;
@@ -274,6 +282,15 @@ namespace Revit.IFC.Export.Utility
          bool? includeIfcSiteElevation = GetNamedBooleanOption(options, "IncludeSiteElevation");
          cache.IncludeSiteElevation = includeIfcSiteElevation != null ? includeIfcSiteElevation.Value : false;
 
+         int? siteTransformation = GetNamedIntOption(options, "SitePlacement");
+         if (siteTransformation != null)
+         {
+            try
+            { 
+               cache.SiteTransformation = (SiteTransformBasis)siteTransformation;
+            }
+            catch (Exception) { }
+         }
          // We have two ways to get information about level of detail:
          // 1. The old Boolean "UseCoarseTessellation".
          // 2. The new double "TessellationLevelOfDetail".
@@ -395,11 +412,11 @@ namespace Revit.IFC.Export.Utility
          cache.ExcludeFilter = GetNamedStringOption(options, "ExcludeFilter");
 
          // Get COBie specific information
-         if (cache.ExportAs2x3COBIE24DesignDeliverable)
-         {
-            cache.COBieCompanyInfo = JsonConvert.DeserializeObject<COBieCompanyInfo>(GetNamedStringOption(options, "COBieCompanyInfo"));
-            cache.COBieProjectInfo = JsonConvert.DeserializeObject<COBieProjectInfo>(GetNamedStringOption(options, "COBieProjectInfo"));
-         }
+         //if (cache.ExportAs2x3COBIE24DesignDeliverable)
+         //{
+            //cache.COBieCompanyInfo = JsonConvert.DeserializeObject<COBieCompanyInfo>(GetNamedStringOption(options, "COBieCompanyInfo"));
+            //cache.COBieProjectInfo = JsonConvert.DeserializeObject<COBieProjectInfo>(GetNamedStringOption(options, "COBieProjectInfo"));
+         //}
          return cache;
       }
 

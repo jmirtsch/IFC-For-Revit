@@ -186,7 +186,11 @@ namespace Revit.IFC.Export.Exporter
          get
          {
             if (m_TessellationControls == null)
+            {
                m_TessellationControls = new SolidOrShellTessellationControls();
+               // Initialize level of detail to a valid value (default is -1, valid range is 0 to 1).
+               m_TessellationControls.LevelOfDetail = ((double)ExporterCacheManager.ExportOptionsCache.LevelOfDetail) / 4.0;
+            }
             return m_TessellationControls;
          }
          set { m_TessellationControls = value; }

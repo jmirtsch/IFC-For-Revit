@@ -68,7 +68,8 @@ namespace Revit.IFC.Export.Exporter
                {
                   foreach (KeyValuePair<Part, IFCRange> partRange in splitPartRangeList)
                   {
-                     PartExporter.ExportPart(exporterIFC, partRange.Key, subWrapper, placementSetter, originalPlacement, partRange.Value, ifcExtrusionAxes, hostElement, overrideLevelId, false);
+                     PartExporter.ExportPart(exporterIFC, partRange.Key, subWrapper, placementSetter, originalPlacement,
+                        partRange.Value, ifcExtrusionAxes, hostElement, overrideLevelId, false);
                   }
                }
             }
@@ -77,7 +78,8 @@ namespace Revit.IFC.Export.Exporter
                foreach (ElementId partId in associatedPartsList)
                {
                   Part part = hostElement.Document.GetElement(partId) as Part;
-                  PartExporter.ExportPart(exporterIFC, part, subWrapper, placementSetter, originalPlacement, null, ifcExtrusionAxes, hostElement, overrideLevelId, false);
+                  PartExporter.ExportPart(exporterIFC, part, subWrapper, placementSetter, originalPlacement, null, ifcExtrusionAxes,
+                     hostElement, overrideLevelId, false);
                }
             }
 
@@ -90,6 +92,32 @@ namespace Revit.IFC.Export.Exporter
                IFCInstanceExporter.CreateRelAggregates(exporterIFC.GetFile(), guid, ExporterCacheManager.OwnerHistoryHandle, null, null, hostHandle, relatedElementIdSet);
             }
          }
+      }
+
+      public static bool IsAnyHostElementLocal(Part partElement)
+      {
+         if (partElement == null)
+            return false;
+
+         Document doc = partElement.Document;
+         foreach (LinkElementId linkElementId in partElement.GetSourceElementIds())
+         {
+            if (linkElementId.HostElementId == ElementId.InvalidElementId)
+               continue;
+
+            Element parentPartAsElement = doc.GetElement(linkElementId.HostElementId);
+            if (parentPartAsElement == null)
+               continue;
+
+            Part parentPartAsPart = parentPartAsElement as Part;
+            if (parentPartAsPart == null)
+               return true;
+
+            if (IsAnyHostElementLocal(parentPartAsPart))
+               return true;
+         }
+
+         return false;
       }
 
       /// <summary>
@@ -116,27 +144,30 @@ namespace Revit.IFC.Export.Exporter
          if (!ExporterCacheManager.ExportOptionsCache.ExportParts || part == null || geometryElement == null)
             return;
 
-         foreach (LinkElementId linkElementId in part.GetSourceElementIds())
+         if (IsAnyHostElementLocal(part))
          {
-            if (linkElementId.HostElementId != ElementId.InvalidElementId)
-            {
-               // Has host element, so should export with host element.
-               return;
-            }
-            if (linkElementId.LinkedElementId != ElementId.InvalidElementId)
-            {
-               if (part.LevelId == ElementId.InvalidElementId)
-               {
-                  // skip the parts have NO Base Level.
-                  continue;
-               }
-
-               IFCExtrusionAxes ifcExtrusionAxes = GetDefaultExtrusionAxesForPart(part);
-               PartExporter.ExportPart(exporterIFC, partElement, productWrapper, null, null, null, ifcExtrusionAxes, null, null, false);
-            }
+            // Has host element, so should export with host element.
+            return;
          }
-      }
 
+         ElementId overrideLevelId = null;
+         if (part.LevelId == ElementId.InvalidElementId)
+         {
+            // If part's level is not associated, try to get the host's level with the same category.
+            Element hostElement = FindRootParent(part, part.OriginalCategoryId);
+            if (hostElement == null)
+               return;
+
+            overrideLevelId = hostElement.LevelId;
+            if (overrideLevelId == ElementId.InvalidElementId)
+               return;
+         }
+
+         IFCExtrusionAxes ifcExtrusionAxes = GetDefaultExtrusionAxesForPart(part);
+         PartExporter.ExportPart(exporterIFC, partElement, productWrapper, null, null, null, ifcExtrusionAxes, null,
+            overrideLevelId, false);
+      }
+   
       /// <summary>
       /// Export the parts as independent building elements. 
       /// </summary>
@@ -182,18 +213,21 @@ namespace Revit.IFC.Export.Exporter
             LevelUtil.CreateSplitLevelRangesForElement(exporterIFC, exportType, part, out levels, out ranges);
             if (ranges.Count == 0)
             {
-               PartExporter.ExportPart(exporterIFC, partElement, productWrapper, null, null, null, ifcExtrusionAxes, hostElement, overrideLevelId, true);
+               PartExporter.ExportPart(exporterIFC, partElement, productWrapper, null, null, null, ifcExtrusionAxes, hostElement, 
+                  overrideLevelId, true);
             }
             else
             {
                for (int ii = 0; ii < ranges.Count; ii++)
                {
-                  PartExporter.ExportPart(exporterIFC, partElement, productWrapper, null, null, ranges[ii], ifcExtrusionAxes, hostElement, levels[ii], true);
+                  PartExporter.ExportPart(exporterIFC, partElement, productWrapper, null, null, ranges[ii], ifcExtrusionAxes, 
+                     hostElement, levels[ii], true);
                }
             }
          }
          else
-            PartExporter.ExportPart(exporterIFC, partElement, productWrapper, null, null, null, ifcExtrusionAxes, hostElement, overrideLevelId, true);
+            PartExporter.ExportPart(exporterIFC, partElement, productWrapper, null, null, null, ifcExtrusionAxes, hostElement, 
+               overrideLevelId, true);
       }
 
       /// <summary>
@@ -203,6 +237,13 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="partElement">The part element to export.</param>
       /// <param name="geometryElement">The geometry of part.</param>
       /// <param name="productWrapper">The ProductWrapper object.</param>
+      /// <param name="placementSetter"></param>
+      /// <param name="originalPlacement"></param>
+      /// <param name="range"></param>
+      /// <param name="ifcExtrusionAxes"></param>
+      /// <param name="hostElement">The host of the part.  This can be null.</param>
+      /// <param name="overrideLevelId">The id of the level that the part is one, overridding other sources.</param>
+      /// <param name="asBuildingElement">If true, export the Part as a building element instead of an IfcElementPart.</param>
       public static void ExportPart(ExporterIFC exporterIFC, Element partElement, ProductWrapper productWrapper,
           PlacementSetter placementSetter, IFCAnyHandle originalPlacement, IFCRange range, IFCExtrusionAxes ifcExtrusionAxes,
           Element hostElement, ElementId overrideLevelId, bool asBuildingElement)
@@ -212,6 +253,10 @@ namespace Revit.IFC.Export.Exporter
 
          Part part = partElement as Part;
          if (part == null)
+            return;
+
+         // We don't know how to export a part as a building element if we don't know it's host.
+         if (asBuildingElement && (hostElement == null))
             return;
 
          if (!asBuildingElement)
@@ -235,23 +280,21 @@ namespace Revit.IFC.Export.Exporter
          }
 
          PlacementSetter standalonePlacementSetter = null;
-         bool standaloneExport = hostElement == null && !asBuildingElement;
+         bool standaloneExport = hostElement == null || asBuildingElement;
 
-         ElementId partExportLevel = null;
-         if (standaloneExport || asBuildingElement)
+         ElementId partExportLevelId = (overrideLevelId != null) ? overrideLevelId : null;
+
+         if (partExportLevelId == null && standaloneExport)
+            partExportLevelId = partElement.LevelId;
+
+         if (partExportLevelId == null)
          {
-            partExportLevel = partElement.LevelId;
-         }
-         else
-         {
-            if (part.OriginalCategoryId != hostElement.Category.Id)
+            if (hostElement == null || (part.OriginalCategoryId != hostElement.Category.Id))
                return;
-            partExportLevel = hostElement.LevelId;
+            partExportLevelId = hostElement.LevelId;
          }
-         if (overrideLevelId != null)
-            partExportLevel = overrideLevelId;
 
-         if (ExporterCacheManager.PartExportedCache.HasExported(partElement.Id, partExportLevel))
+         if (ExporterCacheManager.PartExportedCache.HasExported(partElement.Id, partExportLevelId))
             return;
 
          Options options = GeometryUtil.GetIFCExportGeometryOptions();
@@ -269,10 +312,10 @@ namespace Revit.IFC.Export.Exporter
             using (IFCTransaction transaction = new IFCTransaction(file))
             {
                IFCAnyHandle partPlacement = null;
-               if (standaloneExport || asBuildingElement)
+               if (standaloneExport)
                {
                   Transform orientationTrf = Transform.Identity;
-                  standalonePlacementSetter = PlacementSetter.Create(exporterIFC, partElement, null, orientationTrf, partExportLevel);
+                  standalonePlacementSetter = PlacementSetter.Create(exporterIFC, partElement, null, orientationTrf, partExportLevelId);
                   partPlacement = standalonePlacementSetter.LocalPlacement;
                }
                else
@@ -340,16 +383,12 @@ namespace Revit.IFC.Export.Exporter
                   IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
 
                   string partGUID = GUIDUtil.CreateGUID(partElement);
-                  string partName = NamingUtil.GetNameOverride(partElement, NamingUtil.GetIFCName(partElement));
-                  string partDescription = NamingUtil.GetDescriptionOverride(partElement, null);
-                  string partObjectType = NamingUtil.GetObjectTypeOverride(partElement, NamingUtil.CreateIFCObjectName(exporterIFC, partElement));
-                  string partTag = NamingUtil.GetTagOverride(partElement, NamingUtil.CreateIFCElementId(partElement));
 
                   IFCAnyHandle ifcPart = null;
                   if (!asBuildingElement)
                   {
-                     ifcPart = IFCInstanceExporter.CreateBuildingElementPart(file, partGUID, ownerHistory, partName, partDescription,
-                         partObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, partTag);
+                     ifcPart = IFCInstanceExporter.CreateBuildingElementPart(exporterIFC, partElement, partGUID, ownerHistory, 
+						 extrusionCreationData.GetLocalPlacement(), prodRep);
                   }
                   else
                   {
@@ -366,41 +405,41 @@ namespace Revit.IFC.Export.Exporter
                      switch (exportType)
                      {
                         case IFCExportType.IfcColumnType:
-                           ifcPart = IFCInstanceExporter.CreateColumn(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
-                               extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
+                           ifcPart = IFCInstanceExporter.CreateColumn(exporterIFC, partElement, partGUID, ownerHistory,
+                               extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
                         case IFCExportType.IfcCovering:
-                           ifcPart = IFCInstanceExporter.CreateCovering(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
-                               extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
+                           ifcPart = IFCInstanceExporter.CreateCovering(exporterIFC, partElement, partGUID, ownerHistory,
+                               extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
                         case IFCExportType.IfcFooting:
-                           ifcPart = IFCInstanceExporter.CreateFooting(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
-                               extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
+                           ifcPart = IFCInstanceExporter.CreateFooting(exporterIFC, partElement, partGUID, ownerHistory, 
+                               extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
                         case IFCExportType.IfcPile:
-                           ifcPart = IFCInstanceExporter.CreatePile(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
-                               extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType, null);
+                           ifcPart = IFCInstanceExporter.CreatePile(exporterIFC, partElement, partGUID, ownerHistory, 
+                               extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType, null);
                            break;
                         case IFCExportType.IfcRoof:
-                           ifcPart = IFCInstanceExporter.CreateRoof(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
-                               extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
+                           ifcPart = IFCInstanceExporter.CreateRoof(exporterIFC, partElement, partGUID, ownerHistory, 
+                               extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
                         case IFCExportType.IfcSlab:
-                           ifcPart = IFCInstanceExporter.CreateSlab(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
-                               extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
+                           ifcPart = IFCInstanceExporter.CreateSlab(exporterIFC, partElement, partGUID, ownerHistory, 
+                               extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
                         case IFCExportType.IfcWall:
-                           ifcPart = IFCInstanceExporter.CreateWall(file, partGUID, ownerHistory, partName, partDescription, partObjectType,
-                           extrusionCreationData.GetLocalPlacement(), prodRep, partTag, ifcEnumType);
+                           ifcPart = IFCInstanceExporter.CreateWall(exporterIFC, partElement, partGUID, ownerHistory, 
+                           extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
                         default:
-                           ifcPart = IFCInstanceExporter.CreateBuildingElementProxy(file, partGUID, ownerHistory, partName, partDescription,
-                               partObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, partTag, null);
+                           ifcPart = IFCInstanceExporter.CreateBuildingElementProxy(exporterIFC, partElement, partGUID, ownerHistory, 
+                               extrusionCreationData.GetLocalPlacement(), prodRep, null);
                            break;
                      }
                   }
 
-                  bool containedInLevel = (standaloneExport || asBuildingElement);
+                  bool containedInLevel = standaloneExport;
                   PlacementSetter whichPlacementSetter = containedInLevel ? standalonePlacementSetter : placementSetter;
                   productWrapper.AddElement(partElement, ifcPart, whichPlacementSetter, extrusionCreationData, containedInLevel);
 
@@ -408,7 +447,7 @@ namespace Revit.IFC.Export.Exporter
                       extrusionCreationData.GetLocalPlacement(), whichPlacementSetter, productWrapper);
 
                   //Add the exported part to exported cache.
-                  TraceExportedParts(partElement, partExportLevel, standaloneExport || asBuildingElement ? ElementId.InvalidElementId : hostElement.Id);
+                  TraceExportedParts(partElement, partExportLevelId, standaloneExport ? ElementId.InvalidElementId : hostElement.Id);
 
                   CategoryUtil.CreateMaterialAssociation(exporterIFC, ifcPart, bodyData.MaterialIds);
 
@@ -699,7 +738,24 @@ namespace Revit.IFC.Export.Exporter
          foreach (LinkElementId linkElementId in part.GetSourceElementIds())
          {
             if (linkElementId.HostElementId == ElementId.InvalidElementId)
+            {
+               if(linkElementId.LinkInstanceId == ElementId.InvalidElementId)
+                  continue;
+               Element linkedElement = part.Document.GetElement(linkElementId.LinkInstanceId);
+
+               RevitLinkInstance linkInstance = linkedElement as RevitLinkInstance;
+               if(linkInstance != null)
+               {
+                  Document document = linkInstance.GetLinkDocument();
+                  if(document != null)
+                  {
+                     ElementId id = linkElementId.LinkedElementId;
+                     hostElement = document.GetElement(id);
+                     return hostElement;
+                  }
+               }
                continue;
+            }
 
             Element parentElement = part.Document.GetElement(linkElementId.HostElementId);
             // If the direct parent is a part, find its parent.

@@ -17,40 +17,37 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB.IFC;
+using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of the IfcRoot handles mapping to an IfcMaterial or IfcMaterialList handle.
-    /// </summary>
-    public class MaterialRelationsCache : Dictionary<IFCAnyHandle, HashSet<IFCAnyHandle>>
-    {
-        /// <summary>
-        /// Adds the IfcRoot handle to the dictionary.
-        /// </summary>
-        /// <param name="material">
-        /// The material handle.
-        /// </param>
-        /// <param name="product">
-        /// The product handle.
-        /// </param>
-        public void Add(IFCAnyHandle material, IFCAnyHandle product)
-        {
-            if (ContainsKey(material))
-            {
-                this[material].Add(product);
-            }
-            else
-            {
-                HashSet<IFCAnyHandle> products = new HashSet<IFCAnyHandle>();
-                products.Add(product);
-                this[material] = products;
-            }
-        }
-    }
+   /// <summary>
+   /// Used to keep a cache of the IfcRoot handles mapping to an IfcMaterial or IfcMaterialList handle.
+   /// </summary>
+   public class MaterialRelationsCache : Dictionary<IFCAnyHandle, HashSet<IFCAnyHandle>>
+   {
+      /// <summary>
+      /// Adds the IfcRoot handle to the dictionary.
+      /// </summary>
+      /// <param name="material">The material handle.</param>
+      /// <param name="product">The product handle.</param>
+      public void Add(IFCAnyHandle material, IFCAnyHandle product)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(material))
+            return;
+
+         if (ContainsKey(material))
+         {
+            this[material].Add(product);
+         }
+         else
+         {
+            HashSet<IFCAnyHandle> products = new HashSet<IFCAnyHandle>();
+            products.Add(product);
+            this[material] = products;
+         }
+      }
+   }
 }

@@ -71,9 +71,6 @@ namespace Revit.IFC.Export.Exporter
 
             string guid = GUIDUtil.CreateGUID(element);
             IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
-            string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-            string description = NamingUtil.GetDescriptionOverride(element, null);
-            string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
             IFCAnyHandle localPlacement = null;
             PlacementSetter placementSetter = null;
             IFCLevelInfo levelInfo = null;
@@ -83,8 +80,10 @@ namespace Revit.IFC.Export.Exporter
             IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
             if (exportAs == IFCExportType.IfcSystem)
             {
-               assemblyInstanceHnd = IFCInstanceExporter.CreateSystem(file, guid,
-                   ownerHistory, name, description, objectType);
+               string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
+               string description = NamingUtil.GetDescriptionOverride(element, null);
+               string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
+               assemblyInstanceHnd = IFCInstanceExporter.CreateSystem(file, guid, ownerHistory, name, description, objectType);
 
                // Create classification reference when System has classification filed name assigned to it
                ClassificationUtil.CreateClassification(exporterIFC, file, element, assemblyInstanceHnd);
@@ -101,7 +100,6 @@ namespace Revit.IFC.Export.Exporter
             {
                using (placementSetter = PlacementSetter.Create(exporterIFC, element))
                {
-                  string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
                   IFCAnyHandle representation = null;
 
                   // We have limited support for exporting assemblies as other container types.
@@ -113,36 +111,32 @@ namespace Revit.IFC.Export.Exporter
                   {
                      case IFCExportType.IfcCurtainWall:
                      case IFCExportType.IfcCurtainWallType:
-                        assemblyInstanceHnd = IFCInstanceExporter.CreateCurtainWall(file, guid,
-                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag);
+                        assemblyInstanceHnd = IFCInstanceExporter.CreateCurtainWall(exporterIFC, element, guid,
+                            ownerHistory, localPlacement, representation);
                         break;
                      case IFCExportType.IfcRamp:
                         string rampPredefinedType = RampExporter.GetIFCRampType(ifcEnumType);
-                        assemblyInstanceHnd = IFCInstanceExporter.CreateRamp(file, guid,
-                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
-                            rampPredefinedType);
+                        assemblyInstanceHnd = IFCInstanceExporter.CreateRamp(exporterIFC, element, guid,
+                            ownerHistory, localPlacement, representation, rampPredefinedType);
                         break;
                      case IFCExportType.IfcRoof:
-                        assemblyInstanceHnd = IFCInstanceExporter.CreateRoof(file, guid,
-                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
-                            ifcEnumType);
+                        assemblyInstanceHnd = IFCInstanceExporter.CreateRoof(exporterIFC, element, guid,
+                            ownerHistory, localPlacement, representation, ifcEnumType);
                         break;
                      case IFCExportType.IfcStair:
                         string stairPredefinedType = StairsExporter.GetIFCStairType(ifcEnumType);
-                        assemblyInstanceHnd = IFCInstanceExporter.CreateStair(file, guid,
-                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
-                            stairPredefinedType);
+                        assemblyInstanceHnd = IFCInstanceExporter.CreateStair(exporterIFC, element, guid,
+                            ownerHistory, localPlacement, representation, stairPredefinedType);
                         break;
                      case IFCExportType.IfcWall:
-                        assemblyInstanceHnd = IFCInstanceExporter.CreateWall(file, guid,
-                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
-                            ifcEnumType);
+                        assemblyInstanceHnd = IFCInstanceExporter.CreateWall(exporterIFC, element, guid,
+                            ownerHistory, localPlacement, representation, ifcEnumType);
                         break;
                      default:
+						string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
                         IFCElementAssemblyType assemblyPredefinedType = GetPredefinedTypeFromObjectType(objectType);
-                        assemblyInstanceHnd = IFCInstanceExporter.CreateElementAssembly(file, guid,
-                            ownerHistory, name, description, objectType, localPlacement, representation, elementTag,
-                            IFCAssemblyPlace.NotDefined, assemblyPredefinedType);
+                        assemblyInstanceHnd = IFCInstanceExporter.CreateElementAssembly(exporterIFC, element, guid,
+                            ownerHistory, localPlacement, representation, IFCAssemblyPlace.NotDefined, assemblyPredefinedType);
                         break;
                   }
                }
@@ -266,14 +260,10 @@ namespace Revit.IFC.Export.Exporter
                IFCAnyHandle localPlacement = placementSetter.LocalPlacement;
 
                string guid = GUIDUtil.CreateGUID(assemblyElem);
-               string name = NamingUtil.GetIFCName(assemblyElem);
-               string description = NamingUtil.GetDescriptionOverride(assemblyElem, null);
-               string objectType = NamingUtil.GetObjectTypeOverride(assemblyElem, exporterIFC.GetFamilyName());
-               string elementTag = NamingUtil.CreateIFCElementId(assemblyElem);
+               
 
-               IFCAnyHandle assemblyInstanceHnd = IFCInstanceExporter.CreateElementAssembly(file, guid,
-                   ownerHistory, name, description, objectType, localPlacement, null, elementTag,
-                   IFCAssemblyPlace.NotDefined, assemblyType);
+               IFCAnyHandle assemblyInstanceHnd = IFCInstanceExporter.CreateElementAssembly(exporterIFC, assemblyElem, guid,
+                   ownerHistory, localPlacement, null, IFCAssemblyPlace.NotDefined, assemblyType);
 
                productWrapper.AddElement(assemblyElem, assemblyInstanceHnd, placementSetter.LevelInfo, null, true);
 

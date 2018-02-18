@@ -511,7 +511,7 @@
     <value>Source (Publisher)</value>
   </data>
   <data name="State" xml:space="preserve">
-    <value>State</value>
+    <value>State/Region</value>
   </data>
   <data name="UnkownAltUIVer" xml:space="preserve">
     <value>Unknown alternate UI version</value>
@@ -696,13 +696,85 @@
   <data name="ER_Architecture" xml:space="preserve">
     <value>Architectural Reference Exchange</value>
   </data>
-  <data name="ExchangeRequirement" xml:space="preserve">
-    <value>Exchange Requirement</value>
-  </data>
   <data name="ER_BuildingService" xml:space="preserve">
     <value>MEP Reference Exchange</value>
   </data>
   <data name="ER_Structural" xml:space="preserve">
     <value>Structural Reference Exchange</value>
+  </data>
+  <data name="ExchangeRequirement" xml:space="preserve">
+    <value>Exchange Requirement</value>
+  </data>
+  <data name="ExportSelectedSetup" xml:space="preserve">
+    <value>Save selected setup ...</value>
+  </data>
+  <data name="InternalCoordinates" xml:space="preserve">
+    <value>Internal coordinates</value>
+  </data>
+  <data name="LoadSetup" xml:space="preserve">
+    <value>Import setup ...</value>
+  </data>
+  <data name="ProjectBasePoint" xml:space="preserve">
+    <value>Project base point</value>
+  </data>
+  <data name="ProjectOrigin" xml:space="preserve">
+    <value>Project Origin</value>
+  </data>
+  <data name="SiteSurveyPoint" xml:space="preserve">
+    <value>Site survey point</value>
+  </data>
+  <data name="BuildingDescription" xml:space="preserve">
+    <value>Building description</value>
+  </data>
+  <data name="BuildingName" xml:space="preserve">
+    <value>Building name/number</value>
+  </data>
+  <data name="BuildingType" xml:space="preserve">
+    <value>Building type</value>
+  </data>
+  <data name="CompanyEmail" xml:space="preserve">
+    <value>Company email</value>
+  </data>
+  <data name="CompanyInfo" xml:space="preserve">
+    <value>Company Info</value>
+  </data>
+  <data name="CompanyName" xml:space="preserve">
+    <value>Company name</value>
+  </data>
+  <data name="CompanyPhone" xml:space="preserve">
+    <value>Company phone</value>
+  </data>
+  <data name="CompanyType" xml:space="preserve">
+    <value>Company type</value>
+  </data>
+  <data name="ConfigurationFilePrefix" xml:space="preserve">
+    <value>IFC Configuration</value>
+  </data>
+  <data name="KeepTessellatedAsTriangulation" xml:space="preserve">
+    <value>Keep tessellated geometry as triangulation</value>
+  </data>
+  <data name="ProjectDescription" xml:space="preserve">
+    <value>Project description</value>
+  </data>
+  <data name="ProjectInfo" xml:space="preserve">
+    <value>Project Info</value>
+  </data>
+  <data name="ProjectName" xml:space="preserve">
+    <value>Project name</value>
+  </data>
+  <data name="ProjectPhase" xml:space="preserve">
+    <value>Project phase</value>
+  </data>
+  <data name="SharedCoordinates" xml:space="preserve">
+    <value>Current shared coordinates</value>
+  </data>
+  <data name="SiteDescription" xml:space="preserve">
+    <value>Site description</value>
+  </data>
+  <data name="SiteLocation" xml:space="preserve">
+    <value>Site location</value>
+  </data>
+  <data name="StreetAddress" xml:space="preserve">
+    <value>Street address</value>
   </data>
 </root>

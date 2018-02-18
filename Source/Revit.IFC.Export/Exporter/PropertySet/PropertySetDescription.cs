@@ -51,8 +51,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          Tuple<string, string> key = new Tuple<string, string>(this.Name, entry.PropertyName);
          if (ExporterCacheManager.PropertyMapCache.ContainsKey(new Tuple<string, string>(this.Name, entry.PropertyName)))
          {
+			
             //replace the PropertySetEntry.RevitParameterName by the value in the cache.
-            entry.RevitParameterName = ExporterCacheManager.PropertyMapCache[key];
+            entry.SetRevitParameterName( ExporterCacheManager.PropertyMapCache[key]);
          }
 
          entry.UpdateEntry();

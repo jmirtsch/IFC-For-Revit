@@ -17,37 +17,50 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Revit.IFC.Export.Toolkit;
+using Revit.IFC.Common.Enums;
 using Revit.IFC.Common.Utility;
+using Revit.IFC.Export.Utility;
 
-namespace Revit.IFC.Export.Utility
+namespace Revit.IFC.Export.Exporter.PropertySet
 {
    /// <summary>
-   /// Used to keep a cache of the IfcObject handles mapping to a IfcTypeObject handle.
+   /// Represents a mapping from a Revit parameter or calculated quantity to an IFC property.
    /// </summary>
-   public class TypeRelationsCache : Dictionary<IFCAnyHandle, HashSet<IFCAnyHandle>>
+   public class AttributeEntryMap : EntryMap
    {
-      /// <summary>
-      /// Adds the IfcObject to the dictionary.
-      /// </summary>
-      /// <param name="typeObj">The IfcTypeObject handle.</param>
-      /// <param name="obj">The IfcObject handle.</param>
-      public void Add(IFCAnyHandle typeObj, IFCAnyHandle obj)
+      public AttributeEntryMap()
       {
-         if (IFCAnyHandleUtil.IsNullOrHasNoValue(typeObj))
-            return;
 
-         if (ContainsKey(typeObj))
+      }
+      public AttributeEntryMap(string name, BuiltInParameter builtInParameter) : base(name, builtInParameter)
+      {
+
+      }
+
+
+      internal string AsString(Element element)
+      {
+         if (element == null)
+            return null;
+         Parameter parameter = null;
+         if (RevitBuiltInParameter != BuiltInParameter.INVALID)
          {
-            this[typeObj].Add(obj);
+            parameter = element.get_Parameter(RevitBuiltInParameter);
          }
          else
          {
-            HashSet<IFCAnyHandle> objs = new HashSet<IFCAnyHandle>();
-            objs.Add(obj);
-            this[typeObj] = objs;
+            parameter = ParameterUtil.GetParameterFromName(element.Id, null, RevitParameterName);
          }
+         if (parameter == null)
+            return null;
+         return parameter.AsString();
       }
    }
 }

@@ -186,7 +186,9 @@ namespace Revit.IFC.Export.Utility
       /// The top level IfcOwnerHistory handle.
       /// </summary>
       static IFCAnyHandle m_OwnerHistoryHandle;
-        
+
+      static AttributeCache m_AttributeCache;
+
       /// <summary>
       /// The ParameterCache object.
       /// </summary>
@@ -516,6 +518,16 @@ namespace Revit.IFC.Export.Utility
       {
          get { return m_LanguageType; }
          set { m_LanguageType = value; }
+      }
+
+      public static AttributeCache AttributeCache
+      {
+         get
+         {
+            if (m_AttributeCache == null)
+               m_AttributeCache = new AttributeCache();
+            return m_AttributeCache;
+         }
       }
 
       /// <summary>

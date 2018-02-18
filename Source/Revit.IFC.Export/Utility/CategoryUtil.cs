@@ -529,7 +529,7 @@ namespace Revit.IFC.Export.Utility
       {
          IFCFile file = exporterIFC.GetFile();
          ElementId typeId = familySymbol.Id;
-         IFCAnyHandle materialSet = ExporterCacheManager.MaterialSetCache.Find(typeId);
+         IFCAnyHandle materialSet = ExporterCacheManager.MaterialSetCache.FindProfileSet(typeId);
          if (materialSet == null && materialAndProfile != null)
          {
             IList<IFCAnyHandle> matProf = new List<IFCAnyHandle>();
@@ -543,7 +543,7 @@ namespace Revit.IFC.Export.Utility
             if (matProf.Count > 0)
             {
                materialSet = IFCInstanceExporter.CreateMaterialProfileSet(file, matProf, name: familySymbol.Name);
-               ExporterCacheManager.MaterialSetCache.Register(typeId, materialSet);
+               ExporterCacheManager.MaterialSetCache.RegisterProfileSet(typeId, materialSet);
             }
          }
 

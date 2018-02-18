@@ -42,6 +42,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// </summary>
       string m_Name = String.Empty;
 
+      string m_Description = String.Empty;
       /// <summary>
       /// The element id of the view schedule generating this Description, if appropriate.
       /// </summary>
@@ -182,6 +183,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       {
          get { return m_Name; }
          set { m_Name = value; }
+      }
+
+      public string DescriptionOfSet
+      {
+         get { return m_Description; }
+         set { m_Description = value; }
       }
 
       /// <summary>

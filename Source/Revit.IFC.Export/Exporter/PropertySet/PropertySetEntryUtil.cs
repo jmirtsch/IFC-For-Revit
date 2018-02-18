@@ -42,12 +42,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <returns>The correct PropertySetEntry.</returns>
         public static PropertySetEntry CreateAcousticRatingEntry()
         {
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateLabel("AcousticRating");
+			string name = "AcousticRating";
+            PropertySetEntryMap ifcPSE = new PropertySetEntryMap(name);
             ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "隔音等级");
             ifcPSE.AddLocalizedParameterName(LanguageType.French, "IsolationAcoustique");
             ifcPSE.AddLocalizedParameterName(LanguageType.German, "Schallschutzklasse");
             ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "遮音等級");
-            return ifcPSE;
+            return new PropertySetEntry(PropertyType.Label, name, ifcPSE);
         }
 
         /// <summary>
@@ -56,11 +57,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <returns>The correct PropertySetEntry.</returns>
         public static PropertySetEntry CreateCompartmentationEntry()
         {
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("Compartmentation");
+			string name = "Compartmentation";
+			PropertySetEntryMap ifcPSE = new PropertySetEntryMap(name);
             ifcPSE.AddLocalizedParameterName(LanguageType.French, "Compartimentage");
             ifcPSE.AddLocalizedParameterName(LanguageType.German, "BrandabschnittsdefinierendesBauteil");
             ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "防火区画");
-            return ifcPSE;
+            return new PropertySetEntry(PropertyType.Boolean, name, ifcPSE);
         }
         
         /// <summary>
@@ -69,11 +71,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <returns>The correct PropertySetEntry.</returns>
         public static PropertySetEntry CreateCombustibleEntry()
         {
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("Combustible");
+			string name = "Combustible";
+            PropertySetEntryMap ifcPSE = new PropertySetEntryMap(name);
             ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "是否可燃");
             ifcPSE.AddLocalizedParameterName(LanguageType.German, "BrennbaresMaterial");
             ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "可燃性区分");
-            return ifcPSE;
+            return new PropertySetEntry(PropertyType.Boolean, name, ifcPSE);
         }
 
         /// <summary>
@@ -82,11 +85,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <returns>The correct PropertySetEntry.</returns>
         public static PropertySetEntry CreateExtendToStructureEntry()
         {
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("ExtendToStructure");
+			string name = "ExtendToStructure";
+			PropertySetEntryMap ifcPSE = new PropertySetEntryMap(name);
             ifcPSE.AddLocalizedParameterName(LanguageType.French, "ExtensionStructure");
             ifcPSE.AddLocalizedParameterName(LanguageType.German, "RaumhoheWand");
             ifcPSE.PropertyCalculator = ExtendToStructureCalculator.Instance;
-            return ifcPSE;
+            return new PropertySetEntry(PropertyType.Boolean, name, ifcPSE);
         }
 
         /// <summary>
@@ -95,13 +99,14 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <returns>The correct PropertySetEntry.</returns>
         public static PropertySetEntry CreateFireRatingEntry()
         {
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateLabel("FireRating");
+			string name = "FireRating";
+            PropertySetEntryMap ifcPSE = new PropertySetEntryMap(name);
             ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "防火等级");
             ifcPSE.AddLocalizedParameterName(LanguageType.French, "ResistanceAuFeu");
             ifcPSE.AddLocalizedParameterName(LanguageType.German, "Feuerwiderstandsklasse");
             ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "耐火等級");
             ifcPSE.RevitBuiltInParameter = BuiltInParameter.FIRE_RATING;
-            return ifcPSE;
+			return new PropertySetEntry(PropertyType.Label, name, ifcPSE);
         }
 
         /// <summary>
@@ -133,13 +138,14 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <returns>The correct PropertySetEntry.</returns>
         public static PropertySetEntry CreateIsExternalEntry()
         {
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("IsExternal");
+			string name = "IsExternal";
+            PropertySetEntryMap ifcPSE = new PropertySetEntryMap(name);
             ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, GetLocalizedIsExternal(LanguageType.Chinese_Simplified));
             ifcPSE.AddLocalizedParameterName(LanguageType.French, GetLocalizedIsExternal(LanguageType.French));
             ifcPSE.AddLocalizedParameterName(LanguageType.German, GetLocalizedIsExternal(LanguageType.German));
             ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, GetLocalizedIsExternal(LanguageType.Japanese));
             ifcPSE.PropertyCalculator = ExternalCalculator.Instance;
-            return ifcPSE;
+            return new PropertySetEntry(PropertyType.Boolean, name, ifcPSE);
         }
 
         /// <summary>
@@ -149,13 +155,14 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <returns>The correct PropertySetEntry.</returns>
         public static PropertySetEntry CreateLoadBearingEntry(PropertyCalculator calc)
         {
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("LoadBearing");
+			string name = "LoadBearing";
+			PropertySetEntryMap ifcPSE = new PropertySetEntryMap(name);
             ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "是否承重");
             ifcPSE.AddLocalizedParameterName(LanguageType.French, "Porteur");
             ifcPSE.AddLocalizedParameterName(LanguageType.German, "TragendesBauteil");
             ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "耐力部材");
             ifcPSE.PropertyCalculator = calc;
-            return ifcPSE;
+            return new PropertySetEntry(PropertyType.Boolean, name, ifcPSE);
         }
 
         /// <summary>
@@ -164,14 +171,15 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <returns>The correct PropertySetEntry.</returns>
         public static PropertySetEntry CreateReferenceEntry()
         {
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateIdentifier("Reference");
+			string name = "Reference";
+            PropertySetEntryMap ifcPSE = new PropertySetEntryMap(name);
             ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "参考号");
             ifcPSE.AddLocalizedParameterName(LanguageType.German, "Bauteiltyp");
             ifcPSE.AddLocalizedParameterName(LanguageType.French, "Reference");
             ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "参照記号");
             ifcPSE.AddLocalizedParameterName(LanguageType.Korean, "참조 ID");
             ifcPSE.PropertyCalculator = ReferenceCalculator.Instance;
-            return ifcPSE;
+            return new PropertySetEntry(PropertyType.Identifier, name, ifcPSE);
         }
 
         /// <summary>
@@ -180,10 +188,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <returns>The correct PropertySetEntry.</returns>
         public static PropertySetEntry CreateSurfaceSpreadOfFlameEntry()
         {
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateLabel("SurfaceSpreadOfFlame");
+			string name = "SurfaceSpreadOfFlame";
+			PropertySetEntryMap ifcPSE = new PropertySetEntryMap(name);
             ifcPSE.AddLocalizedParameterName(LanguageType.French, "SurfacePropagationFlamme");
             ifcPSE.AddLocalizedParameterName(LanguageType.German, "Brandverhalten");
-            return ifcPSE;
+            return new PropertySetEntry(PropertyType.Label, name, ifcPSE);
         }
 
         /// <summary>
@@ -192,13 +201,14 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <returns>The correct PropertySetEntry.</returns>
         public static PropertySetEntry CreateThermalTransmittanceEntry()
         {
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateThermalTransmittance("ThermalTransmittance");
+			string name = "ThermalTransmittance";
+			PropertySetEntryMap ifcPSE = new PropertySetEntryMap(name);
             ifcPSE.RevitBuiltInParameter = BuiltInParameter.ANALYTICAL_HEAT_TRANSFER_COEFFICIENT;
             ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "导热系数");
             ifcPSE.AddLocalizedParameterName(LanguageType.French, "TransmissionThermique");
             ifcPSE.AddLocalizedParameterName(LanguageType.German, "U-Wert");
             ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "熱貫流率");
-            return ifcPSE;
+            return new PropertySetEntry(PropertyType.ThermalTransmittance, name, ifcPSE);
         }
 
         /// <summary>
@@ -207,12 +217,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <returns></returns>
         public static PropertySetEntry CreateStatusEntry()
         {
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateEnumeratedValue("Status", PropertyType.Label,
-                typeof(Toolkit.IFC4.PsetElementStatus));
+			string name = "Status";
+			PropertySetEntryMap ifcPSE = new PropertySetEntryMap(name); 
             ifcPSE.AddLocalizedParameterName(LanguageType.German, "Status");
             ifcPSE.AddLocalizedParameterName(LanguageType.French, "Statut");
             ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "状態");
-            return ifcPSE;
+            return PropertySetEntry.CreateEnumeratedValue(name, PropertyType.Label,
+				typeof(Toolkit.IFC4.PsetElementStatus), ifcPSE); 
         }
 
         /// <summary>
@@ -221,42 +232,46 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// <returns></returns>
         public static PropertySetEntry CreateHandicapAccessibleEntry()
         {
-            PropertySetEntry ifcPSE = PropertySetEntry.CreateBoolean("HandicapAccessible");
+			string name = "HandicapAccessible";
+			PropertySetEntryMap ifcPSE = new PropertySetEntryMap(name);
             ifcPSE.AddLocalizedParameterName(LanguageType.German, "Behindertengerecht");
             ifcPSE.AddLocalizedParameterName(LanguageType.French, "AccessibleHandicapes");
             ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "ハンディキャップアクセス可能性");
             ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "是否为无障碍设施");
-            return ifcPSE;
+            return new PropertySetEntry(PropertyType.Boolean, name, ifcPSE);
         }
 
-        public static PropertySetEntry CreateSpanEntry()
+        public static PropertySetEntry CreateSpanEntry(PropertyCalculator propertyCalculator)
         {
-           PropertySetEntry ifcPSE = PropertySetEntry.CreatePositiveLength("Span");
+			string name = "Span";
+			PropertySetEntryMap ifcPSE = new PropertySetEntryMap(name) { PropertyCalculator = propertyCalculator };
            ifcPSE.AddLocalizedParameterName(LanguageType.German, "Spannweite");
            ifcPSE.AddLocalizedParameterName(LanguageType.French, "PorteeLibre");
            ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "全長");
            ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "跨度");
-           return ifcPSE;
+           return new PropertySetEntry(PropertyType.PositiveLength, name, ifcPSE);
         }
 
-      public static PropertySetEntry CreateSlopeEntry()
+      public static PropertySetEntry CreateSlopeEntry(PropertyCalculator propertyCalculator)
       {
-         PropertySetEntry ifcPSE = PropertySetEntry.CreatePlaneAngle("Slope");
+		 string name = "Slope";
+         PropertySetEntryMap ifcPSE = new PropertySetEntryMap(name) { PropertyCalculator = propertyCalculator };
          ifcPSE.AddLocalizedParameterName(LanguageType.German, "Neigungswinkel");
          ifcPSE.AddLocalizedParameterName(LanguageType.French, "Inclinaison");
          ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "傾斜");
          ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "坡度");
-         return ifcPSE;
+         return new PropertySetEntry(PropertyType.PlaneAngle, name, ifcPSE);
       }
 
-      public static PropertySetEntry CreateRollEntry()
-      {
-         PropertySetEntry ifcPSE = PropertySetEntry.CreatePlaneAngle("Roll");
-         ifcPSE.AddLocalizedParameterName(LanguageType.German, "Kippwinkel");
+      public static PropertySetEntry CreateRollEntry(PropertyCalculator propertyCalculator)
+		{
+			string name = "Roll";
+			PropertySetEntryMap ifcPSE = new PropertySetEntryMap(name) { PropertyCalculator = propertyCalculator };
+			ifcPSE.AddLocalizedParameterName(LanguageType.German, "Kippwinkel");
          ifcPSE.AddLocalizedParameterName(LanguageType.French, "RotationAutourAxeLongitudinal");
          ifcPSE.AddLocalizedParameterName(LanguageType.Japanese, "回転");
          ifcPSE.AddLocalizedParameterName(LanguageType.Chinese_Simplified, "转角");
-         return ifcPSE;
+         return new PropertySetEntry(PropertyType.PlaneAngle, name, ifcPSE);
       }
    }
 }

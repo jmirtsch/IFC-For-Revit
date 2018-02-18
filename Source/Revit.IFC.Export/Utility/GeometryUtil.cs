@@ -3307,7 +3307,7 @@ namespace Revit.IFC.Export.Utility
       /// <remarks>This cartesianPoints map caches certain 3D points computed by this function that are related to the 
       /// curve, such as the start point of a line and the center of an arc.  It uses the cached values when possible.</remarks>
       public static IFCAnyHandle CreateIFCCurveFromRevitCurve(IFCFile file, ExporterIFC exporterIFC, Curve curve, bool allowAdvancedCurve,
-         IDictionary<IFCFuzzyXYZ, IFCAnyHandle> cartesianPoints, Transform additionalTrf=null)
+         IDictionary<IFCFuzzyXYZ, IFCAnyHandle> cartesianPoints)
       {
          IFCAnyHandle ifcCurve = null;
 
@@ -3434,7 +3434,7 @@ namespace Revit.IFC.Export.Utility
             IList<IFCAnyHandle> controlPointsInIfc = new List<IFCAnyHandle>();
             foreach (XYZ xyz in controlPoints)
             {
-               controlPointsInIfc.Add(XYZtoIfcCartesianPoint(exporterIFC, xyz, cartesianPoints, additionalTrf));
+               controlPointsInIfc.Add(XYZtoIfcCartesianPoint(exporterIFC, xyz, cartesianPoints));
             }
 
             // Based on IFC4 specification, curveForm is for information only, leave it as UNSPECIFIED for now.
@@ -3510,13 +3510,10 @@ namespace Revit.IFC.Export.Utility
       /// <param name="thePoint">The point</param>
       /// <param name="cartesianPoints">A map of already created IfcCartesianPoints.  This argument may be null.</param>
       /// <returns>The handle representing IfcCartesianPoint</returns>
-      public static IFCAnyHandle XYZtoIfcCartesianPoint(ExporterIFC exporterIFC, XYZ thePoint, IDictionary<IFCFuzzyXYZ, IFCAnyHandle> cartesianPoints, Transform additionalTrf=null)
+      public static IFCAnyHandle XYZtoIfcCartesianPoint(ExporterIFC exporterIFC, XYZ thePoint, IDictionary<IFCFuzzyXYZ, IFCAnyHandle> cartesianPoints)
       {
          IFCFile file = exporterIFC.GetFile();
          XYZ vertexScaled = ExporterIFCUtils.TransformAndScalePoint(exporterIFC, thePoint);
-
-         if (additionalTrf != null)
-            vertexScaled = additionalTrf.OfPoint(vertexScaled);
          IFCFuzzyXYZ fuzzyVertexScaled = (cartesianPoints != null) ? new IFCFuzzyXYZ(vertexScaled) : null;
 
          IFCAnyHandle cartesianPoint = null;

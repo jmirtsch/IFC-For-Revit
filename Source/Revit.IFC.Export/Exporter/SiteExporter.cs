@@ -169,7 +169,28 @@ namespace Revit.IFC.Export.Exporter
                if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
                   longitude.Add(longFracSec);
 
-               Transform siteSharedCoordinatesTrf = projLocation.GetTransform().Inverse;
+               ExportOptionsCache.SiteTransformBasis transformBasis = ExporterCacheManager.ExportOptionsCache.SiteTransformation;
+
+               Transform siteSharedCoordinatesTrf = Transform.Identity;
+
+               if (transformBasis != ExportOptionsCache.SiteTransformBasis.Internal)
+               {
+                  BasePoint basePoint = null;
+                  if (transformBasis == ExportOptionsCache.SiteTransformBasis.Project)
+                     basePoint = new FilteredElementCollector(doc).WherePasses(new ElementCategoryFilter(BuiltInCategory.OST_ProjectBasePoint)).First() as BasePoint;
+                  else if (transformBasis == ExportOptionsCache.SiteTransformBasis.Site)
+                     basePoint = new FilteredElementCollector(doc).WherePasses(new ElementCategoryFilter(BuiltInCategory.OST_SharedBasePoint)).First() as BasePoint;
+
+                  if (basePoint != null)
+                  {
+                     BoundingBoxXYZ bbox = basePoint.get_BoundingBox(null);
+                     XYZ xyz = bbox.Min;
+                     siteSharedCoordinatesTrf = Transform.CreateTranslation(new XYZ(-xyz.X, -xyz.Y, unscaledElevation - xyz.Z));
+                  }
+                  else
+                     siteSharedCoordinatesTrf = projLocation.GetTransform().Inverse;
+               }
+
                if (!siteSharedCoordinatesTrf.IsIdentity)
                {
                   double unscaledSiteElevation = ExporterCacheManager.ExportOptionsCache.IncludeSiteElevation ? 0.0 : unscaledElevation;
@@ -209,7 +230,6 @@ namespace Revit.IFC.Export.Exporter
 
                   siteName = NamingUtil.GetOverrideStringValue(projectInfo, "SiteName", NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element)));
                   siteDescription = NamingUtil.GetDescriptionOverride(element, null);
-                  siteObjectType = NamingUtil.GetObjectTypeOverride(element, siteObjectType);
 
                   // Look in site element for "IfcLongName" or project information for either "IfcLongName" or "SiteLongName".
                   siteLongName = NamingUtil.GetLongNameOverride(projectInfo, NamingUtil.GetLongNameOverride(element, null));
@@ -247,8 +267,8 @@ namespace Revit.IFC.Export.Exporter
 
             if (exportSite)
             {
-               siteHandle = IFCInstanceExporter.CreateSite(file, siteGUID, ownerHistory, siteName, siteDescription, siteObjectType, localPlacement,
-                  siteRepresentation, siteLongName, Toolkit.IFCElementComposition.Element, latitude, longitude, elevation, siteLandTitleNumber, null);
+               siteHandle = IFCInstanceExporter.CreateSite(exporterIFC, element, siteGUID, ownerHistory, siteName, siteDescription, localPlacement,
+                  siteRepresentation, siteLongName, IFCElementComposition.Element, latitude, longitude, elevation, siteLandTitleNumber, null);
                productWrapper.AddSite(mainSiteElement, siteHandle);
                ExporterCacheManager.SiteHandle = siteHandle;
             }

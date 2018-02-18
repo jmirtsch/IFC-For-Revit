@@ -75,16 +75,10 @@ namespace Revit.IFC.Export.Exporter
 
                   string guid = GUIDUtil.CreateGUID(element);
                   IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
-                  string revitObjectType = exporterIFC.GetFamilyName();
-                  string name = NamingUtil.GetNameOverride(element, revitObjectType);
-                  string description = NamingUtil.GetDescriptionOverride(element, null);
-                  string objectType = NamingUtil.GetObjectTypeOverride(element, revitObjectType);
-
                   IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
-                  string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
-                  IFCAnyHandle ductLining = IFCInstanceExporter.CreateCovering(file, guid,
-                      ownerHistory, name, description, objectType, localPlacement, representation, elementTag, "Wrapping");
+                  IFCAnyHandle ductLining = IFCInstanceExporter.CreateCovering(exporterIFC, element, guid,
+                      ownerHistory, localPlacement, representation, "Wrapping");
                   ExporterCacheManager.ElementToHandleCache.Register(element.Id, ductLining);
 
                   productWrapper.AddElement(element, ductLining, placementSetter.LevelInfo, ecData, true);

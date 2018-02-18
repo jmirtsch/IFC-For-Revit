@@ -55,32 +55,48 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         Weight
     }
 
-    /// <summary>
-    /// Represents a mapping from a Revit parameter or calculated quantity to an IFC quantity.
-    /// </summary>
-    public class QuantityEntry : Entry
-    {
-        /// <summary>
-        /// Defines the building code used to calculate the element quantity.
-        /// </summary>
-        string m_MethodOfMeasurement = String.Empty;
+	/// <summary>
+	/// Represents a mapping from a Revit parameter or calculated quantity to an IFC quantity.
+	/// </summary>
+	public class QuantityEntry : Entry<QuantityEntryMap>
+	{
+		/// <summary>
+		/// Defines the building code used to calculate the element quantity.
+		/// </summary>
+		string m_MethodOfMeasurement = String.Empty;
 
-        /// <summary>
-        /// The type of the quantity.
-        /// </summary>
-        QuantityType m_QuantityType = QuantityType.Real;
+		/// <summary>
+		/// The type of the quantity.
+		/// </summary>
+		QuantityType m_QuantityType = QuantityType.Real;
 
-        /// <summary>
-        /// Constructs a QuantityEntry object.
-        /// </summary>
-        /// <param name="revitParameterName">
-        /// Revit parameter name.
-        /// </param>
-        public QuantityEntry(string revitParameterName)
-            : base(revitParameterName)
+		/// <summary>
+		/// Constructs a QuantityEntry object.
+		/// </summary>
+		/// <param name="revitParameterName">
+		/// Revit parameter name.
+		/// </param>
+		/// 
+		public QuantityEntry(string revitParameterName)
+			: base(revitParameterName)
+		{
+
+		}
+		public QuantityEntry(string propertyName, string revitParameterName)
+			: base(propertyName, new QuantityEntryMap(revitParameterName))
+		{
+
+		}
+		public QuantityEntry(string propertyName, BuiltInParameter builtInParameter)
+			: base(propertyName, new QuantityEntryMap(propertyName) { RevitBuiltInParameter = builtInParameter } )
         {
 
         }
+		public QuantityEntry(string propertyName, PropertyCalculator calculator)
+			: base(propertyName, new QuantityEntryMap(propertyName) { PropertyCalculator = calculator } )
+		{
+
+		}
 
         /// <summary>
         /// The type of the quantity.
@@ -136,65 +152,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         public IFCAnyHandle ProcessEntry(IFCFile file, ExporterIFC exporterIFC,
            IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
         {
-            bool useProperty = (!String.IsNullOrEmpty(RevitParameterName)) || (RevitBuiltInParameter != BuiltInParameter.INVALID);
-
-            bool success = false;
-            double val = 0;
-            if (useProperty)
-            {
-                success = (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, RevitParameterName, out val) != null);
-                if (!success && RevitBuiltInParameter != BuiltInParameter.INVALID)
-                    success = (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, RevitBuiltInParameter, out val) != null);
-
-                if (success) // factor in the scale factor for all the parameters depending of the data type to get the correct value
-                {
-                    switch (m_QuantityType)
-                    {
-                        case QuantityType.PositiveLength:
-                            val = UnitUtil.ScaleLength(val);
-                            break;
-                        case QuantityType.Area:
-                            val = UnitUtil.ScaleArea(val);
-                            break;
-                        case QuantityType.Volume:
-                            val = UnitUtil.ScaleVolume(val);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
-
-            if (PropertyCalculator != null && !success)
-            {
-                success = PropertyCalculator.Calculate(exporterIFC, extrusionCreationData, element, elementType);
-                if (success)
-                    val = PropertyCalculator.GetDoubleValue();
-            }
-
-            IFCAnyHandle quantityHnd = null;
-            if (success)
-            {
-                switch (QuantityType)
-                {
-                    case QuantityType.PositiveLength:
-                        quantityHnd = IFCInstanceExporter.CreateQuantityLength(file, PropertyName, MethodOfMeasurement, null, val);
-                        break;
-                    case QuantityType.Area:
-                        quantityHnd = IFCInstanceExporter.CreateQuantityArea(file, PropertyName, MethodOfMeasurement, null, val);
-                        break;
-                    case QuantityType.Volume:
-                        quantityHnd = IFCInstanceExporter.CreateQuantityVolume(file, PropertyName, MethodOfMeasurement, null, val);
-                        break;
-                     case QuantityType.Weight:
-                        quantityHnd = IFCInstanceExporter.CreateQuantityWeight(file, PropertyName, MethodOfMeasurement, null, val);
-                        break;
-                     default:
-                        throw new InvalidOperationException("Missing case!");
-                }
-            }
-
-            return quantityHnd;
+			foreach(QuantityEntryMap entry in m_Entries)
+			{
+				IFCAnyHandle result = entry.ProcessEntry(file, exporterIFC, extrusionCreationData, element, elementType, QuantityType, MethodOfMeasurement, PropertyName);
+				if (result != null)
+					return result;
+			}
+			return null;
         }
     }
 }

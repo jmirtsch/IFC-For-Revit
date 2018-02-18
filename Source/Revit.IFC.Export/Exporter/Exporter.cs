@@ -152,7 +152,7 @@ namespace Revit.IFC.Export.Exporter
          {
             BeginExport(exporterIFC, document, filterView);
 
-            ParamExprListener.ResetParamExprInternalDicts();
+            //ParamExprListener.ResetParamExprInternalDicts();
             InitializeElementExporters();
             if (m_ElementExporter != null)
                m_ElementExporter(exporterIFC, document);
@@ -988,6 +988,7 @@ namespace Revit.IFC.Export.Exporter
             IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
             ProjectInfo projectInfo = document.ProjectInformation;
 
+            // create levels
             // Check if there is any level assigned as a building storey, if no at all, model will be exported without Building and BuildingStorey, all containment will be to Site
             List<Level> levels = LevelUtil.FindAllLevels(document);
             bool exportBuilding = false;
@@ -1025,10 +1026,10 @@ namespace Revit.IFC.Export.Exporter
                //IFCAnyHandle buildingAddress = CreateIFCAddress(file, document, projectInfo);
 
                //string buildingGUID = GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building);
-               //IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(file,
-               //    buildingGUID, ownerHistory, buildingName, buildingDescription, null, buildingPlacement, null, buildingLongName,
+               //IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(exporterIFC,
+               //    buildingGUID, ownerHistory, buildingName, buildingDescription, buildingPlacement, null, buildingLongName,
                //    Toolkit.IFCElementComposition.Element, null, null, buildingAddress);
-               //ExporterCacheManager.SiteOrBuildingHandle = buildingHandle;
+               //ExporterCacheManager.BuildingHandle = buildingHandle;
 
                //if (ExporterCacheManager.ExportOptionsCache.ExportAs2x3COBIE24DesignDeliverable && cobieProjectInfo != null)
                //{
@@ -1125,17 +1126,12 @@ namespace Revit.IFC.Export.Exporter
                   double elevation = UnitUtil.ScaleLength(elev);
                   XYZ orig = new XYZ(0.0, 0.0, elevation);
 
-                  IFCAnyHandle placement = ExporterUtil.CreateLocalPlacement(file, buildingPlacement, orig, null, null);
-                  string levelName = NamingUtil.GetNameOverride(level, level.Name);
-                  string objectType = NamingUtil.GetObjectTypeOverride(level, null);
-                  string description = NamingUtil.GetDescriptionOverride(level, null);
-                  string longName = NamingUtil.GetLongNameOverride(level, level.Name);
-                  string levelGUID = GUIDUtil.GetLevelGUID(level);
-                  IFCElementComposition ifcComposition = LevelUtil.GetElementCompositionTypeOverride(level);
-                  IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(file,
-                      levelGUID, ExporterCacheManager.OwnerHistoryHandle,
-                      levelName, description, objectType, placement,
-                      null, longName, ifcComposition, elevation);
+               IFCAnyHandle placement = ExporterUtil.CreateLocalPlacement(file, buildingPlacement, orig, null, null);
+
+               IFCElementComposition ifcComposition = LevelUtil.GetElementCompositionTypeOverride(level);
+               IFCAnyHandle buildingStorey = IFCInstanceExporter.CreateBuildingStorey(exporterIFC, level, ExporterCacheManager.OwnerHistoryHandle,
+                       placement, ifcComposition, elevation);
+
 
                   // Create classification reference when level has classification field name assigned to it
                   ClassificationUtil.CreateClassification(exporterIFC, file, level, buildingStorey);
@@ -1999,11 +1995,35 @@ namespace Revit.IFC.Export.Exporter
          double precision = Math.Pow(10.0, exponent);
 
          IFCFile file = exporterIFC.GetFile();
-         IFCAnyHandle origin = ExporterIFCUtils.GetGlobal3DOriginHandle();
-         IFCAnyHandle wcs = IFCInstanceExporter.CreateAxis2Placement3D(file, origin, null, null);
+         IFCAnyHandle wcsOrigin = ExporterIFCUtils.GetGlobal3DOriginHandle();
 
-         double trueNorthAngleInRadians;
-         ExporterUtil.GetSafeProjectPositionAngle(doc, out trueNorthAngleInRadians);
+         ExportOptionsCache.SiteTransformBasis transformBasis = ExporterCacheManager.ExportOptionsCache.SiteTransformation;
+
+         double trueNorthAngleInRadians = 0;
+         IFCAnyHandle wcs = null;
+         if (transformBasis == ExportOptionsCache.SiteTransformBasis.Shared)
+         {
+            wcs = IFCInstanceExporter.CreateAxis2Placement3D(file, wcsOrigin, null, null);
+         }
+         else
+         {
+            ExporterUtil.GetSafeProjectPositionAngle(doc, out trueNorthAngleInRadians);
+            ProjectLocation projLocation = doc.ActiveProjectLocation;
+            Transform siteSharedCoordinatesTrf = projLocation == null ? Transform.Identity : projLocation.GetTransform().Inverse;
+            XYZ unscaledOrigin = new XYZ(0, 0, 0);
+		  if (transformBasis == ExportOptionsCache.SiteTransformBasis.Project)
+            {
+               BasePoint basePoint = new FilteredElementCollector(doc).WherePasses(new ElementCategoryFilter(BuiltInCategory.OST_ProjectBasePoint)).First() as BasePoint;
+               if (basePoint != null)
+               {
+                  BoundingBoxXYZ bbox = basePoint.get_BoundingBox(null);
+                  unscaledOrigin = bbox.Min;
+               }
+            }
+            unscaledOrigin = siteSharedCoordinatesTrf.OfPoint(unscaledOrigin);
+            XYZ orig = UnitUtil.ScaleLength(unscaledOrigin);
+            wcs = ExporterUtil.CreateAxis2Placement3D(file, orig, siteSharedCoordinatesTrf.BasisZ, siteSharedCoordinatesTrf.BasisX);
+         }
 
          // CoordinationView2.0 requires that we always export true north, even if it is the same as project north.
          IFCAnyHandle trueNorth = null;
@@ -2257,7 +2277,6 @@ namespace Revit.IFC.Export.Exporter
 
          string projectName = null;
          string projectLongName = null;
-         string projectObjectType = null;
          string projectDescription = null;
          string projectPhase = null;
 
@@ -2275,7 +2294,6 @@ namespace Revit.IFC.Export.Exporter
             projectLongName = (projectInfo != null) ? projectInfo.Name : null;
 
             // Get project description if it is set in the Project info
-            projectObjectType = (projectInfo != null) ? NamingUtil.GetObjectTypeOverride(projectInfo, null) : null;
             projectDescription = (projectInfo != null) ? NamingUtil.GetDescriptionOverride(projectInfo, null) : null;
 
          if (projectInfo != null)
@@ -2283,8 +2301,8 @@ namespace Revit.IFC.Export.Exporter
          }
 
          string projectGUID = GUIDUtil.CreateProjectLevelGUID(doc, IFCProjectLevelGUIDType.Project);
-         IFCAnyHandle projectHandle = IFCInstanceExporter.CreateProject(file, projectGUID, ownerHistory,
-             projectName, projectDescription, projectObjectType, projectLongName, projectPhase, repContexts, units);
+         IFCAnyHandle projectHandle = IFCInstanceExporter.CreateProject(exporterIFC, projectInfo, projectGUID, ownerHistory,
+             projectName, projectDescription,  projectLongName, projectPhase, repContexts, units);
          ExporterCacheManager.ProjectHandle = projectHandle;
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAsCOBIE)
@@ -3400,8 +3418,8 @@ namespace Revit.IFC.Export.Exporter
          IFCAnyHandle buildingAddress = CreateIFCAddress(file, document, projectInfo);
 
          string buildingGUID = GUIDUtil.CreateProjectLevelGUID(document, IFCProjectLevelGUIDType.Building);
-         IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(file,
-             buildingGUID, ownerHistory, buildingName, buildingDescription, null, buildingPlacement, null, buildingLongName,
+         IFCAnyHandle buildingHandle = IFCInstanceExporter.CreateBuilding(exporterIFC,
+             buildingGUID, ownerHistory, buildingName, buildingDescription, buildingPlacement, null, buildingLongName,
              Toolkit.IFCElementComposition.Element, null, null, buildingAddress);
          ExporterCacheManager.BuildingHandle = buildingHandle;
 

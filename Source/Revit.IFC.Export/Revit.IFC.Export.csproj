@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.props" Condition="Exists('..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -32,8 +31,6 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject />
@@ -50,54 +47,7 @@
     <Prefer32Bit>false</Prefer32Bit>
     <OutputPath>..\..\..\..\..\Slow_Debugx64\</OutputPath>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE;DEBUGTEST</DefineConstants>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>1607</NoWarn>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <DocumentationFile>
-    </DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;OVERRIDE_VERSION</DefineConstants>
-    <Optimize>true</Optimize>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>1607</NoWarn>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Slow_Debug|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\Slow_Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE;OVERRIDE_VERSION</DefineConstants>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>1607</NoWarn>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Antlr4.Runtime, Version=4.6.0.0, Culture=neutral, PublicKeyToken=09abb75b9ed49849, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Antlr4.Runtime.4.6.4\lib\net45\Antlr4.Runtime.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="RevitAPI, Version=17.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2017\RevitAPI.dll</HintPath>
-    </Reference>
-    <Reference Include="RevitAPIIFC">
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2017\RevitAPIIFC.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.XML" />
   </ItemGroup>
@@ -132,7 +82,9 @@
     <Compile Include="Exporter\PartExporter.cs" />
     <Compile Include="Exporter\PileExporter.cs" />
     <Compile Include="Exporter\PipeInsulationExporter.cs" />
-    <Compile Include="Exporter\PropertySetsInitialization.cs" />
+    <Compile Include="Exporter\PropertySet\AttributeEntry.cs" />
+    <Compile Include="Exporter\PropertySet\AttributeEntryMap.cs" />
+    <Compile Include="Exporter\PropertySet\AttributeSetDescription.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamLoadBearingCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\BeamMemberSpanCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\CrossSectionAreaCalculator.cs" />
@@ -179,15 +131,15 @@
     <Compile Include="Exporter\PropertySet\ClassificationUtil.cs" />
     <Compile Include="Exporter\PropertySet\ElectricalCurrentPropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\ElectricalVoltagePropertyUtil.cs" />
+    <Compile Include="Exporter\PropertySet\EntryMap.cs" />
     <Compile Include="Exporter\PropertySet\FrequencyPropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\PositivePlaneAnglePropertyUtil.cs" />
-    <Compile Include="Exporter\PropertySet\PropertySetDefinition.cs" />
-    <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC2x2Enum.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC2x3TC1Enum.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC4_ADD1Enum.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC4_ADD2Enum.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDescription.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetEntry.cs" />
+    <Compile Include="Exporter\PropertySet\PropertySetEntryMap.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetEntryUtil.cs" />
     <Compile Include="Exporter\PropertySet\PropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\QuantityDescription.cs" />
@@ -202,6 +154,7 @@
     <Compile Include="Exporter\PropertySet\Calculators\SpaceLevelDescriptionCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpacePerimeterCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpaceVolumeCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\QuantityEntryMap.cs" />
     <Compile Include="Exporter\ProxyElementExporter.cs" />
     <Compile Include="Exporter\RailingExporter.cs" />
     <Compile Include="Exporter\RampExporter.cs" />
@@ -239,6 +192,7 @@
     <Compile Include="Toolkit\TransformSetter.cs" />
     <Compile Include="Utility\AllocatedGeometryObjectCache.cs" />
     <Compile Include="Utility\AssemblyInstanceCache.cs" />
+    <Compile Include="Utility\AttributeCache.cs" />
     <Compile Include="Utility\BooleanPropertyInfoCache.cs" />
     <Compile Include="Utility\CategoryUtil.cs" />
     <Compile Include="Utility\ClassificationLocationCache.cs" />
@@ -290,10 +244,6 @@
     <Compile Include="Utility\OpeningUtil.cs" />
     <Compile Include="Utility\ParameterElementCache.cs" />
     <Compile Include="Utility\ParameterUtil.cs" />
-    <Compile Include="Utility\ParamExprErrorListener.cs" />
-    <Compile Include="Utility\ParamExprListener.cs" />
-    <Compile Include="Utility\ParamExprLogger.cs" />
-    <Compile Include="Utility\ParamExprResolver.cs" />
     <Compile Include="Utility\PartExportedCache.cs" />
     <Compile Include="Utility\PresentationLayerSetCache.cs" />
     <Compile Include="Utility\ProductWrapper.cs" />
@@ -363,14 +313,6 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-    <Antlr4 Include="Utility\ParamExprGrammar.g4">
-      <Generator>MSBuild:Compile</Generator>
-      <CustomToolNamespace>Revit.IFC.Export.Utility</CustomToolNamespace>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Antlr4>
-  </ItemGroup>
   <!--
     Always Import the appropriate *.OutputPath.targets file BEFORE the
     Revit.CSharp.targets file, otherwise VisualStudio will complain
@@ -378,17 +320,8 @@
     -->
   <Import Project=".\Revit.IFC.Export.props" />
   <PropertyGroup>
-    <PostBuildEvent>copy $(TargetPath) $(SolutionDir)$(ConfigurationName)\$(TargetFileName) /Y
-copy $(TargetDir)$(TargetName).pdb $(SolutionDir)$(ConfigurationName)\$(TargetName).pdb /Y</PostBuildEvent>
+    <PostBuildEvent>Copy "$(TargetPath)" "C:\Program Files (x86)\Revit IFC 2018\"</PostBuildEvent>
   </PropertyGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.props'))" />
-    <Error Condition="!Exists('..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.targets'))" />
-  </Target>
-  <Import Project="..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.targets" Condition="Exists('..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

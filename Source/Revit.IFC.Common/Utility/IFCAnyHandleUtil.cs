@@ -208,7 +208,7 @@ namespace Revit.IFC.Common.Utility
          if (String.IsNullOrEmpty(name))
             throw new ArgumentException("The name is empty.", "name");
 
-         if (value != null)
+         if (!string.IsNullOrEmpty(value))
             handle.SetAttribute(name, IFCData.CreateString(value));
       }
 
