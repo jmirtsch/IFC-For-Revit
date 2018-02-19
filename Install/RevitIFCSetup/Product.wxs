@@ -88,9 +88,15 @@
       <Component Id = "COMP_IFC_ExternalUI_DLL" Guid="D7F89B58-029F-4062-B226-6F3D2EB7FE5D">
         <File Id ="FILE_Ifc_ExternalUI_DLL" Name="IFCExportUIOverride.dll" Source="$(var.IFCExporterUIOverride.TargetDir)IFCExportUIOverride.dll" KeyPath="yes" />
       </Component>
-      <!--<Component Id = "COMP_UserInterfaceUtility_DLL" Guid="9D697BF6-A30F-4ABE-8D18-D71846C68065">
-        <File Id ="FILE_UserInterfaceUtility_DLL" Name="UserInterfaceUtility.dll" Source="$(var.ProjectDir)..\..\..\..\..\..\ReleaseX64\UserInterfaceUtility.dll" KeyPath="yes" />
+      <Component Id = "COMP_UserInterfaceUtility" Guid="1C11FFB0-45ED-4735-97AE-A823B708B548">
+        <File Id ="FILE_UserInterfaceUtility_DLL" Name="UserInterfaceUtility.dll" Source="C:\Program Files\Autodesk\Revit 2017\Addins\IFCExporterUI\UserInterfaceUtility.dll" KeyPath="yes" />
+      </Component>
+      <!--<Component Id = "COMP_IFC_GeometryGYM_DLL" Guid="8509DD5C-F7FB-45DB-8C37-80A22EE69D3F">
+        <File Id ="FILE_Ifc_GeometryGym_DLL" Name="GeometryGymIFC.dll" Source="$(var.Revit.IFC.Export.TargetDir)GeometryGymIFC.dll" KeyPath="yes" />
       </Component>-->
+      <Component Id = "COMP_IFC_Antlr4_DLL" Guid="9A80FE3D-90EE-48E7-9B89-792FF852D75E">
+        <File Id ="FILE_Ifc_Antlr4_DLL" Name="Antlr4.Runtime.dll" Source="$(var.Revit.IFC.Export.TargetDir)Antlr4.Runtime.dll" KeyPath="yes" />
+      </Component>
       <Component Id = "COMP_LICENSE_RTF" Guid="9F0851DD-3A43-4D49-AC8C-8B8D2F394A91">
         <File Id ="FILE_LICENSE_RTF" Name="LICENSE.rtf" Source="$(var.ProjectDir)..\Program Files to Install\LICENSE.rtf" KeyPath="yes" />
       </Component>
