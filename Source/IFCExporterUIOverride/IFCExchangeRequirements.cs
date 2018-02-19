@@ -31,7 +31,7 @@ namespace BIM.IFC.Export.UI
       /// <summary>
       /// The list of Known Exchange Requirements
       /// </summary>
-      static IList<string> knownExchangeRequirements = new List<string>() { "", Resources.ER_Architecture, Resources.ER_BuildingService, Resources.ER_Structural }; 
+      static IList<string> knownExchangeRequirements = new List<string>() { "", Resources.ER_Architecture, Resources.ER_BuildingService, Resources.ER_Structural };
 
       /// <summary>
       /// Get the list of known Exchange Requirements
@@ -46,7 +46,7 @@ namespace BIM.IFC.Export.UI
       /// </summary>
       /// <param name="UIERStringValue">the string value from the UI</param>
       /// <returns>the standard ER name</returns>
-      public static string GetERName (string UIERStringValue)
+      public static string GetERName(string UIERStringValue)
       {
          string erName = "";
 

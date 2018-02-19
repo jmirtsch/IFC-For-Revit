@@ -174,13 +174,13 @@ namespace Revit.IFC.Import.Data
                         directShapeType = doc.GetElement(directShapeTypeId) as DirectShapeType;
                      }
                   }
-                  
+
                   if (directShapeType == null)
                   {
                      string directShapeTypeName = Id.ToString();
                      directShapeType = IFCElementUtil.CreateElementType(doc, directShapeTypeName, shapeEditScope.CategoryId, Id);
                   }
-                  
+
                   // Note that this assumes that there is only one 2D rep per DirectShapeType.
                   directShapeType.AppendShape(mappedSolids);
                   if (mappedCurves.Count != 0)

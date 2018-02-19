@@ -143,7 +143,7 @@ namespace Revit.IFC.Import.Data
 
             Transform unscaledTotalTransform = unscaledLcs.Multiply(BaseBoundingCurveTransform);
             Transform scaledTotalTransform = scaledLcs.Multiply(BaseBoundingCurveTransform);
-            
+
             // Make sure this bounding polygon extends below base of half-space soild.
             Transform moveBaseTransform = Transform.Identity;
             moveBaseTransform.Origin = new XYZ(0, 0, -largeCoordinateValue);

@@ -27,141 +27,141 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of systems and the elements contained in them.
-    /// </summary>
-    public class SystemsCache
-    {
-        private IDictionary<ElementId, ISet<IFCAnyHandle>> m_BuiltInSystemsCache;
-        private IDictionary<string, ICollection<IFCAnyHandle>> m_CustomSystemsCache;
-        private IDictionary<ElementId, ISet<IFCAnyHandle>> m_ElectricalSystemsCache;
-        
-        /// <summary>
-        /// Creates a new SystemsCache.
-        /// </summary>
-        public SystemsCache()
-        {
-            m_BuiltInSystemsCache = new Dictionary<ElementId, ISet<IFCAnyHandle>>();
-            m_CustomSystemsCache = new Dictionary<string, ICollection<IFCAnyHandle>>();
-            m_ElectricalSystemsCache = new Dictionary<ElementId, ISet<IFCAnyHandle>>();
-        }
+   /// <summary>
+   /// Used to keep a cache of systems and the elements contained in them.
+   /// </summary>
+   public class SystemsCache
+   {
+      private IDictionary<ElementId, ISet<IFCAnyHandle>> m_BuiltInSystemsCache;
+      private IDictionary<string, ICollection<IFCAnyHandle>> m_CustomSystemsCache;
+      private IDictionary<ElementId, ISet<IFCAnyHandle>> m_ElectricalSystemsCache;
 
-        /// <summary>
-        /// Get the list of systems.
-        /// </summary>
-        public IDictionary<ElementId, ISet<IFCAnyHandle>> BuiltInSystemsCache
-        {
-            get { return m_BuiltInSystemsCache; }
-        }
+      /// <summary>
+      /// Creates a new SystemsCache.
+      /// </summary>
+      public SystemsCache()
+      {
+         m_BuiltInSystemsCache = new Dictionary<ElementId, ISet<IFCAnyHandle>>();
+         m_CustomSystemsCache = new Dictionary<string, ICollection<IFCAnyHandle>>();
+         m_ElectricalSystemsCache = new Dictionary<ElementId, ISet<IFCAnyHandle>>();
+      }
 
-        /// <summary>
-        /// Get the list of Electrical systems.  The members will be determined at the end of export.
-        /// </summary>
-        public IDictionary<ElementId, ISet<IFCAnyHandle>> ElectricalSystemsCache
-        {
-            get { return m_ElectricalSystemsCache; }
-        }
-        
-        /// <summary>
-        /// Get the list of custom systems.
-        /// </summary>
-        public IDictionary<string, ICollection<IFCAnyHandle>> CustomSystemsCache
-        {
-            get { return m_CustomSystemsCache; }
-        }
-        
-        /// <summary>
-        /// Gets a custom system to the custom systems list.
-        /// </summary>
-        /// <param name="systemName">The system name.</param>
-        /// <returns>The value of the system.</returns>
-        private ICollection<IFCAnyHandle> GetCustomSystem(string systemName)
-        {
-            ICollection<IFCAnyHandle> systemValue;
-            if (!CustomSystemsCache.TryGetValue(systemName, out systemValue))
-            {
-                systemValue = new HashSet<IFCAnyHandle>();
-                CustomSystemsCache.Add(new KeyValuePair<string, ICollection<IFCAnyHandle>>(systemName, systemValue));
-            }
-            return systemValue;
-        }
+      /// <summary>
+      /// Get the list of systems.
+      /// </summary>
+      public IDictionary<ElementId, ISet<IFCAnyHandle>> BuiltInSystemsCache
+      {
+         get { return m_BuiltInSystemsCache; }
+      }
 
-        /// <summary>
-        /// Gets a system from the systems list.
-        /// </summary>
-        /// <param name="systemElement">The Revit System element.</param>
-        /// <returns>The new system container.</returns>
-        private ICollection<IFCAnyHandle> GetSystem(Element systemElement)
-        {
-            if (systemElement == null)
-                throw new ArgumentNullException("systemElement");
+      /// <summary>
+      /// Get the list of Electrical systems.  The members will be determined at the end of export.
+      /// </summary>
+      public IDictionary<ElementId, ISet<IFCAnyHandle>> ElectricalSystemsCache
+      {
+         get { return m_ElectricalSystemsCache; }
+      }
 
-            ISet<IFCAnyHandle> system;
-            if (!BuiltInSystemsCache.TryGetValue(systemElement.Id, out system))
-            {
-                system = new HashSet<IFCAnyHandle>();
-                BuiltInSystemsCache.Add(new KeyValuePair<ElementId, ISet<IFCAnyHandle>>(systemElement.Id, system));
-            }
+      /// <summary>
+      /// Get the list of custom systems.
+      /// </summary>
+      public IDictionary<string, ICollection<IFCAnyHandle>> CustomSystemsCache
+      {
+         get { return m_CustomSystemsCache; }
+      }
 
-            return system;
-        }
+      /// <summary>
+      /// Gets a custom system to the custom systems list.
+      /// </summary>
+      /// <param name="systemName">The system name.</param>
+      /// <returns>The value of the system.</returns>
+      private ICollection<IFCAnyHandle> GetCustomSystem(string systemName)
+      {
+         ICollection<IFCAnyHandle> systemValue;
+         if (!CustomSystemsCache.TryGetValue(systemName, out systemValue))
+         {
+            systemValue = new HashSet<IFCAnyHandle>();
+            CustomSystemsCache.Add(new KeyValuePair<string, ICollection<IFCAnyHandle>>(systemName, systemValue));
+         }
+         return systemValue;
+      }
 
-        /// <summary>
-        /// Adds a handle to a built-in system.
-        /// </summary>
-        /// <param name="systemElement">The Revit system element.</param>
-        /// <param name="handle">The handle.</param>
-        public void AddHandleToBuiltInSystem(Element systemElement, IFCAnyHandle handle)
-        {
-            if (systemElement == null)
-                throw new ArgumentNullException("systemElement");
+      /// <summary>
+      /// Gets a system from the systems list.
+      /// </summary>
+      /// <param name="systemElement">The Revit System element.</param>
+      /// <returns>The new system container.</returns>
+      private ICollection<IFCAnyHandle> GetSystem(Element systemElement)
+      {
+         if (systemElement == null)
+            throw new ArgumentNullException("systemElement");
 
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(handle))
-                return;
+         ISet<IFCAnyHandle> system;
+         if (!BuiltInSystemsCache.TryGetValue(systemElement.Id, out system))
+         {
+            system = new HashSet<IFCAnyHandle>();
+            BuiltInSystemsCache.Add(new KeyValuePair<ElementId, ISet<IFCAnyHandle>>(systemElement.Id, system));
+         }
 
-            ICollection<IFCAnyHandle> subSystem = GetSystem(systemElement);
-            if (subSystem == null)
-                throw new InvalidOperationException("Error getting system.");
-            subSystem.Add(handle);
-        }
+         return system;
+      }
 
-        /// <summary>
-        /// Adds a handle to a custom system.
-        /// </summary>
-        /// <param name="systemName">The new system.</param>
-        /// <param name="newSystem">The Revit System element.</param>
-        public void AddHandleToCustomSystem(string customSystemName, IFCAnyHandle handle)
-        {
-            ICollection<IFCAnyHandle> system = GetCustomSystem(customSystemName);
-            if (system == null)
-                throw new InvalidOperationException("Error getting system.");
-            system.Add(handle);
-        }
+      /// <summary>
+      /// Adds a handle to a built-in system.
+      /// </summary>
+      /// <param name="systemElement">The Revit system element.</param>
+      /// <param name="handle">The handle.</param>
+      public void AddHandleToBuiltInSystem(Element systemElement, IFCAnyHandle handle)
+      {
+         if (systemElement == null)
+            throw new ArgumentNullException("systemElement");
 
-        /// <summary>
-        /// Adds an electrical system by Element id, if it doesn't already exist.
-        /// </summary>
-        /// <param name="systemId">The system element Id.</param>
-        public void AddElectricalSystem(ElementId systemId)
-        {
-            if (!ElectricalSystemsCache.ContainsKey(systemId))
-            {
-                KeyValuePair<ElementId, ISet<IFCAnyHandle>> entry = new KeyValuePair<ElementId, ISet<IFCAnyHandle>>(systemId, new HashSet<IFCAnyHandle>());
-                ElectricalSystemsCache.Add(entry);
-            }
-        }
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(handle))
+            return;
 
-        /// <summary>
-        /// Adds a handle to an existing electrical system.
-        /// </summary>
-        /// <param name="systemId">The system element Id.</param>
-        /// <param name="handle">The entity handle.</param>
-        public void AddHandleToElectricalSystem(ElementId systemId, IFCAnyHandle handle)
-        {
-            if (!ElectricalSystemsCache.ContainsKey(systemId))
-                throw new InvalidOperationException("Error getting system.");
+         ICollection<IFCAnyHandle> subSystem = GetSystem(systemElement);
+         if (subSystem == null)
+            throw new InvalidOperationException("Error getting system.");
+         subSystem.Add(handle);
+      }
 
-            ElectricalSystemsCache[systemId].Add(handle);
-        }
-    }
+      /// <summary>
+      /// Adds a handle to a custom system.
+      /// </summary>
+      /// <param name="systemName">The new system.</param>
+      /// <param name="newSystem">The Revit System element.</param>
+      public void AddHandleToCustomSystem(string customSystemName, IFCAnyHandle handle)
+      {
+         ICollection<IFCAnyHandle> system = GetCustomSystem(customSystemName);
+         if (system == null)
+            throw new InvalidOperationException("Error getting system.");
+         system.Add(handle);
+      }
+
+      /// <summary>
+      /// Adds an electrical system by Element id, if it doesn't already exist.
+      /// </summary>
+      /// <param name="systemId">The system element Id.</param>
+      public void AddElectricalSystem(ElementId systemId)
+      {
+         if (!ElectricalSystemsCache.ContainsKey(systemId))
+         {
+            KeyValuePair<ElementId, ISet<IFCAnyHandle>> entry = new KeyValuePair<ElementId, ISet<IFCAnyHandle>>(systemId, new HashSet<IFCAnyHandle>());
+            ElectricalSystemsCache.Add(entry);
+         }
+      }
+
+      /// <summary>
+      /// Adds a handle to an existing electrical system.
+      /// </summary>
+      /// <param name="systemId">The system element Id.</param>
+      /// <param name="handle">The entity handle.</param>
+      public void AddHandleToElectricalSystem(ElementId systemId, IFCAnyHandle handle)
+      {
+         if (!ElectricalSystemsCache.ContainsKey(systemId))
+            throw new InvalidOperationException("Error getting system.");
+
+         ElectricalSystemsCache[systemId].Add(handle);
+      }
+   }
 }

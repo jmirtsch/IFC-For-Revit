@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
+using Autodesk.Revit.DB;
 
 namespace Revit.IFC.Common.Utility
 {
@@ -14,6 +16,7 @@ namespace Revit.IFC.Common.Utility
    {
       static SortedDictionary<string, IfcSchemaEntityNode> IfcEntityDict = new SortedDictionary<string, IfcSchemaEntityNode>();
       static HashSet<IfcSchemaEntityNode> rootNodes = new HashSet<IfcSchemaEntityNode>();
+      static string loadedIfcSchemaVersion = "";
 
       /// <summary>
       /// Reset the static Dictionary and Set. To be done before parsing another IFC schema
@@ -22,6 +25,7 @@ namespace Revit.IFC.Common.Utility
       {
          IfcEntityDict.Clear();
          rootNodes.Clear();
+         loadedIfcSchemaVersion = "";
       }
 
       /// <summary>
@@ -40,19 +44,62 @@ namespace Revit.IFC.Common.Utility
          get { return rootNodes; }
       }
 
+      public static IDictionary<string, IfcSchemaEntityNode> GetEntityDictFor(IFCVersion ifcFileVersion)
+      {
+         string schemaFile = string.Empty;
+         switch (ifcFileVersion)
+         {
+            case IFCVersion.IFC2x2:
+            case IFCVersion.IFCBCA:
+               schemaFile = "IFC2X2_ADD1.xsd";
+               break;
+            case IFCVersion.IFC2x3:
+            case IFCVersion.IFC2x3BFM:
+            case IFCVersion.IFC2x3CV2:
+            case IFCVersion.IFC2x3FM:
+            case IFCVersion.IFCCOBIE:
+               schemaFile = "IFC2X3_TC1.xsd";
+               break;
+            case IFCVersion.IFC4:
+            case IFCVersion.IFC4DTV:
+            case IFCVersion.IFC4RV:
+               schemaFile = "IFC4_ADD2.xsd";
+               break;
+            default:
+               schemaFile = "IFC4_ADD1.xsd";
+               break;
+         }
+
+         if (string.IsNullOrEmpty(loadedIfcSchemaVersion) || !loadedIfcSchemaVersion.Equals(schemaFile, StringComparison.InvariantCultureIgnoreCase))
+         {
+            ResetAll();
+
+            // Process IFCXml schema here, then search for IfcProduct and build TreeView beginning from that node. Allow checks for the tree nodes. Grey out (and Italic) the abstract entity
+            string schemaLoc = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            schemaFile = System.IO.Path.Combine(schemaLoc, schemaFile);
+            FileInfo schemaFileInfo = new FileInfo(schemaFile);
+
+            bool newLoad = ProcessIFCXMLSchema.ProcessIFCSchema(schemaFileInfo);
+            if (newLoad)
+               loadedIfcSchemaVersion = Path.GetFileName(schemaFile);
+         }
+
+         return EntityDict;
+      }
+
       /// <summary>
       /// Add a new node into the tree
       /// </summary>
       /// <param name="entityName">the entity name</param>
       /// <param name="parentNodeName">the name of the supertype entity</param>
-      static public void Add(string entityName, string parentNodeName, bool isAbstract=false)
+      static public void Add(string entityName, string parentNodeName, bool isAbstract = false)
       {
          if (string.IsNullOrEmpty(entityName))
             return;
 
          // We will skip the entityname or its parent name that does not start with Ifc (except Entity)
          if (string.Compare(entityName, 0, "Ifc", 0, 3, ignoreCase: true) != 0
-            || (string.Compare(parentNodeName, 0, "Ifc", 0, 3, ignoreCase: true) != 0 && string.Compare(parentNodeName,"Entity",ignoreCase:true)!=0) )
+            || (string.Compare(parentNodeName, 0, "Ifc", 0, 3, ignoreCase: true) != 0 && string.Compare(parentNodeName, "Entity", ignoreCase: true) != 0))
             return;
 
          IfcSchemaEntityNode parentNode = null;
@@ -77,12 +124,12 @@ namespace Revit.IFC.Common.Utility
          {
             if (parentNode != null)
             {
-               entityNode = new IfcSchemaEntityNode(entityName, parentNode, abstractEntity:isAbstract);
+               entityNode = new IfcSchemaEntityNode(entityName, parentNode, abstractEntity: isAbstract);
                parentNode.AddChildNode(entityNode);
             }
             else
             {
-               entityNode = new IfcSchemaEntityNode(entityName, abstractEntity:isAbstract);
+               entityNode = new IfcSchemaEntityNode(entityName, abstractEntity: isAbstract);
                // Add into the set of root nodes when parent is null/no parent
                rootNodes.Add(entityNode);
             }
@@ -161,8 +208,8 @@ namespace Revit.IFC.Common.Utility
                         + "\n\t/// </summary>"
                         + "\n\tpublic enum IFCEntityType"
                      + "\n\t{";
-          
-         foreach (KeyValuePair<string,IfcSchemaEntityNode> ent in IfcEntityDict)
+
+         foreach (KeyValuePair<string, IfcSchemaEntityNode> ent in IfcEntityDict)
          {
             entityList += "\n\t\t/// <summary>"
                            + "\n\t\t/// " + ent.Key + " enumeration"
@@ -183,7 +230,7 @@ namespace Revit.IFC.Common.Utility
       static public string DumpTree()
       {
          string tree = string.Empty;
-         foreach(IfcSchemaEntityNode rootNode in rootNodes)
+         foreach (IfcSchemaEntityNode rootNode in rootNodes)
          {
             tree += rootNode.PrintBranch();
          }

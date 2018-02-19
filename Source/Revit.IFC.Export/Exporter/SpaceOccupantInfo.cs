@@ -25,63 +25,63 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Exporter
 {
-    /// <summary>
-    /// The class contains information for creating IFC zone.
-    /// </summary>
-    public class SpaceOccupantInfo
-    {
-        /// <summary>
-        /// The associated room handles.
-        /// </summary>
-        private HashSet<IFCAnyHandle> m_AssocRoomHandles = new HashSet<IFCAnyHandle>();
+   /// <summary>
+   /// The class contains information for creating IFC zone.
+   /// </summary>
+   public class SpaceOccupantInfo
+   {
+      /// <summary>
+      /// The associated room handles.
+      /// </summary>
+      private HashSet<IFCAnyHandle> m_AssocRoomHandles = new HashSet<IFCAnyHandle>();
 
-        /// <summary>
-        /// The associated IfcClassificationReference handles.
-        /// </summary>
-        private Dictionary<string, IFCAnyHandle> m_ClassificationReferences = new Dictionary<string, IFCAnyHandle>();
+      /// <summary>
+      /// The associated IfcClassificationReference handles.
+      /// </summary>
+      private Dictionary<string, IFCAnyHandle> m_ClassificationReferences = new Dictionary<string, IFCAnyHandle>();
 
-        /// <summary>
-        /// The associated Pset_SpaceOccupant handle, if any.
-        /// </summary>
-        private IFCAnyHandle m_SpaceOccupantProperySetHandle = null;
+      /// <summary>
+      /// The associated Pset_SpaceOccupant handle, if any.
+      /// </summary>
+      private IFCAnyHandle m_SpaceOccupantProperySetHandle = null;
 
-        /// <summary>
-        /// Constructs a SpaceOccupantInfo object.
-        /// </summary>
-        /// <param name="roomHandle">The room handle for this space occupant.</param>
-        /// <param name="classificationReferences">The classification references for this space occupant.</param>
-        /// <param name="psetHnd">The Pset_SpaceOccupant handle for this space occupant.</param>
-        public SpaceOccupantInfo(IFCAnyHandle roomHandle, Dictionary<string, IFCAnyHandle> classificationReferences, IFCAnyHandle psetHnd)
-        {
-            RoomHandles.Add(roomHandle);
-            ClassificationReferences = classificationReferences;
-            SpaceOccupantProperySetHandle = psetHnd;
-        }
+      /// <summary>
+      /// Constructs a SpaceOccupantInfo object.
+      /// </summary>
+      /// <param name="roomHandle">The room handle for this space occupant.</param>
+      /// <param name="classificationReferences">The classification references for this space occupant.</param>
+      /// <param name="psetHnd">The Pset_SpaceOccupant handle for this space occupant.</param>
+      public SpaceOccupantInfo(IFCAnyHandle roomHandle, Dictionary<string, IFCAnyHandle> classificationReferences, IFCAnyHandle psetHnd)
+      {
+         RoomHandles.Add(roomHandle);
+         ClassificationReferences = classificationReferences;
+         SpaceOccupantProperySetHandle = psetHnd;
+      }
 
-        /// <summary>
-        /// The associated room handles.
-        /// </summary>
-        public HashSet<IFCAnyHandle> RoomHandles
-        {
-            get { return m_AssocRoomHandles; }
-        }
+      /// <summary>
+      /// The associated room handles.
+      /// </summary>
+      public HashSet<IFCAnyHandle> RoomHandles
+      {
+         get { return m_AssocRoomHandles; }
+      }
 
-        /// <summary>
-        /// The associated IfcClassificationReference handles.
-        /// </summary>
-        public Dictionary<string, IFCAnyHandle> ClassificationReferences
-        {
-            get { return m_ClassificationReferences; }
-            set { m_ClassificationReferences = value; }
-        }
+      /// <summary>
+      /// The associated IfcClassificationReference handles.
+      /// </summary>
+      public Dictionary<string, IFCAnyHandle> ClassificationReferences
+      {
+         get { return m_ClassificationReferences; }
+         set { m_ClassificationReferences = value; }
+      }
 
-        /// <summary>
-        /// The associated IfcClassificationReference handles.
-        /// </summary>
-        public IFCAnyHandle SpaceOccupantProperySetHandle
-        {
-            get { return m_SpaceOccupantProperySetHandle; }
-            set { m_SpaceOccupantProperySetHandle = value; }
-        }
-    }
+      /// <summary>
+      /// The associated IfcClassificationReference handles.
+      /// </summary>
+      public IFCAnyHandle SpaceOccupantProperySetHandle
+      {
+         get { return m_SpaceOccupantProperySetHandle; }
+         set { m_SpaceOccupantProperySetHandle = value; }
+      }
+   }
 }

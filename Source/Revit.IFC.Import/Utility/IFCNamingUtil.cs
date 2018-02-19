@@ -24,54 +24,54 @@ using System.Text;
 
 namespace Revit.IFC.Import.Utility
 {
-    /// <summary>
-    /// Provides methods to process IFC names.
-    /// </summary>
-    public class IFCNamingUtil
-    {
-        /// <summary>
-        /// Creates a valid Revit name from an IFC name.
-        /// </summary>
-        /// <param name="ifcName">The IFC name.</param>
-        /// <returns>The Revit equivalent</returns>
-        /// <remarks>Use this at the element creation level, to preserve the IFC name for NameOverride.</remarks>
-        public static string CleanIFCName(string ifcName)
-        {
-            // TODO: potentially parse Revit roundtrip names better.
-            if (string.IsNullOrWhiteSpace(ifcName))
-                return null;
-            StringBuilder cleanName = new StringBuilder(ifcName);
-            cleanName.Replace(':', '-');
-            cleanName.Replace('{', '(');
-            cleanName.Replace('[', '(');
-            cleanName.Replace('<', '(');
-            cleanName.Replace('}', ')');
-            cleanName.Replace(']', ')');
-            cleanName.Replace('>', ')');
-            cleanName.Replace('|', '/');
-            cleanName.Replace(';', ',');
-            cleanName.Replace('?', '.');
-            cleanName.Replace('`', '\'');
-            cleanName.Replace('~', '-');
+   /// <summary>
+   /// Provides methods to process IFC names.
+   /// </summary>
+   public class IFCNamingUtil
+   {
+      /// <summary>
+      /// Creates a valid Revit name from an IFC name.
+      /// </summary>
+      /// <param name="ifcName">The IFC name.</param>
+      /// <returns>The Revit equivalent</returns>
+      /// <remarks>Use this at the element creation level, to preserve the IFC name for NameOverride.</remarks>
+      public static string CleanIFCName(string ifcName)
+      {
+         // TODO: potentially parse Revit roundtrip names better.
+         if (string.IsNullOrWhiteSpace(ifcName))
+            return null;
+         StringBuilder cleanName = new StringBuilder(ifcName);
+         cleanName.Replace(':', '-');
+         cleanName.Replace('{', '(');
+         cleanName.Replace('[', '(');
+         cleanName.Replace('<', '(');
+         cleanName.Replace('}', ')');
+         cleanName.Replace(']', ')');
+         cleanName.Replace('>', ')');
+         cleanName.Replace('|', '/');
+         cleanName.Replace(';', ',');
+         cleanName.Replace('?', '.');
+         cleanName.Replace('`', '\'');
+         cleanName.Replace('~', '-');
 
-            return cleanName.ToString();
-        }
+         return cleanName.ToString();
+      }
 
-        /// <summary>
-        /// Compares two strings for equality, including null strings.
-        /// </summary>
-        /// <param name="s1">The first string.</param>
-        /// <param name="s2">The second string.</param>
-        /// <returns>True if s1 == s2.</returns>
-        public static bool SafeStringsAreEqual(string s1, string s2)
-        {
-            if ((s1 == null) != (s2 == null))
-                return false;
+      /// <summary>
+      /// Compares two strings for equality, including null strings.
+      /// </summary>
+      /// <param name="s1">The first string.</param>
+      /// <param name="s2">The second string.</param>
+      /// <returns>True if s1 == s2.</returns>
+      public static bool SafeStringsAreEqual(string s1, string s2)
+      {
+         if ((s1 == null) != (s2 == null))
+            return false;
 
-            if ((s1 != null) && (string.Compare(s1, s2) != 0))
-                return false;
+         if ((s1 != null) && (string.Compare(s1, s2) != 0))
+            return false;
 
-            return true;
-        }        
-    }
+         return true;
+      }
+   }
 }

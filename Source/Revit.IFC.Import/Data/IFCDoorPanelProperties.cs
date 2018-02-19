@@ -30,78 +30,78 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents an IfcDoorPanelProperties
-    /// </summary>
-    public class IFCDoorPanelProperties : IFCDoorWindowPropertyBase
-    {
-        int PanelNumber { get; set; }
+   /// <summary>
+   /// Represents an IfcDoorPanelProperties
+   /// </summary>
+   public class IFCDoorPanelProperties : IFCDoorWindowPropertyBase
+   {
+      int PanelNumber { get; set; }
 
-        /// <summary>
-        /// Processes IfcDoorPanelProperties attributes.
-        /// </summary>
-        /// <param name="ifcDoorPanelProperties">The IfcDoorPanelProperties handle.</param>
-        /// <param name="panelNumber">The panel number.</param>
-        protected IFCDoorPanelProperties(IFCAnyHandle ifcDoorPanelProperties, int panelNumber)
-        {
-            PanelNumber = panelNumber;
-            Process(ifcDoorPanelProperties);
-        }
+      /// <summary>
+      /// Processes IfcDoorPanelProperties attributes.
+      /// </summary>
+      /// <param name="ifcDoorPanelProperties">The IfcDoorPanelProperties handle.</param>
+      /// <param name="panelNumber">The panel number.</param>
+      protected IFCDoorPanelProperties(IFCAnyHandle ifcDoorPanelProperties, int panelNumber)
+      {
+         PanelNumber = panelNumber;
+         Process(ifcDoorPanelProperties);
+      }
 
-        private string GeneratePropertyName(string originalPropertyName)
-        {
-            if (PanelNumber <= 1)
-                return originalPropertyName;
-            else
-                return originalPropertyName + " " + PanelNumber;
-        }
+      private string GeneratePropertyName(string originalPropertyName)
+      {
+         if (PanelNumber <= 1)
+            return originalPropertyName;
+         else
+            return originalPropertyName + " " + PanelNumber;
+      }
 
-        /// <summary>
-        /// Processes an IfcDoorPanelProperties entity.
-        /// </summary>
-        /// <param name="ifcDoorPanelProperties">The IfcDoorPanelProperties handle.</param>
-        protected override void Process(IFCAnyHandle ifcDoorPanelProperties)
-        {
-            base.Process(ifcDoorPanelProperties);
+      /// <summary>
+      /// Processes an IfcDoorPanelProperties entity.
+      /// </summary>
+      /// <param name="ifcDoorPanelProperties">The IfcDoorPanelProperties handle.</param>
+      protected override void Process(IFCAnyHandle ifcDoorPanelProperties)
+      {
+         base.Process(ifcDoorPanelProperties);
 
-            double currPropertyValue = IFCImportHandleUtil.GetOptionalScaledLengthAttribute(ifcDoorPanelProperties, "PanelDepth", -1e+30);
-            if (!MathUtil.IsAlmostEqual(currPropertyValue, -1e+30))
-                DoubleProperties[new Tuple<string, UnitType, AllowedValues>(GeneratePropertyName("PanelDepth"), 
-                    UnitType.UT_Length, AllowedValues.Positive)] = currPropertyValue;
+         double currPropertyValue = IFCImportHandleUtil.GetOptionalScaledLengthAttribute(ifcDoorPanelProperties, "PanelDepth", -1e+30);
+         if (!MathUtil.IsAlmostEqual(currPropertyValue, -1e+30))
+            DoubleProperties[new Tuple<string, UnitType, AllowedValues>(GeneratePropertyName("PanelDepth"),
+                UnitType.UT_Length, AllowedValues.Positive)] = currPropertyValue;
 
-            currPropertyValue = IFCImportHandleUtil.GetOptionalRealAttribute(ifcDoorPanelProperties, "PanelWidth", -1e+30);
-            if (!MathUtil.IsAlmostEqual(currPropertyValue, -1e+30))
-                DoubleProperties[new Tuple<string, UnitType, AllowedValues>(GeneratePropertyName("PanelWidth"), 
-                    UnitType.UT_Length, AllowedValues.NonNegative)] = currPropertyValue;
+         currPropertyValue = IFCImportHandleUtil.GetOptionalRealAttribute(ifcDoorPanelProperties, "PanelWidth", -1e+30);
+         if (!MathUtil.IsAlmostEqual(currPropertyValue, -1e+30))
+            DoubleProperties[new Tuple<string, UnitType, AllowedValues>(GeneratePropertyName("PanelWidth"),
+                UnitType.UT_Length, AllowedValues.NonNegative)] = currPropertyValue;
 
-            string currPropertyValueString = IFCImportHandleUtil.GetOptionalStringAttribute(ifcDoorPanelProperties, "PanelOperation", null);
-            if (!string.IsNullOrEmpty(currPropertyValueString))
-                StringProperties[GeneratePropertyName("PanelOperation")] = currPropertyValueString;
+         string currPropertyValueString = IFCImportHandleUtil.GetOptionalStringAttribute(ifcDoorPanelProperties, "PanelOperation", null);
+         if (!string.IsNullOrEmpty(currPropertyValueString))
+            StringProperties[GeneratePropertyName("PanelOperation")] = currPropertyValueString;
 
-            currPropertyValueString = IFCImportHandleUtil.GetOptionalStringAttribute(ifcDoorPanelProperties, "PanelPosition", null);
-            if (!string.IsNullOrEmpty(currPropertyValueString))
-                StringProperties[GeneratePropertyName("PanelPosition")] = currPropertyValueString; 
-        }
+         currPropertyValueString = IFCImportHandleUtil.GetOptionalStringAttribute(ifcDoorPanelProperties, "PanelPosition", null);
+         if (!string.IsNullOrEmpty(currPropertyValueString))
+            StringProperties[GeneratePropertyName("PanelPosition")] = currPropertyValueString;
+      }
 
-        /// <summary>
-        /// Processes an IfcDoorPanelProperties set.
-        /// </summary>
-        /// <param name="ifcDoorPanelProperties">The IfcDoorPanelProperties object.</param>
-        /// <param name="panelNumber">The panel number, based on the containing IfcObject.</param>
-        /// <returns>The IFCDoorPanelProperties object.</returns>
-        public static IFCDoorPanelProperties ProcessIFCDoorPanelProperties(IFCAnyHandle ifcDoorPanelProperties, int panelNumber)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcDoorPanelProperties))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcDoorPanelProperties);
-                return null;
-            }
+      /// <summary>
+      /// Processes an IfcDoorPanelProperties set.
+      /// </summary>
+      /// <param name="ifcDoorPanelProperties">The IfcDoorPanelProperties object.</param>
+      /// <param name="panelNumber">The panel number, based on the containing IfcObject.</param>
+      /// <returns>The IFCDoorPanelProperties object.</returns>
+      public static IFCDoorPanelProperties ProcessIFCDoorPanelProperties(IFCAnyHandle ifcDoorPanelProperties, int panelNumber)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcDoorPanelProperties))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcDoorPanelProperties);
+            return null;
+         }
 
-            IFCEntity doorPanelProperties;
-            if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcDoorPanelProperties.StepId, out doorPanelProperties))
-                return (doorPanelProperties as IFCDoorPanelProperties);
+         IFCEntity doorPanelProperties;
+         if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcDoorPanelProperties.StepId, out doorPanelProperties))
+            return (doorPanelProperties as IFCDoorPanelProperties);
 
-            return new IFCDoorPanelProperties(ifcDoorPanelProperties, panelNumber);
-        }
-    }
+         return new IFCDoorPanelProperties(ifcDoorPanelProperties, panelNumber);
+      }
+   }
 }

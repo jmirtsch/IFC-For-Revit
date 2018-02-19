@@ -26,66 +26,67 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate extend to structure value for a wall.
-    /// </summary>
-    class ExtendToStructureCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A boolean variable to keep the calculated value.
-        /// </summary>
-        private bool m_ExtendToStructure = false;
+   /// <summary>
+   /// A calculation class to calculate extend to structure value for a wall.
+   /// </summary>
+   class ExtendToStructureCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A boolean variable to keep the calculated value.
+      /// </summary>
+      private bool m_ExtendToStructure = false;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static ExtendToStructureCalculator s_Instance = new ExtendToStructureCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static ExtendToStructureCalculator s_Instance = new ExtendToStructureCalculator();
 
-        /// <summary>
-        /// The ExtendToStructureCalculator instance.
-        /// </summary>
-        public static ExtendToStructureCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The ExtendToStructureCalculator instance.
+      /// </summary>
+      public static ExtendToStructureCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates extend to structure value for a wall.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element,">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            Wall wall = element as Wall;
-            if (wall != null)
-            {
-                m_ExtendToStructure = ExporterIFCUtils.IsWallJoinedToTop(wall);
-            }
+      /// <summary>
+      /// Calculates extend to structure value for a wall.
+      /// </summary>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="extrusionCreationData">
+      /// The IFCExtrusionCreationData.
+      /// </param>
+      /// <param name="element,">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="elementType">
+      /// The element type.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         Wall wall = element as Wall;
+         if (wall != null)
+         {
+            m_ExtendToStructure = ExporterIFCUtils.IsWallJoinedToTop(wall);
             return true;
-        }
+         }
+         return false;
+      }
 
-        /// <summary>
-        /// Gets the calculated boolean value.
-        /// </summary>
-        /// <returns>
-        /// The boolean value.
-        /// </returns>
-        public override bool GetBooleanValue()
-        {
-            return m_ExtendToStructure;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated boolean value.
+      /// </summary>
+      /// <returns>
+      /// The boolean value.
+      /// </returns>
+      public override bool GetBooleanValue()
+      {
+         return m_ExtendToStructure;
+      }
+   }
 }

@@ -200,8 +200,8 @@ namespace Revit.IFC.Import.Data
             // Note that we process Axis representations later since they create model geometry also,
             // but we don't consider Axis or 2D geometry in our decision to import bounding boxes.  
             // Note also that we will only read in the first bounding box, which is the maximum of Box representations allowed.
-            if ((representation.Identifier == IFCRepresentationIdentifier.Box) && 
-               IFCImportFile.TheFile.Options.ProcessBoundingBoxGeometry != IFCProcessBBoxOptions.Always && 
+            if ((representation.Identifier == IFCRepresentationIdentifier.Box) &&
+               IFCImportFile.TheFile.Options.ProcessBoundingBoxGeometry != IFCProcessBBoxOptions.Always &&
                shapeEditScope.Creator.Solids.Count > 0)
                continue;
 

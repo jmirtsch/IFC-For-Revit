@@ -50,53 +50,9 @@
     <Prefer32Bit>false</Prefer32Bit>
     <OutputPath>..\..\..\..\..\Slow_Debugx64\</OutputPath>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE;DEBUGTEST</DefineConstants>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>1607</NoWarn>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <DocumentationFile>
-    </DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;OVERRIDE_VERSION</DefineConstants>
-    <Optimize>true</Optimize>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>1607</NoWarn>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Slow_Debug|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\Slow_Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE;OVERRIDE_VERSION</DefineConstants>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>1607</NoWarn>
-    <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Antlr4.Runtime, Version=4.6.0.0, Culture=neutral, PublicKeyToken=09abb75b9ed49849, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Antlr4.Runtime.4.6.4\lib\net45\Antlr4.Runtime.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="RevitAPI, Version=17.0.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2017\RevitAPI.dll</HintPath>
-    </Reference>
-    <Reference Include="RevitAPIIFC">
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2017\RevitAPIIFC.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.XML" />
@@ -133,10 +89,12 @@
     <Compile Include="Exporter\PileExporter.cs" />
     <Compile Include="Exporter\PipeInsulationExporter.cs" />
     <Compile Include="Exporter\PropertySetsInitialization.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\BeamLoadBearingCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\BeamMemberSpanCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\AttributeEntry.cs" />
+    <Compile Include="Exporter\PropertySet\AttributeEntryMap.cs" />
+    <Compile Include="Exporter\PropertySet\AttributeSetDescription.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\SpanCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\CrossSectionAreaCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\DoorAreaCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\AreaCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\GrossAreaCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\GrossSurfaceAreaCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\GrossVolumeCalculator.cs" />
@@ -146,10 +104,8 @@
     <Compile Include="Exporter\PropertySet\Calculators\NetVolumeCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\NetWeightCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\OuterSurfaceAreaCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\StructuralMemberRollCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\WindowAreaCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\ColumnLoadBearingCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\CoveringFinishCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\RollCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\FinishCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ISOCD3766BendingEndHookCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ISOCD3766BendingRadiusCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ISOCD3766BendingStartHookCalculator.cs" />
@@ -159,49 +115,44 @@
     <Compile Include="Exporter\PropertySet\Calculators\ISOCD3766ShapeParameterCCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ISOCD3766ShapeParameterDCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ISOCD3766ShapeParameterECalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\ProvisionForVoidDepthCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\ProvisionForVoidDiameterCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\ProvisionForVoidHeightCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\ProvisionForVoidShapeCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\ProvisionForVoidWidthCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\DepthCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\DiameterCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\ShapeCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SlopeCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ExtendToStructureCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ExternalCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\LoadBearingCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\NumberOfStoreysCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\RailingHeightCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\RampFlightSlopeCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\RoofProjectedAreaCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SpaceConcealCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SpaceTemperatureCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\HeightCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\ProjectedAreaCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\ConcealCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\TemperatureCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpecificZoneCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\StairRiserTreadsCalculator.cs" />
     <Compile Include="Exporter\PropertySet\ClassificationUtil.cs" />
     <Compile Include="Exporter\PropertySet\ElectricalCurrentPropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\ElectricalVoltagePropertyUtil.cs" />
+    <Compile Include="Exporter\PropertySet\EntryMap.cs" />
     <Compile Include="Exporter\PropertySet\FrequencyPropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\PositivePlaneAnglePropertyUtil.cs" />
-    <Compile Include="Exporter\PropertySet\PropertySetDefinition.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC2x2Enum.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC2x3TC1Enum.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC4_ADD1Enum.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC4_ADD2Enum.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDescription.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetEntry.cs" />
+    <Compile Include="Exporter\PropertySet\PropertySetEntryMap.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetEntryUtil.cs" />
     <Compile Include="Exporter\PropertySet\PropertyUtil.cs" />
-    <Compile Include="Exporter\PropertySet\QuantityDescription.cs" />
-    <Compile Include="Exporter\PropertySet\QuantityEntry.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ReferenceCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SlabLoadBearingCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SlabPerimeterCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SlabWidthCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SpaceAreaCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SpaceHeightCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\WidthCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpaceLevelAreaCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpaceLevelDescriptionCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SpacePerimeterCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SpaceVolumeCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\PerimeterCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\VolumeCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\QuantityDescription.cs" />
+    <Compile Include="Exporter\PropertySet\QuantityEntry.cs" />
+    <Compile Include="Exporter\PropertySet\QuantityEntryMap.cs" />
     <Compile Include="Exporter\ProxyElementExporter.cs" />
     <Compile Include="Exporter\RailingExporter.cs" />
     <Compile Include="Exporter\RampExporter.cs" />
@@ -239,6 +190,7 @@
     <Compile Include="Toolkit\TransformSetter.cs" />
     <Compile Include="Utility\AllocatedGeometryObjectCache.cs" />
     <Compile Include="Utility\AssemblyInstanceCache.cs" />
+    <Compile Include="Utility\AttributeCache.cs" />
     <Compile Include="Utility\BooleanPropertyInfoCache.cs" />
     <Compile Include="Utility\CategoryUtil.cs" />
     <Compile Include="Utility\ClassificationLocationCache.cs" />

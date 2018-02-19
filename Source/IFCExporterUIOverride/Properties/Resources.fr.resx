@@ -523,7 +523,7 @@
     <value>Scinder les murs, poteaux, gaines par niveau</value>
   </data>
   <data name="State" xml:space="preserve">
-    <value>Etat</value>
+    <value>Etat/Région</value>
   </data>
   <data name="UnkownAltUIVer" xml:space="preserve">
     <value>Version d'interface alternative d'export inconnue</value>
@@ -693,5 +693,89 @@
   </data>
   <data name="ExportIFC" xml:space="preserve">
     <value>Exporter IFC</value>
+  </data>
+  <data name="BuildingDescription" xml:space="preserve">
+    <value>Description du bâtiment</value>
+  </data>
+  <data name="BuildingName" xml:space="preserve">
+    <value>Nom du bâtiment/Numéro</value>
+  </data>
+  <data name="BuildingType" xml:space="preserve">
+    <value>Type de bâtiment</value>
+  </data>
+  <data name="CompanyEmail" xml:space="preserve">
+    <value>E-mail Société</value>
+  </data>
+  <data name="CompanyInfo" xml:space="preserve">
+    <value>Informations sur la Société</value>
+  </data>
+  <data name="CompanyName" xml:space="preserve">
+    <value>Nom de la société</value>
+  </data>
+  <data name="CompanyPhone" xml:space="preserve">
+    <value>Téléphone Société</value>
+  </data>
+  <data name="CompanyType" xml:space="preserve">
+    <value>Type de société</value>
+  </data>
+  <data name="ConfigurationFilePrefix" xml:space="preserve">
+    <value>Configuration IFC</value>
+  </data>
+  <data name="ER_Architecture" xml:space="preserve">
+    <value>Echange de référence Architectural</value>
+  </data>
+  <data name="ER_BuildingService" xml:space="preserve">
+    <value>Echange de référence MEP</value>
+  </data>
+  <data name="ER_Structural" xml:space="preserve">
+    <value>Echange de référence Structurel</value>
+  </data>
+  <data name="ExchangeRequirement" xml:space="preserve">
+    <value>Exigences d’échange</value>
+  </data>
+  <data name="ExportSelectedSetup" xml:space="preserve">
+    <value>Sauvegarder configuration sélectionnée</value>
+  </data>
+  <data name="InternalCoordinates" xml:space="preserve">
+    <value>Système de coordonnées interne</value>
+  </data>
+  <data name="KeepTessellatedAsTriangulation" xml:space="preserve">
+    <value>Garder la géométrie tessellée en tant que triangulation</value>
+  </data>
+  <data name="LoadSetup" xml:space="preserve">
+    <value>Importer configuration</value>
+  </data>
+  <data name="ProjectBasePoint" xml:space="preserve">
+    <value>Point de base du projet</value>
+  </data>
+  <data name="ProjectDescription" xml:space="preserve">
+    <value>Description du projet</value>
+  </data>
+  <data name="ProjectInfo" xml:space="preserve">
+    <value>Informations sur le projet</value>
+  </data>
+  <data name="ProjectName" xml:space="preserve">
+    <value>Nom du projet</value>
+  </data>
+  <data name="ProjectOrigin" xml:space="preserve">
+    <value>Origine Projet</value>
+  </data>
+  <data name="ProjectPhase" xml:space="preserve">
+    <value>Phase du projet</value>
+  </data>
+  <data name="SharedCoordinates" xml:space="preserve">
+    <value>Coordonnées partagées actuelles</value>
+  </data>
+  <data name="SiteDescription" xml:space="preserve">
+    <value>Description du site</value>
+  </data>
+  <data name="SiteLocation" xml:space="preserve">
+    <value>Adresse du site</value>
+  </data>
+  <data name="SiteSurveyPoint" xml:space="preserve">
+    <value>Point de topographie</value>
+  </data>
+  <data name="StreetAddress" xml:space="preserve">
+    <value>Adresse</value>
   </data>
 </root>

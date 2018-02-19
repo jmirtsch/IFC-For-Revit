@@ -17,40 +17,37 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Autodesk.Revit.DB.IFC;
+using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of the IfcObject handles mapping to a IfcTypeObject handle.
-    /// </summary>
-    public class TypeRelationsCache : Dictionary<IFCAnyHandle, HashSet<IFCAnyHandle>>
-    {
-        /// <summary>
-        /// Adds the IfcObject to the dictionary.
-        /// </summary>
-        /// <param name="typeObj">
-        /// The IfcTypeObject handle.
-        /// </param>
-        /// <param name="obj">
-        /// The IfcObject handle.
-        /// </param>
-        public void Add(IFCAnyHandle typeObj, IFCAnyHandle obj)
-        {
-            if (ContainsKey(typeObj))
-            {
-                this[typeObj].Add(obj);
-            }
-            else
-            {
-                HashSet<IFCAnyHandle> objs = new HashSet<IFCAnyHandle>();
-                objs.Add(obj);
-                this[typeObj] = objs;
-            }
-        }
-    }
+   /// <summary>
+   /// Used to keep a cache of the IfcObject handles mapping to a IfcTypeObject handle.
+   /// </summary>
+   public class TypeRelationsCache : Dictionary<IFCAnyHandle, HashSet<IFCAnyHandle>>
+   {
+      /// <summary>
+      /// Adds the IfcObject to the dictionary.
+      /// </summary>
+      /// <param name="typeObj">The IfcTypeObject handle.</param>
+      /// <param name="obj">The IfcObject handle.</param>
+      public void Add(IFCAnyHandle typeObj, IFCAnyHandle obj)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(typeObj))
+            return;
+
+         if (ContainsKey(typeObj))
+         {
+            this[typeObj].Add(obj);
+         }
+         else
+         {
+            HashSet<IFCAnyHandle> objs = new HashSet<IFCAnyHandle>();
+            objs.Add(obj);
+            this[typeObj] = objs;
+         }
+      }
+   }
 }

@@ -25,105 +25,105 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Exporter
 {
-    /// <summary>
-    /// The class contains the components information for stairs or ramps.
-    /// </summary>
-    public class StairRampContainerInfo
-    {
-        /// <summary>
-        /// Stair or ramp handles.
-        /// </summary>
-        List<IFCAnyHandle> m_StairOrRampHandles;
+   /// <summary>
+   /// The class contains the components information for stairs or ramps.
+   /// </summary>
+   public class StairRampContainerInfo
+   {
+      /// <summary>
+      /// Stair or ramp handles.
+      /// </summary>
+      List<IFCAnyHandle> m_StairOrRampHandles;
 
-        /// <summary>
-        /// Sub components handles of stairs or ramps.
-        /// </summary>
-        List<List<IFCAnyHandle>> m_Components;
+      /// <summary>
+      /// Sub components handles of stairs or ramps.
+      /// </summary>
+      List<List<IFCAnyHandle>> m_Components;
 
-        /// <summary>
-        /// Local placements.
-        /// </summary>
-        List<IFCAnyHandle> m_LocalPlacements;
+      /// <summary>
+      /// Local placements.
+      /// </summary>
+      List<IFCAnyHandle> m_LocalPlacements;
 
-        /// <summary>
-        /// Constructs an StairRampContainerInfo.
-        /// </summary>
-        /// <param name="stairOrRampHandles">The stair or ramp handles.</param>
-        /// <param name="components">The sub components.</param>
-        /// <param name="localPlacements">The local placements.</param>
-        private void Construct(List<IFCAnyHandle> stairOrRampHandles, List<List<IFCAnyHandle>> components, List<IFCAnyHandle> localPlacements)
-        {
-            m_StairOrRampHandles = stairOrRampHandles;
-            m_Components = components;
-            m_LocalPlacements = localPlacements;
-        }
+      /// <summary>
+      /// Constructs an StairRampContainerInfo.
+      /// </summary>
+      /// <param name="stairOrRampHandles">The stair or ramp handles.</param>
+      /// <param name="components">The sub components.</param>
+      /// <param name="localPlacements">The local placements.</param>
+      private void Construct(List<IFCAnyHandle> stairOrRampHandles, List<List<IFCAnyHandle>> components, List<IFCAnyHandle> localPlacements)
+      {
+         m_StairOrRampHandles = stairOrRampHandles;
+         m_Components = components;
+         m_LocalPlacements = localPlacements;
+      }
 
-        /// <summary>
-        /// Constructs an StairRampContainerInfo.
-        /// </summary>
-        /// <param name="stairOrRampHandles">The stair or ramp handles.</param>
-        /// <param name="components">The sub components.</param>
-        /// <param name="localPlacements">The local placements.</param>
-        public StairRampContainerInfo(List<IFCAnyHandle> stairOrRampHandles, List<List<IFCAnyHandle>> components, List<IFCAnyHandle> localPlacements)
-        {
-            Construct(stairOrRampHandles, components, localPlacements);
-        }
+      /// <summary>
+      /// Constructs an StairRampContainerInfo.
+      /// </summary>
+      /// <param name="stairOrRampHandles">The stair or ramp handles.</param>
+      /// <param name="components">The sub components.</param>
+      /// <param name="localPlacements">The local placements.</param>
+      public StairRampContainerInfo(List<IFCAnyHandle> stairOrRampHandles, List<List<IFCAnyHandle>> components, List<IFCAnyHandle> localPlacements)
+      {
+         Construct(stairOrRampHandles, components, localPlacements);
+      }
 
-        /// <summary>
-        /// Constructs an StairRampContainerInfo.
-        /// </summary>
-        /// <param name="stairOrRampHandle">The stair or ramp handle.</param>
-        /// <param name="components">The sub components.</param>
-        /// <param name="localPlacement">The local placement.</param>
-        public StairRampContainerInfo(IFCAnyHandle stairOrRampHandle, List<IFCAnyHandle> components, IFCAnyHandle localPlacement)
-        {
-            List<IFCAnyHandle> stairOrRampHandles = new List<IFCAnyHandle>();
-            stairOrRampHandles.Add(stairOrRampHandle);
+      /// <summary>
+      /// Constructs an StairRampContainerInfo.
+      /// </summary>
+      /// <param name="stairOrRampHandle">The stair or ramp handle.</param>
+      /// <param name="components">The sub components.</param>
+      /// <param name="localPlacement">The local placement.</param>
+      public StairRampContainerInfo(IFCAnyHandle stairOrRampHandle, List<IFCAnyHandle> components, IFCAnyHandle localPlacement)
+      {
+         List<IFCAnyHandle> stairOrRampHandles = new List<IFCAnyHandle>();
+         stairOrRampHandles.Add(stairOrRampHandle);
 
-            List<List<IFCAnyHandle>> componentsList = new List<List<IFCAnyHandle>>();
-            componentsList.Add(components);
+         List<List<IFCAnyHandle>> componentsList = new List<List<IFCAnyHandle>>();
+         componentsList.Add(components);
 
-            List<IFCAnyHandle> localPlacemtns = new List<IFCAnyHandle>();
-            localPlacemtns.Add(localPlacement);
+         List<IFCAnyHandle> localPlacemtns = new List<IFCAnyHandle>();
+         localPlacemtns.Add(localPlacement);
 
-            Construct(stairOrRampHandles, componentsList, localPlacemtns);
-        }
+         Construct(stairOrRampHandles, componentsList, localPlacemtns);
+      }
 
-        /// <summary>
-        /// Stair or ramp handles.
-        /// </summary>
-        public List<IFCAnyHandle> StairOrRampHandles
-        {
-            get { return m_StairOrRampHandles; }
-        }
+      /// <summary>
+      /// Stair or ramp handles.
+      /// </summary>
+      public List<IFCAnyHandle> StairOrRampHandles
+      {
+         get { return m_StairOrRampHandles; }
+      }
 
-        /// <summary>
-        /// Sub components handles of stairs or ramps.
-        /// </summary>
-        public List<List<IFCAnyHandle>> Components
-        {
-            get { return m_Components; }
-        }
+      /// <summary>
+      /// Sub components handles of stairs or ramps.
+      /// </summary>
+      public List<List<IFCAnyHandle>> Components
+      {
+         get { return m_Components; }
+      }
 
-        /// <summary>
-        /// Local placements.
-        /// </summary>
-        public List<IFCAnyHandle> LocalPlacements
-        {
-            get { return m_LocalPlacements; }
-        }
+      /// <summary>
+      /// Local placements.
+      /// </summary>
+      public List<IFCAnyHandle> LocalPlacements
+      {
+         get { return m_LocalPlacements; }
+      }
 
-        /// <summary>
-        /// Adds a sub component to the container.
-        /// </summary>
-        /// <param name="index">The index of the container.</param>
-        /// <param name="component">The component.</param>
-        public void AddComponent(int index, IFCAnyHandle component)
-        {
-            if (index < 0 || index >= Components.Count)
-                throw new ArgumentOutOfRangeException("index");
+      /// <summary>
+      /// Adds a sub component to the container.
+      /// </summary>
+      /// <param name="index">The index of the container.</param>
+      /// <param name="component">The component.</param>
+      public void AddComponent(int index, IFCAnyHandle component)
+      {
+         if (index < 0 || index >= Components.Count)
+            throw new ArgumentOutOfRangeException("index");
 
-            Components[index].Add(component);
-        }
-    }
+         Components[index].Add(component);
+      }
+   }
 }

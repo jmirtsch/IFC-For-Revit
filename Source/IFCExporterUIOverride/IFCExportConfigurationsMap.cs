@@ -68,14 +68,14 @@ namespace BIM.IFC.Export.UI
          // These are the built-in configurations.  Provide a more extensible means of storage.
          // Order of construction: name, version, space boundaries, QTO, split walls, internal sets, 2d elems, boundingBox
          Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 Coordination View 2.0", IFCVersion.IFC2x3CV2, 0, false, false, false, false, false, false, false, false, false));
+         Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC4 Reference View", IFCVersion.IFC4RV, 0, true, false, false, false, false, false, false, false, false));
+         Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC4 Design Transfer View", IFCVersion.IFC4DTV, 0, true, false, false, false, false, false, false, false, false));
          Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 Coordination View", IFCVersion.IFC2x3, 1, false, false, true, false, false, false, true, false, false));
          Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 GSA Concept Design BIM 2010", IFCVersion.IFCCOBIE, 2, true, true, true, false, false, false, true, true, false));
          Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 Basic FM Handover View", IFCVersion.IFC2x3BFM, 1, true, true, false, false, false, false, true, false, false));
          Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x2 Coordination View", IFCVersion.IFC2x2, 1, false, false, true, false, false, false, false, false, false));
          Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x2 Singapore BCA e-Plan Check", IFCVersion.IFCBCA, 1, false, true, true, false, false, false, false, false, false));
          Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC2x3 COBie 2.4 Design Deliverable", IFCVersion.IFC2x3FM, 1, true, false, false, true, true, false, true, true, false));
-         Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC4 Reference View", IFCVersion.IFC4RV, 0, false, false, false, false, false, false, false, false, false));
-         Add(IFCExportConfiguration.CreateBuiltInConfiguration("IFC4 Design Transfer View", IFCVersion.IFC4DTV, 0, false, false, false, false, false, false, false, false, false));
       }
 
       /// <summary>
@@ -234,38 +234,39 @@ namespace BIM.IFC.Export.UI
 
       // The MapField is to defined the map<string,string> in schema. 
       // Please don't change the name values, it affects the schema.
-      private const String s_configMapField = "MapField";
-      // The following are the keys in the MapFied in new schema. For old schema, they are simple fields.
-      private const String s_setupName = "Name";
-      private const String s_setupVersion = "Version";
-      private const String s_setupFileFormat = "FileFormat";
-      private const String s_setupSpaceBoundaries = "SpaceBoundaryLevel";
-      private const String s_setupQTO = "ExportBaseQuantities";
-      private const String s_splitWallsAndColumns = "SplitWallsAndColumns";
-      private const String s_setupCurrentView = "VisibleElementsInCurrentView";
-      private const String s_setupExport2D = "Export2DElements";
-      private const String s_setupExportRevitProps = "ExportInternalRevitPropertySets";
-      private const String s_setupExportIFCCommonProperty = "ExportIFCCommonPropertySets";
-      private const String s_setupUse2DForRoomVolume = "Use2DBoundariesForRoomVolume";
-      private const String s_setupUseFamilyAndTypeName = "UseFamilyAndTypeNameForReference";
-      private const String s_setupExportPartsAsBuildingElements = "ExportPartsAsBuildingElements";
-      private const String s_useActiveViewGeometry = "UseActiveViewGeometry";
-      private const String s_setupExportSpecificSchedules = "ExportSpecificSchedules";
-      private const String s_setupExportBoundingBox = "ExportBoundingBox";
-      private const String s_setupExportSolidModelRep = "ExportSolidModelRep";
-      private const String s_setupExportSchedulesAsPsets = "ExportSchedulesAsPsets";
+      private const string s_configMapField = "MapField";
+      // The following are the keys in the MapField in new schema. For old schema, they are simple fields.
+      private const string s_setupName = "Name";
+      private const string s_setupVersion = "Version";
+      private const string s_setupFileFormat = "FileFormat";
+      private const string s_setupSpaceBoundaries = "SpaceBoundaryLevel";
+      private const string s_setupQTO = "ExportBaseQuantities";
+      private const string s_splitWallsAndColumns = "SplitWallsAndColumns";
+      private const string s_setupCurrentView = "VisibleElementsInCurrentView";
+      private const string s_setupExport2D = "Export2DElements";
+      private const string s_setupExportRevitProps = "ExportInternalRevitPropertySets";
+      private const string s_setupExportIFCCommonProperty = "ExportIFCCommonPropertySets";
+      private const string s_setupUse2DForRoomVolume = "Use2DBoundariesForRoomVolume";
+      private const string s_setupUseFamilyAndTypeName = "UseFamilyAndTypeNameForReference";
+      private const string s_setupExportPartsAsBuildingElements = "ExportPartsAsBuildingElements";
+      private const string s_useActiveViewGeometry = "UseActiveViewGeometry";
+      private const string s_setupExportSpecificSchedules = "ExportSpecificSchedules";
+      private const string s_setupExportBoundingBox = "ExportBoundingBox";
+      private const string s_setupExportSolidModelRep = "ExportSolidModelRep";
+      private const string s_setupExportSchedulesAsPsets = "ExportSchedulesAsPsets";
       private const string s_setupExportUserDefinedPsets = "ExportUserDefinedPsets";
       private const string s_setupExportUserDefinedPsetsFileName = "ExportUserDefinedPsetsFileName";
       private const string s_setupExportUserDefinedParameterMapping = "ExportUserDefinedParameterMapping";
       private const string s_setupExportUserDefinedParameterMappingFileName = "ExportUserDefinedParameterMappingFileName";
       private const string s_setupExportLinkedFiles = "ExportLinkedFiles";
-      private const String s_setupIncludeSiteElevation = "IncludeSiteElevation";
-      private const String s_setupUseCoarseTessellation = "UseCoarseTessellation";
+      private const string s_setupIncludeSiteElevation = "IncludeSiteElevation";
+      private const string s_setupUseCoarseTessellation = "UseCoarseTessellation";
       private const string s_useOnlyTriangulation = "UseOnlyTriangulation";
-      private const String s_setupStoreIFCGUID = "StoreIFCGUID";
-      private const String s_setupActivePhase = "ActivePhase";
-      private const String s_setupExportRoomsInView = "ExportRoomsInView";
+      private const string s_setupStoreIFCGUID = "StoreIFCGUID";
+      private const string s_setupActivePhase = "ActivePhase";
+      private const string s_setupExportRoomsInView = "ExportRoomsInView";
       private const string s_excludeFilter = "ExcludeFilter";
+      private const string s_setupSitePlacement = "SitePlacement";
       // Used for COBie 2.4
       private const string s_cobieCompanyInfo = "COBieCompanyInfo";
       private const string s_cobieProjectInfo = "COBieProjectInfo";
@@ -394,6 +395,7 @@ namespace BIM.IFC.Export.UI
                mapData.Add(s_setupExportRoomsInView, configuration.ExportRoomsInView.ToString());
                mapData.Add(s_useOnlyTriangulation, configuration.UseOnlyTriangulation.ToString());
                mapData.Add(s_excludeFilter, configuration.ExcludeFilter.ToString());
+               mapData.Add(s_setupSitePlacement, configuration.SitePlacement.ToString());
                // For COBie v2.4
                mapData.Add(s_cobieCompanyInfo, configuration.COBieCompanyInfo);
                mapData.Add(s_cobieProjectInfo, configuration.COBieProjectInfo);

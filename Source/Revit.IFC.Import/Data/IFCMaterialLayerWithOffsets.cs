@@ -60,7 +60,7 @@ namespace Revit.IFC.Import.Data
          base.Process(ifcMaterialLayerWithOffsets);
 
          OffsetValues = IFCAnyHandleUtil.GetAggregateDoubleAttribute<List<double>>(ifcMaterialLayerWithOffsets, "OffsetValues");
-         OffsetDirection = (IFCLayerSetDirection) Enum.Parse(typeof(IFCLayerSetDirection), IFCAnyHandleUtil.GetEnumerationAttribute(ifcMaterialLayerWithOffsets, "OffsetDirection"));
+         OffsetDirection = (IFCLayerSetDirection)Enum.Parse(typeof(IFCLayerSetDirection), IFCAnyHandleUtil.GetEnumerationAttribute(ifcMaterialLayerWithOffsets, "OffsetDirection"));
       }
 
       public static IFCMaterialLayerWithOffsets ProcessIFCMaterialLayerWithOffsets(IFCAnyHandle ifcMaterialLayerWithOffsets)

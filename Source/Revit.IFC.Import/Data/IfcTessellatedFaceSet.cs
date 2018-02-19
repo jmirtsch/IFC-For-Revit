@@ -32,78 +32,78 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    public class IFCTessellatedFaceSet : IFCRepresentationItem
-    {
-        IFCCartesianPointList3D m_Coordinates =  null;
+   public class IFCTessellatedFaceSet : IFCRepresentationItem
+   {
+      IFCCartesianPointList3D m_Coordinates = null;
 
-        protected IFCTessellatedFaceSet()
-        {
-        }
+      protected IFCTessellatedFaceSet()
+      {
+      }
 
-        /// <summary>
-        /// Coordinates attribute. This is an IFCCartesianPointList3D
-        /// </summary>
-        public IFCCartesianPointList3D Coordinates
-        {
-            get { return m_Coordinates; }
-            protected set { m_Coordinates = value; }
-        }
+      /// <summary>
+      /// Coordinates attribute. This is an IFCCartesianPointList3D
+      /// </summary>
+      public IFCCartesianPointList3D Coordinates
+      {
+         get { return m_Coordinates; }
+         protected set { m_Coordinates = value; }
+      }
 
-        protected IFCTessellatedFaceSet(IFCAnyHandle item)
-        {
-            Process(item);
-        }
+      protected IFCTessellatedFaceSet(IFCAnyHandle item)
+      {
+         Process(item);
+      }
 
-        /// <summary>
-        /// Process IfcTriangulatedFaceSet instance
-        /// </summary>
-        /// <param name="ifcTessellatedFaceSet">the handle</param>
-        protected override void Process(IFCAnyHandle ifcTessellatedFaceSet)
-        {
-            base.Process(ifcTessellatedFaceSet);
+      /// <summary>
+      /// Process IfcTriangulatedFaceSet instance
+      /// </summary>
+      /// <param name="ifcTessellatedFaceSet">the handle</param>
+      protected override void Process(IFCAnyHandle ifcTessellatedFaceSet)
+      {
+         base.Process(ifcTessellatedFaceSet);
 
-            // Process the IFCCartesianPointLIst3D
-            IFCAnyHandle coordinates = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcTessellatedFaceSet, "Coordinates", true);
-            if (IFCAnyHandleUtil.IsSubTypeOf(coordinates, IFCEntityType.IfcCartesianPointList3D))
-            {
-                IFCCartesianPointList3D coordList = IFCCartesianPointList3D.processIFCCartesianPointList3D(coordinates);
-                if (coordList != null)
-                    Coordinates = coordList;
-            }
-        }
+         // Process the IFCCartesianPointLIst3D
+         IFCAnyHandle coordinates = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcTessellatedFaceSet, "Coordinates", true);
+         if (IFCAnyHandleUtil.IsSubTypeOf(coordinates, IFCEntityType.IfcCartesianPointList3D))
+         {
+            IFCCartesianPointList3D coordList = IFCCartesianPointList3D.processIFCCartesianPointList3D(coordinates);
+            if (coordList != null)
+               Coordinates = coordList;
+         }
+      }
 
-        /// <summary>
-        /// Scale the vertex according to the Project unit
-        /// </summary>
-        /// <param name="vertex">the vertex</param>
-        /// <returns></returns>
-        private XYZ applyProjectUnitScaleVertex(XYZ vertex)
-        {
-            double x = IFCUnitUtil.ScaleLength(vertex.X);
-            double y = IFCUnitUtil.ScaleLength(vertex.Y);
-            double z = IFCUnitUtil.ScaleLength(vertex.Z);
-            XYZ scaledVertex = new XYZ(x, y, z);
-            return scaledVertex;
-        }
+      /// <summary>
+      /// Scale the vertex according to the Project unit
+      /// </summary>
+      /// <param name="vertex">the vertex</param>
+      /// <returns></returns>
+      private XYZ applyProjectUnitScaleVertex(XYZ vertex)
+      {
+         double x = IFCUnitUtil.ScaleLength(vertex.X);
+         double y = IFCUnitUtil.ScaleLength(vertex.Y);
+         double z = IFCUnitUtil.ScaleLength(vertex.Z);
+         XYZ scaledVertex = new XYZ(x, y, z);
+         return scaledVertex;
+      }
 
 
-        /// <summary>
-        /// Start processing the IfcTriangulatedFaceSet
-        /// </summary>
-        /// <param name="ifcTriangulatedFaceSet">the handle</param>
-        /// <returns></returns>
-        public static IFCTessellatedFaceSet ProcessIFCTessellatedFaceSet(IFCAnyHandle ifcTessellatedFaceSet)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcTessellatedFaceSet))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcTessellatedFaceSet);
-                return null;
-            }
+      /// <summary>
+      /// Start processing the IfcTriangulatedFaceSet
+      /// </summary>
+      /// <param name="ifcTriangulatedFaceSet">the handle</param>
+      /// <returns></returns>
+      public static IFCTessellatedFaceSet ProcessIFCTessellatedFaceSet(IFCAnyHandle ifcTessellatedFaceSet)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcTessellatedFaceSet))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcTessellatedFaceSet);
+            return null;
+         }
 
-            IFCEntity tessellatedFaceSet;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcTessellatedFaceSet.StepId, out tessellatedFaceSet))
-                tessellatedFaceSet = new IFCTessellatedFaceSet(ifcTessellatedFaceSet);
-            return (tessellatedFaceSet as IFCTessellatedFaceSet);
-        }
-    }
+         IFCEntity tessellatedFaceSet;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcTessellatedFaceSet.StepId, out tessellatedFaceSet))
+            tessellatedFaceSet = new IFCTessellatedFaceSet(ifcTessellatedFaceSet);
+         return (tessellatedFaceSet as IFCTessellatedFaceSet);
+      }
+   }
 }

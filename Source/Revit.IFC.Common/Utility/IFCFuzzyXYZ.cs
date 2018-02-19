@@ -25,48 +25,48 @@ using System.Threading.Tasks;
 
 namespace Revit.IFC.Common.Utility
 {
-    /// <summary>
-    /// A class to allow comparison of XYZ values based on a static epsilon value
-    /// The static epsilon value should be set before using these values.
-    /// </summary>
-    public class IFCFuzzyXYZ : XYZ, IComparable
-    {
-        static private double m_IFCFuzzyXYZEpsilon = 0.0;
+   /// <summary>
+   /// A class to allow comparison of XYZ values based on a static epsilon value
+   /// The static epsilon value should be set before using these values.
+   /// </summary>
+   public class IFCFuzzyXYZ : XYZ, IComparable
+   {
+      static private double m_IFCFuzzyXYZEpsilon = 0.0;
 
-        static public double IFCFuzzyXYZEpsilon
-        {
-            get { return m_IFCFuzzyXYZEpsilon; }
-            set
-            {
-                if (value > 0.0)
-                    m_IFCFuzzyXYZEpsilon = value;
-            }
-        }
+      static public double IFCFuzzyXYZEpsilon
+      {
+         get { return m_IFCFuzzyXYZEpsilon; }
+         set
+         {
+            if (value > 0.0)
+               m_IFCFuzzyXYZEpsilon = value;
+         }
+      }
 
-        public IFCFuzzyXYZ() : base() { }
+      public IFCFuzzyXYZ() : base() { }
 
-        public IFCFuzzyXYZ(XYZ xyz) : base(xyz.X, xyz.Y, xyz.Z) { }
+      public IFCFuzzyXYZ(XYZ xyz) : base(xyz.X, xyz.Y, xyz.Z) { }
 
-        /// <summary>
-        /// Compare an IFCFuzzyXYZ with an XYZ value by checking that their individual X,Y, and Z components are within an epsilon value of each other.
-        /// </summary>
-        /// <param name="obj">The other value, an XYZ or IFCFuzzyXYZ.</param>
-        /// <returns>0 if they are equal, -1 if this is smaller than obj, and 1 if this is larger than obj.</returns>
-        public int CompareTo(Object obj)
-        {
-            if (obj == null || (!(obj is XYZ)))
-                return -1;
+      /// <summary>
+      /// Compare an IFCFuzzyXYZ with an XYZ value by checking that their individual X,Y, and Z components are within an epsilon value of each other.
+      /// </summary>
+      /// <param name="obj">The other value, an XYZ or IFCFuzzyXYZ.</param>
+      /// <returns>0 if they are equal, -1 if this is smaller than obj, and 1 if this is larger than obj.</returns>
+      public int CompareTo(Object obj)
+      {
+         if (obj == null || (!(obj is XYZ)))
+            return -1;
 
-            XYZ otherXYZ = obj as XYZ;
-            for (int ii = 0; ii < 3; ii++)
-            {
-                if (this[ii] < otherXYZ[ii] - IFCFuzzyXYZEpsilon)
-                    return -1;
-                if (this[ii] > otherXYZ[ii] + IFCFuzzyXYZEpsilon)
-                    return 1;
-            }
+         XYZ otherXYZ = obj as XYZ;
+         for (int ii = 0; ii < 3; ii++)
+         {
+            if (this[ii] < otherXYZ[ii] - IFCFuzzyXYZEpsilon)
+               return -1;
+            if (this[ii] > otherXYZ[ii] + IFCFuzzyXYZEpsilon)
+               return 1;
+         }
 
-            return 0;
-        }
-    }
+         return 0;
+      }
+   }
 }

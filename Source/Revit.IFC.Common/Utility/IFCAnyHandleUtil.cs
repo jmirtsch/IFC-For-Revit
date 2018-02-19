@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB.IFC;
+using Autodesk.Revit.DB;
 using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Common.Utility
@@ -207,7 +208,7 @@ namespace Revit.IFC.Common.Utility
          if (String.IsNullOrEmpty(name))
             throw new ArgumentException("The name is empty.", "name");
 
-         if (value != null)
+         if (!string.IsNullOrEmpty(value))
             handle.SetAttribute(name, IFCData.CreateString(value));
       }
 
@@ -1519,43 +1520,43 @@ namespace Revit.IFC.Common.Utility
       }
 
       /// <summary>
-        /// Gets Opening representations of a representation handle.
-        /// </summary>
-        /// <param name="representation">The representation handle.</param>
-        /// <returns>The list of representations.</returns>
-        public static List<IFCAnyHandle> GetOpenings(IFCAnyHandle ifcElement)
-        {
-            if (ifcElement == null)
-                throw new ArgumentNullException("ifcElement");
+      /// Gets Opening representations of a representation handle.
+      /// </summary>
+      /// <param name="representation">The representation handle.</param>
+      /// <returns>The list of representations.</returns>
+      public static List<IFCAnyHandle> GetOpenings(IFCAnyHandle ifcElement)
+      {
+         if (ifcElement == null)
+            throw new ArgumentNullException("ifcElement");
 
-            if (!ifcElement.HasValue)
-                throw new ArgumentException("Invalid handle.");
+         if (!ifcElement.HasValue)
+            throw new ArgumentException("Invalid handle.");
 
-            if (!IsSubTypeOf(ifcElement, IFCEntityType.IfcElement))
-                throw new ArgumentException("The operation is not valid for this handle.");
+         if (!IsSubTypeOf(ifcElement, IFCEntityType.IfcElement))
+            throw new ArgumentException("The operation is not valid for this handle.");
 
-            List<IFCAnyHandle> openings = new List<IFCAnyHandle>();
-            IFCData ifcData = ifcElement.GetAttribute("HasOpenings");
-            if (ifcData.PrimitiveType == IFCDataPrimitiveType.Aggregate)
+         List<IFCAnyHandle> openings = new List<IFCAnyHandle>();
+         IFCData ifcData = ifcElement.GetAttribute("HasOpenings");
+         if (ifcData.PrimitiveType == IFCDataPrimitiveType.Aggregate)
+         {
+            IFCAggregate aggregate = ifcData.AsAggregate();
+            if (aggregate != null && aggregate.Count > 0)
             {
-                IFCAggregate aggregate = ifcData.AsAggregate();
-                if (aggregate != null && aggregate.Count > 0)
-                {
-                    foreach (IFCData val in aggregate)
-                    {
-                        if (val.PrimitiveType == IFCDataPrimitiveType.Instance)
-                        {
-                            IFCAnyHandle relVoidElement = val.AsInstance();
-                            IFCData openingElementData = relVoidElement.GetAttribute("RelatedOpeningElement");
-                            openings.Add(openingElementData.AsInstance());
-                        }
-                    }
-                }
+               foreach (IFCData val in aggregate)
+               {
+                  if (val.PrimitiveType == IFCDataPrimitiveType.Instance)
+                  {
+                     IFCAnyHandle relVoidElement = val.AsInstance();
+                     IFCData openingElementData = relVoidElement.GetAttribute("RelatedOpeningElement");
+                     openings.Add(openingElementData.AsInstance());
+                  }
+               }
             }
-            return openings;
-        }
+         }
+         return openings;
+      }
 
-        /// <summary>
+      /// <summary>
       /// Adds representations of a product representation.
       /// </summary>
       /// <param name="productRepresentation">The product representation handle.</param>

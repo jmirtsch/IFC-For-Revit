@@ -27,87 +27,87 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents an IfcOpeningElement.
-    /// </summary>
-    public class IFCOpeningElement : IFCFeatureElementSubtraction
-    {
-        protected IFCElement m_FilledByElement = null;
+   /// <summary>
+   /// Represents an IfcOpeningElement.
+   /// </summary>
+   public class IFCOpeningElement : IFCFeatureElementSubtraction
+   {
+      protected IFCElement m_FilledByElement = null;
 
-        /// <summary>
-        /// The element this opening is filled by (e.g., a door).
-        /// </summary>
-        public IFCElement FilledByElement
-        {
-            get { return m_FilledByElement; }
-            set { m_FilledByElement = value; }
-        }
+      /// <summary>
+      /// The element this opening is filled by (e.g., a door).
+      /// </summary>
+      public IFCElement FilledByElement
+      {
+         get { return m_FilledByElement; }
+         set { m_FilledByElement = value; }
+      }
 
-        /// <summary>
-        /// Default constructor.
-        /// </summary>
-        protected IFCOpeningElement()
-        {
+      /// <summary>
+      /// Default constructor.
+      /// </summary>
+      protected IFCOpeningElement()
+      {
 
-        }
+      }
 
-        /// <summary>
-        /// Constructs an IFCOpeningElement from the IfcOpeningElement handle.
-        /// </summary>
-        /// <param name="ifcOpeningElement">The IfcOpeningElement handle.</param>
-        protected IFCOpeningElement(IFCAnyHandle ifcOpeningElement)
-        {
-            Process(ifcOpeningElement);
-        }
+      /// <summary>
+      /// Constructs an IFCOpeningElement from the IfcOpeningElement handle.
+      /// </summary>
+      /// <param name="ifcOpeningElement">The IfcOpeningElement handle.</param>
+      protected IFCOpeningElement(IFCAnyHandle ifcOpeningElement)
+      {
+         Process(ifcOpeningElement);
+      }
 
-        /// <summary>
-        /// Processes IfcOpeningElement attributes.
-        /// </summary>
-        /// <param name="ifcOpeningElement">The IfcOpeningElement handle.</param>
-        protected override void Process(IFCAnyHandle ifcOpeningElement)
-        {
-            base.Process(ifcOpeningElement);
+      /// <summary>
+      /// Processes IfcOpeningElement attributes.
+      /// </summary>
+      /// <param name="ifcOpeningElement">The IfcOpeningElement handle.</param>
+      protected override void Process(IFCAnyHandle ifcOpeningElement)
+      {
+         base.Process(ifcOpeningElement);
 
-            ICollection<IFCAnyHandle> hasFillings = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcOpeningElement, "HasFillings");
-            if (hasFillings != null)
+         ICollection<IFCAnyHandle> hasFillings = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcOpeningElement, "HasFillings");
+         if (hasFillings != null)
+         {
+            // Assume that there is only one filling for the opening, and take first found.
+            foreach (IFCAnyHandle hasFilling in hasFillings)
             {
-                // Assume that there is only one filling for the opening, and take first found.
-                foreach (IFCAnyHandle hasFilling in hasFillings)
-                {
-                    IFCAnyHandle relatedFillingElement = IFCAnyHandleUtil.GetInstanceAttribute(hasFilling, "RelatedBuildingElement");
-                    if (IFCAnyHandleUtil.IsNullOrHasNoValue(relatedFillingElement))
-                        continue;
+               IFCAnyHandle relatedFillingElement = IFCAnyHandleUtil.GetInstanceAttribute(hasFilling, "RelatedBuildingElement");
+               if (IFCAnyHandleUtil.IsNullOrHasNoValue(relatedFillingElement))
+                  continue;
 
-                    IFCEntity filledByElement;
-                    IFCImportFile.TheFile.EntityMap.TryGetValue(relatedFillingElement.StepId, out filledByElement);
-                    if (filledByElement == null)
-                        FilledByElement = IFCElement.ProcessIFCElement(relatedFillingElement);
-                    else
-                        FilledByElement = filledByElement as IFCElement;
-                    FilledByElement.FillsOpening = this;
-                    break;
-                }
-            } 
-        }
-
-        /// <summary>
-        /// Processes an IfcOpeningElement object.
-        /// </summary>
-        /// <param name="ifcOpeningElement">The IfcOpeningElement handle.</param>
-        /// <returns>The IFCOpeningElement object.</returns>
-        public static IFCOpeningElement ProcessIFCOpeningElement(IFCAnyHandle ifcOpeningElement)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcOpeningElement))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcOpeningElement);
-                return null;
+               IFCEntity filledByElement;
+               IFCImportFile.TheFile.EntityMap.TryGetValue(relatedFillingElement.StepId, out filledByElement);
+               if (filledByElement == null)
+                  FilledByElement = IFCElement.ProcessIFCElement(relatedFillingElement);
+               else
+                  FilledByElement = filledByElement as IFCElement;
+               FilledByElement.FillsOpening = this;
+               break;
             }
+         }
+      }
 
-            //sub classes not handled yet!
-            IFCEntity openingElement;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcOpeningElement.StepId, out openingElement))
-                openingElement = new IFCOpeningElement(ifcOpeningElement);
-            return (openingElement as IFCOpeningElement); 
-        }
-    }
+      /// <summary>
+      /// Processes an IfcOpeningElement object.
+      /// </summary>
+      /// <param name="ifcOpeningElement">The IfcOpeningElement handle.</param>
+      /// <returns>The IFCOpeningElement object.</returns>
+      public static IFCOpeningElement ProcessIFCOpeningElement(IFCAnyHandle ifcOpeningElement)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcOpeningElement))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcOpeningElement);
+            return null;
+         }
+
+         //sub classes not handled yet!
+         IFCEntity openingElement;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcOpeningElement.StepId, out openingElement))
+            openingElement = new IFCOpeningElement(ifcOpeningElement);
+         return (openingElement as IFCOpeningElement);
+      }
+   }
 }

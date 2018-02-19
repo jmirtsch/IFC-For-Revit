@@ -23,62 +23,59 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Autodesk.Revit.DB.Structure;
 using Revit.IFC.Common.Utility;
 using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
    /// <summary>
-   /// Get Builtin Parameter for Roll property
+   /// A calculation class to calculate the depth of a provision for void.
    /// </summary>
-   class StructuralMemberRollCalculator : PropertyCalculator
+   class DepthCalculator : PropertyCalculator
    {
       /// <summary>
       /// A double variable to keep the calculated value.
       /// </summary>
-      private double m_Roll = 0;
+      private double m_Depth = 0.0;
 
       /// <summary>
       /// A static instance of this class.
       /// </summary>
-      static StructuralMemberRollCalculator s_Instance = new StructuralMemberRollCalculator();
+      static DepthCalculator s_Instance = new DepthCalculator();
 
       /// <summary>
-      /// The StructuralMemberRollCalculator instance.
+      /// The ProvisionForVoidDepthCalculator instance.
       /// </summary>
-      public static StructuralMemberRollCalculator Instance
+      public static DepthCalculator Instance
       {
          get { return s_Instance; }
       }
 
       /// <summary>
-      /// Calculates Roll value (Rotation angle) for a beam, column and member
+      /// Calculates the depth of a provision for void.
       /// </summary>
-      /// <param name="exporterIFC">
-      /// The ExporterIFC object.
-      /// </param>
-      /// <param name="extrusionCreationData">
-      /// The IFCExtrusionCreationData.
-      /// </param>
-      /// <param name="element">
-      /// The element to calculate the value.
-      /// </param>
-      /// <param name="elementType">
-      /// The element type.
-      /// </param>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
+      /// <param name="element">The element to calculate the value.</param>
+      /// <param name="elementType">The element type.</param>
       /// <returns>
       /// True if the operation succeed, false otherwise.
       /// </returns>
       public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
       {
-         Parameter rollPar = element.get_Parameter(BuiltInParameter.STRUCTURAL_BEND_DIR_ANGLE);
-         if (rollPar == null)
-            return false;
-         double? roll = rollPar.AsDouble();
-         if (roll == null || !roll.HasValue)
-            return false;
-         m_Roll = UnitUtil.ScaleAngle(roll.Value);
-         return true;
+         if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyDepth", out m_Depth) == null)
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcDepth", out m_Depth) == null)
+               ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "Depth", out m_Depth);
+         m_Depth = UnitUtil.ScaleLength(m_Depth);
+         if (m_Depth > MathUtil.Eps() * MathUtil.Eps())
+            return true;
+
+         if (extrusionCreationData == null)
+               return false;
+
+         m_Depth = extrusionCreationData.ScaledLength;
+         return (m_Depth > MathUtil.Eps());
       }
 
       /// <summary>
@@ -89,7 +86,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
       /// </returns>
       public override double GetDoubleValue()
       {
-         return m_Roll;
+         return m_Depth;
       }
    }
 }

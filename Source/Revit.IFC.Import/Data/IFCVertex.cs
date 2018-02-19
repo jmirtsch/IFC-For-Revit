@@ -30,53 +30,53 @@ using Revit.IFC.Import.Enums;
 using Revit.IFC.Import.Utility;
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class that represents an IFCVertex entity
-    /// </summary>
-    public class IFCVertex : IFCTopologicalRepresentationItem
-    {
-        protected IFCVertex()
-        { 
-        }
+   /// <summary>
+   /// Class that represents an IFCVertex entity
+   /// </summary>
+   public class IFCVertex : IFCTopologicalRepresentationItem
+   {
+      protected IFCVertex()
+      {
+      }
 
-        protected IFCVertex(IFCAnyHandle ifcVertex) 
-        {
-            Process(ifcVertex);
-        }
+      protected IFCVertex(IFCAnyHandle ifcVertex)
+      {
+         Process(ifcVertex);
+      }
 
-        protected override void Process(IFCAnyHandle ifcVertex)
-        {
-            base.Process(ifcVertex);
-        }
+      protected override void Process(IFCAnyHandle ifcVertex)
+      {
+         base.Process(ifcVertex);
+      }
 
-        /// <summary>
-        /// Returns the coordinate of this vertex
-        /// </summary>
-        public virtual XYZ GetCoordinate() 
-        {
+      /// <summary>
+      /// Returns the coordinate of this vertex
+      /// </summary>
+      public virtual XYZ GetCoordinate()
+      {
+         return null;
+      }
+
+      /// <summary>
+      /// Create an IFCVertex object from a handle of type IfcVertex.
+      /// </summary>
+      /// <param name="ifcFace">The IFC handle.</param>
+      /// <returns>The IFCVertex object.</returns>
+      public static IFCVertex ProcessIFCVertex(IFCAnyHandle ifcVertex)
+      {
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcVertex, IFCEntityType.IfcVertexPoint))
+            return IFCVertexPoint.ProcessIFCVertexPoint(ifcVertex);
+
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcVertex))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcVertex);
             return null;
-        }
+         }
 
-        /// <summary>
-        /// Create an IFCVertex object from a handle of type IfcVertex.
-        /// </summary>
-        /// <param name="ifcFace">The IFC handle.</param>
-        /// <returns>The IFCVertex object.</returns>
-        public static IFCVertex ProcessIFCVertex(IFCAnyHandle ifcVertex)
-        {
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcVertex, IFCEntityType.IfcVertexPoint))
-                return IFCVertexPoint.ProcessIFCVertexPoint(ifcVertex);
-
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcVertex))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcVertex);
-                return null;
-            }
-
-            IFCEntity vertex;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcVertex.StepId, out vertex))
-                vertex = new IFCVertex(ifcVertex);
-            return (vertex as IFCVertex);
-        }
-    }
+         IFCEntity vertex;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcVertex.StepId, out vertex))
+            vertex = new IFCVertex(ifcVertex);
+         return (vertex as IFCVertex);
+      }
+   }
 }

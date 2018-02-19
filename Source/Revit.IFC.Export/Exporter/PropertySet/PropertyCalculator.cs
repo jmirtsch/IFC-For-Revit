@@ -33,7 +33,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
     abstract public class PropertyCalculator
     {
         /// <summary>
-        /// Performs the calculation.
+        /// Performs the calculation. 
+        /// NOTE: the general rule to follow when overriding Calculate method in order of priority:
+        ///       1. If it the property is dependent on the object or the geometry, such as dimension of a door, the first priority is to be given to the values provided by Revit
+        ///       2. If it does not give any appropriate value, look at the override parameters. It is generally the name of the IFC property, or prefixed with Ifc (for Pset property) or IfcQty (for quantity)
+        ///       3. If still does not give the appropriate value, and it has an Extrusion data, calculte the appropriate dimension from the extrusion data
+        ///       4. If everything fails, return false
         /// </summary>
         /// <param name="exporterIFC">
         /// The ExporterIFC object.
@@ -52,159 +57,159 @@ namespace Revit.IFC.Export.Exporter.PropertySet
         /// </returns>
         abstract public bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType);
 
-        /// <summary>
-        /// If implemented in derived classes, may retrieve parameter data for a specific IFC handle.
-        /// Designed to retrieve data for subelement parameter overrides.
-        /// By default returns false.
-        /// </summary>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="handle">
-        /// The IFC handle that may offer parameter overrides.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        virtual public bool GetParameterFromSubelementCache(Element element, IFCAnyHandle handle)
-        {
-            return false;
-        }
-        /// <summary>
-        /// Determines if the calculator calculates only one parameter, or multiple.
-        /// </summary>
-        public virtual bool CalculatesMultipleParameters
-        {
-            get { return false; }
-        }
+      /// <summary>
+      /// If implemented in derived classes, may retrieve parameter data for a specific IFC handle.
+      /// Designed to retrieve data for subelement parameter overrides.
+      /// By default returns false.
+      /// </summary>
+      /// <param name="element">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="handle">
+      /// The IFC handle that may offer parameter overrides.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      virtual public bool GetParameterFromSubelementCache(Element element, IFCAnyHandle handle)
+      {
+         return false;
+      }
+      /// <summary>
+      /// Determines if the calculator calculates only one parameter, or multiple.
+      /// </summary>
+      public virtual bool CalculatesMultipleParameters
+      {
+         get { return false; }
+      }
 
-        /// <summary>
-        /// Determines if the calculator calculates only one value, or multiple.
-        /// </summary>
-        public virtual bool CalculatesMutipleValues
-        {
-            get { return false; }
-        }
+      /// <summary>
+      /// Determines if the calculator calculates only one value, or multiple.
+      /// </summary>
+      public virtual bool CalculatesMutipleValues
+      {
+         get { return false; }
+      }
 
-        /// <summary>
-        /// Determines if the calculator allows string values to be cached.
-        /// </summary>
-        public virtual bool CacheStringValues
-        {
-            get { return false; }
-        }
+      /// <summary>
+      /// Determines if the calculator allows string values to be cached.
+      /// </summary>
+      public virtual bool CacheStringValues
+      {
+         get { return false; }
+      }
 
-        /// <summary>
-        /// Gets the calculated string value.  Use if CalculatesMultipleParameters is false.
-        /// </summary>
-        /// <exception cref="System.NotImplementedException">
-        /// Default method is not implemented.
-        /// </exception>
-        /// <returns>
-        /// The calculated string value.
-        /// </returns>
-        public virtual string GetStringValue()
-        {
-            throw new NotImplementedException();
-        }
+      /// <summary>
+      /// Gets the calculated string value.  Use if CalculatesMultipleParameters is false.
+      /// </summary>
+      /// <exception cref="System.NotImplementedException">
+      /// Default method is not implemented.
+      /// </exception>
+      /// <returns>
+      /// The calculated string value.
+      /// </returns>
+      public virtual string GetStringValue()
+      {
+         throw new NotImplementedException();
+      }
 
-        /// <summary>
-        /// Gets the calculated string values.  Use if CalculatesMutipleValues is true.
-        /// </summary>
-        /// <returns>The list of strings.</returns>
-        public virtual IList<string> GetStringValues()
-        {
-            throw new NotImplementedException();
-        }
+      /// <summary>
+      /// Gets the calculated string values.  Use if CalculatesMutipleValues is true.
+      /// </summary>
+      /// <returns>The list of strings.</returns>
+      public virtual IList<string> GetStringValues()
+      {
+         throw new NotImplementedException();
+      }
 
-        /// <summary>
-        /// Gets the calculated boolean value.  Use if CalculatesMultipleParameters is false.
-        /// </summary>
-        /// <exception cref="System.NotImplementedException">
-        /// Default method is not implemented.
-        /// </exception>
-        /// <returns>
-        /// The calculated boolean value.
-        /// </returns>
-        public virtual bool GetBooleanValue()
-        {
-            throw new NotImplementedException();
-        }
+      /// <summary>
+      /// Gets the calculated boolean value.  Use if CalculatesMultipleParameters is false.
+      /// </summary>
+      /// <exception cref="System.NotImplementedException">
+      /// Default method is not implemented.
+      /// </exception>
+      /// <returns>
+      /// The calculated boolean value.
+      /// </returns>
+      public virtual bool GetBooleanValue()
+      {
+         throw new NotImplementedException();
+      }
 
-        /// <summary>
-        /// Gets the calculated logical value.  Use if CalculatesMultipleParameters is false.
-        /// </summary>
-        /// <exception cref="System.NotImplementedException">
-        /// Default method is not implemented.
-        /// </exception>
-        /// <returns>
-        /// The calculated boolean value.
-        /// </returns>
-        public virtual IFCLogical GetLogicalValue()
-        {
-            throw new NotImplementedException();
-        }
+      /// <summary>
+      /// Gets the calculated logical value.  Use if CalculatesMultipleParameters is false.
+      /// </summary>
+      /// <exception cref="System.NotImplementedException">
+      /// Default method is not implemented.
+      /// </exception>
+      /// <returns>
+      /// The calculated boolean value.
+      /// </returns>
+      public virtual IFCLogical GetLogicalValue()
+      {
+         throw new NotImplementedException();
+      }
 
-        /// <summary>
-        /// Gets the calculated double value.  Use if CalculatesMultipleParameters is false.
-        /// </summary>
-        /// <exception cref="System.NotImplementedException">
-        /// Default method is not implemented.
-        /// </exception>
-        /// <returns>
-        /// The calculated double value.
-        /// </returns>
-        public virtual double GetDoubleValue()
-        {
-            throw new NotImplementedException();
-        }
+      /// <summary>
+      /// Gets the calculated double value.  Use if CalculatesMultipleParameters is false.
+      /// </summary>
+      /// <exception cref="System.NotImplementedException">
+      /// Default method is not implemented.
+      /// </exception>
+      /// <returns>
+      /// The calculated double value.
+      /// </returns>
+      public virtual double GetDoubleValue()
+      {
+         throw new NotImplementedException();
+      }
 
-        /// <summary>
-        /// Gets the calculated integer value.  Use if CalculatesMultipleParameters is false.
-        /// </summary>
-        /// <exception cref="System.NotImplementedException">
-        /// Default method is not implemented.
-        /// </exception>
-        /// <returns>
-        /// The calculated integer value.
-        /// </returns>
-        public virtual int GetIntValue()
-        {
-            throw new NotImplementedException();
-        }
+      /// <summary>
+      /// Gets the calculated integer value.  Use if CalculatesMultipleParameters is false.
+      /// </summary>
+      /// <exception cref="System.NotImplementedException">
+      /// Default method is not implemented.
+      /// </exception>
+      /// <returns>
+      /// The calculated integer value.
+      /// </returns>
+      public virtual int GetIntValue()
+      {
+         throw new NotImplementedException();
+      }
 
-        /// <summary>
-        /// Gets the calculated double value for a given parameter.  Use if CalculatesMultipleParameters is true.
-        /// </summary>
-        /// <exception cref="System.NotImplementedException">
-        /// Default method is not implemented.
-        /// </exception>
-        /// <param name="paramName">
-        /// The name of the parameter.
-        /// </param>
-        /// <returns>
-        /// The calculated double value.
-        /// </returns>
-        public virtual double GetDoubleValue(string paramName)
-        {
-            throw new NotImplementedException();
-        }
+      /// <summary>
+      /// Gets the calculated double value for a given parameter.  Use if CalculatesMultipleParameters is true.
+      /// </summary>
+      /// <exception cref="System.NotImplementedException">
+      /// Default method is not implemented.
+      /// </exception>
+      /// <param name="paramName">
+      /// The name of the parameter.
+      /// </param>
+      /// <returns>
+      /// The calculated double value.
+      /// </returns>
+      public virtual double GetDoubleValue(string paramName)
+      {
+         throw new NotImplementedException();
+      }
 
-        /// <summary>
-        /// Gets the calculated integer value for a given parameter.  Use if CalculatesMultipleParameters is true.
-        /// </summary>
-        /// <exception cref="System.NotImplementedException">
-        /// Default method is not implemented.
-        /// </exception>
-        /// <param name="paramName">
-        /// The name of the parameter.
-        /// </param>
-        /// <returns>
-        /// The calculated integer value.
-        /// </returns>
-        public virtual int GetIntValue(string paramName)
-        {
-            throw new NotImplementedException();
-        }
-    }
+      /// <summary>
+      /// Gets the calculated integer value for a given parameter.  Use if CalculatesMultipleParameters is true.
+      /// </summary>
+      /// <exception cref="System.NotImplementedException">
+      /// Default method is not implemented.
+      /// </exception>
+      /// <param name="paramName">
+      /// The name of the parameter.
+      /// </param>
+      /// <returns>
+      /// The calculated integer value.
+      /// </returns>
+      public virtual int GetIntValue(string paramName)
+      {
+         throw new NotImplementedException();
+      }
+   }
 }

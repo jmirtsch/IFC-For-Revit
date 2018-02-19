@@ -31,59 +31,59 @@ using Revit.IFC.Export.Exporter.PropertySet;
 
 namespace Revit.IFC.Export.Exporter
 {
-    /// <summary>
-    /// Provides methods to export an AreaScheme element as IfcGroup.
-    /// </summary>
-    class AreaSchemeExporter
-    {
-        /// <summary>
-        /// Exports an element as a group.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="element">The element.</param>
-        /// <param name="productWrapper">The ProductWrapper.</param>
-        public static void ExportAreaScheme(ExporterIFC exporterIFC, AreaScheme element,
-            ProductWrapper productWrapper)
-        {
-            if (element == null)
-                return;
+   /// <summary>
+   /// Provides methods to export an AreaScheme element as IfcGroup.
+   /// </summary>
+   class AreaSchemeExporter
+   {
+      /// <summary>
+      /// Exports an element as a group.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="element">The element.</param>
+      /// <param name="productWrapper">The ProductWrapper.</param>
+      public static void ExportAreaScheme(ExporterIFC exporterIFC, AreaScheme element,
+          ProductWrapper productWrapper)
+      {
+         if (element == null)
+            return;
 
-            HashSet<IFCAnyHandle> areaHandles = null;
-            if (!ExporterCacheManager.AreaSchemeCache.TryGetValue(element.Id, out areaHandles))
-                return;
+         HashSet<IFCAnyHandle> areaHandles = null;
+         if (!ExporterCacheManager.AreaSchemeCache.TryGetValue(element.Id, out areaHandles))
+            return;
 
-            if (areaHandles == null || areaHandles.Count == 0)
-                return;
+         if (areaHandles == null || areaHandles.Count == 0)
+            return;
 
-            // Check the intended IFC entity or type name is in the exclude list specified in the UI
-            Common.Enums.IFCEntityType elementClassTypeEnum;
-            if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcGroup", out elementClassTypeEnum))
-               if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
-                  return;
+         // Check the intended IFC entity or type name is in the exclude list specified in the UI
+         Common.Enums.IFCEntityType elementClassTypeEnum;
+         if (Enum.TryParse<Common.Enums.IFCEntityType>("IfcGroup", out elementClassTypeEnum))
+            if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
+               return;
 
          IFCFile file = exporterIFC.GetFile();
 
-            using (IFCTransaction tr = new IFCTransaction(file))
-            {
-                string guid = GUIDUtil.CreateGUID(element);
-                IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
-                string name = NamingUtil.GetNameOverride(element, element.Name);
-                string description = NamingUtil.GetDescriptionOverride(element, null);
-                string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
+         using (IFCTransaction tr = new IFCTransaction(file))
+         {
+            string guid = GUIDUtil.CreateGUID(element);
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
+            string name = NamingUtil.GetNameOverride(element, element.Name);
+            string description = NamingUtil.GetDescriptionOverride(element, null);
+            string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
 
-                string elementTag = NamingUtil.CreateIFCElementId(element);
+            string elementTag = NamingUtil.CreateIFCElementId(element);
 
-                IFCAnyHandle areaScheme = IFCInstanceExporter.CreateGroup(file, guid,
-                    ownerHistory, name, description, objectType);
+            IFCAnyHandle areaScheme = IFCInstanceExporter.CreateGroup(file, guid,
+                ownerHistory, name, description, objectType);
 
-                productWrapper.AddElement(element, areaScheme);
+            productWrapper.AddElement(element, areaScheme);
 
-                IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(), ownerHistory,
-                    null, null, areaHandles, null, areaScheme);
+            IFCInstanceExporter.CreateRelAssignsToGroup(file, GUIDUtil.CreateGUID(), ownerHistory,
+                null, null, areaHandles, null, areaScheme);
 
-                tr.Commit();
-                return;
-            }
-        }
-    }
+            tr.Commit();
+            return;
+         }
+      }
+   }
 }

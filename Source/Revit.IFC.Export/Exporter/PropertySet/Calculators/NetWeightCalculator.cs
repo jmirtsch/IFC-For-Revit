@@ -28,65 +28,67 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate net weight.
-    /// </summary>
-    class NetWeightCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Weight = 0;
+   /// <summary>
+   /// A calculation class to calculate net weight.
+   /// </summary>
+   class NetWeightCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Weight = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static NetWeightCalculator s_Instance = new NetWeightCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static NetWeightCalculator s_Instance = new NetWeightCalculator();
 
       /// <summary>
       /// The NetWeightCalculator instance.
       /// </summary>
       public static NetWeightCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates net weight
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyNetWeight", out m_Weight);
-            if (m_Weight < MathUtil.Eps())
-               return false;
-            else
-               return true;
-         }
+      /// <summary>
+      /// Calculates net weight
+      /// </summary>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="extrusionCreationData">
+      /// The IFCExtrusionCreationData.
+      /// </param>
+      /// <param name="element">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="elementType">
+      /// The element type.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyNetWeight", out m_Weight) == null)
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcNetWeight", out m_Weight) == null)
+               ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "NetWeight", out m_Weight);
+         if (m_Weight < MathUtil.Eps())
+            return false;
+         else
+            return true;
+      }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Weight;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Weight;
+      }
+   }
 }

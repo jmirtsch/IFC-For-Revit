@@ -25,38 +25,38 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of IFC logical properties.
-    /// </summary>
-    public class LogicalPropertyInfoCache : Dictionary<KeyValuePair<string, IFCLogical>, IFCAnyHandle>
-    {
-        /// <summary>
-        /// Finds if it contains the property with the specified logical value.
-        /// </summary>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="value">The value.</param>
-        /// <returns>True if it has, false otherwise.</returns>
-        public IFCAnyHandle Find(string propertyName, IFCLogical value)
-        {
-            KeyValuePair<string, IFCLogical> key = new KeyValuePair<string, IFCLogical>(propertyName, value);
+   /// <summary>
+   /// Used to keep a cache of IFC logical properties.
+   /// </summary>
+   public class LogicalPropertyInfoCache : Dictionary<KeyValuePair<string, IFCLogical>, IFCAnyHandle>
+   {
+      /// <summary>
+      /// Finds if it contains the property with the specified logical value.
+      /// </summary>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="value">The value.</param>
+      /// <returns>True if it has, false otherwise.</returns>
+      public IFCAnyHandle Find(string propertyName, IFCLogical value)
+      {
+         KeyValuePair<string, IFCLogical> key = new KeyValuePair<string, IFCLogical>(propertyName, value);
 
-            IFCAnyHandle propertyHandle;
-            if (TryGetValue(key, out propertyHandle))
-                return propertyHandle;
+         IFCAnyHandle propertyHandle;
+         if (TryGetValue(key, out propertyHandle))
+            return propertyHandle;
 
-            return null;
-        }
+         return null;
+      }
 
-        /// <summary>
-        /// Adds a new property of a logical value to the cache.
-        /// </summary>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="value">The value.</param>
-        /// <param name="propertyHandle">The property handle.</param>
-        public void Add(string propertyName, IFCLogical value, IFCAnyHandle propertyHandle)
-        {
-            KeyValuePair<string, IFCLogical> key = new KeyValuePair<string, IFCLogical>(propertyName, value);
-            this[key] = propertyHandle;
-        }
-    }
+      /// <summary>
+      /// Adds a new property of a logical value to the cache.
+      /// </summary>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="value">The value.</param>
+      /// <param name="propertyHandle">The property handle.</param>
+      public void Add(string propertyName, IFCLogical value, IFCAnyHandle propertyHandle)
+      {
+         KeyValuePair<string, IFCLogical> key = new KeyValuePair<string, IFCLogical>(propertyName, value);
+         this[key] = propertyHandle;
+      }
+   }
 }

@@ -135,8 +135,8 @@ namespace Revit.IFC.Export.Exporter
                shapeReps.Add(bodyRepHnd);
 
                IFCAnyHandle prodShapeHnd = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, shapeReps);
-               IFCAnyHandle annoHnd = IFCInstanceExporter.CreateAnnotation(file, GUIDUtil.CreateGUID(), ExporterCacheManager.OwnerHistoryHandle,
-                  null, null, null, setter.LocalPlacement, prodShapeHnd);
+               IFCAnyHandle annoHnd = IFCInstanceExporter.CreateAnnotation(exporterIFC, textNote, GUIDUtil.CreateGUID(), ExporterCacheManager.OwnerHistoryHandle,
+                  setter.LocalPlacement, prodShapeHnd);
 
                productWrapper.AddAnnotation(annoHnd, setter.LevelInfo, true);
             }
@@ -230,22 +230,22 @@ namespace Revit.IFC.Export.Exporter
 
          // The center-middle is an odd case; we can deal with it firs
 
-         if(   (HorizontalTextAlignment.Center == textNote.HorizontalAlignment)
-            && (VerticalTextAlignment.Middle == textNote.VerticalAlignment) )
+         if ((HorizontalTextAlignment.Center == textNote.HorizontalAlignment)
+            && (VerticalTextAlignment.Middle == textNote.VerticalAlignment))
          {
             return "center";
          }
 
          string boxAlignment = null;
 
-         switch(textNote.VerticalAlignment)
+         switch (textNote.VerticalAlignment)
          {
             case VerticalTextAlignment.Top:
                yFactor = 1.0;
                boxAlignment = "top-";
                break;
             case VerticalTextAlignment.Middle:
-                  boxAlignment = "middle-";
+               boxAlignment = "middle-";
                break;
             case VerticalTextAlignment.Bottom:
                yFactor = -1.0;
@@ -253,7 +253,7 @@ namespace Revit.IFC.Export.Exporter
                break;
          }
 
-         switch(textNote.HorizontalAlignment)
+         switch (textNote.HorizontalAlignment)
          {
             case HorizontalTextAlignment.Left:
                xFactor = -1.0;

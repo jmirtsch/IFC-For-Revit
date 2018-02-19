@@ -27,77 +27,77 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate load bearing value for a column.
-    /// </summary>
-    class CoveringFinishCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A boolean variable to keep the calculated value.
-        /// </summary>
-        private string m_Finish = string.Empty;
+   /// <summary>
+   /// A calculation class to calculate load bearing value for a column.
+   /// </summary>
+   class CoveringFinishCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A boolean variable to keep the calculated value.
+      /// </summary>
+      private string m_Finish = string.Empty;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static CoveringFinishCalculator s_Instance = new CoveringFinishCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static CoveringFinishCalculator s_Instance = new CoveringFinishCalculator();
 
-        /// <summary>
-        /// The CoveringFinishCalculator instance.
-        /// </summary>
-        public static CoveringFinishCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The CoveringFinishCalculator instance.
+      /// </summary>
+      public static CoveringFinishCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates covering finish value.
-        /// </summary>
-        /// <remarks>
-        /// True for structural columns, and false for architectural ones.
-        /// </remarks>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            if (element is Ceiling)
+      /// <summary>
+      /// Calculates covering finish value.
+      /// </summary>
+      /// <remarks>
+      /// True for structural columns, and false for architectural ones.
+      /// </remarks>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="extrusionCreationData">
+      /// The IFCExtrusionCreationData.
+      /// </param>
+      /// <param name="element">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="elementType">
+      /// The element type.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         if (element is Ceiling)
+         {
+            m_Finish = string.Empty;
+            ISet<ElementId> matIds = HostObjectExporter.GetFinishMaterialIds(element as HostObject);
+            foreach (ElementId matId in matIds)
             {
-                m_Finish = string.Empty;
-                ISet<ElementId> matIds = HostObjectExporter.GetFinishMaterialIds(element as HostObject);
-                foreach (ElementId matId in matIds)
-                {
-                    Element materialElem = element.Document.GetElement(matId);
-                    if (materialElem == null)
-                        continue;
-                    m_Finish += materialElem.Name + ";";
-                }
-                return !string.IsNullOrEmpty(m_Finish);
+               Element materialElem = element.Document.GetElement(matId);
+               if (materialElem == null)
+                  continue;
+               m_Finish += materialElem.Name + ";";
             }
-            return false;
-        }
+            return !string.IsNullOrEmpty(m_Finish);
+         }
+         return false;
+      }
 
-        /// <summary>
-        /// Gets the calculated boolean value.
-        /// </summary>
-        /// <returns>
-        /// The boolean value.
-        /// </returns>
-        public override string GetStringValue()
-        {
-            return m_Finish;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated boolean value.
+      /// </summary>
+      /// <returns>
+      /// The boolean value.
+      /// </returns>
+      public override string GetStringValue()
+      {
+         return m_Finish;
+      }
+   }
 }

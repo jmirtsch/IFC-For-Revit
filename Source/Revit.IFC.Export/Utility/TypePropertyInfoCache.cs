@@ -27,47 +27,47 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of the type property infos.
-    /// </summary>
-    public class TypePropertyInfoCache : Dictionary<ElementId, TypePropertyInfo>
-    {
-        /// <summary>
-        /// Checks if the element has type properties.
-        /// </summary>
-        /// <param name="elementId">The element id.</param>
-        /// <returns>True if it has, false if not.</returns>
-        public bool HasTypeProperties(ElementId elementId)
-        {
-            return this.ContainsKey(elementId);
-        }
+   /// <summary>
+   /// Used to keep a cache of the type property infos.
+   /// </summary>
+   public class TypePropertyInfoCache : Dictionary<ElementId, TypePropertyInfo>
+   {
+      /// <summary>
+      /// Checks if the element has type properties.
+      /// </summary>
+      /// <param name="elementId">The element id.</param>
+      /// <returns>True if it has, false if not.</returns>
+      public bool HasTypeProperties(ElementId elementId)
+      {
+         return this.ContainsKey(elementId);
+      }
 
-        /// <summary>
-        /// Adds new IFC element handles to the existing element type info.
-        /// </summary>
-        /// <param name="elementId">The element id.</param>
-        /// <param name="elements">The IFC elements.</param>
-        public void AddNewElementHandles(ElementId elementId, ICollection<IFCAnyHandle> elements)
-        {
-            TypePropertyInfo typePropertyInfo;
-            if (TryGetValue(elementId, out typePropertyInfo))
-            {
-                foreach (IFCAnyHandle element in elements)
-                    typePropertyInfo.Elements.Add(element);
-            }
-        }
+      /// <summary>
+      /// Adds new IFC element handles to the existing element type info.
+      /// </summary>
+      /// <param name="elementId">The element id.</param>
+      /// <param name="elements">The IFC elements.</param>
+      public void AddNewElementHandles(ElementId elementId, ICollection<IFCAnyHandle> elements)
+      {
+         TypePropertyInfo typePropertyInfo;
+         if (TryGetValue(elementId, out typePropertyInfo))
+         {
+            foreach (IFCAnyHandle element in elements)
+               typePropertyInfo.Elements.Add(element);
+         }
+      }
 
-        /// <summary>
-        /// Adds a new type info of an element.
-        /// </summary>
-        /// <param name="elementId">The element id.</param>
-        /// <param name="propertySets">The property sets.</param>
-        /// <param name="elements">The IFC elements.</param>
-        public void AddNewTypeProperties(ElementId elementId, ICollection<IFCAnyHandle> propertySets,
-            ICollection<IFCAnyHandle> elements)
-        {
-            TypePropertyInfo typePropertyInfo = new TypePropertyInfo(propertySets, elements);
-            Add(elementId, typePropertyInfo);
-        }
-    }
+      /// <summary>
+      /// Adds a new type info of an element.
+      /// </summary>
+      /// <param name="elementId">The element id.</param>
+      /// <param name="propertySets">The property sets.</param>
+      /// <param name="elements">The IFC elements.</param>
+      public void AddNewTypeProperties(ElementId elementId, ICollection<IFCAnyHandle> propertySets,
+          ICollection<IFCAnyHandle> elements)
+      {
+         TypePropertyInfo typePropertyInfo = new TypePropertyInfo(propertySets, elements);
+         Add(elementId, typePropertyInfo);
+      }
+   }
 }

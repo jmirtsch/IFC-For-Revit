@@ -27,147 +27,147 @@ using System.Text;
 // Note that sub-element GUIDs can not be stored on import, so they do not survive roundtrips.
 namespace Revit.IFC.Export.Toolkit
 {
-    enum IFCAssemblyInstanceSubElements
-    {
-        RelContainedInSpatialStructure = 1,
-        RelAggregates = 2
-    }
+   enum IFCAssemblyInstanceSubElements
+   {
+      RelContainedInSpatialStructure = 1,
+      RelAggregates = 2
+   }
 
-    enum IFCBuildingSubElements
-    {
-        RelContainedInSpatialStructure = 1,
-        RelAggregatesProducts = 2,
-        RelAggregatesBuildingStoreys = 3
-    }
+   enum IFCBuildingSubElements
+   {
+      RelContainedInSpatialStructure = 1,
+      RelAggregatesProducts = 2,
+      RelAggregatesBuildingStoreys = 3
+   }
 
-    enum IFCBuildingStoreySubElements
-    {
-        RelContainedInSpatialStructure = 1,
-        RelAggregates = 2
-    }
+   enum IFCBuildingStoreySubElements
+   {
+      RelContainedInSpatialStructure = 1,
+      RelAggregates = 2
+   }
 
-    public enum IFCCommonPSets
-    {
-        PSetAirTerminalTypeCommon = 3048,
-        PSetBeamCommon = 3049,
-        PSetBECCommon = 3050,
-        PSetBuildingCommon = 3051,
-        PSetBuildingStoreyCommon = 3052,
-        PSetBS8666Common = 3053,
-        PSetCoveringCommon = 3054,
-        PSetCurtainWallCommon = 3055,
-        PSetDoorCommon = 3056,
-        PSetDIN135610Common = 3057,
-        PSetDistributionFlowElementCommon = 3058,
-        PSetFlowTerminalAirTerminal = 3059,
-        PSetISOCD3766Common = 3060,
-        PSetLightFixtureTypeCommon = 3061,
-        PSetMemberCommon = 3062,
-        PSetPlateCommon = 3063,
-        PSetRampCommon = 3064,
-        PSetRoofCommon = 3065,
-        PSetSiteCommon = 3066,
-        PSetSlabCommon = 3067,
-        PSetStairCommon = 3068,
-        PSetWallCommon = 3069,
-        PSetWindowCommon = 3070,
-        PSetDoorWindowGlazingType = 3071,
-        PsetDoorWindowShadingType = 3072,
-    }
+   public enum IFCCommonPSets
+   {
+      PSetAirTerminalTypeCommon = 3048,
+      PSetBeamCommon = 3049,
+      PSetBECCommon = 3050,
+      PSetBuildingCommon = 3051,
+      PSetBuildingStoreyCommon = 3052,
+      PSetBS8666Common = 3053,
+      PSetCoveringCommon = 3054,
+      PSetCurtainWallCommon = 3055,
+      PSetDoorCommon = 3056,
+      PSetDIN135610Common = 3057,
+      PSetDistributionFlowElementCommon = 3058,
+      PSetFlowTerminalAirTerminal = 3059,
+      PSetISOCD3766Common = 3060,
+      PSetLightFixtureTypeCommon = 3061,
+      PSetMemberCommon = 3062,
+      PSetPlateCommon = 3063,
+      PSetRampCommon = 3064,
+      PSetRoofCommon = 3065,
+      PSetSiteCommon = 3066,
+      PSetSlabCommon = 3067,
+      PSetStairCommon = 3068,
+      PSetWallCommon = 3069,
+      PSetWindowCommon = 3070,
+      PSetDoorWindowGlazingType = 3071,
+      PsetDoorWindowShadingType = 3072,
+   }
 
-    // Curtain Walls can be created from a variety of elements, including Walls and Roofs.
-    // As such, start their subindexes high enough to not bother potential hosts.
-    enum IFCCurtainWallSubElements
-    {
-        RelAggregates = 1024
-    }
+   // Curtain Walls can be created from a variety of elements, including Walls and Roofs.
+   // As such, start their subindexes high enough to not bother potential hosts.
+   enum IFCCurtainWallSubElements
+   {
+      RelAggregates = 1024
+   }
 
-    enum IFCDoorSubElements
-    {    
-        DoorLining = 1,
-        DoorPanelStart = 2,
-        DoorPanelEnd = 17, // 2 through 17 are reserved for panels.
-        DoorOpening = 19,
-        DoorOpeningRelVoid = 20,
-        DoorStyle = 21,
-        DoorType = 22
-    }
+   enum IFCDoorSubElements
+   {
+      DoorLining = 1,
+      DoorPanelStart = 2,
+      DoorPanelEnd = 17, // 2 through 17 are reserved for panels.
+      DoorOpening = 19,
+      DoorOpeningRelVoid = 20,
+      DoorStyle = 21,
+      DoorType = 22
+   }
 
-    enum IFCGroupSubElements
-    {
-        RelAssignsToGroup = 1,
-    }
+   enum IFCGroupSubElements
+   {
+      RelAssignsToGroup = 1,
+   }
 
-    // Used for internal Revit property sets, split instances, and connectors.
-    enum IFCGenericSubElements
-    {
-        PSetRevitInternalStart = 1536,
-        PSetRevitInternalEnd = PSetRevitInternalStart + 255,
-        PSetRevitInternalRelStart = PSetRevitInternalEnd+1,
-        PSetRevitInternalRelEnd = PSetRevitInternalRelStart + 255, // 2047
-        // 2048 is IFCFamilyInstance.InstanceAsType
-        SplitInstanceStart = 2049,
-        SplitInstanceEnd = SplitInstanceStart + 255,
-        SplitTypeStart = SplitInstanceEnd + 1,
-        SplitTypeEnd = SplitTypeStart + 255, // 2560
-    }
+   // Used for internal Revit property sets, split instances, and connectors.
+   enum IFCGenericSubElements
+   {
+      PSetRevitInternalStart = 1536,
+      PSetRevitInternalEnd = PSetRevitInternalStart + 255,
+      PSetRevitInternalRelStart = PSetRevitInternalEnd + 1,
+      PSetRevitInternalRelEnd = PSetRevitInternalRelStart + 255, // 2047
+                                                                 // 2048 is IFCFamilyInstance.InstanceAsType
+      SplitInstanceStart = 2049,
+      SplitInstanceEnd = SplitInstanceStart + 255,
+      SplitTypeStart = SplitInstanceEnd + 1,
+      SplitTypeEnd = SplitTypeStart + 255, // 2560
+   }
 
-    // Family Instances can create a variety of elements.
-    // As such, start their subindexes high enough to not bother potential hosts.
-    enum IFCFamilyInstanceSubElements
-    {
-        InstanceAsType = 2048
-    }
+   // Family Instances can create a variety of elements.
+   // As such, start their subindexes high enough to not bother potential hosts.
+   enum IFCFamilyInstanceSubElements
+   {
+      InstanceAsType = 2048
+   }
 
-    enum IFCHostedSweepSubElements
-    {
-        PipeSegmentType = 1
-    }
+   enum IFCHostedSweepSubElements
+   {
+      PipeSegmentType = 1
+   }
 
-    enum IFCRampSubElements
-    {
-        ContainedRamp = 2,
-        ContainmentRelation = 3 // same as IFCStairSubElements.ContainmentRelation
-    }
+   enum IFCRampSubElements
+   {
+      ContainedRamp = 2,
+      ContainmentRelation = 3 // same as IFCStairSubElements.ContainmentRelation
+   }
 
-    enum IFCReinforcingBarSubElements
-    {
-        BarStart = 5,
-        BarEnd = BarStart + 1023
-    }
+   enum IFCReinforcingBarSubElements
+   {
+      BarStart = 5,
+      BarEnd = BarStart + 1023
+   }
 
-    enum IFCRoofSubElements
-    {
-        RoofSlabStart = 2,
-        RoofSlabEnd = RoofSlabStart + 255
-    }
+   enum IFCRoofSubElements
+   {
+      RoofSlabStart = 2,
+      RoofSlabEnd = RoofSlabStart + 255
+   }
 
-    enum IFCSlabSubElements
-    {
-        SubSlabStart = 2,
-        SubSlabEnd = SubSlabStart + 255
-    }
+   enum IFCSlabSubElements
+   {
+      SubSlabStart = 2,
+      SubSlabEnd = SubSlabStart + 255
+   }
 
-    enum IFCStairSubElements
-    {
-        ContainedStair = 2,
-        ContainmentRelation = 3
-    }
+   enum IFCStairSubElements
+   {
+      ContainedStair = 2,
+      ContainmentRelation = 3
+   }
 
-    enum IFCWallSubElements
-    {
-        RelAggregatesReserved = IFCCurtainWallSubElements.RelAggregates
-    }
+   enum IFCWallSubElements
+   {
+      RelAggregatesReserved = IFCCurtainWallSubElements.RelAggregates
+   }
 
-    enum IFCWindowSubElements
-    {
-        WindowOpening = IFCDoorSubElements.DoorOpening,
-        WindowOpeningRelVoid = IFCDoorSubElements.DoorOpeningRelVoid,
-        WindowStyle = IFCDoorSubElements.DoorStyle,
-    }
+   enum IFCWindowSubElements
+   {
+      WindowOpening = IFCDoorSubElements.DoorOpening,
+      WindowOpeningRelVoid = IFCDoorSubElements.DoorOpeningRelVoid,
+      WindowStyle = IFCDoorSubElements.DoorStyle,
+   }
 
-    enum IFCZoneSubElements
-    {
-        RelAssignsToGroup = 1,
-    }
+   enum IFCZoneSubElements
+   {
+      RelAssignsToGroup = 1,
+   }
 }

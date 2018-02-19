@@ -29,27 +29,27 @@ using Revit.IFC.Import.Data;
 
 namespace Revit.IFC.Import.Utility
 {
-    /// <summary>
-    /// Provides generic utility methods for IFC entities.
-    /// </summary>
-    public class IFCImportDataUtil
-    {
-        /// <summary>
-        /// Check if two IFCPresentationLayerAssignments are equivalent, and warn if they aren't/
-        /// </summary>
-        /// <param name="originalAssignment">The original layer assignment in this representation.</param>
-        /// <param name="layerAssignment">The layer assignment to add to this representation.</param>
-        /// <returns>True if the layer assignments are consistent; false otherwise.</returns>
-        static public bool CheckLayerAssignmentConsistency(IFCPresentationLayerAssignment originalAssignment, 
-            IFCPresentationLayerAssignment layerAssignment, int id)
-        {
-            if ((originalAssignment != null) && (!originalAssignment.IsEquivalentTo(layerAssignment)))
-            {
-                Importer.TheLog.LogWarning(id, "Multiple inconsistent layer assignment items found for this item; using first one.", false);
-                return false;
-            }
+   /// <summary>
+   /// Provides generic utility methods for IFC entities.
+   /// </summary>
+   public class IFCImportDataUtil
+   {
+      /// <summary>
+      /// Check if two IFCPresentationLayerAssignments are equivalent, and warn if they aren't/
+      /// </summary>
+      /// <param name="originalAssignment">The original layer assignment in this representation.</param>
+      /// <param name="layerAssignment">The layer assignment to add to this representation.</param>
+      /// <returns>True if the layer assignments are consistent; false otherwise.</returns>
+      static public bool CheckLayerAssignmentConsistency(IFCPresentationLayerAssignment originalAssignment,
+          IFCPresentationLayerAssignment layerAssignment, int id)
+      {
+         if ((originalAssignment != null) && (!originalAssignment.IsEquivalentTo(layerAssignment)))
+         {
+            Importer.TheLog.LogWarning(id, "Multiple inconsistent layer assignment items found for this item; using first one.", false);
+            return false;
+         }
 
-            return true;
-        }
-    }
+         return true;
+      }
+   }
 }

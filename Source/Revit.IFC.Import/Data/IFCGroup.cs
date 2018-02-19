@@ -28,95 +28,95 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents an IfcGroup.
-    /// </summary>
-    public class IFCGroup : IFCObject
-    {
-        protected ICollection<IFCObjectDefinition> m_IFCRelatedObjects = null;
+   /// <summary>
+   /// Represents an IfcGroup.
+   /// </summary>
+   public class IFCGroup : IFCObject
+   {
+      protected ICollection<IFCObjectDefinition> m_IFCRelatedObjects = null;
 
-        protected string m_RelatedObjectType = null;
+      protected string m_RelatedObjectType = null;
 
-        /// <summary>
-        /// The related object type.
-        /// </summary>
-        public string RelatedObjectType
-        {
-            get { return m_RelatedObjectType; }
-            protected set { m_RelatedObjectType = value; }
-        }
+      /// <summary>
+      /// The related object type.
+      /// </summary>
+      public string RelatedObjectType
+      {
+         get { return m_RelatedObjectType; }
+         protected set { m_RelatedObjectType = value; }
+      }
 
-        /// <summary>
-        /// The objects in the group.
-        /// </summary>
-        public ICollection<IFCObjectDefinition> RelatedObjects
-        {
-            get 
-            {
-                if (m_IFCRelatedObjects == null)
-                    m_IFCRelatedObjects = new HashSet<IFCObjectDefinition>();
-                return m_IFCRelatedObjects; 
-            }
-            protected set { m_IFCRelatedObjects = value; }
-        }
+      /// <summary>
+      /// The objects in the group.
+      /// </summary>
+      public ICollection<IFCObjectDefinition> RelatedObjects
+      {
+         get
+         {
+            if (m_IFCRelatedObjects == null)
+               m_IFCRelatedObjects = new HashSet<IFCObjectDefinition>();
+            return m_IFCRelatedObjects;
+         }
+         protected set { m_IFCRelatedObjects = value; }
+      }
 
-        /// <summary>
-        /// Processes IfcGroup attributes.
-        /// </summary>
-        /// <param name="ifcGroup">The IfcGroup handle.</param>
-        protected override void Process(IFCAnyHandle ifcGroup)
-        {
-            base.Process(ifcGroup);
+      /// <summary>
+      /// Processes IfcGroup attributes.
+      /// </summary>
+      /// <param name="ifcGroup">The IfcGroup handle.</param>
+      protected override void Process(IFCAnyHandle ifcGroup)
+      {
+         base.Process(ifcGroup);
 
-            ICollection<IFCAnyHandle> isGroupedByList = 
-                IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcGroup, "IsGroupedBy");
-            foreach (IFCAnyHandle isGroupedBy in isGroupedByList)
-                ProcessIFCRelAssignsToGroup(isGroupedBy);
-        }
+         ICollection<IFCAnyHandle> isGroupedByList =
+             IFCAnyHandleUtil.GetAggregateInstanceAttribute<HashSet<IFCAnyHandle>>(ifcGroup, "IsGroupedBy");
+         foreach (IFCAnyHandle isGroupedBy in isGroupedByList)
+            ProcessIFCRelAssignsToGroup(isGroupedBy);
+      }
 
-        protected IFCGroup()
-        {
-        }
+      protected IFCGroup()
+      {
+      }
 
-        protected IFCGroup(IFCAnyHandle group)
-        {
-            Process(group);
-        }
+      protected IFCGroup(IFCAnyHandle group)
+      {
+         Process(group);
+      }
 
-        /// <summary>
-        /// Processes IfcRelAssignsToGroup.
-        /// </summary>
-        /// <param name="isGroupedBy">The IfcRelAssignsToGroup handle.</param>
-        void ProcessIFCRelAssignsToGroup(IFCAnyHandle isGroupedBy)
-        {
-            RelatedObjectType = ProcessIFCRelation.ProcessRelatedObjectType(isGroupedBy);
-            RelatedObjects = ProcessIFCRelation.ProcessRelatedObjects(this, isGroupedBy);
-        }
+      /// <summary>
+      /// Processes IfcRelAssignsToGroup.
+      /// </summary>
+      /// <param name="isGroupedBy">The IfcRelAssignsToGroup handle.</param>
+      void ProcessIFCRelAssignsToGroup(IFCAnyHandle isGroupedBy)
+      {
+         RelatedObjectType = ProcessIFCRelation.ProcessRelatedObjectType(isGroupedBy);
+         RelatedObjects = ProcessIFCRelation.ProcessRelatedObjects(this, isGroupedBy);
+      }
 
-        /// <summary>
-        /// Processes IfcGroup handle.
-        /// </summary>
-        /// <param name="ifcGroup">The IfcGroup handle.</param>
-        /// <returns>The IFCGroup object.</returns>
-        public static IFCGroup ProcessIFCGroup(IFCAnyHandle ifcGroup)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcGroup))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcGroup);
-                return null;
-            }
+      /// <summary>
+      /// Processes IfcGroup handle.
+      /// </summary>
+      /// <param name="ifcGroup">The IfcGroup handle.</param>
+      /// <returns>The IFCGroup object.</returns>
+      public static IFCGroup ProcessIFCGroup(IFCAnyHandle ifcGroup)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcGroup))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcGroup);
+            return null;
+         }
 
-            IFCEntity cachedIFCGroup;
-            IFCImportFile.TheFile.EntityMap.TryGetValue(ifcGroup.StepId, out cachedIFCGroup);
-            if (cachedIFCGroup != null)
-                return cachedIFCGroup as IFCGroup;
+         IFCEntity cachedIFCGroup;
+         IFCImportFile.TheFile.EntityMap.TryGetValue(ifcGroup.StepId, out cachedIFCGroup);
+         if (cachedIFCGroup != null)
+            return cachedIFCGroup as IFCGroup;
 
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcGroup, IFCEntityType.IfcZone))
-                return IFCZone.ProcessIFCZone(ifcGroup);
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcGroup, IFCEntityType.IfcSystem))
-                return IFCSystem.ProcessIFCSystem(ifcGroup);
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcGroup, IFCEntityType.IfcZone))
+            return IFCZone.ProcessIFCZone(ifcGroup);
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcGroup, IFCEntityType.IfcSystem))
+            return IFCSystem.ProcessIFCSystem(ifcGroup);
 
-            return new IFCGroup(ifcGroup);
-        }
-    }
+         return new IFCGroup(ifcGroup);
+      }
+   }
 }

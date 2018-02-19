@@ -27,58 +27,58 @@ using Revit.IFC.Export.Exporter;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of the FamilyTypeInfos mapping to a tuple of an ElementId, a Boolean and an IFCExportType.
-    /// The ElementID is used to differentiate between elements of different family types.
-    /// The Boolean is used solely for doors and windows to signal if the doors or windows are flipped or not, the default value is false
-    /// for non-doors and windows.
-    /// The export type is used to distinguish between two instances of the same family but have different export types, this can happen
-    /// if user uses the IfcExportAs shared parameter at the instance level.
-    /// </summary>
-    public class TypeObjectsCache : Dictionary<Tuple<ElementId, bool, IFCExportType>, FamilyTypeInfo>
-    {
-        /// <summary>
-        /// Adds the FamilyTypeInfo to the dictionary.
-        /// </summary>
-        /// <param name="elementId">
-        /// The element elementId.
-        /// </param>
-        /// <param name="flipped">
-        /// Indicates if the element is flipped.
-        /// </param>
-        /// <param name="exportType">
-        /// The export type of the element.
-        /// </param>
-        public void Register(ElementId elementId, bool flipped, IFCExportType exportType, FamilyTypeInfo typeInfo)
-        {
-            Tuple<ElementId, bool, IFCExportType> key = new Tuple<ElementId, bool, IFCExportType>(elementId, flipped, exportType);
-            this[key] = typeInfo;
-        }
+   /// <summary>
+   /// Used to keep a cache of the FamilyTypeInfos mapping to a tuple of an ElementId, a Boolean and an IFCExportType.
+   /// The ElementID is used to differentiate between elements of different family types.
+   /// The Boolean is used solely for doors and windows to signal if the doors or windows are flipped or not, the default value is false
+   /// for non-doors and windows.
+   /// The export type is used to distinguish between two instances of the same family but have different export types, this can happen
+   /// if user uses the IfcExportAs shared parameter at the instance level.
+   /// </summary>
+   public class TypeObjectsCache : Dictionary<Tuple<ElementId, bool, IFCExportType>, FamilyTypeInfo>
+   {
+      /// <summary>
+      /// Adds the FamilyTypeInfo to the dictionary.
+      /// </summary>
+      /// <param name="elementId">
+      /// The element elementId.
+      /// </param>
+      /// <param name="flipped">
+      /// Indicates if the element is flipped.
+      /// </param>
+      /// <param name="exportType">
+      /// The export type of the element.
+      /// </param>
+      public void Register(ElementId elementId, bool flipped, IFCExportType exportType, FamilyTypeInfo typeInfo)
+      {
+         Tuple<ElementId, bool, IFCExportType> key = new Tuple<ElementId, bool, IFCExportType>(elementId, flipped, exportType);
+         this[key] = typeInfo;
+      }
 
-        /// <summary>
-        /// Finds the FamilyTypeInfo from the dictionary.
-        /// </summary>
-        /// <param name="elementId">
-        /// The element elementId.
-        /// </param>
-        /// <param name="flipped">
-        /// Indicates if the element is flipped.
-        /// </param>
-        /// <param name="exportType">
-        /// The export type of the element.
-        /// </param>
-        /// <returns>
-        /// The FamilyTypeInfo object.
-        /// </returns>
-        public FamilyTypeInfo Find(ElementId elementId, bool flipped, IFCExportType exportType)
-        {
-            Tuple<ElementId, bool, IFCExportType> key = new Tuple<ElementId, bool, IFCExportType>(elementId, flipped, exportType);
-            FamilyTypeInfo typeInfo;
+      /// <summary>
+      /// Finds the FamilyTypeInfo from the dictionary.
+      /// </summary>
+      /// <param name="elementId">
+      /// The element elementId.
+      /// </param>
+      /// <param name="flipped">
+      /// Indicates if the element is flipped.
+      /// </param>
+      /// <param name="exportType">
+      /// The export type of the element.
+      /// </param>
+      /// <returns>
+      /// The FamilyTypeInfo object.
+      /// </returns>
+      public FamilyTypeInfo Find(ElementId elementId, bool flipped, IFCExportType exportType)
+      {
+         Tuple<ElementId, bool, IFCExportType> key = new Tuple<ElementId, bool, IFCExportType>(elementId, flipped, exportType);
+         FamilyTypeInfo typeInfo;
 
-            if (TryGetValue(key, out typeInfo))
-                return typeInfo;
+         if (TryGetValue(key, out typeInfo))
+            return typeInfo;
 
-            return new FamilyTypeInfo();
-        }
-    }
+         return new FamilyTypeInfo();
+      }
+   }
 }

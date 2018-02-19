@@ -49,7 +49,7 @@ namespace Revit.IFC.Export.Exporter
       /// <returns>True if exported successfully, false otherwise.</returns>
       public static bool ExportHostObjectMaterials(ExporterIFC exporterIFC, HostObject hostObject,
           IList<IFCAnyHandle> elemHnds, GeometryElement geometryElement, ProductWrapper productWrapper,
-          ElementId levelId, Toolkit.IFCLayerSetDirection direction, bool containsBRepGeometry, IFCAnyHandle typeHnd=null)
+          ElementId levelId, Toolkit.IFCLayerSetDirection direction, bool containsBRepGeometry, IFCAnyHandle typeHnd = null)
       {
          if (hostObject == null)
             return true; //nothing to do
@@ -78,9 +78,9 @@ namespace Revit.IFC.Export.Exporter
             List<ElementId> matIds;
             IFCAnyHandle primaryMaterialHnd;
             IFCAnyHandle materialLayerSet = ExporterUtil.CollectMaterialLayerSet(exporterIFC, hostObject, productWrapper, out matIds, out primaryMaterialHnd);
-            
+
             // For IFC4 RV, material layer may still be created even if the geometry is Brep/Tessellation
-            if ((containsBRepGeometry && matIds.Count > 0) 
+            if ((containsBRepGeometry && matIds.Count > 0)
                   && !(ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView && !IFCAnyHandleUtil.IsNullOrHasNoValue(materialLayerSet)))
             {
                foreach (IFCAnyHandle elemHnd in elemHnds)

@@ -96,9 +96,9 @@ namespace Revit.IFC.Export.Exporter
          /// </summary>
          public ICollection<ElementId> Materials { get; set; }
 
-          /// <summary>
-          /// The material profile set for the extruded Beam
-          /// </summary>
+         /// <summary>
+         /// The material profile set for the extruded Beam
+         /// </summary>
          public MaterialAndProfile materialAndProfile { get; set; }
 
          /// <summary>
@@ -217,17 +217,18 @@ namespace Revit.IFC.Export.Exporter
          IList<IFCAnyHandle> axis_items = null;
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
          {
-            IFCFile file = exporterIFC.GetFile();
-            IList<int> segmentIndex = null;
-            IList<IList<double>> pointList = GeometryUtil.PointListFromCurve(exporterIFC, curve, null, null, out segmentIndex);
+            IFCAnyHandle axisHnd = GeometryUtil.CreatePolyCurveFromCurve(exporterIFC, curve);
+            //IFCFile file = exporterIFC.GetFile();
+            //IList<int> segmentIndex = null;
+            //IList<IList<double>> pointList = GeometryUtil.PointListFromCurve(exporterIFC, curve, null, null, out segmentIndex);
 
-            // For now because of no support in creating IfcLineIndex and IfcArcIndex yet, it is set to null
-            //IList<IList<int>> segmentIndexList = new List<IList<int>>();
-            //segmentIndexList.Add(segmentIndex);
-            IList<IList<int>> segmentIndexList = null;
+            //// For now because of no support in creating IfcLineIndex and IfcArcIndex yet, it is set to null
+            ////IList<IList<int>> segmentIndexList = new List<IList<int>>();
+            ////segmentIndexList.Add(segmentIndex);
+            //IList<IList<int>> segmentIndexList = null;
 
-            IFCAnyHandle pointListHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, pointList);
-            IFCAnyHandle axisHnd = IFCInstanceExporter.CreateIndexedPolyCurve(file, pointListHnd, segmentIndexList, false);
+            //IFCAnyHandle pointListHnd = IFCInstanceExporter.CreateCartesianPointList3D(file, pointList);
+            //IFCAnyHandle axisHnd = IFCInstanceExporter.CreateIndexedPolyCurve(file, pointListHnd, segmentIndexList, false);
             axis_items = new List<IFCAnyHandle>();
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(axisHnd))
             {
@@ -293,7 +294,7 @@ namespace Revit.IFC.Export.Exporter
          Plane beamExtrusionBasePlane = GeometryUtil.CreatePlaneByXYVectorsAtOrigin(planeXVec, planeYVec);
          info.RepresentationHandle = ExtrusionExporter.CreateExtrusionWithClipping(exporterIFC, element,
              catId, solid, beamExtrusionBasePlane, orientTrf.Origin, beamDirection, null, out completelyClipped,
-             out footPrintInfo, out materialAndProfile, addInfo:GenerateAdditionalInfo.GenerateProfileDef);
+             out footPrintInfo, out materialAndProfile, addInfo: GenerateAdditionalInfo.GenerateProfileDef);
          if (completelyClipped)
          {
             info.DontExport = true;
@@ -313,7 +314,7 @@ namespace Revit.IFC.Export.Exporter
          }
 
          if (materialAndProfile != null)
-             info.materialAndProfile = materialAndProfile;
+            info.materialAndProfile = materialAndProfile;
 
          return info;
       }
@@ -378,16 +379,8 @@ namespace Revit.IFC.Export.Exporter
             return;
          }
 
-         string elemGUID = GUIDUtil.CreateGUID(elementType);
-         string elemName = NamingUtil.GetNameOverride(elementType, NamingUtil.GetIFCName(elementType));
-         string elemDesc = NamingUtil.GetDescriptionOverride(elementType, null);
-         string elemTag = NamingUtil.GetTagOverride(elementType, NamingUtil.CreateIFCElementId(elementType));
-         string elemApplicableOccurence = NamingUtil.GetOverrideStringValue(elementType, "IfcApplicableOccurence", null);
-         string elemElementType = NamingUtil.GetOverrideStringValue(elementType, "IfcElementType", null);
-
          // Property sets will be set later.
-         beamType = IFCInstanceExporter.CreateBeamType(exporterIFC.GetFile(), elemGUID, ExporterCacheManager.OwnerHistoryHandle,
-            elemName, elemDesc, elemApplicableOccurence, null, null, elemTag, elemElementType, predefinedType);
+         beamType = IFCInstanceExporter.CreateBeamType(exporterIFC.GetFile(), elementType, null, null, predefinedType);
 
          wrapper.RegisterHandleWithElementType(elementType as ElementType, beamType, null);
 
@@ -513,15 +506,10 @@ namespace Revit.IFC.Export.Exporter
                   IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
 
                   string instanceGUID = GUIDUtil.CreateGUID(element);
-                  string instanceName = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-                  string instanceDescription = NamingUtil.GetDescriptionOverride(element, null);
-                  string instanceObjectType = NamingUtil.GetObjectTypeOverride(element, NamingUtil.CreateIFCObjectName(exporterIFC, element));
-                  string instanceTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
                   string preDefinedType = "BEAM";     // Default predefined type for Beam
                   preDefinedType = IFCValidateEntry.GetValidIFCType(element, preDefinedType);
 
-                  beam = IFCInstanceExporter.CreateBeam(file, instanceGUID, ExporterCacheManager.OwnerHistoryHandle,
-                      instanceName, instanceDescription, instanceObjectType, extrusionCreationData.GetLocalPlacement(), prodRep, instanceTag, preDefinedType);
+                  beam = IFCInstanceExporter.CreateBeam(exporterIFC, element, instanceGUID, ExporterCacheManager.OwnerHistoryHandle, extrusionCreationData.GetLocalPlacement(), prodRep, preDefinedType);
 
                   IFCAnyHandle mpSetUsage;
                   if (materialProfileSet != null)
@@ -556,19 +544,19 @@ namespace Revit.IFC.Export.Exporter
 
       static IFCBeamType GetBeamType(Element element, string beamType)
       {
-          string value = null;
-          if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
-              value = beamType;
+         string value = null;
+         if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null)
+            value = beamType;
 
-          if (String.IsNullOrEmpty(value))
-              return IFCBeamType.Beam;
+         if (String.IsNullOrEmpty(value))
+            return IFCBeamType.Beam;
 
-          string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
+         string newValue = NamingUtil.RemoveSpacesAndUnderscores(value);
 
-          if (String.Compare(newValue, "USERDEFINED", true) == 0)
-              return IFCBeamType.UserDefined;
+         if (String.Compare(newValue, "USERDEFINED", true) == 0)
+            return IFCBeamType.UserDefined;
 
-          return IFCBeamType.Beam;
+         return IFCBeamType.Beam;
       }
    }
 }

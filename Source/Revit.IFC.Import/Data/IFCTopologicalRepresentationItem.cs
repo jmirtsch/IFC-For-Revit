@@ -31,38 +31,38 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class that represents IfcTopologicalRepresentationItem entity
-    /// </summary>
-    public abstract class IFCTopologicalRepresentationItem : IFCRepresentationItem
-    {
-        protected IFCTopologicalRepresentationItem()
-        {
-        }
+   /// <summary>
+   /// Class that represents IfcTopologicalRepresentationItem entity
+   /// </summary>
+   public abstract class IFCTopologicalRepresentationItem : IFCRepresentationItem
+   {
+      protected IFCTopologicalRepresentationItem()
+      {
+      }
 
-        protected IFCTopologicalRepresentationItem(IFCAnyHandle item) 
-        {
-            Process(item);
-        }
+      protected IFCTopologicalRepresentationItem(IFCAnyHandle item)
+      {
+         Process(item);
+      }
 
-        protected override void Process(IFCAnyHandle item)
-        {
-            base.Process(item);
-        }
+      protected override void Process(IFCAnyHandle item)
+      {
+         base.Process(item);
+      }
 
-        public static IFCTopologicalRepresentationItem ProcessIFCTopologicalRepresentationItem(IFCAnyHandle ifcTopologicalRepresentationItem)
-        {
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcTopologicalRepresentationItem, IFCEntityType.IfcEdge))
-                return IFCEdge.ProcessIFCEdge(ifcTopologicalRepresentationItem);
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcTopologicalRepresentationItem, IFCEntityType.IfcConnectedFaceSet))
-                return IFCConnectedFaceSet.ProcessIFCConnectedFaceSet(ifcTopologicalRepresentationItem);
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcTopologicalRepresentationItem, IFCEntityType.IfcVertex))
-                return IFCVertex.ProcessIFCVertex(ifcTopologicalRepresentationItem);
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcTopologicalRepresentationItem, IFCEntityType.IfcLoop))
-                return IFCLoop.ProcessIFCLoop(ifcTopologicalRepresentationItem);
+      public static IFCTopologicalRepresentationItem ProcessIFCTopologicalRepresentationItem(IFCAnyHandle ifcTopologicalRepresentationItem)
+      {
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcTopologicalRepresentationItem, IFCEntityType.IfcEdge))
+            return IFCEdge.ProcessIFCEdge(ifcTopologicalRepresentationItem);
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcTopologicalRepresentationItem, IFCEntityType.IfcConnectedFaceSet))
+            return IFCConnectedFaceSet.ProcessIFCConnectedFaceSet(ifcTopologicalRepresentationItem);
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcTopologicalRepresentationItem, IFCEntityType.IfcVertex))
+            return IFCVertex.ProcessIFCVertex(ifcTopologicalRepresentationItem);
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcTopologicalRepresentationItem, IFCEntityType.IfcLoop))
+            return IFCLoop.ProcessIFCLoop(ifcTopologicalRepresentationItem);
 
-            Importer.TheLog.LogUnhandledSubTypeError(ifcTopologicalRepresentationItem, IFCEntityType.IfcTopologicalRepresentationItem, true);
-            return null;
-        }
-    }
+         Importer.TheLog.LogUnhandledSubTypeError(ifcTopologicalRepresentationItem, IFCEntityType.IfcTopologicalRepresentationItem, true);
+         return null;
+      }
+   }
 }

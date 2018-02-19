@@ -26,10 +26,10 @@ using Revit.IFC.Export.Exporter;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of space boundaries.
-    /// </summary>
-    public class SpaceBoundaryCache : List<SpaceBoundary>
-    {
-    }
+   /// <summary>
+   /// Used to keep a cache of space boundaries.
+   /// </summary>
+   public class SpaceBoundaryCache : List<SpaceBoundary>
+   {
+   }
 }

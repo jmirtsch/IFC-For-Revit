@@ -1,4 +1,4 @@
-<!-- Copy this file to same directory of BIM.IFC.csproj and rename it to BIM.IFC.props. -->
+  <!-- Copy this file to same directory of BIM.IFC.csproj and rename it to BIM.IFC.props. -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <OutputPath>bin\Debug\</OutputPath>
@@ -44,6 +44,11 @@
     <!-- Change to your directory of Revit installation. -->
       <HintPath>C:\Program Files\Autodesk\Revit 2017\Addins\IFCExporterUI\UserInterfaceUtility.dll</HintPath>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files\Autodesk\Revit 2018\NewtonSoft.Json.dll</HintPath> 
+    <Private>False</Private>
     </Reference>
   </ItemGroup>  
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

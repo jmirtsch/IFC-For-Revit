@@ -31,95 +31,95 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class that represents IFCBSplineCurveWithKnots entity
-    /// </summary>
-    public class IFCBSplineCurveWithKnots : IFCBSplineCurve
-    {
+   /// <summary>
+   /// Class that represents IFCBSplineCurveWithKnots entity
+   /// </summary>
+   public class IFCBSplineCurveWithKnots : IFCBSplineCurve
+   {
 
-        private IList<int> m_KnotMultiplicities;
-        
-        /// <summary>
-        /// The multiplicities of the knots. This list defines the number of times each knot in the knots list is to be repeated in constructing the knot array
-        /// </summary>
-        public IList<int> KnotMultiplicities
-        {
-            get { return m_KnotMultiplicities; }
-            set { m_KnotMultiplicities = value; }
-        }
+      private IList<int> m_KnotMultiplicities;
 
-        private IList<double> m_Knots;
-        
-        /// <summary>
-        /// The list of distinct knots used to define the B-spline basis functions.
-        /// </summary>
-        public IList<double> Knots
-        {
-            get { return m_Knots; }
-            set { m_Knots = value; }
-        }
+      /// <summary>
+      /// The multiplicities of the knots. This list defines the number of times each knot in the knots list is to be repeated in constructing the knot array
+      /// </summary>
+      public IList<int> KnotMultiplicities
+      {
+         get { return m_KnotMultiplicities; }
+         set { m_KnotMultiplicities = value; }
+      }
 
-        protected IFCBSplineCurveWithKnots()
-        {
-        }
+      private IList<double> m_Knots;
 
-        protected IFCBSplineCurveWithKnots(IFCAnyHandle bSplineCurve)
-        {
-            Process(bSplineCurve);
-        }
+      /// <summary>
+      /// The list of distinct knots used to define the B-spline basis functions.
+      /// </summary>
+      public IList<double> Knots
+      {
+         get { return m_Knots; }
+         set { m_Knots = value; }
+      }
 
-        protected override void Process(IFCAnyHandle ifcCurve)
-        {
-            base.Process(ifcCurve);
-            KnotMultiplicities = IFCAnyHandleUtil.GetAggregateIntAttribute<List<int>>(ifcCurve, "KnotMultiplicities");
-            Knots = IFCAnyHandleUtil.GetAggregateDoubleAttribute<List<double>>(ifcCurve, "Knots");
+      protected IFCBSplineCurveWithKnots()
+      {
+      }
 
-            if (KnotMultiplicities == null || Knots == null) 
-            {
-                Importer.TheLog.LogError(ifcCurve.StepId, "Cannot find the KnotMultiplicities or Knots attribute of this IfcBSplineCurveWithKnots", true);
-            }
+      protected IFCBSplineCurveWithKnots(IFCAnyHandle bSplineCurve)
+      {
+         Process(bSplineCurve);
+      }
 
-            if (KnotMultiplicities.Count != Knots.Count) 
-            {
-                Importer.TheLog.LogError(ifcCurve.StepId, "The number of knots and knot multiplicities are not the same", true);
-            }
+      protected override void Process(IFCAnyHandle ifcCurve)
+      {
+         base.Process(ifcCurve);
+         KnotMultiplicities = IFCAnyHandleUtil.GetAggregateIntAttribute<List<int>>(ifcCurve, "KnotMultiplicities");
+         Knots = IFCAnyHandleUtil.GetAggregateDoubleAttribute<List<double>>(ifcCurve, "Knots");
 
-            IList<double> revitKnots = IFCGeometryUtil.ConvertIFCKnotsToRevitKnots(KnotMultiplicities, Knots);
+         if (KnotMultiplicities == null || Knots == null)
+         {
+            Importer.TheLog.LogError(ifcCurve.StepId, "Cannot find the KnotMultiplicities or Knots attribute of this IfcBSplineCurveWithKnots", true);
+         }
 
-            Curve = NurbSpline.CreateCurve(Degree, revitKnots, ControlPointsList);
+         if (KnotMultiplicities.Count != Knots.Count)
+         {
+            Importer.TheLog.LogError(ifcCurve.StepId, "The number of knots and knot multiplicities are not the same", true);
+         }
 
-            if (Curve == null) 
-            {
-                Importer.TheLog.LogWarning(ifcCurve.StepId, "Cannot get the curve representation of this IfcCurve", false);
-            }
-        }
+         IList<double> revitKnots = IFCGeometryUtil.ConvertIFCKnotsToRevitKnots(KnotMultiplicities, Knots);
 
-        /// <summary>
-        /// Creates an IFCBSplineCurveWithKnots from a handle of type IfcBSplineCurveWithKnots
-        /// </summary>
-        /// <param name="ifcBSplineCurve">The handle</param>
-        /// <returns>The IFCBSplineCurveWithKnots object</returns>
-        public static IFCBSplineCurveWithKnots ProcessIFCBSplineCurveWithKnots(IFCAnyHandle ifcBSplineCurve)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcBSplineCurve))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcBSplineCurveWithKnots);
-                return null;
-            }
+         Curve = NurbSpline.CreateCurve(Degree, revitKnots, ControlPointsList);
 
-            IFCEntity bSplineCurve = null;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcBSplineCurve.StepId, out bSplineCurve))
-                bSplineCurve = new IFCBSplineCurveWithKnots(ifcBSplineCurve);
+         if (Curve == null)
+         {
+            Importer.TheLog.LogWarning(ifcCurve.StepId, "Cannot get the curve representation of this IfcCurve", false);
+         }
+      }
 
-            return (bSplineCurve as IFCBSplineCurveWithKnots);
-        }
+      /// <summary>
+      /// Creates an IFCBSplineCurveWithKnots from a handle of type IfcBSplineCurveWithKnots
+      /// </summary>
+      /// <param name="ifcBSplineCurve">The handle</param>
+      /// <returns>The IFCBSplineCurveWithKnots object</returns>
+      public static IFCBSplineCurveWithKnots ProcessIFCBSplineCurveWithKnots(IFCAnyHandle ifcBSplineCurve)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcBSplineCurve))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcBSplineCurveWithKnots);
+            return null;
+         }
 
-        protected bool constraintsParamBSpline()
-        {
-            // TODO: implement this function to validate NURBS data
-            //       implementation can be found here http://www.buildingsmart-tech.org/ifc/IFC4/final/html/schema/ifcgeometryresource/lexical/ifcconstraintsparambspline.htm
-            //       move this function to the correct place
-            return true;
-        }
-    }
+         IFCEntity bSplineCurve = null;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcBSplineCurve.StepId, out bSplineCurve))
+            bSplineCurve = new IFCBSplineCurveWithKnots(ifcBSplineCurve);
+
+         return (bSplineCurve as IFCBSplineCurveWithKnots);
+      }
+
+      protected bool constraintsParamBSpline()
+      {
+         // TODO: implement this function to validate NURBS data
+         //       implementation can be found here http://www.buildingsmart-tech.org/ifc/IFC4/final/html/schema/ifcgeometryresource/lexical/ifcconstraintsparambspline.htm
+         //       move this function to the correct place
+         return true;
+      }
+   }
 }

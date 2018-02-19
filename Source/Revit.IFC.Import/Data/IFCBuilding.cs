@@ -84,7 +84,7 @@ namespace Revit.IFC.Import.Data
             createdElementIds.Add(CreatedElementId);
          }
       }
-      
+
       /// <summary>
       /// Creates or populates Revit elements based on the information contained in this class.
       /// </summary>

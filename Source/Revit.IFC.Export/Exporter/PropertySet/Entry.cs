@@ -28,232 +28,122 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
-    /// <summary>
-    /// Represents a mapping from a Revit parameter or calculated value to an IFC property or quantity.
-    /// </summary>
-    /// <remarks>
-    /// Symbol property is true if the property comes from the symbol (vs. the element itself).  Default is TRUE.
-    /// Revit parameter type defaults to RPTString.
-    ///
-    /// One of the following:
-    /// <list type="bullet">
-    /// <item>Revit parameter name</item>
-    /// <item>Revit built-in parameter</item>
-    /// <item>Calculator</item>
-    /// </list>
-    /// must be set. If more than one is valid,
-    /// generally, parameter name is used first, followed by parameter id,
-    /// then by function.
-    /// </remarks>
-    abstract public class Entry
-    {
-        /// <summary>
-        /// The parameter name to be used to get the parameter value.  This is generally in English (ENU).
-        /// </summary>
-        string m_RevitParameterName = String.Empty;
+   /// <summary>
+   /// Represents a mapping from a Revit parameter or calculated value to an IFC property or quantity.
+   /// </summary>
+   /// <remarks>
+   /// Symbol property is true if the property comes from the symbol (vs. the element itself).  Default is TRUE.
+   /// Revit parameter type defaults to RPTString.
+   ///
+   /// One of the following:
+   /// <list type="bullet">
+   /// <item>Revit parameter name</item>
+   /// <item>Revit built-in parameter</item>
+   /// <item>Calculator</item>
+   /// </list>
+   /// must be set. If more than one is valid,
+   /// generally, parameter name is used first, followed by parameter id,
+   /// then by function.
+   /// </remarks>
+   abstract public class Entry<T> where T : EntryMap, new()
+   {
+      /// <summary>
+      /// The default name for IFC property.  This is generally assumed to be in English (ENU).
+      /// </summary>
+      string m_PropertyName = String.Empty;
 
-        /// <summary>
-        /// The parameter name to be used to get the parameter value in other locales.
-        /// </summary>
-        Dictionary<LanguageType, string> m_LocalizedRevitParameterNames = null;
+      /// <summary>
+      /// Indicates if the property is for element type.
+      /// </summary>
+      bool m_IsElementTypeProperty = true;
 
-        /// <summary>
-        /// The default name for IFC property.  This is generally assumed to be in English (ENU).
-        /// </summary>
-        string m_PropertyName = String.Empty;
+      protected List<T> m_Entries = new List<T>();
 
-        /// <summary>
-        /// Indicates if the property is for element type.
-        /// </summary>
-        bool m_IsElementTypeProperty = true;
+      /// <summary>
+      /// Constructor to create an Entry object.
+      /// </summary>
+      /// <param name="revitParameterName">
+      /// The parameter name for this Entry.
+      /// </param>
+      public Entry(string revitParameterName)
+      {
+         m_Entries.Add(new T() { RevitParameterName = revitParameterName });
+         this.m_PropertyName = revitParameterName;
+      }
+      public Entry(string propertyName, T entry)
+      {
+         m_Entries.Add(entry);
+         this.m_PropertyName = propertyName;
+      }
+      public Entry(string propertyName, IEnumerable<T> entries)
+      {
+         m_Entries.AddRange(entries);
+         this.m_PropertyName = propertyName;
+      }
 
-        /// <summary>
-        /// The built in parameter.
-        /// </summary>
-        BuiltInParameter m_RevitBuiltInParameter = BuiltInParameter.INVALID;
+      /// <summary>
+      /// True if the property comes from the element's type (vs. the element itself).
+      /// </summary>
+      /// <remarks>
+      /// The default value is true.
+      /// </remarks>
+      public bool IsElementTypeProperty
+      {
+         get
+         {
+            return m_IsElementTypeProperty;
+         }
+         set
+         {
+            m_IsElementTypeProperty = value;
+         }
+      }
 
-        /// <summary>
-        /// The property calculator to calculate the property value.
-        /// </summary>
-        PropertyCalculator m_PropertyCalculator;
-
-        /// <summary>
-        /// Indicates if the property value is retrieved only from the calculator.
-        /// </summary>
-        bool m_UseCalculatorOnly = false;
-
-        /// <summary>
-        /// Calculated value indicates whether or not there is a valid parameter name associated with this entry.
-        /// </summary>
-        bool m_ParameterNameIsValid = false;
-
-        /// <summary>
-        /// The name to use for looking up the Revit parameter name.
-        /// </summary>
-        string m_ParameterNameToUse = null;
-
-        /// <summary>
-        /// Constructor to create an Entry object.
-        /// </summary>
-        /// <param name="revitParameterName">
-        /// The parameter name for this Entry.
-        /// </param>
-        public Entry(string revitParameterName)
-        {
-            this.m_RevitParameterName = revitParameterName;
-            this.m_PropertyName = revitParameterName;
-        }
-
-        /// <summary>
-        /// Updates caches to make use of this Entry faster after it is completed.
-        /// </summary>
-        public void UpdateEntry()
-        {
-            m_ParameterNameIsValid = (!UseCalculatorOnly && (!String.IsNullOrEmpty(RevitParameterName) || (RevitBuiltInParameter != BuiltInParameter.INVALID)));
-            m_ParameterNameToUse = (!String.IsNullOrEmpty(PropertyName)) ? PropertyName : RevitParameterName;
-        }
-
-        /// <summary>
-        /// Returns whether the parameter has a usable (valid) name.
-        /// </summary>
-        public bool ParameterNameIsValid
-        {
-            get { return m_ParameterNameIsValid; }
-        }
-
-        /// <summary>
-        /// Returns which name to use to look in the Revit parameters.
-        /// </summary>
-        public string ParameterNameToUse
-        {
-            get { return m_ParameterNameToUse; }
-        }
-
-        /// <summary>
-        /// The standard name of the parameter in Revit (if it exists).
-        /// </summary>
-        public string RevitParameterName
-        {
-            get
-            {
-                return m_RevitParameterName;
-            }
-            set
-            {
-                m_RevitParameterName = value;
-            }
-        }
-
-        /// <summary>
-        /// The localized name of the parameter in Revit (if it exists).
-        /// </summary>
-        /// <param name="locale">The language.</param>
-        /// <returns>The localized name, or null if it does not exist.</returns>
-        public string LocalizedRevitParameterName(LanguageType locale)
-        {
-            string localizedName = null;
-            if (m_LocalizedRevitParameterNames != null)
-            {
-                if (m_LocalizedRevitParameterNames.TryGetValue(locale, out localizedName))
-                    return localizedName;
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Adds a localized name for the entry.
-        /// </summary>
-        /// <param name="locale">The language.</param>
-        /// <param name="localizedName">The name for that language.</param>
-        public void AddLocalizedParameterName(LanguageType locale, string localizedName)
-        {
-            if (m_LocalizedRevitParameterNames == null)
-                m_LocalizedRevitParameterNames = new Dictionary<LanguageType, string>();
-
-            if (m_LocalizedRevitParameterNames.ContainsKey(locale))
-                throw new ArgumentException("Locale value already defined.");
-            m_LocalizedRevitParameterNames[locale] = localizedName;
-        }
-
-        /// <summary>
-        /// True if the property comes from the element's type (vs. the element itself).
-        /// </summary>
-        /// <remarks>
-        /// The default value is true.
-        /// </remarks>
-        public bool IsElementTypeProperty
-        {
-            get
-            {
-                return m_IsElementTypeProperty;
-            }
-            set
-            {
-                m_IsElementTypeProperty = value;
-            }
-        }
-
-        /// <summary>
-        /// The built-in parameter.
-        /// </summary>
-        public BuiltInParameter RevitBuiltInParameter
-        {
-            get
-            {
-                return m_RevitBuiltInParameter;
-            }
-            set
-            {
-                m_RevitBuiltInParameter = value;
-            }
-        }
-
-        /// <summary>
-        /// The name of the property or quantity as stored in the IFC export.
-        /// </summary>
-        /// <remarks>
-        /// Default is empty; if empty the name of the Revit parameter will be used.
-        /// </remarks>
-        public string PropertyName
-        {
-            get
-            {
-                return m_PropertyName;
-            }
-            set
-            {
-                m_PropertyName = value;
-            }
-        }
-
-        /// <summary>
-        /// The instance of a class that can calculate the value of the property or quantity.
-        /// </summary>
-        public PropertyCalculator PropertyCalculator
-        {
-            get
-            {
-                return m_PropertyCalculator;
-            }
-            set
-            {
-                m_PropertyCalculator = value;
-            }
-        }
-
-        /// <summary>
-        /// Indicates if the property value is retrieved only from the calculator.
-        /// </summary>
-        public bool UseCalculatorOnly
-        {
-            get
-            {
-                return m_UseCalculatorOnly;
-            }
-            set
-            {
-                m_UseCalculatorOnly = value;
-            }
-        }
-    }
+      /// <summary>
+      /// The name of the property or quantity as stored in the IFC export.
+      /// </summary>
+      /// <remarks>
+      /// Default is empty; if empty the name of the Revit parameter will be used.
+      /// </remarks>
+      public string PropertyName
+      {
+         get
+         {
+            return m_PropertyName;
+         }
+         set
+         {
+            m_PropertyName = value;
+         }
+      }
+      public PropertyCalculator PropertyCalculator
+      {
+         set
+         {
+            if (m_Entries.Count > 0)
+               m_Entries[0].PropertyCalculator = value;
+         }
+      }
+      public void AddLocalizedParameterName(LanguageType locale, string localizedName)
+      {
+         if (m_Entries.Count > 0)
+            m_Entries[0].AddLocalizedParameterName(locale, localizedName);
+      }
+      public void AddEntry(T entry)
+      {
+         m_Entries.Add(entry);
+      }
+      public void UpdateEntry()
+      {
+         foreach (T entry in m_Entries)
+            entry.UpdateEntry();
+      }
+      public void SetRevitParameterName(string revitParameterName)
+      {
+         if (m_Entries.Count == 0)
+            m_Entries.Add(new T() { RevitParameterName = revitParameterName });
+         else
+            m_Entries[0].RevitParameterName = revitParameterName;
+      }
+   }
 }

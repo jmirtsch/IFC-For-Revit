@@ -28,20 +28,20 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate cross section area.
-    /// </summary>
-    class CrossSectionAreaCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Area = 0;
+   /// <summary>
+   /// A calculation class to calculate cross section area.
+   /// </summary>
+   class CrossSectionAreaCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Area = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static CrossSectionAreaCalculator s_Instance = new CrossSectionAreaCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static CrossSectionAreaCalculator s_Instance = new CrossSectionAreaCalculator();
 
       /// <summary>
       /// The CrossSectionAreaCalculator instance.
@@ -71,35 +71,41 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
       /// </returns>
       public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
       {
-         if (extrusionCreationData == null)
+         double crossSectionArea = 0;
+
+         // 1. Use the builtin parameter first
+         if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.HOST_AREA_COMPUTED, out crossSectionArea) != null)
          {
-            double crossSectionArea = 0;
-            ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.HOST_AREA_COMPUTED, out crossSectionArea);
             m_Area = UnitUtil.ScaleArea(crossSectionArea);
-            if (m_Area < MathUtil.Eps() * MathUtil.Eps() || m_Area < MathUtil.Eps())
-            {
-               ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyCrossSectionArea", out crossSectionArea);
-               m_Area = UnitUtil.ScaleArea(crossSectionArea);
-               if (m_Area < MathUtil.Eps() * MathUtil.Eps() || m_Area < MathUtil.Eps())
-                  return false;
-               else
-                  return true;
-            }
+            if (m_Area > MathUtil.Eps() * MathUtil.Eps())
+               return true;
          }
-         else
-            m_Area = extrusionCreationData.ScaledArea;
+
+         // 2. Check override parameter
+         if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyCrossSectionArea", out crossSectionArea) == null)
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcCrossSectionArea", out crossSectionArea) == null)
+               ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "CrossSectionArea", out crossSectionArea);
+         m_Area = UnitUtil.ScaleArea(crossSectionArea);
+         if (m_Area > MathUtil.Eps() * MathUtil.Eps())
+            return true;
+
+         // 3. try using extrusion data
+         if (extrusionCreationData == null)
+            return false;
+
+         m_Area = extrusionCreationData.ScaledArea;
          return m_Area > MathUtil.Eps() * MathUtil.Eps();
       }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Area;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Area;
+      }
+   }
 }

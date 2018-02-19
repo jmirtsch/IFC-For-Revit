@@ -28,64 +28,64 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate height for a space.
-    /// </summary>
-    class SpaceHeightCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Height = 0;
+   /// <summary>
+   /// A calculation class to calculate height for a space.
+   /// </summary>
+   class SpaceHeightCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Height = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static SpaceHeightCalculator s_Instance = new SpaceHeightCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static SpaceHeightCalculator s_Instance = new SpaceHeightCalculator();
 
-        /// <summary>
-        /// The SpaceHeightCalculator instance.
-        /// </summary>
-        public static SpaceHeightCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The SpaceHeightCalculator instance.
+      /// </summary>
+      public static SpaceHeightCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates height for a space.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            if (extrusionCreationData == null)
-                return false;
-            m_Height = extrusionCreationData.ScaledHeight;
-            return m_Height > MathUtil.Eps();
-        }
+      /// <summary>
+      /// Calculates height for a space.
+      /// </summary>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="extrusionCreationData">
+      /// The IFCExtrusionCreationData.
+      /// </param>
+      /// <param name="element">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="elementType">
+      /// The element type.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         if (extrusionCreationData == null)
+            return false;
+         m_Height = extrusionCreationData.ScaledHeight;
+         return m_Height > MathUtil.Eps();
+      }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Height;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Height;
+      }
+   }
 }

@@ -30,115 +30,115 @@ using Revit.IFC.Import.Properties;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class representing IFCMaterialConstituentSet
-    /// </summary>
-    public class IFCMaterialConstituentSet : IFCEntity, IIFCMaterialSelect
-    {
-        string m_Name = null;
-        string m_Description = null;
-        IList<IFCMaterialConstituent> m_MaterialConstituents = null;
+   /// <summary>
+   /// Class representing IFCMaterialConstituentSet
+   /// </summary>
+   public class IFCMaterialConstituentSet : IFCEntity, IIFCMaterialSelect
+   {
+      string m_Name = null;
+      string m_Description = null;
+      IList<IFCMaterialConstituent> m_MaterialConstituents = null;
 
-        /// <summary>
-        /// Get the Name attribute
-        /// </summary>
-        public string Name
-        {
-            get { return m_Name; }
-            protected set { m_Name = value; }
-        }
+      /// <summary>
+      /// Get the Name attribute
+      /// </summary>
+      public string Name
+      {
+         get { return m_Name; }
+         protected set { m_Name = value; }
+      }
 
-        // Get the Description attribute
-        public string Description
-        {
-            get { return m_Description; }
-            protected set { m_Description = value; }
-        }
+      // Get the Description attribute
+      public string Description
+      {
+         get { return m_Description; }
+         protected set { m_Description = value; }
+      }
 
-        /// <summary>
-        /// Get the associated list of MaterialConstituents
-        /// </summary>
-        public IList<IFCMaterialConstituent> MaterialConstituents
-        {
-            get
-            {
-                if (m_MaterialConstituents == null)
-                    m_MaterialConstituents = new List<IFCMaterialConstituent>();
-                return m_MaterialConstituents;
-            }
-        }
+      /// <summary>
+      /// Get the associated list of MaterialConstituents
+      /// </summary>
+      public IList<IFCMaterialConstituent> MaterialConstituents
+      {
+         get
+         {
+            if (m_MaterialConstituents == null)
+               m_MaterialConstituents = new List<IFCMaterialConstituent>();
+            return m_MaterialConstituents;
+         }
+      }
 
-        public void Create(Document doc)
-        {
-            foreach (IFCMaterialConstituent materialConstituent in MaterialConstituents)
-                materialConstituent.Create(doc);
-        }
+      public void Create(Document doc)
+      {
+         foreach (IFCMaterialConstituent materialConstituent in MaterialConstituents)
+            materialConstituent.Create(doc);
+      }
 
-        /// <summary>
-        /// Get the list of associated Materials
-        /// </summary>
-        /// <returns></returns>
-        public IList<IFCMaterial> GetMaterials()
-        {
-            HashSet<IFCMaterial> materials = new HashSet<IFCMaterial>();
-            foreach (IFCMaterialConstituent materialConstituent in MaterialConstituents)
-            {
-                IList<IFCMaterial> constituentMaterials = materialConstituent.GetMaterials();
-                foreach (IFCMaterial material in constituentMaterials)
-                    materials.Add(material);
-            }
-            return materials.ToList();
-        }
+      /// <summary>
+      /// Get the list of associated Materials
+      /// </summary>
+      /// <returns></returns>
+      public IList<IFCMaterial> GetMaterials()
+      {
+         HashSet<IFCMaterial> materials = new HashSet<IFCMaterial>();
+         foreach (IFCMaterialConstituent materialConstituent in MaterialConstituents)
+         {
+            IList<IFCMaterial> constituentMaterials = materialConstituent.GetMaterials();
+            foreach (IFCMaterial material in constituentMaterials)
+               materials.Add(material);
+         }
+         return materials.ToList();
+      }
 
-        protected IFCMaterialConstituentSet()
-        {
-        }
+      protected IFCMaterialConstituentSet()
+      {
+      }
 
-        protected IFCMaterialConstituentSet(IFCAnyHandle ifcMaterialConstituentSet)
-        {
-            Process(ifcMaterialConstituentSet);
-        }
+      protected IFCMaterialConstituentSet(IFCAnyHandle ifcMaterialConstituentSet)
+      {
+         Process(ifcMaterialConstituentSet);
+      }
 
-        protected override void Process(IFCAnyHandle ifcMaterialConstituentSet)
-        {
-            base.Process(ifcMaterialConstituentSet);
+      protected override void Process(IFCAnyHandle ifcMaterialConstituentSet)
+      {
+         base.Process(ifcMaterialConstituentSet);
 
-            IList<IFCAnyHandle> ifcMaterialConsitutuents =
-                IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcMaterialConstituentSet, "MaterialConstituents");
-            if (ifcMaterialConsitutuents == null)
-            {
-                Importer.TheLog.LogError(ifcMaterialConstituentSet.Id, "Expected at least 1 MaterialConsituent, found none.", false);
-                return;
-            }
+         IList<IFCAnyHandle> ifcMaterialConsitutuents =
+             IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcMaterialConstituentSet, "MaterialConstituents");
+         if (ifcMaterialConsitutuents == null)
+         {
+            Importer.TheLog.LogError(ifcMaterialConstituentSet.Id, "Expected at least 1 MaterialConsituent, found none.", false);
+            return;
+         }
 
-            foreach (IFCAnyHandle ifcMaterialConstituent in ifcMaterialConsitutuents)
-            {
-                IFCMaterialConstituent materialConstituent = IFCMaterialConstituent.ProcessIFCMaterialConstituent(ifcMaterialConstituent);
-                if (materialConstituent != null)
-                    MaterialConstituents.Add(materialConstituent);
-            }
+         foreach (IFCAnyHandle ifcMaterialConstituent in ifcMaterialConsitutuents)
+         {
+            IFCMaterialConstituent materialConstituent = IFCMaterialConstituent.ProcessIFCMaterialConstituent(ifcMaterialConstituent);
+            if (materialConstituent != null)
+               MaterialConstituents.Add(materialConstituent);
+         }
 
-            Name = IFCImportHandleUtil.GetOptionalStringAttribute(ifcMaterialConstituentSet, "Name", null);
-            Description = IFCImportHandleUtil.GetOptionalStringAttribute(ifcMaterialConstituentSet, "Description", null);
-        }
+         Name = IFCImportHandleUtil.GetOptionalStringAttribute(ifcMaterialConstituentSet, "Name", null);
+         Description = IFCImportHandleUtil.GetOptionalStringAttribute(ifcMaterialConstituentSet, "Description", null);
+      }
 
-        /// <summary>
-        /// Processes an IFCMaterialConstituentSet entity.
-        /// </summary>
-        /// <param name="IFCMaterialConstituentSet">The IFCMaterialConstituentSet handle.</param>
-        /// <returns>The IFCMaterialConstituentSet object.</returns>
-        public static IFCMaterialConstituentSet ProcessIFCMaterialConstituentSet(IFCAnyHandle ifcMaterialConstituentSet)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialConstituentSet))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialConstituentSet);
-                return null;
-            }
+      /// <summary>
+      /// Processes an IFCMaterialConstituentSet entity.
+      /// </summary>
+      /// <param name="IFCMaterialConstituentSet">The IFCMaterialConstituentSet handle.</param>
+      /// <returns>The IFCMaterialConstituentSet object.</returns>
+      public static IFCMaterialConstituentSet ProcessIFCMaterialConstituentSet(IFCAnyHandle ifcMaterialConstituentSet)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialConstituentSet))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialConstituentSet);
+            return null;
+         }
 
-            IFCEntity materialConstituentSet;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcMaterialConstituentSet.StepId, out materialConstituentSet))
-                materialConstituentSet = new IFCMaterialConstituentSet(ifcMaterialConstituentSet);
-            return (materialConstituentSet as IFCMaterialConstituentSet);
-        }
-    }
+         IFCEntity materialConstituentSet;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcMaterialConstituentSet.StepId, out materialConstituentSet))
+            materialConstituentSet = new IFCMaterialConstituentSet(ifcMaterialConstituentSet);
+         return (materialConstituentSet as IFCMaterialConstituentSet);
+      }
+   }
 }

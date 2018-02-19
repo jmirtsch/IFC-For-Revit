@@ -160,7 +160,7 @@ namespace Revit.IFC.Import.Data
          // process the IfcSite object placement before any of its children, so that the RelativeToSite can be properly set.
          // If this becomes an issue, we can instead move this to after the base.Process, and calculate RelativeToSite as a post-process step.
          ProcessObjectPlacement(ifcProduct);
-         
+
          base.Process(ifcProduct);
 
          IFCAnyHandle ifcProductRepresentation = IFCImportHandleUtil.GetOptionalInstanceAttribute(ifcProduct, "Representation");

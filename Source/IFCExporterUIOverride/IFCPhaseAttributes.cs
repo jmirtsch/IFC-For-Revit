@@ -27,62 +27,62 @@ using BIM.IFC.Export.UI.Properties;
 
 namespace BIM.IFC.Export.UI
 {
-    /// <summary>
-    /// Represents the choices for which phase to export.
-    /// </summary>
-    public class IFCPhaseAttributes
-    {
-        /// <summary>
-        /// The phase id of room/space boundaries exported.
-        /// </summary>
-        public ElementId PhaseId { get; set; }
+   /// <summary>
+   /// Represents the choices for which phase to export.
+   /// </summary>
+   public class IFCPhaseAttributes
+   {
+      /// <summary>
+      /// The phase id of room/space boundaries exported.
+      /// </summary>
+      public ElementId PhaseId { get; set; }
 
-        /// <summary>
-        /// The name of the default phase to export (the last phase).
-        /// </summary>
-        /// <returns></returns>
-        static public string GetDefaultPhaseName()
-        {
-            PhaseArray phases = IFCCommandOverrideApplication.TheDocument.Phases;
-            if (phases == null || phases.Size == 0)
-                return "";
-            Phase lastPhase = phases.get_Item(phases.Size - 1);
-            return lastPhase.Name;
-        }
+      /// <summary>
+      /// The name of the default phase to export (the last phase).
+      /// </summary>
+      /// <returns></returns>
+      static public string GetDefaultPhaseName()
+      {
+         PhaseArray phases = IFCCommandOverrideApplication.TheDocument.Phases;
+         if (phases == null || phases.Size == 0)
+            return "";
+         Phase lastPhase = phases.get_Item(phases.Size - 1);
+         return lastPhase.Name;
+      }
 
-        /// <summary>
-        /// True if the ElementId represents a valid phase.
-        /// </summary>
-        /// <returns>True if it is valid, false otherwise.</returns>
-        static public bool Validate(ElementId phaseId)
-        {
-            if (phaseId == ElementId.InvalidElementId)
-                return false;
+      /// <summary>
+      /// True if the ElementId represents a valid phase.
+      /// </summary>
+      /// <returns>True if it is valid, false otherwise.</returns>
+      static public bool Validate(ElementId phaseId)
+      {
+         if (phaseId == ElementId.InvalidElementId)
+            return false;
 
-            Element checkPhase = IFCCommandOverrideApplication.TheDocument.GetElement(phaseId);
-            return (checkPhase != null && (checkPhase is Phase));
-        }
+         Element checkPhase = IFCCommandOverrideApplication.TheDocument.GetElement(phaseId);
+         return (checkPhase != null && (checkPhase is Phase));
+      }
 
-        /// <summary>
-        /// Constructs the space boundary levels.
-        /// </summary>
-        /// <param name="level"></param>
-        public IFCPhaseAttributes(ElementId phaseId)
-        {
-            PhaseId = phaseId;
-        }
+      /// <summary>
+      /// Constructs the space boundary levels.
+      /// </summary>
+      /// <param name="level"></param>
+      public IFCPhaseAttributes(ElementId phaseId)
+      {
+         PhaseId = phaseId;
+      }
 
-        /// <summary>
-        /// Converts the phase to string.
-        /// </summary>
-        /// <returns>The name of the phase.</returns>
-        public override string ToString()
-        {
-            Element element = IFCCommandOverrideApplication.TheDocument.GetElement(PhaseId);
-            if (element != null && element is Phase)
-                return element.Name;
-            else
-                return String.Format(Resources.DefaultPhase, GetDefaultPhaseName());
-        }
-    }
+      /// <summary>
+      /// Converts the phase to string.
+      /// </summary>
+      /// <returns>The name of the phase.</returns>
+      public override string ToString()
+      {
+         Element element = IFCCommandOverrideApplication.TheDocument.GetElement(PhaseId);
+         if (element != null && element is Phase)
+            return element.Name;
+         else
+            return String.Format(Resources.DefaultPhase, GetDefaultPhaseName());
+      }
+   }
 }

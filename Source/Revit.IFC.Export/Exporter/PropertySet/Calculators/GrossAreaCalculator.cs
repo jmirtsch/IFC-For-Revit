@@ -28,28 +28,28 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate gross area.
-    /// </summary>
-    class GrossAreaCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Area = 0;
+   /// <summary>
+   /// A calculation class to calculate gross area.
+   /// </summary>
+   class GrossAreaCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Area = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static GrossAreaCalculator s_Instance = new GrossAreaCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static GrossAreaCalculator s_Instance = new GrossAreaCalculator();
 
-        /// <summary>
-        /// The GrossAreaCalculator instance.
-        /// </summary>
-        public static GrossAreaCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The GrossAreaCalculator instance.
+      /// </summary>
+      public static GrossAreaCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
       /// <summary>
       /// Calculates cross area.
@@ -71,45 +71,33 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
       /// </returns>
       public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
       {
-         double areaFromParam = 0;
-         ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyGrossArea", out areaFromParam);
+         if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyGrossArea", out m_Area) == null)
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcGrossArea", out m_Area) == null)
+               ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "GrossArea", out m_Area);
+         m_Area = UnitUtil.ScaleArea(m_Area);
+         if (m_Area > MathUtil.Eps() * MathUtil.Eps())
+            return true;
 
          if (extrusionCreationData == null)
-         {
-            if (areaFromParam < MathUtil.Eps())
-               return false;
-            else
-            {
-               m_Area = areaFromParam;
-               return true;
-            }
-         }
-         else
-            m_Area = extrusionCreationData.ScaledArea;
+            return false;
+
+         m_Area = extrusionCreationData.ScaledArea;
 
          if (m_Area > MathUtil.Eps() * MathUtil.Eps())
             return true;
-         else
-         {
-            if (areaFromParam < MathUtil.Eps())
-               return false;
-            else
-            {
-               m_Area = areaFromParam;
-               return true;
-            }
-         }
+
+         return false;
       }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Area;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Area;
+      }
+   }
 }

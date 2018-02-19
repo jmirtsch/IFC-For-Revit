@@ -192,7 +192,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                return propHnd;
          }
 
-         // For Symbol
+         //For Symbol
          Document document = elem.Document;
          ElementId typeId = elem.GetTypeId();
          Element elemType = document.GetElement(typeId);
@@ -1142,7 +1142,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                return propHnd;
          }
 
-         // For Symbol
+         //For Symbol
          Document document = elem.Document;
          ElementId typeId = elem.GetTypeId();
          Element elemType = document.GetElement(typeId);
@@ -1356,9 +1356,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       public static IFCAnyHandle CreateDoublePropertyFromValue(IFCFile file, string ifcPropertyName, double propertyValue,
          string measureType, UnitType unitType, PropertyValueType valueType)
       {
-            double scaledValue = UnitUtil.ScaleDouble(unitType, propertyValue);
-            IFCData doubleData = IFCDataUtil.CreateAsMeasure(scaledValue, measureType);
-            return CreateCommonProperty(file, ifcPropertyName, doubleData, valueType, null);
+         double scaledValue = UnitUtil.ScaleDouble(unitType, propertyValue);
+         IFCData doubleData = IFCDataUtil.CreateAsMeasure(scaledValue, measureType);
+         return CreateCommonProperty(file, ifcPropertyName, doubleData, valueType, null);
       }
 
       /// <summary>
@@ -1653,7 +1653,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          else
             return null;
       }
-      
+
       /// <summary>
       /// Create a Luminous flux measure property from the element's or type's parameter.
       /// </summary>
@@ -2029,7 +2029,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          if (ParameterUtil.GetIntValueFromElement(elem, revitParameterName, out propertyValue) != null)
             return CreateIntegerPropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
 
-         // For Symbol
+         //For Symbol
          Document document = elem.Document;
          ElementId typeId = elem.GetTypeId();
          Element elemType = document.GetElement(typeId);
@@ -2296,7 +2296,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          if (ParameterUtil.GetDoubleValueFromElement(elem, null, ifcPropertyName, out propertyValue) != null)
             return CreatePositiveRatioMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
 
-         // For Symbol
+         //For Symbol
          Document document = elem.Document;
          ElementId typeId = elem.GetTypeId();
          Element elemType = document.GetElement(typeId);
@@ -2599,17 +2599,17 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             quantityHnds.Add(quantityHnd);
          }
 
-            string quantitySetName = string.Empty;
+         string quantitySetName = string.Empty;
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-            {
-                if (IFCAnyHandleUtil.IsSubTypeOf(elemHandle, Common.Enums.IFCEntityType.IfcColumn))
-                    quantitySetName = "Qto_ColumnBaseQuantities";
-                if (IFCAnyHandleUtil.IsSubTypeOf(elemHandle, Common.Enums.IFCEntityType.IfcBeam))
-                    quantitySetName = "Qto_BeamBaseQuantities";
-                if (IFCAnyHandleUtil.IsSubTypeOf(elemHandle, Common.Enums.IFCEntityType.IfcMember))
-                    quantitySetName = "Qto_MemberBaseQuantities";
-            }
-            CreateAndRelateBaseQuantities(file, exporterIFC, elemHandle, quantityHnds, quantitySetName);
+         {
+            if (IFCAnyHandleUtil.IsSubTypeOf(elemHandle, Common.Enums.IFCEntityType.IfcColumn))
+               quantitySetName = "Qto_ColumnBaseQuantities";
+            if (IFCAnyHandleUtil.IsSubTypeOf(elemHandle, Common.Enums.IFCEntityType.IfcBeam))
+               quantitySetName = "Qto_BeamBaseQuantities";
+            if (IFCAnyHandleUtil.IsSubTypeOf(elemHandle, Common.Enums.IFCEntityType.IfcMember))
+               quantitySetName = "Qto_MemberBaseQuantities";
+         }
+         CreateAndRelateBaseQuantities(file, exporterIFC, elemHandle, quantityHnds, quantitySetName);
       }
 
       /// <summary>
@@ -2661,12 +2661,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             quantityHnds.Add(quantityHnd);
          }
 
-        string quantitySetName = string.Empty;
-        if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-        {
+         string quantitySetName = string.Empty;
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         {
             quantitySetName = "Qto_OpeningElementBaseQuantities";
-        }
-        CreateAndRelateBaseQuantities(file, exporterIFC, openingElement, quantityHnds, quantitySetName);
+         }
+         CreateAndRelateBaseQuantities(file, exporterIFC, openingElement, quantityHnds, quantitySetName);
       }
 
       /// <summary>
@@ -2765,12 +2765,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
 
          string quantitySetName = string.Empty;
-        if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-        {
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         {
             quantitySetName = "Qto_WallBaseQuantities";
-        }
+         }
 
-        CreateAndRelateBaseQuantities(file, exporterIFC, wallHnd, quantityHnds, quantitySetName);
+         CreateAndRelateBaseQuantities(file, exporterIFC, wallHnd, quantityHnds, quantitySetName);
       }
 
       /// <summary>
@@ -2780,12 +2780,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// <param name="exporterIFC">The exporter.</param>
       /// <param name="elemHnd">The element handle.</param>
       /// <param name="quantityHnds">The quantity handles.</param>
-      static void CreateAndRelateBaseQuantities(IFCFile file, ExporterIFC exporterIFC, IFCAnyHandle elemHnd, HashSet<IFCAnyHandle> quantityHnds, string quantitySetName=null)
+      static void CreateAndRelateBaseQuantities(IFCFile file, ExporterIFC exporterIFC, IFCAnyHandle elemHnd, HashSet<IFCAnyHandle> quantityHnds, string quantitySetName = null)
       {
          if (quantityHnds.Count > 0)
          {
             if (string.IsNullOrEmpty(quantitySetName))
-                quantitySetName = "BaseQuantities";
+               quantitySetName = "BaseQuantities";
             IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
             IFCAnyHandle quantity = IFCInstanceExporter.CreateElementQuantity(file, GUIDUtil.CreateGUID(), ownerHistory, quantitySetName, null, null, quantityHnds);
             HashSet<IFCAnyHandle> relatedObjects = new HashSet<IFCAnyHandle>();

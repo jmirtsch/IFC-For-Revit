@@ -30,49 +30,49 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    public abstract class IFCPresentationStyle : IFCEntity
-    {
-        string m_Name = null;
+   public abstract class IFCPresentationStyle : IFCEntity
+   {
+      string m_Name = null;
 
-        public string Name
-        {
-            get { return m_Name; }
-            protected set { m_Name = value; }
-        }
+      public string Name
+      {
+         get { return m_Name; }
+         protected set { m_Name = value; }
+      }
 
-        protected IFCPresentationStyle()
-        {
-        }
+      protected IFCPresentationStyle()
+      {
+      }
 
-        override protected void Process(IFCAnyHandle item)
-        {
-            base.Process(item);
+      override protected void Process(IFCAnyHandle item)
+      {
+         base.Process(item);
 
-            Name = IFCImportHandleUtil.GetOptionalStringAttribute(item, "Name", null);
-        }
+         Name = IFCImportHandleUtil.GetOptionalStringAttribute(item, "Name", null);
+      }
 
-        /// <summary>
-        /// Processes an IfcPresentationStyle entity handle.
-        /// </summary>
-        /// <param name="ifcPresentationStyle">The IfcPresentationStyle handle.</param>
-        /// <returns>The IFCPresentationStyle object.</returns>
-        public static IFCPresentationStyle ProcessIFCPresentationStyle(IFCAnyHandle ifcPresentationStyle)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPresentationStyle))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcPresentationStyle);
-                return null;
-            }
-
-            IFCEntity presentationStyle;
-            if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcPresentationStyle.StepId, out presentationStyle))
-                return (presentationStyle as IFCPresentationStyle);
-
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcPresentationStyle, IFCEntityType.IfcSurfaceStyle))
-                return IFCSurfaceStyle.ProcessIFCSurfaceStyle(ifcPresentationStyle);
-
-            Importer.TheLog.LogUnhandledSubTypeError(ifcPresentationStyle, "IfcPresentationStyle", false);
+      /// <summary>
+      /// Processes an IfcPresentationStyle entity handle.
+      /// </summary>
+      /// <param name="ifcPresentationStyle">The IfcPresentationStyle handle.</param>
+      /// <returns>The IFCPresentationStyle object.</returns>
+      public static IFCPresentationStyle ProcessIFCPresentationStyle(IFCAnyHandle ifcPresentationStyle)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcPresentationStyle))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcPresentationStyle);
             return null;
-        }
-    }
+         }
+
+         IFCEntity presentationStyle;
+         if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcPresentationStyle.StepId, out presentationStyle))
+            return (presentationStyle as IFCPresentationStyle);
+
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcPresentationStyle, IFCEntityType.IfcSurfaceStyle))
+            return IFCSurfaceStyle.ProcessIFCSurfaceStyle(ifcPresentationStyle);
+
+         Importer.TheLog.LogUnhandledSubTypeError(ifcPresentationStyle, "IfcPresentationStyle", false);
+         return null;
+      }
+   }
 }

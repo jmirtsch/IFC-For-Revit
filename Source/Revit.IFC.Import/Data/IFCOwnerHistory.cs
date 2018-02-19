@@ -27,109 +27,109 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class for storing IfcOwnerHistory.
-    /// </summary>
-    public class IFCOwnerHistory : IFCEntity
-    {
-        // TODO: Rest of fields.
-        IFCApplication m_OwningApplication = null;
-        DateTime m_CreationDate;
-        
-        protected IFCOwnerHistory()
-        {
+   /// <summary>
+   /// Class for storing IfcOwnerHistory.
+   /// </summary>
+   public class IFCOwnerHistory : IFCEntity
+   {
+      // TODO: Rest of fields.
+      IFCApplication m_OwningApplication = null;
+      DateTime m_CreationDate;
 
-        }
+      protected IFCOwnerHistory()
+      {
 
-        protected IFCOwnerHistory(IFCAnyHandle ifcOwnerHistory)
-        {
-            Process(ifcOwnerHistory);
-        }
-        
-        /// <summary>
-        /// Processes IfcOwnerHistory attributes.
-        /// </summary>
-        /// <param name="ifcOwnerHistory">The IfcOwnerHistory handle.</param>
-        override protected void Process(IFCAnyHandle ifcOwnerHistory)
-        {
-            base.Process(ifcOwnerHistory);
+      }
 
-            int? creationDate = IFCAnyHandleUtil.GetIntAttribute(ifcOwnerHistory, "CreationDate");
-            if (creationDate.HasValue)
-            {
-                // convert IFC seconds from 1/1/1970 to DateTime ticks since 1/1/1601.
-                long ticks = ((long) creationDate.Value + 11644473600) * 10000000;
-                m_CreationDate = new DateTime(ticks, DateTimeKind.Utc).AddYears(1600);
-            }
+      protected IFCOwnerHistory(IFCAnyHandle ifcOwnerHistory)
+      {
+         Process(ifcOwnerHistory);
+      }
 
-            IFCAnyHandle owningApplication = IFCAnyHandleUtil.GetInstanceAttribute(ifcOwnerHistory, "OwningApplication");
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(owningApplication))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcApplication); 
-                return;
-            }
+      /// <summary>
+      /// Processes IfcOwnerHistory attributes.
+      /// </summary>
+      /// <param name="ifcOwnerHistory">The IfcOwnerHistory handle.</param>
+      override protected void Process(IFCAnyHandle ifcOwnerHistory)
+      {
+         base.Process(ifcOwnerHistory);
 
-            m_OwningApplication = IFCApplication.ProcessIFCApplication(owningApplication);
-        }
+         int? creationDate = IFCAnyHandleUtil.GetIntAttribute(ifcOwnerHistory, "CreationDate");
+         if (creationDate.HasValue)
+         {
+            // convert IFC seconds from 1/1/1970 to DateTime ticks since 1/1/1601.
+            long ticks = ((long)creationDate.Value + 11644473600) * 10000000;
+            m_CreationDate = new DateTime(ticks, DateTimeKind.Utc).AddYears(1600);
+         }
 
-        /// <summary>
-        /// Returns an IFCOwnerHistory object for an IfcOwnerHistory handle.
-        /// </summary>
-        /// <param name="ifcOwnerHistory">The IfcOwnerHistory handle.</param>
-        /// <returns></returns>
-        public static IFCOwnerHistory ProcessIFCOwnerHistory(IFCAnyHandle ifcOwnerHistory)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcOwnerHistory))
-                throw new ArgumentNullException("ifcOwnerHistory");
+         IFCAnyHandle owningApplication = IFCAnyHandleUtil.GetInstanceAttribute(ifcOwnerHistory, "OwningApplication");
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(owningApplication))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcApplication);
+            return;
+         }
 
-            IFCEntity ownerHistory;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcOwnerHistory.StepId, out ownerHistory))
-                ownerHistory = new IFCOwnerHistory(ifcOwnerHistory);
-            return (ownerHistory as IFCOwnerHistory); 
-        }
+         m_OwningApplication = IFCApplication.ProcessIFCApplication(owningApplication);
+      }
 
-        /// <summary>
-        /// Gets the Application ApplicationDeveloper string.
-        /// </summary>
-        /// <returns>The ApplicationDeveloper string, if set.</returns>
-        public string ApplicationDeveloper()
-        {
-            if (m_OwningApplication == null)
-                return null;
-            return m_OwningApplication.ApplicationDeveloper;
-        }
+      /// <summary>
+      /// Returns an IFCOwnerHistory object for an IfcOwnerHistory handle.
+      /// </summary>
+      /// <param name="ifcOwnerHistory">The IfcOwnerHistory handle.</param>
+      /// <returns></returns>
+      public static IFCOwnerHistory ProcessIFCOwnerHistory(IFCAnyHandle ifcOwnerHistory)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcOwnerHistory))
+            throw new ArgumentNullException("ifcOwnerHistory");
 
-        /// <summary>
-        /// Gets the Application Version string.
-        /// </summary>
-        /// <returns>The Version string, if set.</returns>
-        public string Version()
-        {
-            if (m_OwningApplication == null)
-                return null;
-            return m_OwningApplication.Version;
-        }
+         IFCEntity ownerHistory;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcOwnerHistory.StepId, out ownerHistory))
+            ownerHistory = new IFCOwnerHistory(ifcOwnerHistory);
+         return (ownerHistory as IFCOwnerHistory);
+      }
 
-        /// <summary>
-        /// Gets the Application ApplicationFullName string.
-        /// </summary>
-        /// <returns>The ApplicationFullName string, if set.</returns>
-        public string ApplicationFullName()
-        {
-            if (m_OwningApplication == null)
-                return null;
-            return m_OwningApplication.ApplicationFullName;
-        }
+      /// <summary>
+      /// Gets the Application ApplicationDeveloper string.
+      /// </summary>
+      /// <returns>The ApplicationDeveloper string, if set.</returns>
+      public string ApplicationDeveloper()
+      {
+         if (m_OwningApplication == null)
+            return null;
+         return m_OwningApplication.ApplicationDeveloper;
+      }
 
-        /// <summary>
-        /// Gets the Application ApplicationIdentifier string.
-        /// </summary>
-        /// <returns>The ApplicationIdentifier string, if set.</returns>
-        public string ApplicationIdentifier()
-        {
-            if (m_OwningApplication == null)
-                return null;
-            return m_OwningApplication.ApplicationIdentifier;
-        }
-    }
+      /// <summary>
+      /// Gets the Application Version string.
+      /// </summary>
+      /// <returns>The Version string, if set.</returns>
+      public string Version()
+      {
+         if (m_OwningApplication == null)
+            return null;
+         return m_OwningApplication.Version;
+      }
+
+      /// <summary>
+      /// Gets the Application ApplicationFullName string.
+      /// </summary>
+      /// <returns>The ApplicationFullName string, if set.</returns>
+      public string ApplicationFullName()
+      {
+         if (m_OwningApplication == null)
+            return null;
+         return m_OwningApplication.ApplicationFullName;
+      }
+
+      /// <summary>
+      /// Gets the Application ApplicationIdentifier string.
+      /// </summary>
+      /// <returns>The ApplicationIdentifier string, if set.</returns>
+      public string ApplicationIdentifier()
+      {
+         if (m_OwningApplication == null)
+            return null;
+         return m_OwningApplication.ApplicationIdentifier;
+      }
+   }
 }

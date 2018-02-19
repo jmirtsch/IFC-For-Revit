@@ -31,92 +31,92 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class that represents IFCCylindricalSurface entity
-    /// </summary>
-    public class IFCCylindricalSurface : IFCElementarySurface
-    {
-        private CylindricalSurface m_CylindricalSurface = null;
-        private double m_Radius = 0;
+   /// <summary>
+   /// Class that represents IFCCylindricalSurface entity
+   /// </summary>
+   public class IFCCylindricalSurface : IFCElementarySurface
+   {
+      private CylindricalSurface m_CylindricalSurface = null;
+      private double m_Radius = 0;
 
-        /// <summary>
-        /// The radius of the cylindrical surface
-        /// </summary>
-        public double Radius
-        {
-            get { return m_Radius; }
-            set { m_Radius = value; }
-        }
+      /// <summary>
+      /// The radius of the cylindrical surface
+      /// </summary>
+      public double Radius
+      {
+         get { return m_Radius; }
+         set { m_Radius = value; }
+      }
 
-        /// <summary>
-        /// Return the corresponding Revit CylindricalSurface of this surface
-        /// </summary>
-        public CylindricalSurface CylindricalSurface
-        {
-            get { return m_CylindricalSurface; }
-            protected set { m_CylindricalSurface = value; }
-        }
+      /// <summary>
+      /// Return the corresponding Revit CylindricalSurface of this surface
+      /// </summary>
+      public CylindricalSurface CylindricalSurface
+      {
+         get { return m_CylindricalSurface; }
+         protected set { m_CylindricalSurface = value; }
+      }
 
-        protected IFCCylindricalSurface()
-        {
-        }
+      protected IFCCylindricalSurface()
+      {
+      }
 
-        protected IFCCylindricalSurface(IFCAnyHandle ifcCylindricalSurface)
-        {
-            Process(ifcCylindricalSurface);
+      protected IFCCylindricalSurface(IFCAnyHandle ifcCylindricalSurface)
+      {
+         Process(ifcCylindricalSurface);
 
-            m_CylindricalSurface = CylindricalSurface.Create(new Frame(Position.Origin, Position.BasisX, Position.BasisY, Position.BasisZ), Radius);
-        }
+         m_CylindricalSurface = CylindricalSurface.Create(new Frame(Position.Origin, Position.BasisX, Position.BasisY, Position.BasisZ), Radius);
+      }
 
-        override protected void Process(IFCAnyHandle ifcCylindricalSurface)
-        {
-            base.Process(ifcCylindricalSurface);
+      override protected void Process(IFCAnyHandle ifcCylindricalSurface)
+      {
+         base.Process(ifcCylindricalSurface);
 
-            bool found = false;
-            Radius = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(ifcCylindricalSurface, "Radius", out found);
-            if (!found)
-            {
-               Importer.TheLog.LogError(ifcCylindricalSurface.StepId, "Cannot find the radius of this cylindrical surface", true);
-               return;
-            }
-        }
+         bool found = false;
+         Radius = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(ifcCylindricalSurface, "Radius", out found);
+         if (!found)
+         {
+            Importer.TheLog.LogError(ifcCylindricalSurface.StepId, "Cannot find the radius of this cylindrical surface", true);
+            return;
+         }
+      }
 
-        /// <summary>
-        /// Create an IFCCylindricalSurface object from a handle of type IfcCylindricalSurface.
-        /// </summary>
-        /// <param name="ifcCylindricalSurface">The IFC handle.</param>
-        /// <returns>The IFCCylindricalSurface object.</returns>
-        public static IFCCylindricalSurface ProcessIfcCylindricalSurface(IFCAnyHandle ifcCylindricalSurface)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcCylindricalSurface))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcCylindricalSurface);
-                return null;
-            }
+      /// <summary>
+      /// Create an IFCCylindricalSurface object from a handle of type IfcCylindricalSurface.
+      /// </summary>
+      /// <param name="ifcCylindricalSurface">The IFC handle.</param>
+      /// <returns>The IFCCylindricalSurface object.</returns>
+      public static IFCCylindricalSurface ProcessIfcCylindricalSurface(IFCAnyHandle ifcCylindricalSurface)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcCylindricalSurface))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcCylindricalSurface);
+            return null;
+         }
 
-            IFCEntity cylindricalSurface;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcCylindricalSurface.StepId, out cylindricalSurface))
-                cylindricalSurface = new IFCCylindricalSurface(ifcCylindricalSurface);
+         IFCEntity cylindricalSurface;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcCylindricalSurface.StepId, out cylindricalSurface))
+            cylindricalSurface = new IFCCylindricalSurface(ifcCylindricalSurface);
 
-            return cylindricalSurface as IFCCylindricalSurface;
-        }
+         return cylindricalSurface as IFCCylindricalSurface;
+      }
 
-        /// <summary>
-        /// Returns the surface which defines the internal shape of the face
-        /// </summary>
-        /// <param name="lcs">The local coordinate system for the surface.  Can be null.</param>
-        /// <returns>The surface which defines the internal shape of the face</returns>
-        public override Surface GetSurface(Transform lcs)
-        {
-           if (lcs == null)
-              return CylindricalSurface;
+      /// <summary>
+      /// Returns the surface which defines the internal shape of the face
+      /// </summary>
+      /// <param name="lcs">The local coordinate system for the surface.  Can be null.</param>
+      /// <returns>The surface which defines the internal shape of the face</returns>
+      public override Surface GetSurface(Transform lcs)
+      {
+         if (lcs == null)
+            return CylindricalSurface;
 
-           XYZ origin = CylindricalSurface.Origin;
-           XYZ xVec = CylindricalSurface.XDir;
-           XYZ yVec = CylindricalSurface.YDir;
-           XYZ zVec = CylindricalSurface.Axis;
+         XYZ origin = CylindricalSurface.Origin;
+         XYZ xVec = CylindricalSurface.XDir;
+         XYZ yVec = CylindricalSurface.YDir;
+         XYZ zVec = CylindricalSurface.Axis;
 
-           return CylindricalSurface.Create(new Frame(lcs.OfPoint(origin), lcs.OfVector(xVec), lcs.OfVector(yVec), lcs.OfVector(zVec)), CylindricalSurface.Radius);
-        }
-    }
+         return CylindricalSurface.Create(new Frame(lcs.OfPoint(origin), lcs.OfVector(xVec), lcs.OfVector(yVec), lcs.OfVector(zVec)), CylindricalSurface.Radius);
+      }
+   }
 }

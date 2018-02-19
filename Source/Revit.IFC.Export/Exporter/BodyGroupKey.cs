@@ -27,78 +27,78 @@ using Revit.IFC.Export.Toolkit;
 
 namespace Revit.IFC.Export.Exporter
 {
-    /// <summary>
-    /// The class contains key information for GroupElementGeometryCache in ExportBody if UseGroupsIfPossible option is used.
-    /// </summary>
-    public class BodyGroupKey
-    {
-        /// <summary>
-        /// The element id of the containing group type
-        /// </summary>
-        ElementId m_GroupTypeId = ElementId.InvalidElementId;
+   /// <summary>
+   /// The class contains key information for GroupElementGeometryCache in ExportBody if UseGroupsIfPossible option is used.
+   /// </summary>
+   public class BodyGroupKey
+   {
+      /// <summary>
+      /// The element id of the containing group type
+      /// </summary>
+      ElementId m_GroupTypeId = ElementId.InvalidElementId;
 
-        /// <summary>
-        /// The index in the group
-        /// </summary>
-        int m_GroupMemberIndex = -1;
+      /// <summary>
+      /// The index in the group
+      /// </summary>
+      int m_GroupMemberIndex = -1;
 
-        /// <summary>
-        /// The element id of the containing group type
-        /// </summary>
-        public ElementId GroupTypeId
-        {
-            get { return m_GroupTypeId; }
-            set { m_GroupTypeId = value; }
-        }
+      /// <summary>
+      /// The element id of the containing group type
+      /// </summary>
+      public ElementId GroupTypeId
+      {
+         get { return m_GroupTypeId; }
+         set { m_GroupTypeId = value; }
+      }
 
-        /// <summary>
-        /// The element id of the containing group type
-        /// </summary>
-        public int GroupMemberIndex
-        {
-            get { return m_GroupMemberIndex; }
-            set { m_GroupMemberIndex = value; }
-        }
+      /// <summary>
+      /// The element id of the containing group type
+      /// </summary>
+      public int GroupMemberIndex
+      {
+         get { return m_GroupMemberIndex; }
+         set { m_GroupMemberIndex = value; }
+      }
 
-        static public bool operator ==(BodyGroupKey first, BodyGroupKey second)
-        {
-            Object lhsObject = first;
-            Object rhsObject = second;
-            if (null == lhsObject)
-            {
-                if (null == rhsObject)
-                    return true;
-                return false;
-            }
+      static public bool operator ==(BodyGroupKey first, BodyGroupKey second)
+      {
+         Object lhsObject = first;
+         Object rhsObject = second;
+         if (null == lhsObject)
+         {
             if (null == rhsObject)
-                return false;
+               return true;
+            return false;
+         }
+         if (null == rhsObject)
+            return false;
 
-            if (first.GroupMemberIndex != second.GroupMemberIndex)
-                return false;
+         if (first.GroupMemberIndex != second.GroupMemberIndex)
+            return false;
 
-            if (first.GroupTypeId != second.GroupTypeId)
-                return false;
+         if (first.GroupTypeId != second.GroupTypeId)
+            return false;
 
-            return true;
-        }
+         return true;
+      }
 
-        static public bool operator !=(BodyGroupKey first, BodyGroupKey second)
-        {
-            return !(first == second);
-        }
+      static public bool operator !=(BodyGroupKey first, BodyGroupKey second)
+      {
+         return !(first == second);
+      }
 
-        public override bool Equals(object obj)
-        {
-            if (obj == null)
-                return false;
+      public override bool Equals(object obj)
+      {
+         if (obj == null)
+            return false;
 
-            BodyGroupKey second = obj as BodyGroupKey;
-            return (this == second);
-        }
+         BodyGroupKey second = obj as BodyGroupKey;
+         return (this == second);
+      }
 
-        public override int GetHashCode()
-        {
-            return GroupMemberIndex.GetHashCode() ^ GroupTypeId.GetHashCode();
-        }
-    }
+      public override int GetHashCode()
+      {
+         return GroupMemberIndex.GetHashCode() ^ GroupTypeId.GetHashCode();
+      }
+   }
 }

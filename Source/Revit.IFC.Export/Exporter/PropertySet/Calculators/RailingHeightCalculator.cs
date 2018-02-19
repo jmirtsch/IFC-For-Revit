@@ -28,68 +28,68 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate height for a railing.
-    /// </summary>
-    class RailingHeightCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Height = 0;
+   /// <summary>
+   /// A calculation class to calculate height for a railing.
+   /// </summary>
+   class RailingHeightCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Height = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static RailingHeightCalculator s_Instance = new RailingHeightCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static RailingHeightCalculator s_Instance = new RailingHeightCalculator();
 
-        /// <summary>
-        /// The RailingHeightCalculator instance.
-        /// </summary>
-        public static RailingHeightCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The RailingHeightCalculator instance.
+      /// </summary>
+      public static RailingHeightCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates height for a railing
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            if (element == null)
-                return false;
-            RailingType railingType = element.Document.GetElement(element.GetTypeId()) as RailingType;
-            if (railingType == null)
-                return false;
+      /// <summary>
+      /// Calculates height for a railing
+      /// </summary>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="extrusionCreationData">
+      /// The IFCExtrusionCreationData.
+      /// </param>
+      /// <param name="element">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="elementType">
+      /// The element type.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         if (element == null)
+            return false;
+         RailingType railingType = element.Document.GetElement(element.GetTypeId()) as RailingType;
+         if (railingType == null)
+            return false;
 
-            m_Height = UnitUtil.ScaleLength(railingType.TopRailHeight);
-            return true;
-        }
+         m_Height = UnitUtil.ScaleLength(railingType.TopRailHeight);
+         return true;
+      }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Height;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Height;
+      }
+   }
 }

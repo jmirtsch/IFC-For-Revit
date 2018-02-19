@@ -54,6 +54,10 @@ namespace BIM.IFC.Export.UI
       public int SpaceBoundaries { get; set; }
 
       /// <summary>
+      /// The origin of the exported file: either shared coordinates (Site Survey Point), Project Base Point, or internal coordinates.
+      /// </summary>
+      public int SitePlacement { get; set; } = 0;
+      /// <summary>
       /// The phase of the document to export.
       /// </summary>
       public ElementId ActivePhaseId { get; set; }
@@ -406,6 +410,7 @@ namespace BIM.IFC.Export.UI
          this.ExcludeFilter = other.ExcludeFilter;
          this.COBieCompanyInfo = other.COBieCompanyInfo;
          this.COBieProjectInfo = other.COBieProjectInfo;
+         this.SitePlacement = other.SitePlacement;
       }
 
       /// <summary>
@@ -458,6 +463,7 @@ namespace BIM.IFC.Export.UI
          this.ExcludeFilter = other.ExcludeFilter;
          this.COBieCompanyInfo = other.COBieCompanyInfo;
          this.COBieProjectInfo = other.COBieProjectInfo;
+         this.SitePlacement = other.SitePlacement;
       }
 
       /// <summary>
@@ -519,6 +525,7 @@ namespace BIM.IFC.Export.UI
          options.AddOption("ExportUserDefinedParameterMapping", ExportUserDefinedParameterMapping.ToString());
          options.AddOption("ExportLinkedFiles", ExportLinkedFiles.ToString());
          options.AddOption("IncludeSiteElevation", IncludeSiteElevation.ToString());
+         options.AddOption("SitePlacement", SitePlacement.ToString());
          options.AddOption("TessellationLevelOfDetail", TessellationLevelOfDetail.ToString());
          options.AddOption("UseOnlyTriangulation", UseOnlyTriangulation.ToString());
          options.AddOption("ActiveViewId", ActiveViewId.ToString());

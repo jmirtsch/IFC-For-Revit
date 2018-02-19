@@ -26,92 +26,92 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of the curve style handles mapping to curve annotations.
-    /// </summary>
-    public class CurveAnnotationCache
-    {
-        /// <summary>
-        /// Used as a curveAnnotationKey for a dictionary.
-        /// </summary>
-        struct CurveAnnotationKey
-        {
-            /// <summary>
-            /// The sketch plane id.
-            /// </summary>
-            public ElementId SketchPlaneId;
-            /// <summary>
-            /// The curve style handle.
-            /// </summary>
-            public IFCAnyHandle CurveStyleHandle;
-        }
+   /// <summary>
+   /// Used to keep a cache of the curve style handles mapping to curve annotations.
+   /// </summary>
+   public class CurveAnnotationCache
+   {
+      /// <summary>
+      /// Used as a curveAnnotationKey for a dictionary.
+      /// </summary>
+      struct CurveAnnotationKey
+      {
+         /// <summary>
+         /// The sketch plane id.
+         /// </summary>
+         public ElementId SketchPlaneId;
+         /// <summary>
+         /// The curve style handle.
+         /// </summary>
+         public IFCAnyHandle CurveStyleHandle;
+      }
 
 
-        /// <summary>
-        /// The dictionary mapping from CurveAnnotationKey to curve annotation handle. 
-        /// </summary>
-        Dictionary<CurveAnnotationKey, IFCAnyHandle> annotationMap;
+      /// <summary>
+      /// The dictionary mapping from CurveAnnotationKey to curve annotation handle. 
+      /// </summary>
+      Dictionary<CurveAnnotationKey, IFCAnyHandle> annotationMap;
 
-        /// <summary>
-        /// Constructs a default CurveAnnotationCache object.
-        /// </summary>
-        public CurveAnnotationCache()
-        {
-            annotationMap = new Dictionary<CurveAnnotationKey, IFCAnyHandle>();
-        }
+      /// <summary>
+      /// Constructs a default CurveAnnotationCache object.
+      /// </summary>
+      public CurveAnnotationCache()
+      {
+         annotationMap = new Dictionary<CurveAnnotationKey, IFCAnyHandle>();
+      }
 
-        /// <summary>
-        /// Gets the curve annotation handle from the dictionary.
-        /// </summary>
-        /// <param name="sketchPlaneId">
-        /// The sketch plane id.
-        /// </param>
-        /// <param name="curveStyleHandle">
-        /// The curve style handle.
-        /// </param>
-        /// <returns>
-        /// The curve annotation handle.
-        /// </returns>
-        public IFCAnyHandle GetAnnotation(ElementId sketchPlaneId, IFCAnyHandle curveStyleHandle)
-        {
-            IFCAnyHandle curveAnnotationHandle;
-            CurveAnnotationKey curveAnnotationKey = new CurveAnnotationKey();
-            curveAnnotationKey.SketchPlaneId = sketchPlaneId;
-            curveAnnotationKey.CurveStyleHandle = curveStyleHandle;
-            if (annotationMap.TryGetValue(curveAnnotationKey, out curveAnnotationHandle))
-            {
-                return curveAnnotationHandle;
-            }
-            else
-            {
-                return null;
-            }
-        }
+      /// <summary>
+      /// Gets the curve annotation handle from the dictionary.
+      /// </summary>
+      /// <param name="sketchPlaneId">
+      /// The sketch plane id.
+      /// </param>
+      /// <param name="curveStyleHandle">
+      /// The curve style handle.
+      /// </param>
+      /// <returns>
+      /// The curve annotation handle.
+      /// </returns>
+      public IFCAnyHandle GetAnnotation(ElementId sketchPlaneId, IFCAnyHandle curveStyleHandle)
+      {
+         IFCAnyHandle curveAnnotationHandle;
+         CurveAnnotationKey curveAnnotationKey = new CurveAnnotationKey();
+         curveAnnotationKey.SketchPlaneId = sketchPlaneId;
+         curveAnnotationKey.CurveStyleHandle = curveStyleHandle;
+         if (annotationMap.TryGetValue(curveAnnotationKey, out curveAnnotationHandle))
+         {
+            return curveAnnotationHandle;
+         }
+         else
+         {
+            return null;
+         }
+      }
 
-        /// <summary>
-        /// Adds a curve annotation handle to the dictionary.
-        /// </summary>
-        /// <param name="sketchPlaneId">
-        /// The sketch plane id.
-        /// </param>
-        /// <param name="curveStyleHandle">
-        /// The curve style handle.
-        /// </param>
-        /// <param name="curveAnnotation">
-        /// The curve annotation handle.
-        /// </param>
-        public void AddAnnotation(ElementId sketchPlaneId, IFCAnyHandle curveStyleHandle, IFCAnyHandle curveAnnotation)
-        {
-            CurveAnnotationKey curveAnnotationKey = new CurveAnnotationKey();
-            curveAnnotationKey.SketchPlaneId = sketchPlaneId;
-            curveAnnotationKey.CurveStyleHandle = curveStyleHandle;
+      /// <summary>
+      /// Adds a curve annotation handle to the dictionary.
+      /// </summary>
+      /// <param name="sketchPlaneId">
+      /// The sketch plane id.
+      /// </param>
+      /// <param name="curveStyleHandle">
+      /// The curve style handle.
+      /// </param>
+      /// <param name="curveAnnotation">
+      /// The curve annotation handle.
+      /// </param>
+      public void AddAnnotation(ElementId sketchPlaneId, IFCAnyHandle curveStyleHandle, IFCAnyHandle curveAnnotation)
+      {
+         CurveAnnotationKey curveAnnotationKey = new CurveAnnotationKey();
+         curveAnnotationKey.SketchPlaneId = sketchPlaneId;
+         curveAnnotationKey.CurveStyleHandle = curveStyleHandle;
 
-            if (annotationMap.ContainsKey(curveAnnotationKey))
-            {
-                throw new Exception("CurveAnnotationCache already contains this curveAnnotationKey");
-            }
+         if (annotationMap.ContainsKey(curveAnnotationKey))
+         {
+            throw new Exception("CurveAnnotationCache already contains this curveAnnotationKey");
+         }
 
-            annotationMap[curveAnnotationKey] = curveAnnotation;
-        }
-    }
+         annotationMap[curveAnnotationKey] = curveAnnotation;
+      }
+   }
 }

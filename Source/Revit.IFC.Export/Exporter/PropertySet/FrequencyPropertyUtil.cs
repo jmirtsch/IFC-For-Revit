@@ -29,76 +29,76 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
-    /// <summary>
-    /// Provides static methods to create varies IFC properties.  Inherit from PropertyUtil for protected helper functions.
-    /// </summary>
-    public class FrequencyPropertyUtil : PropertyUtil
-    {
-        /// <summary>Create a FrequencyMeasure property.</summary>
-        /// <param name="file">The IFC file.</param>
-        /// <param name="propertyName">The name of the property.</param>
-        /// <param name="value">The value of the property.</param>
-        /// <param name="valueType">The value type of the property.</param>
-        /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateFrequencyProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
-        {
-            IFCData frequencyData = IFCDataUtil.CreateAsFrequencyMeasure(value);
-            return CreateCommonProperty(file, propertyName, frequencyData, valueType, null);
-        }
+   /// <summary>
+   /// Provides static methods to create varies IFC properties.  Inherit from PropertyUtil for protected helper functions.
+   /// </summary>
+   public class FrequencyPropertyUtil : PropertyUtil
+   {
+      /// <summary>Create a FrequencyMeasure property.</summary>
+      /// <param name="file">The IFC file.</param>
+      /// <param name="propertyName">The name of the property.</param>
+      /// <param name="value">The value of the property.</param>
+      /// <param name="valueType">The value type of the property.</param>
+      /// <returns>The created property handle.</returns>
+      public static IFCAnyHandle CreateFrequencyProperty(IFCFile file, string propertyName, double value, PropertyValueType valueType)
+      {
+         IFCData frequencyData = IFCDataUtil.CreateAsFrequencyMeasure(value);
+         return CreateCommonProperty(file, propertyName, frequencyData, valueType, null);
+      }
 
-        /// <summary>
-        /// Create a Frequency measure property from the element's parameter.
-        /// </summary>
-        /// <param name="file">The IFC file.</param>
-        /// <param name="exporterIFC">The ExporterIFC.</param>
-        /// <param name="elem">The Element.</param>
-        /// <param name="revitParameterName">The name of the parameter.</param>
-        /// <param name="ifcPropertyName">The name of the property.</param>
-        /// <param name="valueType">The value type of the property.</param>
-        /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateFrequencyPropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
-            string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
-        {
-            double propertyValue;
-            if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
-                return CreateFrequencyProperty(file, ifcPropertyName, propertyValue, valueType);
-            return null;
-        }
+      /// <summary>
+      /// Create a Frequency measure property from the element's parameter.
+      /// </summary>
+      /// <param name="file">The IFC file.</param>
+      /// <param name="exporterIFC">The ExporterIFC.</param>
+      /// <param name="elem">The Element.</param>
+      /// <param name="revitParameterName">The name of the parameter.</param>
+      /// <param name="ifcPropertyName">The name of the property.</param>
+      /// <param name="valueType">The value type of the property.</param>
+      /// <returns>The created property handle.</returns>
+      public static IFCAnyHandle CreateFrequencyPropertyFromElement(IFCFile file, ExporterIFC exporterIFC, Element elem,
+          string revitParameterName, string ifcPropertyName, PropertyValueType valueType)
+      {
+         double propertyValue;
+         if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
+            return CreateFrequencyProperty(file, ifcPropertyName, propertyValue, valueType);
+         return null;
+      }
 
-        /// <summary>
-        /// Create a Frequency measure property from the element's or type's parameter.
-        /// </summary>
-        /// <param name="file">The IFC file.</param>
-        /// <param name="exporterIFC">The ExporterIFC.</param>
-        /// <param name="elem">The Element.</param>
-        /// <param name="revitParameterName">The name of the parameter.</param>
-        /// <param name="revitBuiltInParam">The built in parameter to use, if revitParameterName isn't found.</param>
-        /// <param name="ifcPropertyName">The name of the property.</param>
-        /// <param name="valueType">The value type of the property.</param>
-        /// <returns>The created property handle.</returns>
-        public static IFCAnyHandle CreateFrequencyPropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
-            string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
-        {
-            IFCAnyHandle propHnd = CreateFrequencyPropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName, valueType);
+      /// <summary>
+      /// Create a Frequency measure property from the element's or type's parameter.
+      /// </summary>
+      /// <param name="file">The IFC file.</param>
+      /// <param name="exporterIFC">The ExporterIFC.</param>
+      /// <param name="elem">The Element.</param>
+      /// <param name="revitParameterName">The name of the parameter.</param>
+      /// <param name="revitBuiltInParam">The built in parameter to use, if revitParameterName isn't found.</param>
+      /// <param name="ifcPropertyName">The name of the property.</param>
+      /// <param name="valueType">The value type of the property.</param>
+      /// <returns>The created property handle.</returns>
+      public static IFCAnyHandle CreateFrequencyPropertyFromElementOrSymbol(IFCFile file, ExporterIFC exporterIFC, Element elem,
+          string revitParameterName, BuiltInParameter revitBuiltInParam, string ifcPropertyName, PropertyValueType valueType)
+      {
+         IFCAnyHandle propHnd = CreateFrequencyPropertyFromElement(file, exporterIFC, elem, revitParameterName, ifcPropertyName, valueType);
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
+            return propHnd;
+
+         if (revitBuiltInParam != BuiltInParameter.INVALID)
+         {
+            string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
+            propHnd = CreateFrequencyPropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName, valueType);
             if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
-                return propHnd;
+               return propHnd;
+         }
 
-            if (revitBuiltInParam != BuiltInParameter.INVALID)
-            {
-                string builtInParamName = LabelUtils.GetLabelFor(revitBuiltInParam);
-                propHnd = CreateFrequencyPropertyFromElement(file, exporterIFC, elem, builtInParamName, ifcPropertyName, valueType);
-                if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
-                    return propHnd;
-            }
-
-            // For Symbol
-            Document document = elem.Document;
-            ElementId typeId = elem.GetTypeId();
-            Element elemType = document.GetElement(typeId);
-            if (elemType != null)
-                return CreateFrequencyPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
-            else
-                return null;
-        }
-    }
+         // For Symbol
+         Document document = elem.Document;
+         ElementId typeId = elem.GetTypeId();
+         Element elemType = document.GetElement(typeId);
+         if (elemType != null)
+            return CreateFrequencyPropertyFromElementOrSymbol(file, exporterIFC, elemType, revitParameterName, revitBuiltInParam, ifcPropertyName, valueType);
+         else
+            return null;
+      }
+   }
 }

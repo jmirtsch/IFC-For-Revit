@@ -48,9 +48,9 @@ namespace Revit.IFC.Export.Exporter
       /// </summary>
       ShapeRepresentationType m_RepresentationType = ShapeRepresentationType.Undefined;
 
-       /// <summary>
-       /// Footprint representation info
-       /// </summary>
+      /// <summary>
+      /// Footprint representation info
+      /// </summary>
       FootPrintInfo m_FootprintInfo = null;
 
       /// <summary>
@@ -102,13 +102,13 @@ namespace Revit.IFC.Export.Exporter
          protected set { m_Facets = value; }
       }
 
-       /// <summary>
-       /// Additional representation for the Footprint
-       /// </summary>
-       public FootPrintInfo FootprintInfo
+      /// <summary>
+      /// Additional representation for the Footprint
+      /// </summary>
+      public FootPrintInfo FootprintInfo
       {
-          get { return m_FootprintInfo; }
-          set { m_FootprintInfo = value; }
+         get { return m_FootprintInfo; }
+         set { m_FootprintInfo = value; }
       }
 
       /// <summary>
@@ -147,7 +147,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="solid">The solid.</param>
       /// <param name="normal">The normal of the plane that the path lies on.</param>
       /// <returns>The SweptSolidExporter.</returns>
-      public static SweptSolidExporter Create(ExporterIFC exporterIFC, Element element, SimpleSweptSolidAnalyzer sweptAnalyzer, GeometryObject geomObject, GenerateAdditionalInfo addInfo=GenerateAdditionalInfo.None)
+      public static SweptSolidExporter Create(ExporterIFC exporterIFC, Element element, SimpleSweptSolidAnalyzer sweptAnalyzer, GeometryObject geomObject, GenerateAdditionalInfo addInfo = GenerateAdditionalInfo.None)
       {
          try
          {
@@ -181,13 +181,13 @@ namespace Revit.IFC.Export.Exporter
                Transform lcs = GeometryUtil.CreateTransformFromPlanarFace(sweptAnalyzer.ProfileFace);
                sweptSolidExporter.RepresentationItem = ExtrusionExporter.CreateExtrudedSolidFromCurveLoop(exporterIFC, profileName, faceBoundaries, lcs,
                    line.Direction, UnitUtil.ScaleLength(line.Length), false);
-                if ((addInfo & GenerateAdditionalInfo.GenerateFootprint) != 0)
-                {
+               if ((addInfo & GenerateAdditionalInfo.GenerateFootprint) != 0)
+               {
                   FootPrintInfo fInfo = new FootPrintInfo();
                   fInfo.LCSTransformUsed = lcs;
                   fInfo.FootPrintHandle = GeometryUtil.CreateIFCCurveFromCurveLoop(exporterIFC, faceBoundaries[0], lcs, line.Direction);
-                  sweptSolidExporter.FootprintInfo = fInfo; 
-                }
+                  sweptSolidExporter.FootprintInfo = fInfo;
+               }
             }
             else
             {

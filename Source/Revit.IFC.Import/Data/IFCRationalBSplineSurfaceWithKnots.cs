@@ -51,8 +51,8 @@ namespace Revit.IFC.Import.Data
       /// </remarks>
       public List<double> WeightsList
       {
-         get 
-         { 
+         get
+         {
             if (m_WeightsList == null)
                m_WeightsList = new List<double>();
             return m_WeightsList;
@@ -72,7 +72,7 @@ namespace Revit.IFC.Import.Data
       protected override void Process(IFCAnyHandle ifcRationalBSplineSurfaceWithKnots)
       {
          base.Process(ifcRationalBSplineSurfaceWithKnots);
-         
+
          IList<IList<double>> weightsData = IFCImportHandleUtil.GetListOfListOfDoubleAttribute(ifcRationalBSplineSurfaceWithKnots, "WeightsData");
          if (weightsData != null)
          {

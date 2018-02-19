@@ -283,4 +283,3 @@ namespace BIM.IFC.Export.UI
 
     }
 }
-

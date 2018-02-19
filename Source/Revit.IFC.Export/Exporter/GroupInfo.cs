@@ -25,28 +25,28 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Exporter
 {
-    public class GroupInfo
-    {
-        private IFCAnyHandle m_GroupHandle = null;
+   public class GroupInfo
+   {
+      private IFCAnyHandle m_GroupHandle = null;
 
-        private HashSet<IFCAnyHandle> m_ElementHandles = new HashSet<IFCAnyHandle>();
+      private HashSet<IFCAnyHandle> m_ElementHandles = new HashSet<IFCAnyHandle>();
 
-        /// <summary>
-        /// The Group handle.
-        /// </summary>
-        public IFCAnyHandle GroupHandle
-        {
-            get { return m_GroupHandle; }
-            set { m_GroupHandle = value; }
-        }
+      /// <summary>
+      /// The Group handle.
+      /// </summary>
+      public IFCAnyHandle GroupHandle
+      {
+         get { return m_GroupHandle; }
+         set { m_GroupHandle = value; }
+      }
 
-        /// <summary>
-        /// The associated element handles.
-        /// </summary>
-        public HashSet<IFCAnyHandle> ElementHandles
-        {
-            get { return m_ElementHandles; }
-            set { m_ElementHandles = value; }
-        }
-    }
+      /// <summary>
+      /// The associated element handles.
+      /// </summary>
+      public HashSet<IFCAnyHandle> ElementHandles
+      {
+         get { return m_ElementHandles; }
+         set { m_ElementHandles = value; }
+      }
+   }
 }

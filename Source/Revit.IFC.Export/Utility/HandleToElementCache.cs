@@ -26,51 +26,51 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// This maps an IFC handle to the Element that created it.
-    /// </summary>
-    /// <remarks>
-    /// This is used to identify which element should be used for properties, for elements 
-    /// (e.g. Stairs) that contain other elements.
-    /// </remarks>
-    public class HandleToElementCache
-    {
-        /// <summary>
-        /// The dictionary mapping from an IFC handle to ElementId. 
-        /// </summary>
-        private Dictionary<IFCAnyHandle, ElementId> m_HandleToElementCache = new Dictionary<IFCAnyHandle, ElementId>();
+   /// <summary>
+   /// This maps an IFC handle to the Element that created it.
+   /// </summary>
+   /// <remarks>
+   /// This is used to identify which element should be used for properties, for elements 
+   /// (e.g. Stairs) that contain other elements.
+   /// </remarks>
+   public class HandleToElementCache
+   {
+      /// <summary>
+      /// The dictionary mapping from an IFC handle to ElementId. 
+      /// </summary>
+      private Dictionary<IFCAnyHandle, ElementId> m_HandleToElementCache = new Dictionary<IFCAnyHandle, ElementId>();
 
-        /// <summary>
-        /// Finds the ElementId from the dictionary.
-        /// </summary>
-        /// <param name="hnd">
-        /// The handle.
-        /// </param>
-        /// <returns>
-        /// The ElementId.
-        /// </returns>
-        public ElementId Find(IFCAnyHandle hnd)
-        {
-            ElementId id;
-            if (m_HandleToElementCache.TryGetValue(hnd, out id))
-            {
-                return id;
-            }
-            return ElementId.InvalidElementId;
-        }
+      /// <summary>
+      /// Finds the ElementId from the dictionary.
+      /// </summary>
+      /// <param name="hnd">
+      /// The handle.
+      /// </param>
+      /// <returns>
+      /// The ElementId.
+      /// </returns>
+      public ElementId Find(IFCAnyHandle hnd)
+      {
+         ElementId id;
+         if (m_HandleToElementCache.TryGetValue(hnd, out id))
+         {
+            return id;
+         }
+         return ElementId.InvalidElementId;
+      }
 
-        /// <summary>
-        /// Adds the handle to the dictionary.
-        /// </summary>
-        /// <param name="handle">
-        /// The handle.
-        /// </param>
-        /// <param name="elementId">
-        /// The material element elementId.
-        /// </param>
-        public void Register(IFCAnyHandle handle, ElementId elementId)
-        {
-            m_HandleToElementCache[handle] = elementId;
-        }
-    }
+      /// <summary>
+      /// Adds the handle to the dictionary.
+      /// </summary>
+      /// <param name="handle">
+      /// The handle.
+      /// </param>
+      /// <param name="elementId">
+      /// The material element elementId.
+      /// </param>
+      public void Register(IFCAnyHandle handle, ElementId elementId)
+      {
+         m_HandleToElementCache[handle] = elementId;
+      }
+   }
 }

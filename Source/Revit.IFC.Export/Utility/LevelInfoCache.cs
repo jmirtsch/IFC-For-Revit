@@ -155,7 +155,7 @@ namespace Revit.IFC.Export.Utility
             return m_OrphanedSpaces;
          }
       }
-      
+
       /// <summary>
       /// Adds an IFCLevelInfo to the LevelsByElevation list, also updating the native cache item.
       /// </summary>

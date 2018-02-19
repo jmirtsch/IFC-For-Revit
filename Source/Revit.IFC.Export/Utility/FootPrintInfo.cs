@@ -40,7 +40,7 @@ namespace Revit.IFC.Export.Utility
          get { return m_FootPrintGeomHandle; }
          set { m_FootPrintGeomHandle = value; }
       }
-     
+
       /// <summary>
       /// The LCS transformation used for the Footprint
       /// </summary>

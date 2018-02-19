@@ -30,78 +30,78 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents an IfcWindowPanelProperties
-    /// </summary>
-    public class IFCWindowPanelProperties : IFCDoorWindowPropertyBase
-    {
-        int PanelNumber { get; set; }
+   /// <summary>
+   /// Represents an IfcWindowPanelProperties
+   /// </summary>
+   public class IFCWindowPanelProperties : IFCDoorWindowPropertyBase
+   {
+      int PanelNumber { get; set; }
 
-        /// <summary>
-        /// Processes IfcWindowPanelProperties attributes.
-        /// </summary>
-        /// <param name="ifcWindowPanelProperties">The IfcWindowPanelProperties handle.</param>
-        /// <param name="panelNumber">The panel number.</param>
-        protected IFCWindowPanelProperties(IFCAnyHandle ifcWindowPanelProperties, int panelNumber)
-        {
-            PanelNumber = panelNumber;
-            Process(ifcWindowPanelProperties);
-        }
+      /// <summary>
+      /// Processes IfcWindowPanelProperties attributes.
+      /// </summary>
+      /// <param name="ifcWindowPanelProperties">The IfcWindowPanelProperties handle.</param>
+      /// <param name="panelNumber">The panel number.</param>
+      protected IFCWindowPanelProperties(IFCAnyHandle ifcWindowPanelProperties, int panelNumber)
+      {
+         PanelNumber = panelNumber;
+         Process(ifcWindowPanelProperties);
+      }
 
-        private string GeneratePropertyName(string originalPropertyName)
-        {
-            if (PanelNumber <= 1)
-                return originalPropertyName;
-            else
-                return originalPropertyName + " " + PanelNumber;
-        }
+      private string GeneratePropertyName(string originalPropertyName)
+      {
+         if (PanelNumber <= 1)
+            return originalPropertyName;
+         else
+            return originalPropertyName + " " + PanelNumber;
+      }
 
-        /// <summary>
-        /// Processes an IfcWindowPanelProperties entity.
-        /// </summary>
-        /// <param name="ifcWindowPanelProperties">The IfcWindowPanelProperties handle.</param>
-        protected override void Process(IFCAnyHandle ifcWindowPanelProperties)
-        {
-            base.Process(ifcWindowPanelProperties);
+      /// <summary>
+      /// Processes an IfcWindowPanelProperties entity.
+      /// </summary>
+      /// <param name="ifcWindowPanelProperties">The IfcWindowPanelProperties handle.</param>
+      protected override void Process(IFCAnyHandle ifcWindowPanelProperties)
+      {
+         base.Process(ifcWindowPanelProperties);
 
-            string currPropertyValueString = IFCImportHandleUtil.GetOptionalStringAttribute(ifcWindowPanelProperties, "OperationType", null);
-            if (!string.IsNullOrEmpty(currPropertyValueString))
-                StringProperties[GeneratePropertyName("OperationType")] = currPropertyValueString;
+         string currPropertyValueString = IFCImportHandleUtil.GetOptionalStringAttribute(ifcWindowPanelProperties, "OperationType", null);
+         if (!string.IsNullOrEmpty(currPropertyValueString))
+            StringProperties[GeneratePropertyName("OperationType")] = currPropertyValueString;
 
-            currPropertyValueString = IFCImportHandleUtil.GetOptionalStringAttribute(ifcWindowPanelProperties, "PanelPosition", null);
-            if (!string.IsNullOrEmpty(currPropertyValueString))
-                StringProperties[GeneratePropertyName("PanelPosition")] = currPropertyValueString;
+         currPropertyValueString = IFCImportHandleUtil.GetOptionalStringAttribute(ifcWindowPanelProperties, "PanelPosition", null);
+         if (!string.IsNullOrEmpty(currPropertyValueString))
+            StringProperties[GeneratePropertyName("PanelPosition")] = currPropertyValueString;
 
-            double currPropertyValue = IFCImportHandleUtil.GetOptionalScaledLengthAttribute(ifcWindowPanelProperties, "FrameDepth", -1e+30);
-            if (!MathUtil.IsAlmostEqual(currPropertyValue, -1e+30))
-                DoubleProperties[new Tuple<string, UnitType, AllowedValues>(GeneratePropertyName("FrameDepth"), 
-                    UnitType.UT_Length, AllowedValues.Positive)] = currPropertyValue;
+         double currPropertyValue = IFCImportHandleUtil.GetOptionalScaledLengthAttribute(ifcWindowPanelProperties, "FrameDepth", -1e+30);
+         if (!MathUtil.IsAlmostEqual(currPropertyValue, -1e+30))
+            DoubleProperties[new Tuple<string, UnitType, AllowedValues>(GeneratePropertyName("FrameDepth"),
+                UnitType.UT_Length, AllowedValues.Positive)] = currPropertyValue;
 
-            currPropertyValue = IFCImportHandleUtil.GetOptionalScaledLengthAttribute(ifcWindowPanelProperties, "FrameThickness", -1e+30);
-            if (!MathUtil.IsAlmostEqual(currPropertyValue, -1e+30))
-                DoubleProperties[new Tuple<string, UnitType, AllowedValues>(GeneratePropertyName("FrameThickness"),
-                    UnitType.UT_Length, AllowedValues.Positive)] = currPropertyValue;
-        }
+         currPropertyValue = IFCImportHandleUtil.GetOptionalScaledLengthAttribute(ifcWindowPanelProperties, "FrameThickness", -1e+30);
+         if (!MathUtil.IsAlmostEqual(currPropertyValue, -1e+30))
+            DoubleProperties[new Tuple<string, UnitType, AllowedValues>(GeneratePropertyName("FrameThickness"),
+                UnitType.UT_Length, AllowedValues.Positive)] = currPropertyValue;
+      }
 
-        /// <summary>
-        /// Processes an IfcWindowPanelProperties set.
-        /// </summary>
-        /// <param name="ifcWindowPanelProperties">The IfcWindowPanelProperties object.</param>
-        /// <param name="panelNumber">The panel number, based on the containing IfcObject.</param>
-        /// <returns>The IFCWindowPanelProperties object.</returns>
-        public static IFCWindowPanelProperties ProcessIFCWindowPanelProperties(IFCAnyHandle ifcWindowPanelProperties, int panelNumber)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcWindowPanelProperties))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcWindowPanelProperties);
-                return null;
-            }
+      /// <summary>
+      /// Processes an IfcWindowPanelProperties set.
+      /// </summary>
+      /// <param name="ifcWindowPanelProperties">The IfcWindowPanelProperties object.</param>
+      /// <param name="panelNumber">The panel number, based on the containing IfcObject.</param>
+      /// <returns>The IFCWindowPanelProperties object.</returns>
+      public static IFCWindowPanelProperties ProcessIFCWindowPanelProperties(IFCAnyHandle ifcWindowPanelProperties, int panelNumber)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcWindowPanelProperties))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcWindowPanelProperties);
+            return null;
+         }
 
-            IFCEntity windowPanelProperties;
-            if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcWindowPanelProperties.StepId, out windowPanelProperties))
-                return (windowPanelProperties as IFCWindowPanelProperties);
+         IFCEntity windowPanelProperties;
+         if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcWindowPanelProperties.StepId, out windowPanelProperties))
+            return (windowPanelProperties as IFCWindowPanelProperties);
 
-            return new IFCWindowPanelProperties(ifcWindowPanelProperties, panelNumber);
-        }
-    }
+         return new IFCWindowPanelProperties(ifcWindowPanelProperties, panelNumber);
+      }
+   }
 }

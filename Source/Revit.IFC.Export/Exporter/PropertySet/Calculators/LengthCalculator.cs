@@ -28,94 +28,81 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate gross area.
-    /// </summary>
-    class LengthCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Length = 0;
-
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static LengthCalculator s_Instance = new LengthCalculator();
+   /// <summary>
+   /// A calculation class to calculate gross area.
+   /// </summary>
+   class LengthCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Length = 0;
 
       /// <summary>
-      /// The LengthCalculator instance.
+      /// A static instance of this class.
       /// </summary>
-      public static LengthCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      static LengthCalculator s_Instance = new LengthCalculator();
 
-        /// <summary>
-        /// Calculates cross area.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            double lengthFromParam = 0;
-            ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyLength", out lengthFromParam);
-            if (extrusionCreationData == null)
-            {
-               double length = 0;
-               ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.EXTRUSION_LENGTH, out length);
-               if (length > MathUtil.Eps())
-               {
-                  m_Length = length;
-                  return true;
-               }
-               else if (lengthFromParam < MathUtil.Eps())
-                  return false;
-               else
-               {
-                  m_Length = lengthFromParam;
-                  return true;
-               }
-            }
-            else
-               m_Length = extrusionCreationData.ScaledLength;
+   /// <summary>
+   /// The LengthCalculator instance.
+   /// </summary>
+   public static LengthCalculator Instance
+      {
+         get { return s_Instance; }
+      }
+
+      /// <summary>
+      /// Calculates cross area.
+      /// </summary>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="extrusionCreationData">
+      /// The IFCExtrusionCreationData.
+      /// </param>
+      /// <param name="element">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="elementType">
+      /// The element type.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         double lengthFromParam = 0;
+         if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyLength", out lengthFromParam) == null)
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcLength", out lengthFromParam) == null)
+               ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "Length", out lengthFromParam);
+
+         m_Length = UnitUtil.ScaleLength(lengthFromParam);
+         if (m_Length > MathUtil.Eps())
+            return true;
+
+         if (extrusionCreationData == null)
+         {
+            if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.EXTRUSION_LENGTH, out m_Length) != null)
+               m_Length = UnitUtil.ScaleLength(m_Length);
+         }
+         else
+            m_Length = extrusionCreationData.ScaledLength;
 
          if (m_Length > MathUtil.Eps())
-               return true;
-            else
-            {
-               if (lengthFromParam < MathUtil.Eps())
-                  return false;
-               else
-               {
-                  m_Length = lengthFromParam;
-                  return true;
-               }
-            }
-        }
+            return true;
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Length;
-        }
-    }
+         return false;
+      }
+
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Length;
+      }
+   }
 }

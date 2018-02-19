@@ -246,7 +246,7 @@ namespace Revit.IFC.Import.Data
       {
          // Only set the project location for the site that contains the building.
          bool hasBuilding = false;
-         
+
          foreach (IFCObjectDefinition objectDefinition in ComposedObjectDefinitions)
          {
             if (objectDefinition is IFCBuilding)

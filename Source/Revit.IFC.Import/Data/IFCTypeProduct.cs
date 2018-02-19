@@ -68,7 +68,7 @@ namespace Revit.IFC.Import.Data
          Process(ifcTypeProduct);
       }
 
-      
+
       private void RegisterRepresentationMapWithTypeProject(IFCRepresentationMap representationMap, IFCTypeProduct typeProduct)
       {
          if (representationMap == null || typeProduct == null)

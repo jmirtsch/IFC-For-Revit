@@ -74,10 +74,10 @@ namespace Revit.IFC.Import.Data
          get { return m_WorldCoordinateSystem; }
          protected set { m_WorldCoordinateSystem = value; }
       }
-      
+
       /// <summary>
-       /// The units in the project.
-       /// </summary>
+      /// The units in the project.
+      /// </summary>
       public ISet<IFCUnit> UnitsInContext
       {
          get { return m_UnitsInContext; }

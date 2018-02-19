@@ -28,13 +28,13 @@ using Revit.IFC.Import.Data;
 
 namespace Revit.IFC.Import.Enums
 {
-    /// <summary>
-    /// The shared parameters written out as part of IFC import.
-    /// </summary>
-    public enum IFCSharedParameters
-    {
-        IfcName,
-        IfcDescription,
-        IfcMaterial
-    }
+   /// <summary>
+   /// The shared parameters written out as part of IFC import.
+   /// </summary>
+   public enum IFCSharedParameters
+   {
+      IfcName,
+      IfcDescription,
+      IfcMaterial
+   }
 }

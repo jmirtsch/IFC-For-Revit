@@ -26,75 +26,75 @@ using BIM.IFC.Export.UI.Properties;
 
 namespace BIM.IFC.Export.UI
 {
-    /// <summary>
-    /// Represents the choices for the property sets exported by IFC export.
-    ///    (0) None – neither internal Revit nor IFC common property sets are exported;
-    ///    (1) InternalRevit – only internal Revit parameter groups are exported
-    ///    (2) IFCCommon – only IFC Common property sets are exported
-    ///    (3) RevitPlusIFC - both internal Revit parameter groups and IFC Common property sets are exported 
-    /// </summary>
-    public class IFCExportedPropertySets
-    {
-        /// <summary>
-        /// The level of the property sets exported.
-        /// </summary>
-        private int ExportedPropertySets { get; set; }
+   /// <summary>
+   /// Represents the choices for the property sets exported by IFC export.
+   ///    (0) None – neither internal Revit nor IFC common property sets are exported;
+   ///    (1) InternalRevit – only internal Revit parameter groups are exported
+   ///    (2) IFCCommon – only IFC Common property sets are exported
+   ///    (3) RevitPlusIFC - both internal Revit parameter groups and IFC Common property sets are exported 
+   /// </summary>
+   public class IFCExportedPropertySets
+   {
+      /// <summary>
+      /// The level of the property sets exported.
+      /// </summary>
+      private int ExportedPropertySets { get; set; }
 
-        /// <summary>
-        /// Constructs the property set option.
-        /// </summary>
-        /// <param name="exportInternalRevit">if true, internal Revit parameter groups are exported.</param>
-        /// <param name="exportIFCCommon">if true, IFC Common property sets are exported.</param>
-        /// <param name="exportSchedules">if true, schedules are exported.</param>
-        /// <param name="exportSchedules">if true, user defined property sets are exported.</param>
-        public IFCExportedPropertySets(bool exportInternalRevit, bool exportIFCCommon, bool exportSchedules, bool exportUserDefined)
-        {
-            ExportedPropertySets = ((exportInternalRevit) ? 1 : 0) + ((exportIFCCommon) ? 2 : 0) + ((exportSchedules) ? 4 : 0) + ((exportUserDefined) ? 8 : 0);
-        }
+      /// <summary>
+      /// Constructs the property set option.
+      /// </summary>
+      /// <param name="exportInternalRevit">if true, internal Revit parameter groups are exported.</param>
+      /// <param name="exportIFCCommon">if true, IFC Common property sets are exported.</param>
+      /// <param name="exportSchedules">if true, schedules are exported.</param>
+      /// <param name="exportSchedules">if true, user defined property sets are exported.</param>
+      public IFCExportedPropertySets(bool exportInternalRevit, bool exportIFCCommon, bool exportSchedules, bool exportUserDefined)
+      {
+         ExportedPropertySets = ((exportInternalRevit) ? 1 : 0) + ((exportIFCCommon) ? 2 : 0) + ((exportSchedules) ? 4 : 0) + ((exportUserDefined) ? 8 : 0);
+      }
 
-        /// <summary>
-        /// Converts the property set level to a string.
-        /// </summary>
-        /// <returns>The string of exported property sets.</returns>
-        public override string ToString()
-        {
-            switch (ExportedPropertySets)
-            {
-                case 0:
-                    return Resources.PropertySetsNone;
-                case 1:
-                    return Resources.PropertySetsInternalRevit;
-                case 2:
-                    return Resources.PropertySetsIFCCommon;
-                case 3:
-                    return Resources.PropertySetsRevitPlusIFC;
-                case 4:
-                    return Resources.PropertySetsSchedules;
-                case 5:
-                    return Resources.PropertySetsSchedulesPlusRevit;
-                case 6:
-                    return Resources.PropertySetsSchedulesPlusIFC;
-                case 7:
-                    return Resources.PropertySetsSchedulesPlusRevitPlusIFC;
-                case 8:
-                    return Resources.PropertySetsUserDefined;
-                case 9:
-                    return Resources.PropertySetsInternalRevitPlusUserDefined;
-                case 10:
-                    return Resources.PropertySetsIFCCommonPlusUserDefined;
-                case 11:
-                    return Resources.PropertySetsRevitPlusIFCPlusUserDefined;
-                case 12:
-                    return Resources.PropertySetsSchedulesPlusUserDefined;
-                case 13:
-                    return Resources.PropertySetsSchedulesPlusRevitPlusUserDefined;
-                case 14:
-                    return Resources.PropertySetsSchedulesPlusIFCPlusUserDefined;
-                case 15:
-                    return Resources.PropertySetsSchedulesPlusRevitPlusIFCPlusUserDefined;
-                default:
-                    return Resources.PropertySetsUnrecognized;
-            }
-        }
-    }
+      /// <summary>
+      /// Converts the property set level to a string.
+      /// </summary>
+      /// <returns>The string of exported property sets.</returns>
+      public override string ToString()
+      {
+         switch (ExportedPropertySets)
+         {
+            case 0:
+               return Resources.PropertySetsNone;
+            case 1:
+               return Resources.PropertySetsInternalRevit;
+            case 2:
+               return Resources.PropertySetsIFCCommon;
+            case 3:
+               return Resources.PropertySetsRevitPlusIFC;
+            case 4:
+               return Resources.PropertySetsSchedules;
+            case 5:
+               return Resources.PropertySetsSchedulesPlusRevit;
+            case 6:
+               return Resources.PropertySetsSchedulesPlusIFC;
+            case 7:
+               return Resources.PropertySetsSchedulesPlusRevitPlusIFC;
+            case 8:
+               return Resources.PropertySetsUserDefined;
+            case 9:
+               return Resources.PropertySetsInternalRevitPlusUserDefined;
+            case 10:
+               return Resources.PropertySetsIFCCommonPlusUserDefined;
+            case 11:
+               return Resources.PropertySetsRevitPlusIFCPlusUserDefined;
+            case 12:
+               return Resources.PropertySetsSchedulesPlusUserDefined;
+            case 13:
+               return Resources.PropertySetsSchedulesPlusRevitPlusUserDefined;
+            case 14:
+               return Resources.PropertySetsSchedulesPlusIFCPlusUserDefined;
+            case 15:
+               return Resources.PropertySetsSchedulesPlusRevitPlusIFCPlusUserDefined;
+            default:
+               return Resources.PropertySetsUnrecognized;
+         }
+      }
+   }
 }

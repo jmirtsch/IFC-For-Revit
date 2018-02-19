@@ -33,9 +33,9 @@ using UnitName = Autodesk.Revit.DB.DisplayUnitType;
 
 namespace Revit.IFC.Import.Utility
 {
-    /// <summary>
-    /// Provides methods to manage creation of geometry using BrepBuilder
-    /// </summary>
+   /// <summary>
+   /// Provides methods to manage creation of geometry using BrepBuilder
+   /// </summary>
    public class BrepBuilderScope : BuilderScope
    {
       private BRepBuilder m_BrepBuilder = null;
@@ -141,7 +141,7 @@ namespace Revit.IFC.Import.Utility
 
          int uDegree = bSplineSurfaceWithKnots.UDegree;
          int vDegree = bSplineSurfaceWithKnots.VDegree;
-         
+
          BRepBuilderSurfaceGeometry surfaceGeometry = null;
          if (weights == null)
             surfaceGeometry = BRepBuilderSurfaceGeometry.CreateNURBSSurface(uDegree, vDegree, knotsU, knotsV, controlPoints, false, null);
@@ -155,12 +155,12 @@ namespace Revit.IFC.Import.Utility
       {
          if (m_BrepBuilder == null)
             throw new InvalidOperationException("StartCollectingFaceSet has not been called");
-         
+
          if (isValid)
          {
             if (m_CurrentBrepBuilderFace == null)
                throw new InvalidOperationException("StartCollectingFaceForBrepBuilder hasn't been called yet");
-          
+
             m_BrepBuilder.FinishFace(m_CurrentBrepBuilderFace);
          }
 
@@ -249,7 +249,7 @@ namespace Revit.IFC.Import.Utility
       {
          if (m_CurrentBrepBuilderLoop == null)
             throw new InvalidOperationException("StartCollectingLoopForBrepBuilder hasn't been called");
-         
+
          BRepBuilderGeometryId edgeId = null;
 
          if (m_EdgeIdToBrepId.ContainsKey(id) && m_EdgeIdToBrepId[id] != null)

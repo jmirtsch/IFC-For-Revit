@@ -26,62 +26,62 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate number of storeys.
-    /// </summary>
-    class NumberOfStoreysCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// An integer variable to keep the calculated value.
-        /// </summary>
-        int m_NumberOfStoreys = 0;
+   /// <summary>
+   /// A calculation class to calculate number of storeys.
+   /// </summary>
+   class NumberOfStoreysCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// An integer variable to keep the calculated value.
+      /// </summary>
+      int m_NumberOfStoreys = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static NumberOfStoreysCalculator s_Instance = new NumberOfStoreysCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static NumberOfStoreysCalculator s_Instance = new NumberOfStoreysCalculator();
 
-        /// <summary>
-        /// The NumberOfStoreysCalculator instance.
-        /// </summary>
-        public static NumberOfStoreysCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The NumberOfStoreysCalculator instance.
+      /// </summary>
+      public static NumberOfStoreysCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates number of storeys.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element,">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            m_NumberOfStoreys = ExporterIFCUtils.GetNumBuildingStoreys(exporterIFC);
-            return true;
-        }
+      /// <summary>
+      /// Calculates number of storeys.
+      /// </summary>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="extrusionCreationData">
+      /// The IFCExtrusionCreationData.
+      /// </param>
+      /// <param name="element,">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="elementType">
+      /// The element type.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         m_NumberOfStoreys = ExporterIFCUtils.GetNumBuildingStoreys(exporterIFC);
+         return true;
+      }
 
-        /// <summary>
-        /// Gets the calculated integer value.
-        /// </summary>
-        /// <returns>
-        /// The integer value.
-        /// </returns>
-        public override int GetIntValue()
-        {
-            return m_NumberOfStoreys;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated integer value.
+      /// </summary>
+      /// <returns>
+      /// The integer value.
+      /// </returns>
+      public override int GetIntValue()
+      {
+         return m_NumberOfStoreys;
+      }
+   }
 }

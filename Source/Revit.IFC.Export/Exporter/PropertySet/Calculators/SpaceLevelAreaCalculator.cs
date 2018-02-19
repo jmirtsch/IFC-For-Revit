@@ -28,70 +28,76 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate level area for a space.
-    /// </summary>
-    class SpaceLevelAreaCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Area = 0;
+   /// <summary>
+   /// A calculation class to calculate level area for a space.
+   /// </summary>
+   class SpaceLevelAreaCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Area = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static SpaceLevelAreaCalculator s_Instance = new SpaceLevelAreaCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static SpaceLevelAreaCalculator s_Instance = new SpaceLevelAreaCalculator();
 
-        /// <summary>
-        /// The SpaceLevelAreaCalculator instance.
-        /// </summary>
-        public static SpaceLevelAreaCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The SpaceLevelAreaCalculator instance.
+      /// </summary>
+      public static SpaceLevelAreaCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates level area for a space.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            if (extrusionCreationData == null || element == null)
-                return false;
+      /// <summary>
+      /// Calculates level area for a space.
+      /// </summary>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="extrusionCreationData">
+      /// The IFCExtrusionCreationData.
+      /// </param>
+      /// <param name="element">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="elementType">
+      /// The element type.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcSpaceLevelArea", out m_Area) == null)
+               ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "SpaceLevelArea", out m_Area);
+         m_Area = UnitUtil.ScaleArea(m_Area);
+         if (m_Area > MathUtil.Eps() * MathUtil.Eps())
+            return true;
 
-            Area areaElement = element as Area;
-            if (areaElement == null || !areaElement.IsGrossInterior)
-                return false;
+         if (extrusionCreationData == null || element == null)
+               return false;
 
-            m_Area = extrusionCreationData.ScaledArea;
+         Area areaElement = element as Area;
+         if (areaElement == null || !areaElement.IsGrossInterior)
+               return false;
 
-            return m_Area > MathUtil.Eps() * MathUtil.Eps();
-        }
+         m_Area = extrusionCreationData.ScaledArea;
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Area;
-        }
-    }
+         return m_Area > MathUtil.Eps() * MathUtil.Eps();
+      }
+
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Area;
+      }
+   }
 }

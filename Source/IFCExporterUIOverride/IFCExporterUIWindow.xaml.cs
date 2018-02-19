@@ -17,9 +17,11 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
+using Microsoft.Win32;
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -40,6 +42,7 @@ using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.UI;
 using Revit.IFC.Common.Utility;
 
+using Newtonsoft.Json;
 
 namespace BIM.IFC.Export.UI
 {
@@ -130,15 +133,16 @@ namespace BIM.IFC.Export.UI
       /// </summary>
       private void InitializeConfigurationOptions()
       {
-         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC2x2));
-         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC2x3));
          comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC2x3CV2));
-         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFCCOBIE));
-         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFCBCA));
-         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC2x3BFM));
-         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC2x3FM));
          comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC4RV));
          comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC4DTV));
+         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC2x3));
+         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFCCOBIE));
+         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC2x3BFM));
+         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC2x2));
+         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFCBCA));
+         comboboxIfcType.Items.Add(new IFCVersionAttributes(IFCVersion.IFC2x3FM));
+
 
          foreach (IFCFileFormat fileType in Enum.GetValues(typeof(IFCFileFormat)))
          {
@@ -165,6 +169,11 @@ namespace BIM.IFC.Export.UI
          comboBoxLOD.Items.Add(Properties.Resources.DetailLevelLow);
          comboBoxLOD.Items.Add(Properties.Resources.DetailLevelMedium);
          comboBoxLOD.Items.Add(Properties.Resources.DetailLevelHigh);
+
+         comboBoxSitePlacement.Items.Add(new IFCSitePlacementAttributes(0));
+         comboBoxSitePlacement.Items.Add(new IFCSitePlacementAttributes(1));
+         comboBoxSitePlacement.Items.Add(new IFCSitePlacementAttributes(2));
+         comboBoxSitePlacement.Items.Add(new IFCSitePlacementAttributes(3));
       }
 
       private void UpdatePhaseAttributes(IFCExportConfiguration configuration)
@@ -228,6 +237,14 @@ namespace BIM.IFC.Export.UI
                break;
             }
          }
+         foreach (IFCSitePlacementAttributes attribute in comboBoxSitePlacement.Items.Cast<IFCSitePlacementAttributes>())
+         {
+            if (configuration.SitePlacement == attribute.Level)
+            {
+               comboBoxSitePlacement.SelectedItem = attribute;
+               break;
+            }
+         }
 
          UpdatePhaseAttributes(configuration);
 
@@ -251,7 +268,7 @@ namespace BIM.IFC.Export.UI
          checkboxStoreIFCGUID.IsChecked = configuration.StoreIFCGUID;
          checkBoxExportRoomsInView.IsChecked = configuration.ExportRoomsInView;
          comboBoxLOD.SelectedIndex = (int)(Math.Round(configuration.TessellationLevelOfDetail * 4) - 1);
-
+         comboBoxSitePlacement.SelectedIndex = (int)configuration.SitePlacement;
          if ((configuration.IFCVersion == IFCVersion.IFC4 || configuration.IFCVersion == IFCVersion.IFC4DTV || configuration.IFCVersion == IFCVersion.IFC4RV)
             && !configuration.IsBuiltIn)
             checkBox_TriangulationOnly.IsEnabled = true;
@@ -277,6 +294,7 @@ namespace BIM.IFC.Export.UI
          UIElement[] configurationElements = new UIElement[]{comboboxIfcType,
                                                                 comboboxFileType,
                                                                 comboboxSpaceBoundaries,
+                                                                comboBoxSitePlacement,
                                                                 checkboxExportBaseQuantities,
                                                                 checkboxSplitWalls,
                                                                 checkbox2dElements,
@@ -344,7 +362,7 @@ namespace BIM.IFC.Export.UI
          {
             // Add CompanyInfo tab
             companyInfoItem = new TabItem();
-            companyInfoItem.Header = "CompanyInfo";
+            companyInfoItem.Header = Properties.Resources.CompanyInfo;
             companyInfoItem.Content = new COBieCompanyInfoTab(config.COBieCompanyInfo);
             companyInfoItem.Unloaded += COBieCompanyInfoUnloaded;
             companyInfoItem.LostFocus += COBieCompanyInfoLostFocus;
@@ -355,7 +373,7 @@ namespace BIM.IFC.Export.UI
          {
             // Add ProjectInfo tab
             projectInfoItem = new TabItem();
-            projectInfoItem.Header = "ProjectInfo";
+            projectInfoItem.Header = Properties.Resources.ProjectInfo;
             projectInfoItem.Content = new COBieProjectInfoTab(config.COBieProjectInfo);
             projectInfoItem.Unloaded += COBieProjectInfoUnloaded;
             projectInfoItem.LostFocus += COBieProjectInfoLostFocus;
@@ -424,6 +442,7 @@ namespace BIM.IFC.Export.UI
       {
          buttonDeleteSetup.IsEnabled = !isBuiltIn && !isInSession;
          buttonRenameSetup.IsEnabled = !isBuiltIn && !isInSession;
+         buttonSaveSetup.IsEnabled = !isBuiltIn;
       }
 
       /// <summary>
@@ -497,6 +516,93 @@ namespace BIM.IFC.Export.UI
          listBoxConfigurations.SelectedIndex = 0;
       }
 
+      /// <summary>
+      /// Generate the default directory where the export takes place
+      /// </summary>
+      private string GetDefaultDirectory()
+      {
+         // If the session has a previous path, open the File Dialog using the path available in the session
+         string exportPath = IFCCommandOverrideApplication.MruExportPath != null ? IFCCommandOverrideApplication.MruExportPath : null;
+
+         // For the file dialog check if the path exists or not
+         String defaultDirectory = exportPath != null ? exportPath : null;
+
+         if ((defaultDirectory == null) || (!System.IO.Directory.Exists(defaultDirectory)))
+            defaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
+         return defaultDirectory;
+      }
+
+      private void buttonSaveSetup_Click(object sender, RoutedEventArgs e)
+      {
+         IFCExportConfiguration configuration = (IFCExportConfiguration)listBoxConfigurations.SelectedItem;
+         if (configuration.IsBuiltIn)
+         {
+            // This shouldn't happen; the button is disabled.
+            return;
+         }
+
+         SaveFileDialog saveFileDialog = new SaveFileDialog();
+         saveFileDialog.AddExtension = true;
+
+         saveFileDialog.DefaultExt = "json";
+         saveFileDialog.Filter = Properties.Resources.ConfigurationFilePrefix + " (*.json)|*.json";
+         saveFileDialog.FileName = Properties.Resources.ConfigurationFilePrefix + " - " + configuration.Name + ".json";
+         saveFileDialog.InitialDirectory = GetDefaultDirectory();
+         saveFileDialog.OverwritePrompt = false;
+
+         bool? fileDialogResult = saveFileDialog.ShowDialog();
+         if (fileDialogResult.HasValue && fileDialogResult.Value)
+         {
+            JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings();
+            jsonSerializerSettings.Formatting = Formatting.Indented;
+            using (StreamWriter sw = new StreamWriter(saveFileDialog.FileName))
+            {
+               sw.Write(JsonConvert.SerializeObject(configuration, jsonSerializerSettings));
+            }
+         }
+         //Process.Start(saveFileDialog.FileName);
+      }
+      private void buttonLoadSetup_Click(object sender, RoutedEventArgs e)
+      {
+         OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+
+         // Set filter for file extension and default file extension 
+         openFileDialog.DefaultExt = ".json";
+         openFileDialog.Filter = Properties.Resources.ConfigurationFilePrefix + " (*.json)|*.json";
+         openFileDialog.InitialDirectory = GetDefaultDirectory();
+
+         // Display OpenFileDialog by calling ShowDialog method 
+         bool? result = openFileDialog.ShowDialog();
+
+         // Get the selected file name and display in a TextBox 
+         if (result.HasValue && result.Value)
+         {
+            try
+            {
+               using (StreamReader sr = new StreamReader(openFileDialog.FileName))
+               {
+                  IFCExportConfiguration configuration = JsonConvert.DeserializeObject<IFCExportConfiguration>(sr.ReadToEnd());
+                  if (configuration != null)
+                  {
+                     if (m_configurationsMap.HasName(configuration.Name))
+                        configuration.Name = GetFirstIncrementalName(configuration.Name);
+                     m_configurationsMap.Add(configuration);
+
+                     // set new configuration as selected
+                     listBoxConfigurations.Items.Add(configuration);
+                     listBoxConfigurations.SelectedItem = configuration;
+                  }
+               }
+            }
+            catch (Exception)
+            {
+
+            }
+         }
+
+         //Process.Start(saveFileDialog.FileName);
+      }
       /// <summary>
       /// Shows the rename control and updates with the results.
       /// </summary>
@@ -662,17 +768,11 @@ namespace BIM.IFC.Export.UI
                // Keep COBie specific data from the special tabs
                if (prevConfig.IFCVersion == IFCVersion.IFC2x3FM)
                {
-                  if (companyInfoItem == null || !tabControl.Items.Contains(companyInfoItem))
-                  {
+                  if (companyInfoItem != null && tabControl.Items.Contains(companyInfoItem))
                      prevConfig.COBieCompanyInfo = (companyInfoItem.Content as COBieCompanyInfoTab).CompanyInfoStr;
-                     companyInfoItem = null;
-                  }
 
-                  if (projectInfoItem == null || !tabControl.Items.Contains(projectInfoItem))
-                  {
+                  if (projectInfoItem != null && tabControl.Items.Contains(projectInfoItem))
                      prevConfig.COBieProjectInfo = (projectInfoItem.Content as COBieProjectInfoTab).ProjectInfoStr;
-                     projectInfoItem = null;
-                  }
                }
             }
          }
@@ -853,8 +953,27 @@ namespace BIM.IFC.Export.UI
 
             LoadTreeviewFilterElement(treeView_FilterElement);
          }
+
+         if (configuration.IFCVersion.Equals(IFCVersion.IFC2x3FM))
+         {
+            DoCOBieSpecificSetup(configuration);
+         }
+         else
+         {
+            // Possibly we need to remove the additional COBie specific setup
+            UndoCOBieSpecificSetup(configuration);
+         }
       }
 
+      private void comboBoxPlacement_SelectionChanged(object sender, SelectionChangedEventArgs e)
+      {
+         IFCSitePlacementAttributes attributes = (IFCSitePlacementAttributes)comboBoxSitePlacement.SelectedItem;
+         IFCExportConfiguration configuration = GetSelectedConfiguration();
+         if (attributes != null && configuration != null)
+         {
+            configuration.SitePlacement = attributes.Level;
+         }
+      }
 
       /// <summary>
       /// Updates the configuration IFCFileType when FileType changed in the combobox.
@@ -1091,11 +1210,11 @@ namespace BIM.IFC.Export.UI
       {
          IFCExportConfiguration configuration = GetSelectedConfiguration();
 
-         Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+         OpenFileDialog dlg = new OpenFileDialog();
 
          // Set filter for file extension and default file extension 
          dlg.DefaultExt = ".txt";
-         dlg.Filter = Properties.Resources.UserDefinedParameterSets + @"|*.txt";
+         dlg.Filter = Properties.Resources.UserDefinedParameterSets + @"|*.txt"; //@"|*.txt; *.ifcxml; *.ifcjson";
          if (configuration != null && !string.IsNullOrWhiteSpace(configuration.ExportUserDefinedPsetsFileName))
          {
             string pathName = System.IO.Path.GetDirectoryName(configuration.ExportUserDefinedPsetsFileName);
@@ -1126,7 +1245,7 @@ namespace BIM.IFC.Export.UI
       {
          IFCExportConfiguration configuration = GetSelectedConfiguration();
 
-         Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+         OpenFileDialog dlg = new OpenFileDialog();
 
          dlg.DefaultExt = ".txt";
          dlg.Filter = Properties.Resources.UserDefinedParameterMappingTable + @"|*.txt";

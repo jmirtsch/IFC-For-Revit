@@ -27,56 +27,56 @@ using BIM.IFC.Export.UI.Properties;
 
 namespace BIM.IFC.Export.UI
 {
-    /// <summary>
-    /// Represents the choices available for the file version during IFC export.
-    /// </summary>
-    public class IFCVersionAttributes
-    {
-        /// <summary>
-        /// The IFC file version into which a file may be exported.
-        /// </summary>
-        public IFCVersion Version { get; set; }
+   /// <summary>
+   /// Represents the choices available for the file version during IFC export.
+   /// </summary>
+   public class IFCVersionAttributes
+   {
+      /// <summary>
+      /// The IFC file version into which a file may be exported.
+      /// </summary>
+      public IFCVersion Version { get; set; }
 
-        /// <summary>
-        /// Constructs the file version choices.
-        /// </summary>
-        /// <param name="version"></param>
-        public IFCVersionAttributes(IFCVersion version)
-        {
-            Version = version;
-        }
+      /// <summary>
+      /// Constructs the file version choices.
+      /// </summary>
+      /// <param name="version"></param>
+      public IFCVersionAttributes(IFCVersion version)
+      {
+         Version = version;
+      }
 
-        /// <summary>
-        /// Converts the IFCVersion to string.
-        /// </summary>
-        /// <returns>The string of IFCVersion.</returns>
-        public override String ToString()
-        {
-            switch (Version)
-            {
-                case IFCVersion.IFC2x2:
-                    return Resources.IFCVersion2x2;
-                case IFCVersion.IFC2x3:
-                    return Resources.IFCVersion2x3;
-                case IFCVersion.IFC2x3CV2:
-                    return Resources.IFCMVD2x3CV2;
-                case IFCVersion.IFC4:
-                    return Resources.IFCMVD4CV2;
-                case IFCVersion.IFCBCA:
-                    return Resources.IFCMVDBCA;
-                case IFCVersion.IFCCOBIE:
-                    return Resources.IFCMVDGSA;
-                case IFCVersion.IFC2x3FM:
-                    return Resources.IFC2x3FM;
-                case IFCVersion.IFC4DTV:
-                    return Resources.IFC4DTV;
-                case IFCVersion.IFC4RV:
-                    return Resources.IFC4RV;
-                case IFCVersion.IFC2x3BFM:
-                    return Resources.IFCMVDFMHandOver;
-                default:
-                    return Resources.IFCVersionUnrecognized;
-            }
-        }
-    }
+      /// <summary>
+      /// Converts the IFCVersion to string.
+      /// </summary>
+      /// <returns>The string of IFCVersion.</returns>
+      public override String ToString()
+      {
+         switch (Version)
+         {
+            case IFCVersion.IFC2x2:
+               return Resources.IFCVersion2x2;
+            case IFCVersion.IFC2x3:
+               return Resources.IFCVersion2x3;
+            case IFCVersion.IFC2x3CV2:
+               return Resources.IFCMVD2x3CV2;
+            case IFCVersion.IFC4:
+               return Resources.IFCMVD4CV2;
+            case IFCVersion.IFCBCA:
+               return Resources.IFCMVDBCA;
+            case IFCVersion.IFCCOBIE:
+               return Resources.IFCMVDGSA;
+            case IFCVersion.IFC2x3FM:
+               return Resources.IFC2x3FM;
+            case IFCVersion.IFC4DTV:
+               return Resources.IFC4DTV;
+            case IFCVersion.IFC4RV:
+               return Resources.IFC4RV;
+            case IFCVersion.IFC2x3BFM:
+               return Resources.IFCMVDFMHandOver;
+            default:
+               return Resources.IFCVersionUnrecognized;
+         }
+      }
+   }
 }

@@ -29,44 +29,44 @@ using Revit.IFC.Import.Properties;
 
 namespace Revit.IFC.Import.Data
 {
-    public class IFCMaterialProfileWithOffsets : IFCMaterialProfile, IIFCMaterialSelect
-    {
-        IList<double> m_OffsetValues = null;
+   public class IFCMaterialProfileWithOffsets : IFCMaterialProfile, IIFCMaterialSelect
+   {
+      IList<double> m_OffsetValues = null;
 
-        public IList<double> OffsetValues
-        {
-            get { return m_OffsetValues; }
-            protected set { m_OffsetValues = value; }
-        }
+      public IList<double> OffsetValues
+      {
+         get { return m_OffsetValues; }
+         protected set { m_OffsetValues = value; }
+      }
 
-        protected IFCMaterialProfileWithOffsets()
-        {
-        }
+      protected IFCMaterialProfileWithOffsets()
+      {
+      }
 
-        protected IFCMaterialProfileWithOffsets(IFCAnyHandle ifcMaterialProfileWithOffsets)
-        {
-            Process(ifcMaterialProfileWithOffsets);
-        }
+      protected IFCMaterialProfileWithOffsets(IFCAnyHandle ifcMaterialProfileWithOffsets)
+      {
+         Process(ifcMaterialProfileWithOffsets);
+      }
 
-        protected override void Process(IFCAnyHandle ifcMaterialProfileWithOffsets)
-        {
-            base.Process(ifcMaterialProfileWithOffsets);
+      protected override void Process(IFCAnyHandle ifcMaterialProfileWithOffsets)
+      {
+         base.Process(ifcMaterialProfileWithOffsets);
 
-            OffsetValues = IFCAnyHandleUtil.GetAggregateDoubleAttribute<List<double>>(ifcMaterialProfileWithOffsets, "OffsetValues");
-        }
+         OffsetValues = IFCAnyHandleUtil.GetAggregateDoubleAttribute<List<double>>(ifcMaterialProfileWithOffsets, "OffsetValues");
+      }
 
-        public static IFCMaterialProfileWithOffsets ProcessIFCMaterialProfileWithOffsets(IFCAnyHandle ifcMaterialProfileWithOffsets)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialProfileWithOffsets))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialProfileWithOffsets);
-                return null;
-            }
+      public static IFCMaterialProfileWithOffsets ProcessIFCMaterialProfileWithOffsets(IFCAnyHandle ifcMaterialProfileWithOffsets)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialProfileWithOffsets))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialProfileWithOffsets);
+            return null;
+         }
 
-            IFCEntity materialProfileWithOffsets;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcMaterialProfileWithOffsets.StepId, out materialProfileWithOffsets))
-                materialProfileWithOffsets = new IFCMaterialProfileWithOffsets(ifcMaterialProfileWithOffsets);
-            return (materialProfileWithOffsets as IFCMaterialProfileWithOffsets);
-        }
-    }
+         IFCEntity materialProfileWithOffsets;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcMaterialProfileWithOffsets.StepId, out materialProfileWithOffsets))
+            materialProfileWithOffsets = new IFCMaterialProfileWithOffsets(ifcMaterialProfileWithOffsets);
+         return (materialProfileWithOffsets as IFCMaterialProfileWithOffsets);
+      }
+   }
 }

@@ -26,45 +26,45 @@ using BIM.IFC.Export.UI.Properties;
 
 namespace BIM.IFC.Export.UI
 {
-    /// <summary>
-    /// Represents the choices for the space boundary levels supported by IFC export.
-    ///    None – room/space boundaries are not exported;
-    ///    1st level – the room/space boundaries are included but are not optimized to split elements with respect to spaces on the opposite side of the boundary;
-    ///    2nd level – the room/space boundaries are included and are split with respect to spaces on the opposite side of the boundary.
-    /// </summary>
-    public class IFCSpaceBoundariesAttributes
-    {
-        /// <summary>
-        /// The level of room/space boundaries exported.
-        /// </summary>
-        public int Level { get; set; }
+   /// <summary>
+   /// Represents the choices for the space boundary levels supported by IFC export.
+   ///    None – room/space boundaries are not exported;
+   ///    1st level – the room/space boundaries are included but are not optimized to split elements with respect to spaces on the opposite side of the boundary;
+   ///    2nd level – the room/space boundaries are included and are split with respect to spaces on the opposite side of the boundary.
+   /// </summary>
+   public class IFCSpaceBoundariesAttributes
+   {
+      /// <summary>
+      /// The level of room/space boundaries exported.
+      /// </summary>
+      public int Level { get; set; }
 
-        /// <summary>
-        /// Constructs the space boundary levels.
-        /// </summary>
-        /// <param name="level"></param>
-        public IFCSpaceBoundariesAttributes(int level)
-        {
-            Level = level;
-        }
+      /// <summary>
+      /// Constructs the space boundary levels.
+      /// </summary>
+      /// <param name="level"></param>
+      public IFCSpaceBoundariesAttributes(int level)
+      {
+         Level = level;
+      }
 
-        /// <summary>
-        /// Converts the space boundary levels to string.
-        /// </summary>
-        /// <returns>The string of space boundary level.</returns>
-        public override string ToString()
-        {
-            switch (Level)
-            {
-                case 0:
-                    return Resources.SpaceBoundariesNone;
-                case 1:
-                    return Resources.SpaceBoundaries1stLevel;
-                case 2:
-                    return Resources.SpaceBoundaries2ndLevel;
-                default:
-                    return Resources.SpaceBoundariesUnrecognized;
-            }
-        }
-    }
+      /// <summary>
+      /// Converts the space boundary levels to string.
+      /// </summary>
+      /// <returns>The string of space boundary level.</returns>
+      public override string ToString()
+      {
+         switch (Level)
+         {
+            case 0:
+               return Resources.SpaceBoundariesNone;
+            case 1:
+               return Resources.SpaceBoundaries1stLevel;
+            case 2:
+               return Resources.SpaceBoundaries2ndLevel;
+            default:
+               return Resources.SpaceBoundariesUnrecognized;
+         }
+      }
+   }
 }

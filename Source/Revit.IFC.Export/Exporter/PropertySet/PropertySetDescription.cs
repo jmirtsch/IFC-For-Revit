@@ -51,8 +51,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          Tuple<string, string> key = new Tuple<string, string>(this.Name, entry.PropertyName);
          if (ExporterCacheManager.PropertyMapCache.ContainsKey(new Tuple<string, string>(this.Name, entry.PropertyName)))
          {
+
             //replace the PropertySetEntry.RevitParameterName by the value in the cache.
-            entry.RevitParameterName = ExporterCacheManager.PropertyMapCache[key];
+            entry.SetRevitParameterName(ExporterCacheManager.PropertyMapCache[key]);
          }
 
          entry.UpdateEntry();
@@ -107,11 +108,15 @@ namespace Revit.IFC.Export.Exporter.PropertySet
 
          foreach (PropertySetEntry entry in m_Entries)
          {
-            IFCAnyHandle propHnd = entry.ProcessEntry(file, exporterIFC, ifcParams, elementToUse, elemTypeToUse, handle);
+            try
+            {
+               IFCAnyHandle propHnd = entry.ProcessEntry(file, exporterIFC, ifcParams, elementToUse, elemTypeToUse, handle);
 
-            string currPropertyName = UsablePropertyName(propHnd, propertiesByName);
-            if (currPropertyName != null)
-               propertiesByName[currPropertyName] = propHnd;
+               string currPropertyName = UsablePropertyName(propHnd, propertiesByName);
+               if (currPropertyName != null)
+                  propertiesByName[currPropertyName] = propHnd;
+            }
+            catch(Exception) { }
          }
 
          ISet<IFCAnyHandle> props = new HashSet<IFCAnyHandle>(propertiesByName.Values);

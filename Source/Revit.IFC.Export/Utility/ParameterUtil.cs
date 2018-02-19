@@ -45,13 +45,13 @@ namespace Revit.IFC.Export.Utility
       public static IDictionary<BuiltInParameterGroup, ParameterElementCache> GetNonIFCParametersForElement(ElementId elemId)
       {
          if (elemId == ElementId.InvalidElementId)
-               return null;
+            return null;
 
          IDictionary<BuiltInParameterGroup, ParameterElementCache> nonIFCParametersForElement = null;
          if (!m_NonIFCParameters.TryGetValue(elemId, out nonIFCParametersForElement))
          {
-               CacheParametersForElement(elemId);
-               m_NonIFCParameters.TryGetValue(elemId, out nonIFCParametersForElement);
+            CacheParametersForElement(elemId);
+            m_NonIFCParameters.TryGetValue(elemId, out nonIFCParametersForElement);
          }
 
          return nonIFCParametersForElement;
@@ -70,10 +70,11 @@ namespace Revit.IFC.Export.Utility
       private static Parameter GetStringValueFromElementBase(Element element, ElementId elementId, string propertyName, bool allowUnset, out string propertyValue)
       {
          if (elementId == ElementId.InvalidElementId)
-               throw new ArgumentNullException("element");
+            throw new ArgumentNullException("element");
 
+         propertyValue = string.Empty;
          if (String.IsNullOrEmpty(propertyName))
-               throw new ArgumentException("It is null or empty.", "propertyName");
+            return null;
 
          propertyValue = string.Empty;
 
@@ -93,16 +94,16 @@ namespace Revit.IFC.Export.Utility
                if (!string.IsNullOrEmpty(propValue))
                {
                   string propValuetrim = propValue.Trim();
-                  // This is kind of hack to quickly check whether we need to parse the parameter or not
-                  if (((propValuetrim.Length > 1 && propValuetrim[0] == '{') || (propValuetrim.Length > 2 && propValuetrim[1] == '{')) && (propValuetrim[propValuetrim.Length - 1] == '}'))
-                  {
-                     ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValuetrim);
-                     propertyValue = pResv.GetStringValue();
-                     if (string.IsNullOrEmpty(propertyValue))
-                        propertyValue = propValue;    // return the original propValue (un-trimmed)
-                  }
-                  else
-                     propertyValue = propValue;    // return the original propValue (un-trimmed)
+                  //// This is kind of hack to quickly check whether we need to parse the parameter or not
+                  //if (((propValuetrim.Length > 1 && propValuetrim[0] == '{') || (propValuetrim.Length > 2 && propValuetrim[1] == '{')) && (propValuetrim[propValuetrim.Length - 1] == '}'))
+                  //{
+                  //ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValuetrim);
+                  //propertyValue = pResv.GetStringValue();
+                  //if (string.IsNullOrEmpty(propertyValue))
+                  //propertyValue = propValue;    // return the original propValue (un-trimmed)
+                  //}
+                  //else
+                  propertyValue = propValue;    // return the original propValue (un-trimmed)
 
                   return parameter;
                }
@@ -112,7 +113,7 @@ namespace Revit.IFC.Export.Utility
                   return parameter;
                }
             }
-                
+
             if (allowUnset)
             {
                propertyValue = null;
@@ -150,7 +151,7 @@ namespace Revit.IFC.Export.Utility
       {
          return GetStringValueFromElementBase(element, elementId, propertyName, true, out propertyValue);
       }
-        
+
       /// <summary>
       /// Gets integer value from parameter of an element.
       /// </summary>
@@ -199,17 +200,17 @@ namespace Revit.IFC.Export.Utility
                      propValue = parameter.AsString();
 
                      string propValuetrim = propValue.Trim();
-                     // This is kind of hack to quickly check whether we need to parse the parameter or not
-                     if (((propValuetrim.Length > 1 && propValuetrim[0] == '{') || (propValuetrim.Length > 2 && propValuetrim[1] == '{')) && (propValuetrim[propValuetrim.Length - 1] == '}'))
-                     {
-                        ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValuetrim);
-                        int? propertyIntValue = pResv.GetIntValue();
-                        if (propertyIntValue.HasValue)
-                        {
-                           propertyValue = propertyIntValue.Value;
-                           return parameter;
-                        }
-                     }
+                     //// This is kind of hack to quickly check whether we need to parse the parameter or not
+                     //if (((propValuetrim.Length > 1 && propValuetrim[0] == '{') || (propValuetrim.Length > 2 && propValuetrim[1] == '{')) && (propValuetrim[propValuetrim.Length - 1] == '}'))
+                     //{
+                     //ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValuetrim);
+                     //int? propertyIntValue = pResv.GetIntValue();
+                     //if (propertyIntValue.HasValue)
+                     //{
+                     //propertyValue = propertyIntValue.Value;
+                     //return parameter;
+                     //}
+                     //}
 
                      try
                      {
@@ -224,663 +225,663 @@ namespace Revit.IFC.Export.Utility
             }
          }
          return null;
-        }
+      }
 
-        /// <summary>
-        /// Gets double value from parameter of an element.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="group">Optional property group to limit search to.</param>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
-        /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetDoubleValueFromElement(Element element, BuiltInParameterGroup? group, string propertyName, out double propertyValue)
-        {
-            if (element == null)
-                throw new ArgumentNullException("element");
+      /// <summary>
+      /// Gets double value from parameter of an element.
+      /// </summary>
+      /// <param name="element">The element.</param>
+      /// <param name="group">Optional property group to limit search to.</param>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+      /// <exception cref="System.ArgumentException">Thrown when propertyName is null or empty.</exception>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetDoubleValueFromElement(Element element, BuiltInParameterGroup? group, string propertyName, out double propertyValue)
+      {
+         if (element == null)
+            throw new ArgumentNullException("element");
 
-            if (String.IsNullOrEmpty(propertyName))
-                throw new ArgumentException("It is null or empty.", "propertyName");
+         if (String.IsNullOrEmpty(propertyName))
+            throw new ArgumentException("It is null or empty.", "propertyName");
 
-            propertyValue = 0.0;
+         propertyValue = 0.0;
 
-            Parameter parameter = GetParameterFromName(element.Id, group, propertyName);
+         Parameter parameter = GetParameterFromName(element.Id, group, propertyName);
 
-            if (parameter != null && parameter.HasValue)
+         if (parameter != null && parameter.HasValue)
+         {
+            switch (parameter.StorageType)
             {
-               switch (parameter.StorageType)
-               {
-                  case StorageType.Double:
-                     propertyValue = parameter.AsDouble();
-                     return parameter;
-                  case StorageType.Integer:
-                     propertyValue = parameter.AsInteger();
-                     return parameter;
-                  case StorageType.String:
-                     {
-                        string propValue;
-                        propValue = parameter.AsString();
+               case StorageType.Double:
+                  propertyValue = parameter.AsDouble();
+                  return parameter;
+               case StorageType.Integer:
+                  propertyValue = parameter.AsInteger();
+                  return parameter;
+               case StorageType.String:
+                  {
+                     string propValue;
+                     propValue = parameter.AsString();
 
-                        string propValuetrim = propValue.Trim();
+                     string propValuetrim = propValue.Trim();
                      // This is kind of hack to quickly check whether we need to parse the parameter or not
-                     if (((propValuetrim.Length > 1 && propValuetrim[0] == '{') || (propValuetrim.Length > 2 && propValuetrim[1] == '{')) && (propValuetrim[propValuetrim.Length - 1] == '}'))
-                     {
-                           ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValuetrim);
-                           double? propertyDoubleValue = pResv.GetDoubleValue();
-                           if (propertyDoubleValue.HasValue)
-                           {
-                              propertyValue = propertyDoubleValue.Value;
-                              return parameter;
-                           }
-                        }
+                     //if (((propValuetrim.Length > 1 && propValuetrim[0] == '{') || (propValuetrim.Length > 2 && propValuetrim[1] == '{')) && (propValuetrim[propValuetrim.Length - 1] == '}'))
+                     //{
+                     //ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValuetrim);
+                     //double? propertyDoubleValue = pResv.GetDoubleValue();
+                     //if (propertyDoubleValue.HasValue)
+                     //{
+                     //propertyValue = propertyDoubleValue.Value;
+                     //return parameter;
+                     //}
+                     //}
 
-                        return Double.TryParse(propValue, out propertyValue) ? parameter : null;
-                     }
-               }
+                     return Double.TryParse(propValue, out propertyValue) ? parameter : null;
+                  }
             }
+         }
 
-            return null;
-        }
+         return null;
+      }
 
-        /// <summary>
-        /// Gets string value from built-in parameter of an element.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="builtInParameter">The built-in parameter.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
-        /// <exception cref="System.ArgumentException">Thrown when builtInParameter in invalid.</exception>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetStringValueFromElement(Element element, BuiltInParameter builtInParameter, out string propertyValue)
-        {
-            if (element == null)
-                throw new ArgumentNullException("element");
+      /// <summary>
+      /// Gets string value from built-in parameter of an element.
+      /// </summary>
+      /// <param name="element">The element.</param>
+      /// <param name="builtInParameter">The built-in parameter.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+      /// <exception cref="System.ArgumentException">Thrown when builtInParameter in invalid.</exception>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetStringValueFromElement(Element element, BuiltInParameter builtInParameter, out string propertyValue)
+      {
+         if (element == null)
+            throw new ArgumentNullException("element");
 
-            if (builtInParameter == BuiltInParameter.INVALID)
-                throw new ArgumentException("BuiltInParameter is INVALID", "builtInParameter");
+         if (builtInParameter == BuiltInParameter.INVALID)
+            throw new ArgumentException("BuiltInParameter is INVALID", "builtInParameter");
 
-            propertyValue = String.Empty;
+         propertyValue = String.Empty;
 
-            Parameter parameter = element.get_Parameter(builtInParameter);
-            if (parameter != null && parameter.HasValue)
+         Parameter parameter = element.get_Parameter(builtInParameter);
+         if (parameter != null && parameter.HasValue)
+         {
+            switch (parameter.StorageType)
             {
-                switch (parameter.StorageType)
-                {
-                    case StorageType.Double:
-                        propertyValue = parameter.AsDouble().ToString();
-                        return parameter;
-                    case StorageType.Integer:
-                        propertyValue = parameter.AsInteger().ToString();
-                        return parameter;
-                    case StorageType.String:
-                        propertyValue = parameter.AsString();
-                        return parameter;
-                    case StorageType.ElementId:
-                        propertyValue = PropertyUtil.ElementIdParameterAsString(parameter);
-                        return parameter;
-                }
+               case StorageType.Double:
+                  propertyValue = parameter.AsDouble().ToString();
+                  return parameter;
+               case StorageType.Integer:
+                  propertyValue = parameter.AsInteger().ToString();
+                  return parameter;
+               case StorageType.String:
+                  propertyValue = parameter.AsString();
+                  return parameter;
+               case StorageType.ElementId:
+                  propertyValue = PropertyUtil.ElementIdParameterAsString(parameter);
+                  return parameter;
             }
+         }
 
-            return null;
-        }
+         return null;
+      }
 
-        /// <summary>Gets string value from built-in parameter of an element or its type.</summary>
-        /// <param name="element">The element.</param>
-        /// <param name="builtInParameter">The built-in parameter.</param>
-        /// <param name="nullAllowed">true if we allow the property value to be empty.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetStringValueFromElementOrSymbol(Element element, BuiltInParameter builtInParameter, bool nullAllowed, out string propertyValue)
-        {
-            Parameter parameter = GetStringValueFromElement(element, builtInParameter, out propertyValue);
-            if (parameter != null)
-            {
-                if (!String.IsNullOrEmpty(propertyValue))
-                    return parameter;
-            }
+      /// <summary>Gets string value from built-in parameter of an element or its type.</summary>
+      /// <param name="element">The element.</param>
+      /// <param name="builtInParameter">The built-in parameter.</param>
+      /// <param name="nullAllowed">true if we allow the property value to be empty.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetStringValueFromElementOrSymbol(Element element, BuiltInParameter builtInParameter, bool nullAllowed, out string propertyValue)
+      {
+         Parameter parameter = GetStringValueFromElement(element, builtInParameter, out propertyValue);
+         if (parameter != null)
+         {
+            if (!String.IsNullOrEmpty(propertyValue))
+               return parameter;
+         }
 
-            parameter = null;
-            Element elementType = element.Document.GetElement(element.GetTypeId());
-            if (elementType != null)
-            {
-                parameter = GetStringValueFromElement(elementType, builtInParameter, out propertyValue);
-                if ((parameter != null) && !nullAllowed && String.IsNullOrEmpty(propertyValue))
-                    parameter = null;
-            }
+         parameter = null;
+         Element elementType = element.Document.GetElement(element.GetTypeId());
+         if (elementType != null)
+         {
+            parameter = GetStringValueFromElement(elementType, builtInParameter, out propertyValue);
+            if ((parameter != null) && !nullAllowed && String.IsNullOrEmpty(propertyValue))
+               parameter = null;
+         }
 
+         return parameter;
+      }
+
+      /// <summary>
+      /// Sets string value of a built-in parameter of an element.
+      /// </summary>
+      /// <param name="element">The element.</param>
+      /// <param name="builtInParameter">The built-in parameter.</param>
+      /// <param name="propertyValue">The property value.</param>
+      /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+      /// <exception cref="System.ArgumentException">Thrown when builtInParameter in invalid.</exception>
+      public static void SetStringParameter(Element element, BuiltInParameter builtInParameter, string propertyValue)
+      {
+         if (element == null)
+            throw new ArgumentNullException("element");
+
+         if (builtInParameter == BuiltInParameter.INVALID)
+            throw new ArgumentException("BuiltInParameter is INVALID", "builtInParameter");
+
+         Parameter parameter = element.get_Parameter(builtInParameter);
+         if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.String)
+         {
+            parameter.SetValueString(propertyValue);
+            return;
+         }
+
+         ElementId parameterId = new ElementId(builtInParameter);
+         ExporterIFCUtils.AddValueString(element, parameterId, propertyValue);
+      }
+
+      /// <summary>
+      /// Gets double value from built-in parameter of an element.
+      /// </summary>
+      /// <param name="element">The element.</param>
+      /// <param name="builtInParameter">The built-in parameter.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+      /// <exception cref="System.ArgumentException">Thrown when builtInParameter in invalid.</exception>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetDoubleValueFromElement(Element element, BuiltInParameter builtInParameter, out double propertyValue)
+      {
+         if (element == null)
+            throw new ArgumentNullException("element");
+
+         if (builtInParameter == BuiltInParameter.INVALID)
+            throw new ArgumentException("BuiltInParameter is INVALID", "builtInParameter");
+
+         propertyValue = 0.0;
+
+         Parameter parameter = element.get_Parameter(builtInParameter);
+
+         if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Double)
+         {
+            propertyValue = parameter.AsDouble();
             return parameter;
-        }
+         }
 
-        /// <summary>
-        /// Sets string value of a built-in parameter of an element.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="builtInParameter">The built-in parameter.</param>
-        /// <param name="propertyValue">The property value.</param>
-        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
-        /// <exception cref="System.ArgumentException">Thrown when builtInParameter in invalid.</exception>
-        public static void SetStringParameter(Element element, BuiltInParameter builtInParameter, string propertyValue)
-        {
-            if (element == null)
-                throw new ArgumentNullException("element");
+         return null;
+      }
 
-            if (builtInParameter == BuiltInParameter.INVALID)
-                throw new ArgumentException("BuiltInParameter is INVALID", "builtInParameter");
+      /// <summary>
+      /// Gets integer value from built-in parameter of an element.
+      /// </summary>
+      /// <param name="element">The element.</param>
+      /// <param name="builtInParameter">The built-in parameter.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
+      /// <exception cref="System.ArgumentException">Thrown when builtInParameter in invalid.</exception>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetIntValueFromElement(Element element, BuiltInParameter builtInParameter, out int propertyValue)
+      {
+         if (element == null)
+            throw new ArgumentNullException("element");
 
-            Parameter parameter = element.get_Parameter(builtInParameter);
-            if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.String)
-            {
-                parameter.SetValueString(propertyValue);
-                return;
-            }
+         if (builtInParameter == BuiltInParameter.INVALID)
+            throw new ArgumentException("BuiltInParameter is INVALID", "builtInParameter");
 
-            ElementId parameterId = new ElementId(builtInParameter);
-            ExporterIFCUtils.AddValueString(element, parameterId, propertyValue);
-        }
+         propertyValue = 0;
 
-        /// <summary>
-        /// Gets double value from built-in parameter of an element.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="builtInParameter">The built-in parameter.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
-        /// <exception cref="System.ArgumentException">Thrown when builtInParameter in invalid.</exception>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetDoubleValueFromElement(Element element, BuiltInParameter builtInParameter, out double propertyValue)
-        {
-            if (element == null)
-                throw new ArgumentNullException("element");
+         Parameter parameter = element.get_Parameter(builtInParameter);
 
-            if (builtInParameter == BuiltInParameter.INVALID)
-                throw new ArgumentException("BuiltInParameter is INVALID", "builtInParameter");
-
-            propertyValue = 0.0;
-
-            Parameter parameter = element.get_Parameter(builtInParameter);
-
-            if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Double)
-            {
-                propertyValue = parameter.AsDouble();
-                return parameter;
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Gets integer value from built-in parameter of an element.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="builtInParameter">The built-in parameter.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <exception cref="System.ArgumentNullException">Thrown when element is null.</exception>
-        /// <exception cref="System.ArgumentException">Thrown when builtInParameter in invalid.</exception>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetIntValueFromElement(Element element, BuiltInParameter builtInParameter, out int propertyValue)
-        {
-            if (element == null)
-                throw new ArgumentNullException("element");
-
-            if (builtInParameter == BuiltInParameter.INVALID)
-                throw new ArgumentException("BuiltInParameter is INVALID", "builtInParameter");
-
-            propertyValue = 0;
-
-            Parameter parameter = element.get_Parameter(builtInParameter);
-
-            if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Integer)
-            {
-                propertyValue = parameter.AsInteger();
-                return parameter;
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Gets double value from built-in parameter of an element or its element type.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="builtInParameter">The built-in parameter.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetDoubleValueFromElementOrSymbol(Element element, BuiltInParameter builtInParameter, out double propertyValue)
-        {
-            Parameter parameter = GetDoubleValueFromElement(element, builtInParameter, out propertyValue);
-            if (parameter != null)
-                return parameter;
-
-            Document document = element.Document;
-            ElementId typeId = element.GetTypeId();
-
-            Element elemType = document.GetElement(typeId);
-            if (elemType != null)
-                return GetDoubleValueFromElement(elemType, builtInParameter, out propertyValue);
-
-            return null;
-        }
-
-        /// <summary>
-        /// Gets double value from parameter of an element or its element type.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetDoubleValueFromElementOrSymbol(Element element, string propertyName, out double propertyValue)
-        {
-            Parameter parameter = GetDoubleValueFromElement(element, null, propertyName, out propertyValue);
-            if (parameter != null)
-                return parameter;
-
-            Document document = element.Document;
-            ElementId typeId = element.GetTypeId();
-
-            Element elemType = document.GetElement(typeId);
-            if (elemType != null)
-                return GetDoubleValueFromElement(elemType, null, propertyName, out propertyValue);
-
-            return null;
-        }
-
-        /// <summary>
-        /// Gets positive double value from parameter of an element or its element type.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetPositiveDoubleValueFromElementOrSymbol(Element element, string propertyName, out double propertyValue)
-        {
-            Parameter parameter = GetDoubleValueFromElementOrSymbol(element, propertyName, out propertyValue);
-            if ((parameter != null)  && (propertyValue > 0.0))
-                return parameter;
-            return null;
-        }
-
-        /// <summary>
-        /// Gets element id value from parameter of an element.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="builtInParameter">The built in parameter.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetElementIdValueFromElement(Element element, BuiltInParameter builtInParameter, out ElementId propertyValue)
-        {
-            if (element == null)
-                throw new ArgumentNullException("element");
-
-            if (builtInParameter == BuiltInParameter.INVALID)
-                throw new ArgumentException("BuiltInParameter is INVALID", "builtInParameter");
-
-            propertyValue = ElementId.InvalidElementId;
-
-            Parameter parameter = element.get_Parameter(builtInParameter);
-            if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.ElementId)
-            {
-                propertyValue = parameter.AsElementId();
-                return parameter;
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Gets element id value from parameter of an element or its element type.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="builtInParameter">The built in parameter.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetElementIdValueFromElementOrSymbol(Element element, BuiltInParameter builtInParameter, out ElementId propertyValue)
-        {
-            Parameter parameter = GetElementIdValueFromElement(element, builtInParameter, out propertyValue);
-            if (parameter != null)
-                return parameter;
-
-            Document document = element.Document;
-            ElementId typeId = element.GetTypeId();
-
-            Element elemType = document.GetElement(typeId);
-            if (elemType != null)
-                return GetElementIdValueFromElement(elemType, builtInParameter, out propertyValue);
-            
-            return null;
-        }
-
-        /// <summary>
-        /// Gets the parameter by name from an element from the parameter cache.
-        /// </summary>
-        /// <param name="elementId">The element id.</param>
-        /// <param name="propertyName">The property name.</param>
-        /// <returns>The Parameter.</returns>
-        static private Parameter getParameterByNameFromCache(ElementId elementId, string propertyName)
-        {
-            Parameter parameter = null;
-            string cleanPropertyName = NamingUtil.RemoveSpaces(propertyName);
-
-            if (m_IFCParameters[elementId].ParameterCache.TryGetValue(cleanPropertyName, out parameter))
-                return parameter;
-
-            foreach (ParameterElementCache otherCache in m_NonIFCParameters[elementId].Values)
-            {
-                if (otherCache.ParameterCache.TryGetValue(cleanPropertyName, out parameter))
-                    return parameter;
-            }
-
+         if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Integer)
+         {
+            propertyValue = parameter.AsInteger();
             return parameter;
-        }
+         }
 
-        /// <summary>
-        /// Gets the parameter by name from an element from the parameter cache.
-        /// </summary>
-        /// <param name="elementId">The element id.</param>
-        /// <param name="group">The parameter group.</param>
-        /// <param name="propertyName">The property name.</param>
-        /// <returns>The Parameter.</returns>
-        static private Parameter getParameterByNameFromCache(ElementId elementId, BuiltInParameterGroup group,
-            string propertyName)
-        {
-            Parameter parameter = null;
-            string cleanPropertyName = NamingUtil.RemoveSpaces(propertyName);
+         return null;
+      }
 
-            if (group == BuiltInParameterGroup.PG_IFC)
-            {
-                m_IFCParameters[elementId].ParameterCache.TryGetValue(cleanPropertyName, out parameter);
-                return null;
-            }
-
-            ParameterElementCache otherCache = null;
-            m_NonIFCParameters[elementId].TryGetValue(group, out otherCache);
-            if (otherCache != null)
-                otherCache.ParameterCache.TryGetValue(cleanPropertyName, out parameter);
-
+      /// <summary>
+      /// Gets double value from built-in parameter of an element or its element type.
+      /// </summary>
+      /// <param name="element">The element.</param>
+      /// <param name="builtInParameter">The built-in parameter.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetDoubleValueFromElementOrSymbol(Element element, BuiltInParameter builtInParameter, out double propertyValue)
+      {
+         Parameter parameter = GetDoubleValueFromElement(element, builtInParameter, out propertyValue);
+         if (parameter != null)
             return parameter;
-        }
 
-        /// <summary>
-        /// Gets the parameter value by name from the subelement parameter value cache.
-        /// </summary>
-        /// <param name="elementId">The element id.</param>
-        /// <param name="handle">The subelement ifc handle.</param>
-        /// <param name="propertyName">The property name.</param>
-        /// <returns>The Parameter.</returns>
-        static public ParameterValue getParameterValueByNameFromSubelementCache(ElementId elementId, IFCAnyHandle subelementHandle, string propertyName)
-        {
-            ParameterValue parameterVal = null;
-            string cleanPropertyName = NamingUtil.RemoveSpaces(propertyName);
+         Document document = element.Document;
+         ElementId typeId = element.GetTypeId();
 
-            IDictionary<IFCAnyHandle, ParameterValueSubelementCache> anyHandleParamValMap;
-            if (!m_SubelementParameterValueCache.TryGetValue(elementId, out anyHandleParamValMap))
-                return parameterVal;
+         Element elemType = document.GetElement(typeId);
+         if (elemType != null)
+            return GetDoubleValueFromElement(elemType, builtInParameter, out propertyValue);
 
-            ParameterValueSubelementCache paramValueCache;
-            if (!anyHandleParamValMap.TryGetValue(subelementHandle, out paramValueCache))
-                return parameterVal;
+         return null;
+      }
 
+      /// <summary>
+      /// Gets double value from parameter of an element or its element type.
+      /// </summary>
+      /// <param name="element">The element.</param>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetDoubleValueFromElementOrSymbol(Element element, string propertyName, out double propertyValue)
+      {
+         Parameter parameter = GetDoubleValueFromElement(element, null, propertyName, out propertyValue);
+         if (parameter != null)
+            return parameter;
 
-            paramValueCache.ParameterValueCache.TryGetValue(cleanPropertyName, out parameterVal);
+         Document document = element.Document;
+         ElementId typeId = element.GetTypeId();
+
+         Element elemType = document.GetElement(typeId);
+         if (elemType != null)
+            return GetDoubleValueFromElement(elemType, null, propertyName, out propertyValue);
+
+         return null;
+      }
+
+      /// <summary>
+      /// Gets positive double value from parameter of an element or its element type.
+      /// </summary>
+      /// <param name="element">The element.</param>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetPositiveDoubleValueFromElementOrSymbol(Element element, string propertyName, out double propertyValue)
+      {
+         Parameter parameter = GetDoubleValueFromElementOrSymbol(element, propertyName, out propertyValue);
+         if ((parameter != null) && (propertyValue > 0.0))
+            return parameter;
+         return null;
+      }
+
+      /// <summary>
+      /// Gets element id value from parameter of an element.
+      /// </summary>
+      /// <param name="element">The element.</param>
+      /// <param name="builtInParameter">The built in parameter.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetElementIdValueFromElement(Element element, BuiltInParameter builtInParameter, out ElementId propertyValue)
+      {
+         if (element == null)
+            throw new ArgumentNullException("element");
+
+         if (builtInParameter == BuiltInParameter.INVALID)
+            throw new ArgumentException("BuiltInParameter is INVALID", "builtInParameter");
+
+         propertyValue = ElementId.InvalidElementId;
+
+         Parameter parameter = element.get_Parameter(builtInParameter);
+         if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.ElementId)
+         {
+            propertyValue = parameter.AsElementId();
+            return parameter;
+         }
+
+         return null;
+      }
+
+      /// <summary>
+      /// Gets element id value from parameter of an element or its element type.
+      /// </summary>
+      /// <param name="element">The element.</param>
+      /// <param name="builtInParameter">The built in parameter.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetElementIdValueFromElementOrSymbol(Element element, BuiltInParameter builtInParameter, out ElementId propertyValue)
+      {
+         Parameter parameter = GetElementIdValueFromElement(element, builtInParameter, out propertyValue);
+         if (parameter != null)
+            return parameter;
+
+         Document document = element.Document;
+         ElementId typeId = element.GetTypeId();
+
+         Element elemType = document.GetElement(typeId);
+         if (elemType != null)
+            return GetElementIdValueFromElement(elemType, builtInParameter, out propertyValue);
+
+         return null;
+      }
+
+      /// <summary>
+      /// Gets the parameter by name from an element from the parameter cache.
+      /// </summary>
+      /// <param name="elementId">The element id.</param>
+      /// <param name="propertyName">The property name.</param>
+      /// <returns>The Parameter.</returns>
+      static private Parameter getParameterByNameFromCache(ElementId elementId, string propertyName)
+      {
+         Parameter parameter = null;
+         string cleanPropertyName = NamingUtil.RemoveSpaces(propertyName);
+
+         if (m_IFCParameters[elementId].ParameterCache.TryGetValue(cleanPropertyName, out parameter))
+            return parameter;
+
+         foreach (ParameterElementCache otherCache in m_NonIFCParameters[elementId].Values)
+         {
+            if (otherCache.ParameterCache.TryGetValue(cleanPropertyName, out parameter))
+               return parameter;
+         }
+
+         return parameter;
+      }
+
+      /// <summary>
+      /// Gets the parameter by name from an element from the parameter cache.
+      /// </summary>
+      /// <param name="elementId">The element id.</param>
+      /// <param name="group">The parameter group.</param>
+      /// <param name="propertyName">The property name.</param>
+      /// <returns>The Parameter.</returns>
+      static private Parameter getParameterByNameFromCache(ElementId elementId, BuiltInParameterGroup group,
+          string propertyName)
+      {
+         Parameter parameter = null;
+         string cleanPropertyName = NamingUtil.RemoveSpaces(propertyName);
+
+         if (group == BuiltInParameterGroup.PG_IFC)
+         {
+            m_IFCParameters[elementId].ParameterCache.TryGetValue(cleanPropertyName, out parameter);
+            return null;
+         }
+
+         ParameterElementCache otherCache = null;
+         m_NonIFCParameters[elementId].TryGetValue(group, out otherCache);
+         if (otherCache != null)
+            otherCache.ParameterCache.TryGetValue(cleanPropertyName, out parameter);
+
+         return parameter;
+      }
+
+      /// <summary>
+      /// Gets the parameter value by name from the subelement parameter value cache.
+      /// </summary>
+      /// <param name="elementId">The element id.</param>
+      /// <param name="handle">The subelement ifc handle.</param>
+      /// <param name="propertyName">The property name.</param>
+      /// <returns>The Parameter.</returns>
+      static public ParameterValue getParameterValueByNameFromSubelementCache(ElementId elementId, IFCAnyHandle subelementHandle, string propertyName)
+      {
+         ParameterValue parameterVal = null;
+         string cleanPropertyName = NamingUtil.RemoveSpaces(propertyName);
+
+         IDictionary<IFCAnyHandle, ParameterValueSubelementCache> anyHandleParamValMap;
+         if (!m_SubelementParameterValueCache.TryGetValue(elementId, out anyHandleParamValMap))
             return parameterVal;
-        }
 
-        /// <summary>
-        /// Returns true if the built-in parameter has the identical name and value as another parameter.
-        /// Used to remove redundant output from the IFC export.
-        /// </summary>
-        /// <param name="parameter">The parameter</param>
-        /// <returns>Returns true if the built-in parameter has the identical name and value as another parameter.</returns>
-        static private bool IsDuplicateParameter(Parameter parameter)
-        {
-            if (parameter.Id.IntegerValue == (int) BuiltInParameter.ELEM_CATEGORY_PARAM_MT) // Same as ELEM_CATEGORY_PARAM.
-                return true;
-            // DPART_ORIGINAL_CATEGORY_ID is the string version of DPART_ORIGINAL_CATEGORY_ID.  Not going to duplicate the data.
-            if (parameter.Id.IntegerValue == (int) BuiltInParameter.DPART_ORIGINAL_CATEGORY) 
-                return true;
-            return false;
-        }
+         ParameterValueSubelementCache paramValueCache;
+         if (!anyHandleParamValMap.TryGetValue(subelementHandle, out paramValueCache))
+            return parameterVal;
 
-        /// <summary>
-        /// Maps built-in parameter ids to the supported ids.  In general, this is an identity mapping, except for special
-        /// cases identified in the private function IsDuplicateParameter.
-        /// </summary>
-        /// <param name="parameterId">The original parameter id.</param>
-        /// <returns>The supported parameter id.</returns>
-        static public ElementId MapParameterId(ElementId parameterId)
-        {
-            switch (parameterId.IntegerValue)
-            {
-                case ((int) BuiltInParameter.ELEM_CATEGORY_PARAM_MT):
-                    return new ElementId(BuiltInParameter.ELEM_CATEGORY_PARAM);
-                case ((int)BuiltInParameter.DPART_ORIGINAL_CATEGORY):
-                    return new ElementId(BuiltInParameter.DPART_ORIGINAL_CATEGORY_ID);
-            }
-            return parameterId;
-        }
 
-        /// <summary>
-        /// Cache the parameters for an element, allowing quick access later.
-        /// </summary>
-        /// <param name="id">The element id.</param>
-        static private void CacheParametersForElement(ElementId id)
-        {
-            if (id == ElementId.InvalidElementId)
-                return;
+         paramValueCache.ParameterValueCache.TryGetValue(cleanPropertyName, out parameterVal);
+         return parameterVal;
+      }
 
-            if (m_NonIFCParameters.ContainsKey(id))
-                return;
+      /// <summary>
+      /// Returns true if the built-in parameter has the identical name and value as another parameter.
+      /// Used to remove redundant output from the IFC export.
+      /// </summary>
+      /// <param name="parameter">The parameter</param>
+      /// <returns>Returns true if the built-in parameter has the identical name and value as another parameter.</returns>
+      static private bool IsDuplicateParameter(Parameter parameter)
+      {
+         if (parameter.Id.IntegerValue == (int)BuiltInParameter.ELEM_CATEGORY_PARAM_MT) // Same as ELEM_CATEGORY_PARAM.
+            return true;
+         // DPART_ORIGINAL_CATEGORY_ID is the string version of DPART_ORIGINAL_CATEGORY_ID.  Not going to duplicate the data.
+         if (parameter.Id.IntegerValue == (int)BuiltInParameter.DPART_ORIGINAL_CATEGORY)
+            return true;
+         return false;
+      }
 
-            IDictionary<BuiltInParameterGroup, ParameterElementCache> nonIFCParameters = new SortedDictionary<BuiltInParameterGroup, ParameterElementCache>();
-            ParameterElementCache ifcParameters = new ParameterElementCache();
+      /// <summary>
+      /// Maps built-in parameter ids to the supported ids.  In general, this is an identity mapping, except for special
+      /// cases identified in the private function IsDuplicateParameter.
+      /// </summary>
+      /// <param name="parameterId">The original parameter id.</param>
+      /// <returns>The supported parameter id.</returns>
+      static public ElementId MapParameterId(ElementId parameterId)
+      {
+         switch (parameterId.IntegerValue)
+         {
+            case ((int)BuiltInParameter.ELEM_CATEGORY_PARAM_MT):
+               return new ElementId(BuiltInParameter.ELEM_CATEGORY_PARAM);
+            case ((int)BuiltInParameter.DPART_ORIGINAL_CATEGORY):
+               return new ElementId(BuiltInParameter.DPART_ORIGINAL_CATEGORY_ID);
+         }
+         return parameterId;
+      }
 
-            m_NonIFCParameters[id] = nonIFCParameters;
-            m_IFCParameters[id] = ifcParameters;
+      /// <summary>
+      /// Cache the parameters for an element, allowing quick access later.
+      /// </summary>
+      /// <param name="id">The element id.</param>
+      static private void CacheParametersForElement(ElementId id)
+      {
+         if (id == ElementId.InvalidElementId)
+            return;
 
-            Element element = ExporterCacheManager.Document.GetElement(id);
-            if (element == null)
-                return;
+         if (m_NonIFCParameters.ContainsKey(id))
+            return;
 
-            ParameterSet parameterIds = element.Parameters;
-            if (parameterIds.Size == 0)
-                return;
+         IDictionary<BuiltInParameterGroup, ParameterElementCache> nonIFCParameters = new SortedDictionary<BuiltInParameterGroup, ParameterElementCache>();
+         ParameterElementCache ifcParameters = new ParameterElementCache();
 
-            // We will do two passes.  In the first pass, we will look at parameters in the IFC group.
-            // In the second pass, we will look at all other groups.
-            ParameterSetIterator parameterIt = parameterIds.ForwardIterator();
+         m_NonIFCParameters[id] = nonIFCParameters;
+         m_IFCParameters[id] = ifcParameters;
 
-            while (parameterIt.MoveNext())
-            {
-                Parameter parameter = parameterIt.Current as Parameter;
-                if (parameter == null)
-                    continue;
+         Element element = ExporterCacheManager.Document.GetElement(id);
+         if (element == null)
+            return;
 
-                if (IsDuplicateParameter(parameter))
-                    continue;
+         ParameterSet parameterIds = element.Parameters;
+         if (parameterIds.Size == 0)
+            return;
 
-                Definition paramDefinition = parameter.Definition;
-                if (paramDefinition == null)
-                    continue;
+         // We will do two passes.  In the first pass, we will look at parameters in the IFC group.
+         // In the second pass, we will look at all other groups.
+         ParameterSetIterator parameterIt = parameterIds.ForwardIterator();
 
-                // Don't cache parameters that aren't visible to the user.
-                InternalDefinition internalDefinition = paramDefinition as InternalDefinition;
-                if (internalDefinition != null && internalDefinition.Visible == false)
-                    continue;
+         while (parameterIt.MoveNext())
+         {
+            Parameter parameter = parameterIt.Current as Parameter;
+            if (parameter == null)
+               continue;
 
-                if (string.IsNullOrWhiteSpace(paramDefinition.Name))
-                    continue;
+            if (IsDuplicateParameter(parameter))
+               continue;
 
-                string cleanPropertyName = NamingUtil.RemoveSpaces(paramDefinition.Name);
-                
-                BuiltInParameterGroup groupId = paramDefinition.ParameterGroup;
-                if (groupId != BuiltInParameterGroup.PG_IFC)
-                {
-                    ParameterElementCache cacheForGroup = null;
-                    if (!nonIFCParameters.TryGetValue(groupId, out cacheForGroup))
-                    {
-                        cacheForGroup = new ParameterElementCache();
-                        nonIFCParameters[groupId] = cacheForGroup;
-                    }
-                    cacheForGroup.ParameterCache[cleanPropertyName] = parameter;
-                }
-                else
-                {
-                    ifcParameters.ParameterCache[cleanPropertyName] = parameter;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Cache the parameters for an element's subelement (subelementHandle), allowing quick access later.
-        /// </summary>
-        /// <param name="elementId">The element id.</param>
-        /// <param name="subelementHandle">The subelement ifc handle.</param>
-        /// <param name="param">The element's parameter that we want to override.</param>
-        /// <param name="paramVal">The override value.</param>
-        static public void CacheParameterValuesForSubelementHandle(ElementId elementId, IFCAnyHandle subelementHandle, Parameter param, ParameterValue paramVal)
-        {
-            if ((elementId == ElementId.InvalidElementId) ||
-                (subelementHandle == null) ||
-                (param == null) ||
-                (paramVal == null))
-                return;
-
-            if (IsDuplicateParameter(param))
-                return;
-
-            Definition paramDefinition = param.Definition;
+            Definition paramDefinition = parameter.Definition;
             if (paramDefinition == null)
-                return;
+               continue;
 
             // Don't cache parameters that aren't visible to the user.
             InternalDefinition internalDefinition = paramDefinition as InternalDefinition;
             if (internalDefinition != null && internalDefinition.Visible == false)
-                return;
+               continue;
 
             if (string.IsNullOrWhiteSpace(paramDefinition.Name))
-                return;
+               continue;
 
             string cleanPropertyName = NamingUtil.RemoveSpaces(paramDefinition.Name);
 
-            IDictionary<IFCAnyHandle, ParameterValueSubelementCache> anyHandleParamValMap;
-            if (!m_SubelementParameterValueCache.TryGetValue(elementId, out anyHandleParamValMap))
+            BuiltInParameterGroup groupId = paramDefinition.ParameterGroup;
+            if (groupId != BuiltInParameterGroup.PG_IFC)
             {
-                anyHandleParamValMap = new Dictionary<IFCAnyHandle, ParameterValueSubelementCache>();
-                m_SubelementParameterValueCache[elementId] = anyHandleParamValMap;
+               ParameterElementCache cacheForGroup = null;
+               if (!nonIFCParameters.TryGetValue(groupId, out cacheForGroup))
+               {
+                  cacheForGroup = new ParameterElementCache();
+                  nonIFCParameters[groupId] = cacheForGroup;
+               }
+               cacheForGroup.ParameterCache[cleanPropertyName] = parameter;
             }
-
-            ParameterValueSubelementCache paramCache;
-            if (!anyHandleParamValMap.TryGetValue(subelementHandle, out paramCache))
+            else
             {
-                paramCache = new ParameterValueSubelementCache();
-                anyHandleParamValMap[subelementHandle] = paramCache;
+               ifcParameters.ParameterCache[cleanPropertyName] = parameter;
             }
+         }
+      }
 
-            ParameterValue cachedParamVal;
-            if (paramCache.ParameterValueCache.TryGetValue(cleanPropertyName, out cachedParamVal))
-                return;
+      /// <summary>
+      /// Cache the parameters for an element's subelement (subelementHandle), allowing quick access later.
+      /// </summary>
+      /// <param name="elementId">The element id.</param>
+      /// <param name="subelementHandle">The subelement ifc handle.</param>
+      /// <param name="param">The element's parameter that we want to override.</param>
+      /// <param name="paramVal">The override value.</param>
+      static public void CacheParameterValuesForSubelementHandle(ElementId elementId, IFCAnyHandle subelementHandle, Parameter param, ParameterValue paramVal)
+      {
+         if ((elementId == ElementId.InvalidElementId) ||
+             (subelementHandle == null) ||
+             (param == null) ||
+             (paramVal == null))
+            return;
 
-            paramCache.ParameterValueCache[cleanPropertyName] = paramVal;
-        }
+         if (IsDuplicateParameter(param))
+            return;
 
-        /// <summary>
-        /// Remove an element from the parameter cache, to save space.
-        /// </summary>
-        /// <param name="element">The element to be used.</param>
-        /// <remarks>Generally speaking, we expect to need to access an element's parameters in one pass (this is not true
-        /// for types, which could get accessed repeatedly).  As such, we are wasting space keeping an element's parameters cached
-        /// after it has already been exported.</remarks>
-        static public void RemoveElementFromCache(Element element)
-        {
-            if (element == null)
-                return;
+         Definition paramDefinition = param.Definition;
+         if (paramDefinition == null)
+            return;
 
-            ElementId id = element.Id;
-            m_NonIFCParameters.Remove(id);
-            m_IFCParameters.Remove(id);
-            m_SubelementParameterValueCache.Remove(id);
-        }
+         // Don't cache parameters that aren't visible to the user.
+         InternalDefinition internalDefinition = paramDefinition as InternalDefinition;
+         if (internalDefinition != null && internalDefinition.Visible == false)
+            return;
 
-        /// <summary>
-        /// Gets the parameter by name from an element for a specific parameter group.
-        /// </summary>
-        /// <param name="elemId">The element id.</param>
-        /// <param name="group">The optional parameter group.</param>
-        /// <param name="propertyName">The property name.</param>
-        /// <returns>The Parameter.</returns>
-        static Parameter GetParameterFromName(ElementId elemId, BuiltInParameterGroup? group, string propertyName)
-        {
-            if (!m_IFCParameters.ContainsKey(elemId))
-                CacheParametersForElement(elemId);
+         if (string.IsNullOrWhiteSpace(paramDefinition.Name))
+            return;
 
-            return group.HasValue ?
-                getParameterByNameFromCache(elemId, group.Value, propertyName) :
-                getParameterByNameFromCache(elemId, propertyName);
-        }
+         string cleanPropertyName = NamingUtil.RemoveSpaces(paramDefinition.Name);
 
-        private static Parameter GetStringValueFromElementOrSymbolBase(Element element, string propertyName, bool allowUnset, out string propertyValue)
-        {
-            Parameter parameter = GetStringValueFromElementBase(element, element.Id, propertyName, allowUnset, out propertyValue);
-            if (parameter != null)
-            {
-                if (!string.IsNullOrEmpty(propertyValue))
-                    return parameter;
-            }
-            
-            ElementId typeId = element.GetTypeId();
-            if (typeId != ElementId.InvalidElementId)
-                return GetStringValueFromElementBase(element, typeId, propertyName, allowUnset, out propertyValue);
+         IDictionary<IFCAnyHandle, ParameterValueSubelementCache> anyHandleParamValMap;
+         if (!m_SubelementParameterValueCache.TryGetValue(elementId, out anyHandleParamValMap))
+         {
+            anyHandleParamValMap = new Dictionary<IFCAnyHandle, ParameterValueSubelementCache>();
+            m_SubelementParameterValueCache[elementId] = anyHandleParamValMap;
+         }
 
+         ParameterValueSubelementCache paramCache;
+         if (!anyHandleParamValMap.TryGetValue(subelementHandle, out paramCache))
+         {
+            paramCache = new ParameterValueSubelementCache();
+            anyHandleParamValMap[subelementHandle] = paramCache;
+         }
+
+         ParameterValue cachedParamVal;
+         if (paramCache.ParameterValueCache.TryGetValue(cleanPropertyName, out cachedParamVal))
+            return;
+
+         paramCache.ParameterValueCache[cleanPropertyName] = paramVal;
+      }
+
+      /// <summary>
+      /// Remove an element from the parameter cache, to save space.
+      /// </summary>
+      /// <param name="element">The element to be used.</param>
+      /// <remarks>Generally speaking, we expect to need to access an element's parameters in one pass (this is not true
+      /// for types, which could get accessed repeatedly).  As such, we are wasting space keeping an element's parameters cached
+      /// after it has already been exported.</remarks>
+      static public void RemoveElementFromCache(Element element)
+      {
+         if (element == null)
+            return;
+
+         ElementId id = element.Id;
+         m_NonIFCParameters.Remove(id);
+         m_IFCParameters.Remove(id);
+         m_SubelementParameterValueCache.Remove(id);
+      }
+
+      /// <summary>
+      /// Gets the parameter by name from an element for a specific parameter group.
+      /// </summary>
+      /// <param name="elemId">The element id.</param>
+      /// <param name="group">The optional parameter group.</param>
+      /// <param name="propertyName">The property name.</param>
+      /// <returns>The Parameter.</returns>
+      internal static Parameter GetParameterFromName(ElementId elemId, BuiltInParameterGroup? group, string propertyName)
+      {
+         if (!m_IFCParameters.ContainsKey(elemId))
+            CacheParametersForElement(elemId);
+
+         return group.HasValue ?
+             getParameterByNameFromCache(elemId, group.Value, propertyName) :
+             getParameterByNameFromCache(elemId, propertyName);
+      }
+
+      private static Parameter GetStringValueFromElementOrSymbolBase(Element element, string propertyName, bool allowUnset, out string propertyValue)
+      {
+         Parameter parameter = GetStringValueFromElementBase(element, element.Id, propertyName, allowUnset, out propertyValue);
+         if (parameter != null)
+         {
+            if (!string.IsNullOrEmpty(propertyValue))
+               return parameter;
+         }
+
+         ElementId typeId = element.GetTypeId();
+         if (typeId != ElementId.InvalidElementId)
+            return GetStringValueFromElementBase(element, typeId, propertyName, allowUnset, out propertyValue);
+
+         return parameter;
+      }
+
+      /// <summary>
+      /// Gets string value from parameter of an element or its element type.
+      /// </summary>
+      /// <param name="element">The element.</param>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetStringValueFromElementOrSymbol(Element element, string propertyName, out string propertyValue)
+      {
+         return GetStringValueFromElementOrSymbolBase(element, propertyName, false, out propertyValue);
+      }
+
+      /// <summary>
+      /// Gets string value from parameter of an element or its element type, which is allowed to be optional.
+      /// </summary>
+      /// <param name="element">The element.</param>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetOptionalStringValueFromElementOrSymbol(Element element, string propertyName, out string propertyValue)
+      {
+         return GetStringValueFromElementOrSymbolBase(element, propertyName, true, out propertyValue);
+      }
+
+      /// <summary>
+      /// Gets integer value from parameter of an element or its element type.
+      /// </summary>
+      /// <param name="element">The element.</param>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="propertyValue">The output property value.</param>
+      /// <returns>The parameter, or null if not found.</returns>
+      public static Parameter GetIntValueFromElementOrSymbol(Element element, string propertyName, out int propertyValue)
+      {
+         Parameter parameter = GetIntValueFromElement(element, propertyName, out propertyValue);
+         if (parameter != null)
             return parameter;
-        }
 
-        /// <summary>
-        /// Gets string value from parameter of an element or its element type.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetStringValueFromElementOrSymbol(Element element, string propertyName, out string propertyValue)
-        {
-            return GetStringValueFromElementOrSymbolBase(element, propertyName, false, out propertyValue);
-        }
+         Document document = element.Document;
+         ElementId typeId = element.GetTypeId();
 
-        /// <summary>
-        /// Gets string value from parameter of an element or its element type, which is allowed to be optional.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetOptionalStringValueFromElementOrSymbol(Element element, string propertyName, out string propertyValue)
-        {
-            return GetStringValueFromElementOrSymbolBase(element, propertyName, true, out propertyValue);
-        }
+         Element elemType = document.GetElement(typeId);
+         if (elemType != null)
+            return GetIntValueFromElement(elemType, propertyName, out propertyValue);
 
-        /// <summary>
-        /// Gets integer value from parameter of an element or its element type.
-        /// </summary>
-        /// <param name="element">The element.</param>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="propertyValue">The output property value.</param>
-        /// <returns>The parameter, or null if not found.</returns>
-        public static Parameter GetIntValueFromElementOrSymbol(Element element, string propertyName, out int propertyValue)
-        {
-            Parameter parameter = GetIntValueFromElement(element, propertyName, out propertyValue);
-            if (parameter != null)
-                return parameter;
-
-            Document document = element.Document;
-            ElementId typeId = element.GetTypeId();
-
-            Element elemType = document.GetElement(typeId);
-            if (elemType != null)
-                return GetIntValueFromElement(elemType, propertyName, out propertyValue);
-            
-            return null;
-        }
+         return null;
+      }
 
       /// <summary>
       /// This method returns a special parameter for Offset found in the FamilySymbol that influence the CurtainWall Panel position.

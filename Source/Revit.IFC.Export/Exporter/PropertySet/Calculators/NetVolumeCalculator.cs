@@ -28,97 +28,99 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate gross volume.
-    /// </summary>
-    class NetVolumeCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Volume = 0;
+   /// <summary>
+   /// A calculation class to calculate gross volume.
+   /// </summary>
+   class NetVolumeCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Volume = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static NetVolumeCalculator s_Instance = new NetVolumeCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static NetVolumeCalculator s_Instance = new NetVolumeCalculator();
 
-        /// <summary>
-        /// The NetVolumeCalculator instance.
-        /// </summary>
-        public static NetVolumeCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The NetVolumeCalculator instance.
+      /// </summary>
+      public static NetVolumeCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates net volume.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            double vol = 0;
-            GeometryElement geomElem = element.get_Geometry(GeometryUtil.GetIFCExportGeometryOptions());
-            SolidMeshGeometryInfo geomInfo = GeometryUtil.GetSolidMeshGeometry(geomElem, Transform.Identity);
-            if (geomInfo.SolidsCount() > 0)
+      /// <summary>
+      /// Calculates net volume.
+      /// </summary>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="extrusionCreationData">
+      /// The IFCExtrusionCreationData.
+      /// </param>
+      /// <param name="element">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="elementType">
+      /// The element type.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         double vol = 0;
+         SolidMeshGeometryInfo geomInfo = GeometryUtil.GetSolidMeshGeometry(element);
+         if (geomInfo.SolidsCount() > 0)
+         {
+            for (int ii = 0; ii <geomInfo.SolidsCount(); ++ii)
+               vol += geomInfo.GetSolids()[ii].Volume;
+         }
+
+         if (geomInfo.MeshesCount() > 0)
+         {
+            for (int jj = 0; jj < geomInfo.MeshesCount(); ++jj)
             {
-               for (int ii = 0; ii <geomInfo.SolidsCount(); ++ii)
-                  vol += geomInfo.GetSolids()[ii].Volume;
-            }
-
-            if (geomInfo.MeshesCount() > 0)
-            {
-               for (int jj = 0; jj < geomInfo.MeshesCount(); ++jj)
+               Mesh geomMesh = geomInfo.GetMeshes()[jj];
+               XYZ arbitraryOrig = geomMesh.Vertices[0];
+               for (int i = 0; i < geomMesh.NumTriangles; ++i)
                {
-                  Mesh geomMesh = geomInfo.GetMeshes()[jj];
-                  XYZ arbitraryOrig = geomMesh.Vertices[0];
-                  for (int i = 0; i < geomMesh.NumTriangles; ++i)
-                  {
-                     MeshTriangle meshTri = geomMesh.get_Triangle(i);
-                     XYZ v1 = meshTri.get_Vertex(0) - arbitraryOrig;
-                     XYZ v2 = meshTri.get_Vertex(1) - arbitraryOrig;
-                     XYZ v3 = meshTri.get_Vertex(2) - arbitraryOrig;
-                     vol += v1.DotProduct(v2.CrossProduct(v3)) / 6.0f;
-                  }
+                  MeshTriangle meshTri = geomMesh.get_Triangle(i);
+                  XYZ v1 = meshTri.get_Vertex(0) - arbitraryOrig;
+                  XYZ v2 = meshTri.get_Vertex(1) - arbitraryOrig;
+                  XYZ v3 = meshTri.get_Vertex(2) - arbitraryOrig;
+                  vol += v1.DotProduct(v2.CrossProduct(v3)) / 6.0f;
                }
             }
+         }
 
-            m_Volume = UnitUtil.ScaleVolume(vol);
-            if (m_Volume < MathUtil.Eps() * MathUtil.Eps() || m_Volume < MathUtil.Eps())
-            {
-               ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyNetVolume", out m_Volume);
-               if (m_Volume < MathUtil.Eps())
-                  return false;
-               else
-                  return true;
-            }
+         m_Volume = UnitUtil.ScaleVolume(vol);
+         if (m_Volume < MathUtil.Eps() * MathUtil.Eps() || m_Volume < MathUtil.Eps())
+         {
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyNetVolume", out m_Volume) == null)
+               if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcNetVolume", out m_Volume) == null)
+                  ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "NetVolume", out m_Volume);
+            m_Volume = UnitUtil.ScaleVolume(m_Volume);
+            if (m_Volume < MathUtil.Eps())
+               return false;
             else
                return true;
-        }
+         }
+         else
+            return true;
+      }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Volume;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Volume;
+      }
+   }
 }

@@ -29,69 +29,69 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate the start hook angle for a rebar.
-    /// </summary>
-    class ISOCD3766BendingStartHookCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Angle = 0;
+   /// <summary>
+   /// A calculation class to calculate the start hook angle for a rebar.
+   /// </summary>
+   class ISOCD3766BendingStartHookCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Angle = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static ISOCD3766BendingStartHookCalculator s_Instance = new ISOCD3766BendingStartHookCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static ISOCD3766BendingStartHookCalculator s_Instance = new ISOCD3766BendingStartHookCalculator();
 
-        /// <summary>
-        /// The ISOCD3766BendingStartHookCalculator instance.
-        /// </summary>
-        public static ISOCD3766BendingStartHookCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The ISOCD3766BendingStartHookCalculator instance.
+      /// </summary>
+      public static ISOCD3766BendingStartHookCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates the start hook angle for a rebar.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
-        /// <param name="element">The element to calculate the value.</param>
-        /// <param name="elementType">The element type.</param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            RebarBendData bendData = null;
-            if (element is Rebar)
-                bendData = (element as Rebar).GetBendData();
-            else if (element is RebarInSystem)
-                bendData = (element as RebarInSystem).GetBendData();
-            
-            if (bendData != null)
+      /// <summary>
+      /// Calculates the start hook angle for a rebar.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
+      /// <param name="element">The element to calculate the value.</param>
+      /// <param name="elementType">The element type.</param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         RebarBendData bendData = null;
+         if (element is Rebar)
+            bendData = (element as Rebar).GetBendData();
+         else if (element is RebarInSystem)
+            bendData = (element as RebarInSystem).GetBendData();
+
+         if (bendData != null)
+         {
+            if (bendData.HookLength0 > MathUtil.Eps())
             {
-                if (bendData.HookLength0 > MathUtil.Eps())
-                {
-                    // HookAngle0 is already in degress, so convert to radians and then scale.
-                    double hookAngleInRadians = bendData.HookAngle0 * (Math.PI / 180.0);
-                    m_Angle = UnitUtil.ScaleAngle(hookAngleInRadians);
-                    return true;
-                }
+               // HookAngle0 is already in degress, so convert to radians and then scale.
+               double hookAngleInRadians = bendData.HookAngle0 * (Math.PI / 180.0);
+               m_Angle = UnitUtil.ScaleAngle(hookAngleInRadians);
+               return true;
             }
-            return false;
-        }
+         }
+         return false;
+      }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Angle;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Angle;
+      }
+   }
 }

@@ -27,77 +27,77 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class for storing IfcApplication
-    /// </summary>
-    public class IFCApplication : IFCEntity
-    {
-        string m_ApplicationDeveloper = null;
-        string m_Version = null;
-        string m_ApplicationFullName = null;
-        string m_ApplicationIdentifier = null;
+   /// <summary>
+   /// Class for storing IfcApplication
+   /// </summary>
+   public class IFCApplication : IFCEntity
+   {
+      string m_ApplicationDeveloper = null;
+      string m_Version = null;
+      string m_ApplicationFullName = null;
+      string m_ApplicationIdentifier = null;
 
-        public string ApplicationDeveloper
-        {
-            get { return m_ApplicationDeveloper; }
-            set { m_ApplicationDeveloper = value; }
-        }
+      public string ApplicationDeveloper
+      {
+         get { return m_ApplicationDeveloper; }
+         set { m_ApplicationDeveloper = value; }
+      }
 
-        public string Version
-        {
-            get { return m_Version; }
-            set { m_Version = value; }
-        }
+      public string Version
+      {
+         get { return m_Version; }
+         set { m_Version = value; }
+      }
 
-        public string ApplicationFullName
-        {
-            get { return m_ApplicationFullName; }
-            set { m_ApplicationFullName = value; }
-        }
+      public string ApplicationFullName
+      {
+         get { return m_ApplicationFullName; }
+         set { m_ApplicationFullName = value; }
+      }
 
-        public string ApplicationIdentifier
-        {
-            get { return m_ApplicationIdentifier; }
-            set { m_ApplicationIdentifier = value; }
-        }
+      public string ApplicationIdentifier
+      {
+         get { return m_ApplicationIdentifier; }
+         set { m_ApplicationIdentifier = value; }
+      }
 
-        protected IFCApplication()
-        {
-        }
+      protected IFCApplication()
+      {
+      }
 
-        protected IFCApplication(IFCAnyHandle ifcApplication)
-        {
-            Process(ifcApplication);
-        }
+      protected IFCApplication(IFCAnyHandle ifcApplication)
+      {
+         Process(ifcApplication);
+      }
 
-        protected override void Process(IFCAnyHandle ifcApplication)
-        {
-            base.Process(ifcApplication);
+      protected override void Process(IFCAnyHandle ifcApplication)
+      {
+         base.Process(ifcApplication);
 
-            ApplicationDeveloper = IFCAnyHandleUtil.GetStringAttribute(ifcApplication, "ApplicationDeveloper");
-            Version = IFCAnyHandleUtil.GetStringAttribute(ifcApplication, "Version");
-            ApplicationFullName = IFCAnyHandleUtil.GetStringAttribute(ifcApplication, "ApplicationFullName");
-            ApplicationIdentifier = IFCAnyHandleUtil.GetStringAttribute(ifcApplication, "ApplicationIdentifier");
-        }
+         ApplicationDeveloper = IFCAnyHandleUtil.GetStringAttribute(ifcApplication, "ApplicationDeveloper");
+         Version = IFCAnyHandleUtil.GetStringAttribute(ifcApplication, "Version");
+         ApplicationFullName = IFCAnyHandleUtil.GetStringAttribute(ifcApplication, "ApplicationFullName");
+         ApplicationIdentifier = IFCAnyHandleUtil.GetStringAttribute(ifcApplication, "ApplicationIdentifier");
+      }
 
-        /// <summary>
-        /// Create an IFCApplication object from a handle of type IfcApplication.
-        /// </summary>
-        /// <param name="ifcApplication">The IFC handle.</param>
-        /// <returns>The IFCApplication object.</returns>
-        public static IFCApplication ProcessIFCApplication(IFCAnyHandle ifcApplication)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcApplication))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcApplication);
-                return null;
-            }
+      /// <summary>
+      /// Create an IFCApplication object from a handle of type IfcApplication.
+      /// </summary>
+      /// <param name="ifcApplication">The IFC handle.</param>
+      /// <returns>The IFCApplication object.</returns>
+      public static IFCApplication ProcessIFCApplication(IFCAnyHandle ifcApplication)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcApplication))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcApplication);
+            return null;
+         }
 
 
-            IFCEntity application;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcApplication.StepId, out application))
-                application = new IFCApplication(ifcApplication);
-            return (application as IFCApplication); 
-        }
-    }
+         IFCEntity application;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcApplication.StepId, out application))
+            application = new IFCApplication(ifcApplication);
+         return (application as IFCApplication);
+      }
+   }
 }

@@ -26,50 +26,50 @@ using Revit.IFC.Export.Exporter.PropertySet;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of properties and quantities to be created when exporting an element.
-    /// </summary>
-    public class ParameterCache
-    {
-        /// <summary>
-        /// List of property sets.
-        /// </summary>
-        private List<IList<PropertySetDescription>> m_PropertySets;
+   /// <summary>
+   /// Used to keep a cache of properties and quantities to be created when exporting an element.
+   /// </summary>
+   public class ParameterCache
+   {
+      /// <summary>
+      /// List of property sets.
+      /// </summary>
+      private List<IList<PropertySetDescription>> m_PropertySets;
 
-        /// <summary>
-        /// List of quantities.
-        /// </summary>
-        private List<IList<QuantityDescription>> m_Quantities;
+      /// <summary>
+      /// List of quantities.
+      /// </summary>
+      private List<IList<QuantityDescription>> m_Quantities;
 
-        /// <summary>
-        /// Constructs a default ParameterCache object.
-        /// </summary>
-        public ParameterCache()
-        {
-            m_PropertySets = new List<IList<PropertySetDescription>>();
-            m_Quantities = new List<IList<QuantityDescription>>();
-        }
+      /// <summary>
+      /// Constructs a default ParameterCache object.
+      /// </summary>
+      public ParameterCache()
+      {
+         m_PropertySets = new List<IList<PropertySetDescription>>();
+         m_Quantities = new List<IList<QuantityDescription>>();
+      }
 
-        /// <summary>
-        /// The list of property sets.
-        /// </summary>
-        public IList<IList<PropertySetDescription>> PropertySets
-        {
-            get
-            {
-                return m_PropertySets;
-            }
-        }
+      /// <summary>
+      /// The list of property sets.
+      /// </summary>
+      public IList<IList<PropertySetDescription>> PropertySets
+      {
+         get
+         {
+            return m_PropertySets;
+         }
+      }
 
-        /// <summary>
-        /// The list of quantities.
-        /// </summary>
-        public IList<IList<QuantityDescription>> Quantities
-        {
-            get
-            {
-                return m_Quantities;
-            }
-        }
-    }
+      /// <summary>
+      /// The list of quantities.
+      /// </summary>
+      public IList<IList<QuantityDescription>> Quantities
+      {
+         get
+         {
+            return m_Quantities;
+         }
+      }
+   }
 }

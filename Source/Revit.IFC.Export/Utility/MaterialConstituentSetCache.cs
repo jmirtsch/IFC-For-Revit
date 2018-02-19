@@ -73,7 +73,7 @@ namespace Revit.IFC.Export.Utility
       /// <summary>
       /// The dictionary mapping the IfcMaterialConstituentSet to its handle. 
       /// </summary>
-      private IDictionary<HashSet<IFCAnyHandle>,IFCAnyHandle> m_MatConstituentSetDictionary = new Dictionary<HashSet<IFCAnyHandle>,IFCAnyHandle>(new ConstituentSetComparer());
+      private IDictionary<HashSet<IFCAnyHandle>, IFCAnyHandle> m_MatConstituentSetDictionary = new Dictionary<HashSet<IFCAnyHandle>, IFCAnyHandle>(new ConstituentSetComparer());
 
       /// <summary>
       /// Finds the appriate Handle for the IfcMaterialConstituentSet from the dictionary.

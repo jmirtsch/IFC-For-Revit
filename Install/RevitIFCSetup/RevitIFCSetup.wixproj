@@ -6,7 +6,7 @@
     <ProductVersion>3.10</ProductVersion>
     <ProjectGuid>71a6c0f5-337c-483c-8ac8-69194e76a6ad</ProjectGuid>
     <SchemaVersion>2.0</SchemaVersion>
-    <OutputName>RevitIFCSetup</OutputName>
+    <OutputName>RevitIFCSetup v17.4.7</OutputName>
     <OutputType>Package</OutputType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

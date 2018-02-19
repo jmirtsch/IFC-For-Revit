@@ -150,8 +150,8 @@ namespace Revit.IFC.Export.Exporter
                IFCAnyHandle currentRebarHandle = delayedProductWrapper.ElementHandle;
                productWrapper.AddElement(delayedProductWrapper.RebarElement, currentRebarHandle, delayedProductWrapper.LevelInfo, null, relateToLevel);
                createdRebarHandles.Add(currentRebarHandle);
-            } 
-            
+            }
+
             if (createdRebars.Count > 1)
             {
                if (groupRebarHandles)
@@ -303,7 +303,7 @@ namespace Revit.IFC.Export.Exporter
                double radius = diameter / 2.0;
                double longitudinalBarNominalDiameter = diameter;
                double longitudinalBarCrossSectionArea = UnitUtil.ScaleArea(volumeUnscale / totalBarLengthUnscale);
-              
+
                int numberOfBarPositions = GetNumberOfBarPositions(rebarItem);
 
                string steelGrade = NamingUtil.GetOverrideStringValue(rebarElement, "SteelGrade", null);
@@ -315,9 +315,6 @@ namespace Revit.IFC.Export.Exporter
                IFCReinforcingBarRole role = GetReinforcingBarRole(predefinedType);
 
                string origRebarName = NamingUtil.GetNameOverride(rebarElement, NamingUtil.GetIFCName(rebarElement));
-               string rebarDescription = NamingUtil.GetDescriptionOverride(rebarElement, null);
-               string rebarObjectType = NamingUtil.GetObjectTypeOverride(rebarElement, NamingUtil.CreateIFCObjectName(exporterIFC, rebarElement));
-               string rebarTag = NamingUtil.GetTagOverride(rebarElement, NamingUtil.CreateIFCElementId(rebarElement));
 
                const int maxBarGUIDS = IFCReinforcingBarSubElements.BarEnd - IFCReinforcingBarSubElements.BarStart + 1;
                ElementId categoryId = CategoryUtil.GetSafeCategoryId(rebarElement);
@@ -382,10 +379,9 @@ namespace Revit.IFC.Export.Exporter
                   string rebarGUID = (indexForNamingAndGUID < maxBarGUIDS) ?
                       GUIDUtil.CreateSubElementGUID(rebarElement, indexForNamingAndGUID + (int)IFCReinforcingBarSubElements.BarStart - 1) :
                       GUIDUtil.CreateGUID();
-                  IFCAnyHandle elemHnd = IFCInstanceExporter.CreateReinforcingBar(file, rebarGUID, ExporterCacheManager.OwnerHistoryHandle,
-                      rebarName, rebarDescription, rebarObjectType, copyLevelPlacement,
-                      prodRep, rebarTag, steelGrade, longitudinalBarNominalDiameter, longitudinalBarCrossSectionArea,
-                      barLength, role, null);
+                  IFCAnyHandle elemHnd = IFCInstanceExporter.CreateReinforcingBar(exporterIFC, rebarElement, rebarGUID, ExporterCacheManager.OwnerHistoryHandle,
+                      copyLevelPlacement, prodRep, steelGrade, longitudinalBarNominalDiameter, longitudinalBarCrossSectionArea, barLength, role, null);
+                  IFCAnyHandleUtil.SetAttribute(elemHnd, "Name", rebarName);
 
                   // We will not add the element ot the productWrapper here, but instead in the function that calls
                   // ExportRebar.  The reason for this is that we don't currently know if the handles such be associated
@@ -393,7 +389,7 @@ namespace Revit.IFC.Export.Exporter
                   createdRebars.Add(new DelayedProductWrapper(rebarElement, elemHnd, setter.LevelInfo));
 
                   CacheSubelementParameterValues(rebarElement, rebarElementParams, ii, elemHnd);
-                  
+
                   ExporterCacheManager.HandleToElementCache.Register(elemHnd, rebarElement.Id);
                   CategoryUtil.CreateMaterialAssociation(exporterIFC, elemHnd, materialId);
                }

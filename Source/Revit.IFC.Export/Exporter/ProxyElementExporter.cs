@@ -79,16 +79,10 @@ namespace Revit.IFC.Export.Exporter
 
                   string guid = GUIDUtil.CreateGUID(element);
                   IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
-                  string revitObjectType = exporterIFC.GetFamilyName();
-                  string name = NamingUtil.GetNameOverride(element, revitObjectType);
-                  string description = NamingUtil.GetDescriptionOverride(element, null);
-                  string objectType = NamingUtil.GetObjectTypeOverride(element, revitObjectType);
-
                   IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
-                  string elementTag = NamingUtil.GetTagOverride(element, NamingUtil.CreateIFCElementId(element));
 
-                  buildingElementProxy = IFCInstanceExporter.CreateBuildingElementProxy(file, guid,
-                      ownerHistory, name, description, objectType, localPlacement, representation, elementTag, null);
+                  buildingElementProxy = IFCInstanceExporter.CreateBuildingElementProxy(exporterIFC, element, guid,
+                      ownerHistory, localPlacement, representation, null);
 
                   productWrapper.AddElement(element, buildingElementProxy, placementSetter.LevelInfo, ecData, true);
                }

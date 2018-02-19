@@ -30,83 +30,83 @@ using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of the created IfcElementAssemblies and related IfcElement handles.
-    /// </summary>
-    public class AssemblyInstanceCache : Dictionary<ElementId, AssemblyInstanceInfo>
-    {
-        /// <summary>
-        /// Add the instance handle of an AssemblyInstance to the cache.  It will either add it
-        /// to an existing entry, or create a new entry.
-        /// </summary>
-        /// <param name="instanceId">The ElementId of the AssemblyInstance.</param>
-        /// <param name="instanceHnd">The IFC handle of the AssemblyInstance.</param>
-        public void RegisterAssemblyInstance(ElementId instanceId, IFCAnyHandle instanceHnd)
-        {
-            AssemblyInstanceInfo assemblyInstanceInfo;
-            if (!TryGetValue(instanceId, out assemblyInstanceInfo))
-            {
-                assemblyInstanceInfo = new AssemblyInstanceInfo();
-            }
-            assemblyInstanceInfo.AssemblyInstanceHandle = instanceHnd;
-            this[instanceId] = assemblyInstanceInfo;
-        }
+   /// <summary>
+   /// Used to keep a cache of the created IfcElementAssemblies and related IfcElement handles.
+   /// </summary>
+   public class AssemblyInstanceCache : Dictionary<ElementId, AssemblyInstanceInfo>
+   {
+      /// <summary>
+      /// Add the instance handle of an AssemblyInstance to the cache.  It will either add it
+      /// to an existing entry, or create a new entry.
+      /// </summary>
+      /// <param name="instanceId">The ElementId of the AssemblyInstance.</param>
+      /// <param name="instanceHnd">The IFC handle of the AssemblyInstance.</param>
+      public void RegisterAssemblyInstance(ElementId instanceId, IFCAnyHandle instanceHnd)
+      {
+         AssemblyInstanceInfo assemblyInstanceInfo;
+         if (!TryGetValue(instanceId, out assemblyInstanceInfo))
+         {
+            assemblyInstanceInfo = new AssemblyInstanceInfo();
+         }
+         assemblyInstanceInfo.AssemblyInstanceHandle = instanceHnd;
+         this[instanceId] = assemblyInstanceInfo;
+      }
 
-        /// <summary>
-        /// Add the instance handle of an element in an AssemblyInstance to the cache.  It will either add it
-        /// to an existing entry, or create a new entry.
-        /// </summary>
-        /// <param name="instanceId">The ElementId of the AssemblyInstance.</param>
-        /// <param name="elementHnd">The IFC handle of the element.</param>
-        public void RegisterAssemblyElement(ElementId instanceId, IFCAnyHandle elementHnd)
-        {
-            AssemblyInstanceInfo assemblyInstanceInfo;
-            if (!TryGetValue(instanceId, out assemblyInstanceInfo))
-            {
-                assemblyInstanceInfo = new AssemblyInstanceInfo();
-            }
-            assemblyInstanceInfo.ElementHandles.Add(elementHnd);
-            this[instanceId] = assemblyInstanceInfo;
-        }
+      /// <summary>
+      /// Add the instance handle of an element in an AssemblyInstance to the cache.  It will either add it
+      /// to an existing entry, or create a new entry.
+      /// </summary>
+      /// <param name="instanceId">The ElementId of the AssemblyInstance.</param>
+      /// <param name="elementHnd">The IFC handle of the element.</param>
+      public void RegisterAssemblyElement(ElementId instanceId, IFCAnyHandle elementHnd)
+      {
+         AssemblyInstanceInfo assemblyInstanceInfo;
+         if (!TryGetValue(instanceId, out assemblyInstanceInfo))
+         {
+            assemblyInstanceInfo = new AssemblyInstanceInfo();
+         }
+         assemblyInstanceInfo.ElementHandles.Add(elementHnd);
+         this[instanceId] = assemblyInstanceInfo;
+      }
 
-        /// <summary>
-        /// Add the instance handle of one or more elements in an AssemblyInstance to the cache.  It will either add it
-        /// to an existing entry, or create a new entry.
-        /// </summary>
-        /// <param name="instanceId">The ElementId of the AssemblyInstance.</param>
-        /// <param name="elementHnds">The IFC handle of the elements.</param>
-        public void RegisterAssemblyElements(ElementId instanceId, HashSet<IFCAnyHandle> elementHnds)
-        {
-            if (elementHnds.Count == 0)
-                return;
+      /// <summary>
+      /// Add the instance handle of one or more elements in an AssemblyInstance to the cache.  It will either add it
+      /// to an existing entry, or create a new entry.
+      /// </summary>
+      /// <param name="instanceId">The ElementId of the AssemblyInstance.</param>
+      /// <param name="elementHnds">The IFC handle of the elements.</param>
+      public void RegisterAssemblyElements(ElementId instanceId, HashSet<IFCAnyHandle> elementHnds)
+      {
+         if (elementHnds.Count == 0)
+            return;
 
-            AssemblyInstanceInfo assemblyInstanceInfo;
-            if (!TryGetValue(instanceId, out assemblyInstanceInfo))
-            {
-                assemblyInstanceInfo = new AssemblyInstanceInfo();
-            }
+         AssemblyInstanceInfo assemblyInstanceInfo;
+         if (!TryGetValue(instanceId, out assemblyInstanceInfo))
+         {
+            assemblyInstanceInfo = new AssemblyInstanceInfo();
+         }
 
-            assemblyInstanceInfo.ElementHandles.UnionWith(elementHnds);
-            this[instanceId] = assemblyInstanceInfo;
-        }
+         assemblyInstanceInfo.ElementHandles.UnionWith(elementHnds);
+         this[instanceId] = assemblyInstanceInfo;
+      }
 
-        /// <summary>
-        /// Registers all of the created handles in the product wrapper that are of the right type to an AssemblyInstance.
-        /// </summary>
-        /// <param name="instanceId">The ElementId of the AssemblyInstance.</param>
-        /// <param name="instanceHnd">The product wrapper.</param>
-        public void RegisterElements(ElementId assemblyId, ProductWrapper productWrapper)
-        {
-            ICollection<IFCAnyHandle> objects = productWrapper.GetAllObjects();
-            HashSet<IFCAnyHandle> elementsToAdd = new HashSet<IFCAnyHandle>();
-            foreach (IFCAnyHandle hnd in objects)
-            {
-                if (IFCAnyHandleUtil.IsSubTypeOf(hnd, IFCEntityType.IfcProduct) ||
-                    IFCAnyHandleUtil.IsSubTypeOf(hnd, IFCEntityType.IfcGroup))
-                    elementsToAdd.Add(hnd);
-            }
-            if (elementsToAdd.Count > 0)
-                RegisterAssemblyElements(assemblyId, elementsToAdd);
-        }
-    }
+      /// <summary>
+      /// Registers all of the created handles in the product wrapper that are of the right type to an AssemblyInstance.
+      /// </summary>
+      /// <param name="instanceId">The ElementId of the AssemblyInstance.</param>
+      /// <param name="instanceHnd">The product wrapper.</param>
+      public void RegisterElements(ElementId assemblyId, ProductWrapper productWrapper)
+      {
+         ICollection<IFCAnyHandle> objects = productWrapper.GetAllObjects();
+         HashSet<IFCAnyHandle> elementsToAdd = new HashSet<IFCAnyHandle>();
+         foreach (IFCAnyHandle hnd in objects)
+         {
+            if (IFCAnyHandleUtil.IsSubTypeOf(hnd, IFCEntityType.IfcProduct) ||
+                IFCAnyHandleUtil.IsSubTypeOf(hnd, IFCEntityType.IfcGroup))
+               elementsToAdd.Add(hnd);
+         }
+         if (elementsToAdd.Count > 0)
+            RegisterAssemblyElements(assemblyId, elementsToAdd);
+      }
+   }
 }

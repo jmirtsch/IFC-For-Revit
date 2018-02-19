@@ -28,82 +28,82 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents an IfcElementType.
-    /// </summary>
-    /// <remarks>This class is currently non-abstract because we haven't yet created the derived classes.
-    /// When they are created, this will be made abstract.</remarks>
-    public class IFCElementType : IFCTypeProduct
-    {
-        private string m_ElementType;
+   /// <summary>
+   /// Represents an IfcElementType.
+   /// </summary>
+   /// <remarks>This class is currently non-abstract because we haven't yet created the derived classes.
+   /// When they are created, this will be made abstract.</remarks>
+   public class IFCElementType : IFCTypeProduct
+   {
+      private string m_ElementType;
 
-        /// <summary>
-        /// The element type.
-        /// </summary>
-        public string ElementType
-        {
-            get { return m_ElementType; }
-            protected set { m_ElementType = value; }
-        }
+      /// <summary>
+      /// The element type.
+      /// </summary>
+      public string ElementType
+      {
+         get { return m_ElementType; }
+         protected set { m_ElementType = value; }
+      }
 
-        protected IFCElementType()
-        {
-        }
+      protected IFCElementType()
+      {
+      }
 
-        /// <summary>
-        /// Constructs an IFCElementType from the IfcElementType handle.
-        /// </summary>
-        /// <param name="ifcElementType">The IfcElementType handle.</param>
-        protected IFCElementType(IFCAnyHandle ifcElementType)
-        {
-            Process(ifcElementType);
-        }
+      /// <summary>
+      /// Constructs an IFCElementType from the IfcElementType handle.
+      /// </summary>
+      /// <param name="ifcElementType">The IfcElementType handle.</param>
+      protected IFCElementType(IFCAnyHandle ifcElementType)
+      {
+         Process(ifcElementType);
+      }
 
-        /// <summary>
-        /// Processes IfcElementType attributes.
-        /// </summary>
-        /// <param name="ifcElementType">The IfcElementType handle.</param>
-        protected override void Process(IFCAnyHandle ifcElementType)
-        {
-            base.Process(ifcElementType);
+      /// <summary>
+      /// Processes IfcElementType attributes.
+      /// </summary>
+      /// <param name="ifcElementType">The IfcElementType handle.</param>
+      protected override void Process(IFCAnyHandle ifcElementType)
+      {
+         base.Process(ifcElementType);
 
-            ElementType = IFCAnyHandleUtil.GetStringAttribute(ifcElementType, "ElementType");
-        }
+         ElementType = IFCAnyHandleUtil.GetStringAttribute(ifcElementType, "ElementType");
+      }
 
-        /// <summary>
-        /// Processes an IfcElementType.
-        /// </summary>
-        /// <param name="ifcElementType">The IfcElementType handle.</param>
-        /// <returns>The IFCElementType object.</returns>
-        public static IFCElementType ProcessIFCElementType(IFCAnyHandle ifcElementType)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcElementType))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcElementType);
-                return null;
-            }
+      /// <summary>
+      /// Processes an IfcElementType.
+      /// </summary>
+      /// <param name="ifcElementType">The IfcElementType handle.</param>
+      /// <returns>The IFCElementType object.</returns>
+      public static IFCElementType ProcessIFCElementType(IFCAnyHandle ifcElementType)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcElementType))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcElementType);
+            return null;
+         }
 
-            IFCEntity elementType;
-            if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcElementType.StepId, out elementType))
-                return (elementType as IFCElementType);
+         IFCEntity elementType;
+         if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcElementType.StepId, out elementType))
+            return (elementType as IFCElementType);
 
-            return new IFCElementType(ifcElementType);
-        }
+         return new IFCElementType(ifcElementType);
+      }
 
-        /// <summary>
-        /// Creates or populates Revit element params based on the information contained in this class.
-        /// </summary>
-        /// <param name="doc">The document.</param>
-        /// <param name="element">The element.</param>
-        protected override void CreateParametersInternal(Document doc, Element element)
-        {
-            base.CreateParametersInternal(doc, element);
+      /// <summary>
+      /// Creates or populates Revit element params based on the information contained in this class.
+      /// </summary>
+      /// <param name="doc">The document.</param>
+      /// <param name="element">The element.</param>
+      protected override void CreateParametersInternal(Document doc, Element element)
+      {
+         base.CreateParametersInternal(doc, element);
 
-            if (element != null)
-            {
-                if (!string.IsNullOrWhiteSpace(ElementType))
-                    IFCPropertySet.AddParameterString(doc, element, "IfcElementType", ElementType, Id);
-            }
-        }
-    }
+         if (element != null)
+         {
+            if (!string.IsNullOrWhiteSpace(ElementType))
+               IFCPropertySet.AddParameterString(doc, element, "IfcElementType", ElementType, Id);
+         }
+      }
+   }
 }

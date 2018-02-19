@@ -101,4 +101,3 @@ namespace Revit.IFC.Import.Data
       }
    }
 }
-   

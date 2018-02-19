@@ -42,6 +42,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// </summary>
       string m_Name = String.Empty;
 
+      string m_Description = String.Empty;
       /// <summary>
       /// The element id of the view schedule generating this Description, if appropriate.
       /// </summary>
@@ -84,6 +85,26 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          foreach (IFCEntityType entityType in EntityTypes)
          {
             if (IFCAnyHandleUtil.IsSubTypeOf(handle, entityType))
+               return true;
+         }
+         return false;
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="handle"></param>
+      /// <returns></returns>
+      public bool IsSubTypeOfEntityTypes(IFCEntityType ifcEntityType)
+      {
+         var ifcEntitySchemaTree = IfcSchemaEntityTree.GetEntityDictFor(ExporterCacheManager.ExportOptionsCache.FileVersion);
+         if (ifcEntitySchemaTree == null || ifcEntitySchemaTree.Count == 0)
+            return false;
+
+         // Note that although EntityTypes is represented as a set, we still need to go through each item in the last to check for subtypes.
+         foreach (IFCEntityType entityType in EntityTypes)
+         {
+            if (ifcEntityType == entityType || IfcSchemaEntityTree.IsSubTypeOf(ifcEntityType.ToString(), entityType.ToString()))
                return true;
          }
          return false;
@@ -182,6 +203,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       {
          get { return m_Name; }
          set { m_Name = value; }
+      }
+
+      public string DescriptionOfSet
+      {
+         get { return m_Description; }
+         set { m_Description = value; }
       }
 
       /// <summary>

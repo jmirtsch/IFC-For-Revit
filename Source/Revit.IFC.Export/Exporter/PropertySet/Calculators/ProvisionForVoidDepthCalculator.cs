@@ -29,57 +29,57 @@ using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate the depth of a provision for void.
-    /// </summary>
-    class ProvisionForVoidDepthCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Depth = 0.0;
+   /// <summary>
+   /// A calculation class to calculate the depth of a provision for void.
+   /// </summary>
+   class ProvisionForVoidDepthCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Depth = 0.0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static ProvisionForVoidDepthCalculator s_Instance = new ProvisionForVoidDepthCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static ProvisionForVoidDepthCalculator s_Instance = new ProvisionForVoidDepthCalculator();
 
-        /// <summary>
-        /// The ProvisionForVoidDepthCalculator instance.
-        /// </summary>
-        public static ProvisionForVoidDepthCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The ProvisionForVoidDepthCalculator instance.
+      /// </summary>
+      public static ProvisionForVoidDepthCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates the depth of a provision for void.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
-        /// <param name="element">The element to calculate the value.</param>
-        /// <param name="elementType">The element type.</param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            if (extrusionCreationData == null)
-                return false;
+      /// <summary>
+      /// Calculates the depth of a provision for void.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
+      /// <param name="element">The element to calculate the value.</param>
+      /// <param name="elementType">The element type.</param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         if (extrusionCreationData == null)
+            return false;
 
-            m_Depth = extrusionCreationData.ScaledLength;
-            return (m_Depth > MathUtil.Eps());
-        }
+         m_Depth = extrusionCreationData.ScaledLength;
+         return (m_Depth > MathUtil.Eps());
+      }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Depth;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Depth;
+      }
+   }
 }

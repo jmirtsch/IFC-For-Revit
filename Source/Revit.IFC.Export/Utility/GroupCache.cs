@@ -30,83 +30,83 @@ using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of the created IfcGroups and related IfcElement handles.
-    /// </summary>
-    public class GroupCache : Dictionary<ElementId, GroupInfo>
-    {
-        /// <summary>
-        /// Add the handle of a Group to the cache.  It will either add it
-        /// to an existing entry, or create a new entry.
-        /// </summary>
-        /// <param name="groupId">The elementId of the Group.</param>
-        /// <param name="groupHnd">The handle of the IfcGroup.</param>
-        public void RegisterGroup(ElementId groupId, IFCAnyHandle groupHnd)
-        {
-            GroupInfo groupInfo;
-            if (!TryGetValue(groupId, out groupInfo))
-            {
-                groupInfo = new GroupInfo();
-            }
-            groupInfo.GroupHandle = groupHnd;
-            this[groupId] = groupInfo;
-        }
+   /// <summary>
+   /// Used to keep a cache of the created IfcGroups and related IfcElement handles.
+   /// </summary>
+   public class GroupCache : Dictionary<ElementId, GroupInfo>
+   {
+      /// <summary>
+      /// Add the handle of a Group to the cache.  It will either add it
+      /// to an existing entry, or create a new entry.
+      /// </summary>
+      /// <param name="groupId">The elementId of the Group.</param>
+      /// <param name="groupHnd">The handle of the IfcGroup.</param>
+      public void RegisterGroup(ElementId groupId, IFCAnyHandle groupHnd)
+      {
+         GroupInfo groupInfo;
+         if (!TryGetValue(groupId, out groupInfo))
+         {
+            groupInfo = new GroupInfo();
+         }
+         groupInfo.GroupHandle = groupHnd;
+         this[groupId] = groupInfo;
+      }
 
-        /// <summary>
-        /// Add the handle of an element in a Group to the cache.  It will either add it
-        /// to an existing entry, or create a new entry.
-        /// </summary>
-        /// <param name="elementId">The ElementId of the Group.</param>
-        /// <param name="elementHnd">The IFC handle of the element.</param>
-        public void RegisterElement(ElementId elementId, IFCAnyHandle elementHnd)
-        {
-            GroupInfo groupInfo;
-            if (!TryGetValue(elementId, out groupInfo))
-            {
-                groupInfo = new GroupInfo();
-            }
-            groupInfo.ElementHandles.Add(elementHnd);
-            this[elementId] = groupInfo;
-        }
+      /// <summary>
+      /// Add the handle of an element in a Group to the cache.  It will either add it
+      /// to an existing entry, or create a new entry.
+      /// </summary>
+      /// <param name="elementId">The ElementId of the Group.</param>
+      /// <param name="elementHnd">The IFC handle of the element.</param>
+      public void RegisterElement(ElementId elementId, IFCAnyHandle elementHnd)
+      {
+         GroupInfo groupInfo;
+         if (!TryGetValue(elementId, out groupInfo))
+         {
+            groupInfo = new GroupInfo();
+         }
+         groupInfo.ElementHandles.Add(elementHnd);
+         this[elementId] = groupInfo;
+      }
 
-        /// <summary>
-        /// Add the handle of one or more elements in an Group to the cache.  It will either add it
-        /// to an existing entry, or create a new entry.
-        /// </summary>
-        /// <param name="elementId">The ElementId of the group.</param>
-        /// <param name="elementHnds">The IFC handle of the elements.</param>
-        public void RegisterElements(ElementId groupId, HashSet<IFCAnyHandle> elementHnds)
-        {
-            if (elementHnds.Count == 0)
-                return;
+      /// <summary>
+      /// Add the handle of one or more elements in an Group to the cache.  It will either add it
+      /// to an existing entry, or create a new entry.
+      /// </summary>
+      /// <param name="elementId">The ElementId of the group.</param>
+      /// <param name="elementHnds">The IFC handle of the elements.</param>
+      public void RegisterElements(ElementId groupId, HashSet<IFCAnyHandle> elementHnds)
+      {
+         if (elementHnds.Count == 0)
+            return;
 
-            GroupInfo groupInfo;
-            if (!TryGetValue(groupId, out groupInfo))
-            {
-                groupInfo = new GroupInfo();
-            }
+         GroupInfo groupInfo;
+         if (!TryGetValue(groupId, out groupInfo))
+         {
+            groupInfo = new GroupInfo();
+         }
 
-            groupInfo.ElementHandles.UnionWith(elementHnds);
-            this[groupId] = groupInfo;
-        }
+         groupInfo.ElementHandles.UnionWith(elementHnds);
+         this[groupId] = groupInfo;
+      }
 
-        /// <summary>
-        /// Registers all of the created handles in the product wrapper that are of the right type to a Group.
-        /// </summary>
-        /// <param name="groupId">The ElementId of the Group.</param>
-        /// <param name="productWrapper">The product wrapper.</param>
-        public void RegisterElements(ElementId groupId, ProductWrapper productWrapper)
-        {
-            ICollection<IFCAnyHandle> objects = productWrapper.GetAllObjects();
-            HashSet<IFCAnyHandle> elementsToAdd = new HashSet<IFCAnyHandle>();
-            foreach (IFCAnyHandle hnd in objects)
-            {
-                if (IFCAnyHandleUtil.IsSubTypeOf(hnd, IFCEntityType.IfcProduct) ||
-                    IFCAnyHandleUtil.IsSubTypeOf(hnd, IFCEntityType.IfcGroup))
-                    elementsToAdd.Add(hnd);
-            }
-            if (elementsToAdd.Count > 0)
-                RegisterElements(groupId, elementsToAdd);
-        }
-    }
+      /// <summary>
+      /// Registers all of the created handles in the product wrapper that are of the right type to a Group.
+      /// </summary>
+      /// <param name="groupId">The ElementId of the Group.</param>
+      /// <param name="productWrapper">The product wrapper.</param>
+      public void RegisterElements(ElementId groupId, ProductWrapper productWrapper)
+      {
+         ICollection<IFCAnyHandle> objects = productWrapper.GetAllObjects();
+         HashSet<IFCAnyHandle> elementsToAdd = new HashSet<IFCAnyHandle>();
+         foreach (IFCAnyHandle hnd in objects)
+         {
+            if (IFCAnyHandleUtil.IsSubTypeOf(hnd, IFCEntityType.IfcProduct) ||
+                IFCAnyHandleUtil.IsSubTypeOf(hnd, IFCEntityType.IfcGroup))
+               elementsToAdd.Add(hnd);
+         }
+         if (elementsToAdd.Count > 0)
+            RegisterElements(groupId, elementsToAdd);
+      }
+   }
 }

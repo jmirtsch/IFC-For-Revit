@@ -31,94 +31,94 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class that represents IFCOrientedEdge entity
-    /// </summary>
-    public class IFCOrientedEdge : IFCEdge
-    {
-        private IFCEdge m_EdgeElement = null;
+   /// <summary>
+   /// Class that represents IFCOrientedEdge entity
+   /// </summary>
+   public class IFCOrientedEdge : IFCEdge
+   {
+      private IFCEdge m_EdgeElement = null;
 
-        private bool m_Orientation;
+      private bool m_Orientation;
 
-        /// <summary>
-        /// Indicates if the topological orientation as used coincides with the orientation from start vertex to end vertex of the edge element.
-        /// </summary>
-        public bool Orientation
-        {
-            get { return m_Orientation; }
-            set { m_Orientation = value; }
-        }
+      /// <summary>
+      /// Indicates if the topological orientation as used coincides with the orientation from start vertex to end vertex of the edge element.
+      /// </summary>
+      public bool Orientation
+      {
+         get { return m_Orientation; }
+         set { m_Orientation = value; }
+      }
 
-        /// <summary>
-        /// Edge entity used to construct this oriented edge.
-        /// </summary>
-        public IFCEdge EdgeElement
-        {
-            get { return m_EdgeElement; }
-            set { m_EdgeElement = value; }
-        }
+      /// <summary>
+      /// Edge entity used to construct this oriented edge.
+      /// </summary>
+      public IFCEdge EdgeElement
+      {
+         get { return m_EdgeElement; }
+         set { m_EdgeElement = value; }
+      }
 
-        protected IFCOrientedEdge()
-        {
-        }
+      protected IFCOrientedEdge()
+      {
+      }
 
-        protected IFCOrientedEdge(IFCAnyHandle ifcOrientedEdge)
-        {
-            Process(ifcOrientedEdge);
-        }
+      protected IFCOrientedEdge(IFCAnyHandle ifcOrientedEdge)
+      {
+         Process(ifcOrientedEdge);
+      }
 
-        override protected void Process(IFCAnyHandle ifcOrientedEdge)
-        {
-            base.Process(ifcOrientedEdge);
-            IFCAnyHandle edgeElement = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcOrientedEdge, "EdgeElement", true);
-            EdgeElement = IFCEdge.ProcessIFCEdge(edgeElement);
+      override protected void Process(IFCAnyHandle ifcOrientedEdge)
+      {
+         base.Process(ifcOrientedEdge);
+         IFCAnyHandle edgeElement = IFCImportHandleUtil.GetRequiredInstanceAttribute(ifcOrientedEdge, "EdgeElement", true);
+         EdgeElement = IFCEdge.ProcessIFCEdge(edgeElement);
 
-            bool found = false;
-            bool orientation = IFCImportHandleUtil.GetRequiredBooleanAttribute(ifcOrientedEdge, "Orientation", out found);
-            if (found)
-                Orientation = orientation;
-            else 
-            {
-                Importer.TheLog.LogWarning(ifcOrientedEdge.StepId, "Cannot find Orientation attribute, defaulting to true", false);
-                Orientation = true;
-            }
-        }
+         bool found = false;
+         bool orientation = IFCImportHandleUtil.GetRequiredBooleanAttribute(ifcOrientedEdge, "Orientation", out found);
+         if (found)
+            Orientation = orientation;
+         else
+         {
+            Importer.TheLog.LogWarning(ifcOrientedEdge.StepId, "Cannot find Orientation attribute, defaulting to true", false);
+            Orientation = true;
+         }
+      }
 
-        /// <summary>
-        /// Create an IFCOrientedEdge object from a handle of type IfcOrientedEdge.
-        /// </summary>
-        /// <param name="ifcOrientedEdge">The IFC handle.</param>
-        /// <returns>The IFCOrientedEdge object.</returns>
-        public static IFCOrientedEdge ProcessIFCOrientedEdge(IFCAnyHandle ifcOrientedEdge)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcOrientedEdge))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcOrientedEdge);
-                return null;
-            }
+      /// <summary>
+      /// Create an IFCOrientedEdge object from a handle of type IfcOrientedEdge.
+      /// </summary>
+      /// <param name="ifcOrientedEdge">The IFC handle.</param>
+      /// <returns>The IFCOrientedEdge object.</returns>
+      public static IFCOrientedEdge ProcessIFCOrientedEdge(IFCAnyHandle ifcOrientedEdge)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcOrientedEdge))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcOrientedEdge);
+            return null;
+         }
 
-            IFCEntity orientedEdge;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcOrientedEdge.StepId, out orientedEdge))
-                orientedEdge = new IFCOrientedEdge(ifcOrientedEdge);
-            return (orientedEdge as IFCOrientedEdge);
-        }
+         IFCEntity orientedEdge;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcOrientedEdge.StepId, out orientedEdge))
+            orientedEdge = new IFCOrientedEdge(ifcOrientedEdge);
+         return (orientedEdge as IFCOrientedEdge);
+      }
 
-        public override Curve GetGeometry()
-        {
-            Curve curve = EdgeElement == null ? null : EdgeElement.GetGeometry();
-            if (curve != null)
-            {
-                // If curve is not null then EdgeElement is not null
-                // TODO in REVIT-61368: get the correct orientation of the curve
-                return curve;
-            }
-            else
-                return null;
-        }
+      public override Curve GetGeometry()
+      {
+         Curve curve = EdgeElement == null ? null : EdgeElement.GetGeometry();
+         if (curve != null)
+         {
+            // If curve is not null then EdgeElement is not null
+            // TODO in REVIT-61368: get the correct orientation of the curve
+            return curve;
+         }
+         else
+            return null;
+      }
 
-        protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
-        {
-            base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
-        }
-    }
+      protected override void CreateShapeInternal(IFCImportShapeEditScope shapeEditScope, Transform lcs, Transform scaledLcs, string guid)
+      {
+         base.CreateShapeInternal(shapeEditScope, lcs, scaledLcs, guid);
+      }
+   }
 }

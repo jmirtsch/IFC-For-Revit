@@ -25,38 +25,38 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of IFC boolean properties.
-    /// </summary>
-    public class BooleanPropertyInfoCache : Dictionary<KeyValuePair<string, bool>, IFCAnyHandle>
-    {
-        /// <summary>
-        /// Finds if it contains the property with the specified bool value.
-        /// </summary>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="value">The value.</param>
-        /// <returns>True if it has, false otherwise.</returns>
-        public IFCAnyHandle Find(string propertyName, bool value)
-        {
-            KeyValuePair<string, bool> key = new KeyValuePair<string, bool>(propertyName, value);
+   /// <summary>
+   /// Used to keep a cache of IFC boolean properties.
+   /// </summary>
+   public class BooleanPropertyInfoCache : Dictionary<KeyValuePair<string, bool>, IFCAnyHandle>
+   {
+      /// <summary>
+      /// Finds if it contains the property with the specified bool value.
+      /// </summary>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="value">The value.</param>
+      /// <returns>True if it has, false otherwise.</returns>
+      public IFCAnyHandle Find(string propertyName, bool value)
+      {
+         KeyValuePair<string, bool> key = new KeyValuePair<string, bool>(propertyName, value);
 
-            IFCAnyHandle propertyHandle;
-            if (TryGetValue(key, out propertyHandle))
-                return propertyHandle;
+         IFCAnyHandle propertyHandle;
+         if (TryGetValue(key, out propertyHandle))
+            return propertyHandle;
 
-            return null;
-        }
+         return null;
+      }
 
-        /// <summary>
-        /// Adds a new property of a bool value to the cache.
-        /// </summary>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="value">The value.</param>
-        /// <param name="propertyHandle">The property handle.</param>
-        public void Add(string propertyName, bool value, IFCAnyHandle propertyHandle)
-        {
-            KeyValuePair<string, bool> key = new KeyValuePair<string, bool>(propertyName, value);
-            this[key] = propertyHandle;
-        }
-    }
+      /// <summary>
+      /// Adds a new property of a bool value to the cache.
+      /// </summary>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="value">The value.</param>
+      /// <param name="propertyHandle">The property handle.</param>
+      public void Add(string propertyName, bool value, IFCAnyHandle propertyHandle)
+      {
+         KeyValuePair<string, bool> key = new KeyValuePair<string, bool>(propertyName, value);
+         this[key] = propertyHandle;
+      }
+   }
 }

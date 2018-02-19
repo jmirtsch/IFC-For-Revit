@@ -31,53 +31,53 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class that represents IFCEllipse entity
-    /// </summary>
-    public class IFCEllipse : IFCConic
-    {
-        protected IFCEllipse()
-        {
-        }
+   /// <summary>
+   /// Class that represents IFCEllipse entity
+   /// </summary>
+   public class IFCEllipse : IFCConic
+   {
+      protected IFCEllipse()
+      {
+      }
 
-        protected IFCEllipse(IFCAnyHandle conic)
-        {
-            Process(conic);
-        }
+      protected IFCEllipse(IFCAnyHandle conic)
+      {
+         Process(conic);
+      }
 
-        protected override void Process(IFCAnyHandle ifcCurve)
-        {
-            base.Process(ifcCurve);
-            bool found = false;
-            double radiusX = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(ifcCurve, "SemiAxis1", out found);
-            if (!found)
-                Importer.TheLog.LogError(ifcCurve.StepId, "Cannot find the attribute SemiAxis1 of this curve", true);
+      protected override void Process(IFCAnyHandle ifcCurve)
+      {
+         base.Process(ifcCurve);
+         bool found = false;
+         double radiusX = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(ifcCurve, "SemiAxis1", out found);
+         if (!found)
+            Importer.TheLog.LogError(ifcCurve.StepId, "Cannot find the attribute SemiAxis1 of this curve", true);
 
-            double radiusY = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(ifcCurve, "SemiAxis2", out found);
-            if (!found)
-                Importer.TheLog.LogError(ifcCurve.StepId, "Cannot find the attribute SemiAxis2 of this curve", true);
+         double radiusY = IFCImportHandleUtil.GetRequiredScaledLengthAttribute(ifcCurve, "SemiAxis2", out found);
+         if (!found)
+            Importer.TheLog.LogError(ifcCurve.StepId, "Cannot find the attribute SemiAxis2 of this curve", true);
 
             Curve = Ellipse.Create(Position.Origin, radiusX, radiusY, Position.BasisX, Position.BasisY, 0, 2.0 * Math.PI);
         }
 
-        /// <summary>
-        /// Create an IFCEllipse object from a handle of type IfcEllipse
-        /// </summary>
-        /// <param name="ifcEllipse">The IFC handle</param>
-        /// <returns>The IFCEllipse object</returns>
-        public static IFCEllipse ProcessIFCEllipse(IFCAnyHandle ifcEllipse)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcEllipse))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcEllipse);
-                return null;
-            }
+      /// <summary>
+      /// Create an IFCEllipse object from a handle of type IfcEllipse
+      /// </summary>
+      /// <param name="ifcEllipse">The IFC handle</param>
+      /// <returns>The IFCEllipse object</returns>
+      public static IFCEllipse ProcessIFCEllipse(IFCAnyHandle ifcEllipse)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcEllipse))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcEllipse);
+            return null;
+         }
 
-            IFCEntity ellipse = null;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcEllipse.StepId, out ellipse))
-                ellipse = new IFCEllipse(ifcEllipse);
+         IFCEntity ellipse = null;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcEllipse.StepId, out ellipse))
+            ellipse = new IFCEllipse(ifcEllipse);
 
-            return (ellipse as IFCEllipse);
-        }
-    }
+         return (ellipse as IFCEllipse);
+      }
+   }
 }

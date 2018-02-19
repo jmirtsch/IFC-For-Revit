@@ -27,41 +27,41 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Contains a cache from parameter name to parameter.  Intended to be grouped by BuiltInParameterGroup.
-    /// </summary>
-    public class ParameterElementCache
-    {
-        /// <summary>
-        /// The cache from parameter name to parameter.
-        /// </summary>
-        public IDictionary<string, Parameter> ParameterCache { get; set; }
+   /// <summary>
+   /// Contains a cache from parameter name to parameter.  Intended to be grouped by BuiltInParameterGroup.
+   /// </summary>
+   public class ParameterElementCache
+   {
+      /// <summary>
+      /// The cache from parameter name to parameter.
+      /// </summary>
+      public IDictionary<string, Parameter> ParameterCache { get; set; }
 
-        /// <summary>
-        /// The default constructor.
-        /// </summary>
-        public ParameterElementCache()
-        {
-            ParameterCache = new SortedDictionary<string, Parameter>(StringComparer.InvariantCultureIgnoreCase);
-        }
-    }
+      /// <summary>
+      /// The default constructor.
+      /// </summary>
+      public ParameterElementCache()
+      {
+         ParameterCache = new SortedDictionary<string, Parameter>(StringComparer.InvariantCultureIgnoreCase);
+      }
+   }
 
-    /// <summary>
-    /// Contains a cache from parameter name to parameter value.
-    /// </summary>
-    public class ParameterValueSubelementCache
-    {
-        /// <summary>
-        /// The cache from parameter name to parameter value.
-        /// </summary>
-        public IDictionary<String, ParameterValue> ParameterValueCache { get; set; }
+   /// <summary>
+   /// Contains a cache from parameter name to parameter value.
+   /// </summary>
+   public class ParameterValueSubelementCache
+   {
+      /// <summary>
+      /// The cache from parameter name to parameter value.
+      /// </summary>
+      public IDictionary<String, ParameterValue> ParameterValueCache { get; set; }
 
-        /// <summary>
-        /// The default constructor.
-        /// </summary>
-        public ParameterValueSubelementCache()
-        {
-            ParameterValueCache = new SortedDictionary<String, ParameterValue>(StringComparer.InvariantCultureIgnoreCase);
-        }
-    }
+      /// <summary>
+      /// The default constructor.
+      /// </summary>
+      public ParameterValueSubelementCache()
+      {
+         ParameterValueCache = new SortedDictionary<String, ParameterValue>(StringComparer.InvariantCultureIgnoreCase);
+      }
+   }
 }

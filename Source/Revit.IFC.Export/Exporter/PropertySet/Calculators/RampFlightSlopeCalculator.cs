@@ -28,62 +28,62 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate slope for a ramp flight.
-    /// </summary>
-    class RampFlightSlopeCalculator : PropertyCalculator
-    {
-        private double m_Slope = 0;
+   /// <summary>
+   /// A calculation class to calculate slope for a ramp flight.
+   /// </summary>
+   class RampFlightSlopeCalculator : PropertyCalculator
+   {
+      private double m_Slope = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static RampFlightSlopeCalculator s_Instance = new RampFlightSlopeCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static RampFlightSlopeCalculator s_Instance = new RampFlightSlopeCalculator();
 
-        /// <summary>
-        /// The RailingHeightCalculator instance.
-        /// </summary>
-        public static RampFlightSlopeCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The RailingHeightCalculator instance.
+      /// </summary>
+      public static RampFlightSlopeCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates slope for a ramp flight.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
-        /// <param name="element">The element to calculate the value.</param>
-        /// <param name="elementType">The element type.</param>
-        /// <returns>True if the operation succeed, false otherwise.</returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            if (element == null)
-                return false;
-
-            double slope;
-            if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.RAMP_ATTR_MIN_INV_SLOPE, out slope) == null)
-                return false;
-
-            m_Slope = slope;
-            if (!MathUtil.IsAlmostZero(m_Slope))
-            {
-                m_Slope = UnitUtil.ScaleAngle(Math.Atan(m_Slope));
-                return true;
-            }
-
+      /// <summary>
+      /// Calculates slope for a ramp flight.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="extrusionCreationData">The IFCExtrusionCreationData.</param>
+      /// <param name="element">The element to calculate the value.</param>
+      /// <param name="elementType">The element type.</param>
+      /// <returns>True if the operation succeed, false otherwise.</returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         if (element == null)
             return false;
-        }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Slope;
-        }
-    }
+         double slope;
+         if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.RAMP_ATTR_MIN_INV_SLOPE, out slope) == null)
+            return false;
+
+         m_Slope = slope;
+         if (!MathUtil.IsAlmostZero(m_Slope))
+         {
+            m_Slope = UnitUtil.ScaleAngle(Math.Atan(m_Slope));
+            return true;
+         }
+
+         return false;
+      }
+
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Slope;
+      }
+   }
 }

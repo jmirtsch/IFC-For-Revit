@@ -31,128 +31,128 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class that represents IFCBSplineCurve entity
-    /// </summary>
-    public abstract class IFCBSplineCurve : IFCBoundedCurve
-    {
-        private int m_Degree;
-        private IList<XYZ> m_ControlPointsList;
-        private bool? m_ClosedCurve;
+   /// <summary>
+   /// Class that represents IFCBSplineCurve entity
+   /// </summary>
+   public abstract class IFCBSplineCurve : IFCBoundedCurve
+   {
+      private int m_Degree;
+      private IList<XYZ> m_ControlPointsList;
+      private bool? m_ClosedCurve;
 
-        /// <summary>
-        /// Indication of whether the curve is closed; it is for information only.
-        /// </summary>
-        public bool? ClosedCurve
-        {
-            get { return m_ClosedCurve; }
-            protected set { m_ClosedCurve = value; }
-        }
+      /// <summary>
+      /// Indication of whether the curve is closed; it is for information only.
+      /// </summary>
+      public bool? ClosedCurve
+      {
+         get { return m_ClosedCurve; }
+         protected set { m_ClosedCurve = value; }
+      }
 
-        /// <summary>
-        /// The algebraic degree of the basis functions.
-        /// </summary>
-        public int Degree
-        {
-            get { return m_Degree; }
-            protected set 
+      /// <summary>
+      /// The algebraic degree of the basis functions.
+      /// </summary>
+      public int Degree
+      {
+         get { return m_Degree; }
+         protected set
+         {
+            if (value <= 0)
             {
-                if (value <= 0)
-                {
-                    throw new InvalidOperationException("Invalid degree");
-                }
-                else 
-                {
-                    m_Degree = value;
-                }
-            }
-        }
-        
-        /// <summary>
-        /// The list of control points for the curve.
-        /// </summary>
-        public IList<XYZ> ControlPointsList
-        {
-            get { return m_ControlPointsList; }
-            protected set
-            {
-                if (value == null || value.Count() <= 1)
-                {
-                    throw new InvalidOperationException("Invalid list of control points");
-                }
-                else
-                {
-                    m_ControlPointsList = value;
-                }
-            }
-        }
-
-        protected IFCBSplineCurve()
-        { 
-        }
-
-        protected IFCBSplineCurve(IFCAnyHandle bSplineCurve)
-        {
-            Process(bSplineCurve);
-        }
-
-        protected override void Process(IFCAnyHandle ifcCurve)
-        {
-            base.Process(ifcCurve);
-            
-            bool foundDegree = false;
-            Degree = IFCImportHandleUtil.GetRequiredIntegerAttribute(ifcCurve, "Degree", out foundDegree);
-            if (!foundDegree)
-            {
-                Importer.TheLog.LogError(ifcCurve.StepId, "Cannot find the degree of this curve", true);
-            }
-
-            IList<IFCAnyHandle> controlPoints = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcCurve, "ControlPointsList");
-
-            if (controlPoints == null || controlPoints.Count == 0) 
-            {
-                Importer.TheLog.LogError(ifcCurve.StepId, "This curve has invalid number of control points", true);
-            }
-
-            IList<XYZ> controlPointLists = new List<XYZ>();
-            foreach (IFCAnyHandle point in controlPoints)
-            {
-                XYZ pointXYZ = IFCPoint.ProcessScaledLengthIFCCartesianPoint(point);
-                controlPointLists.Add(pointXYZ);
-            }
-            ControlPointsList = controlPointLists;
-
-            bool foundClosedCurve = false;
-            IFCLogical closedCurve = IFCImportHandleUtil.GetOptionalLogicalAttribute(ifcCurve, "ClosedCurve", out foundClosedCurve);
-            if (!foundClosedCurve)
-            {
-                Importer.TheLog.LogWarning(ifcCurve.StepId, "Cannot find the ClosedCurve property of this curve, ignoring", false);
-                ClosedCurve = null;
+               throw new InvalidOperationException("Invalid degree");
             }
             else
             {
-                ClosedCurve = (closedCurve == IFCLogical.True);
+               m_Degree = value;
             }
-        }
+         }
+      }
 
-        /// <summary>
-        /// Create an IFCBSplineCurve object from the handle of type IfcBSplineCurve
-        /// </summary>
-        /// <param name="ifcBSplineCurve">The IFC handle</param>
-        /// <returns>The IFCBSplineCurve object</returns>
-        public static IFCBSplineCurve ProcessIFCBSplineCurve(IFCAnyHandle ifcBSplineCurve) 
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcBSplineCurve))
+      /// <summary>
+      /// The list of control points for the curve.
+      /// </summary>
+      public IList<XYZ> ControlPointsList
+      {
+         get { return m_ControlPointsList; }
+         protected set
+         {
+            if (value == null || value.Count() <= 1)
             {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcBSplineCurve);
-                return null;
+               throw new InvalidOperationException("Invalid list of control points");
             }
+            else
+            {
+               m_ControlPointsList = value;
+            }
+         }
+      }
 
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcBSplineCurve, IFCEntityType.IfcBSplineCurveWithKnots))
-                return IFCBSplineCurveWithKnots.ProcessIFCBSplineCurveWithKnots(ifcBSplineCurve);
+      protected IFCBSplineCurve()
+      {
+      }
 
-            Importer.TheLog.LogUnhandledSubTypeError(ifcBSplineCurve, IFCEntityType.IfcBSplineCurve, true);
+      protected IFCBSplineCurve(IFCAnyHandle bSplineCurve)
+      {
+         Process(bSplineCurve);
+      }
+
+      protected override void Process(IFCAnyHandle ifcCurve)
+      {
+         base.Process(ifcCurve);
+
+         bool foundDegree = false;
+         Degree = IFCImportHandleUtil.GetRequiredIntegerAttribute(ifcCurve, "Degree", out foundDegree);
+         if (!foundDegree)
+         {
+            Importer.TheLog.LogError(ifcCurve.StepId, "Cannot find the degree of this curve", true);
+         }
+
+         IList<IFCAnyHandle> controlPoints = IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcCurve, "ControlPointsList");
+
+         if (controlPoints == null || controlPoints.Count == 0)
+         {
+            Importer.TheLog.LogError(ifcCurve.StepId, "This curve has invalid number of control points", true);
+         }
+
+         IList<XYZ> controlPointLists = new List<XYZ>();
+         foreach (IFCAnyHandle point in controlPoints)
+         {
+            XYZ pointXYZ = IFCPoint.ProcessScaledLengthIFCCartesianPoint(point);
+            controlPointLists.Add(pointXYZ);
+         }
+         ControlPointsList = controlPointLists;
+
+         bool foundClosedCurve = false;
+         IFCLogical closedCurve = IFCImportHandleUtil.GetOptionalLogicalAttribute(ifcCurve, "ClosedCurve", out foundClosedCurve);
+         if (!foundClosedCurve)
+         {
+            Importer.TheLog.LogWarning(ifcCurve.StepId, "Cannot find the ClosedCurve property of this curve, ignoring", false);
+            ClosedCurve = null;
+         }
+         else
+         {
+            ClosedCurve = (closedCurve == IFCLogical.True);
+         }
+      }
+
+      /// <summary>
+      /// Create an IFCBSplineCurve object from the handle of type IfcBSplineCurve
+      /// </summary>
+      /// <param name="ifcBSplineCurve">The IFC handle</param>
+      /// <returns>The IFCBSplineCurve object</returns>
+      public static IFCBSplineCurve ProcessIFCBSplineCurve(IFCAnyHandle ifcBSplineCurve)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcBSplineCurve))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcBSplineCurve);
             return null;
-        }
-    }
+         }
+
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcBSplineCurve, IFCEntityType.IfcBSplineCurveWithKnots))
+            return IFCBSplineCurveWithKnots.ProcessIFCBSplineCurveWithKnots(ifcBSplineCurve);
+
+         Importer.TheLog.LogUnhandledSubTypeError(ifcBSplineCurve, IFCEntityType.IfcBSplineCurve, true);
+         return null;
+      }
+   }
 }

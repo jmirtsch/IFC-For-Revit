@@ -28,76 +28,80 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate gross surface area.
-    /// </summary>
-    class GrossSurfaceAreaCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Area = 0;
+   /// <summary>
+   /// A calculation class to calculate gross surface area.
+   /// </summary>
+   class GrossSurfaceAreaCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Area = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static GrossSurfaceAreaCalculator s_Instance = new GrossSurfaceAreaCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static GrossSurfaceAreaCalculator s_Instance = new GrossSurfaceAreaCalculator();
 
       /// <summary>
       /// The GrossSurfaceAreaCalculator instance.
       /// </summary>
       public static GrossSurfaceAreaCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates gross surface area.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            if (extrusionCreationData == null)
-                return false;
-            double extrudedArea = extrusionCreationData.ScaledArea;
-            double length = extrusionCreationData.ScaledLength;
-            double perimeter = extrusionCreationData.ScaledOuterPerimeter;
+      /// <summary>
+      /// Calculates gross surface area.
+      /// </summary>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="extrusionCreationData">
+      /// The IFCExtrusionCreationData.
+      /// </param>
+      /// <param name="element">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="elementType">
+      /// The element type.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyGrossSurfaceArea", out m_Area) == null)
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcGrossSurfaceArea", out m_Area) == null)
+               ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "GrossSurfaceArea", out m_Area);
+         m_Area = UnitUtil.ScaleArea(m_Area);
+         if (m_Area > MathUtil.Eps() * MathUtil.Eps())
+            return true;
+
+         if (extrusionCreationData == null)
+            return false;
+
+         double extrudedArea = extrusionCreationData.ScaledArea;
+         double length = extrusionCreationData.ScaledLength;
+         double perimeter = extrusionCreationData.ScaledOuterPerimeter;
+         if (length > MathUtil.Eps() && perimeter > MathUtil.Eps())
+         {
             m_Area = perimeter * length + 2 * extrudedArea;
-            if (m_Area < MathUtil.Eps() * MathUtil.Eps())
-            {
-               ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyGrossSurfaceArea", out m_Area);
-               if (m_Area < MathUtil.Eps() * MathUtil.Eps())
-                  return false;
-               else
-                  return true;
-            }
-            else
-               return true;
-        }
+            return true;
+         }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Area;
-        }
-    }
+         return false;
+      }
+
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Area;
+      }
+   }
 }

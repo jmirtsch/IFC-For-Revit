@@ -25,42 +25,46 @@ using Revit.IFC.Export.Exporter;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of information to create zones.
-    /// </summary>
-    public class SpaceOccupantInfoCache : Dictionary<string, SpaceOccupantInfo>
-    {
-        /// <summary>
-        /// Adds the SpaceOccupantInfo to the dictionary.
-        /// </summary>
-        /// <param name="name">
-        /// The name of the zone.
-        /// </param>
-        /// <param name="spaceOccupantInfo">
-        /// The SpaceOccupantInfo object.
-        /// </param>
-        public void Register(string name, SpaceOccupantInfo spaceOccupantInfo)
-        {
+   /// <summary>
+   /// Used to keep a cache of information to create zones.
+   /// </summary>
+   public class SpaceOccupantInfoCache : Dictionary<string, SpaceOccupantInfo>
+   {
+      /// <summary>
+      /// Adds the SpaceOccupantInfo to the dictionary.
+      /// </summary>
+      /// <param name="name">
+      /// The name of the zone.
+      /// </param>
+      /// <param name="spaceOccupantInfo">
+      /// The SpaceOccupantInfo object.
+      /// </param>
+      public void Register(string name, SpaceOccupantInfo spaceOccupantInfo)
+      {
+         if (!string.IsNullOrEmpty(name))
             this[name] = spaceOccupantInfo;
-        }
+      }
 
-        /// <summary>
-        /// Finds the spaceOccupantInfo from the dictionary.
-        /// </summary>
-        /// <param name="name">
-        /// The name of the zone.
-        /// </param>
-        /// <returns>
-        /// The spaceOccupantInfo object.
-        /// </returns>
-        public SpaceOccupantInfo Find(string name)
-        {
-            SpaceOccupantInfo spaceOccupantInfo;
-
-            if (TryGetValue(name, out spaceOccupantInfo))
-                return spaceOccupantInfo;
-
+      /// <summary>
+      /// Finds the spaceOccupantInfo from the dictionary.
+      /// </summary>
+      /// <param name="name">
+      /// The name of the zone.
+      /// </param>
+      /// <returns>
+      /// The spaceOccupantInfo object.
+      /// </returns>
+      public SpaceOccupantInfo Find(string name)
+      {
+         if (string.IsNullOrEmpty(name))
             return null;
-        }
-    }
+
+         SpaceOccupantInfo spaceOccupantInfo;
+
+         if (TryGetValue(name, out spaceOccupantInfo))
+            return spaceOccupantInfo;
+
+         return null;
+      }
+   }
 }

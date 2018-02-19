@@ -25,10 +25,10 @@ using Revit.IFC.Export.Exporter;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of the wall connection information.
-    /// </summary>
-    public class WallConnectionDataCache : HashSet<WallConnectionData>
-    {
-    }
+   /// <summary>
+   /// Used to keep a cache of the wall connection information.
+   /// </summary>
+   public class WallConnectionDataCache : HashSet<WallConnectionData>
+   {
+   }
 }

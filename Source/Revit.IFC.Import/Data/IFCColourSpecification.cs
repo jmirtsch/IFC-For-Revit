@@ -30,67 +30,67 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class representing the abstract IfcColourSpecification entity.
-    /// </summary>
-    public abstract class IFCColourSpecification : IFCEntity
-    {
-        private string m_Name = null;
+   /// <summary>
+   /// Class representing the abstract IfcColourSpecification entity.
+   /// </summary>
+   public abstract class IFCColourSpecification : IFCEntity
+   {
+      private string m_Name = null;
 
-        // cached color value.
-        private Color m_Color = null;
+      // cached color value.
+      private Color m_Color = null;
 
-        protected IFCColourSpecification()
-        {
-        }
+      protected IFCColourSpecification()
+      {
+      }
 
-        protected abstract Color CreateColor();
+      protected abstract Color CreateColor();
 
-        /// <summary>
-        /// Get the optional name of the color.
-        /// </summary>
-        public string Name
-        {
-            get { return m_Name; }
-            protected set { m_Name = value; }
-        }
+      /// <summary>
+      /// Get the optional name of the color.
+      /// </summary>
+      public string Name
+      {
+         get { return m_Name; }
+         protected set { m_Name = value; }
+      }
 
-        /// <summary>
-        /// Get the RGB associated to the color.
-        /// </summary>
-        /// <returns>The Color value.</returns>
-        public Color GetColor()
-        {
-            if (m_Color == null)
-                m_Color = CreateColor();
+      /// <summary>
+      /// Get the RGB associated to the color.
+      /// </summary>
+      /// <returns>The Color value.</returns>
+      public Color GetColor()
+      {
+         if (m_Color == null)
+            m_Color = CreateColor();
 
-            return m_Color;
-        }
+         return m_Color;
+      }
 
-        override protected void Process(IFCAnyHandle item)
-        {
-            base.Process(item);
+      override protected void Process(IFCAnyHandle item)
+      {
+         base.Process(item);
 
-            Name = IFCImportHandleUtil.GetOptionalStringAttribute(item, "Name", null);
-        }
+         Name = IFCImportHandleUtil.GetOptionalStringAttribute(item, "Name", null);
+      }
 
-        protected IFCColourSpecification(IFCAnyHandle item)
-        {
-            Process(item);
-        }
+      protected IFCColourSpecification(IFCAnyHandle item)
+      {
+         Process(item);
+      }
 
-        /// <summary>
-        /// Processes an IfcColourSpecification entity handle.
-        /// </summary>
-        /// <param name="ifcColourSpecification">The IfcColourSpecification handle.</param>
-        /// <returns>The IFCColourSpecification object.</returns>
-        public static IFCColourSpecification ProcessIFCColourSpecification(IFCAnyHandle ifcColourSpecification)
-        {
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcColourSpecification, IFCEntityType.IfcColourRgb))
-                return IFCColourRgb.ProcessIFCColourRgb(ifcColourSpecification);
+      /// <summary>
+      /// Processes an IfcColourSpecification entity handle.
+      /// </summary>
+      /// <param name="ifcColourSpecification">The IfcColourSpecification handle.</param>
+      /// <returns>The IFCColourSpecification object.</returns>
+      public static IFCColourSpecification ProcessIFCColourSpecification(IFCAnyHandle ifcColourSpecification)
+      {
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcColourSpecification, IFCEntityType.IfcColourRgb))
+            return IFCColourRgb.ProcessIFCColourRgb(ifcColourSpecification);
 
-            Importer.TheLog.LogUnhandledSubTypeError(ifcColourSpecification, IFCEntityType.IfcColourSpecification, true);
-            return null;
-        }
-    }
+         Importer.TheLog.LogUnhandledSubTypeError(ifcColourSpecification, IFCEntityType.IfcColourSpecification, true);
+         return null;
+      }
+   }
 }

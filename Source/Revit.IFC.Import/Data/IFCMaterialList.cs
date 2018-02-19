@@ -30,91 +30,91 @@ using Revit.IFC.Import.Properties;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Class to represent IfcMaterialList.
-    /// </summary>
-    public class IFCMaterialList : IFCEntity, IIFCMaterialSelect
-    {
-        IList<IFCMaterial> m_Materials = null;
+   /// <summary>
+   /// Class to represent IfcMaterialList.
+   /// </summary>
+   public class IFCMaterialList : IFCEntity, IIFCMaterialSelect
+   {
+      IList<IFCMaterial> m_Materials = null;
 
-        /// <summary>
-        /// Get the associated list of IFCMaterialLayers.
-        /// </summary>
-        public IList<IFCMaterial> Materials
-        {
-            get 
-            {
-                if (m_Materials == null)
-                    m_Materials = new List<IFCMaterial>();
-                return m_Materials; 
-            }
-            
-        }
+      /// <summary>
+      /// Get the associated list of IFCMaterialLayers.
+      /// </summary>
+      public IList<IFCMaterial> Materials
+      {
+         get
+         {
+            if (m_Materials == null)
+               m_Materials = new List<IFCMaterial>();
+            return m_Materials;
+         }
 
-        /// <summary>
-        /// Return the material list for this IFCMaterialSelect.
-        /// </summary>
-        public IList<IFCMaterial> GetMaterials()
-        {
-            return Materials;
-        }
-        
-        protected IFCMaterialList()
-        {
-        }
+      }
 
-        protected IFCMaterialList(IFCAnyHandle ifcMaterialList)
-        {
-            Process(ifcMaterialList);
-        }
+      /// <summary>
+      /// Return the material list for this IFCMaterialSelect.
+      /// </summary>
+      public IList<IFCMaterial> GetMaterials()
+      {
+         return Materials;
+      }
 
-        protected override void Process(IFCAnyHandle ifcMaterialList)
-        {
-            base.Process(ifcMaterialList);
+      protected IFCMaterialList()
+      {
+      }
 
-            IList<IFCAnyHandle> ifcMaterials = 
-                IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcMaterialList, "Materials");
-            if (ifcMaterials == null)
-            {
-                Importer.TheLog.LogError(ifcMaterialList.Id, "Expected at least 1 IfcMaterial, found none.", false);
-                return;
-            }
+      protected IFCMaterialList(IFCAnyHandle ifcMaterialList)
+      {
+         Process(ifcMaterialList);
+      }
 
-            foreach (IFCAnyHandle ifcMaterial in ifcMaterials)
-            {
-                IFCMaterial material = IFCMaterial.ProcessIFCMaterial(ifcMaterial);
-                if (material != null)
-                    Materials.Add(material);
-            }
-        }
+      protected override void Process(IFCAnyHandle ifcMaterialList)
+      {
+         base.Process(ifcMaterialList);
 
-        /// <summary>
-        /// Create the contained materials within the IfcMaterialList.
-        /// </summary>
-        /// <param name="doc">The document.</param>
-        public void Create(Document doc)
-        {
-            foreach (IFCMaterial material in Materials)
-                material.Create(doc);
-        }
+         IList<IFCAnyHandle> ifcMaterials =
+             IFCAnyHandleUtil.GetAggregateInstanceAttribute<List<IFCAnyHandle>>(ifcMaterialList, "Materials");
+         if (ifcMaterials == null)
+         {
+            Importer.TheLog.LogError(ifcMaterialList.Id, "Expected at least 1 IfcMaterial, found none.", false);
+            return;
+         }
 
-        /// <summary>
-        /// Processes an IfcMaterialList entity.
-        /// </summary>
-        /// <param name="ifcMaterialList">The IfcMaterialList handle.</param>
-        /// <returns>The IFCMaterialList object.</returns>
-        public static IFCMaterialList ProcessIFCMaterialList(IFCAnyHandle ifcMaterialList)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialList))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialList);
-                return null;
-            }
+         foreach (IFCAnyHandle ifcMaterial in ifcMaterials)
+         {
+            IFCMaterial material = IFCMaterial.ProcessIFCMaterial(ifcMaterial);
+            if (material != null)
+               Materials.Add(material);
+         }
+      }
 
-            IFCEntity materialList;
-            if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcMaterialList.StepId, out materialList))
-                materialList = new IFCMaterialList(ifcMaterialList);
-            return (materialList as IFCMaterialList);
-        }
-    }
+      /// <summary>
+      /// Create the contained materials within the IfcMaterialList.
+      /// </summary>
+      /// <param name="doc">The document.</param>
+      public void Create(Document doc)
+      {
+         foreach (IFCMaterial material in Materials)
+            material.Create(doc);
+      }
+
+      /// <summary>
+      /// Processes an IfcMaterialList entity.
+      /// </summary>
+      /// <param name="ifcMaterialList">The IfcMaterialList handle.</param>
+      /// <returns>The IFCMaterialList object.</returns>
+      public static IFCMaterialList ProcessIFCMaterialList(IFCAnyHandle ifcMaterialList)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcMaterialList))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcMaterialList);
+            return null;
+         }
+
+         IFCEntity materialList;
+         if (!IFCImportFile.TheFile.EntityMap.TryGetValue(ifcMaterialList.StepId, out materialList))
+            materialList = new IFCMaterialList(ifcMaterialList);
+         return (materialList as IFCMaterialList);
+      }
+   }
 }

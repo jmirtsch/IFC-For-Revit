@@ -76,7 +76,7 @@ namespace Revit.IFC.Import.Data
             // We are going to try to reverse or tweak segments as necessary to make the CurveLoop.
             // For each curve, it is acceptable if it can be appended to the end of the existing loop, or prepended to its start, 
             // possibly after reversing the curve, and possibly with some tweaking.
-            
+
             // NOTE: we do not do any checks yet to repair the endpoints of the curveloop to make them closed.
             // NOTE: this is not expected to be perfect with dirty data, but is expected to not change already valid data.
 
@@ -115,7 +115,7 @@ namespace Revit.IFC.Import.Data
                   // Determine the minimum gap between the two curves.  If it is too large, we'll give up before trying anything.
                   double minStartGap = Math.Min(distLoopStartPtToNextEndPt, distLoopStartPtToNextStartPt);
                   double minEndGap = Math.Min(distLoopEndPtToNextStartPt, distLoopEndPtToNextEndPt);
-                  
+
                   minGap = Math.Min(minStartGap, minEndGap);
 
                   // If the minimum distance between the two curves is greater than gapVertexEps (which is the larger of our two tolerances), 
@@ -365,7 +365,7 @@ namespace Revit.IFC.Import.Data
          if (firstCurve is Line)
          {
             Line firstLine = firstCurve as Line;
-            while(curveIterator.MoveNext())
+            while (curveIterator.MoveNext())
             {
                currentCurve = curveIterator.Current;
                if (!(currentCurve is Line))
@@ -386,12 +386,12 @@ namespace Revit.IFC.Import.Data
             Arc firstArc = firstCurve as Arc;
             XYZ firstCurveNormal = firstArc.Normal;
 
-            while(curveIterator.MoveNext())
+            while (curveIterator.MoveNext())
             {
                currentCurve = curveIterator.Current;
                if (!(currentCurve is Arc))
                {
-                   return null;
+                  return null;
                }
 
                XYZ currentStartPoint = currentCurve.GetEndPoint(0);
@@ -431,7 +431,7 @@ namespace Revit.IFC.Import.Data
                firstCurve.MakeBound(startParameter, endParameter);
             }
             returnCurve = firstCurve;
-            
+
          }
          else if (firstCurve is Ellipse)
          {
@@ -442,7 +442,7 @@ namespace Revit.IFC.Import.Data
             XYZ yDirection = firstEllipse.YDirection;
             XYZ firstCurveNormal = firstEllipse.Normal;
 
-            while(curveIterator.MoveNext())
+            while (curveIterator.MoveNext())
             {
                currentCurve = curveIterator.Current;
                if (!(currentCurve is Ellipse))
@@ -515,7 +515,7 @@ namespace Revit.IFC.Import.Data
             }
             returnCurve = firstCurve;
          }
-         
+
          return returnCurve;
       }
    }

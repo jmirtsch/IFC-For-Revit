@@ -31,23 +31,23 @@ using Revit.IFC.Export.Exporter.PropertySet;
 
 namespace Revit.IFC.Export.Exporter
 {
-    /// <summary>
-    /// Provides methods to export a Group element as IfcGroup.
-    /// </summary>
-    class GroupExporter
-    {
-        /// <summary>
-        /// Exports a Group as an IfcGroup.
-        /// </summary>
-        /// <param name="exporterIFC">The ExporterIFC object.</param>
-        /// <param name="element">The element.</param>
-        /// <param name="productWrapper">The ProductWrapper.</param>
-        /// <returns>True if exported successfully, false otherwise.</returns>
-        public static bool ExportGroupElement(ExporterIFC exporterIFC, Group element,
-            ProductWrapper productWrapper)
-        {
-            if (element == null)
-                return false;
+   /// <summary>
+   /// Provides methods to export a Group element as IfcGroup.
+   /// </summary>
+   class GroupExporter
+   {
+      /// <summary>
+      /// Exports a Group as an IfcGroup.
+      /// </summary>
+      /// <param name="exporterIFC">The ExporterIFC object.</param>
+      /// <param name="element">The element.</param>
+      /// <param name="productWrapper">The ProductWrapper.</param>
+      /// <returns>True if exported successfully, false otherwise.</returns>
+      public static bool ExportGroupElement(ExporterIFC exporterIFC, Group element,
+          ProductWrapper productWrapper)
+      {
+         if (element == null)
+            return false;
 
          // Check the intended IFC entity or type name is in the exclude list specified in the UI
          Common.Enums.IFCEntityType elementClassTypeEnum;
@@ -57,33 +57,33 @@ namespace Revit.IFC.Export.Exporter
 
          IFCFile file = exporterIFC.GetFile();
 
-            using (IFCTransaction tr = new IFCTransaction(file))
+         using (IFCTransaction tr = new IFCTransaction(file))
+         {
+            IFCAnyHandle groupHnd = null;
+
+            string guid = GUIDUtil.CreateGUID(element);
+            IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
+            string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
+            string description = NamingUtil.GetDescriptionOverride(element, null);
+            string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
+
+            string ifcEnumType;
+            IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
+            if (exportAs == IFCExportType.IfcGroup)
             {
-                IFCAnyHandle groupHnd = null;
-
-                string guid = GUIDUtil.CreateGUID(element);
-                IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
-                string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
-                string description = NamingUtil.GetDescriptionOverride(element, null);
-                string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
-
-                string ifcEnumType;
-                IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
-                if (exportAs == IFCExportType.IfcGroup)
-                {
-                    groupHnd = IFCInstanceExporter.CreateGroup(file, guid, ownerHistory, name, description, objectType);
-                }
-
-                if (groupHnd == null)
-                    return false;
-
-                productWrapper.AddElement(element, groupHnd);
-
-                ExporterCacheManager.GroupCache.RegisterGroup(element.Id, groupHnd);
-
-                tr.Commit();
-                return true;
+               groupHnd = IFCInstanceExporter.CreateGroup(file, guid, ownerHistory, name, description, objectType);
             }
-        }
-    }
+
+            if (groupHnd == null)
+               return false;
+
+            productWrapper.AddElement(element, groupHnd);
+
+            ExporterCacheManager.GroupCache.RegisterGroup(element.Id, groupHnd);
+
+            tr.Commit();
+            return true;
+         }
+      }
+   }
 }

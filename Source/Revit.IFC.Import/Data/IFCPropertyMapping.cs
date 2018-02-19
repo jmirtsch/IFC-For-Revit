@@ -25,60 +25,60 @@ using Autodesk.Revit.DB;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Maps IFC property to Revit built in parameter.
-    /// </summary>
-    class IFCPropertyMapping
-    {
-        static Dictionary<Tuple<string, string>, BuiltInParameter> m_Parameters = new Dictionary<Tuple<string, string>, BuiltInParameter>();
+   /// <summary>
+   /// Maps IFC property to Revit built in parameter.
+   /// </summary>
+   class IFCPropertyMapping
+   {
+      static Dictionary<Tuple<string, string>, BuiltInParameter> m_Parameters = new Dictionary<Tuple<string, string>, BuiltInParameter>();
 
-        static string m_SpacePropertySet = "Pset_SpaceCommon";
-        static string m_WallPropertySet = "Pset_WallCommon";
-        static string m_BeamPropertySet = "Pset_BeamCommon";
-         static string m_ColumnPropertySet = "Pset_ColumnCommon";
-         static string m_MemberPropertySet = "Pset_MemberCommon";
-         static string m_RoofPropertySet = "Pset_RoofCommon";
-        static string m_SlabPropertySet = "Pset_SlabCommon";
-        static string m_RampPropertySet = "Pset_RampCommon";
-        static string m_StairPropertySet = "Pset_StairCommon";
+      static string m_SpacePropertySet = "Pset_SpaceCommon";
+      static string m_WallPropertySet = "Pset_WallCommon";
+      static string m_BeamPropertySet = "Pset_BeamCommon";
+      static string m_ColumnPropertySet = "Pset_ColumnCommon";
+      static string m_MemberPropertySet = "Pset_MemberCommon";
+      static string m_RoofPropertySet = "Pset_RoofCommon";
+      static string m_SlabPropertySet = "Pset_SlabCommon";
+      static string m_RampPropertySet = "Pset_RampCommon";
+      static string m_StairPropertySet = "Pset_StairCommon";
 
-        static IFCPropertyMapping()
-        {
-            m_Parameters.Add(new Tuple<string, string>(m_SpacePropertySet, "CeilingCovering"), BuiltInParameter.ROOM_FINISH_CEILING);
-            m_Parameters.Add(new Tuple<string, string>(m_SpacePropertySet, "FloorCovering"), BuiltInParameter.ROOM_FINISH_FLOOR);
-            m_Parameters.Add(new Tuple<string, string>(m_SpacePropertySet, "WallCovering"), BuiltInParameter.ROOM_FINISH_WALL);
+      static IFCPropertyMapping()
+      {
+         m_Parameters.Add(new Tuple<string, string>(m_SpacePropertySet, "CeilingCovering"), BuiltInParameter.ROOM_FINISH_CEILING);
+         m_Parameters.Add(new Tuple<string, string>(m_SpacePropertySet, "FloorCovering"), BuiltInParameter.ROOM_FINISH_FLOOR);
+         m_Parameters.Add(new Tuple<string, string>(m_SpacePropertySet, "WallCovering"), BuiltInParameter.ROOM_FINISH_WALL);
 
-            m_Parameters.Add(new Tuple<string, string>(m_WallPropertySet, "FireRating"), BuiltInParameter.FIRE_RATING);
+         m_Parameters.Add(new Tuple<string, string>(m_WallPropertySet, "FireRating"), BuiltInParameter.FIRE_RATING);
 
-            m_Parameters.Add(new Tuple<string, string>(m_BeamPropertySet, "FireRating"), BuiltInParameter.FIRE_RATING);
-            m_Parameters.Add(new Tuple<string, string>(m_BeamPropertySet, "Roll"), BuiltInParameter.STRUCTURAL_BEND_DIR_ANGLE);
+         m_Parameters.Add(new Tuple<string, string>(m_BeamPropertySet, "FireRating"), BuiltInParameter.FIRE_RATING);
+         m_Parameters.Add(new Tuple<string, string>(m_BeamPropertySet, "Roll"), BuiltInParameter.STRUCTURAL_BEND_DIR_ANGLE);
 
-            m_Parameters.Add(new Tuple<string, string>(m_ColumnPropertySet, "Roll"), BuiltInParameter.STRUCTURAL_BEND_DIR_ANGLE);
+         m_Parameters.Add(new Tuple<string, string>(m_ColumnPropertySet, "Roll"), BuiltInParameter.STRUCTURAL_BEND_DIR_ANGLE);
 
-            m_Parameters.Add(new Tuple<string, string>(m_MemberPropertySet, "Roll"), BuiltInParameter.STRUCTURAL_BEND_DIR_ANGLE);
+         m_Parameters.Add(new Tuple<string, string>(m_MemberPropertySet, "Roll"), BuiltInParameter.STRUCTURAL_BEND_DIR_ANGLE);
 
-            m_Parameters.Add(new Tuple<string, string>(m_RoofPropertySet, "FireRating"), BuiltInParameter.FIRE_RATING);
+         m_Parameters.Add(new Tuple<string, string>(m_RoofPropertySet, "FireRating"), BuiltInParameter.FIRE_RATING);
 
-            m_Parameters.Add(new Tuple<string, string>(m_SlabPropertySet, "FireRating"), BuiltInParameter.FIRE_RATING);
+         m_Parameters.Add(new Tuple<string, string>(m_SlabPropertySet, "FireRating"), BuiltInParameter.FIRE_RATING);
 
-            m_Parameters.Add(new Tuple<string, string>(m_RampPropertySet, "FireRating"), BuiltInParameter.FIRE_RATING);
+         m_Parameters.Add(new Tuple<string, string>(m_RampPropertySet, "FireRating"), BuiltInParameter.FIRE_RATING);
 
-            m_Parameters.Add(new Tuple<string, string>(m_StairPropertySet, "FireRating"), BuiltInParameter.FIRE_RATING);
-        }
+         m_Parameters.Add(new Tuple<string, string>(m_StairPropertySet, "FireRating"), BuiltInParameter.FIRE_RATING);
+      }
 
-        /// <summary>
-        /// Gets the built in parameter from property group and name.
-        /// </summary>
-        /// <param name="group">The group.</param>
-        /// <param name="name">The name.</param>
-        /// <returns>The built in parameter.</returns>
-        public static BuiltInParameter GetBuiltInParameter(string group, string name)
-        {
-            BuiltInParameter builtInParameter = BuiltInParameter.INVALID;
+      /// <summary>
+      /// Gets the built in parameter from property group and name.
+      /// </summary>
+      /// <param name="group">The group.</param>
+      /// <param name="name">The name.</param>
+      /// <returns>The built in parameter.</returns>
+      public static BuiltInParameter GetBuiltInParameter(string group, string name)
+      {
+         BuiltInParameter builtInParameter = BuiltInParameter.INVALID;
 
-            m_Parameters.TryGetValue(new Tuple<string, string>(group, name), out builtInParameter);
+         m_Parameters.TryGetValue(new Tuple<string, string>(group, name), out builtInParameter);
 
-            return builtInParameter;
-        }
-    }
+         return builtInParameter;
+      }
+   }
 }

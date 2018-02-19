@@ -53,14 +53,14 @@ namespace Revit.IFC.Import.Data
       /// </summary>
       public IFCElement ContainedIn
       {
-         get 
+         get
          {
             if (m_ContainedIn == null && m_ContainedInHandle != null)
             {
                m_ContainedIn = ProcessIFCRelation.ProcessRelatedElement(m_ContainedInHandle);
                m_ContainedInHandle = null;
             }
-            return m_ContainedIn; 
+            return m_ContainedIn;
          }
       }
 
@@ -70,14 +70,14 @@ namespace Revit.IFC.Import.Data
       /// </summary>
       public IFCPort ConnectedFrom
       {
-         get 
+         get
          {
             if (m_ConnectedFrom == null && m_ConnectedFromHandle != null)
             {
                m_ConnectedFrom = ProcessIFCRelation.ProcessRelatingPort(m_ConnectedFromHandle);
                m_ConnectedFromHandle = null;
             }
-            return m_ConnectedFrom; 
+            return m_ConnectedFrom;
          }
       }
 
@@ -87,14 +87,14 @@ namespace Revit.IFC.Import.Data
       /// </summary>
       public IFCPort ConnectedTo
       {
-         get 
+         get
          {
             if (m_ConnectedTo == null && m_ConnectedToHandle != null)
             {
                m_ConnectedTo = ProcessIFCRelation.ProcessRelatingPort(m_ConnectedToHandle);
                m_ConnectedToHandle = null;
             }
-            return m_ConnectedTo; 
+            return m_ConnectedTo;
          }
       }
 

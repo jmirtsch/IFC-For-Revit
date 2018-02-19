@@ -31,58 +31,58 @@ using Revit.IFC.Import.Utility;
 
 namespace Revit.IFC.Import.Data
 {
-    /// <summary>
-    /// Represents an IfcFeatureElement.
-    /// </summary>
-    public class IFCFeatureElement : IFCElement
-    {
-        /// <summary>
-        /// Default constructor.
-        /// </summary>
-        protected IFCFeatureElement()
-        {
+   /// <summary>
+   /// Represents an IfcFeatureElement.
+   /// </summary>
+   public class IFCFeatureElement : IFCElement
+   {
+      /// <summary>
+      /// Default constructor.
+      /// </summary>
+      protected IFCFeatureElement()
+      {
 
-        }
+      }
 
-        /// <summary>
-        /// Constructs an IFCFeatureElement from the IfcFeatureElement handle.
-        /// </summary>
-        /// <param name="ifcFeatureElement">The IfcFeatureElement handle.</param>
-        protected IFCFeatureElement(IFCAnyHandle ifcFeatureElement)
-        {
-            Process(ifcFeatureElement);
-        }
+      /// <summary>
+      /// Constructs an IFCFeatureElement from the IfcFeatureElement handle.
+      /// </summary>
+      /// <param name="ifcFeatureElement">The IfcFeatureElement handle.</param>
+      protected IFCFeatureElement(IFCAnyHandle ifcFeatureElement)
+      {
+         Process(ifcFeatureElement);
+      }
 
-        /// <summary>
-        /// Processes IfcFeatureElement attributes.
-        /// </summary>
-        /// <param name="ifcFeatureElement">The IfcFeatureElement handle.</param>
-        protected override void Process(IFCAnyHandle ifcFeatureElement)
-        {
-            base.Process(ifcFeatureElement);
-        }
+      /// <summary>
+      /// Processes IfcFeatureElement attributes.
+      /// </summary>
+      /// <param name="ifcFeatureElement">The IfcFeatureElement handle.</param>
+      protected override void Process(IFCAnyHandle ifcFeatureElement)
+      {
+         base.Process(ifcFeatureElement);
+      }
 
-        /// <summary>
-        /// Processes an IfcFeatureElement object.
-        /// </summary>
-        /// <param name="ifcFeatureElement">The IfcFeatureElement handle.</param>
-        /// <returns>The IFCFeatureElement object.</returns>
-        public static IFCFeatureElement ProcessIFCFeatureElement(IFCAnyHandle ifcFeatureElement)
-        {
-            if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcFeatureElement))
-            {
-                Importer.TheLog.LogNullError(IFCEntityType.IfcFeatureElement);
-                return null;
-            }
+      /// <summary>
+      /// Processes an IfcFeatureElement object.
+      /// </summary>
+      /// <param name="ifcFeatureElement">The IfcFeatureElement handle.</param>
+      /// <returns>The IFCFeatureElement object.</returns>
+      public static IFCFeatureElement ProcessIFCFeatureElement(IFCAnyHandle ifcFeatureElement)
+      {
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(ifcFeatureElement))
+         {
+            Importer.TheLog.LogNullError(IFCEntityType.IfcFeatureElement);
+            return null;
+         }
 
-            IFCEntity cachedFeatureElement;
-            if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcFeatureElement.StepId, out cachedFeatureElement))
-                return (cachedFeatureElement as IFCFeatureElement); 
-            
-            if (IFCAnyHandleUtil.IsSubTypeOf(ifcFeatureElement, IFCEntityType.IfcFeatureElementSubtraction))
-                return IFCFeatureElementSubtraction.ProcessIFCFeatureElementSubtraction(ifcFeatureElement);
+         IFCEntity cachedFeatureElement;
+         if (IFCImportFile.TheFile.EntityMap.TryGetValue(ifcFeatureElement.StepId, out cachedFeatureElement))
+            return (cachedFeatureElement as IFCFeatureElement);
 
-            return new IFCFeatureElement(ifcFeatureElement);
-        }
-    }
+         if (IFCAnyHandleUtil.IsSubTypeOf(ifcFeatureElement, IFCEntityType.IfcFeatureElementSubtraction))
+            return IFCFeatureElementSubtraction.ProcessIFCFeatureElementSubtraction(ifcFeatureElement);
+
+         return new IFCFeatureElement(ifcFeatureElement);
+      }
+   }
 }

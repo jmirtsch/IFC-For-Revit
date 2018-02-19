@@ -28,65 +28,65 @@ using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
-    /// <summary>
-    /// A calculation class to calculate width for a slab.
-    /// </summary>
-    class SlabWidthCalculator : PropertyCalculator
-    {
-        /// <summary>
-        /// A double variable to keep the calculated value.
-        /// </summary>
-        private double m_Width = 0;
+   /// <summary>
+   /// A calculation class to calculate width for a slab.
+   /// </summary>
+   class SlabWidthCalculator : PropertyCalculator
+   {
+      /// <summary>
+      /// A double variable to keep the calculated value.
+      /// </summary>
+      private double m_Width = 0;
 
-        /// <summary>
-        /// A static instance of this class.
-        /// </summary>
-        static SlabWidthCalculator s_Instance = new SlabWidthCalculator();
+      /// <summary>
+      /// A static instance of this class.
+      /// </summary>
+      static SlabWidthCalculator s_Instance = new SlabWidthCalculator();
 
-        /// <summary>
-        /// The SlabWidthCalculator instance.
-        /// </summary>
-        public static SlabWidthCalculator Instance
-        {
-            get { return s_Instance; }
-        }
+      /// <summary>
+      /// The SlabWidthCalculator instance.
+      /// </summary>
+      public static SlabWidthCalculator Instance
+      {
+         get { return s_Instance; }
+      }
 
-        /// <summary>
-        /// Calculates width for a slab.
-        /// </summary>
-        /// <param name="exporterIFC">
-        /// The ExporterIFC object.
-        /// </param>
-        /// <param name="extrusionCreationData">
-        /// The IFCExtrusionCreationData.
-        /// </param>
-        /// <param name="element">
-        /// The element to calculate the value.
-        /// </param>
-        /// <param name="elementType">
-        /// The element type.
-        /// </param>
-        /// <returns>
-        /// True if the operation succeed, false otherwise.
-        /// </returns>
-        public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
-        {
-            if (extrusionCreationData == null)
-                return false;
-            m_Width = extrusionCreationData.ScaledLength;
-            return m_Width > MathUtil.Eps();
-        }
+      /// <summary>
+      /// Calculates width for a slab.
+      /// </summary>
+      /// <param name="exporterIFC">
+      /// The ExporterIFC object.
+      /// </param>
+      /// <param name="extrusionCreationData">
+      /// The IFCExtrusionCreationData.
+      /// </param>
+      /// <param name="element">
+      /// The element to calculate the value.
+      /// </param>
+      /// <param name="elementType">
+      /// The element type.
+      /// </param>
+      /// <returns>
+      /// True if the operation succeed, false otherwise.
+      /// </returns>
+      public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
+      {
+         if (extrusionCreationData == null)
+            return false;
+         m_Width = extrusionCreationData.ScaledLength;
+         return m_Width > MathUtil.Eps();
+      }
 
-        /// <summary>
-        /// Gets the calculated double value.
-        /// </summary>
-        /// <returns>
-        /// The double value.
-        /// </returns>
-        public override double GetDoubleValue()
-        {
-            return m_Width;
-        }
-    }
+      /// <summary>
+      /// Gets the calculated double value.
+      /// </summary>
+      /// <returns>
+      /// The double value.
+      /// </returns>
+      public override double GetDoubleValue()
+      {
+         return m_Width;
+      }
+   }
 
 }

@@ -25,38 +25,38 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of IFC integer properties.
-    /// </summary>
-    public class IntegerPropertyInfoCache : Dictionary<KeyValuePair<string, int>, IFCAnyHandle>
-    {
-        /// <summary>
-        /// Finds if it contains the property with the specified int value.
-        /// </summary>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="value">The value.</param>
-        /// <returns>True if it has, false otherwise.</returns>
-        public IFCAnyHandle Find(string propertyName, int value)
-        {
-            KeyValuePair<string, int> key = new KeyValuePair<string, int>(propertyName, value);
+   /// <summary>
+   /// Used to keep a cache of IFC integer properties.
+   /// </summary>
+   public class IntegerPropertyInfoCache : Dictionary<KeyValuePair<string, int>, IFCAnyHandle>
+   {
+      /// <summary>
+      /// Finds if it contains the property with the specified int value.
+      /// </summary>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="value">The value.</param>
+      /// <returns>True if it has, false otherwise.</returns>
+      public IFCAnyHandle Find(string propertyName, int value)
+      {
+         KeyValuePair<string, int> key = new KeyValuePair<string, int>(propertyName, value);
 
-            IFCAnyHandle propertyHandle;
-            if (TryGetValue(key, out propertyHandle))
-                return propertyHandle;
+         IFCAnyHandle propertyHandle;
+         if (TryGetValue(key, out propertyHandle))
+            return propertyHandle;
 
-            return null;
-        }
+         return null;
+      }
 
-        /// <summary>
-        /// Adds a new property of a int value to the cache.
-        /// </summary>
-        /// <param name="propertyName">The property name.</param>
-        /// <param name="value">The value.</param>
-        /// <param name="propertyHandle">The property handle.</param>
-        public void Add(string propertyName, int value, IFCAnyHandle propertyHandle)
-        {
-            KeyValuePair<string, int> key = new KeyValuePair<string, int>(propertyName, value);
-            this[key] = propertyHandle;
-        }
-    }
+      /// <summary>
+      /// Adds a new property of a int value to the cache.
+      /// </summary>
+      /// <param name="propertyName">The property name.</param>
+      /// <param name="value">The value.</param>
+      /// <param name="propertyHandle">The property handle.</param>
+      public void Add(string propertyName, int value, IFCAnyHandle propertyHandle)
+      {
+         KeyValuePair<string, int> key = new KeyValuePair<string, int>(propertyName, value);
+         this[key] = propertyHandle;
+      }
+   }
 }

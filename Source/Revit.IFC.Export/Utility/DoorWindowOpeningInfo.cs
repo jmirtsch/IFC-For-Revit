@@ -27,49 +27,49 @@ using Revit.IFC.Export.Toolkit;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Contains return value for CreateOpeningForDoorWindow.
-    /// </summary>
-    public class DoorWindowOpeningInfo
-    {
-        IFCAnyHandle m_OpeningHnd = null;
+   /// <summary>
+   /// Contains return value for CreateOpeningForDoorWindow.
+   /// </summary>
+   public class DoorWindowOpeningInfo
+   {
+      IFCAnyHandle m_OpeningHnd = null;
 
-        double m_OpeningHeight = -1.0;
+      double m_OpeningHeight = -1.0;
 
-        double m_OpeningWidth = -1.0;
+      double m_OpeningWidth = -1.0;
 
-        private DoorWindowOpeningInfo() { }
+      private DoorWindowOpeningInfo() { }
 
-        /// <summary>
-        /// The public Create function.
-        /// </summary>
-        /// <param name="hnd">The opening handle.</param>
-        /// <param name="placement">The opening local placement.</param>
-        /// <param name="height">The opening height.</param>
-        /// <param name="width">The opening width.</param>
-        /// <returns>The DoorWindowOpeningInfo class.</returns>
-        static public DoorWindowOpeningInfo Create(IFCAnyHandle hnd, double height, double width)
-        {
-            DoorWindowOpeningInfo doorWindowOpeningInfo = new DoorWindowOpeningInfo();
-            doorWindowOpeningInfo.m_OpeningHnd = hnd;
-            doorWindowOpeningInfo.m_OpeningHeight = height;
-            doorWindowOpeningInfo.m_OpeningWidth = width;
-            return doorWindowOpeningInfo;
-        }
+      /// <summary>
+      /// The public Create function.
+      /// </summary>
+      /// <param name="hnd">The opening handle.</param>
+      /// <param name="placement">The opening local placement.</param>
+      /// <param name="height">The opening height.</param>
+      /// <param name="width">The opening width.</param>
+      /// <returns>The DoorWindowOpeningInfo class.</returns>
+      static public DoorWindowOpeningInfo Create(IFCAnyHandle hnd, double height, double width)
+      {
+         DoorWindowOpeningInfo doorWindowOpeningInfo = new DoorWindowOpeningInfo();
+         doorWindowOpeningInfo.m_OpeningHnd = hnd;
+         doorWindowOpeningInfo.m_OpeningHeight = height;
+         doorWindowOpeningInfo.m_OpeningWidth = width;
+         return doorWindowOpeningInfo;
+      }
 
-        /// <summary>
-        /// Access the opening handle.
-        /// </summary>
-        public IFCAnyHandle OpeningHnd { get { return m_OpeningHnd; } }
+      /// <summary>
+      /// Access the opening handle.
+      /// </summary>
+      public IFCAnyHandle OpeningHnd { get { return m_OpeningHnd; } }
 
-        /// <summary>
-        /// Access the opening height.
-        /// </summary>
-        public double OpeningHeight { get { return m_OpeningHeight; } }
+      /// <summary>
+      /// Access the opening height.
+      /// </summary>
+      public double OpeningHeight { get { return m_OpeningHeight; } }
 
-        /// <summary>
-        /// Access the opening width.
-        /// </summary>
-        public double OpeningWidth { get { return m_OpeningWidth; } }
-    }
+      /// <summary>
+      /// Access the opening width.
+      /// </summary>
+      public double OpeningWidth { get { return m_OpeningWidth; } }
+   }
 }

@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace Revit.IFC.Import.Enums
 {
-    /// <summary>
-    /// The types of builder that can be used for IFCImportShapeEditScope
-    /// </summary>
-    public enum IFCShapeBuilderType
-    {
-        BrepBuilder,
-        TessellatedShapeBuilder,
-        Unknown
-    }
+   /// <summary>
+   /// The types of builder that can be used for IFCImportShapeEditScope
+   /// </summary>
+   public enum IFCShapeBuilderType
+   {
+      BrepBuilder,
+      TessellatedShapeBuilder,
+      Unknown
+   }
 }

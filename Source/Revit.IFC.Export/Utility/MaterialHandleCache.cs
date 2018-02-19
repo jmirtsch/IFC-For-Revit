@@ -26,10 +26,10 @@ using Autodesk.Revit.DB.IFC;
 
 namespace Revit.IFC.Export.Utility
 {
-    /// <summary>
-    /// Used to keep a cache of the IfcMaterial handles mapping to a material element in Revit.
-    /// </summary>
-    public class MaterialHandleCache : ElementToHandleCache
-    {
-    }
+   /// <summary>
+   /// Used to keep a cache of the IfcMaterial handles mapping to a material element in Revit.
+   /// </summary>
+   public class MaterialHandleCache : ElementToHandleCache
+   {
+   }
 }

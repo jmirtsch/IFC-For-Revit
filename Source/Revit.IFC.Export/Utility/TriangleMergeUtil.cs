@@ -49,7 +49,7 @@ namespace Revit.IFC.Export.Utility
       /// Constructor for the class, accepting the TriangulatedShellComponent from the result of body tessellation
       /// </summary>
       /// <param name="triangulatedBody"></param>
-      public TriangleMergeUtil (TriangulatedShellComponent triangulatedBody)
+      public TriangleMergeUtil(TriangulatedShellComponent triangulatedBody)
       {
          _geom = triangulatedBody;
       }
@@ -76,7 +76,7 @@ namespace Revit.IFC.Export.Utility
             double X = Math.Round(obj.X, _tolNoDecPrecision);
             double Y = Math.Round(obj.Y, _tolNoDecPrecision);
             double Z = Math.Round(obj.Z, _tolNoDecPrecision);
-            
+
             return X.GetHashCode() ^ Y.GetHashCode() ^ Z.GetHashCode();
          }
       }
@@ -145,7 +145,7 @@ namespace Revit.IFC.Export.Utility
          /// <returns>True if coincide</returns>
          public bool coincide(IndexSegment inputSegment)
          {
-            return ((startPindex == inputSegment.startPindex && endPIndex == inputSegment.endPIndex) 
+            return ((startPindex == inputSegment.startPindex && endPIndex == inputSegment.endPIndex)
                || (endPIndex == inputSegment.startPindex && startPindex == inputSegment.endPIndex));
          }
 
@@ -197,7 +197,7 @@ namespace Revit.IFC.Export.Utility
                vertices.Add(_geom.GetVertex(indexOuterBoundary[ii]));
             }
             normal = NormalByNewellMethod(vertices);
-        }
+         }
 
          /// <summary>
          /// Constructor taking in List of List of vertices. The first list will be the outer boundary and the rest are the inner boundaries
@@ -279,7 +279,7 @@ namespace Revit.IFC.Export.Utility
 
             for (int ii = 0; ii < vertxIndices.Count; ++ii)
             {
-               IndexSegment segm; 
+               IndexSegment segm;
                if (ii == vertxIndices.Count - 1)
                {
                   segm = new IndexSegment(vertxIndices[ii], vertxIndices[0]);
@@ -401,7 +401,7 @@ namespace Revit.IFC.Export.Utility
          int noTriangle = _geom.TriangleCount;
          int noVertices = _geom.VertexCount;
 
-         for (int ef = 0; ef<noTriangle; ++ef)
+         for (int ef = 0; ef < noTriangle; ++ef)
          {
             TriangleInShellComponent f = _geom.GetTriangle(ef);
             IList<int> vertIndex = new List<int>();
@@ -485,7 +485,7 @@ namespace Revit.IFC.Export.Utility
          IEqualityComparer<IndexSegment> segCompare = new SegmentCompare();
          IDictionary<IndexSegment, Tuple<IndexFace, int, int>> segmentOfFaceDict = new Dictionary<IndexSegment, Tuple<IndexFace, int, int>>(segCompare);
          IList<int> discardList = new List<int>();
-         for (int iFace=0; iFace < inputFaceList.Count; ++iFace)
+         for (int iFace = 0; iFace < inputFaceList.Count; ++iFace)
          {
             int fidx = inputFaceList[iFace];
             IndexFace IdxFace = facesColl[fidx];
@@ -504,7 +504,7 @@ namespace Revit.IFC.Export.Utility
             IndexSegment currEdge = firstF.outerAndInnerBoundaries[currEdgeIdx];
             IndexSegment reversedEdge = currEdge.reverse();
 
-            { 
+            {
                IndexFace currFace = null;
                int currFaceIdx = -1;
                int idx = -1;
@@ -826,7 +826,7 @@ namespace Revit.IFC.Export.Utility
          catch
          {
             // If exception, it is likely that there is duplicate. Remove all segments of this face first to rollback
-            foreach(IndexSegment segDel in entriesToRollback)
+            foreach (IndexSegment segDel in entriesToRollback)
                segmentOfFaceDict.Remove(segDel);
             entriesToRollback.Clear();
          }
