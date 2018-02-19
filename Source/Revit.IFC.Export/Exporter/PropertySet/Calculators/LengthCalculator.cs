@@ -43,10 +43,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
       /// </summary>
       static LengthCalculator s_Instance = new LengthCalculator();
 
-      /// <summary>
-      /// The LengthCalculator instance.
-      /// </summary>
-      public static LengthCalculator Instance
+   /// <summary>
+   /// The LengthCalculator instance.
+   /// </summary>
+   public static LengthCalculator Instance
       {
          get { return s_Instance; }
       }
@@ -72,39 +72,26 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
       public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
       {
          double lengthFromParam = 0;
-         ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyLength", out lengthFromParam);
+         if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyLength", out lengthFromParam) == null)
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcLength", out lengthFromParam) == null)
+               ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "Length", out lengthFromParam);
+
+         m_Length = UnitUtil.ScaleLength(lengthFromParam);
+         if (m_Length > MathUtil.Eps())
+            return true;
+
          if (extrusionCreationData == null)
          {
-            double length = 0;
-            ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.EXTRUSION_LENGTH, out length);
-            if (length > MathUtil.Eps())
-            {
-               m_Length = length;
-               return true;
-            }
-            else if (lengthFromParam < MathUtil.Eps())
-               return false;
-            else
-            {
-               m_Length = lengthFromParam;
-               return true;
-            }
+            if (ParameterUtil.GetDoubleValueFromElement(element, BuiltInParameter.EXTRUSION_LENGTH, out m_Length) != null)
+               m_Length = UnitUtil.ScaleLength(m_Length);
          }
          else
             m_Length = extrusionCreationData.ScaledLength;
 
          if (m_Length > MathUtil.Eps())
             return true;
-         else
-         {
-            if (lengthFromParam < MathUtil.Eps())
-               return false;
-            else
-            {
-               m_Length = lengthFromParam;
-               return true;
-            }
-         }
+
+         return false;
       }
 
       /// <summary>

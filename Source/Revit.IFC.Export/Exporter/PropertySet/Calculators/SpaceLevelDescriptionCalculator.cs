@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
+using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
@@ -62,10 +63,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
          SpatialElement spatialElem = element as SpatialElement;
          if (spatialElem != null)
          {
-            ElementId levelId = spatialElem.LevelId;
-            IFCLevelInfo levelInfo = exporterIFC.GetLevelInfo(levelId);
-            if (levelInfo != null)
-               return levelInfo.GetBuildingStorey();
+               ElementId levelId = spatialElem.LevelId;
+               IFCLevelInfo levelInfo = exporterIFC.GetLevelInfo(levelId);
+               if (levelInfo != null)
+                  return levelInfo.GetBuildingStorey();
          }
 
          return null;

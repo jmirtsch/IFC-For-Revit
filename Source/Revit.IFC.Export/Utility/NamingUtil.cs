@@ -132,16 +132,16 @@ namespace Revit.IFC.Export.Utility
             {
                string propertyValue = null;
                string paramValuetrim = paramValue.Trim();
-               //// This is kind of hack to quickly check whether we need to parse the parameter or not by checking that the value is enclosed by "{ }" or "u{ }" for unique value
-               //if (((paramValuetrim.Length > 1 && paramValuetrim[0] == '{') || (paramValuetrim.Length > 2 && paramValuetrim[1] == '{')) && (paramValuetrim[paramValuetrim.Length-1] == '}'))
-               //{
-               //ParamExprResolver pResv = new ParamExprResolver(element, paramName, paramValuetrim);
-               //propertyValue = pResv.GetStringValue();
-               //if (string.IsNullOrEmpty(propertyValue))
-               //propertyValue = paramValue;   // return the original paramValue
-               //}
-               //else
-               propertyValue = paramValue;   // return the original paramValue
+               // This is kind of hack to quickly check whether we need to parse the parameter or not by checking that the value is enclosed by "{ }" or "u{ }" for unique value
+               if (((paramValuetrim.Length > 1 && paramValuetrim[0] == '{') || (paramValuetrim.Length > 2 && paramValuetrim[1] == '{')) && (paramValuetrim[paramValuetrim.Length - 1] == '}'))
+               {
+                  ParamExprResolver pResv = new ParamExprResolver(element, paramName, paramValuetrim);
+                  propertyValue = pResv.GetStringValue();
+                  if (string.IsNullOrEmpty(propertyValue))
+                     propertyValue = paramValue;   // return the original paramValue
+               }
+               else
+                  propertyValue = paramValue;   // return the original paramValue
 
                //return paramValue;
                return propertyValue;
@@ -151,20 +151,6 @@ namespace Revit.IFC.Export.Utility
          return originalValue;
       }
 
-      public static string GetNameOverride(IFCAnyHandle handle, Element element, string originalValue)
-      {
-         List<Exporter.PropertySet.AttributeEntry> entries = ExporterCacheManager.AttributeCache.GetEntry(handle, Exporter.PropertySet.PropertyType.Label, "Name");
-         if (entries != null)
-         {
-            foreach (Exporter.PropertySet.AttributeEntry entry in entries)
-            {
-               string result = entry.AsString(element);
-               if (result != null)
-                  return result;
-            }
-         }
-         return GetNameOverride(element, originalValue);
-      }
       /// <summary>
       /// Gets override name from element.
       /// </summary>
@@ -201,6 +187,20 @@ namespace Revit.IFC.Export.Utility
          //overrideValue = GetCleanName(overrideValue);
          //GetOverrideStringValue will return the override value from the parameter specified, otherwise it will return the originalValue
          return overrideValue;
+      }
+      public static string GetNameOverride(IFCAnyHandle handle, Element element, string originalValue)
+      {
+         List<Exporter.PropertySet.AttributeEntry> entries = ExporterCacheManager.AttributeCache.GetEntry(handle, Exporter.PropertySet.PropertyType.Label, "Name");
+         if (entries != null)
+         {
+            foreach (Exporter.PropertySet.AttributeEntry entry in entries)
+            {
+               string result = entry.AsString(element);
+               if (result != null)
+                  return result;
+            }
+         }
+         return GetNameOverride(element, originalValue);
       }
 
       private static System.Text.RegularExpressions.Regex g_rxMixedName = null;
@@ -262,20 +262,6 @@ namespace Revit.IFC.Export.Utility
          return GetLongNameOverride(element, originalValue);
       }
 
-      public static string GetDescriptionOverride(IFCAnyHandle handle, Element element, string originalValue)
-      {
-         List<Exporter.PropertySet.AttributeEntry> entries = ExporterCacheManager.AttributeCache.GetEntry(handle, Exporter.PropertySet.PropertyType.Text, "Description");
-         if (entries != null)
-         {
-            foreach (Exporter.PropertySet.AttributeEntry entry in entries)
-            {
-               string result = entry.AsString(element);
-               if (result != null)
-                  return result;
-            }
-         }
-         return GetDescriptionOverride(element, originalValue);
-      }
       /// <summary>
       /// Gets override description from element.
       /// </summary>
@@ -288,7 +274,6 @@ namespace Revit.IFC.Export.Utility
       /// <returns>
       /// The string contains the description string value.
       /// </returns>
-
       public static string GetDescriptionOverride(Element element, string originalValue)
       {
          string nameOverride = "IfcDescription";
@@ -303,9 +288,9 @@ namespace Revit.IFC.Export.Utility
          return overrideValue;
       }
 
-      public static string GetObjectTypeOverride(IFCAnyHandle handle, Element element, string originalValue)
+      public static string GetDescriptionOverride(IFCAnyHandle handle, Element element, string originalValue)
       {
-         List<Exporter.PropertySet.AttributeEntry> entries = ExporterCacheManager.AttributeCache.GetEntry(handle, Exporter.PropertySet.PropertyType.Label, "ObjectType");
+         List<Exporter.PropertySet.AttributeEntry> entries = ExporterCacheManager.AttributeCache.GetEntry(handle, Exporter.PropertySet.PropertyType.Text, "Description");
          if (entries != null)
          {
             foreach (Exporter.PropertySet.AttributeEntry entry in entries)
@@ -315,7 +300,7 @@ namespace Revit.IFC.Export.Utility
                   return result;
             }
          }
-         return GetObjectTypeOverride(element, originalValue);
+         return GetDescriptionOverride(element, originalValue);
       }
       /// <summary>
       /// Gets override object type from element.
@@ -340,7 +325,20 @@ namespace Revit.IFC.Export.Utility
          //GetOverrideStringValue will return the override value from the parameter specified, otherwise it will return the originalValue
          return overrideValue;
       }
-
+      public static string GetObjectTypeOverride(IFCAnyHandle handle, Element element, string originalValue)
+      {
+         List<Exporter.PropertySet.AttributeEntry> entries = ExporterCacheManager.AttributeCache.GetEntry(handle, Exporter.PropertySet.PropertyType.Label, "ObjectType");
+         if (entries != null)
+         {
+            foreach (Exporter.PropertySet.AttributeEntry entry in entries)
+            {
+               string result = entry.AsString(element);
+               if (result != null)
+                  return result;
+            }
+         }
+         return GetObjectTypeOverride(element, originalValue);
+      }
       /// <summary>
       /// Gets Tag override from element.
       /// </summary>

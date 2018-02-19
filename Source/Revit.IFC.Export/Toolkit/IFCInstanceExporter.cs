@@ -2538,8 +2538,7 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandle building = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcBuilding);
          IFCAnyHandleUtil.SetAttribute(building, "ElevationOfRefHeight", elevationOfRefHeight);
          IFCAnyHandleUtil.SetAttribute(building, "ElevationOfTerrain", elevationOfTerrain);
-         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(buildingAddress))
-            IFCAnyHandleUtil.SetAttribute(building, "BuildingAddress", buildingAddress);
+         IFCAnyHandleUtil.SetAttribute(building, "BuildingAddress", buildingAddress);
          SetSpatialStructureElement(exporterIFC, building, null, guid, ownerHistory, name, description, objectPlacement, representation, longName, compositionType);
          return building;
       }
@@ -8088,8 +8087,7 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandleUtil.SetAttribute(site, "RefLongitude", longitude);
          IFCAnyHandleUtil.SetAttribute(site, "RefElevation", elevation);
          IFCAnyHandleUtil.SetAttribute(site, "LandTitleNumber", landTitleNumber);
-         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(address))
-            IFCAnyHandleUtil.SetAttribute(site, "SiteAddress", address);
+         IFCAnyHandleUtil.SetAttribute(site, "SiteAddress", address);
          SetSpatialStructureElement(exporterIFC, site, element, guid, ownerHistory, name, description, objectPlacement, representation, longName, compositionType);
          return site;
       }
@@ -9208,7 +9206,43 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandleUtil.SetAttribute(gridPlacement, "PlacementRefDirection", placementRefDirection);
          return gridPlacement;
       }
+      /// <summary>
+      /// Create IfcIndexedColourMap entity and assign it to the file
+      /// </summary>
+      /// <param name="file">The file</param>
+      /// <param name="mappedTo">The associated IfcTesselatedFaceSet</param>
+      /// <param name="opacity">The opacity</param>
+      /// <param name="colours">the IfcColourRgbList entity</param>
+      /// <param name="colourIndex">the colour index</param>
+      /// <returns>the IfcIndexedColourMap entity</returns>
+      public static IFCAnyHandle CreateIndexedColourMap(IFCFile file, IFCAnyHandle mappedTo, double? opacity, IFCAnyHandle colours, IList<int> colourIndex)
+      {
+         IFCAnyHandleUtil.ValidateSubTypeOf(mappedTo, false, IFCEntityType.IfcTessellatedFaceSet);
+         IFCAnyHandleUtil.ValidateSubTypeOf(colours, false, IFCEntityType.IfcColourRgbList);
 
+         IFCAnyHandle indexedColourMap = CreateInstance(file, IFCEntityType.IfcIndexedColourMap);
+         IFCAnyHandleUtil.SetAttribute(indexedColourMap, "MappedTo", mappedTo);
+         if (opacity.HasValue)
+            IFCAnyHandleUtil.SetAttribute(indexedColourMap, "Opacity", opacity);
+         IFCAnyHandleUtil.SetAttribute(indexedColourMap, "Colours", colours);
+         IFCAnyHandleUtil.SetAttribute(indexedColourMap, "ColourIndex", colourIndex);
+         return indexedColourMap;
+      }
+
+      /// <summary>
+      /// Create IfcColourRgbList entity and assign it to the file
+      /// </summary>
+      /// <param name="file">the File</param>
+      /// <param name="colourList">the ColourRgbList data</param>
+      /// <returns>return IfcColourRgbList</returns>
+      public static IFCAnyHandle CreateColourRgbList(IFCFile file, IList<IList<double>> colourList)
+      {
+         ValidateListOfList(colourList, false, "colourList");
+
+         IFCAnyHandle colourRgbList = CreateInstance(file, IFCEntityType.IfcColourRgbList);
+         IFCAnyHandleUtil.SetAttribute(colourRgbList, "ColourList", colourList, 1, null, 3, 3);
+         return colourRgbList;
+      }
       #endregion
 
       #region public header creation methods

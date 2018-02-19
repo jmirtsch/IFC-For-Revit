@@ -314,6 +314,7 @@ namespace Revit.IFC.Export.Exporter
             IFCAnyHandle localPlacement = CreateLocalPlacementForConnector(exporterIFC, connected, outElementIFCHandle, flowDir);
             string portName = "OutPort_" + outElement.Id;
             string portType = "Flow";   // Assigned as Port.Description
+
             portOut = IFCInstanceExporter.CreateDistributionPort(exporterIFC, null, guid, ownerHistory, localPlacement, null, flowDir);
             IFCAnyHandleUtil.SetAttribute(portOut, "Name", portName);
             IFCAnyHandleUtil.SetAttribute(portOut, "Description", portType);
@@ -347,7 +348,6 @@ namespace Revit.IFC.Export.Exporter
          catch
          {
          }
-
 
          if (isElectricalDomain)
          {

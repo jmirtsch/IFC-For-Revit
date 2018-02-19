@@ -24,6 +24,7 @@ using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.DB.Structure;
+using Revit.IFC.Export.Utility;
 
 namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
 {
@@ -74,7 +75,31 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
          if (wall != null)
          {
             m_LoadBearing = wall.StructuralUsage == StructuralWallUsage.Bearing;
+            return true;
          }
+
+         // This may be set for Column
+         if (CategoryUtil.GetSafeCategoryId(element) == new ElementId(BuiltInCategory.OST_StructuralColumns))
+         {
+            m_LoadBearing = true;
+            return true;
+         }
+
+         // This is for Floor/Slab
+         Parameter parameter = element.get_Parameter(BuiltInParameter.FLOOR_PARAM_IS_STRUCTURAL);
+         if (parameter != null && parameter.HasValue && parameter.StorageType == StorageType.Integer)
+         {
+            m_LoadBearing = (parameter.AsInteger() != 0) ? true : false;
+            return true;
+         }
+
+         // If other entities, look for the parameter value for Load Bearing
+         int intLoadBearing = 0;
+         if (ParameterUtil.GetIntValueFromElementOrSymbol(element, "IfcLoadBearing", out intLoadBearing) == null)
+            if (ParameterUtil.GetIntValueFromElementOrSymbol(element, "LoadBearing", out intLoadBearing) == null)
+               return false;
+
+         m_LoadBearing = (intLoadBearing != 0);
          return true;
       }
 

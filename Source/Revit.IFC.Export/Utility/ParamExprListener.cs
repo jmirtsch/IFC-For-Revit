@@ -92,7 +92,8 @@ namespace Revit.IFC.Export.Utility
       /// <summary>
       /// Returning as an integer value (null if cannot be converted into an integer value) 
       /// </summary>
-      public int? ValueAsInteger {
+      public int? ValueAsInteger
+      {
          get
          {
             try
@@ -229,7 +230,7 @@ namespace Revit.IFC.Export.Utility
             {
                counter++;
                parValue = parValue.ToString() + " (" + counter.ToString() + ")";
-               UniqueParameterValue[key] = counter;  
+               UniqueParameterValue[key] = counter;
             }
             else
             {
@@ -260,7 +261,7 @@ namespace Revit.IFC.Export.Utility
             else if (spParCtx.RUNNINGNUMBER() != null)
             {
                var key = new Tuple<string, string>(RevitElement.Category.Name, RevitParameterName);
-               int lastNumber; 
+               int lastNumber;
                if (LastRunningNumberCollection.ContainsKey(key))
                {
                   lastNumber = ++LastRunningNumberCollection[key];
@@ -289,7 +290,7 @@ namespace Revit.IFC.Export.Utility
             }
             //else if (spParCtx.AUTOCALCULATE() != null)
             //{
-               
+
             //}
             else
             {
@@ -371,7 +372,7 @@ namespace Revit.IFC.Export.Utility
          string valueStr = context.GetChild(0).GetText();
          if (context.GetChild(0) is ParamExprGrammarParser.StringliteralContext)
          {
-            valueStr = valueStr.Trim().Replace("\'", "").Replace("\"","");
+            valueStr = valueStr.Trim().Replace("\'", "").Replace("\"", "");
             value = (string)valueStr;
          }
          else if (context.GetChild(0) is ParamExprGrammarParser.RealliteralContext)
@@ -382,7 +383,7 @@ namespace Revit.IFC.Export.Utility
             ParamExprGrammarParser.RealliteralContext realCtx = context.GetChild(0) as ParamExprGrammarParser.RealliteralContext;
             if (realCtx.UNITTYPEENUM() != null)
             {
-               hasUnit = Enum.TryParse<UnitType>(realCtx.UNITTYPEENUM().GetText(), out convertUnit);
+               hasUnit = Enum.TryParse<UnitType>(realCtx.UNITTYPEENUM().GetText(), true, out convertUnit);
             }
 
             valueStr = realCtx.signed_number().GetText();

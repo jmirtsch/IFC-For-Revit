@@ -72,11 +72,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
       public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
       {
          double vol = 0;
-         GeometryElement geomElem = element.get_Geometry(GeometryUtil.GetIFCExportGeometryOptions());
-         SolidMeshGeometryInfo geomInfo = GeometryUtil.GetSolidMeshGeometry(geomElem, Transform.Identity);
+         SolidMeshGeometryInfo geomInfo = GeometryUtil.GetSolidMeshGeometry(element);
          if (geomInfo.SolidsCount() > 0)
          {
-            for (int ii = 0; ii < geomInfo.SolidsCount(); ++ii)
+            for (int ii = 0; ii <geomInfo.SolidsCount(); ++ii)
                vol += geomInfo.GetSolids()[ii].Volume;
          }
 
@@ -100,7 +99,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
          m_Volume = UnitUtil.ScaleVolume(vol);
          if (m_Volume < MathUtil.Eps() * MathUtil.Eps() || m_Volume < MathUtil.Eps())
          {
-            ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyNetVolume", out m_Volume);
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyNetVolume", out m_Volume) == null)
+               if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcNetVolume", out m_Volume) == null)
+                  ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "NetVolume", out m_Volume);
+            m_Volume = UnitUtil.ScaleVolume(m_Volume);
             if (m_Volume < MathUtil.Eps())
                return false;
             else

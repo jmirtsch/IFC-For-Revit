@@ -28,6 +28,8 @@ using Autodesk.Revit.DB.Mechanical;
 using Autodesk.Revit.DB.Electrical;
 using Autodesk.Revit.DB.Plumbing;
 using Autodesk.Revit.DB.Structure;
+using Revit.IFC.Common.Enums;
+using Revit.IFC.Common.Utility;
 
 namespace Revit.IFC.Export.Utility
 {
@@ -81,14 +83,18 @@ namespace Revit.IFC.Export.Utility
       /// </param>
       public void Register(Element element, IFCAnyHandle handle)
       {
-         if (m_MEPElementHandleDictionary.ContainsKey(element.Id))
-            return;
+      // Keep the "real" MEP objects in Cache for port connection later on (e.g. exclude IfcBuildingElementProxy)
+      if (!(IFCAnyHandleUtil.IsSubTypeOf(handle, IFCEntityType.IfcDistributionElement)))
+         return;
+
+      if (m_MEPElementHandleDictionary.ContainsKey(element.Id))
+               return;
 
          m_MEPElementHandleDictionary[element.Id] = handle;
 
          ConnectorSet connectorts = GetConnectors(element);
          if (connectorts != null)
-            MEPConnectors.Add(connectorts);
+               MEPConnectors.Add(connectorts);
 
       }
 
@@ -113,7 +119,7 @@ namespace Revit.IFC.Export.Utility
       static ConnectorSet GetConnectors(Element e)
       {
          ConnectorSet connectors = null;
-
+ 
          try
          {
             if (e is FamilyInstance)

@@ -71,22 +71,26 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
       /// </returns>
       public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
       {
+         if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyGrossSurfaceArea", out m_Area) == null)
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcGrossSurfaceArea", out m_Area) == null)
+               ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "GrossSurfaceArea", out m_Area);
+         m_Area = UnitUtil.ScaleArea(m_Area);
+         if (m_Area > MathUtil.Eps() * MathUtil.Eps())
+            return true;
+
          if (extrusionCreationData == null)
             return false;
+
          double extrudedArea = extrusionCreationData.ScaledArea;
          double length = extrusionCreationData.ScaledLength;
          double perimeter = extrusionCreationData.ScaledOuterPerimeter;
-         m_Area = perimeter * length + 2 * extrudedArea;
-         if (m_Area < MathUtil.Eps() * MathUtil.Eps())
+         if (length > MathUtil.Eps() && perimeter > MathUtil.Eps())
          {
-            ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyGrossSurfaceArea", out m_Area);
-            if (m_Area < MathUtil.Eps() * MathUtil.Eps())
-               return false;
-            else
-               return true;
-         }
-         else
+            m_Area = perimeter * length + 2 * extrudedArea;
             return true;
+         }
+
+         return false;
       }
 
       /// <summary>

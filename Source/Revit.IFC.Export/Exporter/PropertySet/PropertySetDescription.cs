@@ -108,11 +108,15 @@ namespace Revit.IFC.Export.Exporter.PropertySet
 
          foreach (PropertySetEntry entry in m_Entries)
          {
-            IFCAnyHandle propHnd = entry.ProcessEntry(file, exporterIFC, ifcParams, elementToUse, elemTypeToUse, handle);
+            try
+            {
+               IFCAnyHandle propHnd = entry.ProcessEntry(file, exporterIFC, ifcParams, elementToUse, elemTypeToUse, handle);
 
-            string currPropertyName = UsablePropertyName(propHnd, propertiesByName);
-            if (currPropertyName != null)
-               propertiesByName[currPropertyName] = propHnd;
+               string currPropertyName = UsablePropertyName(propHnd, propertiesByName);
+               if (currPropertyName != null)
+                  propertiesByName[currPropertyName] = propHnd;
+            }
+            catch(Exception) { }
          }
 
          ISet<IFCAnyHandle> props = new HashSet<IFCAnyHandle>(propertiesByName.Values);

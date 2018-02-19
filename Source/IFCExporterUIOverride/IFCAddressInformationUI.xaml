@@ -41,4 +41,8 @@
       <CheckBox Content="Assign address to Building" Height="16" x:Name="Checkbox_AssignToBuilding" Margin="0,427,10,0" VerticalAlignment="Top" Grid.Column="1" HorizontalAlignment="Right" Width="175" IsChecked="True" Checked="Checkbox_AssignToBuilding_Checked" Unchecked="Checkbox_AssignToBuilding_Unchecked"/>
       <CheckBox Content="Assign address to Site" Height="16" x:Name="Checkbox_AssignToSite" Margin="0,448,10,0" VerticalAlignment="Top" Grid.Column="1" HorizontalAlignment="Right" Width="175" Checked="Checkbox_AssignToSite_Checked" Unchecked="Checkbox_AssignToSite_Unchecked"/>
    </Grid>
+<<<<<<< HEAD
 </ui:ChildWindow>
+=======
+</ui:ChildWindow>
+>>>>>>> 243aa67b14c4ab31b64b55d350d8bab5df6596eb

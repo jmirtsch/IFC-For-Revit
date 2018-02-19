@@ -70,19 +70,24 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
       /// </returns>
       public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
       {
+         if (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcReference", out m_ReferenceName) == null)
+               ParameterUtil.GetStringValueFromElementOrSymbol(element, "Reference", out m_ReferenceName);
+         if (!string.IsNullOrEmpty(m_ReferenceName))
+            return true;
+
          if (elementType == null)
-            m_ReferenceName = element.Name;
+               m_ReferenceName = element.Name;
          else
          {
-            if (ExporterCacheManager.ExportOptionsCache.NamingOptions.UseFamilyAndTypeNameForReference || String.IsNullOrEmpty(elementType.Name))
-            {
-               if (!String.IsNullOrEmpty(elementType.Name))
-                  m_ReferenceName = String.Format("{0}:{1}", elementType.FamilyName, element.Name);
+               if (ExporterCacheManager.ExportOptionsCache.NamingOptions.UseFamilyAndTypeNameForReference || String.IsNullOrEmpty(elementType.Name))
+               {
+                  if (!String.IsNullOrEmpty(elementType.Name))
+                     m_ReferenceName = String.Format("{0}:{1}", elementType.FamilyName, element.Name);
+                  else
+                     m_ReferenceName = elementType.FamilyName;
+               }
                else
-                  m_ReferenceName = elementType.FamilyName;
-            }
-            else
-               m_ReferenceName = elementType.Name;
+                  m_ReferenceName = elementType.Name;
          }
          return true;
       }

@@ -530,10 +530,10 @@ namespace Revit.IFC.Export.Utility
          }
       }
 
-      /// <summary>
-      /// The ParameterCache object.
-      /// </summary>
-      public static ParameterCache ParameterCache
+/// <summary>
+/// The ParameterCache object.
+/// </summary>
+public static ParameterCache ParameterCache
       {
          get
          {

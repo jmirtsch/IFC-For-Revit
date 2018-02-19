@@ -73,8 +73,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
          if (wall != null)
          {
             m_ExtendToStructure = ExporterIFCUtils.IsWallJoinedToTop(wall);
+            return true;
          }
-         return true;
+         return false;
       }
 
       /// <summary>

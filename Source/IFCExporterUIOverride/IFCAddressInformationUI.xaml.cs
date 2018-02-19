@@ -46,6 +46,7 @@ namespace BIM.IFC.Export.UI
    public partial class IFCAddressInformation : ChildWindow
    {
       private string[] ifcPurposeList = { "OFFICE", "SITE", "HOME", "DISTRIBUTIONPOINT", "USERDEFINED" };
+<<<<<<< HEAD
       private string[] purposeList =
       {
          Properties.Resources.Office,
@@ -53,6 +54,15 @@ namespace BIM.IFC.Export.UI
          Properties.Resources.Home,
          Properties.Resources.DistributionPoint,
          Properties.Resources.UserDefined
+=======
+      private string[] purposeList = 
+      { 
+         Properties.Resources.Office, 
+         Properties.Resources.Site,
+         Properties.Resources.Home, 
+         Properties.Resources.DistributionPoint,
+         Properties.Resources.UserDefined 
+>>>>>>> 243aa67b14c4ab31b64b55d350d8bab5df6596eb
       };
 
       private IFCAddress m_newAddress = new IFCAddress();
@@ -132,7 +142,11 @@ namespace BIM.IFC.Export.UI
             m_newAddress.UpdateAddress(IFCCommandOverrideApplication.TheDocument, m_newAddressItem);
          }
 
+<<<<<<< HEAD
 
+=======
+           
+>>>>>>> 243aa67b14c4ab31b64b55d350d8bab5df6596eb
          if (m_newAddressItem.UpdateProjectInformation == true)
          {
             // Format IFC address and update it into Project Information: Project Address
@@ -157,6 +171,7 @@ namespace BIM.IFC.Export.UI
                addNewLine = true;
             }
             if (String.IsNullOrEmpty(m_newAddressItem.PostalCode) == false)
+<<<<<<< HEAD
             {
                address += string.Format(" {0}", m_newAddressItem.PostalCode);
                addNewLine = true;
@@ -176,6 +191,156 @@ namespace BIM.IFC.Export.UI
 
             if (String.IsNullOrEmpty(m_newAddressItem.TownOrCity) == false)
                geographicMapLocation = m_newAddressItem.TownOrCity;
+=======
+            {
+               address += string.Format(" {0}", m_newAddressItem.PostalCode);
+               addNewLine = true;
+            }
+            if (addNewLine == true)
+            {
+               address += string.Format("\r\n");
+               addNewLine = false;
+            }
+
+            if (String.IsNullOrEmpty(m_newAddressItem.Country) == false)
+               address += string.Format("{0}\r\n", m_newAddressItem.Country);
+
+            if (String.IsNullOrEmpty(m_newAddressItem.InternalLocation) == false)
+               address += string.Format("\r\n{0}: {1}\r\n",
+                  Properties.Resources.InternalAddress, m_newAddressItem.InternalLocation);
+
+            if (String.IsNullOrEmpty(m_newAddressItem.TownOrCity) == false)
+               geographicMapLocation = m_newAddressItem.TownOrCity;
+
+            if (String.IsNullOrEmpty(m_newAddressItem.RegionOrState) == false)
+            {
+               if (String.IsNullOrEmpty(geographicMapLocation) == false)
+                  geographicMapLocation = geographicMapLocation + ", " + m_newAddressItem.RegionOrState;
+               else
+                  geographicMapLocation = m_newAddressItem.RegionOrState;
+            }
+
+            if (String.IsNullOrEmpty(m_newAddressItem.Country) == false)
+            {
+               if (String.IsNullOrEmpty(geographicMapLocation) == false)
+                  geographicMapLocation = geographicMapLocation + ", " + m_newAddressItem.Country;
+               else
+                  geographicMapLocation = m_newAddressItem.Country;
+            };
+
+            Transaction transaction = new Transaction(IFCCommandOverrideApplication.TheDocument, Properties.Resources.UpdateProjectAddress);
+            transaction.Start();
+
+            ProjectInfo projectInfo = IFCCommandOverrideApplication.TheDocument.ProjectInformation;
+            projectInfo.Address = address;    // set project address information using the IFC Address Information when requested
+
+            if (String.IsNullOrEmpty(geographicMapLocation) == false)
+               IFCCommandOverrideApplication.TheDocument.ActiveProjectLocation.GetSiteLocation().PlaceName = geographicMapLocation;    // Update also Revit Site location on the Map using City, State and Country when they are not null
+
+            transaction.Commit();
+         }
+
+         Close();
+      }
+
+      /// <summary>
+      /// Event when Cancel button is pressed
+      /// </summary>
+      /// <param name="sender"></param>
+      /// <param name="e"></param>
+      private void bottonCancel_Click(object sender, RoutedEventArgs e)
+      {
+         Close();
+      }
+
+      /// <summary>
+      /// Event when update project information is checked
+      /// </summary>
+      /// <param name="sender"></param>
+      /// <param name="e"></param>
+      private void UpdateProjInfocheckBox_Checked(object sender, RoutedEventArgs e)
+      {
+         m_newAddressItem.UpdateProjectInformation = true;
+      }
+
+      /// <summary>
+      /// Event when the update project information is unchecked
+      /// </summary>
+      /// <param name="sender"></param>
+      /// <param name="e"></param>
+      private void UpdateProjInfocheckBox_Unchecked(object sender, RoutedEventArgs e)
+      {
+         m_newAddressItem.UpdateProjectInformation = false;
+      }
+
+       
+      /// <summary>
+      /// Upon AddressTab initialization
+      /// </summary>
+      /// <param name="sender"></param>
+      /// <param name="e"></param>
+      private void AddressTab_Initialized(object sender, EventArgs e)
+      {
+         bool hasSavedItem = m_newAddress.GetSavedAddress(IFCCommandOverrideApplication.TheDocument, out m_newAddressItem);
+         if (hasSavedItem == true)
+         {
+            //keep a copy of the original saved items for checking for any value changed later on
+            m_savedAddressItem = m_newAddressItem.Clone();
+
+            // We won't initialize PurposeComboBox.SelectedIndex, as otherwise that will change the value
+            // of m_newAddressItem.Purpose to the first item in the list, which we don't want.   It is
+            // OK for this to be "uninitialized".
+
+            // This is a short list, so we just do an O(n) search.
+            int numItems = ifcPurposeList.Count();
+            for (int ii = 0; ii < numItems; ii++)
+            {
+               if (m_newAddressItem.Purpose == ifcPurposeList[ii])
+               {
+                  PurposeComboBox.SelectedIndex = ii;
+                  break;
+               }
+            }
+         }
+            
+      }
+
+      /// <summary>
+      /// Update the Purpose Combo Box value to USERDEFINED when the value is set to something else 
+      /// </summary>
+      /// <param name="sender"></param>
+      /// <param name="e"></param>
+      private void UserDefinedPurposeTextBox_LostFocus(object sender, RoutedEventArgs e)
+      {
+         if (String.IsNullOrEmpty(this.m_newAddressItem.UserDefinedPurpose) == false)
+         {
+            m_newAddressItem.Purpose = getUserDefinedStringFromIFCPurposeList();
+            PurposeComboBox.SelectedItem = Properties.Resources.UserDefined;
+         }
+      }
+
+      private void Checkbox_AssignToBuilding_Checked(object sender, RoutedEventArgs e)
+      {
+         m_newAddressItem.AssignAddressToBuilding = true;
+      }
+
+      private void Checkbox_AssignToSite_Checked(object sender, RoutedEventArgs e)
+      {
+         m_newAddressItem.AssignAddressToSite = true;
+      }
+
+      private void Checkbox_AssignToBuilding_Unchecked(object sender, RoutedEventArgs e)
+      {
+         m_newAddressItem.AssignAddressToBuilding = false;
+      }
+
+      private void Checkbox_AssignToSite_Unchecked(object sender, RoutedEventArgs e)
+      {
+         m_newAddressItem.AssignAddressToSite = false;
+      }
+}
+}
+>>>>>>> 243aa67b14c4ab31b64b55d350d8bab5df6596eb
 
             if (String.IsNullOrEmpty(m_newAddressItem.RegionOrState) == false)
             {

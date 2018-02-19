@@ -192,7 +192,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                return propHnd;
          }
 
-         // For Symbol
+         //For Symbol
          Document document = elem.Document;
          ElementId typeId = elem.GetTypeId();
          Element elemType = document.GetElement(typeId);
@@ -1142,7 +1142,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                return propHnd;
          }
 
-         // For Symbol
+         //For Symbol
          Document document = elem.Document;
          ElementId typeId = elem.GetTypeId();
          Element elemType = document.GetElement(typeId);
@@ -2029,7 +2029,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          if (ParameterUtil.GetIntValueFromElement(elem, revitParameterName, out propertyValue) != null)
             return CreateIntegerPropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
 
-         // For Symbol
+         //For Symbol
          Document document = elem.Document;
          ElementId typeId = elem.GetTypeId();
          Element elemType = document.GetElement(typeId);
@@ -2296,7 +2296,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          if (ParameterUtil.GetDoubleValueFromElement(elem, null, ifcPropertyName, out propertyValue) != null)
             return CreatePositiveRatioMeasureProperty(file, ifcPropertyName, propertyValue, valueType);
 
-         // For Symbol
+         //For Symbol
          Document document = elem.Document;
          ElementId typeId = elem.GetTypeId();
          Element elemType = document.GetElement(typeId);

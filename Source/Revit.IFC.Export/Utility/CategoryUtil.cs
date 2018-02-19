@@ -165,6 +165,59 @@ namespace Revit.IFC.Export.Utility
       }
 
       /// <summary>
+      /// Get various color values from element's material
+      /// </summary>
+      /// <param name="element">the element</param>
+      /// <param name="materialColor">element's material color</param>
+      /// <param name="surfacePatternColor">element's material surface pattern color</param>
+      /// <param name="cutPatternColor">element's material cut pattern color</param>
+      /// <param name="opacity">material opacity</param>
+      public static void GetElementColorAndTransparency(Element element, out Color materialColor, out Color surfacePatternColor, out Color cutPatternColor, out double? opacity)
+      {
+         Category category = element.Category;
+
+         materialColor = null;
+         surfacePatternColor = null;
+         cutPatternColor = null;
+         opacity = null;
+
+         ElementId materialId = ElementId.InvalidElementId;
+         ParameterUtil.GetElementIdValueFromElementOrSymbol(element, BuiltInParameter.MATERIAL_ID_PARAM, out materialId);
+         Material matElem = element.Document.GetElement(materialId) as Material;
+
+         if (matElem == null)
+         {
+            if (category == null)
+            {
+               return;
+            }
+            matElem = category.Material;
+         }
+
+         if (matElem != null)
+         {
+            materialColor = GetSafeColor(matElem.Color);
+            surfacePatternColor = GetSafeColor(matElem.SurfacePatternColor);
+            cutPatternColor = GetSafeColor(matElem.CutPatternColor);
+            opacity = (double) (100 - matElem.Transparency)/100;
+         }
+         else
+         {
+            Color color = GetSafeColor(category.LineColor);
+
+            // Grey is returned in place of pure black.  For systems which default to a black background color, 
+            // Grey is more of a contrast.  
+            if (color.Red == 0 && color.Green == 0 && color.Blue == 0)
+               color = new Color(0x7f, 0x7f, 0x7f);
+
+            materialColor = color;
+            surfacePatternColor = color;
+            cutPatternColor = color;
+            opacity = 1.0;
+         }
+      }
+
+      /// <summary>
       /// Checks if element is external.
       /// </summary>
       /// <remarks>

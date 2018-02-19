@@ -70,6 +70,12 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
       /// </returns>
       public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
       {
+         int isExternalInt = 0;
+         if (ParameterUtil.GetIntValueFromElementOrSymbol(element, "IfcIsExternal", out isExternalInt) == null)
+            ParameterUtil.GetIntValueFromElementOrSymbol(element, "IsExternal", out isExternalInt);
+         if (isExternalInt != 0)
+            m_IsExternal = true;
+
          m_IsExternal = CategoryUtil.IsElementExternal(element);
          return true;
       }

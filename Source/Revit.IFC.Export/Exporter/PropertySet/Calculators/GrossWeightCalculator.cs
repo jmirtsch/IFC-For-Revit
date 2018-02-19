@@ -43,10 +43,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
       /// </summary>
       static GrossWeightCalculator s_Instance = new GrossWeightCalculator();
 
-      /// <summary>
-      /// The GrossWeightCalculator instance.
-      /// </summary>
-      public static GrossWeightCalculator Instance
+   /// <summary>
+   /// The GrossWeightCalculator instance.
+   /// </summary>
+   public static GrossWeightCalculator Instance
       {
          get { return s_Instance; }
       }
@@ -71,11 +71,14 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
       /// </returns>
       public override bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType)
       {
-         ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyGrossWeight", out m_Weight);
-         if (m_Weight < MathUtil.Eps())
-            return false;
-         else
+         if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcQtyGrossWeight", out m_Weight) == null)
+            if (ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "IfcGrossWeight", out m_Weight) == null)
+               ParameterUtil.GetDoubleValueFromElementOrSymbol(element, "GrossWeight", out m_Weight);
+
+         if (m_Weight > MathUtil.Eps())
             return true;
+
+         return false;
       }
 
       /// <summary>

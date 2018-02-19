@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.props" Condition="Exists('..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -31,6 +32,8 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject />
@@ -48,6 +51,9 @@
     <OutputPath>..\..\..\..\..\Slow_Debugx64\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Antlr4.Runtime, Version=4.6.0.0, Culture=neutral, PublicKeyToken=09abb75b9ed49849, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Antlr4.Runtime.4.6.4\lib\net45\Antlr4.Runtime.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.XML" />
   </ItemGroup>
@@ -82,13 +88,13 @@
     <Compile Include="Exporter\PartExporter.cs" />
     <Compile Include="Exporter\PileExporter.cs" />
     <Compile Include="Exporter\PipeInsulationExporter.cs" />
+    <Compile Include="Exporter\PropertySetsInitialization.cs" />
     <Compile Include="Exporter\PropertySet\AttributeEntry.cs" />
     <Compile Include="Exporter\PropertySet\AttributeEntryMap.cs" />
     <Compile Include="Exporter\PropertySet\AttributeSetDescription.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\BeamLoadBearingCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\BeamMemberSpanCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\SpanCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\CrossSectionAreaCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\DoorAreaCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\AreaCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\GrossAreaCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\GrossSurfaceAreaCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\GrossVolumeCalculator.cs" />
@@ -98,10 +104,8 @@
     <Compile Include="Exporter\PropertySet\Calculators\NetVolumeCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\NetWeightCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\OuterSurfaceAreaCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\StructuralMemberRollCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\WindowAreaCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\ColumnLoadBearingCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\CoveringFinishCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\RollCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\FinishCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ISOCD3766BendingEndHookCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ISOCD3766BendingRadiusCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ISOCD3766BendingStartHookCalculator.cs" />
@@ -111,21 +115,18 @@
     <Compile Include="Exporter\PropertySet\Calculators\ISOCD3766ShapeParameterCCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ISOCD3766ShapeParameterDCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ISOCD3766ShapeParameterECalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\ProvisionForVoidDepthCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\ProvisionForVoidDiameterCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\ProvisionForVoidHeightCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\ProvisionForVoidShapeCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\ProvisionForVoidWidthCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\DepthCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\DiameterCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\ShapeCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SlopeCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ExtendToStructureCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ExternalCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\LoadBearingCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\NumberOfStoreysCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\RailingHeightCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\RampFlightSlopeCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\RoofProjectedAreaCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SpaceConcealCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SpaceTemperatureCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\HeightCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\ProjectedAreaCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\ConcealCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\TemperatureCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpecificZoneCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\StairRiserTreadsCalculator.cs" />
     <Compile Include="Exporter\PropertySet\ClassificationUtil.cs" />
@@ -134,6 +135,7 @@
     <Compile Include="Exporter\PropertySet\EntryMap.cs" />
     <Compile Include="Exporter\PropertySet\FrequencyPropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\PositivePlaneAnglePropertyUtil.cs" />
+    <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC2x2Enum.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC2x3TC1Enum.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC4_ADD1Enum.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC4_ADD2Enum.cs" />
@@ -142,18 +144,14 @@
     <Compile Include="Exporter\PropertySet\PropertySetEntryMap.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetEntryUtil.cs" />
     <Compile Include="Exporter\PropertySet\PropertyUtil.cs" />
-    <Compile Include="Exporter\PropertySet\QuantityDescription.cs" />
-    <Compile Include="Exporter\PropertySet\QuantityEntry.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\ReferenceCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SlabLoadBearingCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SlabPerimeterCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SlabWidthCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SpaceAreaCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SpaceHeightCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\WidthCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpaceLevelAreaCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpaceLevelDescriptionCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SpacePerimeterCalculator.cs" />
-    <Compile Include="Exporter\PropertySet\Calculators\SpaceVolumeCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\PerimeterCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\VolumeCalculator.cs" />
+    <Compile Include="Exporter\PropertySet\QuantityDescription.cs" />
+    <Compile Include="Exporter\PropertySet\QuantityEntry.cs" />
     <Compile Include="Exporter\PropertySet\QuantityEntryMap.cs" />
     <Compile Include="Exporter\ProxyElementExporter.cs" />
     <Compile Include="Exporter\RailingExporter.cs" />
@@ -244,6 +242,10 @@
     <Compile Include="Utility\OpeningUtil.cs" />
     <Compile Include="Utility\ParameterElementCache.cs" />
     <Compile Include="Utility\ParameterUtil.cs" />
+    <Compile Include="Utility\ParamExprErrorListener.cs" />
+    <Compile Include="Utility\ParamExprListener.cs" />
+    <Compile Include="Utility\ParamExprLogger.cs" />
+    <Compile Include="Utility\ParamExprResolver.cs" />
     <Compile Include="Utility\PartExportedCache.cs" />
     <Compile Include="Utility\PresentationLayerSetCache.cs" />
     <Compile Include="Utility\ProductWrapper.cs" />
@@ -313,6 +315,14 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <Antlr4 Include="Utility\ParamExprGrammar.g4">
+      <Generator>MSBuild:Compile</Generator>
+      <CustomToolNamespace>Revit.IFC.Export.Utility</CustomToolNamespace>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Antlr4>
+  </ItemGroup>
   <!--
     Always Import the appropriate *.OutputPath.targets file BEFORE the
     Revit.CSharp.targets file, otherwise VisualStudio will complain
@@ -322,6 +332,14 @@
   <PropertyGroup>
     <PostBuildEvent>Copy "$(TargetPath)" "C:\Program Files (x86)\Revit IFC 2018\"</PostBuildEvent>
   </PropertyGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.props'))" />
+    <Error Condition="!Exists('..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.targets'))" />
+  </Target>
+  <Import Project="..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.targets" Condition="Exists('..\..\packages\Antlr4.CodeGenerator.4.6.4\build\Antlr4.CodeGenerator.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

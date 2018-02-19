@@ -27,30 +27,35 @@ using Autodesk.Revit.DB.Structure;
 
 namespace Revit.IFC.Export.Exporter.PropertySet
 {
-   /// <summary>
-   /// A utility class that execute a calculation to determine the value of special IFC parameters.
-   /// </summary>
-   abstract public class PropertyCalculator
-   {
-      /// <summary>
-      /// Performs the calculation.
-      /// </summary>
-      /// <param name="exporterIFC">
-      /// The ExporterIFC object.
-      /// </param>
-      /// <param name="extrusionCreationData">
-      /// The IFCExtrusionCreationData.
-      /// </param>
-      /// <param name="element">
-      /// The element to calculate the value.
-      /// </param>
-      /// <param name="elementType">
-      /// The element type.
-      /// </param>
-      /// <returns>
-      /// True if the operation succeed, false otherwise.
-      /// </returns>
-      abstract public bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType);
+    /// <summary>
+    /// A utility class that execute a calculation to determine the value of special IFC parameters.
+    /// </summary>
+    abstract public class PropertyCalculator
+    {
+        /// <summary>
+        /// Performs the calculation. 
+        /// NOTE: the general rule to follow when overriding Calculate method in order of priority:
+        ///       1. If it the property is dependent on the object or the geometry, such as dimension of a door, the first priority is to be given to the values provided by Revit
+        ///       2. If it does not give any appropriate value, look at the override parameters. It is generally the name of the IFC property, or prefixed with Ifc (for Pset property) or IfcQty (for quantity)
+        ///       3. If still does not give the appropriate value, and it has an Extrusion data, calculte the appropriate dimension from the extrusion data
+        ///       4. If everything fails, return false
+        /// </summary>
+        /// <param name="exporterIFC">
+        /// The ExporterIFC object.
+        /// </param>
+        /// <param name="extrusionCreationData">
+        /// The IFCExtrusionCreationData.
+        /// </param>
+        /// <param name="element">
+        /// The element to calculate the value.
+        /// </param>
+        /// <param name="elementType">
+        /// The element type.
+        /// </param>
+        /// <returns>
+        /// True if the operation succeed, false otherwise.
+        /// </returns>
+        abstract public bool Calculate(ExporterIFC exporterIFC, IFCExtrusionCreationData extrusionCreationData, Element element, ElementType elementType);
 
       /// <summary>
       /// If implemented in derived classes, may retrieve parameter data for a specific IFC handle.
