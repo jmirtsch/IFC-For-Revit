@@ -5036,7 +5036,14 @@ namespace Revit.IFC.Export.Toolkit
          SetElementType(genericIFCType, revitType, propertySets, representationMaps);
 
          if (!string.IsNullOrEmpty(predefinedType))
-            IFCAnyHandleUtil.SetAttribute(genericIFCType, "PredefinedType", predefinedType, true);
+         {
+            // Earlier types in IFC2x_ may not have PredefinedType property. Ignore error
+            try
+            {
+               IFCAnyHandleUtil.SetAttribute(genericIFCType, "PredefinedType", predefinedType, true);
+            }
+            catch { }
+         }
 
          //if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          //{

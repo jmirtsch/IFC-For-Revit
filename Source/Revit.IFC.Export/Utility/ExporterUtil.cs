@@ -1418,34 +1418,29 @@ namespace Revit.IFC.Export.Utility
             string exportAsType = "IFCExportType";
 
             ParameterUtil.GetStringValueFromElementOrSymbol(element, exportAsEntity, out symbolClassName);
-            ParameterUtil.GetStringValueFromElementOrSymbol(element, exportAsType, out enumTypeValue);
 
+            string predefType = null;
             if (!String.IsNullOrEmpty(symbolClassName))
             {
-               // We are expanding IfcExportAs format to support also format: <IfcTypeEntity>.<predefinedType>. Therefore we need to parse here. This format will override value in
-               // IFCExportType if any
-               string[] splitResult = symbolClassName.Split(new Char[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
-               if (splitResult.Length > 1)
-               {
-                  // found <IfcTypeEntity>.<PredefinedType>
-                  symbolClassName = splitResult[0].Trim();
-                  enumTypeValue = splitResult[1].Trim();
-               }
-
-               ExportEntityAndPredefinedType(symbolClassName, out symbolClassName, out enumTypeValue);
-
+               ExportEntityAndPredefinedType(symbolClassName, out symbolClassName, out predefType);
 
                exportType = ElementFilteringUtil.GetExportTypeFromClassName(symbolClassName);
                if (exportType.IsUnKnown)
                   return IFCExportInfoPair.UnKnown;
             }
+
+            string pdefFromParam = null;
+            ParameterUtil.GetStringValueFromElementOrSymbol(element, exportAsType, out pdefFromParam);
+            if (!string.IsNullOrEmpty(pdefFromParam))
+               enumTypeValue = pdefFromParam;
+            else
+               enumTypeValue = predefType;
          }
 
+         if (string.IsNullOrEmpty(enumTypeValue))
+            enumTypeValue = "NOTDEFINED";
+
          // Check whether the intended Entity type is inside the export exclusion set
-         //Common.Enums.IFCEntityType elementClassTypeEnum;
-         //if (Enum.TryParse<Common.Enums.IFCEntityType>(exportType.ToString(), out elementClassTypeEnum))
-         //   if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(elementClassTypeEnum))
-         //      return IFCExportInfoPair.UnKnown;
          if (ExporterCacheManager.ExportOptionsCache.IsElementInExcludeList(exportType.ExportInstance))
             return IFCExportInfoPair.UnKnown;
 

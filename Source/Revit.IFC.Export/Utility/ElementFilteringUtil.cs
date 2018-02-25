@@ -1157,11 +1157,11 @@ namespace Revit.IFC.Export.Utility
 
                IfcSchemaEntityNode clNode = IfcSchemaEntityTree.Find(clName);
                if (clNode != null)
-                  clNameValid = IfcSchemaEntityTree.IsSubTypeOf(clName, "IfcProduct");
+                  clNameValid = IfcSchemaEntityTree.IsSubTypeOf(clName, "IfcProduct") && !clNode.isAbstract;
 
                IfcSchemaEntityNode tyNode = IfcSchemaEntityTree.Find(tyName);
                if (tyNode != null)
-                  tyNameValid = IfcSchemaEntityTree.IsSubTypeOf(tyName, "IfcTypeProduct");
+                  tyNameValid = IfcSchemaEntityTree.IsSubTypeOf(tyName, "IfcTypeProduct") && !tyNode.isAbstract;
 
                //bool clNameValid = IFCExportType.TryParse(clName, out theGenExportClass);
                //bool tyNameValid = IFCExportType.TryParse(tyName, out theGenExportType);

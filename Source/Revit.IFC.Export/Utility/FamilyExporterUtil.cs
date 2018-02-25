@@ -661,32 +661,32 @@ namespace Revit.IFC.Export.Exporter
          //}
          //}
 
-         string predefinedType = null;
-         string value = null;
-         if (ParameterUtil.GetStringValueFromElementOrSymbol(instance, "IfcExportAs", out value) != null)
-         {
-            string[] exportParams = value.Split('.');
-            IFCEntityType ent = IFCEntityType.UnKnown;
-            IFCEntityType.TryParse(exportParams[0], out ent);
-            if (ent != IFCEntityType.UnKnown)
-               exportInfo.ExportType = ent;
+         //string predefinedType = null;
+         //string value = null;
+         //if (ParameterUtil.GetStringValueFromElementOrSymbol(instance, "IfcExportAs", out value) != null)
+         //{
+         //   string[] exportParams = value.Split('.');
+         //   IFCEntityType ent = IFCEntityType.UnKnown;
+         //   IFCEntityType.TryParse(exportParams[0], out ent);
+         //   if (ent != IFCEntityType.UnKnown)
+         //      exportInfo.ExportType = ent;
 
-            if (exportParams.Length > 1)
-               predefinedType = exportParams[1];
-         }
-         else
-         {
-            if (ParameterUtil.GetStringValueFromElementOrSymbol(instance, "IfcExportType", out value) != null)
-            {
-               IFCEntityType ent = IFCEntityType.UnKnown;
-               IFCEntityType.TryParse(value, out ent);
-               if (ent != IFCEntityType.UnKnown)
-                  exportInfo.ExportType = ent;
-            }
-            ParameterUtil.GetStringValueFromElementOrSymbol(instance, "IfcType", out predefinedType);
-         }
+         //   if (exportParams.Length > 1)
+         //      predefinedType = exportParams[1];
+         //}
+         //else
+         //{
+         //   if (ParameterUtil.GetStringValueFromElementOrSymbol(instance, "IfcExportType", out value) != null)
+         //   {
+         //      IFCEntityType ent = IFCEntityType.UnKnown;
+         //      IFCEntityType.TryParse(value, out ent);
+         //      if (ent != IFCEntityType.UnKnown)
+         //         exportInfo.ExportType = ent;
+         //   }
+         //   ParameterUtil.GetStringValueFromElementOrSymbol(instance, "IfcType", out predefinedType);
+         //}
 
-         return IFCInstanceExporter.CreateGenericIFCType(exportInfo, symbol, file, propertySets, representationMapList, predefinedType);
+         return IFCInstanceExporter.CreateGenericIFCType(exportInfo, symbol, file, propertySets, representationMapList, ifcEnumType);
       }
 
       /// <summary>
