@@ -24,6 +24,7 @@ using Autodesk.Revit.DB.Architecture;
 using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Common.Utility;
+using Revit.IFC.Common.Enums;
 using Revit.IFC.Export.Exporter;
 using Revit.IFC.Export.Toolkit;
 
@@ -297,7 +298,7 @@ namespace Revit.IFC.Export.Utility
       /// <param name="element">The element. </param>
       /// <param name="levels">The levels to split the element.</param>
       /// <param name="ranges">The ranges to split the element. These will be non-overlapping.</param>
-      public static void CreateSplitLevelRangesForElement(ExporterIFC exporterIFC, IFCExportType exportType, Element element,
+      public static void CreateSplitLevelRangesForElement(ExporterIFC exporterIFC, IFCExportInfoPair exportType, Element element,
          out IList<ElementId> levels, out IList<IFCRange> ranges)
       {
          levels = new List<ElementId>();
@@ -308,7 +309,7 @@ namespace Revit.IFC.Export.Utility
 
          double extension = GetLevelExtension();
 
-         bool splitByLevel = (exportType == IFCExportType.IfcColumnType || exportType == IFCExportType.IfcWall) || (exportType == IFCExportType.IfcDuctSegmentType);
+         bool splitByLevel = (exportType.ExportInstance == IFCEntityType.IfcColumn || exportType.ExportInstance == IFCEntityType.IfcWall) || (exportType.ExportType == IFCEntityType.IfcDuctSegmentType);
 
          if (!splitByLevel)
             return;

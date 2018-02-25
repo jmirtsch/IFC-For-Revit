@@ -25,6 +25,7 @@ using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Utility;
+using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Export.Exporter
 {
@@ -209,8 +210,10 @@ namespace Revit.IFC.Export.Exporter
          {
             IList<ElementId> levels = new List<ElementId>();
             IList<IFCRange> ranges = new List<IFCRange>();
-            IFCExportType exportType = isWall ? IFCExportType.IfcWall : IFCExportType.IfcColumnType;
-            LevelUtil.CreateSplitLevelRangesForElement(exporterIFC, exportType, part, out levels, out ranges);
+            IFCEntityType exportType = isWall ? IFCEntityType.IfcWall : IFCEntityType.IfcColumn;
+            IFCExportInfoPair exportInfo = new IFCExportInfoPair();
+            exportInfo.SetValueWithPair(exportType);
+            LevelUtil.CreateSplitLevelRangesForElement(exporterIFC, exportInfo, part, out levels, out ranges);
             if (ranges.Count == 0)
             {
                PartExporter.ExportPart(exporterIFC, partElement, productWrapper, null, null, null, ifcExtrusionAxes, hostElement,
@@ -270,7 +273,7 @@ namespace Revit.IFC.Export.Exporter
          else
          {
             string ifcEnumType = null;
-            IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
+            IFCExportInfoPair exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
 
             // Check the intended IFC entity or type name is in the exclude list specified in the UI
             Common.Enums.IFCEntityType elementClassTypeEnum;
@@ -393,7 +396,7 @@ namespace Revit.IFC.Export.Exporter
                   else
                   {
                      string ifcEnumType = null;
-                     IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
+                     IFCExportInfoPair exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
 
                      string defaultValue = null;
                      // This replicates old functionality before IFC4 addition, where the default for slab was "FLOOR".
@@ -402,33 +405,33 @@ namespace Revit.IFC.Export.Exporter
                         ifcEnumType = "FLOOR";
                      ifcEnumType = IFCValidateEntry.GetValidIFCType(hostElement, ifcEnumType, defaultValue);
 
-                     switch (exportType)
+                     switch (exportType.ExportInstance)
                      {
-                        case IFCExportType.IfcColumnType:
+                        case IFCEntityType.IfcColumn:
                            ifcPart = IFCInstanceExporter.CreateColumn(exporterIFC, partElement, partGUID, ownerHistory,
                                extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
-                        case IFCExportType.IfcCovering:
+                        case IFCEntityType.IfcCovering:
                            ifcPart = IFCInstanceExporter.CreateCovering(exporterIFC, partElement, partGUID, ownerHistory,
                                extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
-                        case IFCExportType.IfcFooting:
+                        case IFCEntityType.IfcFooting:
                            ifcPart = IFCInstanceExporter.CreateFooting(exporterIFC, partElement, partGUID, ownerHistory,
                                extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
-                        case IFCExportType.IfcPile:
+                        case IFCEntityType.IfcPile:
                            ifcPart = IFCInstanceExporter.CreatePile(exporterIFC, partElement, partGUID, ownerHistory,
                                extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType, null);
                            break;
-                        case IFCExportType.IfcRoof:
+                        case IFCEntityType.IfcRoof:
                            ifcPart = IFCInstanceExporter.CreateRoof(exporterIFC, partElement, partGUID, ownerHistory,
                                extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
-                        case IFCExportType.IfcSlab:
+                        case IFCEntityType.IfcSlab:
                            ifcPart = IFCInstanceExporter.CreateSlab(exporterIFC, partElement, partGUID, ownerHistory,
                                extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
-                        case IFCExportType.IfcWall:
+                        case IFCEntityType.IfcWall:
                            ifcPart = IFCInstanceExporter.CreateWall(exporterIFC, partElement, partGUID, ownerHistory,
                            extrusionCreationData.GetLocalPlacement(), prodRep, ifcEnumType);
                            break;
@@ -555,8 +558,8 @@ namespace Revit.IFC.Export.Exporter
       private static bool IsHostWallOrColumn(ExporterIFC exporterIFC, Element hostElement)
       {
          string ifcEnumType;
-         IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
-         return (exportType == IFCExportType.IfcWall) || (exportType == IFCExportType.IfcColumnType);
+         IFCExportInfoPair exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
+         return (exportType.ExportInstance == IFCEntityType.IfcWall) || (exportType.ExportInstance == IFCEntityType.IfcColumn);
       }
 
       /// <summary>
@@ -589,14 +592,14 @@ namespace Revit.IFC.Export.Exporter
       private static IFCExtrusionAxes GetDefaultExtrusionAxesForHost(ExporterIFC exporterIFC, Element hostElement)
       {
          string ifcEnumType;
-         IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
+         IFCExportInfoPair exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
 
-         switch (exportType)
+         switch (exportType.ExportInstance)
          {
-            case IFCExportType.IfcWall:
-            case IFCExportType.IfcColumnType:
-            case IFCExportType.IfcSlab:
-            case IFCExportType.IfcRoof:
+            case IFCEntityType.IfcWall:
+            case IFCEntityType.IfcColumn:
+            case IFCEntityType.IfcSlab:
+            case IFCEntityType.IfcRoof:
                return IFCExtrusionAxes.TryZ;
             default:
                return IFCExtrusionAxes.TryXY;
@@ -612,7 +615,7 @@ namespace Revit.IFC.Export.Exporter
       private static void SplitParts(ExporterIFC exporterIFC, Element hostElement, List<ElementId> associatedPartsList)
       {
          string ifcEnumType;
-         IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
+         IFCExportInfoPair exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
 
          // Split the host to find the orphan parts.
          IList<ElementId> orphanLevels = new List<ElementId>();

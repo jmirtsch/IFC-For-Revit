@@ -24,6 +24,7 @@ using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Export.Exporter.PropertySet;
 using Revit.IFC.Common.Utility;
+using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Export.Exporter
 {
@@ -43,7 +44,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="productWrapper">The ProductWrapper.</param>
       /// <returns>True if an entity was created, false otherwise.</returns>
       public static bool Export(ExporterIFC exporterIFC, Element element, GeometryElement geometryElement,
-          IFCExportType exportType, string ifcEnumType, ProductWrapper productWrapper)
+          IFCExportInfoPair exportType, string ifcEnumType, ProductWrapper productWrapper)
       {
          IFCFile file = exporterIFC.GetFile();
          using (IFCTransaction tr = new IFCTransaction(file))
@@ -56,7 +57,7 @@ namespace Revit.IFC.Export.Exporter
 
             // We will not split duct segments if the assemblyId is set, as we would like to keep the original duct segment
             // associated with the assembly, on the level of the assembly.
-            if ((exportType == IFCExportType.IfcDuctSegmentType) &&
+            if ((exportType.ExportType == IFCEntityType.IfcDuctSegmentType) &&
                (ExporterCacheManager.ExportOptionsCache.WallAndColumnSplitting) &&
                (element.AssemblyInstanceId == ElementId.InvalidElementId))
             {
@@ -117,9 +118,9 @@ namespace Revit.IFC.Export.Exporter
                               return false;
 
                            bool tryToExportAsExtrusion = (!exporterIFC.ExportAs2x2 ||
-                                                          (exportType == IFCExportType.IfcColumnType));
+                                                          (exportType.ExportInstance == IFCEntityType.IfcColumn));
 
-                           if (exportType == IFCExportType.IfcColumnType)
+                           if (exportType.ExportInstance == IFCEntityType.IfcColumn)
                            {
                               extraParams.PossibleExtrusionAxes = IFCExtrusionAxes.TryZ;
                            }
@@ -171,7 +172,7 @@ namespace Revit.IFC.Export.Exporter
          return true;
       }
 
-      private static void ExportAsMappedItem(ExporterIFC exporterIFC, Element element, IFCFile file, IFCExportType exportType, string ifcEnumType, IFCExtrusionCreationData extraParams,
+      private static void ExportAsMappedItem(ExporterIFC exporterIFC, Element element, IFCFile file, IFCExportInfoPair exportType, string ifcEnumType, IFCExtrusionCreationData extraParams,
           PlacementSetter setter, IFCAnyHandle localPlacementToUse, IFCAnyHandle productRepresentation, ProductWrapper productWrapper)
       {
          IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
@@ -181,7 +182,7 @@ namespace Revit.IFC.Export.Exporter
 
          if (type != null)
          {
-            FamilyTypeInfo currentTypeInfo = ExporterCacheManager.FamilySymbolToTypeInfoCache.Find(typeId, false, exportType);
+            FamilyTypeInfo currentTypeInfo = ExporterCacheManager.FamilySymbolToTypeInfoCache.Find(typeId, false, exportType.ExportType);
 
             bool found = currentTypeInfo.IsValid();
             if (!found)
@@ -200,7 +201,7 @@ namespace Revit.IFC.Export.Exporter
                   if (!string.IsNullOrEmpty(applicableOccurrence))
                      IFCAnyHandleUtil.SetAttribute(styleHandle, "ApplicableOccurrence", applicableOccurrence);
                   currentTypeInfo.Style = styleHandle;
-                  ExporterCacheManager.FamilySymbolToTypeInfoCache.Register(typeId, false, exportType, currentTypeInfo);
+                  ExporterCacheManager.FamilySymbolToTypeInfoCache.Register(typeId, false, exportType.ExportType, currentTypeInfo);
                }
             }
             else
@@ -223,17 +224,17 @@ namespace Revit.IFC.Export.Exporter
          IFCAnyHandle instanceHandle = null;
 
          // For MEP objects
-         string exportEntityStr = exportType.ToString();
-         Common.Enums.IFCEntityType exportEntity;
+         //string exportEntityStr = exportType.ToString();
+         //Common.Enums.IFCEntityType exportEntity;
 
-         if (String.Compare(exportEntityStr.Substring(exportEntityStr.Length - 4), "Type", true) == 0)
-            exportEntityStr = exportEntityStr.Substring(0, (exportEntityStr.Length - 4));
-         if (Enum.TryParse(exportEntityStr, out exportEntity))
-         {
+         //if (String.Compare(exportEntityStr.Substring(exportEntityStr.Length - 4), "Type", true) == 0)
+         //   exportEntityStr = exportEntityStr.Substring(0, (exportEntityStr.Length - 4));
+         //if (Enum.TryParse(exportEntityStr, out exportEntity))
+         //{
             // For MEP object creation
-            instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(exportEntity, exporterIFC, element, instanceGUID, ownerHistory,
+            instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(exportType, exporterIFC, element, instanceGUID, ownerHistory,
                localPlacementToUse, productRepresentation);
-         }
+         //}
 
          if (IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
             return;

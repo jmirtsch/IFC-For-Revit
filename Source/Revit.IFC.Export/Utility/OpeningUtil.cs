@@ -23,6 +23,7 @@ using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Exporter;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Utility;
+using Revit.IFC.Common.Enums;
 using Revit.IFC.Export.Exporter.PropertySet;
 
 namespace Revit.IFC.Export.Utility
@@ -483,9 +484,10 @@ namespace Revit.IFC.Export.Utility
          if (openingElem is FamilyInstance && hostElement is Wall)
          {
             string ifcEnumType;
-            IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, openingElem, out ifcEnumType);
+            IFCExportInfoPair exportType = ExporterUtil.GetExportType(exporterIFC, openingElem, out ifcEnumType);
             Element instHost = (openingElem as FamilyInstance).Host;
-            return (exportType == IFCExportType.IfcDoorType || exportType == IFCExportType.IfcWindowType) &&
+            return (exportType.ExportInstance == IFCEntityType.IfcDoor || exportType.ExportType == IFCEntityType.IfcDoorType 
+               || exportType.ExportInstance == IFCEntityType.IfcWindow || exportType.ExportType == IFCEntityType.IfcWindowType) &&
                 (instHost != null && instHost.Id == hostElement.Id);
          }
 

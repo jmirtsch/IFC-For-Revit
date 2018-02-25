@@ -24,6 +24,7 @@ using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Exporter;
+using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Export.Utility
 {
@@ -35,7 +36,7 @@ namespace Revit.IFC.Export.Utility
    /// The export type is used to distinguish between two instances of the same family but have different export types, this can happen
    /// if user uses the IfcExportAs shared parameter at the instance level.
    /// </summary>
-   public class TypeObjectsCache : Dictionary<Tuple<ElementId, bool, IFCExportType>, FamilyTypeInfo>
+   public class TypeObjectsCache : Dictionary<Tuple<ElementId, bool, IFCEntityType>, FamilyTypeInfo>
    {
       /// <summary>
       /// Adds the FamilyTypeInfo to the dictionary.
@@ -49,9 +50,9 @@ namespace Revit.IFC.Export.Utility
       /// <param name="exportType">
       /// The export type of the element.
       /// </param>
-      public void Register(ElementId elementId, bool flipped, IFCExportType exportType, FamilyTypeInfo typeInfo)
+      public void Register(ElementId elementId, bool flipped, IFCEntityType exportType, FamilyTypeInfo typeInfo)
       {
-         Tuple<ElementId, bool, IFCExportType> key = new Tuple<ElementId, bool, IFCExportType>(elementId, flipped, exportType);
+         Tuple<ElementId, bool, IFCEntityType> key = new Tuple<ElementId, bool, IFCEntityType>(elementId, flipped, exportType);
          this[key] = typeInfo;
       }
 
@@ -70,9 +71,9 @@ namespace Revit.IFC.Export.Utility
       /// <returns>
       /// The FamilyTypeInfo object.
       /// </returns>
-      public FamilyTypeInfo Find(ElementId elementId, bool flipped, IFCExportType exportType)
+      public FamilyTypeInfo Find(ElementId elementId, bool flipped, IFCEntityType exportType)
       {
-         Tuple<ElementId, bool, IFCExportType> key = new Tuple<ElementId, bool, IFCExportType>(elementId, flipped, exportType);
+         Tuple<ElementId, bool, IFCEntityType> key = new Tuple<ElementId, bool, IFCEntityType>(elementId, flipped, exportType);
          FamilyTypeInfo typeInfo;
 
          if (TryGetValue(key, out typeInfo))

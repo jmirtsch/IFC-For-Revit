@@ -27,6 +27,7 @@ using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Export.Exporter.PropertySet;
 using Revit.IFC.Common.Utility;
+using Revit.IFC.Common.Enums;
 
 
 namespace Revit.IFC.Export.Exporter
@@ -63,11 +64,11 @@ namespace Revit.IFC.Export.Exporter
          IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
          Options options = GeometryUtil.GetIFCExportGeometryOptions(); ;
          string ifcEnumType;
-         IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, coupler, out ifcEnumType);
+         IFCExportInfoPair exportType = ExporterUtil.GetExportType(exporterIFC, coupler, out ifcEnumType);
 
          using (IFCTransaction tr = new IFCTransaction(file))
          {
-            FamilyTypeInfo currentTypeInfo = ExporterCacheManager.FamilySymbolToTypeInfoCache.Find(coupler.GetTypeId(), false, exportType);
+            FamilyTypeInfo currentTypeInfo = ExporterCacheManager.FamilySymbolToTypeInfoCache.Find(coupler.GetTypeId(), false, exportType.ExportType);
             bool found = currentTypeInfo.IsValid();
             if (!found)
             {
@@ -93,7 +94,7 @@ namespace Revit.IFC.Export.Exporter
                   if (!string.IsNullOrEmpty(applicableOccurrence))
                      IFCAnyHandleUtil.SetAttribute(styleHandle, "ApplicableOccurrence", applicableOccurrence);
                   currentTypeInfo.Style = styleHandle;
-                  ExporterCacheManager.FamilySymbolToTypeInfoCache.Register(coupler.GetTypeId(), false, exportType, currentTypeInfo);
+                  ExporterCacheManager.FamilySymbolToTypeInfoCache.Register(coupler.GetTypeId(), false, exportType.ExportType, currentTypeInfo);
                }
             }
 
@@ -132,7 +133,9 @@ namespace Revit.IFC.Export.Exporter
                using (PlacementSetter setter = PlacementSetter.Create(exporterIFC, coupler, trf, null))
                {
                   IFCAnyHandle instanceHandle = null;
-                  instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(Common.Enums.IFCEntityType.IfcMechanicalFastener, exporterIFC, coupler, instanceGUID, ownerHistory,
+                  IFCExportInfoPair exportMechFastener = new IFCExportInfoPair();
+                  exportMechFastener.SetValueWithPair(IFCEntityType.IfcMechanicalFastener);
+                  instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(exportMechFastener, exporterIFC, coupler, instanceGUID, ownerHistory,
                                       setter.LocalPlacement, productRepresentation);
                   string instanceName = NamingUtil.GetNameOverride(instanceHandle, coupler, origInstanceName + ": " + idx);
                   IFCAnyHandleUtil.SetAttribute(instanceHandle, "Name", instanceName);

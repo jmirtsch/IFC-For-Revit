@@ -2702,11 +2702,15 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             quantityHnds.Add(quantityHnd);
          }
 
-         double scaledWidth = UnitUtil.ScaleLength(wallElement.Width);
-         if (!MathUtil.IsAlmostZero(scaledWidth))
+         double scaledWidth = 0.0;
+         if (wallElement != null)
          {
-            IFCAnyHandle quantityHnd = IFCInstanceExporter.CreateQuantityLength(file, "Width", null, null, scaledWidth);
-            quantityHnds.Add(quantityHnd);
+            scaledWidth = UnitUtil.ScaleLength(wallElement.Width);
+            if (!MathUtil.IsAlmostZero(scaledWidth))
+            {
+               IFCAnyHandle quantityHnd = IFCInstanceExporter.CreateQuantityLength(file, "Width", null, null, scaledWidth);
+               quantityHnds.Add(quantityHnd);
+            }
          }
 
          if (!MathUtil.IsAlmostZero(scaledFootPrintArea))
@@ -2746,8 +2750,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          }
          else
          {
-            ParameterUtil.GetDoubleValueFromElement(wallElement, BuiltInParameter.HOST_AREA_COMPUTED, out area);
-            ParameterUtil.GetDoubleValueFromElement(wallElement, BuiltInParameter.HOST_VOLUME_COMPUTED, out volume);
+            if (wallElement != null)
+            {
+               ParameterUtil.GetDoubleValueFromElement(wallElement, BuiltInParameter.HOST_AREA_COMPUTED, out area);
+               ParameterUtil.GetDoubleValueFromElement(wallElement, BuiltInParameter.HOST_VOLUME_COMPUTED, out volume);
+            }
          }
 
          if (!MathUtil.IsAlmostZero(area))

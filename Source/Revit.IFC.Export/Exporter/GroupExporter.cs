@@ -24,7 +24,7 @@ using System.Text;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.DB.Mechanical;
-using Revit.IFC.Common.Utility;
+using Revit.IFC.Common.Enums;
 using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Export.Exporter.PropertySet;
@@ -68,8 +68,8 @@ namespace Revit.IFC.Export.Exporter
             string objectType = NamingUtil.GetObjectTypeOverride(element, exporterIFC.GetFamilyName());
 
             string ifcEnumType;
-            IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
-            if (exportAs == IFCExportType.IfcGroup)
+            IFCExportInfoPair exportAs = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
+            if (exportAs.ExportInstance == IFCEntityType.IfcGroup)
             {
                groupHnd = IFCInstanceExporter.CreateGroup(file, guid, ownerHistory, name, description, objectType);
             }

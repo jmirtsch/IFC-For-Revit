@@ -202,7 +202,8 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy $(TargetPath) $(SolutionDir)$(ConfigurationName)\$(TargetFileName) /Y
-copy $(TargetDir)$(TargetName).pdb $(SolutionDir)$(ConfigurationName)\$(TargetName).pdb /Y</PostBuildEvent>
+copy $(TargetDir)$(TargetName).pdb $(SolutionDir)$(ConfigurationName)\$(TargetName).pdb /Y
+copy $(TargetDir)\IFC*.xsd $(SolutionDir)$(ConfigurationName) /Y</PostBuildEvent>
   </PropertyGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

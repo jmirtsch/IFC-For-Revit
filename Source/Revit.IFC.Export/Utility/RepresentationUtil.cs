@@ -26,6 +26,7 @@ using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Exporter;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Utility;
+using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Export.Utility
 {
@@ -701,7 +702,7 @@ namespace Revit.IFC.Export.Utility
       /// <param name="exportType">the export type of the element</param>
       /// <param name="productHnd">IfcProduct handle</param>
       /// <returns>true if it fulfills the StandardCase requirements</returns>
-      public static bool RepresentationForStandardCaseFromProduct(IFCExportType exportType, IFCAnyHandle productHnd)
+      public static bool RepresentationForStandardCaseFromProduct(IFCEntityType exportType, IFCAnyHandle productHnd)
       {
          List<IFCAnyHandle> representationHnds = IFCAnyHandleUtil.GetRepresentations(IFCAnyHandleUtil.GetRepresentation(productHnd));
          return RepresentationForStandardCases(exportType, representationHnds);
@@ -713,7 +714,7 @@ namespace Revit.IFC.Export.Utility
       /// <param name="exportType">element export type</param>
       /// <param name="representationHnds">List of IfcRepresentations</param>
       /// <returns>true if the IfcRepresentation (Body) contains the suitable geometry for various types</returns>
-      public static bool RepresentationForStandardCases(IFCExportType exportType, List<IFCAnyHandle> representationHnds)
+      public static bool RepresentationForStandardCases(IFCEntityType exportType, List<IFCAnyHandle> representationHnds)
       {
          if (representationHnds.Count == 0)
             return false;
@@ -753,7 +754,7 @@ namespace Revit.IFC.Export.Utility
                   }
 
                   // IfcOpeningStandardCase only allows IfcExtrudedAreaSolid
-                  if (exportType == IFCExportType.IfcOpeningElement)
+                  if (exportType == IFCEntityType.IfcOpeningElement)
                      continue;
 
                   // For IfcBooleanClippingResult, we must ensure the that at least one of the leaf is an ExtrudedAreaSolid (should be the base, but we have no way to know)
@@ -769,9 +770,9 @@ namespace Revit.IFC.Export.Utility
                      }
                   }
 
-                  if ((exportType == IFCExportType.IfcBeamType
-                        || exportType == IFCExportType.IfcColumnType
-                        || exportType == IFCExportType.IfcMemberType)
+                  if ((exportType == IFCEntityType.IfcBeam || exportType == IFCEntityType.IfcBeamType
+                        || exportType == IFCEntityType.IfcColumn || exportType == IFCEntityType.IfcColumnType
+                        || exportType == IFCEntityType.IfcMember || exportType == IFCEntityType.IfcMemberType)
                       && (IFCAnyHandleUtil.IsTypeOf(repItem, Common.Enums.IFCEntityType.IfcSurfaceCurveSweptAreaSolid)
                         || IFCAnyHandleUtil.IsTypeOf(repItem, Common.Enums.IFCEntityType.IfcFixedReferenceSweptAreaSolid)
                         || IFCAnyHandleUtil.IsTypeOf(repItem, Common.Enums.IFCEntityType.IfcExtrudedAreaSolidTapered)

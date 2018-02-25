@@ -25,6 +25,7 @@ using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Export.Exporter.PropertySet;
 using Revit.IFC.Common.Utility;
+using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Export.Exporter
 {
@@ -978,8 +979,8 @@ namespace Revit.IFC.Export.Exporter
                               {
                                  // In this case, allow potential to export foundation and retaining walls as footing.
                                  string enumTypeValue = null;
-                                 IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, wallElement, out enumTypeValue);
-                                 if (exportType == IFCExportType.IfcFooting)
+                                 IFCExportInfoPair exportType = ExporterUtil.GetExportType(exporterIFC, wallElement, out enumTypeValue);
+                                 if (exportType.ExportInstance == IFCEntityType.IfcFooting)
                                     exportAsFooting = true;
                               }
                            }
@@ -1152,7 +1153,9 @@ namespace Revit.IFC.Export.Exporter
             IList<IFCRange> ranges = new List<IFCRange>();
             if (wallElement != null && geometryElement != null)
             {
-               LevelUtil.CreateSplitLevelRangesForElement(exporterIFC, IFCExportType.IfcWall, element, out levels, out ranges);
+               IFCExportInfoPair exportInfo = new IFCExportInfoPair();
+               exportInfo.SetValueWithPair(Common.Enums.IFCEntityType.IfcWall);
+               LevelUtil.CreateSplitLevelRangesForElement(exporterIFC, exportInfo, element, out levels, out ranges);
             }
 
             int numPartsToExport = ranges.Count;

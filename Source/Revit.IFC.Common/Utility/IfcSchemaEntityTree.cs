@@ -21,8 +21,13 @@ namespace Revit.IFC.Common.Utility
       /// <summary>
       /// Reset the static Dictionary and Set. To be done before parsing another IFC schema
       /// </summary>
-      public static void ResetAll()
+      public static void Initialize(string schemaFile)
       {
+         // If the same schema is already loaded and has content, do nothing
+         if (loadedIfcSchemaVersion.Equals(schemaFile, StringComparison.InvariantCultureIgnoreCase) && EntityDict.Count > 0)
+            return;
+
+         // It is a new schema or the first time
          IfcEntityDict.Clear();
          rootNodes.Clear();
          loadedIfcSchemaVersion = "";
@@ -44,7 +49,7 @@ namespace Revit.IFC.Common.Utility
          get { return rootNodes; }
       }
 
-      public static IDictionary<string, IfcSchemaEntityNode> GetEntityDictFor(IFCVersion ifcFileVersion)
+      private static string SchemaFileName(IFCVersion ifcFileVersion)
       {
          string schemaFile = string.Empty;
          switch (ifcFileVersion)
@@ -69,13 +74,21 @@ namespace Revit.IFC.Common.Utility
                schemaFile = "IFC4_ADD1.xsd";
                break;
          }
+         return schemaFile;
+      }
 
+      public static IDictionary<string, IfcSchemaEntityNode> GetEntityDictFor(IFCVersion ifcFileVersion)
+      {
+         string schemaFile = SchemaFileName(ifcFileVersion);
+         return GetEntityDictFor(schemaFile);
+      }
+
+      public static IDictionary<string, IfcSchemaEntityNode> GetEntityDictFor(string schemaFile)
+      { 
          if (string.IsNullOrEmpty(loadedIfcSchemaVersion) || !loadedIfcSchemaVersion.Equals(schemaFile, StringComparison.InvariantCultureIgnoreCase))
          {
-            ResetAll();
-
             // Process IFCXml schema here, then search for IfcProduct and build TreeView beginning from that node. Allow checks for the tree nodes. Grey out (and Italic) the abstract entity
-            string schemaLoc = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            string schemaLoc = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetCallingAssembly().Location);
             schemaFile = System.IO.Path.Combine(schemaLoc, schemaFile);
             FileInfo schemaFileInfo = new FileInfo(schemaFile);
 
@@ -163,34 +176,123 @@ namespace Revit.IFC.Common.Utility
       }
 
       /// <summary>
+      /// Find a Non ABS supertype entity from the input type name
+      /// </summary>
+      /// <param name="typeName">the type name</param>
+      /// <returns>the non-abs supertype instance node</returns>
+      static public IfcSchemaEntityNode FindNonAbsInstanceSuperType(string typeName)
+      {
+         IfcSchemaEntityNode res = null;
+
+         // Note: Implementer's agreement #CV-2x3-166 changes IfcSpaceHeaterType from IfcEnergyConversionDevice to IfcFlowTerminal.
+         if (loadedIfcSchemaVersion.Equals("IFC2X3_TC1.xsd", StringComparison.InvariantCultureIgnoreCase) && typeName.Equals("IfcSpaceHeaterType", StringComparison.InvariantCultureIgnoreCase))
+         {
+            res = Find("IfcFlowTerminal");
+            if (res.isAbstract)
+               return null;
+            return res;
+         }
+
+         string theTypeName = typeName.Substring(typeName.Length - 4, 4).Equals("Type", StringComparison.CurrentCultureIgnoreCase) ? typeName : typeName + "Type";
+         IfcSchemaEntityNode entNode = Find(theTypeName);
+         if (entNode != null)
+         {
+            while (true)
+            {
+               res = entNode.GetParent();
+               // no more parent node to get
+               if (res == null)
+                  break;
+
+               entNode = Find(res.Name.Substring(0, res.Name.Length - 4));
+               if (entNode != null && !entNode.isAbstract)
+               {
+                  res = entNode;
+                  break;
+               }
+               else
+                  entNode = res;    // put back the Type Node
+            }
+         }
+
+         return res;
+      }
+
+      /// <summary>
       /// Check whether an entity is a subtype of another entity
       /// </summary>
       /// <param name="subTypeName">candidate of the subtype entity name</param>
       /// <param name="superTypeName">candidate of the supertype entity name</param>
       /// <returns>true: if the the subTypeName is the subtype of supertTypeName</returns>
-      static public bool IsSubTypeOf(string subTypeName, string superTypeName)
+      static public bool IsSubTypeOf(string subTypeName, string superTypeName, bool strict = true)
       {
          IfcSchemaEntityNode theNode = Find(subTypeName);
          if (theNode != null)
-            return theNode.IsSubTypeOf(superTypeName);
+         {
+            if (strict)
+               return (theNode.IsSubTypeOf(superTypeName));
+            else
+               return (theNode.Name.Equals(superTypeName, StringComparison.InvariantCultureIgnoreCase) || theNode.IsSubTypeOf(superTypeName));
+         }
 
          return false;
       }
 
+
+      static public bool IsSubTypeOf(IFCVersion context, string subTypeName, string superTypeName, bool strict = true)
+      {
+         var ifcEntitySchemaTree = IfcSchemaEntityTree.GetEntityDictFor(context);
+         if (ifcEntitySchemaTree == null || ifcEntitySchemaTree.Count == 0)
+            throw new Exception("Unable to locate IFC Schema xsd file! Make sure the relevant xsd " + context + " exists.");
+
+         IfcSchemaEntityNode theNode = Find(subTypeName);
+         if (theNode != null)
+         {
+            if (strict)
+               return (theNode.IsSubTypeOf(superTypeName));
+            else
+               return (theNode.Name.Equals(superTypeName, StringComparison.InvariantCultureIgnoreCase) || theNode.IsSubTypeOf(superTypeName));
+         }
+
+         return false;
+      }
+      
       /// <summary>
       /// Check whether an entity is a supertype of another entity
       /// </summary>
       /// <param name="superTypeName">candidate of the supertype entity name</param>
       /// <param name="subTypeName">candidate of the subtype entity name</param>
       /// <returns>true: if the the superTypeName is the supertype of subtTypeName</returns>
-      static public bool IsSuperTypeOf(string superTypeName, string subTypeName)
+      static public bool IsSuperTypeOf(string superTypeName, string subTypeName, bool strict = true)
       {
          IfcSchemaEntityNode theNode = Find(superTypeName);
          if (theNode != null)
-            return theNode.IsSuperTypeOf(subTypeName);
+         {
+            if (strict)
+               return (theNode.IsSuperTypeOf(subTypeName));
+            else
+               return (theNode.Name.Equals(subTypeName, StringComparison.InvariantCultureIgnoreCase) || theNode.IsSuperTypeOf(subTypeName));
+         }
 
          return false;
+      }
 
+      static public bool IsSuperTypeOf(IFCVersion context, string superTypeName, string subTypeName, bool strict = true)
+      {
+         var ifcEntitySchemaTree = IfcSchemaEntityTree.GetEntityDictFor(context);
+         if (ifcEntitySchemaTree == null || ifcEntitySchemaTree.Count == 0)
+            throw new Exception("Unable to locate IFC Schema xsd file! Make sure the relevant xsd " + context + " exists.");
+
+         IfcSchemaEntityNode theNode = Find(superTypeName);
+         if (theNode != null)
+         {
+            if (strict)
+               return (theNode.IsSuperTypeOf(subTypeName));
+            else
+               return (theNode.Name.Equals(subTypeName, StringComparison.InvariantCultureIgnoreCase) || theNode.IsSuperTypeOf(subTypeName));
+         }
+
+         return false;
       }
 
       /// <summary>

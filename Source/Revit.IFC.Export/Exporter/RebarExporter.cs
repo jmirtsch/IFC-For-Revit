@@ -28,6 +28,7 @@ using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Export.Exporter.PropertySet;
 using Revit.IFC.Common.Utility;
+using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Export.Exporter
 {
@@ -233,10 +234,10 @@ namespace Revit.IFC.Export.Exporter
             // The only options handled here is IfcBuildingElementProxy.
             // Not Exported is handled previously, and ReinforcingBar vs Mesh will be handled later.
             string ifcEnumType;
-            IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, rebarElement, out ifcEnumType);
+            IFCExportInfoPair exportType = ExporterUtil.GetExportType(exporterIFC, rebarElement, out ifcEnumType);
 
-            if (exportType == IFCExportType.IfcBuildingElementProxy ||
-                exportType == IFCExportType.IfcBuildingElementProxyType)
+            if (exportType.ExportInstance == IFCEntityType.IfcBuildingElementProxy ||
+                exportType.ExportType == IFCEntityType.IfcBuildingElementProxyType)
             {
                Rebar rebar = rebarElement as Rebar;
                GeometryElement rebarGeometry = rebar.GetFullGeometryForView(ExporterCacheManager.ExportOptionsCache.FilterViewForExport);

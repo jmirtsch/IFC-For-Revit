@@ -526,7 +526,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="exporterIFC">The IFC exporter object.</param>
       /// <param name="element">The element to check.</param>
       /// <returns>True for MEP type of elements.</returns>
-      private bool IsMEPType(ExporterIFC exporterIFC, Element element, IFCExportType exportType)
+      private bool IsMEPType(ExporterIFC exporterIFC, Element element, IFCExportInfoPair exportType)
       {
          return (ElementFilteringUtil.IsMEPType(exportType) || ElementFilteringUtil.ProxyForMEPType(element, exportType));
       }
@@ -536,10 +536,10 @@ namespace Revit.IFC.Export.Exporter
       /// </summary>
       /// <param name="element">The element.</param>
       /// <returns>True for exporting as proxy element.</returns>
-      private bool ExportAsProxy(Element element, IFCExportType exportType)
+      private bool ExportAsProxy(Element element, IFCExportInfoPair exportType)
       {
          // FaceWall should be exported as IfcWall.
-         return ((element is FaceWall) || (element is ModelText) || (exportType == IFCExportType.IfcBuildingElementProxy) || (exportType == IFCExportType.IfcBuildingElementProxyType));
+         return ((element is FaceWall) || (element is ModelText) || (exportType.ExportInstance == IFCEntityType.IfcBuildingElementProxy) || (exportType.ExportType == IFCEntityType.IfcBuildingElementProxyType));
       }
 
       /// <summary>
@@ -803,7 +803,7 @@ namespace Revit.IFC.Export.Exporter
                else
                {
                   string ifcEnumType;
-                  IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
+                  IFCExportInfoPair exportType = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
 
                   // Check the intended IFC entity or type name is in the exclude list specified in the UI
                   Common.Enums.IFCEntityType elementClassTypeEnum;

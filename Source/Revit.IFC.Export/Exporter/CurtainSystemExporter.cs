@@ -24,6 +24,7 @@ using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Utility;
+using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Export.Exporter
 {
@@ -86,7 +87,7 @@ namespace Revit.IFC.Export.Exporter
                         if (subElem is FamilyInstance)
                         {
                            string ifcEnumType;
-                           IFCExportType exportType = ExporterUtil.GetExportType(exporterIFC, subElem, out ifcEnumType);
+                           IFCExportInfoPair exportType = ExporterUtil.GetExportType(exporterIFC, subElem, out ifcEnumType);
 
                            if (subElem is Mullion)
                            {
@@ -96,11 +97,11 @@ namespace Revit.IFC.Export.Exporter
                               {
                                  IFCAnyHandle currLocalPlacement = currSetter.LocalPlacement;
 
-                                 if (exportType == IFCExportType.IfcCurtainWallType)
+                                 if (exportType.ExportInstance == IFCEntityType.IfcCurtainWall)
                                  {
                                     // By default, panels and mullions are set to the same category as their parent.  In this case,
                                     // ask to get the exportType from the category id, since we don't want to inherit the parent class.
-                                    exportType = IFCExportType.IfcMemberType;
+                                    exportType.SetValueWithPair(IFCEntityType.IfcMemberType);
                                     ifcEnumType = "MULLION";
                                  }
 
@@ -112,7 +113,7 @@ namespace Revit.IFC.Export.Exporter
                            {
                               FamilyInstance subFamInst = subElem as FamilyInstance;
 
-                              if (exportType == IFCExportType.IfcCurtainWallType)
+                              if (exportType.ExportInstance == IFCEntityType.IfcCurtainWall)
                               {
                                  // By default, panels and mullions are set to the same category as their parent.  In this case,
                                  // ask to get the exportType from the category id, since we don't want to inherit the parent class.
@@ -123,16 +124,17 @@ namespace Revit.IFC.Export.Exporter
 
                               if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
                               {
-                                 if ((exportType == IFCExportType.DontExport) || (exportType == IFCExportType.IfcPlateType) ||
-                                    (exportType == IFCExportType.IfcMemberType))
-                                    exportType = IFCExportType.IfcBuildingElementProxyType;
+                                 if ((exportType.ExportInstance == IFCEntityType.UnKnown) || 
+                                       (exportType.ExportInstance == IFCEntityType.IfcPlate) ||
+                                       (exportType.ExportInstance == IFCEntityType.IfcMember))
+                                    exportType.SetValueWithPair(IFCEntityType.IfcBuildingElementProxy);
                               }
                               else
                               {
-                                 if (exportType == IFCExportType.DontExport)
+                                 if (exportType.ExportInstance == IFCEntityType.UnKnown)
                                  {
                                     ifcEnumType = "CURTAIN_PANEL";
-                                    exportType = IFCExportType.IfcPlateType;
+                                    exportType.SetValueWithPair(IFCEntityType.IfcPlateType);
                                  }
                               }
 

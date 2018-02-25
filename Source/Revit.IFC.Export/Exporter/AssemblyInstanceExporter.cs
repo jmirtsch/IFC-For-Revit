@@ -25,6 +25,7 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.DB.Structure;
 using Revit.IFC.Common.Utility;
+using Revit.IFC.Common.Enums;
 using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Export.Exporter.PropertySet;
@@ -77,8 +78,8 @@ namespace Revit.IFC.Export.Exporter
             bool relateToLevel = true;
 
             string ifcEnumType;
-            IFCExportType exportAs = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
-            if (exportAs == IFCExportType.IfcSystem)
+            IFCExportInfoPair exportAs = ExporterUtil.GetExportType(exporterIFC, element, out ifcEnumType);
+            if (exportAs.ExportInstance == IFCEntityType.IfcSystem)
             {
                string name = NamingUtil.GetNameOverride(element, NamingUtil.GetIFCName(element));
                string description = NamingUtil.GetDescriptionOverride(element, null);
@@ -107,28 +108,28 @@ namespace Revit.IFC.Export.Exporter
                   levelInfo = placementSetter.LevelInfo;
                   ifcEnumType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
 
-                  switch (exportAs)
+                  switch (exportAs.ExportInstance)
                   {
-                     case IFCExportType.IfcCurtainWall:
-                     case IFCExportType.IfcCurtainWallType:
+                     case IFCEntityType.IfcCurtainWall:
+                     //case IFCExportType.IfcCurtainWallType:
                         assemblyInstanceHnd = IFCInstanceExporter.CreateCurtainWall(exporterIFC, element, guid,
                             ownerHistory, localPlacement, representation);
                         break;
-                     case IFCExportType.IfcRamp:
+                     case IFCEntityType.IfcRamp:
                         string rampPredefinedType = RampExporter.GetIFCRampType(ifcEnumType);
                         assemblyInstanceHnd = IFCInstanceExporter.CreateRamp(exporterIFC, element, guid,
                             ownerHistory, localPlacement, representation, rampPredefinedType);
                         break;
-                     case IFCExportType.IfcRoof:
+                     case IFCEntityType.IfcRoof:
                         assemblyInstanceHnd = IFCInstanceExporter.CreateRoof(exporterIFC, element, guid,
                             ownerHistory, localPlacement, representation, ifcEnumType);
                         break;
-                     case IFCExportType.IfcStair:
+                     case IFCEntityType.IfcStair:
                         string stairPredefinedType = StairsExporter.GetIFCStairType(ifcEnumType);
                         assemblyInstanceHnd = IFCInstanceExporter.CreateStair(exporterIFC, element, guid,
                             ownerHistory, localPlacement, representation, stairPredefinedType);
                         break;
-                     case IFCExportType.IfcWall:
+                     case IFCEntityType.IfcWall:
                         assemblyInstanceHnd = IFCInstanceExporter.CreateWall(exporterIFC, element, guid,
                             ownerHistory, localPlacement, representation, ifcEnumType);
                         break;

@@ -4948,45 +4948,53 @@ namespace Revit.IFC.Export.Toolkit
       /// <param name="representation">Geometry representation</param>
       /// <param name="elementTag">Element Tag attribue</param>
       /// <returns></returns>
-      public static IFCAnyHandle CreateGenericIFCEntity(IFCEntityType entityToCreate, ExporterIFC exporterIFC, Element element, string guid,
+      public static IFCAnyHandle CreateGenericIFCEntity(IFCExportInfoPair entityToCreate, ExporterIFC exporterIFC, Element element, string guid,
           IFCAnyHandle ownerHistory, IFCAnyHandle objectPlacement, IFCAnyHandle representation)
       {
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle genericIFCEntity;
 
-         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-         {
-            genericIFCEntity = CreateInstance(exporterIFC.GetFile(), entityToCreate);
-            SetElement(exporterIFC, genericIFCEntity, element, guid, ownerHistory, objectPlacement, representation);
-         }
+         // There is no need to check for valid entity type because that has been enforced inside IFCExportInfoPair, only default to IfcBuildingElementProxy when it is UnKnown type
+         if (entityToCreate.ExportInstance == IFCEntityType.UnKnown)
+            genericIFCEntity = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcBuildingElementProxy);
          else
-         {
-            // check for valid IFC2x- entity type
-            Revit.IFC.Common.Enums.IFC2x.IFCEntityType IFC2xValidTypeEnum;
-            if (!Enum.TryParse(entityToCreate.ToString(), true, out IFC2xValidTypeEnum))
-            {
-               IFCEntityType actualEntity;
-               if (IFCCompatibilityType.checkCompatibleType(entityToCreate, out actualEntity))
-               {
-                  genericIFCEntity = CreateInstance(exporterIFC.GetFile(), actualEntity);
-                  SetElement(exporterIFC, genericIFCEntity, element, guid, ownerHistory, objectPlacement, representation);
-                  return genericIFCEntity;
-               }
-               else
-               {
-                  // compatible type not found and it is not a valid 2x- entity type, create proxy
-                  genericIFCEntity = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcBuildingElementProxy);
-                  SetElement(exporterIFC, genericIFCEntity, element, guid, ownerHistory, objectPlacement, representation);
-               }
-            }
-            else
-            {
-               // valid 2x- entity
-               genericIFCEntity = CreateInstance(exporterIFC.GetFile(), entityToCreate);
-               SetElement(exporterIFC, genericIFCEntity, element, guid, ownerHistory, objectPlacement, representation);
-            }
-         }
+            genericIFCEntity = CreateInstance(exporterIFC.GetFile(), entityToCreate.ExportInstance);
+
+         SetElement(exporterIFC, genericIFCEntity, element, guid, ownerHistory, objectPlacement, representation);
+
+         //if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         //{
+         //   genericIFCEntity = CreateInstance(exporterIFC.GetFile(), entityToCreate.ExportInstance);
+         //   SetElement(exporterIFC, genericIFCEntity, element, guid, ownerHistory, objectPlacement, representation);
+         //}
+         //else
+         //{
+         //   // check for valid IFC2x- entity type
+         //   Revit.IFC.Common.Enums.IFC2x.IFCEntityType IFC2xValidTypeEnum;
+         //   if (!Enum.TryParse(entityToCreate.ToString(), true, out IFC2xValidTypeEnum))
+         //   {
+         //      IFCEntityType actualEntity;
+         //      if (IFCCompatibilityType.checkCompatibleType(entityToCreate, out actualEntity))
+         //      {
+         //         genericIFCEntity = CreateInstance(exporterIFC.GetFile(), actualEntity);
+         //         SetElement(exporterIFC, genericIFCEntity, element, guid, ownerHistory, objectPlacement, representation);
+         //         return genericIFCEntity;
+         //      }
+         //      else
+         //      {
+         //         // compatible type not found and it is not a valid 2x- entity type, create proxy
+         //         genericIFCEntity = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcBuildingElementProxy);
+         //         SetElement(exporterIFC, genericIFCEntity, element, guid, ownerHistory, objectPlacement, representation);
+         //      }
+         //   }
+         //   else
+         //   {
+         //      // valid 2x- entity
+         //      genericIFCEntity = CreateInstance(exporterIFC.GetFile(), entityToCreate);
+         //      SetElement(exporterIFC, genericIFCEntity, element, guid, ownerHistory, objectPlacement, representation);
+         //   }
+         //}
 
          return genericIFCEntity;
       }
@@ -5007,48 +5015,70 @@ namespace Revit.IFC.Export.Toolkit
       /// <param name="elementType">Element Type</param>
       /// <param name="predefinedType">preDefinedType</param>
       /// <returns></returns>
-      public static IFCAnyHandle CreateGenericIFCType(IFCEntityType typeEntityToCreate, ElementType revitType, IFCFile file,
+      public static IFCAnyHandle CreateGenericIFCType(IFCExportInfoPair typeEntityToCreate, ElementType revitType, IFCFile file,
           HashSet<IFCAnyHandle> propertySets, IList<IFCAnyHandle> representationMaps, string predefinedType)
       {
-         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-         {
-            Revit.IFC.Common.Enums.IFC4.IFCEntityType IFC4ValidTypeEnum;
-            // check existence of the entity in IFC4
-            if (Enum.TryParse(typeEntityToCreate.ToString(), true, out IFC4ValidTypeEnum))
-            {
-               IFCAnyHandle genericIFCType = CreateInstance(file, typeEntityToCreate);
-               SetElementType(genericIFCType, revitType, propertySets, representationMaps);
+         IFCAnyHandle genericIFCType;
 
-               if (!string.IsNullOrEmpty(predefinedType))
-                  IFCAnyHandleUtil.SetAttribute(genericIFCType, "PredefinedType", predefinedType, true);
+         // No need to check the valid entity type. It has been enforced in IFCExportInfoPair. Rather create IfcBuildingElementTypeProxyType when the instance is IfcBuildingELementProxy and the type is UnKnown.
+         // No type will be created if the Instance is Unknown too
+         if (typeEntityToCreate.ExportType == IFCEntityType.UnKnown && typeEntityToCreate.ExportInstance == IFCEntityType.UnKnown)
+            return null;
 
-               return genericIFCType;
-            }
-         }
+         if (typeEntityToCreate.ExportType == IFCEntityType.UnKnown && typeEntityToCreate.ExportInstance == IFCEntityType.IfcBuildingElementProxy)
+            genericIFCType = CreateInstance(file, IFCEntityType.IfcBuildingElementProxyType);
          else
-         {
-            Revit.IFC.Common.Enums.IFC2x.IFCEntityType IFC2xValidTypeEnum;
-            // check existence of the entity in IFC2x-
-            if (Enum.TryParse(typeEntityToCreate.ToString(), true, out IFC2xValidTypeEnum))
-            {
-               // Special IFC2x2 checks to avoid creating a completely new enum.
-               if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
-               {
-                  // Not supported: IfcBuildingElementProxyType in IFC2x2.
-                  if (typeEntityToCreate == IFCEntityType.IfcBuildingElementProxyType)
-                     return null;
-               }
+            genericIFCType = CreateInstance(file, typeEntityToCreate.ExportType);
 
-               IFCAnyHandle genericMEPType = CreateInstance(file, typeEntityToCreate);
-               SetElementType(genericMEPType, revitType, propertySets, representationMaps);
+         if (genericIFCType == null)
+            return null;
 
-               if (!string.IsNullOrEmpty(predefinedType))
-                  IFCAnyHandleUtil.SetAttribute(genericMEPType, "PredefinedType", predefinedType, true);
+         SetElementType(genericIFCType, revitType, propertySets, representationMaps);
 
-               return genericMEPType;
-            }
-         }
-         return null;    //type is unknown in both IFC4 and prior to IFC4
+         if (!string.IsNullOrEmpty(predefinedType))
+            IFCAnyHandleUtil.SetAttribute(genericIFCType, "PredefinedType", predefinedType, true);
+
+         //if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         //{
+         //   Revit.IFC.Common.Enums.IFC4.IFCEntityType IFC4ValidTypeEnum;
+         //   // check existence of the entity in IFC4
+         //   if (Enum.TryParse(typeEntityToCreate.ToString(), true, out IFC4ValidTypeEnum))
+         //   {
+         //      IFCAnyHandle genericIFCType = CreateInstance(file, typeEntityToCreate.ExportType);
+         //      SetElementType(genericIFCType, revitType, propertySets, representationMaps);
+
+         //      if (!string.IsNullOrEmpty(predefinedType))
+         //         IFCAnyHandleUtil.SetAttribute(genericIFCType, "PredefinedType", predefinedType, true);
+
+         //      return genericIFCType;
+         //   }
+         //}
+         //else
+         //{
+         //   Revit.IFC.Common.Enums.IFC2x.IFCEntityType IFC2xValidTypeEnum;
+         //   // check existence of the entity in IFC2x-
+         //   if (Enum.TryParse(typeEntityToCreate.ToString(), true, out IFC2xValidTypeEnum))
+         //   {
+         //      // Special IFC2x2 checks to avoid creating a completely new enum.
+         //      if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
+         //      {
+         //         // Not supported: IfcBuildingElementProxyType in IFC2x2.
+         //         if (typeEntityToCreate.ExportType == IFCEntityType.IfcBuildingElementProxyType)
+         //            return null;
+         //      }
+
+         //      IFCAnyHandle genericMEPType = CreateInstance(file, typeEntityToCreate.ExportType);
+         //      SetElementType(genericMEPType, revitType, propertySets, representationMaps);
+
+         //      if (!string.IsNullOrEmpty(predefinedType))
+         //         IFCAnyHandleUtil.SetAttribute(genericMEPType, "PredefinedType", predefinedType, true);
+
+         //      return genericMEPType;
+         //   }
+         //}
+         //return null;    //type is unknown in both IFC4 and prior to IFC4
+
+         return genericIFCType;
       }
 
 
