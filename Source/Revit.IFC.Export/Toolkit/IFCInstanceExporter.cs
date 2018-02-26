@@ -1602,12 +1602,13 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandle wall = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcWall);
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            string validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCWallType>(preDefinedType);
-            // Special check here because .STANDARD. has been deprecated in IFC4 even though the definition still contains the Enum 
-            // for backward compatibility.
-            if (String.Compare(validatedType, "STANDARD", true) == 0)
-               validatedType = "NOTDEFINED";
-            IFCAnyHandleUtil.SetAttribute(wall, "PreDefinedType", validatedType, true);
+            SetSpecificEnumAttr(wall, "PredefinedType", preDefinedType, "IfcWallType", "STANDARD");
+            //string validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCWallType>(preDefinedType);
+            //// Special check here because .STANDARD. has been deprecated in IFC4 even though the definition still contains the Enum 
+            //// for backward compatibility.
+            //if (String.Compare(validatedType, "STANDARD", true) == 0)
+            //   validatedType = "NOTDEFINED";
+            //IFCAnyHandleUtil.SetAttribute(wall, "PreDefinedType", validatedType, true);
          }
 
          SetElement(exporterIFC, wall, element, guid, ownerHistory, objectPlacement, representation);
@@ -1636,12 +1637,13 @@ namespace Revit.IFC.Export.Toolkit
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             wallStandardCase = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcWall);   // We export IfcWall only beginning IFC4
-            string validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCWallType>(preDefinedType);
-            // Special check here because .STANDARD. has been deprecated in IFC4 even though the definition still contains the Enum 
-            // for backward compatibility.
-            if (String.Compare(validatedType, "STANDARD", true) == 0)
-               validatedType = "NOTDEFINED";
-            IFCAnyHandleUtil.SetAttribute(wallStandardCase, "PreDefinedType", validatedType, true);
+            SetSpecificEnumAttr(wallStandardCase, "PredefinedType", preDefinedType, "IfcWallType", "STANDARD");
+            //string validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCWallType>(preDefinedType);
+            //// Special check here because .STANDARD. has been deprecated in IFC4 even though the definition still contains the Enum 
+            //// for backward compatibility.
+            //if (String.Compare(validatedType, "STANDARD", true) == 0)
+            //   validatedType = "NOTDEFINED";
+            //IFCAnyHandleUtil.SetAttribute(wallStandardCase, "PreDefinedType", validatedType, true);
          }
          else
             wallStandardCase = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcWallStandardCase);
@@ -1675,8 +1677,9 @@ namespace Revit.IFC.Export.Toolkit
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             footingType = CreateInstance(file, IFCEntityType.IfcFootingType);
-            string validatedType = IFCValidateEntry.ValidateStrEnum<IFCFootingType>(predefinedType);
-            IFCAnyHandleUtil.SetAttribute(footingType, "PredefinedType", validatedType, true);
+            SetSpecificEnumAttr(footingType, "PredefinedType", predefinedType, "IfcFootingType");
+            //string validatedType = IFCValidateEntry.ValidateStrEnum<IFCFootingType>(predefinedType);
+            //IFCAnyHandleUtil.SetAttribute(footingType, "PredefinedType", validatedType, true);
             SetElementType(footingType, revitType, propertySets, representationMaps);
          }
          else
@@ -1717,9 +1720,10 @@ namespace Revit.IFC.Export.Toolkit
          else
          {
             curtainWallType = CreateInstance(file, IFCEntityType.IfcCurtainWallType);
-            string validatedType = IFCValidateEntry.ValidateStrEnum<IFCCurtainWallType>(predefinedType);
+            SetSpecificEnumAttr(curtainWallType, "PredefinedType", predefinedType, "IfcCurtainWallType");
+            //string validatedType = IFCValidateEntry.ValidateStrEnum<IFCCurtainWallType>(predefinedType);
 
-            IFCAnyHandleUtil.SetAttribute(curtainWallType, "PredefinedType", validatedType, true);
+            //IFCAnyHandleUtil.SetAttribute(curtainWallType, "PredefinedType", validatedType, true);
             SetElementType(curtainWallType, revitType, propertySets, representationMaps);
          }
 
@@ -1744,21 +1748,23 @@ namespace Revit.IFC.Export.Toolkit
       public static IFCAnyHandle CreateWallType(IFCFile file, Element revitType, HashSet<IFCAnyHandle> propertySets,
           List<IFCAnyHandle> representationMaps, string predefinedType)
       {
-         string validatedType;
+         //string validatedType;
 
          IFCAnyHandle wallType = CreateInstance(file, IFCEntityType.IfcWallType);
-         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-         {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCWallType>(predefinedType);
-            // Special check here because .STANDARD. has been deprecated in IFC4 even though the definition still contains the Enum 
-            // for backward compatibility.
-            if (String.Compare(validatedType, "STANDARD", true) == 0)
-               validatedType = "NOTDEFINED";
-         }
-         else
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFCWallType>(predefinedType);
+         //if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         //{
+         //   SetSpecificEnumAttr(wallType, "PredefinedType", predefinedType, "IfcWallType");
+         //   //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCWallType>(predefinedType);
+         //   //// Special check here because .STANDARD. has been deprecated in IFC4 even though the definition still contains the Enum 
+         //   //// for backward compatibility.
+         //   //if (String.Compare(validatedType, "STANDARD", true) == 0)
+         //   //   validatedType = "NOTDEFINED";
+         //}
+         //else
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFCWallType>(predefinedType);
+            SetSpecificEnumAttr(wallType, "PredefinedType", predefinedType, "IfcWallType", "STANDARD");
 
-         IFCAnyHandleUtil.SetAttribute(wallType, "PredefinedType", validatedType, true);
+         //IFCAnyHandleUtil.SetAttribute(wallType, "PredefinedType", validatedType, true);
          SetElementType(wallType, revitType, propertySets, representationMaps);
          return wallType;
       }
@@ -1890,12 +1896,14 @@ namespace Revit.IFC.Export.Toolkit
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle covering = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcCovering);
-         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCCoveringType>(coveringType);
-         else
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFCCoveringType>(coveringType);
+         //if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         //   //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCCoveringType>(coveringType);
+         //   SetSpecificEnumAttr(covering, "PredefinedType", coveringType, "IfcCoveringType");
+         //else
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFCCoveringType>(coveringType);
+            SetSpecificEnumAttr(covering, "PredefinedType", coveringType, "IfcCoveringType");
 
-         IFCAnyHandleUtil.SetAttribute(covering, "PredefinedType", validatedType, true);
+         //IFCAnyHandleUtil.SetAttribute(covering, "PredefinedType", validatedType, true);
          SetElement(exporterIFC, covering, element, guid, ownerHistory, objectPlacement, representation);
          return covering;
       }
@@ -1922,15 +1930,17 @@ namespace Revit.IFC.Export.Toolkit
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle footing = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcFooting);
-         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-         {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCFootingType>(predefinedType);
-         }
-         else
-         {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFCFootingType>(predefinedType);
-         }
-         IFCAnyHandleUtil.SetAttribute(footing, "PredefinedType", validatedType, true);
+         //if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         //{
+         //   //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCFootingType>(predefinedType);
+         //   SetSpecificEnumAttr(footing, "PredefinedType", predefinedType, "IfcFootingType");
+         //}
+         //else
+         //{
+         //   //validatedType = IFCValidateEntry.ValidateStrEnum<IFCFootingType>(predefinedType);
+            SetSpecificEnumAttr(footing, "PredefinedType", predefinedType, "IfcFootingType");
+         //}
+         //IFCAnyHandleUtil.SetAttribute(footing, "PredefinedType", validatedType, true);
          SetElement(exporterIFC, footing, element, guid, ownerHistory, objectPlacement, representation);
          return footing;
       }
@@ -1952,19 +1962,21 @@ namespace Revit.IFC.Export.Toolkit
       public static IFCAnyHandle CreateSlab(ExporterIFC exporterIFC, Element element, string guid, IFCAnyHandle ownerHistory,
           IFCAnyHandle objectPlacement, IFCAnyHandle representation, string predefinedType)
       {
-         string validatedType;
+         //string validatedType;
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle slab = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcSlab);
-         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-         {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCSlabType>(predefinedType);
-         }
-         else
-         {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFCSlabType>(predefinedType);
-         }
-         IFCAnyHandleUtil.SetAttribute(slab, "PredefinedType", validatedType, true);
+         //if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         //{
+         //   //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCSlabType>(predefinedType);
+         //   SetSpecificEnumAttr(slab, "PredefinedType", predefinedType, "IfcSlabType");
+         //}
+         //else
+         //{
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFCSlabType>(predefinedType);
+            SetSpecificEnumAttr(slab, "PredefinedType", predefinedType, "IfcSlabType");
+         //}
+         //IFCAnyHandleUtil.SetAttribute(slab, "PredefinedType", validatedType, true);
          SetElement(exporterIFC, slab, element, guid, ownerHistory, objectPlacement, representation);
          return slab;
       }
@@ -1984,22 +1996,25 @@ namespace Revit.IFC.Export.Toolkit
       public static IFCAnyHandle CreateSlabStandardCase(ExporterIFC exporterIFC, Element element, string guid, IFCAnyHandle ownerHistory,
           IFCAnyHandle objectPlacement, IFCAnyHandle representation, string predefinedType)
       {
-         string validatedType;
+         //string validatedType;
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle slab;
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             slab = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcSlabStandardCase);
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCSlabType>(predefinedType);
+            //SetSpecificEnumAttr(slab, "PredefinedType", predefinedType, "IfcSlabType");
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IfcSlabType>(predefinedType);
          }
          else
          {
             // If it happens to come here but not IFC4 export, create the IfcSlab entity instead
             slab = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcSlab);
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFCSlabType>(predefinedType);
+            //SetSpecificEnumAttr(slab, "PredefinedType", predefinedType, "IfcSlabType");
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFCSlabType>(predefinedType);
          }
-         IFCAnyHandleUtil.SetAttribute(slab, "PredefinedType", validatedType, true);
+         SetSpecificEnumAttr(slab, "PredefinedType", predefinedType, "IfcSlabType");
+         //IFCAnyHandleUtil.SetAttribute(slab, "PredefinedType", validatedType, true);
          SetElement(exporterIFC, slab, element, guid, ownerHistory, objectPlacement, representation);
          return slab;
       }
@@ -2018,11 +2033,26 @@ namespace Revit.IFC.Export.Toolkit
       /// <returns>The handle.</returns>
       /// <param name="elementTag">The tag for the identifier of the element.</param>
       public static IFCAnyHandle CreateCurtainWall(ExporterIFC exporterIFC, Element element, string guid, IFCAnyHandle ownerHistory,
-          IFCAnyHandle objectPlacement, IFCAnyHandle representation)
+          IFCAnyHandle objectPlacement, IFCAnyHandle representation, string predefinedType)
       {
+         //string validatedType;
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle curtainWall = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcCurtainWall);
+         //if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         //{
+         //   //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCSlabType>(predefinedType);
+         //   SetSpecificEnumAttr(curtainWall, "PredefinedType", predefinedType, "IfcCurtainWallType");
+         //}
+         //else
+         //{
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFCSlabType>(predefinedType);
+            SetSpecificEnumAttr(curtainWall, "PredefinedType", predefinedType, "IfcCurtainWallType");
+         //}
+         //if (string.IsNullOrEmpty(validatedType))
+         //   validatedType = "NOTDEFINED";
+
+         //IFCAnyHandleUtil.SetAttribute(curtainWall, "PredefinedType", validatedType, true);
          SetElement(exporterIFC, curtainWall, element, guid, ownerHistory, objectPlacement, representation);
          return curtainWall;
       }
@@ -2054,17 +2084,23 @@ namespace Revit.IFC.Export.Toolkit
 
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCPileType>(preDefinedType);
-            validatedConstructionType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCPileConstruction>(constructionType.ToString());
+            SetSpecificEnumAttr(pile, "PredefinedType", preDefinedType, "IfcPileType");
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCPileType>(preDefinedType);
+            //validatedConstructionType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCPileConstruction>(constructionType.ToString());
+            SetSpecificEnumAttr(pile, "ConstructionType", constructionType.ToString(), "IfcPileConstruction");
          }
          else
          {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFCPileType>(preDefinedType);
-            validatedConstructionType = IFCValidateEntry.ValidateStrEnum<IFCPileConstructionEnum>(constructionType.ToString());
+            SetSpecificEnumAttr(pile, "PredefinedType", preDefinedType, "IfcPileType");
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFCPileType>(preDefinedType);
+            //validatedConstructionType = IFCValidateEntry.ValidateStrEnum<IFCPileConstructionEnum>(constructionType.ToString());
+            SetSpecificEnumAttr(pile, "ConstructionType", constructionType.ToString(), "IFCPileConstructionEnum");
          }
+         //if (string.IsNullOrEmpty(validatedType))
+         //   validatedType = "NOTDEFINED";
 
-         IFCAnyHandleUtil.SetAttribute(pile, "PredefinedType", validatedType, true);
-         IFCAnyHandleUtil.SetAttribute(pile, "ConstructionType", validatedConstructionType, true);
+         //IFCAnyHandleUtil.SetAttribute(pile, "PredefinedType", validatedType, true);
+         //IFCAnyHandleUtil.SetAttribute(pile, "ConstructionType", validatedConstructionType, true);
          SetElement(exporterIFC, pile, element, guid, ownerHistory, objectPlacement, representation);
          return pile;
       }
@@ -2091,16 +2127,20 @@ namespace Revit.IFC.Export.Toolkit
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle railing = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcRailing);
-         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-         {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCRailingType>(predefinedType);
-         }
-         else
-         {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFCRailingType>(predefinedType);
-         }
+         //if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         //{
+         //   SetSpecificEnumAttr(railing, "PredefinedType", predefinedType, "IfcRailingType");
+         //   //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCRailingType>(predefinedType);
+         //}
+         //else
+         //{
+            SetSpecificEnumAttr(railing, "PredefinedType", predefinedType, "IfcRailingType");
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFCRailingType>(predefinedType);
+         //}
+         //if (string.IsNullOrEmpty(validatedType))
+         //   validatedType = "NOTDEFINED";
 
-         IFCAnyHandleUtil.SetAttribute(railing, "PredefinedType", validatedType, true);
+         //IFCAnyHandleUtil.SetAttribute(railing, "PredefinedType", validatedType, true);
          SetElement(exporterIFC, railing, element, guid, ownerHistory, objectPlacement, representation);
          return railing;
       }
@@ -2122,20 +2162,24 @@ namespace Revit.IFC.Export.Toolkit
       public static IFCAnyHandle CreateRamp(ExporterIFC exporterIFC, Element element, string guid, IFCAnyHandle ownerHistory,
           IFCAnyHandle objectPlacement, IFCAnyHandle representation, string shapeType)
       {
-         string validatedType;
+         //string validatedType;
 
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle ramp = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcRamp);
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCRampType>(shapeType);
-            IFCAnyHandleUtil.SetAttribute(ramp, "PreDefinedType", validatedType, true);
+            SetSpecificEnumAttr(ramp, "PredefinedType", shapeType, "IfcRampType");
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCRampType>(shapeType);
+            //if (string.IsNullOrEmpty(validatedType))
+            //   validatedType = "NOTDEFINED";
+            //IFCAnyHandleUtil.SetAttribute(ramp, "PreDefinedType", validatedType, true);
          }
          else
          {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFCRampType>(shapeType);
-            IFCAnyHandleUtil.SetAttribute(ramp, "ShapeType", validatedType, true);
+            SetSpecificEnumAttr(ramp, "ShapeType", shapeType, "IfcRampType");
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFCRampType>(shapeType);
+            //IFCAnyHandleUtil.SetAttribute(ramp, "ShapeType", validatedType, true);
          }
 
          SetElement(exporterIFC, ramp, element, guid, ownerHistory, objectPlacement, representation);
@@ -2165,13 +2209,15 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandle roof = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcRoof);
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCRoofType>(shapeType);
-            IFCAnyHandleUtil.SetAttribute(roof, "PreDefinedType", validatedType, true);
+            SetSpecificEnumAttr(roof, "PredefinedType", shapeType, "IfcRoofType");
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCRoofType>(shapeType);
+            //IFCAnyHandleUtil.SetAttribute(roof, "PreDefinedType", validatedType, true);
          }
          else
          {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFCRoofType>(shapeType);
-            IFCAnyHandleUtil.SetAttribute(roof, "ShapeType", validatedType, true);
+            SetSpecificEnumAttr(roof, "ShapeType", shapeType, "IfcRoofType");
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFCRoofType>(shapeType);
+            //IFCAnyHandleUtil.SetAttribute(roof, "ShapeType", validatedType, true);
          }
          SetElement(exporterIFC, roof, element, guid, ownerHistory, objectPlacement, representation);
          return roof;
@@ -2201,13 +2247,16 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandle stair = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcStair);
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCStairType>(shapeType);
-            IFCAnyHandleUtil.SetAttribute(stair, "PreDefinedType", validatedType, true);
+            SetSpecificEnumAttr(stair, "PredefinedType", shapeType, "IfcStairType");
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCStairType>(shapeType);
+            //IFCAnyHandleUtil.SetAttribute(stair, "PreDefinedType", validatedType, true);
          }
          else
          {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFCStairType>(shapeType);
-            IFCAnyHandleUtil.SetAttribute(stair, "ShapeType", validatedType, true);
+            SetSpecificEnumAttr(stair, "ShapeType", shapeType, "IfcStairType");
+
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFCStairType>(shapeType);
+            //IFCAnyHandleUtil.SetAttribute(stair, "ShapeType", validatedType, true);
          }
          SetElement(exporterIFC, stair, element, guid, ownerHistory, objectPlacement, representation);
          return stair;
@@ -2244,8 +2293,10 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandleUtil.SetAttribute(stairFlight, "TreadLength", treadLength);
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCStairFlightType>(preDefinedType);
-            IFCAnyHandleUtil.SetAttribute(stairFlight, "PreDefinedType", validatedType, true);
+            SetSpecificEnumAttr(stairFlight, "PredefinedType", preDefinedType, "IfcStairFlightType");
+
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCStairFlightType>(preDefinedType);
+            //IFCAnyHandleUtil.SetAttribute(stairFlight, "PreDefinedType", validatedType, true);
          }
 
          return stairFlight;
@@ -2267,15 +2318,17 @@ namespace Revit.IFC.Export.Toolkit
       public static IFCAnyHandle CreateRampFlight(ExporterIFC exporterIFC, Element element, string guid, IFCAnyHandle ownerHistory,
           IFCAnyHandle objectPlacement, IFCAnyHandle representation, string preDefinedType)
       {
-         string validatedType;
+         //string validatedType;
 
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle rampFlight = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcRampFlight);
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCRampFlightType>(preDefinedType);
-            IFCAnyHandleUtil.SetAttribute(rampFlight, "PreDefinedType", validatedType, true);
+            SetSpecificEnumAttr(rampFlight, "PredefinedType", preDefinedType, "IfcRampFlightType");
+
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCRampFlightType>(preDefinedType);
+            //IFCAnyHandleUtil.SetAttribute(rampFlight, "PreDefinedType", validatedType, true);
          }
 
          SetElement(exporterIFC, rampFlight, element, guid, ownerHistory, objectPlacement, representation);
@@ -4138,9 +4191,10 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandle beam = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcBeam);
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
+            SetSpecificEnumAttr(beam, "PredefinedType", preDefinedType, "IfcBeamType");
             // Attribute PreDefinedType in IfcBeam is new in IFC4!
-            string validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCBeamType>(preDefinedType);
-            IFCAnyHandleUtil.SetAttribute(beam, "PredefinedType", validatedType, true);
+            //string validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCBeamType>(preDefinedType);
+            //IFCAnyHandleUtil.SetAttribute(beam, "PredefinedType", validatedType, true);
          }
 
          SetElement(exporterIFC, beam, element, guid, ownerHistory, objectPlacement, representation);
@@ -4233,8 +4287,9 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandle column = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcColumn);
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCColumnType>(preDefinedType);
-            IFCAnyHandleUtil.SetAttribute(column, "PreDefinedType", validatedType, true);
+            SetSpecificEnumAttr(column, "PredefinedType", preDefinedType, "IfcColumnType");
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCColumnType>(preDefinedType);
+            //IFCAnyHandleUtil.SetAttribute(column, "PreDefinedType", validatedType, true);
          }
 
          SetElement(exporterIFC, column, element, guid, ownerHistory, objectPlacement, representation);
@@ -4400,8 +4455,9 @@ namespace Revit.IFC.Export.Toolkit
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             // In IFC4 NominalDiameter and NominalLength attributes have been deprecated. PredefinedType attribute was added.
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCColumnType>(preDefinedType);
-            IFCAnyHandleUtil.SetAttribute(fastener, "PredefinedType", validatedType, true);
+            SetSpecificEnumAttr(fastener, "PredefinedType", preDefinedType, "IfcMechanicalFastenerType");
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCColumnType>(preDefinedType);
+            //IFCAnyHandleUtil.SetAttribute(fastener, "PredefinedType", validatedType, true);
          }
          else
          {
@@ -4688,8 +4744,9 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandle member = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcMember);
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCMemberType>(IFCEnumType);
-            IFCAnyHandleUtil.SetAttribute(member, "PreDefinedType", validatedType, true);
+            SetSpecificEnumAttr(member, "PredefinedType", IFCEnumType, "IfcMemberType");
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCMemberType>(IFCEnumType);
+            //IFCAnyHandleUtil.SetAttribute(member, "PreDefinedType", validatedType, true);
          }
 
          SetElement(exporterIFC, member, element, guid, ownerHistory, objectPlacement, representation);
@@ -4720,8 +4777,9 @@ namespace Revit.IFC.Export.Toolkit
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             member = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcMemberStandardCase);
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCMemberType>(IFCEnumType);
-            IFCAnyHandleUtil.SetAttribute(member, "PreDefinedType", validatedType, true);
+            SetSpecificEnumAttr(member, "PredefinedType", IFCEnumType, "IfcMemberType");
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCMemberType>(IFCEnumType);
+            //IFCAnyHandleUtil.SetAttribute(member, "PreDefinedType", validatedType, true);
          }
          else
          {
@@ -4756,8 +4814,9 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandle plate = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcPlate);
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCPlateType>(IFCEnumType);
-            IFCAnyHandleUtil.SetAttribute(plate, "PreDefinedType", validatedType, true);
+            SetSpecificEnumAttr(plate, "PredefinedType", IFCEnumType, "IfcPlateType");
+            //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCPlateType>(IFCEnumType);
+            //IFCAnyHandleUtil.SetAttribute(plate, "PreDefinedType", validatedType, true);
          }
 
          SetElement(exporterIFC, plate, element, guid, ownerHistory, objectPlacement, representation);
@@ -4823,12 +4882,14 @@ namespace Revit.IFC.Export.Toolkit
       {
          IFCAnyHandle beamType = CreateInstance(file, IFCEntityType.IfcBeamType);
 
-         string validatedType = null;
-         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCBeamType>(predefinedType);
-         else
-            validatedType = IFCValidateEntry.ValidateStrEnum<IFCBeamType>(predefinedType);
-         IFCAnyHandleUtil.SetAttribute(beamType, "PredefinedType", validatedType, true);
+         //string validatedType = null;
+         //if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         //   SetSpecificEnumAttr(beamType, "PredefinedType", predefinedType, "IfcBeamType");
+         //   //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCBeamType>(predefinedType);
+         //else
+            SetSpecificEnumAttr(beamType, "PredefinedType", predefinedType, "IfcBeamType");
+         //validatedType = IFCValidateEntry.ValidateStrEnum<IFCBeamType>(predefinedType);
+         //IFCAnyHandleUtil.SetAttribute(beamType, "PredefinedType", validatedType, true);
 
          SetElementType(beamType, revitType, propertySets, representationMaps);
          return beamType;
@@ -9279,6 +9340,25 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandle colourRgbList = CreateInstance(file, IFCEntityType.IfcColourRgbList);
          IFCAnyHandleUtil.SetAttribute(colourRgbList, "ColourList", colourList, 1, null, 3, 3);
          return colourRgbList;
+      }
+
+      private static void SetSpecificEnumAttr(IFCAnyHandle elemHnd, string attributeNane, string predefTypeStr, string theEnumType, string ignoredType = null)
+      {
+         string validatedType = IFCValidateEntry.GetValidIFCPredefinedType(predefTypeStr, theEnumType);
+         if (string.IsNullOrEmpty(validatedType))
+            validatedType = "NOTDEFINED";
+
+         // This is for Enum value that is still in the list but has been deprecated
+         if (!string.IsNullOrEmpty(ignoredType))
+            if (string.Compare(validatedType, ignoredType, ignoreCase: true) == 0)
+               validatedType = "NOTDEFINED";
+
+         // In some cases, NOTDEFINED enum is not defined. Ignore error in this case
+         try
+         {
+            IFCAnyHandleUtil.SetAttribute(elemHnd, attributeNane, validatedType, true);
+         }
+         catch { }
       }
       #endregion
 

@@ -1436,7 +1436,7 @@ namespace Revit.IFC.Export.Exporter
                StairsExporter.ExportStairAsSingleGeometry(exporterIFC, ifcEnumTypeString, element, geometryElement, new List<double>() { 0 }, productWrapper);
                return true;
             case IFCEntityType.IfcWall:
-               WallExporter.ExportWall(exporterIFC, element, null, geometryElement, productWrapper);
+               WallExporter.ExportWall(exporterIFC, ifcEnumTypeString, element, null, geometryElement, productWrapper);
                return true;
          }
          return false;

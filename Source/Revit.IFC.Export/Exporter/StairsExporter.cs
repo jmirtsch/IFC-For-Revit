@@ -484,7 +484,7 @@ namespace Revit.IFC.Export.Exporter
                Element landingElemToUse = (landingElem == null) ? stair : landingElem;
                ElementId catId = CategoryUtil.GetSafeCategoryId(landingElemToUse);
 
-               string componentType = IFCValidateEntry.GetValidIFCType(landingElemToUse, IFCAnyHandleUtil.GetEnumerationAttribute(component, "PredefinedType"));
+               //string componentType = IFCValidateEntry.GetValidIFCPredefinedType(landingElemToUse, IFCAnyHandleUtil.GetEnumerationAttribute(component, "PredefinedType"));
                // IFCSlabType localLandingType = FloorExporter.GetIFCSlabType(componentType);
 
                for (int ii = 0; ii < numFlights - 1; ii++)
@@ -493,7 +493,7 @@ namespace Revit.IFC.Export.Exporter
                       ExporterUtil.CopyProductDefinitionShape(exporterIFC, landingElemToUse, catId, componentProdRep);
 
                   IFCAnyHandle localComponent = IFCInstanceExporter.CreateSlab(exporterIFC, stair, GUIDUtil.CreateGUID(), ownerHistory,
-                componentPlacementHnds[ii], representationCopy, componentType);
+                  componentPlacementHnds[ii], representationCopy, "PredefinedType");
                   IFCAnyHandleUtil.SetAttribute(localComponent, "Name", localComponentNames[ii]);
                   localComponentHnds.Add(localComponent);
                }

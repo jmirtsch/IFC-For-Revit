@@ -16,9 +16,9 @@ namespace Revit.IFC.Export.Toolkit
       /// <param name="element">The element.</param>
       /// <param name="typeName">The original value.</param>
       /// <returns>The found value.</returns>
-      public static string GetValidIFCType(Element element, string typeName)
+      public static string GetValidIFCPredefinedType(/*Element element, */string typeName, string theTypeEnumstr)
       {
-         return GetValidIFCType(element, typeName, null);
+         return GetValidIFCPredefinedTypeType(/*element,*/ typeName, null, theTypeEnumstr);
       }
 
       /// <summary>
@@ -28,20 +28,31 @@ namespace Revit.IFC.Export.Toolkit
       /// <param name="typeName">The type value.</param>
       /// <param name="defaultValue">A default value that can be null.</param>
       /// <returns>The found value.</returns>
-      public static string GetValidIFCType(Element element, string typeName, string defaultValue)
+      public static string GetValidIFCPredefinedTypeType(/*Element element, */string typeName, string defaultValue, string theTypeEnumStr)
       {
-         string value = null;
-         if ((ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcExportType", out value) == null) && // change IFCType to consistent parameter of IfcExportType
-             (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null))  // support IFCType for legacy support
-            value = typeName;
+         string enumValue = null;
+         // Do this in ExporterUtil.cs:GetExportType(). Instead validate the Enum according to the specific schema for export
+         //if ((ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcExportType", out value) == null) && // change IFCType to consistent parameter of IfcExportType
+         //    (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null))  // support IFCType for legacy support
+         //   value = typeName;
 
-         if (String.IsNullOrEmpty(value))
+         try
+         {
+            string desiredTypeExtra = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? "IFC4." : string.Empty;
+            string desiredType = "Revit.IFC.Export.Toolkit." + desiredTypeExtra + theTypeEnumStr;
+            Type theTypeEnum = Type.GetType(desiredType, false, true);
+            if (theTypeEnum != null)
+               enumValue = Enum.Parse(theTypeEnum, typeName, true).ToString();
+         }
+         catch { }
+
+         if (String.IsNullOrEmpty(enumValue))
          {
             if (!String.IsNullOrEmpty(defaultValue))
                return defaultValue;
-            return "NotDefined";
+            return "NOTDEFINED";
          }
-         return value;
+         return enumValue;
       }
 
       /// <summary>

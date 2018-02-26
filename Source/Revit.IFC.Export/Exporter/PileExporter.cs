@@ -75,10 +75,10 @@ namespace Revit.IFC.Export.Exporter
                   }
 
                   string instanceGUID = GUIDUtil.CreateGUID(element);
-                  string pileType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
+                  //string pileType = IFCValidateEntry.GetValidIFCPredefinedType(element, ifcEnumType);
 
                   IFCAnyHandle pile = IFCInstanceExporter.CreatePile(exporterIFC, element, instanceGUID, ExporterCacheManager.OwnerHistoryHandle,
-                      ecData.GetLocalPlacement(), prodRep, pileType, null);
+                      ecData.GetLocalPlacement(), prodRep, ifcEnumType, null);
 
                   if (exportParts)
                   {

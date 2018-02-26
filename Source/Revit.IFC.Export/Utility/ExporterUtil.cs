@@ -1434,7 +1434,14 @@ namespace Revit.IFC.Export.Utility
             if (!string.IsNullOrEmpty(pdefFromParam))
                enumTypeValue = pdefFromParam;
             else
-               enumTypeValue = predefType;
+            {
+               // To support old parameter
+               ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out pdefFromParam);
+               if (!string.IsNullOrEmpty(pdefFromParam))
+                  enumTypeValue = pdefFromParam;
+               else
+                  enumTypeValue = predefType;
+            }
          }
 
          if (string.IsNullOrEmpty(enumTypeValue))

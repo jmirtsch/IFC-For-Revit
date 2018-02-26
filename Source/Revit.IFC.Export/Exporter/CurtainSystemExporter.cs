@@ -152,7 +152,7 @@ namespace Revit.IFC.Export.Exporter
                         }
                         else if (subElem is Wall)
                         {
-                           WallExporter.ExportWall(exporterIFC, subElem, null, geomElem, productWrapper);
+                           WallExporter.ExportWall(exporterIFC, null, subElem, null, geomElem, productWrapper);
                         }
                      }
                      catch (Exception ex)
@@ -359,13 +359,13 @@ namespace Revit.IFC.Export.Exporter
                string elemGUID = GUIDUtil.CreateGUID(element);
                if (element is Wall || element is CurtainSystem || IsLegacyCurtainElement(element))
                {
-                  elemHnd = IFCInstanceExporter.CreateCurtainWall(exporterIFC, element, elemGUID, ownerHistory, localPlacement, prodRepHnd);
+                  elemHnd = IFCInstanceExporter.CreateCurtainWall(exporterIFC, element, elemGUID, ownerHistory, localPlacement, prodRepHnd, null);
                }
                else if (element is RoofBase)
                {
                   //need to convert the string to enum
                   string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, element);
-                  ifcEnumType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
+                  //ifcEnumType = IFCValidateEntry.GetValidIFCPredefinedType(element, ifcEnumType);
                   elemHnd = IFCInstanceExporter.CreateRoof(exporterIFC, element, elemGUID, ownerHistory, localPlacement, prodRepHnd, ifcEnumType);
                }
                else

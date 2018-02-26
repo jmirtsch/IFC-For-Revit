@@ -271,7 +271,7 @@ namespace Revit.IFC.Export.Exporter
             //case IFCEntityType.IfcCurtainWallType:
                {
                   instanceHandle = IFCInstanceExporter.CreateCurtainWall(exporterIFC, familyInstance, instanceGUID, ownerHistory,
-                     localPlacementToUse, productRepresentation);
+                     localPlacementToUse, productRepresentation, ifcEnumType);
                   break;
                }
             case IFCEntityType.IfcMember:

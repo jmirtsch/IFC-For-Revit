@@ -340,10 +340,10 @@ namespace Revit.IFC.Export.Exporter
 
                   string instanceGUID = GUIDUtil.CreateGUID(element);
 
-                  string railingType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
+                  //string railingType = IFCValidateEntry.GetValidIFCPredefinedType(element, ifcEnumType);
 
                   IFCAnyHandle railing = IFCInstanceExporter.CreateRailing(exporterIFC, element, instanceGUID, ownerHistory,
-                      ecData.GetLocalPlacement(), prodRep, railingType);
+                      ecData.GetLocalPlacement(), prodRep, ifcEnumType);
 
                   bool associateToLevel = (hostId == ElementId.InvalidElementId);
 

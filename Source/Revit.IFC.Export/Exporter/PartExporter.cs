@@ -398,12 +398,12 @@ namespace Revit.IFC.Export.Exporter
                      string ifcEnumType = null;
                      IFCExportInfoPair exportType = ExporterUtil.GetExportType(exporterIFC, hostElement, out ifcEnumType);
 
-                     string defaultValue = null;
+                     //string defaultValue = null;
                      // This replicates old functionality before IFC4 addition, where the default for slab was "FLOOR".
                      // Really the export layer table should be fixed for this case.
                      if (string.IsNullOrWhiteSpace(ifcEnumType) && hostCatId == new ElementId(BuiltInCategory.OST_Floors))
                         ifcEnumType = "FLOOR";
-                     ifcEnumType = IFCValidateEntry.GetValidIFCType(hostElement, ifcEnumType, defaultValue);
+                     //ifcEnumType = IFCValidateEntry.GetValidIFCPredefinedTypeType(hostElement, ifcEnumType, defaultValue);
 
                      switch (exportType.ExportInstance)
                      {

@@ -106,30 +106,34 @@ namespace Revit.IFC.Export.Exporter
                   // We have limited support for exporting assemblies as other container types.
                   localPlacement = placementSetter.LocalPlacement;
                   levelInfo = placementSetter.LevelInfo;
-                  ifcEnumType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
 
                   switch (exportAs.ExportInstance)
                   {
                      case IFCEntityType.IfcCurtainWall:
-                     //case IFCExportType.IfcCurtainWallType:
+                        //case IFCExportType.IfcCurtainWallType:
+                        //string cwPredefinedType = IFCValidateEntry.GetValidIFCPredefinedType(element, ifcEnumType, "IfcCurtainWallType");
                         assemblyInstanceHnd = IFCInstanceExporter.CreateCurtainWall(exporterIFC, element, guid,
-                            ownerHistory, localPlacement, representation);
+                            ownerHistory, localPlacement, representation, ifcEnumType);
                         break;
                      case IFCEntityType.IfcRamp:
                         string rampPredefinedType = RampExporter.GetIFCRampType(ifcEnumType);
+                        //rampPredefinedType = IFCValidateEntry.GetValidIFCPredefinedType(element, rampPredefinedType, "IfcRampType");
                         assemblyInstanceHnd = IFCInstanceExporter.CreateRamp(exporterIFC, element, guid,
                             ownerHistory, localPlacement, representation, rampPredefinedType);
                         break;
                      case IFCEntityType.IfcRoof:
+                        //string roofPredefinedType = IFCValidateEntry.GetValidIFCPredefinedType(element, ifcEnumType, "IfcRoofType");
                         assemblyInstanceHnd = IFCInstanceExporter.CreateRoof(exporterIFC, element, guid,
                             ownerHistory, localPlacement, representation, ifcEnumType);
                         break;
                      case IFCEntityType.IfcStair:
                         string stairPredefinedType = StairsExporter.GetIFCStairType(ifcEnumType);
+                        //stairPredefinedType = IFCValidateEntry.GetValidIFCPredefinedType(element, stairPredefinedType, "IfcStairType");
                         assemblyInstanceHnd = IFCInstanceExporter.CreateStair(exporterIFC, element, guid,
                             ownerHistory, localPlacement, representation, stairPredefinedType);
                         break;
                      case IFCEntityType.IfcWall:
+                        //string wallPredefinedType = IFCValidateEntry.GetValidIFCPredefinedType(element, ifcEnumType, "IfcWallType");
                         assemblyInstanceHnd = IFCInstanceExporter.CreateWall(exporterIFC, element, guid,
                             ownerHistory, localPlacement, representation, ifcEnumType);
                         break;

@@ -80,7 +80,7 @@ namespace Revit.IFC.Export.Exporter
                   IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                   IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
                   string roofType = GetIFCRoofType(ifcEnumType);
-                  roofType = IFCValidateEntry.GetValidIFCType(roof, ifcEnumType);
+                  //roofType = IFCValidateEntry.GetValidIFCPredefinedType(roof, ifcEnumType);
 
                   IFCAnyHandle roofHnd = IFCInstanceExporter.CreateRoof(exporterIFC, roof, guid, ownerHistory,
                       localPlacement, exportSlab ? null : representation, roofType);
@@ -226,15 +226,15 @@ namespace Revit.IFC.Export.Exporter
 
                         string elementGUID = GUIDUtil.CreateGUID(element);
 
-                        string hostObjectType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
+                        //string hostObjectType = IFCValidateEntry.GetValidIFCPredefinedType(element, ifcEnumType);
 
                         IFCAnyHandle hostObjectHandle = null;
                         if (elementIsRoof)
                            hostObjectHandle = IFCInstanceExporter.CreateRoof(exporterIFC, element, elementGUID, ownerHistory,
-                            localPlacement, prodRepHnd, hostObjectType);
+                            localPlacement, prodRepHnd, ifcEnumType);
                         else
                            hostObjectHandle = IFCInstanceExporter.CreateSlab(exporterIFC, element, elementGUID, ownerHistory,
-                           localPlacement, prodRepHnd, hostObjectType);
+                           localPlacement, prodRepHnd, ifcEnumType);
 
                         if (IFCAnyHandleUtil.IsNullOrHasNoValue(hostObjectHandle))
                            return null;
@@ -261,7 +261,7 @@ namespace Revit.IFC.Export.Exporter
 
                            int loopNum = 0;
                            int subElementStart = elementIsRoof ? (int)IFCRoofSubElements.RoofSlabStart : (int)IFCSlabSubElements.SubSlabStart;
-                           string subSlabType = elementIsRoof ? "ROOF" : hostObjectType;
+                           string subSlabType = elementIsRoof ? "ROOF" : ifcEnumType;
 
                            foreach (HostObjectSubcomponentInfo hostObjectSubcomponent in hostObjectSubcomponents)
                            {
@@ -366,7 +366,7 @@ namespace Revit.IFC.Export.Exporter
 
                //need to convert the string to enum
                string ifcEnumType = ExporterUtil.GetIFCTypeFromExportTable(exporterIFC, element);
-               ifcEnumType = IFCValidateEntry.GetValidIFCType(element, ifcEnumType);
+               //ifcEnumType = IFCValidateEntry.GetValidIFCPredefinedType(element, ifcEnumType);
 
                IFCAnyHandle roofHandle = IFCInstanceExporter.CreateRoof(exporterIFC, element, elementGUID, ownerHistory,
                    localPlacement, prodRepHnd, ifcEnumType);
