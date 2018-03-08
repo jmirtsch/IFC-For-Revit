@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
 
-  <Product Id="*" Name="Revit IFC 2017" Language="1033" Version="16.6.1.0" Manufacturer="Autodesk" UpgradeCode="5559280E-E7F0-4C92-ACF0-927D5BCEC71F">
+  <Product Id="*" Name="Revit IFC 2016" Language="1033" Version="16.6.1.0" Manufacturer="Autodesk" UpgradeCode="FBFFBDA7-F36C-48DB-B01A-F35F3AE5A334">
     <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
@@ -154,13 +154,13 @@
            File="[#FILE_Export_manifest]"
            SelectionLanguage="XPath"
            Sequence="1" />
-        <util:XmlFile Id="SetKeyImport"
+        <!--<util:XmlFile Id="SetKeyImport"
            Action="setValue"
            ElementPath="RevitAddIns/AddIn[\[]position()=2[\]]/Assembly"
            Value="[INSTALLDIR]Revit.IFC.Import.dll"
            File="[#FILE_Export_manifest]"
            SelectionLanguage="XPath"
-           Sequence="1" />
+           Sequence="1" />-->
       </Component>
       <Component Id = "COMP_IFC_ExternalUI_Addin_manifest" Guid="1B6E36EF-C7E0-44A4-AD1F-C904EA01FBD3">
         <File Id ="FILE_UI_manifest" Name="IFCExporterUIOverride.addin" Source="$(var.ProjectDir)..\Program Files to Install\IFCExporterUIOverride.addin" KeyPath="yes" />
