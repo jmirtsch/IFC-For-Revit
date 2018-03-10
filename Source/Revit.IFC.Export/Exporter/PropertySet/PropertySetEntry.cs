@@ -141,13 +141,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// </summary>
       PositivePlaneAngle,
       /// <summary>
-      /// An electrical current value
+      /// An electric current value
       /// </summary>
-      ElectricalCurrent,
+      ElectricCurrent,
       /// <summary>
-      /// An electrical voltage value
+      /// An electric voltage value
       /// </summary>
-      ElectricalVoltage,
+      ElectricVoltage,
       /// <summary>
       /// Volume
       /// </summary>
@@ -208,8 +208,6 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       PlanarForce,
       Monetary,
       ThermalConductivity,
-      ElectricCurrent,
-      ElectricVoltage,
       IfcMaterialDefinition,
       RotationalFrequency,
       AreaDensity,
@@ -450,10 +448,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// </summary>
       /// <param name="revitParameterName">Revit parameter name.</param>
       /// <returns>The PropertySetEntry.</returns>
-      public static PropertySetEntry CreateElectricalCurrent(string revitParameterName)
+      public static PropertySetEntry CreateElectricCurrent(string revitParameterName)
       {
          PropertySetEntry pse = new PropertySetEntry(revitParameterName);
-         pse.PropertyType = PropertyType.ElectricalCurrent;
+         pse.PropertyType = PropertyType.ElectricCurrent;
          return pse;
       }
 
@@ -462,10 +460,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       /// </summary>
       /// <param name="revitParameterName">Revit parameter name.</param>
       /// <returns>The PropertySetEntry.</returns>
-      public static PropertySetEntry CreateElectricalVoltage(string revitParameterName)
+      public static PropertySetEntry CreateElectricVoltage(string revitParameterName)
       {
          PropertySetEntry pse = new PropertySetEntry(revitParameterName);
-         pse.PropertyType = PropertyType.ElectricalVoltage;
+         pse.PropertyType = PropertyType.ElectricVoltage;
          return pse;
       }
 
@@ -850,10 +848,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                         propertyType = PropertyType.Power;
                         break;
                      case ParameterType.ElectricalCurrent:
-                        propertyType = PropertyType.ElectricalCurrent;
+                        propertyType = PropertyType.ElectricCurrent;
                         break;
                      case ParameterType.ElectricalPotential:
-                        propertyType = PropertyType.ElectricalVoltage;
+                        propertyType = PropertyType.ElectricVoltage;
                         break;
                      case ParameterType.ElectricalFrequency:
                         propertyType = PropertyType.Frequency;

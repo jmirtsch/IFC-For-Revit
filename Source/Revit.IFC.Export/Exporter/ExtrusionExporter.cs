@@ -1072,7 +1072,7 @@ namespace Revit.IFC.Export.Exporter
       /// <param name="exporterIFC">The ExporterIFC object.</param>
       /// <param name="extrusionData">The extrusion data.</param>
       /// <returns>The IfcExtrudedAreaSolid handle.</returns>
-      public static IFCAnyHandle CreateExtrudedSolidFromExtrusionData(ExporterIFC exporterIFC, Element element, IFCExtrusionData extrusionData)
+      public static IFCAnyHandle CreateExtrudedSolidFromExtrusionData(ExporterIFC exporterIFC, Element element, IFCExtrusionData extrusionData, string profileName=null)
       {
          Transform lcs = null;
          if (!extrusionData.IsValid())
@@ -1086,8 +1086,7 @@ namespace Revit.IFC.Export.Exporter
 
             if (CorrectCurveLoopOrientation(extrusionLoops, extrusionDir, out lcs))
             {
-               string profileName = null;
-               if (element != null)
+               if (element != null && string.IsNullOrEmpty(profileName))
                {
                   ElementType type = element.Document.GetElement(element.GetTypeId()) as ElementType;
                   if (type != null)

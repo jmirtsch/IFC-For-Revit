@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.IFC;
 using Autodesk.Revit.DB.Mechanical;
@@ -969,15 +970,8 @@ namespace Revit.IFC.Export.Utility
 
          // PropertySetEntry will only have an information about IFC entity (or type) for the Pset definition but may not be both
          // Here we will check for both and assign Pset to create equally for both Element or ElementType
-         if (IFCAnyHandleUtil.IsSubTypeOf(prodHnd, IFCEntityType.IfcObject))
-            Enum.TryParse<IFCEntityType>(hndTypeStr + "Type", out altProdHndType);
-         else if (IFCAnyHandleUtil.IsSubTypeOf(prodHnd, IFCEntityType.IfcTypeObject))
-            Enum.TryParse<IFCEntityType>(hndTypeStr.Substring(0, hndTypeStr.Length - 4), out altProdHndType);
-
-         string predefinedType = null;
-
-         IList<PropertySetDescription> cachedPsets = null ;
-         ExporterCacheManager.PropertySetsForTypeCache.TryGetValue(prodHndType, out cachedPsets);
+         IList<PropertySetDescription> cachedPsets = null;
+         //ExporterCacheManager.PropertySetsForTypeCache.TryGetValue(prodHndType, out cachedPsets);
          //if (altProdHndType != IFCEntityType.UnKnown)
          //{
          //   IList<PropertySetDescription> altCachedPsets = null;
@@ -990,6 +984,30 @@ namespace Revit.IFC.Export.Utility
          //         cachedPsets.Add(psd);
          //      }
          //}
+
+         if (IFCAnyHandleUtil.IsSubTypeOf(prodHnd, IFCEntityType.IfcObject))
+         {
+            Enum.TryParse<IFCEntityType>(hndTypeStr + "Type", out altProdHndType);
+         }
+         else if (IFCAnyHandleUtil.IsSubTypeOf(prodHnd, IFCEntityType.IfcTypeObject))
+         {
+            Enum.TryParse<IFCEntityType>(hndTypeStr.Substring(0, hndTypeStr.Length - 4), out altProdHndType);
+         }
+
+         IList<PropertySetDescription> tmpCachedPsets = null;
+         ExporterCacheManager.PropertySetsForTypeCache.TryGetValue(prodHndType, out tmpCachedPsets);
+         List<PropertySetDescription> psetdefListObj = new List<PropertySetDescription>();
+         if (tmpCachedPsets != null)
+            psetdefListObj = (List<PropertySetDescription>)tmpCachedPsets;
+         tmpCachedPsets = null;
+         if (altProdHndType != IFCEntityType.UnKnown)
+            ExporterCacheManager.PropertySetsForTypeCache.TryGetValue(altProdHndType, out tmpCachedPsets);
+         List<PropertySetDescription> psetdefListType = new List<PropertySetDescription>();
+         if (tmpCachedPsets != null)
+            psetdefListType = (List<PropertySetDescription>)tmpCachedPsets;
+         psetdefListObj.Union(psetdefListType);
+         cachedPsets = psetdefListObj; 
+         string predefinedType = null;
 
          if (cachedPsets == null || cachedPsets.Count == 0)
          {
@@ -1011,6 +1029,7 @@ namespace Revit.IFC.Export.Utility
                         conditionalPsetsToCreate.Add(currDesc);
                   }
                }
+
             }
             ExporterCacheManager.PropertySetsForTypeCache[prodHndType] = unconditionalPsetsToCreate;
             ExporterCacheManager.ConditionalPropertySetsForTypeCache[prodHndType] = conditionalPsetsToCreate;

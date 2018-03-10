@@ -3145,7 +3145,7 @@ namespace Revit.IFC.Export.Exporter
                         IFCExtrusionBasis whichBasis = extrusionLists[ii][0].ExtrusionBasis;
                         if (whichBasis >= 0)
                         {
-                           IFCAnyHandle extrusionHandle = ExtrusionExporter.CreateExtrudedSolidFromExtrusionData(exporterIFC, element, extrusionLists[ii][0]);
+                           IFCAnyHandle extrusionHandle = ExtrusionExporter.CreateExtrudedSolidFromExtrusionData(exporterIFC, element, extrusionLists[ii][0], profileName:profileName);
                            if (!IFCAnyHandleUtil.IsNullOrHasNoValue(extrusionHandle))
                            {
                               bodyItems.Add(extrusionHandle);
@@ -3571,19 +3571,26 @@ namespace Revit.IFC.Export.Exporter
          foreach (Face face in faces)
          {
             Mesh faceTriangulation = face.Triangulate(tessellationLevel);
-            for (int ii = 0; ii < faceTriangulation.NumTriangles; ++ii)
+            if (faceTriangulation != null)
             {
-               List<XYZ> triangleVertices = new List<XYZ>();
-               MeshTriangle triangle = faceTriangulation.get_Triangle(ii);
-               for (int tri = 0; tri < 3; ++tri)
+               for (int ii = 0; ii < faceTriangulation.NumTriangles; ++ii)
                {
-                  XYZ vert = UnitUtil.ScaleLength(triangle.get_Vertex(tri));
-                  if (lcsToUse != null)
-                     vert = lcsToUse.Inverse.OfPoint(vert);
+                  List<XYZ> triangleVertices = new List<XYZ>();
+                  MeshTriangle triangle = faceTriangulation.get_Triangle(ii);
+                  for (int tri = 0; tri < 3; ++tri)
+                  {
+                     XYZ vert = UnitUtil.ScaleLength(triangle.get_Vertex(tri));
+                     if (lcsToUse != null)
+                        vert = lcsToUse.Inverse.OfPoint(vert);
 
-                  triangleVertices.Add(vert);
+                     triangleVertices.Add(vert);
+                  }
+                  triangleList.Add(triangleVertices);
                }
-               triangleList.Add(triangleVertices);
+            }
+            else
+            {
+               // TODO: log the information to the user since it will mean missing face for this geometry though the failure is probably because the face is too thin or self intersecting
             }
          }
          return triangleList;

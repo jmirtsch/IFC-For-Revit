@@ -710,7 +710,11 @@ namespace Revit.IFC.Export.Toolkit
           string guid, IFCAnyHandle ownerHistory, IFCAnyHandle objectPlacement, IFCAnyHandle representation)
       {
          string elementTag = NamingUtil.GetTagOverride(revitElement, NamingUtil.CreateIFCElementId(revitElement));
-         IFCAnyHandleUtil.SetAttribute(element, "Tag", elementTag);
+         try
+         {
+            IFCAnyHandleUtil.SetAttribute(element, "Tag", elementTag);
+         }
+         catch { }
          SetProduct(exporterIFC, element, revitElement, guid, ownerHistory, objectPlacement, representation);
       }
 

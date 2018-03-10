@@ -94,16 +94,16 @@ namespace Revit.IFC.Export.Utility
                if (!string.IsNullOrEmpty(propValue))
                {
                   string propValuetrim = propValue.Trim();
-                  //// This is kind of hack to quickly check whether we need to parse the parameter or not
-                  //if (((propValuetrim.Length > 1 && propValuetrim[0] == '{') || (propValuetrim.Length > 2 && propValuetrim[1] == '{')) && (propValuetrim[propValuetrim.Length - 1] == '}'))
-                  //{
-                  //ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValuetrim);
-                  //propertyValue = pResv.GetStringValue();
-                  //if (string.IsNullOrEmpty(propertyValue))
-                  //propertyValue = propValue;    // return the original propValue (un-trimmed)
-                  //}
-                  //else
-                  propertyValue = propValue;    // return the original propValue (un-trimmed)
+                  // This is kind of hack to quickly check whether we need to parse the parameter or not
+                  if (((propValuetrim.Length > 1 && propValuetrim[0] == '{') || (propValuetrim.Length > 2 && propValuetrim[1] == '{')) && (propValuetrim[propValuetrim.Length - 1] == '}'))
+                  {
+                     ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValuetrim);
+                     propertyValue = pResv.GetStringValue();
+                     if (string.IsNullOrEmpty(propertyValue))
+                        propertyValue = propValue;    // return the original propValue (un-trimmed)
+                  }
+                  else
+                     propertyValue = propValue;    // return the original propValue (un-trimmed)
 
                   return parameter;
                }
@@ -200,17 +200,17 @@ namespace Revit.IFC.Export.Utility
                      propValue = parameter.AsString();
 
                      string propValuetrim = propValue.Trim();
-                     //// This is kind of hack to quickly check whether we need to parse the parameter or not
-                     //if (((propValuetrim.Length > 1 && propValuetrim[0] == '{') || (propValuetrim.Length > 2 && propValuetrim[1] == '{')) && (propValuetrim[propValuetrim.Length - 1] == '}'))
-                     //{
-                     //ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValuetrim);
-                     //int? propertyIntValue = pResv.GetIntValue();
-                     //if (propertyIntValue.HasValue)
-                     //{
-                     //propertyValue = propertyIntValue.Value;
-                     //return parameter;
-                     //}
-                     //}
+                     // This is kind of hack to quickly check whether we need to parse the parameter or not
+                     if (((propValuetrim.Length > 1 && propValuetrim[0] == '{') || (propValuetrim.Length > 2 && propValuetrim[1] == '{')) && (propValuetrim[propValuetrim.Length - 1] == '}'))
+                     {
+                        ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValuetrim);
+                        int? propertyIntValue = pResv.GetIntValue();
+                        if (propertyIntValue.HasValue)
+                        {
+                           propertyValue = propertyIntValue.Value;
+                           return parameter;
+                        }
+                     }
 
                      try
                      {
@@ -266,16 +266,16 @@ namespace Revit.IFC.Export.Utility
 
                      string propValuetrim = propValue.Trim();
                      // This is kind of hack to quickly check whether we need to parse the parameter or not
-                     //if (((propValuetrim.Length > 1 && propValuetrim[0] == '{') || (propValuetrim.Length > 2 && propValuetrim[1] == '{')) && (propValuetrim[propValuetrim.Length - 1] == '}'))
-                     //{
-                     //ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValuetrim);
-                     //double? propertyDoubleValue = pResv.GetDoubleValue();
-                     //if (propertyDoubleValue.HasValue)
-                     //{
-                     //propertyValue = propertyDoubleValue.Value;
-                     //return parameter;
-                     //}
-                     //}
+                     if (((propValuetrim.Length > 1 && propValuetrim[0] == '{') || (propValuetrim.Length > 2 && propValuetrim[1] == '{')) && (propValuetrim[propValuetrim.Length - 1] == '}'))
+                     {
+                        ParamExprResolver pResv = new ParamExprResolver(element, propertyName, propValuetrim);
+                        double? propertyDoubleValue = pResv.GetDoubleValue();
+                        if (propertyDoubleValue.HasValue)
+                        {
+                           propertyValue = propertyDoubleValue.Value;
+                           return parameter;
+                        }
+                     }
 
                      return Double.TryParse(propValue, out propertyValue) ? parameter : null;
                   }

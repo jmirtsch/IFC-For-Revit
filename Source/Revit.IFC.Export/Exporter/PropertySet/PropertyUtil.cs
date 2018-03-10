@@ -3057,7 +3057,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                                  }
                               case ParameterType.ElectricalCurrent:
                                  {
-                                    double scaledValue = UnitUtil.ScaleElectricalCurrent(value);
+                                    double scaledValue = UnitUtil.ScaleElectricCurrent(value);
                                     propertyHandle = ElectricalCurrentPropertyUtil.CreateElectricalCurrentMeasureProperty(file, parameterCaption,
                                         scaledValue, PropertyValueType.SingleValue);
                                     break;
@@ -3099,8 +3099,8 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                                  }
                               case ParameterType.ElectricalPotential:
                                  {
-                                    double scaledValue = UnitUtil.ScaleElectricalVoltage(value);
-                                    propertyHandle = ElectricalVoltagePropertyUtil.CreateElectricalVoltageMeasureProperty(file, parameterCaption,
+                                    double scaledValue = UnitUtil.ScaleElectricVoltage(value);
+                                    propertyHandle = ElectricVoltagePropertyUtil.CreateElectricVoltageMeasureProperty(file, parameterCaption,
                                         scaledValue, PropertyValueType.SingleValue);
                                     break;
                                  }

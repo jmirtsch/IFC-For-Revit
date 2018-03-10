@@ -73,6 +73,7 @@
     <Compile Include="Exporter\DoorWindowExporter.cs" />
     <Compile Include="Exporter\DuctInsulationExporter.cs" />
     <Compile Include="Exporter\DuctLiningExporter.cs" />
+    <Compile Include="Exporter\ExporterInitializer_PsetDef.cs" />
     <Compile Include="Exporter\ExtrusionExporter.cs" />
     <Compile Include="Exporter\FabricSheetExporter.cs" />
     <Compile Include="Exporter\FilledRegionExporter.cs" />
@@ -88,10 +89,10 @@
     <Compile Include="Exporter\PartExporter.cs" />
     <Compile Include="Exporter\PileExporter.cs" />
     <Compile Include="Exporter\PipeInsulationExporter.cs" />
-    <Compile Include="Exporter\PropertySetsInitialization.cs" />
     <Compile Include="Exporter\PropertySet\AttributeEntry.cs" />
     <Compile Include="Exporter\PropertySet\AttributeEntryMap.cs" />
     <Compile Include="Exporter\PropertySet\AttributeSetDescription.cs" />
+    <Compile Include="Exporter\PropertySet\Calculators\FireRatingCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\SpanCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\CrossSectionAreaCalculator.cs" />
     <Compile Include="Exporter\PropertySet\Calculators\AreaCalculator.cs" />

@@ -266,7 +266,7 @@ namespace Revit.IFC.Export.Toolkit
       /// </summary>
       /// <param name="value">The double value.</param>
       /// <returns>The IFCData object.</returns>
-      public static IFCData CreateAsElectricalCurrentMeasure(double value)
+      public static IFCData CreateAsElectricCurrentMeasure(double value)
       {
          return CreateAsMeasure(value, "IfcElectricCurrentMeasure");
       }
@@ -276,7 +276,7 @@ namespace Revit.IFC.Export.Toolkit
       /// </summary>
       /// <param name="value">The double value.</param>
       /// <returns>The IFCData object.</returns>
-      public static IFCData CreateAsElectricalVoltageMeasure(double value)
+      public static IFCData CreateAsElectricVoltageMeasure(double value)
       {
          return CreateAsMeasure(value, "IfcElectricVoltageMeasure");
       }

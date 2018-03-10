@@ -79,6 +79,7 @@ namespace Revit.IFC.Export.Exporter
             if (exportType.IsUnKnown)
                return;
 
+            // TODO: This step now appears to be redundant with the rest of the steps, but to change it is too much of risk of regression. Reserve it for future refactoring
             if (ExportGenericBuildingElement(exporterIFC, familyInstance, geometryElement, exportType, ifcEnumType, productWrapper))
             {
                tr.Commit();
@@ -337,9 +338,12 @@ namespace Revit.IFC.Export.Exporter
          }
          if (IFCAnyHandleUtil.IsNullOrHasNoValue(typeStyle))
             return null;
-         IFCAnyHandleUtil.SetAttribute(typeStyle, "GlobalId", guid);
-         string symbolTag = NamingUtil.GetTagOverride(familySymbol, NamingUtil.CreateIFCElementId(familySymbol));
-         propertySets = ExporterUtil.ExtractElementTypeProperties(exporterIFC, familySymbol, typeStyle);
+         // Duplicate?? THe Pset will also be created at the end of export (inside ProductWrapper.Dispose())
+         //IFCAnyHandleUtil.SetAttribute(typeStyle, "GlobalId", guid);
+         //string symbolTag = NamingUtil.GetTagOverride(familySymbol, NamingUtil.CreateIFCElementId(familySymbol));
+         //HashSet<IFCAnyHandle> pSets = ExporterUtil.ExtractElementTypeProperties(exporterIFC, familySymbol, typeStyle);
+         //if (pSets != null)
+         //   propertySets.UnionWith(pSets);
          return typeStyle;
       }
 
@@ -1009,25 +1013,28 @@ namespace Revit.IFC.Export.Exporter
                      overrideLocalPlacement = plateLocalPlacement;
                   }
 
-                  instanceHandle = FamilyExporterUtil.ExportGenericInstance(exportType, exporterIFC, familyInstance,
-                     wrapper, setter, extraParams, instanceGUID, ownerHistory, exportParts ? null : repHnd, ifcEnumType, overrideLocalPlacement);
+                  //instanceHandle = FamilyExporterUtil.ExportGenericInstance(exportType, exporterIFC, familyInstance,
+                  //   wrapper, setter, extraParams, instanceGUID, ownerHistory, exportParts ? null : repHnd, ifcEnumType, overrideLocalPlacement);
 
-                  if (exportParts)
-                     PartExporter.ExportHostPart(exporterIFC, familyInstance, instanceHandle, familyProductWrapper, setter, setter.LocalPlacement, overrideLevelId);
+                  // Move these lines down
+                  //if (exportParts)
+                  //   PartExporter.ExportHostPart(exporterIFC, familyInstance, instanceHandle, familyProductWrapper, setter, setter.LocalPlacement, overrideLevelId);
 
-                  if (ElementFilteringUtil.IsMEPType(exportType) || ElementFilteringUtil.ProxyForMEPType(familyInstance, exportType))
-                  {
-                     ExporterCacheManager.MEPCache.Register(familyInstance, instanceHandle);
-                     // For ducts and pipes, check later if there is an associated duct or pipe.
-                     if (CanHaveInsulationOrLining(exportType, categoryId))
-                        ExporterCacheManager.MEPCache.CoveredElementsCache.Add(familyInstance.Id);
-                  }
+                  //if (ElementFilteringUtil.IsMEPType(exportType) || ElementFilteringUtil.ProxyForMEPType(familyInstance, exportType))
+                  //{
+                  //   ExporterCacheManager.MEPCache.Register(familyInstance, instanceHandle);
+                  //   // For ducts and pipes, check later if there is an associated duct or pipe.
+                  //   if (CanHaveInsulationOrLining(exportType, categoryId))
+                  //      ExporterCacheManager.MEPCache.CoveredElementsCache.Add(familyInstance.Id);
+                  //}
 
                   switch (exportType.ExportInstance)
                   {
                      case IFCEntityType.IfcBeam:
                      //case IFCExportType.IfcBeamType:
                         {
+                           instanceHandle = FamilyExporterUtil.ExportGenericInstance(exportType, exporterIFC, familyInstance,
+                              wrapper, setter, extraParams, instanceGUID, ownerHistory, exportParts ? null : repHnd, ifcEnumType, overrideLocalPlacement);
                            IFCAnyHandle placementToUse = localPlacement;
 
                            // NOTE: We do not expect openings here, as they are created as part of creating an extrusion in ExportBody above.
@@ -1065,6 +1072,9 @@ namespace Revit.IFC.Export.Exporter
                      case IFCEntityType.IfcColumn:
                      //case IFCExportType.IfcColumnType:
                         {
+                           instanceHandle = FamilyExporterUtil.ExportGenericInstance(exportType, exporterIFC, familyInstance,
+                              wrapper, setter, extraParams, instanceGUID, ownerHistory, exportParts ? null : repHnd, ifcEnumType, overrideLocalPlacement);
+
                            IFCAnyHandle placementToUse = localPlacement;
                            if (!useInstanceGeometry)
                            {
@@ -1123,7 +1133,7 @@ namespace Revit.IFC.Export.Exporter
 
                            IFCAnyHandle doorWindowLocalPlacement = !IFCAnyHandleUtil.IsNullOrHasNoValue(overrideLocalPlacement) ?
                                overrideLocalPlacement : localPlacement;
-                           if (exportType.ExportInstance == IFCEntityType.IfcDoorType || exportType.ExportInstance == IFCEntityType.IfcDoor)
+                           if (exportType.ExportType == IFCEntityType.IfcDoorType || exportType.ExportInstance == IFCEntityType.IfcDoor)
                               instanceHandle = IFCInstanceExporter.CreateDoor(exporterIFC, familyInstance, instanceGUID, ownerHistory,
                                  doorWindowLocalPlacement, repHnd, height, width, doorWindowInfo.PreDefinedType,
                                  doorWindowInfo.DoorOperationTypeString, doorWindowInfo.UserDefinedOperationType);
@@ -1160,6 +1170,9 @@ namespace Revit.IFC.Export.Exporter
                      case IFCEntityType.IfcMember:
                      //case IFCExportType.IfcMemberType:
                         {
+                           instanceHandle = FamilyExporterUtil.ExportGenericInstance(exportType, exporterIFC, familyInstance,
+                              wrapper, setter, extraParams, instanceGUID, ownerHistory, exportParts ? null : repHnd, ifcEnumType, overrideLocalPlacement);
+
                            OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, offsetTransform,
                                exporterIFC, localPlacement, setter, wrapper);
                            wrapper.AddElement(familyInstance, instanceHandle, setter, extraParams, true);
@@ -1184,6 +1197,9 @@ namespace Revit.IFC.Export.Exporter
                      case IFCEntityType.IfcPlate:
                      //case IFCExportType.IfcPlateType:
                         {
+                           instanceHandle = FamilyExporterUtil.ExportGenericInstance(exportType, exporterIFC, familyInstance,
+                              wrapper, setter, extraParams, instanceGUID, ownerHistory, exportParts ? null : repHnd, ifcEnumType, overrideLocalPlacement);
+
                            OpeningUtil.CreateOpeningsIfNecessary(instanceHandle, familyInstance, extraParams, offsetTransform,
                                exporterIFC, localPlacement, setter, wrapper);
 
@@ -1320,6 +1336,17 @@ namespace Revit.IFC.Export.Exporter
 
                   if (!IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
                   {
+                     if (exportParts)
+                        PartExporter.ExportHostPart(exporterIFC, familyInstance, instanceHandle, familyProductWrapper, setter, setter.LocalPlacement, overrideLevelId);
+
+                     if (ElementFilteringUtil.IsMEPType(exportType) || ElementFilteringUtil.ProxyForMEPType(familyInstance, exportType))
+                     {
+                        ExporterCacheManager.MEPCache.Register(familyInstance, instanceHandle);
+                        // For ducts and pipes, check later if there is an associated duct or pipe.
+                        if (CanHaveInsulationOrLining(exportType, categoryId))
+                           ExporterCacheManager.MEPCache.CoveredElementsCache.Add(familyInstance.Id);
+                     }
+
                      ExporterCacheManager.HandleToElementCache.Register(instanceHandle, familyInstance.Id);
 
                      if (!exportParts && !materialAlreadyAssociated)

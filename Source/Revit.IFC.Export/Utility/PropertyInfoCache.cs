@@ -228,15 +228,15 @@ namespace Revit.IFC.Export.Utility
       /// <summary>
       /// The DoublePropertyInfoCache object for ElectricalCurrent parameter types.
       /// </summary>
-      public DoublePropertyInfoCache ElectricalCurrentCache
+      public DoublePropertyInfoCache ElectricCurrentCache
       {
          get
          {
             DoublePropertyInfoCache electricalCurrentCache;
-            if (!DoubleCacheMap.TryGetValue(PropertyType.ElectricalCurrent, out electricalCurrentCache))
+            if (!DoubleCacheMap.TryGetValue(PropertyType.ElectricCurrent, out electricalCurrentCache))
             {
                electricalCurrentCache = new DoublePropertyInfoCache();
-               DoubleCacheMap[PropertyType.ElectricalCurrent] = electricalCurrentCache;
+               DoubleCacheMap[PropertyType.ElectricCurrent] = electricalCurrentCache;
             }
             return electricalCurrentCache;
          }
@@ -245,15 +245,15 @@ namespace Revit.IFC.Export.Utility
       /// <summary>
       /// The DoublePropertyInfoCache object for ElectricalVoltage parameter types.
       /// </summary>
-      public DoublePropertyInfoCache ElectricalVoltageCache
+      public DoublePropertyInfoCache ElectricVoltageCache
       {
          get
          {
             DoublePropertyInfoCache electricalVoltageCache;
-            if (!DoubleCacheMap.TryGetValue(PropertyType.ElectricalVoltage, out electricalVoltageCache))
+            if (!DoubleCacheMap.TryGetValue(PropertyType.ElectricVoltage, out electricalVoltageCache))
             {
                electricalVoltageCache = new DoublePropertyInfoCache();
-               DoubleCacheMap[PropertyType.ElectricalVoltage] = electricalVoltageCache;
+               DoubleCacheMap[PropertyType.ElectricVoltage] = electricalVoltageCache;
             }
             return electricalVoltageCache;
          }

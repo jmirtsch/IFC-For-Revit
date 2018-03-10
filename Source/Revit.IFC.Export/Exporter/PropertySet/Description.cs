@@ -104,7 +104,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          // Note that although EntityTypes is represented as a set, we still need to go through each item in the last to check for subtypes.
          foreach (IFCEntityType entityType in EntityTypes)
          {
-            if (IfcSchemaEntityTree.IsSubTypeOf(ifcEntityType.ToString(), entityType.ToString()))
+            if (IfcSchemaEntityTree.IsSubTypeOf(ifcEntityType.ToString(), entityType.ToString(), strict: false))
                return true;
          }
          return false;

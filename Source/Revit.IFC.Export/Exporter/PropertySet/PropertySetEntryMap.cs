@@ -210,14 +210,14 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                       ifcPropertyName, valueType);
                   break;
                }
-            case PropertyType.ElectricalCurrent:
+            case PropertyType.ElectricCurrent:
                {
                   propHnd = ElectricalCurrentPropertyUtil.CreateElectricalCurrentMeasurePropertyFromElementOrSymbol(file, element, revitParamNameToUse, ifcPropertyName, valueType);
                   break;
                }
-            case PropertyType.ElectricalVoltage:
+            case PropertyType.ElectricVoltage:
                {
-                  propHnd = ElectricalVoltagePropertyUtil.CreateElectricalVoltageMeasurePropertyFromElementOrSymbol(file, element, revitParamNameToUse, ifcPropertyName, valueType);
+                  propHnd = ElectricVoltagePropertyUtil.CreateElectricVoltageMeasurePropertyFromElementOrSymbol(file, element, revitParamNameToUse, ifcPropertyName, valueType);
                   break;
                }
             case PropertyType.LuminousFlux:

@@ -49,11 +49,11 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             case PropertyValueType.EnumeratedValue:
                {
                   IList<IFCData> valueList = new List<IFCData>();
-                  valueList.Add(IFCDataUtil.CreateAsElectricalCurrentMeasure(value));
+                  valueList.Add(IFCDataUtil.CreateAsElectricCurrentMeasure(value));
                   return IFCInstanceExporter.CreatePropertyEnumeratedValue(file, propertyName, null, valueList, null);
                }
             case PropertyValueType.SingleValue:
-               return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsElectricalCurrentMeasure(value), null);
+               return IFCInstanceExporter.CreatePropertySingleValue(file, propertyName, null, IFCDataUtil.CreateAsElectricCurrentMeasure(value), null);
             default:
                throw new InvalidOperationException("Missing case!");
          }
@@ -82,7 +82,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          IFCAnyHandle propertyHandle;
          if (canCache)
          {
-            propertyHandle = ExporterCacheManager.PropertyInfoCache.ElectricalCurrentCache.Find(propertyName, value);
+            propertyHandle = ExporterCacheManager.PropertyInfoCache.ElectricCurrentCache.Find(propertyName, value);
             if (propertyHandle != null)
                return propertyHandle;
          }
@@ -91,7 +91,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
 
          if (canCache && !IFCAnyHandleUtil.IsNullOrHasNoValue(propertyHandle))
          {
-            ExporterCacheManager.PropertyInfoCache.ElectricalCurrentCache.Add(propertyName, value, propertyHandle);
+            ExporterCacheManager.PropertyInfoCache.ElectricCurrentCache.Add(propertyName, value, propertyHandle);
          }
 
          return propertyHandle;
@@ -111,7 +111,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          double propertyValue;
          if (ParameterUtil.GetDoubleValueFromElement(elem, null, revitParameterName, out propertyValue) != null)
          {
-            propertyValue = UnitUtil.ScaleElectricalCurrent(propertyValue);
+            propertyValue = UnitUtil.ScaleElectricCurrent(propertyValue);
             return CreateElectricalCurrentMeasurePropertyFromCache(file, ifcPropertyName, propertyValue, valueType);
          }
          // For Symbol

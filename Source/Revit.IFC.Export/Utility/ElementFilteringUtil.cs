@@ -1145,7 +1145,15 @@ namespace Revit.IFC.Export.Utility
                // Here we try to catch any possible types that are missing above by checking both the class name or the type name
                // Unless there is any special treatment needed most of the above check can be done here
                string clName = ifcClassName.Substring(ifcClassName.Length - 4, 4).Equals("Type", StringComparison.CurrentCultureIgnoreCase) ? ifcClassName.Substring(0, ifcClassName.Length - 4) : ifcClassName;
-               string tyName = ifcClassName.Substring(ifcClassName.Length - 4, 4).Equals("Type", StringComparison.CurrentCultureIgnoreCase) ? ifcClassName : ifcClassName + "Type";
+               string tyName = null;
+               if ( ((ExporterCacheManager.ExportOptionsCache.ExportAs2x2 || ExporterCacheManager.ExportOptionsCache.ExportAs2x3))
+                     && (clName.Equals("IfcDoor", StringComparison.InvariantCultureIgnoreCase) || clName.Equals("ifcWindow", StringComparison.InvariantCultureIgnoreCase)) )
+               {
+                  // Prior to IFC4 Door and Window types are not "Ifc..Type", but "Ifc.. Style"
+                  tyName = clName + "Style";
+               }
+               else
+                  tyName = clName + "Type";
                IFCEntityType theGenExportClass;
                IFCEntityType theGenExportType;
                var ifcEntitySchemaTree = IfcSchemaEntityTree.GetEntityDictFor(ExporterCacheManager.ExportOptionsCache.FileVersion);

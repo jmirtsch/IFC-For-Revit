@@ -170,7 +170,7 @@ namespace Revit.IFC.Export.Utility
       /// </summary>
       /// <param name="unscaledCurrent">The electrical current in Revit internal units.</param>
       /// <returns>The electrical current in Revit display units.</returns>
-      static public double ScaleElectricalCurrent(double unscaledCurrent)
+      static public double ScaleElectricCurrent(double unscaledCurrent)
       {
          return ScaleDouble(UnitType.UT_Electrical_Current, unscaledCurrent);
       }
@@ -190,7 +190,7 @@ namespace Revit.IFC.Export.Utility
       /// </summary>
       /// <param name="unscaledVoltage">The elecrical voltage in Revit internal units.</param>
       /// <returns>The electrical current in Revit display units.</returns>
-      static public double ScaleElectricalVoltage(double unscaledVoltage)
+      static public double ScaleElectricVoltage(double unscaledVoltage)
       {
          return ScaleDouble(UnitType.UT_Electrical_Potential, unscaledVoltage);
       }
