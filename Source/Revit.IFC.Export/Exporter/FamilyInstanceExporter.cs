@@ -208,19 +208,12 @@ namespace Revit.IFC.Export.Exporter
          else
             guid = GUIDUtil.CreateGUID(originalFamilySymbol);
 
-
-         //// This covers many generic types.  If we can't find it in the list here, do custom exports.
-         //typeStyle = FamilyExporterUtil.ExportGenericType(exporterIFC, exportType, ifcEnumType, guid,
-         //   gentypeName, gentypeDescription, gentypeApplicableOccurrence, propertySets, repMapList, gentypeTag, gentypeElementType,
-         //   familyInstance, familySymbol);
-
          // Cover special cases not covered above.
          if (IFCAnyHandleUtil.IsNullOrHasNoValue(typeStyle))
          {
             switch (exportType.ExportInstance)
             {
                case IFCEntityType.IfcBeam:
-               //case IFCExportType.IfcBeamType:
                   {
                      string beamType = "Beam";   // temporary. It might be provided through type info? or override
                      typeStyle = IFCInstanceExporter.CreateBeamType(file, familySymbol,
@@ -228,7 +221,6 @@ namespace Revit.IFC.Export.Exporter
                      break;
                   }
                case IFCEntityType.IfcColumn:
-               //case IFCExportType.IfcColumnType:
                   {
                      string columnType = "Column";
                      typeStyle = IFCInstanceExporter.CreateColumnType(file, familySymbol,
@@ -236,7 +228,6 @@ namespace Revit.IFC.Export.Exporter
                      break;
                   }
                case IFCEntityType.IfcMember:
-               //case IFCExportType.IfcMemberType:
                   {
                      string memberType = "Brace";   // temporary. It might be provided through type info? or override
                      typeStyle = IFCInstanceExporter.CreateMemberType(file, familySymbol,
@@ -310,11 +301,7 @@ namespace Revit.IFC.Export.Exporter
                      break;
                   }
                case IFCEntityType.IfcBuildingElementProxy:
-               //case IFCExportType.IfcBuildingElementProxyType:
                   {
-                     //Revit.IFC.Common.Enums.IFCEntityType IFCTypeEntity;
-                     //if (!Enum.TryParse(ifcEnumType, out IFCTypeEntity))
-                     //   break;    // The export type is unknown IFC type entity
                      typeStyle = IFCInstanceExporter.CreateGenericIFCType(exportType, familySymbol, file, propertySets, repMapList,
                         FamilyExporterUtil.GetPreDefinedType<Toolkit.IFCBuildingElementProxyType>(familyInstance, ifcEnumType).ToString());
                      break;
@@ -1013,25 +1000,9 @@ namespace Revit.IFC.Export.Exporter
                      overrideLocalPlacement = plateLocalPlacement;
                   }
 
-                  //instanceHandle = FamilyExporterUtil.ExportGenericInstance(exportType, exporterIFC, familyInstance,
-                  //   wrapper, setter, extraParams, instanceGUID, ownerHistory, exportParts ? null : repHnd, ifcEnumType, overrideLocalPlacement);
-
-                  // Move these lines down
-                  //if (exportParts)
-                  //   PartExporter.ExportHostPart(exporterIFC, familyInstance, instanceHandle, familyProductWrapper, setter, setter.LocalPlacement, overrideLevelId);
-
-                  //if (ElementFilteringUtil.IsMEPType(exportType) || ElementFilteringUtil.ProxyForMEPType(familyInstance, exportType))
-                  //{
-                  //   ExporterCacheManager.MEPCache.Register(familyInstance, instanceHandle);
-                  //   // For ducts and pipes, check later if there is an associated duct or pipe.
-                  //   if (CanHaveInsulationOrLining(exportType, categoryId))
-                  //      ExporterCacheManager.MEPCache.CoveredElementsCache.Add(familyInstance.Id);
-                  //}
-
                   switch (exportType.ExportInstance)
                   {
                      case IFCEntityType.IfcBeam:
-                     //case IFCExportType.IfcBeamType:
                         {
                            instanceHandle = FamilyExporterUtil.ExportGenericInstance(exportType, exporterIFC, familyInstance,
                               wrapper, setter, extraParams, instanceGUID, ownerHistory, exportParts ? null : repHnd, ifcEnumType, overrideLocalPlacement);
@@ -1070,7 +1041,6 @@ namespace Revit.IFC.Export.Exporter
                            break;
                         }
                      case IFCEntityType.IfcColumn:
-                     //case IFCExportType.IfcColumnType:
                         {
                            instanceHandle = FamilyExporterUtil.ExportGenericInstance(exportType, exporterIFC, familyInstance,
                               wrapper, setter, extraParams, instanceGUID, ownerHistory, exportParts ? null : repHnd, ifcEnumType, overrideLocalPlacement);
@@ -1121,9 +1091,7 @@ namespace Revit.IFC.Export.Exporter
                            break;
                         }
                      case IFCEntityType.IfcDoor:
-                     //case IFCExportType.IfcDoorType:
                      case IFCEntityType.IfcWindow:
-                     //case IFCExportType.IfcWindowType:
                         {
                            double doorHeight = GetMinSymbolHeight(originalFamilySymbol);
                            double doorWidth = GetMinSymbolWidth(originalFamilySymbol);
@@ -1168,7 +1136,6 @@ namespace Revit.IFC.Export.Exporter
                            break;
                         }
                      case IFCEntityType.IfcMember:
-                     //case IFCExportType.IfcMemberType:
                         {
                            instanceHandle = FamilyExporterUtil.ExportGenericInstance(exportType, exporterIFC, familyInstance,
                               wrapper, setter, extraParams, instanceGUID, ownerHistory, exportParts ? null : repHnd, ifcEnumType, overrideLocalPlacement);
@@ -1195,7 +1162,6 @@ namespace Revit.IFC.Export.Exporter
                            break;
                         }
                      case IFCEntityType.IfcPlate:
-                     //case IFCExportType.IfcPlateType:
                         {
                            instanceHandle = FamilyExporterUtil.ExportGenericInstance(exportType, exporterIFC, familyInstance,
                               wrapper, setter, extraParams, instanceGUID, ownerHistory, exportParts ? null : repHnd, ifcEnumType, overrideLocalPlacement);
@@ -1232,7 +1198,6 @@ namespace Revit.IFC.Export.Exporter
                            break;
                         }
                      case IFCEntityType.IfcTransportElement:
-                     //case IFCExportType.IfcTransportElementType:
                         {
                            IFCAnyHandle localPlacementToUse;
                            ElementId roomId = setter.UpdateRoomRelativeCoordinates(familyInstance, out localPlacementToUse);
@@ -1265,8 +1230,6 @@ namespace Revit.IFC.Export.Exporter
 
                            break;
                         }
-                     //case IFCExportType.IfcBuildingElementProxy:
-                     //case IFCExportType.IfcBuildingElementProxyType:
                      default:
                         {
                            if (IFCAnyHandleUtil.IsNullOrHasNoValue(instanceHandle))
@@ -1278,19 +1241,8 @@ namespace Revit.IFC.Export.Exporter
                               IFCAnyHandle localPlacementToUse = null;
                               ElementId roomId = setter.UpdateRoomRelativeCoordinates(familyInstance, out localPlacementToUse);
 
-                              if (!isBuildingElementProxy && FamilyExporterUtil.IsDistributionControlElementSubType(exportType))
+                              if (!isBuildingElementProxy)
                               {
-                                 string ifcelementType = null;
-                                 ParameterUtil.GetStringValueFromElement(familyInstance, familyInstance.Id, "IfcElementType", out ifcelementType);
-
-                                 instanceHandle = IFCInstanceExporter.CreateDistributionControlElement(exporterIFC, familyInstance, instanceGUID,
-                                    ownerHistory, localPlacementToUse, repHnd, ifcelementType);
-                              }
-                              else if (!isBuildingElementProxy)
-                              {
-                                 string ifcelementType = null;
-                                 ParameterUtil.GetStringValueFromElement(familyInstance, familyInstance.Id, "IfcElementType", out ifcelementType);
-
                                  instanceHandle = IFCInstanceExporter.CreateGenericIFCEntity(exportType, exporterIFC, familyInstance, instanceGUID,
                                     ownerHistory, localPlacementToUse, repHnd);
                               }
@@ -1388,7 +1340,6 @@ namespace Revit.IFC.Export.Exporter
          switch (exportType.ExportInstance)
          {
             case IFCEntityType.IfcBeam:
-            //case IFCExportType.IfcBeamType:
                {
                   // We will say that we exported the beam if either we generated an IfcBeam, or if we determined that there
                   // was nothing to export, either because the beam had no geometry to export, or it was completely clipped.
@@ -1407,7 +1358,6 @@ namespace Revit.IFC.Export.Exporter
                      return false;
                }
             case IFCEntityType.IfcBuildingElementProxy:
-            //case IFCExportType.IfcBuildingElementProxyType:
                {
                   Element type = element.Document.GetElement(element.GetTypeId());
                   string objectType = NamingUtil.GetObjectTypeOverride(element, (type != null) ? type.Name : "");
@@ -1436,7 +1386,6 @@ namespace Revit.IFC.Export.Exporter
                RampExporter.ExportRamp(exporterIFC, ifcEnumTypeString, element, geometryElement, 1, productWrapper);
                return true;
             case IFCEntityType.IfcRailing:
-            //case IFCExportType.IfcRailingType:
                if (ExporterCacheManager.RailingCache.Contains(element.Id))
                {
                   // Don't export this object if it is part of a parent railing.

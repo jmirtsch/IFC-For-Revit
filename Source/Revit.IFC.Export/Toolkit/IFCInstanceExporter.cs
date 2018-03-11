@@ -7060,7 +7060,11 @@ namespace Revit.IFC.Export.Toolkit
          IFCAnyHandle distributionControlElement = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcDistributionControlElement);
          // ControlElementId has been removed in IFC4 in favor of using Classification
          if (!ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         {
+            string ifcelementType = null;
+            ParameterUtil.GetStringValueFromElement(element, element.Id, "IfcElementType", out ifcelementType);
             IFCAnyHandleUtil.SetAttribute(distributionControlElement, "ControlElementId", controlElementId);
+         }
          SetElement(exporterIFC, distributionControlElement, element, guid, ownerHistory, objectPlacement, representation);
          return distributionControlElement;
       }
