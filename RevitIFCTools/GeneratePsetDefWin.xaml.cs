@@ -396,6 +396,11 @@ namespace RevitIFCTools
             File.Delete(textBox_OutputFile.Text);
 
          StreamWriter outF = new StreamWriter(textBox_OutputFile.Text);
+         outF.WriteLine("/********************************************************************************************************************************");
+         outF.WriteLine("** NOTE: This code is generated from IFC psd files automatically by RevitIFCTools.                                            **");
+         outF.WriteLine("**       DO NOT change it manually as it will be overwritten the next time this file is re-generated!!                        **");
+         outF.WriteLine("********************************************************************************************************************************/");
+         outF.WriteLine();
          outF.WriteLine("using System;");
          outF.WriteLine("using System.Collections.Generic;");
          outF.WriteLine("using System.Linq;");

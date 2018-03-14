@@ -134,12 +134,12 @@
     <Compile Include="Exporter\PropertySet\ElectricalCurrentPropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\ElectricalVoltagePropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\EntryMap.cs" />
+    <Compile Include="Exporter\PropertySet\ExporterInitializer_PsetDefIFC2X2Enum.cs" />
+    <Compile Include="Exporter\PropertySet\ExporterInitializer_PsetDefIFC2X3TC1Enum.cs" />
+    <Compile Include="Exporter\PropertySet\ExporterInitializer_PsetDefIFC4_ADD1Enum.cs" />
+    <Compile Include="Exporter\PropertySet\ExporterInitializer_PsetDefIFC4_ADD2Enum.cs" />
     <Compile Include="Exporter\PropertySet\FrequencyPropertyUtil.cs" />
     <Compile Include="Exporter\PropertySet\PositivePlaneAnglePropertyUtil.cs" />
-    <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC2x2Enum.cs" />
-    <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC2x3TC1Enum.cs" />
-    <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC4_ADD1Enum.cs" />
-    <Compile Include="Exporter\PropertySet\PropertySetDefinitionIFC4_ADD2Enum.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetDescription.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetEntry.cs" />
     <Compile Include="Exporter\PropertySet\PropertySetEntryMap.cs" />
