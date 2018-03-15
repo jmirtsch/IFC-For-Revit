@@ -82,7 +82,6 @@
                </Grid.ColumnDefinitions>
                <Label Content="{x:Static p:Resources.TessellationDetails}" HorizontalAlignment="Left" Margin="-72,10,0,0" x:Name="checkBoxLevelOfDetails" Grid.ColumnSpan="2" Width="368" VerticalAlignment="Top" Height="26"/>
                <ComboBox Name="comboBoxLOD" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Top" Width="199"  Height="25"  Margin="108,10,0,0" SelectionChanged="comboBoxLOD_SelectionChanged"/>
-               <CheckBox x:Name="checkBox_TriangulationOnly" Content="{x:Static p:Resources.KeepTessellatedAsTriangulation}" Margin="-68,41,285.4,200.8" Grid.ColumnSpan="2" Checked="checkBox_TriangulationOnly_Checked" Unchecked="checkBox_TriangulationOnly_Unchecked"/>
             </Grid>
          </TabItem>
          <TabItem Header="{x:Static p:Resources.Advanced}" x:Name="Advanced">
@@ -102,6 +101,7 @@
                <CheckBox Content="{x:Static p:Resources.IncludeIfcSiteElevation}" Height="16" HorizontalAlignment="Left" Margin="-74,107,0,0" x:Name="checkboxIncludeIfcSiteElevation" VerticalAlignment="Top" Checked="checkboxIfcSiteElevation_Checked" Unchecked="checkboxIfcSiteElevation_Checked" Width="569" Grid.ColumnSpan="5" />
                <CheckBox Content="{x:Static p:Resources.StoreIFCGUID}" Height="16" HorizontalAlignment="Left" Margin="-74,127,0,0" x:Name="checkboxStoreIFCGUID" VerticalAlignment="Top" Checked="checkboxStoreIFCGUID_Checked" Unchecked="checkboxStoreIFCGUID_Checked" Width="569" Grid.ColumnSpan="5"  />
                <CheckBox Content="{x:Static p:Resources.ExportBoundingBox}" Height="16" HorizontalAlignment="Left" Margin="-74,147,0,0" Name="checkboxExportBoundingBox" VerticalAlignment="Top" Checked="checkboxExportBoundingBox_Checked" Unchecked="checkboxExportBoundingBox_Checked" Width="569" Grid.ColumnSpan="5" />
+               <CheckBox x:Name="checkBox_TriangulationOnly" Content="Keep tessellated geometry as triangulated faces only" Margin="-74,167,0,101" Grid.ColumnSpan="5" Checked="checkBox_TriangulationOnly_Checked" Unchecked="checkBox_TriangulationOnly_Unchecked" ToolTip="Use this option if any tessellated geometry should remain as triangulated faces, or if the export performance is affected"/>
             </Grid>
          </TabItem>
          <!--
