@@ -5110,45 +5110,8 @@ namespace Revit.IFC.Export.Toolkit
             catch { }
          }
 
-         //if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
-         //{
-         //   Revit.IFC.Common.Enums.IFC4.IFCEntityType IFC4ValidTypeEnum;
-         //   // check existence of the entity in IFC4
-         //   if (Enum.TryParse(typeEntityToCreate.ToString(), true, out IFC4ValidTypeEnum))
-         //   {
-         //      IFCAnyHandle genericIFCType = CreateInstance(file, typeEntityToCreate.ExportType);
-         //      SetElementType(genericIFCType, revitType, propertySets, representationMaps);
-
-         //      if (!string.IsNullOrEmpty(predefinedType))
-         //         IFCAnyHandleUtil.SetAttribute(genericIFCType, "PredefinedType", predefinedType, true);
-
-         //      return genericIFCType;
-         //   }
-         //}
-         //else
-         //{
-         //   Revit.IFC.Common.Enums.IFC2x.IFCEntityType IFC2xValidTypeEnum;
-         //   // check existence of the entity in IFC2x-
-         //   if (Enum.TryParse(typeEntityToCreate.ToString(), true, out IFC2xValidTypeEnum))
-         //   {
-         //      // Special IFC2x2 checks to avoid creating a completely new enum.
-         //      if (ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
-         //      {
-         //         // Not supported: IfcBuildingElementProxyType in IFC2x2.
-         //         if (typeEntityToCreate.ExportType == IFCEntityType.IfcBuildingElementProxyType)
-         //            return null;
-         //      }
-
-         //      IFCAnyHandle genericMEPType = CreateInstance(file, typeEntityToCreate.ExportType);
-         //      SetElementType(genericMEPType, revitType, propertySets, representationMaps);
-
-         //      if (!string.IsNullOrEmpty(predefinedType))
-         //         IFCAnyHandleUtil.SetAttribute(genericMEPType, "PredefinedType", predefinedType, true);
-
-         //      return genericMEPType;
-         //   }
-         //}
-         //return null;    //type is unknown in both IFC4 and prior to IFC4
+         string name = NamingUtil.GetNameOverride(revitType, NamingUtil.GetIFCName(revitType));
+         string description = NamingUtil.GetDescriptionOverride(revitType, null);
 
          return genericIFCType;
       }

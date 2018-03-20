@@ -24,6 +24,7 @@ using Autodesk.Revit.DB.IFC;
 using Revit.IFC.Export.Utility;
 using Revit.IFC.Export.Toolkit;
 using Revit.IFC.Common.Utility;
+using Revit.IFC.Common.Enums;
 
 namespace Revit.IFC.Export.Exporter
 {
@@ -79,11 +80,25 @@ namespace Revit.IFC.Export.Exporter
                   string guid = GUIDUtil.CreateGUID(roof);
                   IFCAnyHandle ownerHistory = ExporterCacheManager.OwnerHistoryHandle;
                   IFCAnyHandle localPlacement = ecData.GetLocalPlacement();
-                  string roofType = GetIFCRoofType(ifcEnumType);
+                  string predefinedType = GetIFCRoofType(ifcEnumType);
                   //roofType = IFCValidateEntry.GetValidIFCPredefinedType(roof, ifcEnumType);
 
                   IFCAnyHandle roofHnd = IFCInstanceExporter.CreateRoof(exporterIFC, roof, guid, ownerHistory,
-                      localPlacement, exportSlab ? null : representation, roofType);
+                      localPlacement, exportSlab ? null : representation, predefinedType);
+
+                  // Export IfcRoofType
+                  IFCExportInfoPair exportInfo = new IFCExportInfoPair(IFCEntityType.IfcRoof, IFCEntityType.IfcRoofType);
+                  if (exportInfo.ExportType != IFCEntityType.UnKnown)
+                  {
+                     if ((ParameterUtil.GetStringValueFromElementOrSymbol(roof, "IfcExportType", out predefinedType) == null) && // change IFCType to consistent parameter of IfcExportType
+                         (ParameterUtil.GetStringValueFromElementOrSymbol(roof, "IfcType", out predefinedType) == null))  // support IFCType for legacy support
+                     {
+                        predefinedType = "NotDefined";
+                     }
+
+                     IFCAnyHandle typeHnd = ExporterUtil.CreateGenericTypeFromElement(roof, exportInfo, file, ownerHistory, predefinedType, productWrapper);
+                     ExporterCacheManager.TypeRelationsCache.Add(typeHnd, roofHnd);
+                  }
 
                   productWrapper.AddElement(roof, roofHnd, placementSetter.LevelInfo, ecData, true);
 
