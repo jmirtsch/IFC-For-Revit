@@ -274,7 +274,7 @@ namespace Revit.IFC.Export.Exporter
                   address = null;
 
                siteHandle = IFCInstanceExporter.CreateSite(exporterIFC, element, siteGUID, ownerHistory, siteName, siteDescription, localPlacement,
-                  siteRepresentation, siteLongName, IFCElementComposition.Element, latitude, longitude, elevation, siteLandTitleNumber, null);
+                  siteRepresentation, siteLongName, IFCElementComposition.Element, latitude, longitude, elevation, siteLandTitleNumber, address);
                productWrapper.AddSite(mainSiteElement, siteHandle);
                ExporterCacheManager.SiteHandle = siteHandle;
             }

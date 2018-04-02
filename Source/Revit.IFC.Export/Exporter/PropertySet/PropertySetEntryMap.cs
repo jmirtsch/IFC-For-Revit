@@ -336,6 +336,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             propHnd = PropertySetEntryMap.CreatePropertyFromElementOrSymbolBase(file, exporterIFC, element,
                  localizedRevitParameterName, propertyName, BuiltInParameter.INVALID,
                  propertyType, valueType, propertyEnumerationType);
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd) && (element is ElementType || element is FamilySymbol))
+            {
+               localizedRevitParameterName = localizedRevitParameterName + "[Type]";
+               propHnd = PropertySetEntryMap.CreatePropertyFromElementOrSymbolBase(file, exporterIFC, element,
+                 localizedRevitParameterName, propertyName, BuiltInParameter.INVALID,
+                 propertyType, valueType, propertyEnumerationType);
+            }
          }
 
          if (IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd))
@@ -343,6 +350,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
             propHnd = PropertySetEntryMap.CreatePropertyFromElementOrSymbolBase(file, exporterIFC, element,
                  revitParameterName, propertyName, RevitBuiltInParameter,
                  propertyType, valueType, propertyEnumerationType);
+            if (IFCAnyHandleUtil.IsNullOrHasNoValue(propHnd) && (element is ElementType || element is FamilySymbol))
+            {
+               revitParameterName = revitParameterName + "[Type]";
+               propHnd = PropertySetEntryMap.CreatePropertyFromElementOrSymbolBase(file, exporterIFC, element,
+                 revitParameterName, propertyName, RevitBuiltInParameter,
+                 propertyType, valueType, propertyEnumerationType);
+            }
          }
          return propHnd;
       }

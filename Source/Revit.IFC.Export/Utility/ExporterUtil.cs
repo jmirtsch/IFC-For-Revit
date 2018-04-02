@@ -1480,7 +1480,13 @@ namespace Revit.IFC.Export.Utility
                }
             }
          }
-
+         if (!string.IsNullOrEmpty(enumTypeValue))
+         {
+            enumTypeValue = IFCValidateEntry.GetValidIFCPredefinedTypeType(enumTypeValue, "NOTDEFINED", exportType.ExportInstance.ToString());
+            if (string.IsNullOrEmpty(enumTypeValue))
+               enumTypeValue = IFCValidateEntry.GetValidIFCPredefinedTypeType(enumTypeValue, "NOTDEFINED", exportType.ExportType.ToString());
+         }
+         exportType.ValidatedPredefinedType = enumTypeValue;
          return exportType;
       }
 
@@ -2139,6 +2145,7 @@ namespace Revit.IFC.Export.Utility
             }
 
             IFCFile file = exporterIFC.GetFile();
+            Document document = ExporterCacheManager.Document;
 
             //if (!containsBRepGeometry)
             {
@@ -2146,22 +2153,39 @@ namespace Revit.IFC.Export.Utility
 
                for (int ii = 0; ii < numLayersToCreate; ii++)
                {
+                  Material material = document.GetElement(matIds[ii]) as Material;
+
                   int widthIndex = widthIndices[ii];
                   double scaledWidth = UnitUtil.ScaleLength(widths[widthIndex]);
 
-                  string materialName = null;
+                  string layerName = null;
                   string description = null;
                   string category = null;
+                  int? priority = null;
+                  //IFCLogical? isVentilated = IFCAnyHandleUtil.GetLogicalAttribute(materialHnds[ii], "IfcMaterialLayer.IsVentilated");
+                  IFCLogical? isVentilated = null;
+                  int isVentilatedValue;
+                  if (ParameterUtil.GetIntValueFromElement(material, "IfcMaterialLayer.IsVentilated", out isVentilatedValue) != null)
+                  {
+                     if (isVentilatedValue == 0)
+                        isVentilated = IFCLogical.False;
+                     else if (isVentilatedValue == 1)
+                        isVentilated = IFCLogical.True;
+                  }
                   if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
                   {
-                     Parameter layerNamePar = ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcMaterialLayerName", out materialName);
-                     if (string.IsNullOrEmpty(materialName))
-                        materialName = IFCAnyHandleUtil.GetStringAttribute(materialHnds[ii], "Name");
-                     description = IFCAnyHandleUtil.GetStringAttribute(materialHnds[ii], "Description");
-                     category = IFCAnyHandleUtil.GetStringAttribute(materialHnds[ii], "Category");
+                     //Parameter layerNamePar = ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcMaterialLayerName", out materialName);
+                     //if (string.IsNullOrEmpty(materialName))
+                     //materialName = IFCAnyHandleUtil.GetStringAttribute(materialHnds[ii], "IfcName");
+                     layerName = NamingUtil.GetOverrideStringValue(material, "IfcMaterialLayer.Name", IFCAnyHandleUtil.GetStringAttribute(materialHnds[ii], "IfcName"));
+                     description = NamingUtil.GetOverrideStringValue(material, "IfcMaterialLayer.Description", IFCAnyHandleUtil.GetStringAttribute(materialHnds[ii], "IfcDescription"));
+                     category = NamingUtil.GetOverrideStringValue(material, "IfcMaterialLayer.Category", IFCAnyHandleUtil.GetStringAttribute(materialHnds[ii], "IfcCategory"));
+                     int priorityValue;
+                     if (ParameterUtil.GetIntValueFromElement(material, "IfcMaterialLayer.Priority", out priorityValue) != null)
+                        priority = priorityValue;
                   }
-                  IFCAnyHandle materialLayer = IFCInstanceExporter.CreateMaterialLayer(file, materialHnds[ii], scaledWidth, null,
-                                                                     name: materialName, description: description, category: category);
+                  IFCAnyHandle materialLayer = IFCInstanceExporter.CreateMaterialLayer(file, materialHnds[ii], scaledWidth, isVentilated,
+                                                                     name: layerName, description: description, category: category, priority:priority);
                   layers.Add(materialLayer);
                }
 

@@ -742,7 +742,7 @@ namespace Revit.IFC.Export.Exporter.PropertySet
          {
             case PropertyType.PositiveRatio:
                {
-                  if (value <= MathUtil.Eps())
+                  if (value < 0)
                      return null;
 
                   ratioData = IFCDataUtil.CreateAsPositiveRatioMeasure(value);

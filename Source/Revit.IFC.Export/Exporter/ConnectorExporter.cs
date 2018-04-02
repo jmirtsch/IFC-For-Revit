@@ -61,6 +61,10 @@ namespace Revit.IFC.Export.Exporter
       // If originalConnector != null, use that connector for AddConnection routine, instead of connector.
       private static void ProcessConnections(ExporterIFC exporterIFC, Connector connector, Connector originalConnector)
       {
+         // Port connection is not allowed for IFC4RV MVD
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+            return;
+
          Domain domain = connector.Domain;
          bool isElectricalDomain = (domain == Domain.DomainElectrical);
          bool supportsDirection = (domain == Domain.DomainHvac || domain == Domain.DomainPiping);
@@ -223,6 +227,10 @@ namespace Revit.IFC.Export.Exporter
 
       static void AddConnection(ExporterIFC exporterIFC, Connector connector, Connector connected, bool isBiDirectional, bool isElectricalDomain)
       {
+         // Port connection is not allowed in IFC4RV MVD
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4ReferenceView)
+            return;
+
          Element inElement = connector.Owner;
          Element outElement = connected.Owner;
 

@@ -175,7 +175,7 @@ namespace Revit.IFC.Export.Utility
             //if NameOverride is not used or does not exist, test for the actual IFC attribute name: Name (using parameter name: IfcName)
             nameOverride = "IfcName";
             overrideValue = GetOverrideStringValue(element, nameOverride, originalValue);
-            if (!string.IsNullOrEmpty(overrideValue) && overrideValue.Equals(originalValue)
+            if ((string.IsNullOrEmpty(overrideValue) || overrideValue.Equals(originalValue))
                && (element is ElementType || element is FamilySymbol))
             {
                nameOverride = "IfcName[Type]";
@@ -278,7 +278,7 @@ namespace Revit.IFC.Export.Utility
       {
          string nameOverride = "IfcDescription";
          string overrideValue = GetOverrideStringValue(element, nameOverride, originalValue);
-         if (!string.IsNullOrEmpty(overrideValue) && overrideValue.Equals(originalValue)
+         if ((string.IsNullOrEmpty(overrideValue) || overrideValue.Equals(originalValue))
             && (element is ElementType || element is FamilySymbol))
          {
             nameOverride = "IfcDescription[Type]";

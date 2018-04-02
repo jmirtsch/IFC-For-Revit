@@ -104,7 +104,7 @@ namespace Revit.IFC.Export.Exporter
 
                      if (!exportParts)
                      {
-                        IFCExportInfoPair exportInfo = new IFCExportInfoPair(IFCEntityType.IfcSlab, IFCEntityType.IfcSlabType);
+                        IFCExportInfoPair exportInfo = new IFCExportInfoPair(IFCEntityType.IfcSlab, IFCEntityType.IfcSlabType, entityType);
                         IFCAnyHandle typeHnd = ExporterUtil.CreateGenericTypeFromElement(slabElement, exportInfo, file, ownerHistory, entityType, productWrapper);
                         ExporterCacheManager.TypeRelationsCache.Add(typeHnd, slabHnd);
 

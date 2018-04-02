@@ -30,6 +30,7 @@ using Autodesk.Revit.DB.Structure;
 using Revit.IFC.Export.Exporter;
 using Revit.IFC.Common.Utility;
 using Revit.IFC.Common.Enums;
+using Revit.IFC.Export.Toolkit;
 
 namespace Revit.IFC.Export.Utility
 {
@@ -46,6 +47,10 @@ namespace Revit.IFC.Export.Utility
       /// The type for export
       /// </summary>
       public IFCEntityType ExportType { get; set; } = IFCEntityType.UnKnown;
+      /// <summary>
+      /// Validated PredefinedType from IfcExportType (or IfcType for the old param), or from IfcExportAs
+      /// </summary>
+      public string ValidatedPredefinedType { get; set; } = null;
 
       /// <summary>
       /// Initialization of the class
@@ -59,13 +64,20 @@ namespace Revit.IFC.Export.Utility
       /// </summary>
       /// <param name="instance">the entity</param>
       /// <param name="type">the type</param>
-      public IFCExportInfoPair(IFCEntityType instance, IFCEntityType type)
+      public IFCExportInfoPair(IFCEntityType instance, IFCEntityType type, string predefinedType)
       {
          instance = ElementFilteringUtil.GetValidIFCEntityType(instance);
          ExportInstance = instance;
 
          type = ElementFilteringUtil.GetValidIFCEntityType(type);
          ExportType = type;
+
+         if (!string.IsNullOrEmpty(predefinedType))
+         {
+            ValidatedPredefinedType = IFCValidateEntry.GetValidIFCPredefinedTypeType(predefinedType, ValidatedPredefinedType, ExportInstance.ToString());
+            if (string.IsNullOrEmpty(ValidatedPredefinedType))
+               ValidatedPredefinedType = IFCValidateEntry.GetValidIFCPredefinedTypeType(predefinedType, ValidatedPredefinedType, ExportType.ToString());
+         }
       }
 
       /// <summary>
@@ -89,13 +101,20 @@ namespace Revit.IFC.Export.Utility
       /// </summary>
       /// <param name="instance">the entity</param>
       /// <param name="type">the type</param>
-      public void SetValue(IFCEntityType instance, IFCEntityType type)
+      public void SetValue(IFCEntityType instance, IFCEntityType type, string predefinedType)
       {
          instance = ElementFilteringUtil.GetValidIFCEntityType(instance);
          ExportInstance = instance;
 
          type = ElementFilteringUtil.GetValidIFCEntityType(type);
          ExportType = type;
+
+         if (!string.IsNullOrEmpty(predefinedType))
+         {
+            ValidatedPredefinedType = IFCValidateEntry.GetValidIFCPredefinedTypeType(predefinedType, ValidatedPredefinedType, ExportInstance.ToString());
+            if (string.IsNullOrEmpty(ValidatedPredefinedType))
+               ValidatedPredefinedType = IFCValidateEntry.GetValidIFCPredefinedTypeType(predefinedType, ValidatedPredefinedType, ExportType.ToString());
+         }
       }
 
       /// <summary>

@@ -392,6 +392,24 @@ namespace Revit.IFC.Export.Utility
                else
                   DoorOperationTypeString = "NOTDEFINED";         //re-set to NotDefined if operation type is set to UserDefined but the userDefinedOperationType parameter is empty!
             }
+
+            // Get override operationtype from parameter Operation
+            ParameterUtil.GetStringValueFromElementOrSymbol(doorType, "Operation", out doorOperationType);
+            if (!string.IsNullOrEmpty(doorOperationType))
+            {
+               if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+               {
+                  Toolkit.IFC4.IFCDoorTypeOperation doorOp = Toolkit.IFC4.IFCDoorTypeOperation.NOTDEFINED;
+                  if (Enum.TryParse<Toolkit.IFC4.IFCDoorTypeOperation>(doorOperationType, true, out doorOp))
+                     DoorOperationTypeString = doorOp.ToString();
+               }
+               else
+               {
+                  Toolkit.IFCDoorStyleOperation doorOp = Toolkit.IFCDoorStyleOperation.NotDefined;
+                  if (Enum.TryParse<Toolkit.IFCDoorStyleOperation>(doorOperationType, true, out doorOp))
+                     DoorOperationTypeString = doorOp.ToString();
+               }
+            }
          }
 
          if (HasRealWallHost)

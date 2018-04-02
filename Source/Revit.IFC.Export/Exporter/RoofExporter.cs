@@ -87,7 +87,7 @@ namespace Revit.IFC.Export.Exporter
                       localPlacement, exportSlab ? null : representation, predefinedType);
 
                   // Export IfcRoofType
-                  IFCExportInfoPair exportInfo = new IFCExportInfoPair(IFCEntityType.IfcRoof, IFCEntityType.IfcRoofType);
+                  IFCExportInfoPair exportInfo = new IFCExportInfoPair(IFCEntityType.IfcRoof, IFCEntityType.IfcRoofType, null);
                   if (exportInfo.ExportType != IFCEntityType.UnKnown)
                   {
                      if ((ParameterUtil.GetStringValueFromElementOrSymbol(roof, "IfcExportType", out predefinedType) == null) && // change IFCType to consistent parameter of IfcExportType
@@ -95,6 +95,7 @@ namespace Revit.IFC.Export.Exporter
                      {
                         predefinedType = "NotDefined";
                      }
+                     exportInfo.ValidatedPredefinedType = predefinedType;
 
                      IFCAnyHandle typeHnd = ExporterUtil.CreateGenericTypeFromElement(roof, exportInfo, file, ownerHistory, predefinedType, productWrapper);
                      ExporterCacheManager.TypeRelationsCache.Add(typeHnd, roofHnd);

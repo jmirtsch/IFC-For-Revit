@@ -1082,9 +1082,13 @@ namespace Revit.IFC.Common.Utility
          if (!hnd.HasValue)
             throw new ArgumentException("Invalid handle.");
 
-         IFCData ifcData = hnd.GetAttribute(name);
-         if (ifcData.PrimitiveType == IFCDataPrimitiveType.Instance)
-            return ifcData.AsInstance();
+         try
+         {
+            IFCData ifcData = hnd.GetAttribute(name);
+            if (ifcData.PrimitiveType == IFCDataPrimitiveType.Instance)
+               return ifcData.AsInstance();
+         }
+         catch { }
 
          return null;
       }
@@ -1103,9 +1107,13 @@ namespace Revit.IFC.Common.Utility
          if (!hnd.HasValue)
             throw new ArgumentException("Invalid handle.");
 
-         IFCData ifcData = hnd.GetAttribute(name);
-         if (ifcData.PrimitiveType == IFCDataPrimitiveType.String)
-            return ifcData.AsString();
+         try
+         {
+            IFCData ifcData = hnd.GetAttribute(name);
+            if (ifcData.PrimitiveType == IFCDataPrimitiveType.String)
+               return ifcData.AsString();
+         }
+         catch { }
 
          return null;
       }
@@ -1124,9 +1132,13 @@ namespace Revit.IFC.Common.Utility
          if (!hnd.HasValue)
             throw new ArgumentException("Invalid handle.");
 
-         IFCData ifcData = hnd.GetAttribute(name);
-         if (ifcData.PrimitiveType == IFCDataPrimitiveType.Integer)
-            return ifcData.AsInteger();
+         try
+         {
+            IFCData ifcData = hnd.GetAttribute(name);
+            if (ifcData.PrimitiveType == IFCDataPrimitiveType.Integer)
+               return ifcData.AsInteger();
+         }
+         catch { }
 
          return null;
       }
@@ -1145,9 +1157,13 @@ namespace Revit.IFC.Common.Utility
          if (!hnd.HasValue)
             throw new ArgumentException("Invalid handle.");
 
-         IFCData ifcData = hnd.GetAttribute(name);
-         if (ifcData.PrimitiveType == IFCDataPrimitiveType.Double)
-            return ifcData.AsDouble();
+         try
+         {
+            IFCData ifcData = hnd.GetAttribute(name);
+            if (ifcData.PrimitiveType == IFCDataPrimitiveType.Double)
+               return ifcData.AsDouble();
+         }
+         catch { }
 
          return null;
       }
@@ -1166,9 +1182,13 @@ namespace Revit.IFC.Common.Utility
          if (!hnd.HasValue)
             throw new ArgumentException("Invalid handle.");
 
-         IFCData ifcData = hnd.GetAttribute(name);
-         if (ifcData.PrimitiveType == IFCDataPrimitiveType.Boolean)
-            return ifcData.AsBoolean();
+         try
+         {
+            IFCData ifcData = hnd.GetAttribute(name);
+            if (ifcData.PrimitiveType == IFCDataPrimitiveType.Boolean)
+               return ifcData.AsBoolean();
+         }
+         catch { }
 
          return null;
       }
@@ -1187,9 +1207,13 @@ namespace Revit.IFC.Common.Utility
          if (!hnd.HasValue)
             throw new ArgumentException("Invalid handle.");
 
-         IFCData ifcData = hnd.GetAttribute(name);
-         if (ifcData.PrimitiveType == IFCDataPrimitiveType.Logical)
-            return ifcData.AsLogical();
+         try
+         {
+            IFCData ifcData = hnd.GetAttribute(name);
+            if (ifcData.PrimitiveType == IFCDataPrimitiveType.Logical)
+               return ifcData.AsLogical();
+         }
+         catch { }
 
          return null;
       }
@@ -1212,9 +1236,13 @@ namespace Revit.IFC.Common.Utility
          if (!hnd.HasValue)
             throw new ArgumentException("Invalid handle.");
 
-         IFCData ifcData = hnd.GetAttribute(name);
-         if (ifcData.PrimitiveType == IFCDataPrimitiveType.Enumeration)
-            return ifcData.AsString();
+         try
+         {
+            IFCData ifcData = hnd.GetAttribute(name);
+            if (ifcData.PrimitiveType == IFCDataPrimitiveType.Enumeration)
+               return ifcData.AsString();
+         }
+         catch { }
 
          return null;
       }

@@ -1192,25 +1192,73 @@ namespace Revit.IFC.Export.Exporter
 
          string grossPlannedAreaName = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? "GrossPlannedArea" : "GrossAreaPlanned";
          propSingleValue = PropertyUtil.CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, element,
-             "Zone" + grossPlannedAreaName, BuiltInParameter.INVALID, grossPlannedAreaName, PropertyValueType.SingleValue);
+             "Pset_ZoneCommon." + grossPlannedAreaName, BuiltInParameter.INVALID, grossPlannedAreaName, PropertyValueType.SingleValue);
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
+         {
+            // For backward compatibility
+            propSingleValue = PropertyUtil.CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, element,
+                "Zone" + grossPlannedAreaName, BuiltInParameter.INVALID, grossPlannedAreaName, PropertyValueType.SingleValue);
+         }
          if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
             properties.Add(propSingleValue);
 
          string netPlannedAreaName = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? "NetPlannedArea" : "NetAreaPlanned";
          propSingleValue = PropertyUtil.CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, element,
-             "Zone" + netPlannedAreaName, BuiltInParameter.INVALID, netPlannedAreaName, PropertyValueType.SingleValue);
+             "Pset_ZoneCommon." + netPlannedAreaName, BuiltInParameter.INVALID, netPlannedAreaName, PropertyValueType.SingleValue);
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
+         {
+            // For backward compatibility
+            propSingleValue = PropertyUtil.CreateAreaMeasurePropertyFromElementOrSymbol(file, exporterIFC, element,
+                "Zone" + netPlannedAreaName, BuiltInParameter.INVALID, netPlannedAreaName, PropertyValueType.SingleValue);
+         }
          if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
             properties.Add(propSingleValue);
 
          propSingleValue = PropertyUtil.CreateBooleanPropertyFromElementOrSymbol(file, element,
-             "ZonePubliclyAccessible", "PubliclyAccessible", PropertyValueType.SingleValue);
+             "Pset_ZoneCommon.PubliclyAccessible", "PubliclyAccessible", PropertyValueType.SingleValue);
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
+         {
+            propSingleValue = PropertyUtil.CreateBooleanPropertyFromElementOrSymbol(file, element,
+               "ZonePubliclyAccessible", "PubliclyAccessible", PropertyValueType.SingleValue);
+         }
          if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
          {
             properties.Add(propSingleValue);
          }
 
          propSingleValue = PropertyUtil.CreateBooleanPropertyFromElementOrSymbol(file, element,
-             "ZoneHandicapAccessible", "HandicapAccessible", PropertyValueType.SingleValue);
+             "Pset_ZoneCommon.HandicapAccessible", "HandicapAccessible", PropertyValueType.SingleValue);
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
+         {
+            propSingleValue = PropertyUtil.CreateBooleanPropertyFromElementOrSymbol(file, element,
+               "ZoneHandicapAccessible", "HandicapAccessible", PropertyValueType.SingleValue);
+
+         }
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
+         {
+            properties.Add(propSingleValue);
+         }
+
+         propSingleValue = PropertyUtil.CreateBooleanPropertyFromElementOrSymbol(file, element,
+            "Pset_ZoneCommon.IsExternal", "IsExternal", PropertyValueType.SingleValue);
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
+         {
+            propSingleValue = PropertyUtil.CreateBooleanPropertyFromElementOrSymbol(file, element,
+               "ZoneIsExternal", "IsExternal", PropertyValueType.SingleValue);
+
+         }
+         if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
+         {
+            properties.Add(propSingleValue);
+         }
+
+         propSingleValue = PropertyUtil.CreateIdentifierPropertyFromElementOrSymbol(file, element,
+            "Pset_ZoneCommon.Reference", BuiltInParameter.INVALID, "Reference", PropertyValueType.SingleValue);
+         if (IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
+         {
+            propSingleValue = PropertyUtil.CreateIdentifierPropertyFromElementOrSymbol(file, element,
+               "ZoneReference", BuiltInParameter.INVALID, "Reference", PropertyValueType.SingleValue);
+         }
          if (!IFCAnyHandleUtil.IsNullOrHasNoValue(propSingleValue))
          {
             properties.Add(propSingleValue);

@@ -247,14 +247,20 @@ namespace Revit.IFC.Export.Exporter
                      if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
                      {
                         guid = GUIDUtil.CreateSubElementGUID(originalFamilySymbol, (int)IFCDoorSubElements.DoorType);
-                        typeStyle = IFCInstanceExporter.CreateDoorType(file, originalFamilySymbol,
+                        //typeStyle = IFCInstanceExporter.CreateDoorType(file, originalFamilySymbol,
+                        //   propertySets, repMapList, doorWindowInfo.PreDefinedType, doorWindowInfo.DoorOperationTypeString,
+                        //   paramTakesPrecedence, doorWindowInfo.UserDefinedOperationType);
+                        typeStyle = IFCInstanceExporter.CreateDoorType(file, familySymbol,
                            propertySets, repMapList, doorWindowInfo.PreDefinedType, doorWindowInfo.DoorOperationTypeString,
                            paramTakesPrecedence, doorWindowInfo.UserDefinedOperationType);
                      }
                      else
                      {
                         guid = GUIDUtil.CreateSubElementGUID(originalFamilySymbol, (int)IFCDoorSubElements.DoorStyle);
-                        typeStyle = IFCInstanceExporter.CreateDoorStyle(file, originalFamilySymbol,
+                        //typeStyle = IFCInstanceExporter.CreateDoorStyle(file, originalFamilySymbol,
+                        //   propertySets, repMapList, doorWindowInfo.DoorOperationTypeString, DoorWindowUtil.GetDoorStyleConstruction(familyInstance),
+                        //   paramTakesPrecedence, sizeable);
+                        typeStyle = IFCInstanceExporter.CreateDoorStyle(file, familySymbol,
                            propertySets, repMapList, doorWindowInfo.DoorOperationTypeString, DoorWindowUtil.GetDoorStyleConstruction(familyInstance),
                            paramTakesPrecedence, sizeable);
                      }
@@ -268,7 +274,7 @@ namespace Revit.IFC.Export.Exporter
                   }
                case IFCEntityType.IfcSystemFurnitureElement:
                   {
-                     typeStyle = IFCInstanceExporter.CreateSystemFurnitureElementType(file, familySymbol, propertySets, repMapList);
+                     typeStyle = IFCInstanceExporter.CreateSystemFurnitureElementType(file, familySymbol, propertySets, repMapList, exportType.ValidatedPredefinedType);
 
                      break;
                   }
@@ -304,6 +310,16 @@ namespace Revit.IFC.Export.Exporter
                   {
                      typeStyle = IFCInstanceExporter.CreateGenericIFCType(exportType, familySymbol, file, propertySets, repMapList,
                         FamilyExporterUtil.GetPreDefinedType<Toolkit.IFCBuildingElementProxyType>(familyInstance, ifcEnumType).ToString());
+                     break;
+                  }
+               case IFCEntityType.IfcFurniture:
+                  {
+                     string predefType = null;
+                     if (string.IsNullOrEmpty(exportType.ValidatedPredefinedType))
+                        predefType = FamilyExporterUtil.GetPreDefinedType<Toolkit.IFCBuildingElementProxyType>(familyInstance, ifcEnumType).ToString();
+                     else
+                        predefType = exportType.ValidatedPredefinedType;
+                     typeStyle = IFCInstanceExporter.CreateFurnitureType(file, familySymbol, propertySets, repMapList, null, null, null, predefType);
                      break;
                   }
             }
