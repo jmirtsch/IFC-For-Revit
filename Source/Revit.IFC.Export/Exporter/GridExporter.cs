@@ -437,14 +437,8 @@ namespace Revit.IFC.Export.Exporter
             foreach (ElementId levelId in ExporterCacheManager.LevelInfoCache.BuildingStoreysByElevation)
             {
                Level level = document.GetElement(levelId) as Level;
-               try
-               {
+               if (!levelIds.ContainsKey(level.Elevation))
                   levelIds.Add(level.Elevation, levelId);
-               }
-               catch (ArgumentException ex)
-               {
-                  // likely here because of duplicate levels with the same elevation. Ignore the error and use only the first one for use with Grid
-               }
             }
          }
 
