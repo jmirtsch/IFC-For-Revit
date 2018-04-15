@@ -289,9 +289,6 @@ namespace Revit.IFC.Export.Exporter
                         // Footprint representation will only be exported in export to IFC4
                         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
                         {
-                           // Get back the representations, we need to add the Footprint to it
-                           //IList<IFCAnyHandle> representations = IFCAnyHandleUtil.GetRepresentations(prodRepsTmp[ii]);
-
                            if (extrusionLoops.Count > ii)
                            {
                               if (extrusionLoops[ii].Count > 0)
@@ -310,16 +307,7 @@ namespace Revit.IFC.Export.Exporter
                                  IFCAnyHandleUtil.AddRepresentations(prodReps[ii], reps);
                               }
                            }
-                           //IFCAnyHandle prodRep = IFCInstanceExporter.CreateProductDefinitionShape(file, null, null, representations);
-                           //prodReps.Add(prodRep);
                         }
-                        else
-                        {
-                           //prodReps.Add(prodRepsTmp[ii]);
-                        }
-
-                        // We do not need the prodRepsTmp anymore, delete the handle:
-                        //prodRepsTmp[ii].Delete();
                      }
                   }
 
@@ -391,33 +379,6 @@ namespace Revit.IFC.Export.Exporter
                         IFCAnyHandleUtil.SetAttribute(slabHnd, "Name", ifcName);
                      if (!string.IsNullOrEmpty(predefinedType))
                         IFCAnyHandleUtil.SetAttribute(slabHnd, "PredefinedType", predefinedType, true);
-                     // TODO: replace with CreateGenericBuildingElement.
-                     //           switch (exportType)
-                     //           {
-                     //              case IFCExportType.IfcFooting:
-                     //                 slabHnd = IFCInstanceExporter.CreateFooting(exporterIFC, floorElement, currentGUID, ownerHistory,
-                     //                     localPlacementHnd, exportParts ? null : prodReps[ii], entityType);
-                     //                 break;
-                     //              case IFCExportType.IfcCovering:
-                     //                 slabHnd = IFCInstanceExporter.CreateCovering(exporterIFC, floorElement, currentGUID, ownerHistory, 
-                     //                     localPlacementHnd, exportParts ? null : prodReps[ii], entityType);
-                     //                 break;
-                     //              case IFCExportType.IfcRamp:
-                     //                 slabHnd = IFCInstanceExporter.CreateRamp(exporterIFC, floorElement, currentGUID, ownerHistory, 
-                     //localPlacementHnd, exportParts ? null : prodReps[ii], entityType);
-                     //                 break;
-                     //              default:
-                     //                 //if ((canExportAsInternalExtrusion || exportedAsInternalExtrusion) && ExporterCacheManager.ExportOptionsCache.ExportAs4)
-                     //                 //{
-                     //                 //    slabHnd = IFCInstanceExporter.CreateSlabStandardCase(file, currentGUID, ownerHistory, ifcName,
-                     //                 //        ifcDescription, ifcObjectType, localPlacementHnd, exportParts ? null : prodReps[ii],
-                     //                 //        ifcTag, entityType);
-                     //                 //}
-                     //                 //else
-                     //                 slabHnd = IFCInstanceExporter.CreateSlab(exporterIFC, floorElement, currentGUID, ownerHistory,
-                     //localPlacementHnd, exportParts ? null : prodReps[ii], entityType);
-                     //                 break;
-                     //           }
 
                      if (IFCAnyHandleUtil.IsNullOrHasNoValue(slabHnd))
                         return;

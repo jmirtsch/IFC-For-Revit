@@ -2256,23 +2256,16 @@ namespace Revit.IFC.Export.Toolkit
       public static IFCAnyHandle CreateStair(ExporterIFC exporterIFC, Element element, string guid, IFCAnyHandle ownerHistory,
           IFCAnyHandle objectPlacement, IFCAnyHandle representation, string shapeType)
       {
-         string validatedType;
-
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle stair = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcStair, element);
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             SetSpecificEnumAttr(stair, "PredefinedType", shapeType, "IfcStairType");
-            //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCStairType>(shapeType);
-            //IFCAnyHandleUtil.SetAttribute(stair, "PreDefinedType", validatedType, true);
          }
          else
          {
             SetSpecificEnumAttr(stair, "ShapeType", shapeType, "IfcStairType");
-
-            //validatedType = IFCValidateEntry.ValidateStrEnum<IFCStairType>(shapeType);
-            //IFCAnyHandleUtil.SetAttribute(stair, "ShapeType", validatedType, true);
          }
          SetElement(exporterIFC, stair, element, guid, ownerHistory, objectPlacement, representation);
          return stair;
@@ -2296,7 +2289,6 @@ namespace Revit.IFC.Export.Toolkit
           IFCAnyHandle objectPlacement, IFCAnyHandle representation,
           int? numberOfRiser, int? numberOfTreads, double? riserHeight, double? treadLength, string preDefinedType)
       {
-         string validatedType;
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle stairFlight = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcStairFlight, element);
@@ -2310,9 +2302,6 @@ namespace Revit.IFC.Export.Toolkit
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             SetSpecificEnumAttr(stairFlight, "PredefinedType", preDefinedType, "IfcStairFlightType");
-
-            //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCStairFlightType>(preDefinedType);
-            //IFCAnyHandleUtil.SetAttribute(stairFlight, "PreDefinedType", validatedType, true);
          }
 
          return stairFlight;
@@ -2334,17 +2323,12 @@ namespace Revit.IFC.Export.Toolkit
       public static IFCAnyHandle CreateRampFlight(ExporterIFC exporterIFC, Element element, string guid, IFCAnyHandle ownerHistory,
           IFCAnyHandle objectPlacement, IFCAnyHandle representation, string preDefinedType)
       {
-         //string validatedType;
-
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle rampFlight = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcRampFlight, element);
          if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
          {
             SetSpecificEnumAttr(rampFlight, "PredefinedType", preDefinedType, "IfcRampFlightType");
-
-            //validatedType = IFCValidateEntry.ValidateStrEnum<IFC4.IFCRampFlightType>(preDefinedType);
-            //IFCAnyHandleUtil.SetAttribute(rampFlight, "PreDefinedType", validatedType, true);
          }
 
          SetElement(exporterIFC, rampFlight, element, guid, ownerHistory, objectPlacement, representation);
@@ -7576,13 +7560,18 @@ namespace Revit.IFC.Export.Toolkit
       /// <param name="materiallayers">The material layers.</param>
       /// <param name="name">The name.</param>
       /// <returns>The handle.</returns>
-      public static IFCAnyHandle CreateMaterialLayerSet(IFCFile file, IList<IFCAnyHandle> materiallayers, string name)
+      public static IFCAnyHandle CreateMaterialLayerSet(IFCFile file, IList<IFCAnyHandle> materiallayers, string name, string description=null)
       {
          IFCAnyHandleUtil.ValidateSubTypeOf(materiallayers, false, IFCEntityType.IfcMaterialLayer);
 
          IFCAnyHandle materialLayerSet = CreateInstance(file, IFCEntityType.IfcMaterialLayerSet, null);
          IFCAnyHandleUtil.SetAttribute(materialLayerSet, "MaterialLayers", materiallayers);
          IFCAnyHandleUtil.SetAttribute(materialLayerSet, "LayerSetName", name);
+         if (ExporterCacheManager.ExportOptionsCache.ExportAs4)
+         {
+            if (!string.IsNullOrEmpty(description))
+               IFCAnyHandleUtil.SetAttribute(materialLayerSet, "Description", description);
+         }
          return materialLayerSet;
       }
 

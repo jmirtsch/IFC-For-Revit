@@ -36,15 +36,18 @@ namespace Revit.IFC.Export.Toolkit
          //    (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null))  // support IFCType for legacy support
          //   value = typeName;
 
-         try
+         if (!string.IsNullOrEmpty(typeName))
          {
-            string desiredTypeExtra = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? "IFC4." : string.Empty;
-            string desiredType = "Revit.IFC.Export.Toolkit." + desiredTypeExtra + theTypeEnumStr;
-            Type theTypeEnum = Type.GetType(desiredType, false, true);
-            if (theTypeEnum != null)
-               enumValue = Enum.Parse(theTypeEnum, typeName, true).ToString();
+            try
+            {
+               string desiredTypeExtra = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? "IFC4." : string.Empty;
+               string desiredType = "Revit.IFC.Export.Toolkit." + desiredTypeExtra + theTypeEnumStr;
+               Type theTypeEnum = Type.GetType(desiredType, false, true);
+               if (theTypeEnum != null)
+                  enumValue = Enum.Parse(theTypeEnum, typeName, true).ToString();
+            }
+            catch { }
          }
-         catch { }
 
          if (String.IsNullOrEmpty(enumValue))
          {

@@ -2140,6 +2140,7 @@ namespace Revit.IFC.Export.Utility
                if (!string.IsNullOrEmpty(paramValue))
                {
                   IFCAnyHandle singleMaterialOverrideHnd = IFCInstanceExporter.CreateMaterial(exporterIFC.GetFile(), paramValue, null, null);
+                  ExporterCacheManager.MaterialHandleCache.Register(matIds[0], singleMaterialOverrideHnd);
                   return singleMaterialOverrideHnd;
                }
             }
@@ -2177,9 +2178,9 @@ namespace Revit.IFC.Export.Utility
                      //Parameter layerNamePar = ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcMaterialLayerName", out materialName);
                      //if (string.IsNullOrEmpty(materialName))
                      //materialName = IFCAnyHandleUtil.GetStringAttribute(materialHnds[ii], "IfcName");
-                     layerName = NamingUtil.GetOverrideStringValue(material, "IfcMaterialLayer.Name", IFCAnyHandleUtil.GetStringAttribute(materialHnds[ii], "IfcName"));
-                     description = NamingUtil.GetOverrideStringValue(material, "IfcMaterialLayer.Description", IFCAnyHandleUtil.GetStringAttribute(materialHnds[ii], "IfcDescription"));
-                     category = NamingUtil.GetOverrideStringValue(material, "IfcMaterialLayer.Category", IFCAnyHandleUtil.GetStringAttribute(materialHnds[ii], "IfcCategory"));
+                     layerName = NamingUtil.GetOverrideStringValue(material, "IfcMaterialLayer.Name", IFCAnyHandleUtil.GetStringAttribute(materialHnds[ii], "Name"));
+                     description = NamingUtil.GetOverrideStringValue(material, "IfcMaterialLayer.Description", IFCAnyHandleUtil.GetStringAttribute(materialHnds[ii], "Description"));
+                     category = NamingUtil.GetOverrideStringValue(material, "IfcMaterialLayer.Category", IFCAnyHandleUtil.GetStringAttribute(materialHnds[ii], "Category"));
                      int priorityValue;
                      if (ParameterUtil.GetIntValueFromElement(material, "IfcMaterialLayer.Priority", out priorityValue) != null)
                         priority = priorityValue;
@@ -2189,8 +2190,10 @@ namespace Revit.IFC.Export.Utility
                   layers.Add(materialLayer);
                }
 
-               string layerSetName = exporterIFC.GetFamilyName();
-               materialLayerSet = IFCInstanceExporter.CreateMaterialLayerSet(file, layers, layerSetName);
+               Element type = document.GetElement(typeElemId);
+               string layerSetName = NamingUtil.GetOverrideStringValue(type, "IfcMaterialLayerSet.Name", exporterIFC.GetFamilyName());
+               string layerSetDesc = NamingUtil.GetOverrideStringValue(type, "IfcMaterialLayerSet.Description", null);
+               materialLayerSet = IFCInstanceExporter.CreateMaterialLayerSet(file, layers, layerSetName, layerSetDesc);
 
                ExporterCacheManager.MaterialSetCache.RegisterLayerSet(typeElemId, materialLayerSet);
                ExporterCacheManager.MaterialSetCache.RegisterPrimaryMaterialHnd(typeElemId, primaryMaterialHnd);

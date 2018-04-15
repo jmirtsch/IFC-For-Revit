@@ -2291,7 +2291,9 @@ namespace Revit.IFC.Export.Exporter
          {
             // As per IFC implementer's agreement, we get IfcProject.Name from ProjectInfo.Number and IfcProject.Longname from ProjectInfo.Name 
             projectName = (projectInfo != null) ? projectInfo.Number : null;
+            projectName = NamingUtil.GetOverrideStringValue(projectInfo, "Project Number", projectName);
             projectLongName = (projectInfo != null) ? projectInfo.Name : null;
+            projectLongName = NamingUtil.GetOverrideStringValue(projectInfo, "Project Name", projectLongName);
 
             // Get project description if it is set in the Project info
             projectDescription = (projectInfo != null) ? NamingUtil.GetDescriptionOverride(projectInfo, null) : null;
