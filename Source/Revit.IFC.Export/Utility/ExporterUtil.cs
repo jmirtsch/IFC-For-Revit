@@ -1480,13 +1480,13 @@ namespace Revit.IFC.Export.Utility
                }
             }
          }
+
          if (!string.IsNullOrEmpty(enumTypeValue))
          {
-            enumTypeValue = IFCValidateEntry.GetValidIFCPredefinedTypeType(enumTypeValue, "NOTDEFINED", exportType.ExportInstance.ToString());
-            if (string.IsNullOrEmpty(enumTypeValue))
-               enumTypeValue = IFCValidateEntry.GetValidIFCPredefinedTypeType(enumTypeValue, "NOTDEFINED", exportType.ExportType.ToString());
+            exportType.ValidatedPredefinedType = IFCValidateEntry.GetValidIFCPredefinedTypeType(enumTypeValue, null, exportType.ExportInstance.ToString());
+            if (string.IsNullOrEmpty(exportType.ValidatedPredefinedType))
+               exportType.ValidatedPredefinedType = IFCValidateEntry.GetValidIFCPredefinedTypeType(enumTypeValue, "NOTDEFINED", exportType.ExportType.ToString());
          }
-         exportType.ValidatedPredefinedType = enumTypeValue;
          return exportType;
       }
 
@@ -2154,8 +2154,11 @@ namespace Revit.IFC.Export.Utility
 
                for (int ii = 0; ii < numLayersToCreate; ii++)
                {
-                  Material material = document.GetElement(matIds[ii]) as Material;
+                  if (matIds[ii] == ElementId.InvalidElementId)
+                     continue;
 
+                  Material material = document.GetElement(matIds[ii]) as Material;
+                 
                   int widthIndex = widthIndices[ii];
                   double scaledWidth = UnitUtil.ScaleLength(widths[widthIndex]);
 
@@ -2190,13 +2193,17 @@ namespace Revit.IFC.Export.Utility
                   layers.Add(materialLayer);
                }
 
-               Element type = document.GetElement(typeElemId);
-               string layerSetName = NamingUtil.GetOverrideStringValue(type, "IfcMaterialLayerSet.Name", exporterIFC.GetFamilyName());
-               string layerSetDesc = NamingUtil.GetOverrideStringValue(type, "IfcMaterialLayerSet.Description", null);
-               materialLayerSet = IFCInstanceExporter.CreateMaterialLayerSet(file, layers, layerSetName, layerSetDesc);
+               if (layers.Count > 0)
+               {
+                  Element type = document.GetElement(typeElemId);
+                  string layerSetName = NamingUtil.GetOverrideStringValue(type, "IfcMaterialLayerSet.Name", exporterIFC.GetFamilyName());
+                  string layerSetDesc = NamingUtil.GetOverrideStringValue(type, "IfcMaterialLayerSet.Description", null);
+                  materialLayerSet = IFCInstanceExporter.CreateMaterialLayerSet(file, layers, layerSetName, layerSetDesc);
 
-               ExporterCacheManager.MaterialSetCache.RegisterLayerSet(typeElemId, materialLayerSet);
-               ExporterCacheManager.MaterialSetCache.RegisterPrimaryMaterialHnd(typeElemId, primaryMaterialHnd);
+                  ExporterCacheManager.MaterialSetCache.RegisterLayerSet(typeElemId, materialLayerSet);
+               }
+               if (!IFCAnyHandleUtil.IsNullOrHasNoValue(primaryMaterialHnd))
+                  ExporterCacheManager.MaterialSetCache.RegisterPrimaryMaterialHnd(typeElemId, primaryMaterialHnd);
             }
          }
 

@@ -31,29 +31,37 @@ namespace Revit.IFC.Export.Toolkit
       public static string GetValidIFCPredefinedTypeType(/*Element element, */string typeName, string defaultValue, string theTypeEnumStr)
       {
          string enumValue = null;
+         Type theTypeEnum = null;
          // Do this in ExporterUtil.cs:GetExportType(). Instead validate the Enum according to the specific schema for export
          //if ((ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcExportType", out value) == null) && // change IFCType to consistent parameter of IfcExportType
          //    (ParameterUtil.GetStringValueFromElementOrSymbol(element, "IfcType", out value) == null))  // support IFCType for legacy support
          //   value = typeName;
 
+         string desiredTypeExtra = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? "IFC4." : string.Empty;
+         string desiredType = "Revit.IFC.Export.Toolkit." + desiredTypeExtra + theTypeEnumStr;
+         theTypeEnum = Type.GetType(desiredType, false, true);
+
+         // The type is not found
+         if (theTypeEnum == null)
+            return null;
+
          if (!string.IsNullOrEmpty(typeName))
          {
             try
             {
-               string desiredTypeExtra = ExporterCacheManager.ExportOptionsCache.ExportAs4 ? "IFC4." : string.Empty;
-               string desiredType = "Revit.IFC.Export.Toolkit." + desiredTypeExtra + theTypeEnumStr;
-               Type theTypeEnum = Type.GetType(desiredType, false, true);
-               if (theTypeEnum != null)
-                  enumValue = Enum.Parse(theTypeEnum, typeName, true).ToString();
+               enumValue = Enum.Parse(theTypeEnum, typeName, true).ToString();
             }
             catch { }
          }
 
          if (String.IsNullOrEmpty(enumValue))
          {
-            if (!String.IsNullOrEmpty(defaultValue))
-               return defaultValue;
-            return "NOTDEFINED";
+            try
+            {
+               if (!String.IsNullOrEmpty(defaultValue))
+                  enumValue = Enum.Parse(theTypeEnum, defaultValue, true).ToString();
+            }
+            catch { }
          }
          return enumValue;
       }

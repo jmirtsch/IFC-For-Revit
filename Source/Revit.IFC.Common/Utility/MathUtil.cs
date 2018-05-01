@@ -117,9 +117,9 @@ namespace Revit.IFC.Common.Utility
          range[1] = midRange + halfPeriod;
 
          double shiftCountAsDouble = 0.0;
-         if (number < range[0])
+         if (number < range[0] && !MathUtil.IsAlmostEqual(number, range[0]))
             shiftCountAsDouble += (1.0 + Math.Floor((range[0] - number) / period));
-         if (number >= range[1])
+         if (number >= range[1] && !MathUtil.IsAlmostEqual(number, range[1]))
             shiftCountAsDouble -= (1.0 + Math.Floor((number - range[1]) / period));
 
          number += period * shiftCountAsDouble;
