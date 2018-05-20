@@ -18,14 +18,14 @@
 */
 
 grammar ParamExprGrammar;
+
 @header {
-#pragma warning disable 3021
+   #pragma warning disable 3021
 }
 
 @lexer::members
 {
-	public static int WHITESPACE = 1;
-	public static int COMMENTS = 2;
+	public const int WHITESPACE = 1;
 }
 
 /*
@@ -81,12 +81,13 @@ NUMBER:			INT '.' INT? EXP?   // 1.35, 1.35E-9, 0.3
 				   | INT EXP?            // 1e10
 				   | INT                // 45
 				   ;
+INT:    INT_DIGITS; 
 fragment ALPHANUMERIC:          [a-zA-Z0-9_] ;
 fragment ESC:			'\\' (["\\/bfnrt] | UNICODE) ;
 fragment UNICODE :		'u' HEX HEX HEX HEX ;
 fragment HEX :			[0-9a-fA-F] ;
-fragment NAMEWITHSPECIALCHAR:   [a-zA-Z0-9&*%^@!_=+-/.,];
-fragment INT:                   [0] | [0-9] [0-9]* ; 
+fragment NAMEWITHSPECIALCHAR:   [a-zA-Z0-9&*%^@!_=+/.,\-];
+fragment INT_DIGITS:                   [0] | [0-9] [0-9]* ; 
 fragment EXP:                   [Ee] [+\-]? INT ; 
 
 WS:				[ \t\n\r]+ -> channel(WHITESPACE) ;
