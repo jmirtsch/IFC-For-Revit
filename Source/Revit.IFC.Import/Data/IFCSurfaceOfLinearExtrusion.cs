@@ -157,6 +157,7 @@ namespace Revit.IFC.Import.Data
             // profile curve that we want
             IFCSimpleProfile simpleSweptCurve = SweptCurve as IFCSimpleProfile;
             CurveLoop outerCurve = simpleSweptCurve.OuterCurve;
+            //outerCurve.Transform(Position);
             if (outerCurve == null)
             {
                return null;
@@ -170,8 +171,8 @@ namespace Revit.IFC.Import.Data
          if (lcs == null)
             return RuledSurface.Create(sweptCurve, profileCurve2);
 
-         Curve transformedProfileCurve1 = sweptCurve.CreateTransformed(lcs);
-         Curve transformedProfileCurve2 = profileCurve2.CreateTransformed(lcs);
+         Curve transformedProfileCurve1 = sweptCurve.CreateTransformed(Position.Multiply(lcs));
+         Curve transformedProfileCurve2 = profileCurve2.CreateTransformed(Position.Multiply(lcs));
 
          return RuledSurface.Create(transformedProfileCurve1, transformedProfileCurve2);
       }
