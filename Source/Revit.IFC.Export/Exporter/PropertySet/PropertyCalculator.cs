@@ -75,13 +75,13 @@ namespace Revit.IFC.Export.Exporter.PropertySet
       {
          return false;
       }
-      /// <summary>
-      /// Determines if the calculator calculates only one parameter, or multiple.
-      /// </summary>
-      public virtual bool CalculatesMultipleParameters
-      {
-         get { return false; }
-      }
+      ///// <summary>
+      ///// Determines if the calculator calculates only one parameter, or multiple.
+      ///// </summary>
+      //public virtual bool CalculatesMultipleParameters
+      //{
+      //   get { return false; }
+      //}
 
       /// <summary>
       /// Determines if the calculator calculates only one value, or multiple.

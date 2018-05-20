@@ -312,7 +312,8 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                   break;
                }
             default:
-               throw new InvalidOperationException();
+               //throw new InvalidOperationException();
+               break;
          }
 
          return propHnd;
@@ -419,9 +420,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                   }
                case PropertyType.Integer:
                   {
-                     if (PropertyCalculator.CalculatesMultipleParameters)
-                        propHnd = PropertyUtil.CreateIntegerPropertyFromCache(file, propertyName, PropertyCalculator.GetIntValue(propertyName), valueType);
-                     else
+                     //if (PropertyCalculator.CalculatesMultipleParameters)
+                     //   propHnd = PropertyUtil.CreateIntegerPropertyFromCache(file, propertyName, PropertyCalculator.GetIntValue(propertyName), valueType);
+                     //else
                         propHnd = PropertyUtil.CreateIntegerPropertyFromCache(file, propertyName, PropertyCalculator.GetIntValue(), valueType);
                      break;
                   }
@@ -432,17 +433,17 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                   }
                case PropertyType.Length:
                   {
-                     if (PropertyCalculator.CalculatesMultipleParameters)
-                        propHnd = PropertyUtil.CreateLengthMeasurePropertyFromCache(file, propertyName, PropertyCalculator.GetDoubleValue(propertyName), valueType);
-                     else
+                     //if (PropertyCalculator.CalculatesMultipleParameters)
+                     //   propHnd = PropertyUtil.CreateLengthMeasurePropertyFromCache(file, propertyName, PropertyCalculator.GetDoubleValue(propertyName), valueType);
+                     //else
                         propHnd = PropertyUtil.CreateLengthMeasurePropertyFromCache(file, propertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
                case PropertyType.PositiveLength:
                   {
-                     if (PropertyCalculator.CalculatesMultipleParameters)
-                        propHnd = PropertyUtil.CreatePositiveLengthMeasureProperty(file, propertyName, PropertyCalculator.GetDoubleValue(propertyName), valueType);
-                     else
+                     //if (PropertyCalculator.CalculatesMultipleParameters)
+                     //   propHnd = PropertyUtil.CreatePositiveLengthMeasureProperty(file, propertyName, PropertyCalculator.GetDoubleValue(propertyName), valueType);
+                     //else
                         propHnd = PropertyUtil.CreatePositiveLengthMeasureProperty(file, propertyName, PropertyCalculator.GetDoubleValue(), valueType);
                      break;
                   }
@@ -478,9 +479,9 @@ namespace Revit.IFC.Export.Exporter.PropertySet
                   }
                case PropertyType.Count:
                   {
-                     if (PropertyCalculator.CalculatesMultipleParameters)
-                        propHnd = PropertyUtil.CreateCountMeasureProperty(file, propertyName, PropertyCalculator.GetIntValue(propertyName), valueType);
-                     else
+                     //if (PropertyCalculator.CalculatesMultipleParameters)
+                     //   propHnd = PropertyUtil.CreateCountMeasureProperty(file, propertyName, PropertyCalculator.GetIntValue(propertyName), valueType);
+                     //else
                         propHnd = PropertyUtil.CreateCountMeasureProperty(file, propertyName, PropertyCalculator.GetIntValue(), valueType);
                      break;
                   }

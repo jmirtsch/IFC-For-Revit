@@ -967,6 +967,7 @@ namespace Revit.IFC.Export.Utility
          IFCEntityType prodHndType = IFCAnyHandleUtil.GetEntityType(prodHnd);
          string hndTypeStr = prodHndType.ToString();
          IFCEntityType altProdHndType = IFCEntityType.UnKnown;
+         IFCEntityType altProdHndType2 = IFCEntityType.UnKnown;
 
          // PropertySetEntry will only have an information about IFC entity (or type) for the Pset definition but may not be both
          // Here we will check for both and assign Pset to create equally for both Element or ElementType
@@ -974,10 +975,20 @@ namespace Revit.IFC.Export.Utility
          if (IFCAnyHandleUtil.IsSubTypeOf(prodHnd, IFCEntityType.IfcObject))
          {
             Enum.TryParse<IFCEntityType>(hndTypeStr + "Type", out altProdHndType);
+
+            // Need to handle backward compatibility for IFC2x3
+            if (IFCAnyHandleUtil.IsTypeOf(prodHnd, IFCEntityType.IfcFurnishingElement)
+               && (ExporterCacheManager.ExportOptionsCache.ExportAs2x3 || ExporterCacheManager.ExportOptionsCache.ExportAs2x2))
+               Enum.TryParse<IFCEntityType>("IfcFurnitureType", out altProdHndType2);
          }
          else if (IFCAnyHandleUtil.IsSubTypeOf(prodHnd, IFCEntityType.IfcTypeObject))
          {
-            Enum.TryParse<IFCEntityType>(hndTypeStr.Substring(0, hndTypeStr.Length - 4), out altProdHndType);
+            // Need to handle backward compatibility for IFC2x3
+            if (IFCAnyHandleUtil.IsTypeOf(prodHnd, IFCEntityType.IfcFurnitureType)
+               && (ExporterCacheManager.ExportOptionsCache.ExportAs2x3 || ExporterCacheManager.ExportOptionsCache.ExportAs2x2))
+               Enum.TryParse<IFCEntityType>("IfcFurnishingElement", out altProdHndType);
+            else
+               Enum.TryParse<IFCEntityType>(hndTypeStr.Substring(0, hndTypeStr.Length - 4), out altProdHndType);
          }
 
          IList<PropertySetDescription> tmpCachedPsets = null;
@@ -992,6 +1003,15 @@ namespace Revit.IFC.Export.Utility
          if (tmpCachedPsets != null)
             psetdefListType = (List<PropertySetDescription>)tmpCachedPsets;
          psetdefListObj.Union(psetdefListType);
+
+         tmpCachedPsets = null;
+         if (altProdHndType2 != IFCEntityType.UnKnown)
+            ExporterCacheManager.PropertySetsForTypeCache.TryGetValue(altProdHndType2, out tmpCachedPsets);
+         List<PropertySetDescription> psetdefListType2 = new List<PropertySetDescription>();
+         if (tmpCachedPsets != null)
+            psetdefListType2 = (List<PropertySetDescription>)tmpCachedPsets;
+         psetdefListObj.AddRange(psetdefListType2);
+
          cachedPsets = psetdefListObj; 
          string predefinedType = null;
 

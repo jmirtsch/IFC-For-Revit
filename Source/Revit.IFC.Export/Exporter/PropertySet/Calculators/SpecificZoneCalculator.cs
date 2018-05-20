@@ -78,10 +78,10 @@ namespace Revit.IFC.Export.Exporter.PropertySet.Calculators
          return m_SpecificZones.Count > 0;
       }
 
-      public override bool CalculatesMutipleValues
-      {
-         get { return true; }
-      }
+      //public override bool CalculatesMutipleValues
+      //{
+      //   get { return true; }
+      //}
 
       /// <summary>
       /// Gets the calculated string values.

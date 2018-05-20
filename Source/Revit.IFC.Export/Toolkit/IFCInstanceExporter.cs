@@ -2063,6 +2063,7 @@ namespace Revit.IFC.Export.Toolkit
          //else
          //{
             //validatedType = IFCValidateEntry.ValidateStrEnum<IFCSlabType>(predefinedType);
+         if (!ExporterCacheManager.ExportOptionsCache.ExportAs2x3 && !ExporterCacheManager.ExportOptionsCache.ExportAs2x2)
             SetSpecificEnumAttr(curtainWall, "PredefinedType", predefinedType, "IfcCurtainWallType");
          //}
          //if (string.IsNullOrEmpty(validatedType))
@@ -2092,7 +2093,6 @@ namespace Revit.IFC.Export.Toolkit
           IFCAnyHandle objectPlacement, IFCAnyHandle representation, string preDefinedType, IFCPileConstructionEnum? constructionType)
       {
          string validatedType = preDefinedType;
-         string validatedConstructionType;
 
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
@@ -2138,8 +2138,6 @@ namespace Revit.IFC.Export.Toolkit
       public static IFCAnyHandle CreateRailing(ExporterIFC exporterIFC, Element element, string guid, IFCAnyHandle ownerHistory,
           IFCAnyHandle objectPlacement, IFCAnyHandle representation, string predefinedType)
       {
-         string validatedType;
-
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle railing = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcRailing, element);
@@ -4737,8 +4735,6 @@ namespace Revit.IFC.Export.Toolkit
       public static IFCAnyHandle CreateMember(ExporterIFC exporterIFC, Element element, string guid, IFCAnyHandle ownerHistory,
           IFCAnyHandle objectPlacement, IFCAnyHandle representation, string IFCEnumType)
       {
-         string validatedType;
-
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle member = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcMember, element);
@@ -4769,8 +4765,6 @@ namespace Revit.IFC.Export.Toolkit
       public static IFCAnyHandle CreateMemberStandardCase(ExporterIFC exporterIFC, Element element, string guid, IFCAnyHandle ownerHistory,
           IFCAnyHandle objectPlacement, IFCAnyHandle representation, string IFCEnumType)
       {
-         string validatedType;
-
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle member;
@@ -4807,8 +4801,6 @@ namespace Revit.IFC.Export.Toolkit
       public static IFCAnyHandle CreatePlate(ExporterIFC exporterIFC, Element element, string guid, IFCAnyHandle ownerHistory,
           IFCAnyHandle objectPlacement, IFCAnyHandle representation, string IFCEnumType)
       {
-         string validatedType;
-
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
          IFCAnyHandle plate = CreateInstance(exporterIFC.GetFile(), IFCEntityType.IfcPlate, element);
@@ -5014,7 +5006,7 @@ namespace Revit.IFC.Export.Toolkit
       {
          ValidateElement(guid, ownerHistory, objectPlacement, representation);
 
-         IFCAnyHandle genericIFCEntity;
+         IFCAnyHandle genericIFCEntity = null;
 
          // There is no need to check for valid entity type because that has been enforced inside IFCExportInfoPair, only default to IfcBuildingElementProxy when it is UnKnown type
          if (entityToCreate.ExportInstance == IFCEntityType.UnKnown)
@@ -5022,7 +5014,11 @@ namespace Revit.IFC.Export.Toolkit
          else
             genericIFCEntity = CreateInstance(exporterIFC.GetFile(), entityToCreate.ExportInstance, element);
 
-         SetElement(exporterIFC, genericIFCEntity, element, guid, ownerHistory, objectPlacement, representation);
+         if (genericIFCEntity == null)
+            return null;
+
+         if (IFCAnyHandleUtil.IsSubTypeOf(genericIFCEntity, IFCEntityType.IfcElement))
+            SetElement(exporterIFC, genericIFCEntity, element, guid, ownerHistory, objectPlacement, representation);
 
          if (!string.IsNullOrEmpty(entityToCreate.ValidatedPredefinedType))
          {
@@ -5056,7 +5052,7 @@ namespace Revit.IFC.Export.Toolkit
       public static IFCAnyHandle CreateGenericIFCType(IFCExportInfoPair typeEntityToCreate, ElementType revitType, IFCFile file,
           HashSet<IFCAnyHandle> propertySets, IList<IFCAnyHandle> representationMaps, string predefinedType)
       {
-         IFCAnyHandle genericIFCType;
+         IFCAnyHandle genericIFCType = null;
 
          // No need to check the valid entity type. It has been enforced in IFCExportInfoPair. Rather create IfcBuildingElementTypeProxyType when the instance is IfcBuildingELementProxy and the type is UnKnown.
          // No type will be created if the Instance is Unknown too
@@ -5065,7 +5061,7 @@ namespace Revit.IFC.Export.Toolkit
 
          if (typeEntityToCreate.ExportType == IFCEntityType.UnKnown && typeEntityToCreate.ExportInstance == IFCEntityType.IfcBuildingElementProxy)
             genericIFCType = CreateInstance(file, IFCEntityType.IfcBuildingElementProxyType, revitType);
-         else
+         else if (typeEntityToCreate.ExportType != IFCEntityType.UnKnown)
             genericIFCType = CreateInstance(file, typeEntityToCreate.ExportType, revitType);
 
          if (genericIFCType == null)
